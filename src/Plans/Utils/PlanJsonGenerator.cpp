@@ -31,7 +31,7 @@
 
 namespace NES {
 
-std::string PlanJsonGenerator::getOperatorType(OperatorNodePtr operatorNode) {
+std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNode) {
     NES_INFO("UtilityFunctions: getting the type of the operator");
 
     std::string operatorType;
@@ -64,7 +64,7 @@ std::string PlanJsonGenerator::getOperatorType(OperatorNodePtr operatorNode) {
     return operatorType;
 }
 
-web::json::value PlanJsonGenerator::getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId) {
+web::json::value PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan, QueryId queryId) {
 
     NES_INFO("UtilityFunctions: getting execution plan as JSON");
 
@@ -78,7 +78,7 @@ web::json::value PlanJsonGenerator::getExecutionPlanAsJson(GlobalExecutionPlanPt
         executionNodes = globalExecutionPlan->getAllExecutionNodes();
     }
 
-    for (ExecutionNodePtr executionNode : executionNodes) {
+    for (const ExecutionNodePtr& executionNode : executionNodes) {
         web::json::value currentExecutionNodeJsonValue{};
 
         currentExecutionNodeJsonValue["executionNodeId"] = web::json::value::number(executionNode->getId());
@@ -106,7 +106,7 @@ web::json::value PlanJsonGenerator::getExecutionPlanAsJson(GlobalExecutionPlanPt
             queryToQuerySubPlans["queryId"] = web::json::value::number(queryId);
 
             // loop over all query sub plans inside the current executionNode
-            for (QueryPlanPtr querySubPlan : querySubPlans) {
+            for (const QueryPlanPtr& querySubPlan : querySubPlans) {
                 // prepare json object to hold information on current query sub plan
                 web::json::value currentQuerySubPlan{};
 
@@ -133,7 +133,7 @@ web::json::value PlanJsonGenerator::getExecutionPlanAsJson(GlobalExecutionPlanPt
     return executionPlanJson;
 }
 
-web::json::value PlanJsonGenerator::getQueryPlanAsJson(QueryPlanPtr queryPlan) {
+web::json::value PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPlan) {
 
     NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
 
@@ -177,7 +177,7 @@ web::json::value PlanJsonGenerator::getQueryPlanAsJson(QueryPlanPtr queryPlan) {
     return result;
 }
 
-void PlanJsonGenerator::getChildren(const OperatorNodePtr root,
+void PlanJsonGenerator::getChildren(const OperatorNodePtr& root,
                                     std::vector<web::json::value>& nodes,
                                     std::vector<web::json::value>& edges) {
 
@@ -190,7 +190,7 @@ void PlanJsonGenerator::getChildren(const OperatorNodePtr root,
     }
 
     NES_DEBUG("UtilityFunctions::getChildren : children size = " << children.size());
-    for (NodePtr child : children) {
+    for (const NodePtr& child : children) {
         // Create a node JSON object for the current operator
         auto node = web::json::value::object();
         auto childLogicalOperatorNode = child->as<LogicalOperatorNode>();

@@ -23,6 +23,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace NES {
 /*
@@ -37,16 +38,16 @@ SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
 MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    QuerySubPlanId parentPlanId,
-                   const std::string address,
-                   const std::string clientId,
-                   const std::string topic,
-                   const std::string user,
+                   const std::string& address,
+                   const std::string& clientId,
+                   const std::string& topic,
+                   const std::string& user,
                    uint64_t maxBufferedMSGs,
                    const MQTTSinkDescriptor::TimeUnits timeUnit,
                    uint64_t messageDelay,
                    const MQTTSinkDescriptor::ServiceQualities qualityOfService,
                    bool asynchronousClient)
-    : SinkMedium(sinkFormat, parentPlanId), address(address), clientId(clientId), topic(topic), user(user),
+    : SinkMedium(std::move(sinkFormat), parentPlanId), address(address), clientId(clientId), topic(topic), user(user),
       maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService),
       asynchronousClient(asynchronousClient), connected(false) {
 

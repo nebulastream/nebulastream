@@ -30,6 +30,7 @@
 #include <cassert>
 #include <cstring>
 #include <limits>
+#include <utility>
 
 namespace NES {
 
@@ -82,7 +83,7 @@ DataTypePtr DataTypeFactory::createInt32() { return createInteger(32, INT32_MIN,
 
 DataTypePtr DataTypeFactory::createUInt32() { return createInteger(32, 0, UINT32_MAX); };
 
-DataTypePtr DataTypeFactory::createArray(uint64_t length, DataTypePtr component) {
+DataTypePtr DataTypeFactory::createArray(uint64_t length, const DataTypePtr& component) {
     return std::make_shared<ArrayType>(length, component);
 }
 
@@ -99,7 +100,7 @@ ValueTypePtr DataTypeFactory::createBasicValue(uint64_t value) { return createBa
 ValueTypePtr DataTypeFactory::createBasicValue(int64_t value) { return createBasicValue(createInt64(), std::to_string(value)); }
 
 ValueTypePtr DataTypeFactory::createBasicValue(BasicType type, std::string value) {
-    return createBasicValue(createType(type), value);
+    return createBasicValue(createType(type), std::move(value));
 }
 
 ValueTypePtr DataTypeFactory::createArrayValueFromContainerType(std::shared_ptr<ArrayType>&& type,

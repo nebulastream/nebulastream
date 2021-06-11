@@ -61,7 +61,7 @@ class GlobalQueryPlan {
      * @param queryPlan : new query plan to be added.
      * @return: true if successful else false
      */
-    bool addQueryPlan(QueryPlanPtr queryPlan);
+    bool addQueryPlan(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief remove the operators belonging to the query with input query Id from the global query plan
@@ -105,7 +105,7 @@ class GlobalQueryPlan {
      * @param sharedQueryMetaData: the global query metadata to be updated
      * @return true if successful
      */
-    bool updateSharedQueryMetadata(SharedQueryMetaDataPtr sharedQueryMetaData);
+    bool updateSharedQueryMetadata(const SharedQueryMetaDataPtr& sharedQueryMetaData);
     std::vector<SharedQueryMetaDataPtr> getAllNewSharedQueryMetaData();
     std::vector<SharedQueryMetaDataPtr> getAllOldSharedQueryMetaData();
 

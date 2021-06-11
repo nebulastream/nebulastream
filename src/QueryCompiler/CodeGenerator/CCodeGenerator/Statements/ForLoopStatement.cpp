@@ -56,7 +56,7 @@ const CodeExpressionPtr ForLoopStatement::getCode() const {
     return std::make_shared<CodeExpression>(code.str());
 }
 
-void ForLoopStatement::addStatement(StatementPtr stmt) {
+void ForLoopStatement::addStatement(const StatementPtr& stmt) {
     if (stmt) {
         body->addStatement(stmt);
     }

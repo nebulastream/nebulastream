@@ -56,7 +56,7 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    static bool checkCompleteOrTimeout(NodeEngine::NodeEnginePtr ptr, QueryId queryId, uint64_t expectedResult) {
+    static bool checkCompleteOrTimeout(const NodeEngine::NodeEnginePtr& ptr, QueryId queryId, uint64_t expectedResult) {
         if (ptr->getQueryStatistics(queryId).empty()) {
             NES_ERROR("checkCompleteOrTimeout query does not exists");
             return false;
@@ -85,7 +85,7 @@ class TestUtils {
      * @param expectedResult: The expected value
      * @return true if matched the expected result within the timeout
      */
-    static bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult, std::string restPort = "8081") {
+    static bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult, const std::string& restPort = "8081") {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         uint64_t currentResult = 0;
@@ -157,7 +157,7 @@ class TestUtils {
      * @param queryId: Id of the query
      * @return if stopped
      */
-    static bool stopQueryViaRest(QueryId queryId, std::string restPort = "8081") {
+    static bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081") {
         web::json::value json_return;
 
         web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/query/stop-query");
@@ -189,7 +189,7 @@ class TestUtils {
      * @param query string
      * @return if stopped
      */
-    static web::json::value startQueryViaRest(string queryString, std::string restPort = "8081") {
+    static web::json::value startQueryViaRest(const string& queryString, const std::string& restPort = "8081") {
         web::json::value json_return;
 
         web::http::client::http_client clientQ1("http://127.0.0.1:" + restPort + "/v1/nes/");
@@ -219,7 +219,7 @@ class TestUtils {
    * @param query string
    * @return
    */
-    static bool addLogicalStream(string schemaString, std::string restPort = "8081") {
+    static bool addLogicalStream(const string& schemaString, const std::string& restPort = "8081") {
         web::json::value json_returnSchema;
 
         web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort + "/v1/nes/streamCatalog/addLogicalStream");
@@ -252,7 +252,7 @@ class TestUtils {
      * @return true if query gets into running status else false
      */
     static bool waitForQueryToStart(QueryId queryId,
-                                    QueryCatalogPtr queryCatalog,
+                                    const QueryCatalogPtr& queryCatalog,
                                     std::chrono::seconds timeoutInSec = std::chrono::seconds(timeout)) {
         NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
         auto start_timestamp = std::chrono::system_clock::now();
@@ -286,7 +286,7 @@ class TestUtils {
      */
     template<typename Predicate = std::equal_to<uint64_t>>
     static bool
-    checkCompleteOrTimeout(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan, uint64_t expectedResult) {
+    checkCompleteOrTimeout(const NesWorkerPtr& nesWorker, QueryId queryId, const GlobalQueryPlanPtr& globalQueryPlan, uint64_t expectedResult) {
 
         SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
@@ -334,9 +334,9 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<uint64_t>>
-    static bool checkCompleteOrTimeout(NesCoordinatorPtr nesCoordinator,
+    static bool checkCompleteOrTimeout(const NesCoordinatorPtr& nesCoordinator,
                                        QueryId queryId,
-                                       GlobalQueryPlanPtr globalQueryPlan,
+                                       const GlobalQueryPlanPtr& globalQueryPlan,
                                        uint64_t expectedResult) {
         SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
@@ -383,7 +383,7 @@ class TestUtils {
      * @param queryCatalog: the catalog containig the queries in the system
      * @return true if successful
      */
-    static bool checkStoppedOrTimeout(QueryId queryId, QueryCatalogPtr queryCatalog) {
+    static bool checkStoppedOrTimeout(QueryId queryId, const QueryCatalogPtr& queryCatalog) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -406,7 +406,7 @@ class TestUtils {
    * @param outputFilePath
    * @return true if successful
    */
-    static bool checkOutputOrTimeout(string expectedContent, string outputFilePath, uint64_t customTimeout = 0) {
+    static bool checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeout = 0) {
         std::chrono::seconds timeoutInSec;
         if (customTimeout == 0) {
             timeoutInSec = std::chrono::seconds(timeout);
@@ -463,7 +463,7 @@ class TestUtils {
    * @param outputFilePath
    * @return true if successful
    */
-    static bool checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, string outputFilePath, uint64_t customTimeout = 0) {
+    static bool checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0) {
         std::chrono::seconds timeoutInSec;
         if (customTimeout == 0) {
             timeoutInSec = std::chrono::seconds(timeout);
@@ -504,7 +504,7 @@ class TestUtils {
   */
     template<typename T>
     static bool checkBinaryOutputContentLengthOrTimeout(uint64_t expectedNumberOfContent,
-                                                        string outputFilePath,
+                                                        const string& outputFilePath,
                                                         uint64_t testTimeout = timeout) {
         auto timeoutInSec = std::chrono::seconds(testTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
@@ -555,7 +555,7 @@ class TestUtils {
    * @param outputFilePath
    * @return true if successful
    */
-    static bool checkFileCreationOrTimeout(string outputFilePath) {
+    static bool checkFileCreationOrTimeout(const string& outputFilePath) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {

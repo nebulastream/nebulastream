@@ -19,15 +19,16 @@
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
 TopologySpecificQueryRewritePhasePtr TopologySpecificQueryRewritePhase::create(StreamCatalogPtr streamCatalog) {
-    return std::make_shared<TopologySpecificQueryRewritePhase>(TopologySpecificQueryRewritePhase(streamCatalog));
+    return std::make_shared<TopologySpecificQueryRewritePhase>(TopologySpecificQueryRewritePhase(std::move(streamCatalog)));
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(StreamCatalogPtr streamCatalog) {
-    logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
+    logicalSourceExpansionRule = LogicalSourceExpansionRule::create(std::move(streamCatalog));
     distributeWindowRule = DistributeWindowRule::create();
     distributeJoinRule = DistributeJoinRule::create();
 }

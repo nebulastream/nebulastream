@@ -26,9 +26,9 @@ namespace NES {
  */
 class WindowComputationOperator : public WindowOperatorNode {
   public:
-    WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id);
+    WindowComputationOperator(Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id);
 
-    bool equal(const NodePtr rhs) const override;
+    bool equal(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;

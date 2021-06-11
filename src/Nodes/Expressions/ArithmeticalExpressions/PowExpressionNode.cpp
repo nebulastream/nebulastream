@@ -26,7 +26,7 @@ PowExpressionNode::PowExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpr
 
 PowExpressionNode::PowExpressionNode(PowExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr PowExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr PowExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto addNode = std::make_shared<PowExpressionNode>(
         DataTypeFactory::createFloat());// TODO: stamp should always be float, but is this the right way?
     addNode->setChildren(left, right);

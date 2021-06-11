@@ -21,11 +21,11 @@
 
 namespace NES::Optimizer {
 
-SignatureEqualityUtilPtr SignatureEqualityUtil::create(z3::ContextPtr context) {
+SignatureEqualityUtilPtr SignatureEqualityUtil::create(const z3::ContextPtr& context) {
     return std::make_shared<SignatureEqualityUtil>(context);
 }
 
-SignatureEqualityUtil::SignatureEqualityUtil(z3::ContextPtr context) {
+SignatureEqualityUtil::SignatureEqualityUtil(const z3::ContextPtr& context) {
     this->context = context;
     this->context->set("solver2_unknown", true);
     this->context->set("ignore_solver1", true);
@@ -33,7 +33,7 @@ SignatureEqualityUtil::SignatureEqualityUtil(z3::ContextPtr context) {
     solver = std::make_unique<z3::solver>(*context);
 }
 
-bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySignaturePtr signature2) {
+bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2) {
     NES_TRACE("QuerySignature: Equating signatures");
 
     auto otherConditions = signature2->getConditions();
@@ -107,7 +107,7 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
 
     //Convert window definitions from both signature into equality conditions
     //If window key from one signature doesn't exists in other signature then they are not equal.
-    for (auto windowExpression : windowsExpressions) {
+    for (const auto& windowExpression : windowsExpressions) {
         if (otherWindowExpressions.find(windowExpression.first) == otherWindowExpressions.end()) {
             NES_WARNING("Window expression with key " << windowExpression.first
                                                       << " doesn't exists in window expressions of other signature");

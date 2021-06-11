@@ -20,6 +20,7 @@
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
 #include <string>
+#include <utility>
 
 namespace NES {
 
@@ -128,9 +129,9 @@ const StringConfigOption SourceConfig::getLogicalStreamName() const { return log
 
 const BoolConfigOption SourceConfig::getSkipHeader() const { return skipHeader; }
 
-void SourceConfig::setSourceType(std::string sourceTypeValue) { sourceType->setValue(sourceTypeValue); }
+void SourceConfig::setSourceType(std::string sourceTypeValue) { sourceType->setValue(std::move(sourceTypeValue)); }
 
-void SourceConfig::setSourceConfig(std::string sourceConfigValue) { sourceConfig->setValue(sourceConfigValue); }
+void SourceConfig::setSourceConfig(std::string sourceConfigValue) { sourceConfig->setValue(std::move(sourceConfigValue)); }
 
 void SourceConfig::setSourceFrequency(uint32_t sourceFrequencyValue) { sourceFrequency->setValue(sourceFrequencyValue); }
 
@@ -143,11 +144,11 @@ void SourceConfig::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesTo
 }
 
 void SourceConfig::setPhysicalStreamName(std::string physicalStreamNameValue) {
-    physicalStreamName->setValue(physicalStreamNameValue);
+    physicalStreamName->setValue(std::move(physicalStreamNameValue));
 }
 
 void SourceConfig::setLogicalStreamName(std::string logicalStreamNameValue) {
-    logicalStreamName->setValue(logicalStreamNameValue);
+    logicalStreamName->setValue(std::move(logicalStreamNameValue));
 }
 
 void SourceConfig::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }

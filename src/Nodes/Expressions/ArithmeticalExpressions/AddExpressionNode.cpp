@@ -23,7 +23,7 @@ AddExpressionNode::AddExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpr
 
 AddExpressionNode::AddExpressionNode(AddExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr AddExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr AddExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto addNode = std::make_shared<AddExpressionNode>(left->getStamp());
     addNode->setChildren(left, right);
     return addNode;

@@ -34,7 +34,7 @@
 #include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
 
 namespace NES::QueryCompilation {
-GeneratableDataTypePtr GeneratableTypesFactory::createDataType(DataTypePtr type) {
+GeneratableDataTypePtr GeneratableTypesFactory::createDataType(const DataTypePtr& type) {
     auto const physicalType = DefaultPhysicalTypeFactory().getPhysicalType(type);
     if (type->isArray()) {
         auto const arrayType = DataType::as<ArrayType>(type);
@@ -46,7 +46,7 @@ GeneratableDataTypePtr GeneratableTypesFactory::createDataType(DataTypePtr type)
     return std::make_shared<BasicGeneratableType>(basicPhysicalType);
 }
 
-GeneratableValueTypePtr GeneratableTypesFactory::createValueType(ValueTypePtr valueType) {
+GeneratableValueTypePtr GeneratableTypesFactory::createValueType(const ValueTypePtr& valueType) {
     if (valueType->dataType->isArray()) {
         return std::make_shared<GeneratableArrayValueType>(valueType, std::dynamic_pointer_cast<ArrayValue>(valueType)->values);
     }
@@ -54,19 +54,19 @@ GeneratableValueTypePtr GeneratableTypesFactory::createValueType(ValueTypePtr va
     return std::make_shared<GeneratableBasicValueType>(std::dynamic_pointer_cast<BasicValue>(valueType));
 }
 
-GeneratableDataTypePtr GeneratableTypesFactory::createAnonymusDataType(std::string type) {
+GeneratableDataTypePtr GeneratableTypesFactory::createAnonymusDataType(const std::string& type) {
     return std::make_shared<AnonymousUserDefinedDataType>(type);
 }
 
-GeneratableDataTypePtr GeneratableTypesFactory::createUserDefinedType(StructDeclaration structDeclaration) {
+GeneratableDataTypePtr GeneratableTypesFactory::createUserDefinedType(const StructDeclaration& structDeclaration) {
     return std::make_shared<UserDefinedDataType>(structDeclaration);
 }
 
-GeneratableDataTypePtr GeneratableTypesFactory::createPointer(GeneratableDataTypePtr type) {
+GeneratableDataTypePtr GeneratableTypesFactory::createPointer(const GeneratableDataTypePtr& type) {
     return std::make_shared<PointerDataType>(type);
 }
 
-GeneratableDataTypePtr GeneratableTypesFactory::createReference(GeneratableDataTypePtr type) {
+GeneratableDataTypePtr GeneratableTypesFactory::createReference(const GeneratableDataTypePtr& type) {
     return std::make_shared<ReferenceDataType>(type);
 }
 }// namespace NES::QueryCompilation

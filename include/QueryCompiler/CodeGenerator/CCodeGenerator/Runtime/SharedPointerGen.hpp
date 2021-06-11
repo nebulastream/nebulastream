@@ -28,14 +28,14 @@ class SharedPointerGen {
      * @param type GeneratableDataTypePtr
      * @return GeneratableDataTypePtr
      */
-    static GeneratableDataTypePtr createSharedPtrType(GeneratableDataTypePtr type);
+    static GeneratableDataTypePtr createSharedPtrType(const GeneratableDataTypePtr& type);
 
     /**
      * @brief Creates function call to make shared.
      * @param type GeneratableDataTypePtr
      * @return StatementPtr
      */
-    static StatementPtr makeShared(GeneratableDataTypePtr type);
+    static StatementPtr makeShared(const GeneratableDataTypePtr& type);
 };
 }// namespace QueryCompilation
 }// namespace NES

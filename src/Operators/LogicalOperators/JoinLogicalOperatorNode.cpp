@@ -119,11 +119,11 @@ bool JoinLogicalOperatorNode::inferSchema() {
     outputSchema->addField(AttributeField::create(newQualifierForSystemField + "$key", leftJoinKey->getStamp()));
 
     // create dynamic fields to store all fields from left and right streams
-    for (auto field : leftInputSchema->fields) {
+    for (const auto& field : leftInputSchema->fields) {
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
-    for (auto field : rightInputSchema->fields) {
+    for (const auto& field : rightInputSchema->fields) {
         outputSchema->addField(field->getName(), field->getDataType());
     }
 

@@ -35,20 +35,20 @@ class RecordHandler {
      * @param name attribute name.
      * @param variableAccessStatement reference to the statement that generates this attribute.
      */
-    void registerAttribute(std::string name, ExpressionStatmentPtr variableAccessStatement);
+    void registerAttribute(const std::string& name, ExpressionStatmentPtr variableAccessStatement);
 
     /**
      * @brief Checks a specific attribute was already registered.
      * @return name attribute name.
      */
-    bool hasAttribute(std::string name);
+    bool hasAttribute(const std::string& name);
 
     /**
      * @brief Returns the VariableReference to the particular attribute name.
      * @param name attribute name
      * @return VariableDeclarationPtr
      */
-    ExpressionStatmentPtr getAttribute(std::string name);
+    ExpressionStatmentPtr getAttribute(const std::string& name);
 
   private:
     std::map<std::string, ExpressionStatmentPtr> statementMap;

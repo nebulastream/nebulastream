@@ -44,7 +44,7 @@ class TimeCharacteristic {
      * @param field the field from which we want to extract the time.
      * @return
      */
-    static TimeCharacteristicPtr createEventTime(ExpressionItem field, TimeUnit unit = API::Milliseconds());
+    static TimeCharacteristicPtr createEventTime(ExpressionItem field, const TimeUnit& unit = API::Milliseconds());
 
     /**
      * @return The TimeCharacteristic type.

@@ -31,7 +31,7 @@ using SchemaPtr = std::shared_ptr<Schema>;
  */
 class LogicalStream {
   public:
-    LogicalStream(std::string name, SchemaPtr schema);
+    LogicalStream(std::string name, const SchemaPtr& schema);
 
     /**
      * @brief Gets the stream name

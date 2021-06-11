@@ -33,74 +33,74 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @brief Insets demultiplex operator before the current operator.
      * @param operatorNode
      */
-    static void insertDemultiplexOperatorsBefore(LogicalOperatorNodePtr operatorNode);
+    static void insertDemultiplexOperatorsBefore(const LogicalOperatorNodePtr& operatorNode);
     /**
      * @brief Insert multiplex operator after the current operator.
      * @param operatorNode
      */
-    static void insertMultiplexOperatorsAfter(LogicalOperatorNodePtr operatorNode);
+    static void insertMultiplexOperatorsAfter(const LogicalOperatorNodePtr& operatorNode);
     /**
      * @brief Checks if the current operator is a demultiplexer, if it has multiple parents.
      * @param operatorNode
      * @return
      */
-    static bool isDemultiplex(LogicalOperatorNodePtr operatorNode);
+    static bool isDemultiplex(const LogicalOperatorNodePtr& operatorNode);
 
     /**
      * @brief Lowers a binary operator
      * @param queryPlan current plan
      * @param operatorNode current operator
      */
-    void lowerBinaryOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    void lowerBinaryOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a unary operator
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerUnaryOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    void lowerUnaryOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a union operator
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    static void lowerUnionOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    static void lowerUnionOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a project operator
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    static void lowerProjectOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    static void lowerProjectOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a map operator
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    static void lowerMapOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    static void lowerMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a window operator
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    static void lowerWindowOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    static void lowerWindowOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a watermark assignment operator
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    static void lowerWatermarkAssignmentOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    static void lowerWatermarkAssignmentOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a join operator
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerJoinOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    void lowerJoinOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a join build operator
@@ -108,7 +108,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     * @param operatorNode current operator
     */
     static OperatorNodePtr
-    getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator, SchemaPtr schema, std::vector<OperatorNodePtr> children);
+    getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator, SchemaPtr schema, std::vector<OperatorNodePtr> children);
 };
 
 }// namespace QueryCompilation

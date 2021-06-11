@@ -68,7 +68,7 @@ class Compiler {
      * @brief Calls the system compiler with a set of compiler flags.
      * @param args CompilerFlagsPtr
      */
-    static void callSystemCompiler(CompilerFlagsPtr flags, std::string const& filename);
+    static void callSystemCompiler(const CompilerFlagsPtr& flags, std::string const& filename);
 
     /**
      * @brief Helper function to write source code to a file

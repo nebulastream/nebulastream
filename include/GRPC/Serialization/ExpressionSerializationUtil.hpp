@@ -38,7 +38,7 @@ class ExpressionSerializationUtil {
     * @param serializedExpression The corresponding protobuff object, which is used to capture the state of the object.
     * @return the modified serializedExpression
     */
-    static SerializableExpression* serializeExpression(ExpressionNodePtr expressionNode,
+    static SerializableExpression* serializeExpression(const ExpressionNodePtr& expressionNode,
                                                        SerializableExpression* serializedExpression);
 
     /**
@@ -49,8 +49,8 @@ class ExpressionSerializationUtil {
     static ExpressionNodePtr deserializeExpression(SerializableExpression* serializedExpression);
 
   private:
-    static void serializeLogicalExpressions(ExpressionNodePtr expression, SerializableExpression* serializedExpression);
-    static void serializeArithmeticalExpressions(ExpressionNodePtr expression, SerializableExpression* serializedExpression);
+    static void serializeLogicalExpressions(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression);
+    static void serializeArithmeticalExpressions(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeLogicalExpressions(SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeArithmeticalExpressions(SerializableExpression* serializedExpression);
 };

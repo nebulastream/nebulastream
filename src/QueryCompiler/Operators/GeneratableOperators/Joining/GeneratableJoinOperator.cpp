@@ -24,6 +24,6 @@ GeneratableJoinOperator::GeneratableJoinOperator(OperatorId id,
                                                  SchemaPtr inputSchema,
                                                  SchemaPtr outputSchema,
                                                  Join::JoinOperatorHandlerPtr operatorHandler)
-    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), operatorHandler(std::move(operatorHandler)) {}
+    : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)), operatorHandler(std::move(operatorHandler)) {}
 
 }// namespace NES::QueryCompilation::GeneratableOperators

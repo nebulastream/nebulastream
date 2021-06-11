@@ -23,9 +23,10 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <iostream>
+#include <utility>
 namespace NES {
 
-TextFormat::TextFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
+TextFormat::TextFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(std::move(schema), std::move(bufferManager)) {
     NES_DEBUG("TextFormat::()");
 }
 

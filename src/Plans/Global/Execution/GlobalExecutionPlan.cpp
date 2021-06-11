@@ -47,7 +47,7 @@ ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeByNodeId(uint64_t id) {
     return nullptr;
 }
 
-bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode) {
+bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, const ExecutionNodePtr& parentExecutionNode) {
     ExecutionNodePtr childNode = getExecutionNodeByNodeId(childId);
     if (childNode) {
         NES_DEBUG("GlobalExecutionPlan: Adding Execution node as parent to the execution node with id " << childId);
@@ -68,7 +68,7 @@ bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, Execution
     return false;
 }
 
-bool GlobalExecutionPlan::addExecutionNodeAsRoot(ExecutionNodePtr executionNode) {
+bool GlobalExecutionPlan::addExecutionNodeAsRoot(const ExecutionNodePtr& executionNode) {
     NES_DEBUG("GlobalExecutionPlan: Added Execution node as root node");
     auto found = std::find(rootNodes.begin(), rootNodes.end(), executionNode);
     if (found == rootNodes.end()) {
@@ -81,7 +81,7 @@ bool GlobalExecutionPlan::addExecutionNodeAsRoot(ExecutionNodePtr executionNode)
     return true;
 }
 
-bool GlobalExecutionPlan::addExecutionNode(ExecutionNodePtr executionNode) {
+bool GlobalExecutionPlan::addExecutionNode(const ExecutionNodePtr& executionNode) {
     NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << executionNode->getId());
     nodeIdIndex[executionNode->getId()] = executionNode;
     scheduleExecutionNode(executionNode);
@@ -92,7 +92,7 @@ bool GlobalExecutionPlan::removeExecutionNode(uint64_t id) {
     NES_DEBUG("GlobalExecutionPlan: Removing Execution node with id " << id);
     if (checkIfExecutionNodeExists(id)) {
         NES_DEBUG("GlobalExecutionPlan: Removed execution node with id " << id);
-        auto found = std::find_if(rootNodes.begin(), rootNodes.end(), [id](ExecutionNodePtr rootNode) {
+        auto found = std::find_if(rootNodes.begin(), rootNodes.end(), [id](const ExecutionNodePtr& rootNode) {
             return rootNode->getId() == id;
         });
         if (found != rootNodes.end()) {
@@ -113,7 +113,7 @@ bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
 
     std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[queryId];
     NES_DEBUG("GlobalExecutionPlan: Found " << executionNodes.size() << " Execution node for query with id " << queryId);
-    for (auto executionNode : executionNodes) {
+    for (const auto& executionNode : executionNodes) {
         uint64_t executionNodeId = executionNode->getId();
         if (!executionNode->removeQuerySubPlans(queryId)) {
             NES_ERROR("GlobalExecutionPlan: Unable to remove query sub plan with id "
@@ -162,13 +162,13 @@ std::string GlobalExecutionPlan::getAsString() {
     NES_DEBUG("GlobalExecutionPlan: Get Execution plan as string");
     std::stringstream ss;
     auto dumpHandler = ConsoleDumpHandler::create(ss);
-    for (auto rootNode : rootNodes) {
+    for (const auto& rootNode : rootNodes) {
         dumpHandler->multilineDump(rootNode);
     }
     return ss.str();
 }
 
-void GlobalExecutionPlan::scheduleExecutionNode(ExecutionNodePtr executionNode) {
+void GlobalExecutionPlan::scheduleExecutionNode(const ExecutionNodePtr& executionNode) {
     NES_DEBUG("GlobalExecutionPlan: Schedule execution node for deployment");
     auto found = std::find(executionNodesToSchedule.begin(), executionNodesToSchedule.end(), executionNode);
     if (found != executionNodesToSchedule.end()) {
@@ -180,10 +180,10 @@ void GlobalExecutionPlan::scheduleExecutionNode(ExecutionNodePtr executionNode) 
     mapExecutionNodeToQueryId(executionNode);
 }
 
-void GlobalExecutionPlan::mapExecutionNodeToQueryId(ExecutionNodePtr executionNode) {
+void GlobalExecutionPlan::mapExecutionNodeToQueryId(const ExecutionNodePtr& executionNode) {
     NES_DEBUG("GlobalExecutionPlan: Mapping execution node " << executionNode->getId() << " to the query Id index.");
     auto querySubPlans = executionNode->getAllQuerySubPlans();
-    for (auto pair : querySubPlans) {
+    for (const auto& pair : querySubPlans) {
         QueryId queryId = pair.first;
         if (queryIdIndex.find(queryId) == queryIdIndex.end()) {
             NES_DEBUG("GlobalExecutionPlan: Query Id " << queryId << " does not exists adding a new entry with execution node "

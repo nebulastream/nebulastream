@@ -43,7 +43,7 @@ class NetworkValues {
      * @param prefix
      * @return The object
      */
-    static NetworkValues fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static NetworkValues fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json

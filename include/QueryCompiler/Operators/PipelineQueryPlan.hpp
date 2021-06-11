@@ -43,7 +43,7 @@ class PipelineQueryPlan {
      * @brief Add a pipeline to the query plan
      * @param pipeline
      */
-    void addPipeline(OperatorPipelinePtr pipeline);
+    void addPipeline(const OperatorPipelinePtr& pipeline);
 
     /**
      * @brief Gets a list of source pipelines, which only contain a single physical source operator
@@ -67,7 +67,7 @@ class PipelineQueryPlan {
      * @brief Remove a particular pipeline from the query plan
      * @param pipeline
      */
-    void removePipeline(OperatorPipelinePtr pipeline);
+    void removePipeline(const OperatorPipelinePtr& pipeline);
 
     /**
      * @brief Gets the query id
@@ -82,7 +82,7 @@ class PipelineQueryPlan {
     [[nodiscard]] const QuerySubPlanId getQuerySubPlanId() const;
 
   private:
-    PipelineQueryPlan(const QueryId queryId, const QuerySubPlanId querySubPlanId);
+    PipelineQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId);
     const QueryId queryId;
     const QuerySubPlanId querySubPlanId;
     std::vector<OperatorPipelinePtr> pipelines;

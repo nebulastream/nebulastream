@@ -18,6 +18,7 @@
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <queue>
+#include <utility>
 
 namespace NES {
 
@@ -31,7 +32,7 @@ Node::Node() {
 #endif
 }
 
-bool Node::addChildWithEqual(const NodePtr newNode) {
+bool Node::addChildWithEqual(const NodePtr& newNode) {
     if (newNode.get() == this) {
         NES_DEBUG("Node: Adding node to its self so skip add child with equal operation.");
         return false;
@@ -64,7 +65,7 @@ bool Node::addChild(const NodePtr newNode) {
     return true;
 }
 
-bool Node::removeChild(const NodePtr node) {
+bool Node::removeChild(const NodePtr& node) {
 
     if (!node) {
         NES_ERROR("Node: Can't remove null node");
@@ -109,7 +110,7 @@ bool Node::addParent(const NodePtr newNode) {
     return true;
 }
 
-bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
+bool Node::insertBetweenThisAndParentNodes(const NodePtr& newNode) {
 
     if (newNode.get() == this) {
         NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
@@ -133,7 +134,7 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
     }
 
     NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
-    for (NodePtr parent : copyOfParents) {
+    for (const NodePtr& parent : copyOfParents) {
         if (!newNode->addParent(parent)) {
             NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
             return false;
@@ -143,7 +144,7 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
     return true;
 }
 
-bool Node::insertBetweenThisAndChildNodes(const NodePtr newNode) {
+bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
 
     if (newNode.get() == this) {
         NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
@@ -167,7 +168,7 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr newNode) {
     }
 
     NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
-    for (NodePtr child : copyOfChildren) {
+    for (const NodePtr& child : copyOfChildren) {
         if (!newNode->addChild(child)) {
             NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
             return false;
@@ -199,7 +200,7 @@ void Node::removeChildren() {
     }
 }
 
-bool Node::removeParent(const NodePtr node) {
+bool Node::removeParent(const NodePtr& node) {
 
     if (!node) {
         NES_ERROR("Node: Can't remove null node");
@@ -223,9 +224,9 @@ bool Node::removeParent(const NodePtr node) {
     return false;
 }
 
-bool Node::replace(NodePtr newNode) { return replace(newNode, shared_from_this()); }
+bool Node::replace(NodePtr newNode) { return replace(std::move(newNode), shared_from_this()); }
 
-bool Node::replace(NodePtr newNode, NodePtr oldNode) {
+bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
 
     if (!newNode || !oldNode) {
         NES_ERROR("Node: Can't replace null node");
@@ -275,7 +276,7 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
     return false;
 }
 
-bool Node::swap(const NodePtr newNode, const NodePtr oldNode) {
+bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
     auto node = findRecursively(shared_from_this(), oldNode);
     // oldNode is not in current graph
     if (!node) {
@@ -308,12 +309,12 @@ bool Node::swap(const NodePtr newNode, const NodePtr oldNode) {
     return true;
 }
 
-bool Node::remove(const NodePtr node) {
+bool Node::remove(const NodePtr& node) {
     // NOTE: if there is a cycle inside the operator topology, it won't behave correctly.
     return removeChild(node) || removeParent(node);
 }
 
-bool Node::removeAndLevelUpChildren(const NodePtr node) {
+bool Node::removeAndLevelUpChildren(const NodePtr& node) {
 
     // if a successor of node is equal to children,
     // it's confused to merge two equal operators,
@@ -368,12 +369,12 @@ const std::vector<NodePtr>& Node::getChildren() const { return children; }
 
 bool Node::containAsChild(NodePtr node) {
     NES_DEBUG("Node: Checking if the input node is contained in the children list");
-    return vectorContainsTheNode(children, node);
+    return vectorContainsTheNode(children, std::move(node));
 }
 
 bool Node::containAsParent(NodePtr node) {
     NES_DEBUG("Node: Checking if the input node is contained in the parent list");
-    return vectorContainsTheNode(parents, node);
+    return vectorContainsTheNode(parents, std::move(node));
 }
 
 const std::vector<NodePtr>& Node::getParents() const { return parents; }
@@ -430,7 +431,7 @@ std::vector<NodePtr> Node::getAllLeafNodes() {
     return leafNodes;
 }
 
-bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::NodePtr nodeToFind) {
+bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::NodePtr& nodeToFind) {
     return find(nodes, nodeToFind) != nullptr;
 }
 
@@ -440,7 +441,7 @@ bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::N
  * @param nodeToFind
  * @return
  */
-NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr nodeToFind) {
+NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind) {
     for (auto&& currentNode : nodes) {
         if (nodeToFind->equal(currentNode)) {// TODO: need to check this when merge is used. nodeToFind.get() == currentNode.get()
             return currentNode;
@@ -449,7 +450,7 @@ NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr nodeToFind) 
     return nullptr;
 }
 
-NodePtr Node::findRecursively(const NodePtr root, const NodePtr nodeToFind) {
+NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind) {
     // DFS
     NodePtr resultNode = nullptr;
     // two operator are equal, may not the same object
@@ -467,7 +468,7 @@ NodePtr Node::findRecursively(const NodePtr root, const NodePtr nodeToFind) {
     return resultNode;
 }
 
-bool Node::equalWithAllChildrenHelper(const NodePtr node1, const NodePtr node2) {
+bool Node::equalWithAllChildrenHelper(const NodePtr& node1, const NodePtr& node2) {
     if (node1->children.size() != node2->children.size()) {
         return false;
     }
@@ -492,7 +493,7 @@ bool Node::equalWithAllChildrenHelper(const NodePtr node1, const NodePtr node2) 
     return true;
 }
 
-bool Node::equalWithAllChildren(const NodePtr otherNode) {
+bool Node::equalWithAllChildren(const NodePtr& otherNode) {
     // the root is equal
     if (!equal(otherNode)) {
         return false;
@@ -501,7 +502,7 @@ bool Node::equalWithAllChildren(const NodePtr otherNode) {
     return equalWithAllChildrenHelper(shared_from_this(), otherNode);
 }// namespace NES
 
-bool Node::equalWithAllParentsHelper(const NodePtr node1, const NodePtr node2) {
+bool Node::equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2) {
     if (node1->parents.size() != node2->parents.size()) {
         return false;
     }
@@ -527,7 +528,7 @@ bool Node::equalWithAllParentsHelper(const NodePtr node1, const NodePtr node2) {
     return true;
 }
 
-bool Node::equalWithAllParents(const NodePtr node) {
+bool Node::equalWithAllParents(const NodePtr& node) {
     // the root is equal
     if (!equal(node)) {
         return false;
@@ -535,7 +536,7 @@ bool Node::equalWithAllParents(const NodePtr node) {
     return equalWithAllParentsHelper(shared_from_this(), node);
 }
 
-std::vector<NodePtr> Node::split(const NodePtr splitNode) {
+std::vector<NodePtr> Node::split(const NodePtr& splitNode) {
     std::vector<NodePtr> result{};
     auto node = findRecursively(shared_from_this(), splitNode);
     if (!node) {
@@ -561,9 +562,9 @@ std::vector<NodePtr> Node::getAndFlattenAllChildren(bool withDuplicateChildren) 
     return allChildren;
 }
 
-void Node::getAndFlattenAllChildrenHelper(const NodePtr node,
+void Node::getAndFlattenAllChildrenHelper(const NodePtr& node,
                                           std::vector<NodePtr>& allChildren,
-                                          const NodePtr excludedNode,
+                                          const NodePtr& excludedNode,
                                           bool allowDuplicate) {
 
     // todo this implementation may be slow

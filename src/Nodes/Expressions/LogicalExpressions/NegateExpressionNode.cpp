@@ -36,7 +36,7 @@ const std::string NegateExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr NegateExpressionNode::create(const ExpressionNodePtr child) {
+ExpressionNodePtr NegateExpressionNode::create(const ExpressionNodePtr& child) {
     auto equals = std::make_shared<NegateExpressionNode>();
     equals->setChild(child);
     return equals;

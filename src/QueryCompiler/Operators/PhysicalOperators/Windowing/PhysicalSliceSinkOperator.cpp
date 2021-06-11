@@ -14,18 +14,19 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr
 PhysicalSliceSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, handler);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(handler));
 }
 
 PhysicalOperatorPtr PhysicalSliceSinkOperator::create(OperatorId id,
-                                                      SchemaPtr inputSchema,
-                                                      SchemaPtr outputSchema,
-                                                      Windowing::WindowOperatorHandlerPtr handler) {
+                                                      const SchemaPtr& inputSchema,
+                                                      const SchemaPtr& outputSchema,
+                                                      const Windowing::WindowOperatorHandlerPtr& handler) {
     return std::make_shared<PhysicalSliceSinkOperator>(id, inputSchema, outputSchema, handler);
 }
 
@@ -33,7 +34,7 @@ PhysicalSliceSinkOperator::PhysicalSliceSinkOperator(OperatorId id,
                                                      SchemaPtr inputSchema,
                                                      SchemaPtr outputSchema,
                                                      Windowing::WindowOperatorHandlerPtr handler)
-    : OperatorNode(id), PhysicalWindowOperator(id, inputSchema, outputSchema, handler){};
+    : OperatorNode(id), PhysicalWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(handler)){};
 
 const std::string PhysicalSliceSinkOperator::toString() const { return "PhysicalSliceSinkOperator"; }
 

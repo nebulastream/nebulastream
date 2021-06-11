@@ -35,7 +35,7 @@ class QueryCompiler {
     virtual ~QueryCompiler() = default;
 
   protected:
-    explicit QueryCompiler(const QueryCompilerOptionsPtr);
+    explicit QueryCompiler(QueryCompilerOptionsPtr&);
     const QueryCompilerOptionsPtr queryCompilerOptions;
 };
 }// namespace QueryCompilation

@@ -42,12 +42,12 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog,
       enableSemanticQueryValidation(enableSemanticQueryValidation) {
     NES_DEBUG("QueryService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create();
-    semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalog);
+    semanticQueryValidation = Optimizer::SemanticQueryValidation::create(std::move(streamCatalog));
 }
 
 QueryService::~QueryService() { NES_DEBUG("~QueryService()"); }
 
-uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName) {
+uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString, const std::string& placementStrategyName) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -112,7 +112,7 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
     return false;
 }
 
-uint64_t QueryService::addQueryRequest(std::string queryString, Query query, std::string placementStrategyName) {
+uint64_t QueryService::addQueryRequest(const std::string& queryString, Query query, const std::string& placementStrategyName) {
     NES_INFO("QueryService: Queuing the query for the execution");
     auto queryPlan = query.getQueryPlan();
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
@@ -124,7 +124,7 @@ uint64_t QueryService::addQueryRequest(std::string queryString, Query query, std
     throw Exception("QueryService: unable to create query catalog entry");
 }
 
-uint64_t QueryService::addQueryRequest(QueryPlanPtr queryPlan, std::string placementStrategyName) {
+uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan, const std::string& placementStrategyName) {
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery("", queryPlan, placementStrategyName);
     if (entry) {
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
@@ -134,7 +134,7 @@ uint64_t QueryService::addQueryRequest(QueryPlanPtr queryPlan, std::string place
     throw Exception("QueryService: unable to create query catalog entry");
 }
 
-uint64_t QueryService::addQueryRequest(std::string queryString, QueryPlanPtr queryPlan, std::string placementStrategyName) {
+uint64_t QueryService::addQueryRequest(const std::string& queryString, const QueryPlanPtr& queryPlan, const std::string& placementStrategyName) {
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);

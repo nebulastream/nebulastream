@@ -20,6 +20,7 @@
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
 #include <string>
+#include <utility>
 
 namespace NES {
 
@@ -149,11 +150,11 @@ void CoordinatorConfig::resetCoordinatorOptions() {
 
 StringConfigOption CoordinatorConfig::getRestIp() { return restIp; }
 
-void CoordinatorConfig::setRestIp(std::string restIpValue) { restIp->setValue(restIpValue); }
+void CoordinatorConfig::setRestIp(std::string restIpValue) { restIp->setValue(std::move(restIpValue)); }
 
 StringConfigOption CoordinatorConfig::getCoordinatorIp() { return coordinatorIp; }
 
-void CoordinatorConfig::setCoordinatorIp(std::string coordinatorIpValue) { coordinatorIp->setValue(coordinatorIpValue); }
+void CoordinatorConfig::setCoordinatorIp(std::string coordinatorIpValue) { coordinatorIp->setValue(std::move(coordinatorIpValue)); }
 
 IntConfigOption CoordinatorConfig::getRpcPort() { return rpcPort; }
 
@@ -183,7 +184,7 @@ void CoordinatorConfig::setEnableQueryMerging(bool enableQueryMergingValue) {
 
 StringConfigOption CoordinatorConfig::getLogLevel() { return logLevel; }
 
-void CoordinatorConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(logLevelValue); }
+void CoordinatorConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(std::move(logLevelValue)); }
 
 IntConfigOption CoordinatorConfig::getNumberOfBuffersInGlobalBufferManager() { return numberOfBuffersInGlobalBufferManager; }
 IntConfigOption CoordinatorConfig::getnumberOfBuffersPerPipeline() { return numberOfBuffersPerPipeline; }
@@ -207,7 +208,7 @@ void CoordinatorConfig::setQueryBatchSize(uint32_t batchSize) { queryBatchSize->
 
 StringConfigOption CoordinatorConfig::getQueryMergerRule() { return queryMergerRule; }
 
-void CoordinatorConfig::setQueryMergerRule(std::string queryMergerRuleValue) { queryMergerRule->setValue(queryMergerRuleValue); }
+void CoordinatorConfig::setQueryMergerRule(std::string queryMergerRuleValue) { queryMergerRule->setValue(std::move(queryMergerRuleValue)); }
 
 BoolConfigOption CoordinatorConfig::getEnableSemanticQueryValidation() { return enableSemanticQueryValidation; }
 

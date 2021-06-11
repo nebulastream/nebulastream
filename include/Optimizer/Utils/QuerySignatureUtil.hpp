@@ -53,7 +53,7 @@ class QuerySignatureUtil {
      * @param operatorNode: the input operator
      * @return the object representing signature created by the operator and its children
      */
-    static QuerySignaturePtr createQuerySignatureForOperator(z3::ContextPtr context, OperatorNodePtr operatorNode);
+    static QuerySignaturePtr createQuerySignatureForOperator(const z3::ContextPtr& context, const OperatorNodePtr& operatorNode);
 
   private:
     /**
@@ -62,14 +62,14 @@ class QuerySignatureUtil {
      * @param sourceOperator: the source operator
      * @return Signature based on source operator
      */
-    static QuerySignaturePtr createQuerySignatureForSource(z3::ContextPtr context, SourceLogicalOperatorNodePtr sourceOperator);
+    static QuerySignaturePtr createQuerySignatureForSource(const z3::ContextPtr& context, const SourceLogicalOperatorNodePtr& sourceOperator);
 
     /**
      * @brief Compute a query signature for Project operator
      * @param projectOperator: the project operator
      * @return Signature based on project operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForProject(ProjectionLogicalOperatorNodePtr projectOperator);
+    static QuerySignaturePtr createQuerySignatureForProject(const ProjectionLogicalOperatorNodePtr& projectOperator);
 
     /**
      * @brief Compute a query signature for Map operator
@@ -77,7 +77,7 @@ class QuerySignatureUtil {
      * @param mapOperator: the map operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForMap(z3::ContextPtr context, MapLogicalOperatorNodePtr mapOperator);
+    static QuerySignaturePtr createQuerySignatureForMap(const z3::ContextPtr& context, const MapLogicalOperatorNodePtr& mapOperator);
 
     /**
      * @brief Compute a query signature for Filter operator
@@ -85,7 +85,7 @@ class QuerySignatureUtil {
      * @param filterOperator: the Filter operator
      * @return Signature based on filter operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForFilter(z3::ContextPtr context, FilterLogicalOperatorNodePtr filterOperator);
+    static QuerySignaturePtr createQuerySignatureForFilter(const z3::ContextPtr& context, const FilterLogicalOperatorNodePtr& filterOperator);
 
     /**
      * @brief Compute a query signature for window operator
@@ -93,7 +93,7 @@ class QuerySignatureUtil {
      * @param windowOperator: the window operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForWindow(z3::ContextPtr context, WindowLogicalOperatorNodePtr windowOperator);
+    static QuerySignaturePtr createQuerySignatureForWindow(const z3::ContextPtr& context, const WindowLogicalOperatorNodePtr& windowOperator);
 
     /**
      * @brief compute a signature for join operator
@@ -101,7 +101,7 @@ class QuerySignatureUtil {
      * @param joinOperator: the join operator
      * @return Signature based on join operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForJoin(z3::ContextPtr context, JoinLogicalOperatorNodePtr joinOperator);
+    static QuerySignaturePtr createQuerySignatureForJoin(const z3::ContextPtr& context, const JoinLogicalOperatorNodePtr& joinOperator);
 
     /**
      * @brief compute a signature for watermark operator
@@ -109,8 +109,8 @@ class QuerySignatureUtil {
      * @param watermarkAssignerOperator: the watermark operator
      * @return Signature based on watermark operator and its child signature
      */
-    static QuerySignaturePtr createQuerySignatureForWatermark(z3::ContextPtr context,
-                                                              WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator);
+    static QuerySignaturePtr createQuerySignatureForWatermark(const z3::ContextPtr& context,
+                                                              const WatermarkAssignerLogicalOperatorNodePtr& watermarkAssignerOperator);
 
     /**
      * @brief Compute a signature for Union operator
@@ -118,7 +118,7 @@ class QuerySignatureUtil {
      * @param unionOperator: the union operator
      * @return Signature based on union and its child signatures
      */
-    static QuerySignaturePtr createQuerySignatureForUnion(z3::ContextPtr context, UnionLogicalOperatorNodePtr unionOperator);
+    static QuerySignaturePtr createQuerySignatureForUnion(const z3::ContextPtr& context, const UnionLogicalOperatorNodePtr& unionOperator);
 };
 }// namespace NES::Optimizer
 

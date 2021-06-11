@@ -22,7 +22,7 @@ EqualsExpressionNode::EqualsExpressionNode(EqualsExpressionNode* other) : Logica
 
 EqualsExpressionNode::EqualsExpressionNode() : LogicalBinaryExpressionNode() {}
 
-ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto equals = std::make_shared<EqualsExpressionNode>();
     equals->setChildren(left, right);
     return equals;

@@ -55,7 +55,7 @@ web::json::value MonitoringService::registerMonitoringPlanToAllNodes(MonitoringP
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         nodeIds.emplace_back(tNode->getId());
     }
-    auto success = monitoringManager->registerRemoteMonitoringPlans(nodeIds, monitoringPlan);
+    auto success = monitoringManager->registerRemoteMonitoringPlans(nodeIds, std::move(monitoringPlan));
     metricsJson["success"] = success;
     return metricsJson;
 }

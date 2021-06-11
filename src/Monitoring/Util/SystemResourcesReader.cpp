@@ -139,7 +139,7 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
         outputValue.tCompressed = tCompressed;
 
         // extension of the wrapper class object
-        output.addNetworkValues(std::move(outputValue));
+        output.addNetworkValues(outputValue);
     }
     fclose(fp);
 

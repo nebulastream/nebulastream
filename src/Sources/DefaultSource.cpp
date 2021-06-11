@@ -44,7 +44,7 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                       operatorId,
                       numSourceLocalBuffers,
                       DataSource::GatheringMode::FREQUENCY_MODE,
-                      successors) {
+                      std::move(successors)) {
     NES_DEBUG("DefaultSource:" << this << " creating");
     this->gatheringInterval = std::chrono::milliseconds(frequency);
 }

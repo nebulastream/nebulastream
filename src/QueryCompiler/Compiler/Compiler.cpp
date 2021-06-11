@@ -135,7 +135,7 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
     return SystemCompilerCompiledCode::create(sharedLibrary, basename);
 }
 
-void Compiler::callSystemCompiler(CompilerFlagsPtr flags, std::string const& filename) {
+void Compiler::callSystemCompiler(const CompilerFlagsPtr& flags, std::string const& filename) {
     std::stringstream compilerCall;
     compilerCall << CLANG_EXECUTABLE << " ";
 #if 0

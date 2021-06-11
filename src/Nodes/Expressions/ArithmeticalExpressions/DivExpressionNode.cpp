@@ -23,7 +23,7 @@ DivExpressionNode::DivExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpr
 
 DivExpressionNode::DivExpressionNode(DivExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr DivExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr DivExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto divNode = std::make_shared<DivExpressionNode>(left->getStamp());
     divNode->setChildren(left, right);
     return divNode;

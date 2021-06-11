@@ -33,7 +33,7 @@ const CodeExpressionPtr CompoundStatement::getCode() const {
     return std::make_shared<CodeExpression>(code.str());
 }
 
-void CompoundStatement::addStatement(StatementPtr stmt) {
+void CompoundStatement::addStatement(const StatementPtr& stmt) {
     if (stmt) {
         statements.push_back(stmt);
     }

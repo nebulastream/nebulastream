@@ -41,9 +41,9 @@ using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
 class SignatureEqualityUtil {
 
   public:
-    static SignatureEqualityUtilPtr create(z3::ContextPtr context);
+    static SignatureEqualityUtilPtr create(const z3::ContextPtr& context);
 
-    explicit SignatureEqualityUtil(z3::ContextPtr context);
+    explicit SignatureEqualityUtil(const z3::ContextPtr& context);
 
     /**
      * @brief Check equality of the given signatures
@@ -51,7 +51,7 @@ class SignatureEqualityUtil {
      * @param signature2
      * @return true if tey are equal else false
      */
-    bool checkEquality(QuerySignaturePtr signature1, QuerySignaturePtr signature2);
+    bool checkEquality(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
 
   private:
     z3::ContextPtr context;

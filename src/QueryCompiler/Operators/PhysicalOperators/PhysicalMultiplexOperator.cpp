@@ -14,17 +14,18 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
+#include <utility>
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalMultiplexOperator::create(OperatorId id, SchemaPtr schema) {
+PhysicalOperatorPtr PhysicalMultiplexOperator::create(OperatorId id, const SchemaPtr& schema) {
     return std::make_shared<PhysicalMultiplexOperator>(id, schema);
 }
 
 PhysicalOperatorPtr PhysicalMultiplexOperator::create(SchemaPtr schema) {
-    return create(UtilityFunctions::getNextOperatorId(), schema);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(schema));
 }
 
-PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id, SchemaPtr schema)
+PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id, const SchemaPtr& schema)
     : OperatorNode(id), PhysicalOperator(id), ExchangeOperatorNode(id) {
     ExchangeOperatorNode::setInputSchema(schema);
     ExchangeOperatorNode::setOutputSchema(schema);

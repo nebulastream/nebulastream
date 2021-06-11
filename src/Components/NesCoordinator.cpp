@@ -52,7 +52,7 @@ using grpc::Status;
 
 namespace NES {
 
-NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
+NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     : restIp(coordinatorConfig->getRestIp()->getValue()), restPort(coordinatorConfig->getRestPort()->getValue()),
       rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()), rpcPort(coordinatorConfig->getRpcPort()->getValue()),
       numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
@@ -284,7 +284,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
     return true;
 }
 
-void NesCoordinator::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom) {
+void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom) {
     grpc::ServerBuilder builder;
     NES_ASSERT(coordinatorEngine, "null coordinator engine");
     CoordinatorRPCServer service(coordinatorEngine);

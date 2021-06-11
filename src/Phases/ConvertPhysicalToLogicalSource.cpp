@@ -40,7 +40,7 @@
 
 namespace NES {
 
-SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataSourcePtr dataSource) {
+SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const DataSourcePtr& dataSource) {
     SourceType srcType = dataSource->getType();
     switch (srcType) {
         case ZMQ_SOURCE: {

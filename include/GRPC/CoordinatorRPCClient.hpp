@@ -36,7 +36,7 @@ using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
 class CoordinatorRPCClient {
   public:
-    explicit CoordinatorRPCClient(std::string address);
+    explicit CoordinatorRPCClient(const std::string& address);
 
     ~CoordinatorRPCClient();
     /**
@@ -44,7 +44,7 @@ class CoordinatorRPCClient {
      * @param configuration of the stream
      * @return bool indicating success
      */
-    bool registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf);
+    bool registerPhysicalStream(const AbstractPhysicalStreamConfigPtr& conf);
 
     /**
      * @brief this method registers logical streams via the coordinator
@@ -53,21 +53,21 @@ class CoordinatorRPCClient {
      * @return bool indicating the success of the log stream
      * @note the logical stream is not saved in the worker as it is maintained on the coordinator and all logical streams can be retrieved from the physical stream map locally, if we later need the data we can add a map
      */
-    bool registerLogicalStream(std::string streamName, std::string filePath);
+    bool registerLogicalStream(const std::string& streamName, const std::string& filePath);
 
     /**
      * @brief this method removes the logical stream in the coordinator
      * @param logical stream to be deleted
      * @return bool indicating success of the removal
      */
-    bool unregisterLogicalStream(std::string streamName);
+    bool unregisterLogicalStream(const std::string& streamName);
 
     /**
      * @brief this method removes a physical stream from a logical stream in the coordinator
      * @param logical stream to be deleted
      * @return bool indicating success of the removal
      */
-    bool unregisterPhysicalStream(std::string logicalStreamName, std::string physicalStreamName);
+    bool unregisterPhysicalStream(const std::string& logicalStreamName, const std::string& physicalStreamName);
 
     /**
      * @brief method to add a new parent to an existing node
@@ -101,12 +101,12 @@ class CoordinatorRPCClient {
      * @param nodeProperties
      * @return bool indicating success
      */
-    bool registerNode(std::string ipAddress,
+    bool registerNode(const std::string& ipAddress,
                       int64_t grpcPort,
                       int64_t dataPort,
                       int16_t numberOfSlots,
                       NodeType type,
-                      NodeStats nodeStats);
+                      const NodeStats& nodeStats);
 
     /**
    * @brief method to unregister a node after the connection is established

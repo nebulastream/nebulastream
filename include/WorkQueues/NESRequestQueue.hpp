@@ -49,7 +49,7 @@ class NESRequestQueue {
      * @param request: the query request
      * @return true if successfully added to the queue
      */
-    bool add(NESRequestPtr request);
+    bool add(const NESRequestPtr& request);
 
     /**
      * @brief Get a batch of query catalog entries to be processed.

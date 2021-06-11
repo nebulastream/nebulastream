@@ -24,7 +24,7 @@
 namespace NES::QueryCompilation {
 
 LowerLogicalToPhysicalOperatorsPtr
-LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(PhysicalOperatorProviderPtr provider) {
+LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(const PhysicalOperatorProviderPtr& provider) {
     return std::make_shared<LowerLogicalToPhysicalOperators>(provider);
 }
 
@@ -33,7 +33,7 @@ LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(PhysicalOperato
 
 QueryPlanPtr LowerLogicalToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
     std::vector<NodePtr> nodes = QueryPlanIterator(queryPlan).snapshot();
-    for (auto node : nodes) {
+    for (const auto& node : nodes) {
         provider->lower(queryPlan, node->as<LogicalOperatorNode>());
     }
     return queryPlan;

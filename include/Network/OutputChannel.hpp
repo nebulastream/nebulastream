@@ -37,7 +37,7 @@ using OutputChannelPtr = std::unique_ptr<OutputChannel>;
 
 class OutputChannel {
   public:
-    explicit OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, const std::string address);
+    explicit OutputChannel(zmq::socket_t&& zmqSocket, ChannelId channelId, std::string& address);
 
   public:
     /**
@@ -60,8 +60,8 @@ class OutputChannel {
      * @param retryTimes the number of retries before the methods will raise error
      * @return
      */
-    static OutputChannelPtr create(std::shared_ptr<zmq::context_t> zmqContext,
-                                   const std::string socketAddr,
+    static OutputChannelPtr create(const std::shared_ptr<zmq::context_t>& zmqContext,
+                                   std::string& socketAddr,
                                    NesPartition nesPartition,
                                    ExchangeProtocol& protocol,
                                    std::chrono::seconds waitTime,

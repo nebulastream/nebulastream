@@ -26,7 +26,7 @@ std::shared_ptr<ConsoleDumpHandler> ConsoleDumpHandler::create(std::ostream& out
     return std::make_shared<ConsoleDumpHandler>(out);
 }
 
-void ConsoleDumpHandler::dumpHelper(const NodePtr op, uint64_t depth, uint64_t indent, std::ostream& out) const {
+void ConsoleDumpHandler::dumpHelper(const NodePtr& op, uint64_t depth, uint64_t indent, std::ostream& out) const {
     out << std::string(indent * depth, ' ') << op->toString() << std::endl;
     ++depth;
     auto children = op->getChildren();
@@ -35,10 +35,10 @@ void ConsoleDumpHandler::dumpHelper(const NodePtr op, uint64_t depth, uint64_t i
     }
 }
 
-void ConsoleDumpHandler::multilineDumpHelper(const NodePtr op, uint64_t depth, uint64_t indent, std::ostream& out) const {
+void ConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t depth, uint64_t indent, std::ostream& out) const {
 
     std::vector<std::string> multiLineNodeString = op->toMultilineString();
-    for (const std::string line : multiLineNodeString) {
+    for (const std::string& line : multiLineNodeString) {
         for (int i = 0; i < indent * depth; i++) {
             if (i % indent == 0) {
                 out << '|';
@@ -64,7 +64,7 @@ void ConsoleDumpHandler::multilineDumpHelper(const NodePtr op, uint64_t depth, u
 
 void ConsoleDumpHandler::dump(const NodePtr node) { dumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
-void ConsoleDumpHandler::multilineDump(const NodePtr node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
+void ConsoleDumpHandler::multilineDump(const NodePtr& node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 void ConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr) { NES_NOT_IMPLEMENTED(); }
 void ConsoleDumpHandler::dump(std::string, std::string, QueryCompilation::PipelineQueryPlanPtr) { NES_NOT_IMPLEMENTED(); }
 }// namespace NES

@@ -22,17 +22,18 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <sstream>
+#include <utility>
 namespace NES {
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::create(SourceConfigPtr sourceConfig) {
-    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceConfig));
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(std::move(sourceConfig)));
 }
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::createEmpty() {
     return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(SourceConfig::create()));
 }
 
-PhysicalStreamConfig::PhysicalStreamConfig(SourceConfigPtr sourceConfig)
+PhysicalStreamConfig::PhysicalStreamConfig(const SourceConfigPtr& sourceConfig)
     : sourceType(sourceConfig->getSourceType()->getValue()), sourceConfig(sourceConfig->getSourceConfig()->getValue()),
       sourceFrequency(sourceConfig->getSourceFrequency()->getValue()),
       numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue()),

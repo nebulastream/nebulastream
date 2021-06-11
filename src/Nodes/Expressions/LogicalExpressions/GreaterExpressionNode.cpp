@@ -21,7 +21,7 @@ GreaterExpressionNode::GreaterExpressionNode() : LogicalBinaryExpressionNode(){}
 
 GreaterExpressionNode::GreaterExpressionNode(GreaterExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr GreaterExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr GreaterExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto greater = std::make_shared<GreaterExpressionNode>();
     greater->setChildren(left, right);
     return greater;

@@ -16,29 +16,31 @@
 
 #include "REST/Controller/BaseController.hpp"
 
+#include <utility>
+
 namespace NES {
 
-void BaseController::handleDelete(std::vector<utility::string_t>, http_request request) {
+void BaseController::handleDelete(const std::vector<utility::string_t>&, http_request request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, getPath(request)));
 }
 
-void BaseController::handleGet(std::vector<utility::string_t>, http_request request) {
+void BaseController::handleGet(const std::vector<utility::string_t>&, http_request request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, getPath(request)));
 }
 
-void BaseController::handleHead(std::vector<utility::string_t>, http_request request) {
+void BaseController::handleHead(const std::vector<utility::string_t>&, http_request request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(request)));
 }
 
-void BaseController::handleMerge(std::vector<utility::string_t>, http_request request) {
+void BaseController::handleMerge(const std::vector<utility::string_t>&, http_request request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(request)));
 }
 
-void BaseController::handleTrace(std::vector<utility::string_t>, http_request request) {
+void BaseController::handleTrace(const std::vector<utility::string_t>&, http_request request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(request)));
 }
 
-void BaseController::handleOptions(http_request request) {
+void BaseController::handleOptions(const http_request& request) {
     http_response response(status_codes::OK);
     response.headers().add(U("Allow"), U("GET, POST, OPTIONS"));
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
@@ -49,7 +51,7 @@ void BaseController::handleOptions(http_request request) {
 
 json::value BaseController::responseNotImpl(const http::method& method, utility::string_t path) {
     auto response = json::value::object();
-    response["path"] = json::value::string(path);
+    response["path"] = json::value::string(std::move(path));
     response["http_method"] = json::value::string(method);
     return response;
 }
@@ -70,7 +72,7 @@ void BaseController::successMessageImpl(const http_request& message, const utf8s
     message.reply(response);
 }
 
-void BaseController::internalServerErrorImpl(http_request message) {
+void BaseController::internalServerErrorImpl(const http_request& message) {
     http_response response(status_codes::InternalError);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
     response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));

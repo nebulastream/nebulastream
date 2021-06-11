@@ -55,7 +55,7 @@ class DepthFirstNodeIterator {
         NodePtr operator*();
 
       private:
-        explicit iterator(NodePtr current);
+        explicit iterator(const NodePtr& current);
         explicit iterator();
         std::stack<NodePtr> workStack;
     };

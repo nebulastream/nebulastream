@@ -44,7 +44,7 @@ class DataTypeSerializationUtil {
      * @param serializedDataType The corresponding protobuff object, which is used to capture the state of the object.
      * @return the modified serializedDataType
      */
-    static SerializableDataType* serializeDataType(DataTypePtr dataType, SerializableDataType* serializedDataType);
+    static SerializableDataType* serializeDataType(const DataTypePtr& dataType, SerializableDataType* serializedDataType);
 
     /**
     * @brief De-serializes the SerializableDataType and all its children to a DataTypePtr
@@ -62,7 +62,7 @@ class DataTypeSerializationUtil {
      * @param serializedDataValue The corresponding protobuff object, which is used to capture the state of the object.
      * @return the modified serializedDataValue
      */
-    static SerializableDataValue* serializeDataValue(ValueTypePtr valueType, SerializableDataValue* serializedDataValue);
+    static SerializableDataValue* serializeDataValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue);
 
     /**
     * @brief De-serializes the SerializableDataValue and all its children to a ValueTypePtr

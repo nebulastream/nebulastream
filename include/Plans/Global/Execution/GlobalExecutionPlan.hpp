@@ -47,19 +47,19 @@ class GlobalExecutionPlan {
      * @param parentExecutionNode: the parent execution node
      * @return true if operation succeeds
      */
-    bool addExecutionNodeAsParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode);
+    bool addExecutionNodeAsParentTo(uint64_t childId, const ExecutionNodePtr& parentExecutionNode);
 
     /**
      * Add execution node without any connectivity
      */
-    bool addExecutionNode(ExecutionNodePtr executionNode);
+    bool addExecutionNode(const ExecutionNodePtr& executionNode);
 
     /**
      * Add execution node as root of the execution graph
      * @param executionNode : Node to be added
      * @return true if operation succeeds
      */
-    bool addExecutionNodeAsRoot(ExecutionNodePtr executionNode);
+    bool addExecutionNodeAsRoot(const ExecutionNodePtr& executionNode);
 
     /**
      * Remove the execution node from the graph
@@ -132,7 +132,7 @@ class GlobalExecutionPlan {
      * Add execution node to the collection of execution nodes to schedule
      * @param executionNode : execution node to schedule
      */
-    void scheduleExecutionNode(ExecutionNodePtr executionNode);
+    void scheduleExecutionNode(const ExecutionNodePtr& executionNode);
 
     /**
      * @brief Get the map of topology node id to the amount of resources occupied by the query
@@ -149,7 +149,7 @@ class GlobalExecutionPlan {
      * Map the input execution node with different sub query plans it has
      * @param executionNode : the input execution node
      */
-    void mapExecutionNodeToQueryId(ExecutionNodePtr executionNode);
+    void mapExecutionNodeToQueryId(const ExecutionNodePtr& executionNode);
 
     /**
      * Index based on nodeId for faster access to the execution nodes

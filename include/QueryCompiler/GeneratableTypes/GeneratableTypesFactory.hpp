@@ -31,42 +31,42 @@ class GeneratableTypesFactory {
      * @param type
      * @return GeneratableDataTypePtr
      */
-    static GeneratableDataTypePtr createAnonymusDataType(std::string type);
+    static GeneratableDataTypePtr createAnonymusDataType(const std::string& type);
 
     /**
     * @brief Create a generatable data type, which corresponds to a particular nes data type.
     * @param type nes data type
     * @return GeneratableDataTypePtr
     */
-    GeneratableDataTypePtr createDataType(DataTypePtr type);
+    GeneratableDataTypePtr createDataType(const DataTypePtr& type);
 
     /**
     * @brief Create a user defined type, which corresponds to a struct declaration. This is used to represent the input and output of a pipeline.
     * @param structDeclaration the struct declaration.
     * @return GeneratableDataTypePtr
     */
-    static GeneratableDataTypePtr createUserDefinedType(StructDeclaration structDeclaration);
+    static GeneratableDataTypePtr createUserDefinedType(const StructDeclaration& structDeclaration);
 
     /**
      * @brief Create a reference from a GeneratableDataType
      * @param type GeneratableDataTypePtr
      * @return GeneratableDataTypePtr
      */
-    static GeneratableDataTypePtr createReference(GeneratableDataTypePtr type);
+    static GeneratableDataTypePtr createReference(const GeneratableDataTypePtr& type);
 
     /**
     * @brief Create a pointer from a GeneratableDataType
     * @param type GeneratableDataTypePtr
     * @return GeneratableDataTypePtr
     */
-    static GeneratableDataTypePtr createPointer(GeneratableDataTypePtr type);
+    static GeneratableDataTypePtr createPointer(const GeneratableDataTypePtr& type);
 
     /**
     * @brief Create a value type from a GeneratableDataType
     * @param type GeneratableDataTypePtr
     * @return GeneratableDataTypePtr
     */
-    static GeneratableValueTypePtr createValueType(ValueTypePtr valueType);
+    static GeneratableValueTypePtr createValueType(const ValueTypePtr& valueType);
 };
 }// namespace QueryCompilation
 }// namespace NES

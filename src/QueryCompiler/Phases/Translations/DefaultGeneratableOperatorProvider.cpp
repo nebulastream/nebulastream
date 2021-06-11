@@ -50,6 +50,7 @@
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
@@ -92,30 +93,30 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
     }
 }
 
-void DefaultGeneratableOperatorProvider::lowerSink(QueryPlanPtr, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerSink(const QueryPlanPtr&, const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     // a sink operator should be in a pipeline on its own.
     NES_ASSERT(operatorNode->getChildren().size(), "A sink node should have no children");
     NES_ASSERT(operatorNode->getParents().size(), "A sink node should have no parents");
 }
 
-void DefaultGeneratableOperatorProvider::lowerSource(QueryPlanPtr, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerSource(const QueryPlanPtr&, const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     // a source operator should be in a pipeline on its own.
     NES_ASSERT(operatorNode->getChildren().size(), "A source operator should have no children");
     NES_ASSERT(operatorNode->getParents().size(), "A source operator should have no parents");
 }
 
-void DefaultGeneratableOperatorProvider::lowerScan(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerScan(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto bufferScan = GeneratableOperators::GeneratableBufferScan::create(operatorNode->getOutputSchema());
     queryPlan->replaceOperator(operatorNode, bufferScan);
 }
 
-void DefaultGeneratableOperatorProvider::lowerEmit(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerEmit(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto bufferEmit = GeneratableOperators::GeneratableBufferEmit::create(operatorNode->getOutputSchema());
     queryPlan->replaceOperator(operatorNode, bufferEmit);
 }
 
-void DefaultGeneratableOperatorProvider::lowerProjection(QueryPlanPtr queryPlan,
-                                                         PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerProjection(const QueryPlanPtr& queryPlan,
+                                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto physicalProjectionOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
     auto generatableProjectOperator =
         GeneratableOperators::GeneratableProjectionOperator::create(physicalProjectionOperator->getInputSchema(),
@@ -124,8 +125,8 @@ void DefaultGeneratableOperatorProvider::lowerProjection(QueryPlanPtr queryPlan,
     queryPlan->replaceOperator(physicalProjectionOperator, generatableProjectOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerFilter(QueryPlanPtr queryPlan,
-                                                     PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerFilter(const QueryPlanPtr& queryPlan,
+                                                     const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto physicalFilterOperator = operatorNode->as<PhysicalOperators::PhysicalFilterOperator>();
     auto generatableFilterOperator =
         GeneratableOperators::GeneratableFilterOperator::create(physicalFilterOperator->getInputSchema(),
@@ -133,7 +134,7 @@ void DefaultGeneratableOperatorProvider::lowerFilter(QueryPlanPtr queryPlan,
     queryPlan->replaceOperator(physicalFilterOperator, generatableFilterOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerMap(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerMap(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto physicalMapOperator = operatorNode->as<PhysicalOperators::PhysicalMapOperator>();
     auto generatableMapOperator = GeneratableOperators::GeneratableMapOperator::create(physicalMapOperator->getInputSchema(),
                                                                                        physicalMapOperator->getOutputSchema(),
@@ -141,8 +142,8 @@ void DefaultGeneratableOperatorProvider::lowerMap(QueryPlanPtr queryPlan, Physic
     queryPlan->replaceOperator(physicalMapOperator, generatableMapOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(QueryPlanPtr queryPlan,
-                                                                  PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(const QueryPlanPtr& queryPlan,
+                                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto physicalWatermarkAssignmentOperator = operatorNode->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
     auto generatableWatermarkAssignmentOperator = GeneratableOperators::GeneratableWatermarkAssignmentOperator::create(
         physicalWatermarkAssignmentOperator->getInputSchema(),
@@ -152,7 +153,7 @@ void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(QueryPlanPtr q
 }
 
 GeneratableOperators::GeneratableWindowAggregationPtr DefaultGeneratableOperatorProvider::lowerWindowAggregation(
-    Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) {
+    const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor) {
     switch (windowAggregationDescriptor->getType()) {
         case Windowing::WindowAggregationDescriptor::Count: {
             return GeneratableOperators::GeneratableCountAggregation::create(windowAggregationDescriptor);
@@ -176,8 +177,8 @@ GeneratableOperators::GeneratableWindowAggregationPtr DefaultGeneratableOperator
     }
 }
 
-void DefaultGeneratableOperatorProvider::lowerSlicePreAggregation(QueryPlanPtr queryPlan,
-                                                                  PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerSlicePreAggregation(const QueryPlanPtr& queryPlan,
+                                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto slicePreAggregationOperator = operatorNode->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
 
     auto windowAggregationDescriptor =
@@ -192,8 +193,8 @@ void DefaultGeneratableOperatorProvider::lowerSlicePreAggregation(QueryPlanPtr q
     queryPlan->replaceOperator(slicePreAggregationOperator, generatableOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerSliceMerging(QueryPlanPtr queryPlan,
-                                                           PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerSliceMerging(const QueryPlanPtr& queryPlan,
+                                                           const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto sliceMergingOperator = operatorNode->as<PhysicalOperators::PhysicalSliceMergingOperator>();
 
     auto windowAggregationDescriptor = sliceMergingOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
@@ -210,17 +211,17 @@ void DefaultGeneratableOperatorProvider::lowerSliceMerging(QueryPlanPtr queryPla
 void DefaultGeneratableOperatorProvider::lowerWindowSink(QueryPlanPtr queryPlan,
                                                          PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     // a window sink is lowered to a standard scan operator
-    lowerScan(queryPlan, operatorNode);
+    lowerScan(std::move(queryPlan), std::move(operatorNode));
 }
 
 void DefaultGeneratableOperatorProvider::lowerSliceSink(QueryPlanPtr queryPlan,
                                                         PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     // a slice sink is lowered to a standard scan operator
-    lowerScan(queryPlan, operatorNode);
+    lowerScan(std::move(queryPlan), std::move(operatorNode));
 }
 
-void DefaultGeneratableOperatorProvider::lowerJoinBuild(QueryPlanPtr queryPlan,
-                                                        PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerJoinBuild(const QueryPlanPtr& queryPlan,
+                                                        const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto physicalJoinBuild = operatorNode->as<PhysicalOperators::PhysicalJoinBuildOperator>();
     auto generatableJoinOperator =
         GeneratableOperators::GeneratableJoinBuildOperator::create(physicalJoinBuild->getInputSchema(),
@@ -230,8 +231,8 @@ void DefaultGeneratableOperatorProvider::lowerJoinBuild(QueryPlanPtr queryPlan,
     queryPlan->replaceOperator(operatorNode, generatableJoinOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerJoinSink(QueryPlanPtr queryPlan,
-                                                       PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerJoinSink(const QueryPlanPtr& queryPlan,
+                                                       const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto physicalJoinSink = operatorNode->as<PhysicalOperators::PhysicalJoinSinkOperator>();
     auto generatableJoinOperator = GeneratableOperators::GeneratableJoinSinkOperator::create(physicalJoinSink->getOutputSchema(),
                                                                                              physicalJoinSink->getOutputSchema(),

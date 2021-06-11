@@ -32,7 +32,7 @@ class PhysicalProjectOperator : public PhysicalUnaryOperator {
                             SchemaPtr outputSchema,
                             std::vector<ExpressionNodePtr> expressions);
     static PhysicalOperatorPtr
-    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
+    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const std::vector<ExpressionNodePtr>& expressions);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
     /**
      * @brief returns the list of fields that remain in the output schema.

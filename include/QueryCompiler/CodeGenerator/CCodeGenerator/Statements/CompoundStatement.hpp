@@ -31,7 +31,7 @@ class CompoundStatement : public Statement {
 
     [[nodiscard]] const StatementPtr createCopy() const override;
 
-    void addStatement(StatementPtr stmt);
+    void addStatement(const StatementPtr& stmt);
 
     ~CompoundStatement() override;
 

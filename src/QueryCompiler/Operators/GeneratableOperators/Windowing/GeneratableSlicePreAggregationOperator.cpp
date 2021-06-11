@@ -28,14 +28,14 @@ GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(OperatorId
                                                                       Windowing::WindowOperatorHandlerPtr operatorHandler,
                                                                       GeneratableWindowAggregationPtr windowAggregation) {
     return std::make_shared<GeneratableSlicePreAggregationOperator>(
-        GeneratableSlicePreAggregationOperator(id, inputSchema, outputSchema, operatorHandler, windowAggregation));
+        GeneratableSlicePreAggregationOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler), std::move(windowAggregation)));
 }
 
 GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(SchemaPtr inputSchema,
                                                                       SchemaPtr outputSchema,
                                                                       Windowing::WindowOperatorHandlerPtr operatorHandler,
                                                                       GeneratableWindowAggregationPtr windowAggregation) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, windowAggregation);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler), std::move(windowAggregation));
 }
 
 GeneratableSlicePreAggregationOperator::GeneratableSlicePreAggregationOperator(
@@ -44,7 +44,7 @@ GeneratableSlicePreAggregationOperator::GeneratableSlicePreAggregationOperator(
     SchemaPtr outputSchema,
     Windowing::WindowOperatorHandlerPtr operatorHandler,
     GeneratableWindowAggregationPtr windowAggregation)
-    : OperatorNode(id), GeneratableWindowOperator(id, inputSchema, outputSchema, operatorHandler),
+    : OperatorNode(id), GeneratableWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler)),
       windowAggregation(std::move(windowAggregation)) {}
 
 void GeneratableSlicePreAggregationOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {

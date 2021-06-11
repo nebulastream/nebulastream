@@ -51,7 +51,7 @@ bool PartitionManager::registerSubpartition(NesPartition partition, DataEmitterP
         // partition is contained
         it->second.pin();
     } else {
-        partitions[partition] = PartitionEntry(emitterPtr);
+        partitions[partition] = PartitionEntry(std::move(emitterPtr));
     }
     NES_DEBUG("PartitionManager: Registering " << partition.toString() << "=" << partitions[partition].count());
     return partitions[partition].count() == 0;

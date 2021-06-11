@@ -33,7 +33,7 @@ class WindowAggregationDescriptor {
     * @param asField
     * @return WindowAggregationDescriptor
     */
-    WindowAggregationDescriptor& as(FieldAccessExpressionNodePtr asField);
+    WindowAggregationDescriptor& as(const FieldAccessExpressionNodePtr& asField);
 
     /**
     * Returns the result field of the aggregation
@@ -83,8 +83,8 @@ class WindowAggregationDescriptor {
     std::string getTypeAsString();
 
   protected:
-    explicit WindowAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    WindowAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+    explicit WindowAggregationDescriptor(const FieldAccessExpressionNodePtr& onField);
+    WindowAggregationDescriptor(const ExpressionNodePtr& onField, const ExpressionNodePtr& asField);
     WindowAggregationDescriptor() = default;
     ExpressionNodePtr onField;
     ExpressionNodePtr asField;

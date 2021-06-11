@@ -46,33 +46,33 @@ using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
 class DumpContext {
   public:
     static DumpContextPtr create();
-    static DumpContextPtr create(std::string contextIdentifier);
+    static DumpContextPtr create(const std::string& contextIdentifier);
     explicit DumpContext(std::string contextIdentifier);
     /**
      * @brief Registers a new dump handler to the context.
      * @param debugDumpHandler
      */
-    void registerDumpHandler(DebugDumpHandlerPtr debugDumpHandler);
+    void registerDumpHandler(const DebugDumpHandlerPtr& debugDumpHandler);
 
     /**
      * @brief Dumps the passed node and its children on all registered dump handlers.
      * @param node
      */
-    void dump(const NodePtr node);
+    void dump(NodePtr& node);
 
     /**
     * @brief Dumps the passed query plan on all registered dump handlers.
     * @param defines the scope of this plan.
     * @param queryPlan
     */
-    void dump(std::string scope, const QueryPlanPtr queryPlan);
+    void dump(const std::string& scope, QueryPlanPtr& queryPlan);
 
     /**
     * @brief Dumps the passed pipeline query plan on all registered dump handlers.
     * @param defines the scope of this plan.
     * @param queryPlan
     */
-    void dump(std::string scope, const QueryCompilation::PipelineQueryPlanPtr queryPlan);
+    void dump(const std::string& scope, QueryCompilation::PipelineQueryPlanPtr& queryPlan);
 
   private:
     std::string context;

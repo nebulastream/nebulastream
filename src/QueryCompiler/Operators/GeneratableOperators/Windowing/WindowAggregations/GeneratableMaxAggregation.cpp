@@ -29,7 +29,7 @@ GeneratableMaxAggregation::GeneratableMaxAggregation(Windowing::WindowAggregatio
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
 GeneratableWindowAggregationPtr
-GeneratableMaxAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
+GeneratableMaxAggregation::create(const Windowing::WindowAggregationDescriptorPtr& aggregationDescriptor) {
     return std::make_shared<GeneratableMaxAggregation>(aggregationDescriptor);
 }
 

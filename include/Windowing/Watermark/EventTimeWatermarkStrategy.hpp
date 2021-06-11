@@ -37,7 +37,7 @@ class EventTimeWatermarkStrategy : public WatermarkStrategy {
     Type getType() override;
 
     static EventTimeWatermarkStrategyPtr
-    create(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness, uint64_t multiplier);
+    create(const FieldAccessExpressionNodePtr& onField, uint64_t allowedLateness, uint64_t multiplier);
 
   private:
     // Field where the watermark should be retrieved

@@ -33,7 +33,7 @@
 
 namespace NES {
 
-SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr dataSink) {
+SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(const DataSinkPtr& dataSink) {
 
     std::string sinkType = dataSink->toString();
 

@@ -30,7 +30,7 @@ namespace NES::QueryCompilation {
 AddScanAndEmitPhasePtr AddScanAndEmitPhase::create() { return std::make_shared<AddScanAndEmitPhase>(); }
 
 PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQueryPlan) {
-    for (auto pipeline : pipelineQueryPlan->getPipelines()) {
+    for (const auto& pipeline : pipelineQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             process(pipeline);
         }
@@ -58,7 +58,7 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
 
     // insert emit buffer operator if necessary
     auto pipelineLeafOperators = rootOperator->getAllLeafNodes();
-    for (auto leaf : pipelineLeafOperators) {
+    for (const auto& leaf : pipelineLeafOperators) {
         auto leafOperator = leaf->as<OperatorNode>();
         if (!leafOperator->instanceOf<PhysicalOperators::AbstractEmitOperator>()) {
             auto emitOperator = PhysicalOperators::PhysicalEmitOperator::create(leafOperator->getOutputSchema());

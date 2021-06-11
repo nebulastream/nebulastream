@@ -21,7 +21,7 @@
 
 namespace NES {
 
-FilterLogicalOperatorNode::FilterLogicalOperatorNode(const ExpressionNodePtr predicate, uint64_t id)
+FilterLogicalOperatorNode::FilterLogicalOperatorNode(const ExpressionNodePtr& predicate, uint64_t id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), predicate(predicate) {}
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() { return predicate; }

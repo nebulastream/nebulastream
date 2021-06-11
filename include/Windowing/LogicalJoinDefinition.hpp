@@ -28,12 +28,12 @@ namespace NES::Join {
  */
 class LogicalJoinDefinition {
   public:
-    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr leftJoinKeyType,
-                                           FieldAccessExpressionNodePtr rightJoinKeyType,
-                                           Windowing::WindowTypePtr windowType,
-                                           Windowing::DistributionCharacteristicPtr distributionType,
-                                           Windowing::WindowTriggerPolicyPtr triggerPolicy,
-                                           BaseJoinActionDescriptorPtr triggerAction,
+    static LogicalJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
+                                           const FieldAccessExpressionNodePtr& rightJoinKeyType,
+                                           const Windowing::WindowTypePtr& windowType,
+                                           const Windowing::DistributionCharacteristicPtr& distributionType,
+                                           const Windowing::WindowTriggerPolicyPtr& triggerPolicy,
+                                           const BaseJoinActionDescriptorPtr& triggerAction,
                                            uint64_t numberOfInputEdgesLeft,
                                            uint64_t numberOfInputEdgesRight);
 

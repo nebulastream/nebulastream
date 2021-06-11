@@ -37,7 +37,7 @@ std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> DataSource::getE
     return executableSuccessors;
 }
 
-DataSource::GatheringMode DataSource::getGatheringModeFromString(std::string mode) {
+DataSource::GatheringMode DataSource::getGatheringModeFromString(const std::string& mode) {
     UtilityFunctions::trim(mode);
     if (mode == "frequency") {
         return GatheringMode::FREQUENCY_MODE;
@@ -49,7 +49,7 @@ DataSource::GatheringMode DataSource::getGatheringModeFromString(std::string mod
     }
 }
 
-DataSource::DataSource(const SchemaPtr pSchema,
+DataSource::DataSource(const SchemaPtr& pSchema,
                        NodeEngine::BufferManagerPtr bufferManager,
                        NodeEngine::QueryManagerPtr queryManager,
                        OperatorId operatorId,
@@ -67,7 +67,7 @@ DataSource::DataSource(const SchemaPtr pSchema,
 }
 
 void DataSource::emitWork(NodeEngine::TupleBuffer& buffer) {
-    for (auto successor : executableSuccessors) {
+    for (const auto& successor : executableSuccessors) {
         queryManager->addWorkForNextPipeline(buffer, successor);
     }
 }

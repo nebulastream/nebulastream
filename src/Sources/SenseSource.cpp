@@ -36,13 +36,13 @@ SenseSource::SenseSource(SchemaPtr schema,
                          OperatorId operatorId,
                          size_t numSourceLocalBuffers,
                          std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(schema,
-                 bufferManager,
-                 queryManager,
+    : DataSource(std::move(schema),
+                 std::move(bufferManager),
+                 std::move(queryManager),
                  operatorId,
                  numSourceLocalBuffers,
                  DataSource::GatheringMode::FREQUENCY_MODE,
-                 successors),
+                 std::move(successors)),
       udsf(std::move(udsf)) {}
 
 std::optional<NodeEngine::TupleBuffer> SenseSource::receiveData() {

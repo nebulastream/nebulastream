@@ -29,7 +29,7 @@ LambdaSourceDescriptor::LambdaSourceDescriptor(
       numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode) {}
 
 std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
-    SchemaPtr schema,
+    const SchemaPtr& schema,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,

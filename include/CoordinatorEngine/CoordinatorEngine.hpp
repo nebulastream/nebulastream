@@ -41,11 +41,11 @@ class CoordinatorEngine {
      * @param node type
      * @return id of node
      */
-    uint64_t registerNode(std::string address,
+    uint64_t registerNode(const std::string& address,
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
-                          NodeStatsPtr nodeStats,
+                          const NodeStatsPtr& nodeStats,
                           NodeType type);
 
     /**
@@ -67,9 +67,9 @@ class CoordinatorEngine {
      * @return bool indicating success
      */
     bool registerPhysicalStream(uint64_t nodeId,
-                                std::string sourceType,
-                                std::string physicalStreamname,
-                                std::string logicalStreamname);
+                                const std::string& sourceType,
+                                const std::string& physicalStreamname,
+                                const std::string& logicalStreamname);
 
     /**
      * @brief method to unregister a physical stream
@@ -78,7 +78,7 @@ class CoordinatorEngine {
      * @param physicalStreamName
      * @return bool indicating success
      */
-    bool unregisterPhysicalStream(uint64_t nodeId, std::string physicalStreamName, std::string logicalStreamName);
+    bool unregisterPhysicalStream(uint64_t nodeId, const std::string& physicalStreamName, const std::string& logicalStreamName);
 
     /**
      * @brief method to register a logical stream
@@ -86,14 +86,14 @@ class CoordinatorEngine {
      * @param schemaString
      * @return bool indicating success
      */
-    bool registerLogicalStream(std::string logicalStreamName, std::string schemaString);
+    bool registerLogicalStream(const std::string& logicalStreamName, const std::string& schemaString);
 
     /**
      * @brief method to unregister a logical stream
      * @param logicalStreamName
      * @return bool indicating success
      */
-    bool unregisterLogicalStream(std::string logicalStreamName);
+    bool unregisterLogicalStream(const std::string& logicalStreamName);
 
     /**
      * @brief method to ad a new parent to a node

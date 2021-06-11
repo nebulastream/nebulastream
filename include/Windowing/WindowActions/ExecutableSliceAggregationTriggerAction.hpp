@@ -58,7 +58,7 @@ class ExecutableSliceAggregationTriggerAction
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
             executableWindowAggregation,
-        SchemaPtr outputSchema,
+        const SchemaPtr& outputSchema,
         uint64_t id)
         : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(executableWindowAggregation), id(id) {
 

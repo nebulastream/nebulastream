@@ -33,14 +33,14 @@ class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOp
      * @param id operator id
      * @param outputSchema output schema
      */
-    PhysicalScanOperator(OperatorId id, SchemaPtr outputSchema);
+    PhysicalScanOperator(OperatorId id, const SchemaPtr& outputSchema);
 
     /**
      * @brief Creates for the physical scan operator
      * @param id operator id
      * @param outputSchema output schema
      */
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr outputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& outputSchema);
 
     /**
      * @brief Constructor for the physical scan operator

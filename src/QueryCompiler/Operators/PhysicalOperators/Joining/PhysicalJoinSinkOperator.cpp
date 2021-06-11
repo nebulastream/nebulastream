@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -21,14 +22,14 @@ PhysicalOperatorPtr PhysicalJoinSinkOperator::create(SchemaPtr leftInputSchema,
                                                      SchemaPtr rightInputSchema,
                                                      SchemaPtr outputSchema,
                                                      Join::JoinOperatorHandlerPtr joinOperatorHandler) {
-    return create(UtilityFunctions::getNextOperatorId(), leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(leftInputSchema), std::move(rightInputSchema), std::move(outputSchema), std::move(joinOperatorHandler));
 }
 
 PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id,
-                                                     SchemaPtr leftInputSchema,
-                                                     SchemaPtr rightInputSchema,
-                                                     SchemaPtr outputSchema,
-                                                     Join::JoinOperatorHandlerPtr joinOperatorHandler) {
+                                                     const SchemaPtr& leftInputSchema,
+                                                     const SchemaPtr& rightInputSchema,
+                                                     const SchemaPtr& outputSchema,
+                                                     const Join::JoinOperatorHandlerPtr& joinOperatorHandler) {
     return std::make_shared<PhysicalJoinSinkOperator>(id, leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
 }
 
@@ -37,8 +38,8 @@ PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(OperatorId id,
                                                    SchemaPtr rightInputSchema,
                                                    SchemaPtr outputSchema,
                                                    Join::JoinOperatorHandlerPtr joinOperatorHandler)
-    : OperatorNode(id), PhysicalJoinOperator(joinOperatorHandler),
-      PhysicalBinaryOperator(id, leftInputSchema, rightInputSchema, outputSchema){};
+    : OperatorNode(id), PhysicalJoinOperator(std::move(joinOperatorHandler)),
+      PhysicalBinaryOperator(id, std::move(leftInputSchema), std::move(rightInputSchema), std::move(outputSchema)){};
 
 const std::string PhysicalJoinSinkOperator::toString() const { return "PhysicalJoinSinkOperator"; }
 

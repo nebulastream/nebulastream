@@ -35,9 +35,9 @@ class ExpressionStatment : public Statement {
     BinaryOperatorStatement assign(const ExpressionStatment& ref);
     BinaryOperatorStatement assign(ExpressionStatmentPtr ref);
     BinaryOperatorStatement accessPtr(const ExpressionStatment& ref);
-    BinaryOperatorStatement accessPtr(const ExpressionStatmentPtr ref);
+    BinaryOperatorStatement accessPtr(ExpressionStatmentPtr& ref);
     BinaryOperatorStatement accessRef(const ExpressionStatment& ref);
-    BinaryOperatorStatement accessRef(const ExpressionStatmentPtr ref);
+    BinaryOperatorStatement accessRef(ExpressionStatmentPtr ref);
     BinaryOperatorStatement operator[](const ExpressionStatment& ref);
 
     ~ExpressionStatment() override;

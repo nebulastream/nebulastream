@@ -41,7 +41,7 @@ RecordHandlerPtr PipelineContext::getRecordHandler() { return this->recordHandle
 
 const std::vector<PipelineContextPtr>& PipelineContext::getNextPipelineContexts() const { return this->nextPipelines; }
 
-void PipelineContext::addNextPipeline(PipelineContextPtr nextPipeline) { this->nextPipelines.push_back(nextPipeline); }
+void PipelineContext::addNextPipeline(const PipelineContextPtr& nextPipeline) { this->nextPipelines.push_back(nextPipeline); }
 
 SchemaPtr PipelineContext::getInputSchema() const { return inputSchema; }
 
@@ -53,12 +53,12 @@ std::vector<BlockScopeStatementPtr> PipelineContext::getSetupScopes() { return s
 
 std::vector<BlockScopeStatementPtr> PipelineContext::getStartScopes() { return startScopes; }
 
-int64_t PipelineContext::registerOperatorHandler(NodeEngine::Execution::OperatorHandlerPtr operatorHandler) {
+int64_t PipelineContext::registerOperatorHandler(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler) {
     operatorHandlers.emplace_back(operatorHandler);
     return operatorHandlers.size() - 1;
 }
 
-const uint64_t PipelineContext::getHandlerIndex(NodeEngine::Execution::OperatorHandlerPtr operatorHandler) {
+const uint64_t PipelineContext::getHandlerIndex(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler) {
     for (auto i = 0; i < operatorHandlers.size(); i++) {
         if (operatorHandlers[i] == operatorHandler) {
             return i;

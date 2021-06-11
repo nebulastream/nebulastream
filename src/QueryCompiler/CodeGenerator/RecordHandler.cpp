@@ -15,22 +15,23 @@
 */
 #include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 RecordHandlerPtr RecordHandler::create() { return std::make_shared<RecordHandler>(); }
 
-void RecordHandler::registerAttribute(std::string name, ExpressionStatmentPtr variableAccessStatement) {
+void RecordHandler::registerAttribute(const std::string& name, ExpressionStatmentPtr variableAccessStatement) {
     if (hasAttribute(name)) {
         NES_DEBUG("RecordHandler: replace attribute with name " << name);
     } else {
         NES_DEBUG("RecordHandler: place new attribute with name " << name);
     }
-    this->statementMap[name] = variableAccessStatement;
+    this->statementMap[name] = std::move(variableAccessStatement);
 }
 
-bool RecordHandler::hasAttribute(std::string name) { return this->statementMap.count(name) == 1; }
+bool RecordHandler::hasAttribute(const std::string& name) { return this->statementMap.count(name) == 1; }
 
-ExpressionStatmentPtr RecordHandler::getAttribute(std::string name) {
+ExpressionStatmentPtr RecordHandler::getAttribute(const std::string& name) {
     if (!hasAttribute(name)) {
         NES_ASSERT2_FMT(hasAttribute(name), "RecordHandler: Attribute name: " << name << " is not registered.");
     }

@@ -28,7 +28,7 @@ class SystemCompilerCompiledCode : public CompiledCode {
   public:
     SystemCompilerCompiledCode(SharedLibraryPtr library, std::string baseName);
 
-    static CompiledCodePtr create(SharedLibraryPtr library, const std::string& baseName);
+    static CompiledCodePtr create(const SharedLibraryPtr& library, const std::string& baseName);
 
     ~SystemCompilerCompiledCode() override;
 

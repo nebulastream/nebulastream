@@ -17,6 +17,7 @@
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <utility>
 namespace NES::QueryCompilation {
 
 OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
@@ -42,12 +43,12 @@ bool OperatorPipeline::isSinkPipeline() const { return pipelineType == SinkPipel
 
 bool OperatorPipeline::isSourcePipeline() const { return pipelineType == SourcePipelineType; }
 
-void OperatorPipeline::addPredecessor(OperatorPipelinePtr pipeline) {
+void OperatorPipeline::addPredecessor(const OperatorPipelinePtr& pipeline) {
     pipeline->successorPipelines.emplace_back(shared_from_this());
     this->predecessorPipelines.emplace_back(pipeline);
 }
 
-void OperatorPipeline::addSuccessor(OperatorPipelinePtr pipeline) {
+void OperatorPipeline::addSuccessor(const OperatorPipelinePtr& pipeline) {
     if (pipeline) {
         pipeline->predecessorPipelines.emplace_back(weak_from_this());
         this->successorPipelines.emplace_back(pipeline);
@@ -56,7 +57,7 @@ void OperatorPipeline::addSuccessor(OperatorPipelinePtr pipeline) {
 
 const std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() const {
     std::vector<OperatorPipelinePtr> predecessors;
-    for (auto predecessor : predecessorPipelines) {
+    for (const auto& predecessor : predecessorPipelines) {
         predecessors.emplace_back(predecessor.lock());
     }
     return predecessors;
@@ -65,7 +66,7 @@ const std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() const
 bool OperatorPipeline::hasOperators() const { return !this->queryPlan->getRootOperators().empty(); }
 
 void OperatorPipeline::clearPredecessors() {
-    for (auto pre : predecessorPipelines) {
+    for (const auto& pre : predecessorPipelines) {
         if (auto prePipeline = pre.lock()) {
             prePipeline->removeSuccessor(shared_from_this());
         }
@@ -73,7 +74,7 @@ void OperatorPipeline::clearPredecessors() {
     predecessorPipelines.clear();
 }
 
-void OperatorPipeline::removePredecessor(OperatorPipelinePtr pipeline) {
+void OperatorPipeline::removePredecessor(const OperatorPipelinePtr& pipeline) {
     for (auto iter = predecessorPipelines.begin(); iter != predecessorPipelines.end(); ++iter) {
         if (iter->lock().get() == pipeline.get()) {
             predecessorPipelines.erase(iter);
@@ -81,7 +82,7 @@ void OperatorPipeline::removePredecessor(OperatorPipelinePtr pipeline) {
         }
     }
 }
-void OperatorPipeline::removeSuccessor(OperatorPipelinePtr pipeline) {
+void OperatorPipeline::removeSuccessor(const OperatorPipelinePtr& pipeline) {
     for (auto iter = successorPipelines.begin(); iter != successorPipelines.end(); ++iter) {
         if (iter->get() == pipeline.get()) {
             successorPipelines.erase(iter);
@@ -90,7 +91,7 @@ void OperatorPipeline::removeSuccessor(OperatorPipelinePtr pipeline) {
     }
 }
 void OperatorPipeline::clearSuccessors() {
-    for (auto succ : successorPipelines) {
+    for (const auto& succ : successorPipelines) {
         succ->removePredecessor(shared_from_this());
     }
     successorPipelines.clear();
@@ -102,7 +103,7 @@ void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     if (!this->isOperatorPipeline() && this->hasOperators()) {
         throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
     }
-    this->queryPlan->appendOperatorAsNewRoot(newRootOperator);
+    this->queryPlan->appendOperatorAsNewRoot(std::move(newRootOperator));
 }
 
 const uint64_t OperatorPipeline::getPipelineId() const { return id; }

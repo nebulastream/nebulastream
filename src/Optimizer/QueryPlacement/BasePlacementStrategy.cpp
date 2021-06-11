@@ -41,7 +41,7 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
       operatorToExecutionNodeMap() {}
 
 void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
-                                                             std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {
+                                                             const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators) {
 
     NES_DEBUG("BasePlacementStrategy: Prepare a map of source to physical nodes");
     NES_TRACE("BasePlacementStrategy: Clear the previous pinned operator mapping");
@@ -195,7 +195,7 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId
 OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId) {
     NES_DEBUG("BasePlacementStrategy: create Network Source operator");
     const Network::NesPartition nesPartition = Network::NesPartition(queryId, operatorId, 0, 0);
-    return LogicalOperatorFactory::createSourceOperator(Network::NetworkSourceDescriptor::create(inputSchema, nesPartition),
+    return LogicalOperatorFactory::createSourceOperator(Network::NetworkSourceDescriptor::create(std::move(inputSchema), nesPartition),
                                                         operatorId);
 }
 

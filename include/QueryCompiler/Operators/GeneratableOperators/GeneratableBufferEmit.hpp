@@ -46,7 +46,7 @@ class GeneratableBufferEmit : public GeneratableOperator {
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableBufferEmit(OperatorId id, SchemaPtr outputSchema);
+    GeneratableBufferEmit(OperatorId id, const SchemaPtr& outputSchema);
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

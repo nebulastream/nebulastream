@@ -39,6 +39,7 @@
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
@@ -101,13 +102,14 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
         std::vector<ExpressionNodePtr> sortedCommutativeFields;
-        for (auto commutativeField : allCommutativeFields) {
+        sortedCommutativeFields.reserve(allCommutativeFields.size());
+for (const auto& commutativeField : allCommutativeFields) {
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
         std::sort(sortedCommutativeFields.begin(),
                   sortedCommutativeFields.end(),
-                  [](NES::ExpressionNodePtr lhsField, NES::ExpressionNodePtr rhsField) {
+                  [](const NES::ExpressionNodePtr& lhsField, const NES::ExpressionNodePtr& rhsField) {
                       std::string leftValue;
                       std::string rightValue;
 
@@ -188,13 +190,14 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
         std::vector<ExpressionNodePtr> sortedCommutativeFields;
-        for (auto commutativeField : allCommutativeFields) {
+        sortedCommutativeFields.reserve(allCommutativeFields.size());
+for (const auto& commutativeField : allCommutativeFields) {
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
         std::sort(sortedCommutativeFields.begin(),
                   sortedCommutativeFields.end(),
-                  [](ExpressionNodePtr lhsField, ExpressionNodePtr rhsField) {
+                  [](const ExpressionNodePtr& lhsField, const ExpressionNodePtr& rhsField) {
                       std::string leftValue;
                       std::string rightValue;
 
@@ -264,7 +267,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
     return nullptr;
 }
 
-ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr expression) {
+ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const ExpressionNodePtr& expression) {
     NES_DEBUG("Create Z3 expression node for logical expression " << expression->toString());
     if (expression->instanceOf<AndExpressionNode>()) {
         auto andExpressionNode = expression->as<AndExpressionNode>();
@@ -281,13 +284,14 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
         std::vector<ExpressionNodePtr> sortedCommutativeFields;
-        for (auto commutativeField : allCommutativeFields) {
+        sortedCommutativeFields.reserve(allCommutativeFields.size());
+for (const auto& commutativeField : allCommutativeFields) {
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
         std::sort(sortedCommutativeFields.begin(),
                   sortedCommutativeFields.end(),
-                  [](ExpressionNodePtr lhsField, ExpressionNodePtr rhsField) {
+                  [](const ExpressionNodePtr& lhsField, const ExpressionNodePtr& rhsField) {
                       std::string leftValue;
                       std::string rightValue;
 
@@ -359,13 +363,14 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
         std::vector<ExpressionNodePtr> sortedCommutativeFields;
-        for (auto commutativeField : allCommutativeFields) {
+        sortedCommutativeFields.reserve(allCommutativeFields.size());
+for (const auto& commutativeField : allCommutativeFields) {
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
         std::sort(sortedCommutativeFields.begin(),
                   sortedCommutativeFields.end(),
-                  [](ExpressionNodePtr lhsField, ExpressionNodePtr rhsField) {
+                  [](const ExpressionNodePtr& lhsField, const ExpressionNodePtr& rhsField) {
                       std::string leftValue;
                       std::string rightValue;
 
@@ -506,9 +511,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
     return nullptr;
 }
 
-bool AttributeSortRule::replaceCommutativeExpressions(ExpressionNodePtr parentExpression,
-                                                      ExpressionNodePtr originalExpression,
-                                                      ExpressionNodePtr updatedExpression) {
+bool AttributeSortRule::replaceCommutativeExpressions(const ExpressionNodePtr& parentExpression,
+                                                      const ExpressionNodePtr& originalExpression,
+                                                      const ExpressionNodePtr& updatedExpression) {
 
     auto binaryExpression = parentExpression->as<BinaryExpressionNode>();
 
@@ -524,7 +529,7 @@ bool AttributeSortRule::replaceCommutativeExpressions(ExpressionNodePtr parentEx
         binaryExpression->setChildren(leftChild, updatedExpression);
         return true;
     } else {
-        for (auto child : parentExpression->getChildren()) {
+        for (const auto& child : parentExpression->getChildren()) {
             if (!(child->instanceOf<FieldAccessExpressionNode>() || child->instanceOf<ConstantValueExpressionNode>())) {
                 bool replaced = replaceCommutativeExpressions(child->as<ExpressionNode>(), originalExpression, updatedExpression);
                 if (replaced) {
@@ -537,7 +542,7 @@ bool AttributeSortRule::replaceCommutativeExpressions(ExpressionNodePtr parentEx
 }
 
 std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression) {
-    ExpressionNodePtr startPoint = expression;
+    ExpressionNodePtr startPoint = std::move(expression);
     while (!(startPoint->instanceOf<FieldAccessExpressionNode>() || startPoint->instanceOf<ConstantValueExpressionNode>())) {
         startPoint = startPoint->getChildren()[0]->as<ExpressionNode>();
     }

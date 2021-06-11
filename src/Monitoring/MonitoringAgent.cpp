@@ -32,18 +32,18 @@ MonitoringAgent::MonitoringAgent()
     NES_DEBUG("MonitoringAgent: Init with default monitoring plan");
 }
 
-MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr catalog)
+MonitoringAgent::MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog)
     : monitoringPlan(monitoringPlan), catalog(std::move(catalog)), schema(monitoringPlan->createSchema()) {
     NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString());
 }
 
 MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
 
-MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr catalog) {
+MonitoringAgentPtr MonitoringAgent::create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog) {
     return std::make_shared<MonitoringAgent>(monitoringPlan, catalog);
 }
 
-SchemaPtr MonitoringAgent::registerMonitoringPlan(MonitoringPlanPtr monitoringPlan) {
+SchemaPtr MonitoringAgent::registerMonitoringPlan(const MonitoringPlanPtr& monitoringPlan) {
     this->monitoringPlan = monitoringPlan;
     schema = monitoringPlan->createSchema();
     return schema;

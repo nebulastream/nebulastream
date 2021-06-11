@@ -17,11 +17,12 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <utility>
 #include <z3++.h>
 
 namespace NES {
 
-SourceLogicalOperatorNode::SourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor, OperatorId id)
+SourceLogicalOperatorNode::SourceLogicalOperatorNode(const SourceDescriptorPtr& sourceDescriptor, OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), sourceDescriptor(sourceDescriptor) {}
 
 bool SourceLogicalOperatorNode::isIdentical(NodePtr rhs) const {
@@ -51,10 +52,10 @@ bool SourceLogicalOperatorNode::inferSchema() {
 }
 
 void SourceLogicalOperatorNode::setSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
-    this->sourceDescriptor = sourceDescriptor;
+    this->sourceDescriptor = std::move(sourceDescriptor);
 }
 
-void SourceLogicalOperatorNode::setProjectSchema(SchemaPtr schema) { projectSchema = schema; }
+void SourceLogicalOperatorNode::setProjectSchema(SchemaPtr schema) { projectSchema = std::move(schema); }
 
 OperatorNodePtr SourceLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id);

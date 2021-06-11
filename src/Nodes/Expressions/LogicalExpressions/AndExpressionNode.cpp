@@ -22,7 +22,7 @@ AndExpressionNode::AndExpressionNode() : LogicalBinaryExpressionNode(){};
 
 AndExpressionNode::AndExpressionNode(AndExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr AndExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr AndExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto andNode = std::make_shared<AndExpressionNode>();
     andNode->setChildren(left, right);
     return andNode;

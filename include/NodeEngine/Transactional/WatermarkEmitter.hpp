@@ -32,13 +32,13 @@ class WatermarkEmitter {
      * @brief Creates a new watermark emitter, with a specific origin id.
      * @param originId
      */
-    explicit WatermarkEmitter(const OriginId originId);
+    explicit WatermarkEmitter(OriginId originId);
 
     /**
     * @brief Creates a new watermark emitter, with a specific origin id.
     * @param originId
     */
-    static std::shared_ptr<WatermarkEmitter> create(const OriginId originId);
+    static std::shared_ptr<WatermarkEmitter> create(OriginId originId);
 
     /**
      * @brief Updates the local watermark and indicates that the watermark was changed.

@@ -29,10 +29,10 @@ namespace PhysicalOperators {
 class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id,
-                                      SchemaPtr leftInputSchema,
-                                      SchemaPtr rightInputSchema,
-                                      SchemaPtr outputSchema,
-                                      Join::JoinOperatorHandlerPtr operatorHandler);
+                                      const SchemaPtr& leftInputSchema,
+                                      const SchemaPtr& rightInputSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const Join::JoinOperatorHandlerPtr& operatorHandler);
     static PhysicalOperatorPtr create(SchemaPtr leftInputSchema,
                                       SchemaPtr rightInputSchema,
                                       SchemaPtr outputSchema,

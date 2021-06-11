@@ -23,7 +23,7 @@ MulExpressionNode::MulExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpr
 
 MulExpressionNode::MulExpressionNode(MulExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr MulExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr MulExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto mulNode = std::make_shared<MulExpressionNode>(left->getStamp());
     mulNode->setChildren(left, right);
     return mulNode;

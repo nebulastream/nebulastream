@@ -25,14 +25,14 @@
 
 namespace NES {
 
-SharedQueryMetaData::SharedQueryMetaData(QueryPlanPtr queryPlan)
+SharedQueryMetaData::SharedQueryMetaData(const QueryPlanPtr& queryPlan)
     : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), deployed(false), newMetaData(true) {
     NES_DEBUG("SharedQueryMetaData()");
     auto queryId = queryPlan->getQueryId();
     //Create a new query plan
     this->queryPlan = QueryPlan::create();
     auto rootOperators = queryPlan->getRootOperators();
-    for (auto rootOperator : rootOperators) {
+    for (const auto& rootOperator : rootOperators) {
         this->queryPlan->addRootOperator(rootOperator);
     }
     this->queryPlan->setQueryId(sharedQueryId);
@@ -42,7 +42,7 @@ SharedQueryMetaData::SharedQueryMetaData(QueryPlanPtr queryPlan)
 }
 
 SharedQueryMetaDataPtr SharedQueryMetaData::create(QueryPlanPtr queryPlan) {
-    return std::make_shared<SharedQueryMetaData>(SharedQueryMetaData(queryPlan));
+    return std::make_shared<SharedQueryMetaData>(SharedQueryMetaData(std::move(queryPlan)));
 }
 
 bool SharedQueryMetaData::removeQueryId(QueryId queryId) {
@@ -57,7 +57,7 @@ bool SharedQueryMetaData::removeQueryId(QueryId queryId) {
     std::vector<OperatorNodePtr> sinkOperatorsToRemove = queryIdToSinkOperatorMap[queryId];
 
     // Iterate over all sink global query nodes for the input query and remove the corresponding exclusive upstream operator chains
-    for (auto sinkOperator : sinkOperatorsToRemove) {
+    for (const auto& sinkOperator : sinkOperatorsToRemove) {
 
         //Remove sink operator and associated operators from query plan
         if (!queryPlan->removeRootOperatorFromPlan(sinkOperator)) {
@@ -123,7 +123,7 @@ void SharedQueryMetaData::clear() {
     markAsNotDeployed();
 }
 
-bool SharedQueryMetaData::addSharedQueryMetaData(SharedQueryMetaDataPtr queryMetaData) {
+bool SharedQueryMetaData::addSharedQueryMetaData(const SharedQueryMetaDataPtr& queryMetaData) {
 
     NES_DEBUG("SharedQueryMetaData: Adding query metadata to this");
 

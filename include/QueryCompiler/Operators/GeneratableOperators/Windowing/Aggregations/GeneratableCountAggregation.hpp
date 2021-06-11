@@ -29,7 +29,7 @@ class GeneratableCountAggregation : public GeneratableWindowAggregation {
      * @param aggregationDescriptor Window aggregation descriptor
      * @return GeneratableWindowAggregationPtr
      */
-    static GeneratableWindowAggregationPtr create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+    static GeneratableWindowAggregationPtr create(const Windowing::WindowAggregationDescriptorPtr& aggregationDescriptor);
 
     /**
      * @brief Generates code for window aggregate

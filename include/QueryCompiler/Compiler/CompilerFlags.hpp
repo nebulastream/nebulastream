@@ -60,7 +60,7 @@ class CompilerFlags {
     static CompilerFlagsPtr createDebuggingCompilerFlags();
 
     std::vector<std::string> getFlags();
-    void addFlag(std::string flag);
+    void addFlag(const std::string& flag);
 
   private:
     CompilerFlags();

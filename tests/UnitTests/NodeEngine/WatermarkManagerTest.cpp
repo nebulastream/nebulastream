@@ -80,7 +80,8 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterTest) {
     }
     std::atomic<uint64_t> globalUpdateCounter = 0;
     std::vector<std::thread> threads;
-    for (int threadId = 0; threadId < threadsCount; threadId++) {
+    threads.reserve(threadsCount);
+for (int threadId = 0; threadId < threadsCount; threadId++) {
         threads.emplace_back(thread([&watermarkManager, &watermarkBarriers, &globalUpdateCounter]() {
             // each thread processes a particular update
             for (auto i = 0; i < updates; i++) {
@@ -174,7 +175,8 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTest) {
     }
     std::atomic<uint64_t> globalUpdateCounter = 0;
     std::vector<std::thread> threads;
-    for (int threadId = 0; threadId < threadsCount; threadId++) {
+    threads.reserve(threadsCount);
+for (int threadId = 0; threadId < threadsCount; threadId++) {
         threads.emplace_back(thread([&watermarkManager, &watermarkBarriers, &globalUpdateCounter]() {
             // each thread processes a particular update
             for (auto i = 0; i < updates; i++) {
@@ -203,7 +205,8 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkEmitterAndUpdaterTest) {
     auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
 
     std::vector<std::shared_ptr<NodeEngine::Transactional::WatermarkEmitter>> emitters;
-    for (int o = 0; o < origins; o++) {
+    emitters.reserve(origins);
+for (int o = 0; o < origins; o++) {
         emitters.emplace_back(NodeEngine::Transactional::WatermarkEmitter::create(o));
     }
 

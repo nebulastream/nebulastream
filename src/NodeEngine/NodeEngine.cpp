@@ -35,6 +35,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
+#include <utility>
 
 namespace NES::NodeEngine {
 
@@ -42,14 +43,14 @@ extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener>);
 
 NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    return NodeEngine::create(hostname, port, config, 1, 4096, 1024, 128, 12);
+    return NodeEngine::create(hostname, port, std::move(config), 1, 4096, 1024, 128, 12);
 }
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
 NodeEnginePtr NodeEngine::create(const std::string& hostname,
                                  uint16_t port,
-                                 PhysicalStreamConfigPtr config,
+                                 const PhysicalStreamConfigPtr& config,
                                  uint16_t numThreads,
                                  uint64_t bufferSize,
                                  uint64_t numberOfBuffersInGlobalBufferManager,
@@ -89,7 +90,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
             config,
             std::move(bufferManager),
             std::move(queryManager),
-            [hostname, port, numThreads](std::shared_ptr<NodeEngine> engine) {
+            [hostname, port, numThreads](const std::shared_ptr<NodeEngine>& engine) {
                 return Network::NetworkManager::create(hostname,
                                                        port,
                                                        Network::ExchangeProtocol(engine->getPartitionManager(), engine),
@@ -112,7 +113,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
     return nullptr;
 }
 
-NodeEngine::NodeEngine(PhysicalStreamConfigPtr config,
+NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        BufferManagerPtr&& bufferManager,
                        QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
@@ -156,7 +157,7 @@ NodeEngine::~NodeEngine() {
     stop();
 }
 
-bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
+bool NodeEngine::deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: deployQueryInNodeEngine query using qep " << queryExecutionPlan);
     bool successRegister = registerQueryInNodeEngine(queryExecutionPlan);
@@ -176,7 +177,7 @@ bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr query
     return true;
 }
 
-bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
+bool NodeEngine::registerQueryInNodeEngine(const QueryPlanPtr& queryPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryPlan->getQueryId();
     QueryId querySubPlanId = queryPlan->getQuerySubPlanId();
@@ -195,7 +196,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     }
 }
 
-bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
+bool NodeEngine::registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
@@ -465,7 +466,7 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
 
 Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
 
-SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
+SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor) {
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
     //we have to decide where many cases
@@ -481,7 +482,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     return configs[0]->build(sourceDescriptor->getSchema());
 }
 
-void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {
+void NodeEngine::setConfig(const AbstractPhysicalStreamConfigPtr& config) {
     NES_ASSERT(config, "physical source config is not specified");
     this->configs.emplace_back(config);
 }

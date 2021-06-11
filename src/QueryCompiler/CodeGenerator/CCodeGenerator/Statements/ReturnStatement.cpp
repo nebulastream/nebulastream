@@ -21,7 +21,7 @@
 namespace NES::QueryCompilation {
 ReturnStatement::ReturnStatement(StatementPtr statement) : statement(std::move(statement)) {}
 
-StatementPtr ReturnStatement::create(StatementPtr statement) { return std::make_shared<ReturnStatement>(statement); }
+StatementPtr ReturnStatement::create(const StatementPtr& statement) { return std::make_shared<ReturnStatement>(statement); }
 
 StatementType ReturnStatement::getStamentType() const { return RETURN_STMT; }
 

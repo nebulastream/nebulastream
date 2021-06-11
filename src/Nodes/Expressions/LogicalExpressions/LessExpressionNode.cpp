@@ -21,7 +21,7 @@ LessExpressionNode::LessExpressionNode() : LogicalBinaryExpressionNode(){};
 
 LessExpressionNode::LessExpressionNode(LessExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr LessExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr LessExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto lessThen = std::make_shared<LessExpressionNode>();
     lessThen->setChildren(left, right);
     return lessThen;

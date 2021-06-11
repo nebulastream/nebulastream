@@ -59,7 +59,7 @@ class QueryUndeploymentPhase {
      * @param queryId : id of the query
      * @return true if successful
      */
-    bool execute(const QueryId queryId);
+    bool execute(QueryId queryId);
 
     ~QueryUndeploymentPhase();
 
@@ -72,14 +72,14 @@ class QueryUndeploymentPhase {
      * @param queryId
      * @return bool indicating success
      */
-    bool undeployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool undeployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
 
     /**
      * @brief method to stop a query
      * @param queryId
      * @return bool indicating success
      */
-    bool stopQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool stopQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
 
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;

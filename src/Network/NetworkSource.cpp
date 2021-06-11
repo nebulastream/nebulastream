@@ -28,13 +28,13 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                              NesPartition nesPartition,
                              size_t numSourceLocalBuffers,
                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(schema,
-                 bufferManager,
-                 queryManager,
+    : DataSource(std::move(schema),
+                 std::move(bufferManager),
+                 std::move(queryManager),
                  nesPartition.getOperatorId(),
                  numSourceLocalBuffers,
                  DataSource::FREQUENCY_MODE,
-                 successors),
+                 std::move(successors)),
       networkManager(std::move(networkManager)), nesPartition(nesPartition) {
     NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
     NES_ASSERT(this->networkManager, "Invalid network manager");
@@ -61,7 +61,7 @@ bool NetworkSource::stop() {
     return true;
 }
 
-void NetworkSource::runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr) {
+void NetworkSource::runningRoutine(const NodeEngine::BufferManagerPtr&, const NodeEngine::QueryManagerPtr&) {
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
 

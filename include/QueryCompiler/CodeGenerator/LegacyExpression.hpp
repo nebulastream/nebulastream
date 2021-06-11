@@ -40,11 +40,11 @@ class LegacyExpression {
 class Predicate : public LegacyExpression {
   public:
     Predicate(const BinaryOperatorType& op,
-              const LegacyExpressionPtr left,
-              const LegacyExpressionPtr right,
+              LegacyExpressionPtr& left,
+              LegacyExpressionPtr& right,
               std::string functionCallOverload,
               bool bracket = true);
-    Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr left, const LegacyExpressionPtr right, bool bracket = true);
+    Predicate(const BinaryOperatorType& op, LegacyExpressionPtr& left, LegacyExpressionPtr& right, bool bracket = true);
 
     const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     [[nodiscard]] const std::string toString() const override;
@@ -104,7 +104,7 @@ using PredicateItemPtr = std::shared_ptr<PredicateItem>;
 
 class Field : public PredicateItem {
   public:
-    Field(AttributeFieldPtr field);
+    Field(const AttributeFieldPtr& field);
 
   private:
     std::string _name;

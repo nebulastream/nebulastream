@@ -26,7 +26,7 @@ namespace NES {
  */
 class InvalidQueryException : public std::runtime_error {
   public:
-    explicit InvalidQueryException(std::string message);
+    explicit InvalidQueryException(const std::string& message);
 };
 }// namespace NES
 

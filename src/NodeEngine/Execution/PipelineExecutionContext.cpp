@@ -24,8 +24,8 @@
 namespace NES::NodeEngine::Execution {
 
 PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId,
-                                                   QueryManagerPtr queryManager,
-                                                   BufferManagerPtr bufferManager,
+                                                   const QueryManagerPtr& queryManager,
+                                                   const BufferManagerPtr& bufferManager,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
                                                    std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                                    std::vector<OperatorHandlerPtr> operatorHandlers,
@@ -39,7 +39,7 @@ PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId,
 }
 
 PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId,
-                                                   QueryManagerPtr queryManager,
+                                                   const QueryManagerPtr& queryManager,
                                                    LocalBufferPoolPtr bufferManager,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
                                                    std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,

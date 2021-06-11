@@ -28,7 +28,7 @@ GeneratableAvgAggregation::GeneratableAvgAggregation(Windowing::WindowAggregatio
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
 GeneratableWindowAggregationPtr
-GeneratableAvgAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
+GeneratableAvgAggregation::create(const Windowing::WindowAggregationDescriptorPtr& aggregationDescriptor) {
     return std::make_shared<GeneratableAvgAggregation>(aggregationDescriptor);
 }
 

@@ -38,7 +38,7 @@ class FormatIterator {
         using iterator_category = std::forward_iterator_tag;
         using difference_type = std::ptrdiff_t;
 
-        explicit Iterator(uint64_t currentSeek, NodeEngine::TupleBuffer buffer, SchemaPtr schema, FormatTypes sinkFormatType)
+        explicit Iterator(uint64_t currentSeek, NodeEngine::TupleBuffer buffer, const SchemaPtr& schema, FormatTypes sinkFormatType)
             : buffer(std::move(buffer)), sinkFormatType(sinkFormatType) {
             auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -46,7 +46,7 @@ class FormatIterator {
             // Also, store types of fields in a separate array. Is later used to convert values to strings correctly.
             // Iteratively add up all the sizes in the offset array, to correctly determine where each field starts in the TupleBuffer
             uint32_t fieldOffset = 0;
-            for (auto field : schema->fields) {
+            for (const auto& field : schema->fields) {
                 auto physicalType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
                 fieldTypes.push_back(physicalType);
                 fieldNames.push_back(field->getName());

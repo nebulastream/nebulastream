@@ -50,22 +50,22 @@ JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return Joi
 
 namespace JoinOperatorBuilder {
 
-JoinWhere Join::where(ExpressionItem onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
+JoinWhere Join::where(const ExpressionItem& onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
 
 Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
 
-JoinCondition JoinWhere::equalsTo(ExpressionItem onRightKey) const {
+JoinCondition JoinWhere::equalsTo(const ExpressionItem& onRightKey) const {
     return JoinCondition(subQueryRhs, originalQuery, onLeftKey, onRightKey);
 }
 
-JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey)
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey)
     : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey) {}
 
-Query& JoinCondition::window(const Windowing::WindowTypePtr windowType) const {
+Query& JoinCondition::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery.joinWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original joinWith() function
 }
 
-JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey)
+JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey, const ExpressionItem& onRightKey)
     : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey), onRightKey(onRightKey) {}
 
 }// namespace JoinOperatorBuilder
@@ -74,14 +74,14 @@ Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
 
 Query::Query(const Query& query) = default;
 
-Query Query::from(const std::string sourceStreamName) {
+Query Query::from(const std::string& sourceStreamName) {
     NES_DEBUG("Query: create query for input stream " << sourceStreamName);
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceOperator);
     return Query(queryPlan);
 }
 
-Query& Query::as(const std::string newStreamName) {
+Query& Query::as(const std::string& newStreamName) {
     auto renameOperator = LogicalOperatorFactory::createRenameStreamOperator(newStreamName);
     queryPlan->appendOperatorAsNewRoot(renameOperator);
     return *this;
@@ -98,7 +98,7 @@ Query& Query::unionWith(Query* subQuery) {
 Query& Query::joinWith(const Query& subQueryRhs,
                        ExpressionItem onLeftKey,
                        ExpressionItem onRightKey,
-                       const Windowing::WindowTypePtr windowType) {
+                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: joinWith the subQuery to current query");
 
     auto subQuery = const_cast<Query&>(subQueryRhs);
@@ -176,14 +176,14 @@ Query& Query::joinWith(const Query& subQueryRhs,
     return *this;
 }
 
-Query& Query::filter(const ExpressionNodePtr filterExpression) {
+Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
     OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
 
-Query& Query::map(const FieldAssignmentExpressionNodePtr mapExpression) {
+Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     NES_DEBUG("Query: add map operator to query");
     OperatorNodePtr op = LogicalOperatorFactory::createMapOperator(mapExpression);
     queryPlan->appendOperatorAsNewRoot(op);
@@ -197,7 +197,7 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     return *this;
 }
 
-Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
+Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor) {
     NES_DEBUG("Query: add assignWatermark operator to query");
     OperatorNodePtr op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
     queryPlan->appendOperatorAsNewRoot(op);

@@ -45,7 +45,7 @@ class PipelineContext {
     GeneratedCodePtr code;
 
     [[nodiscard]] const std::vector<PipelineContextPtr>& getNextPipelineContexts() const;
-    void addNextPipeline(PipelineContextPtr nextPipeline);
+    void addNextPipeline(const PipelineContextPtr& nextPipeline);
     [[nodiscard]] bool hasNextPipeline() const;
 
     RecordHandlerPtr getRecordHandler();
@@ -56,11 +56,11 @@ class PipelineContext {
      * @param operatorHandler
      * @return operator handler index
      */
-    int64_t registerOperatorHandler(NodeEngine::Execution::OperatorHandlerPtr operatorHandler);
+    int64_t registerOperatorHandler(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler);
 
     const std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
 
-    const uint64_t getHandlerIndex(NodeEngine::Execution::OperatorHandlerPtr operatorHandler);
+    const uint64_t getHandlerIndex(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler);
 
     std::string pipelineName;
     PipelineContextArity arity;

@@ -40,7 +40,7 @@ class LowerPhysicalToGeneratableOperators {
      * @brief Create a LowerPhysicalToGeneratableOperatorPhase
      * @param provider to lower specific physical operator to generatabale operators
      */
-    static LowerPhysicalToGeneratableOperatorsPtr create(GeneratableOperatorProviderPtr provider);
+    static LowerPhysicalToGeneratableOperatorsPtr create(const GeneratableOperatorProviderPtr& provider);
 
     /**
      * @brief Applies the phase on a pipelined query plan.

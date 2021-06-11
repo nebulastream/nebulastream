@@ -43,12 +43,12 @@
 namespace NES {
 
 const DataSourcePtr
-createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema,
-                                              NodeEngine::BufferManagerPtr bufferManager,
-                                              NodeEngine::QueryManagerPtr queryManager,
+createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
+                                              const NodeEngine::BufferManagerPtr& bufferManager,
+                                              const NodeEngine::QueryManagerPtr& queryManager,
                                               OperatorId operatorId,
                                               size_t numSourceLocalBuffers,
-                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                              const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<DefaultSource>(schema,
                                            bufferManager,
                                            queryManager,
@@ -60,14 +60,14 @@ createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema,
 }
 
 const DataSourcePtr
-createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema,
-                                               NodeEngine::BufferManagerPtr bufferManager,
-                                               NodeEngine::QueryManagerPtr queryManager,
+createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
+                                               const NodeEngine::BufferManagerPtr& bufferManager,
+                                               const NodeEngine::QueryManagerPtr& queryManager,
                                                uint64_t numbersOfBufferToProduce,
                                                uint64_t frequency,
                                                OperatorId operatorId,
                                                size_t numSourceLocalBuffers,
-                                               std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                               const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<DefaultSource>(schema,
                                            bufferManager,
                                            queryManager,
@@ -79,11 +79,11 @@ createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema,
 }
 
 const DataSourcePtr
-createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
-                                             NodeEngine::QueryManagerPtr queryManager,
+createDefaultSourceWithoutSchemaForOneBuffer(const NodeEngine::BufferManagerPtr& bufferManager,
+                                             const NodeEngine::QueryManagerPtr& queryManager,
                                              OperatorId operatorId,
                                              size_t numSourceLocalBuffers,
-                                             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                             const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("id", DataTypeFactory::createUInt64()),
                                            bufferManager,
                                            queryManager,
@@ -95,16 +95,16 @@ createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::BufferManagerPtr buffer
 }
 
 const DataSourcePtr createLambdaSource(
-    SchemaPtr schema,
-    NodeEngine::BufferManagerPtr bufferManager,
-    NodeEngine::QueryManagerPtr queryManager,
+    const SchemaPtr& schema,
+    const NodeEngine::BufferManagerPtr& bufferManager,
+    const NodeEngine::QueryManagerPtr& queryManager,
     uint64_t numbersOfBufferToProduce,
     uint64_t gatheringValue,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     OperatorId operatorId,
     size_t numSourceLocalBuffers,
     DataSource::GatheringMode gatheringMode,
-    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+    const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<LambdaSource>(schema,
                                           bufferManager,
                                           queryManager,
@@ -117,17 +117,17 @@ const DataSourcePtr createLambdaSource(
                                           successors);
 }
 
-const DataSourcePtr createMemorySource(SchemaPtr schema,
-                                       NodeEngine::BufferManagerPtr bufferManager,
-                                       NodeEngine::QueryManagerPtr queryManager,
-                                       std::shared_ptr<uint8_t> memoryArea,
+const DataSourcePtr createMemorySource(const SchemaPtr& schema,
+                                       const NodeEngine::BufferManagerPtr& bufferManager,
+                                       const NodeEngine::QueryManagerPtr& queryManager,
+                                       const std::shared_ptr<uint8_t>& memoryArea,
                                        size_t memoryAreaSize,
                                        uint64_t numBuffersToProcess,
                                        uint64_t gatheringValue,
                                        OperatorId operatorId,
                                        size_t numSourceLocalBuffers,
                                        DataSource::GatheringMode gatheringMode,
-                                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                       const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<MemorySource>(schema,
                                           memoryArea,
                                           memoryAreaSize,
@@ -141,14 +141,14 @@ const DataSourcePtr createMemorySource(SchemaPtr schema,
                                           successors);
 }
 
-const DataSourcePtr createZmqSource(SchemaPtr schema,
-                                    NodeEngine::BufferManagerPtr bufferManager,
-                                    NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createZmqSource(const SchemaPtr& schema,
+                                    const NodeEngine::BufferManagerPtr& bufferManager,
+                                    const NodeEngine::QueryManagerPtr& queryManager,
                                     const std::string& host,
                                     uint16_t port,
                                     OperatorId operatorId,
                                     size_t numSourceLocalBuffers,
-                                    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                    const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<ZmqSource>(schema,
                                        bufferManager,
                                        queryManager,
@@ -160,13 +160,13 @@ const DataSourcePtr createZmqSource(SchemaPtr schema,
                                        successors);
 }
 
-const DataSourcePtr createBinaryFileSource(SchemaPtr schema,
-                                           NodeEngine::BufferManagerPtr bufferManager,
-                                           NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
+                                           const NodeEngine::BufferManagerPtr& bufferManager,
+                                           const NodeEngine::QueryManagerPtr& queryManager,
                                            const std::string& pathToFile,
                                            OperatorId operatorId,
                                            size_t numSourceLocalBuffers,
-                                           std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                           const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<BinarySource>(schema,
                                           bufferManager,
                                           queryManager,
@@ -177,13 +177,13 @@ const DataSourcePtr createBinaryFileSource(SchemaPtr schema,
                                           successors);
 }
 
-const DataSourcePtr createSenseSource(SchemaPtr schema,
-                                      NodeEngine::BufferManagerPtr bufferManager,
-                                      NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createSenseSource(const SchemaPtr& schema,
+                                      const NodeEngine::BufferManagerPtr& bufferManager,
+                                      const NodeEngine::QueryManagerPtr& queryManager,
                                       const std::string& udfs,
                                       OperatorId operatorId,
                                       size_t numSourceLocalBuffers,
-                                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                      const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<SenseSource>(schema,
                                          bufferManager,
                                          queryManager,
@@ -193,9 +193,9 @@ const DataSourcePtr createSenseSource(SchemaPtr schema,
                                          successors);
 }
 
-const DataSourcePtr createCSVFileSource(SchemaPtr schema,
-                                        NodeEngine::BufferManagerPtr bufferManager,
-                                        NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
+                                        const NodeEngine::BufferManagerPtr& bufferManager,
+                                        const NodeEngine::QueryManagerPtr& queryManager,
                                         const std::string& pathToFile,
                                         const std::string& delimiter,
                                         uint64_t numberOfTuplesToProducePerBuffer,
@@ -204,7 +204,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema,
                                         bool skipHeader,
                                         OperatorId operatorId,
                                         size_t numSourceLocalBuffers,
-                                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                        const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<CSVSource>(schema,
                                        bufferManager,
                                        queryManager,
@@ -220,13 +220,13 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema,
                                        successors);
 }
 
-const DataSourcePtr createNetworkSource(SchemaPtr schema,
-                                        NodeEngine::BufferManagerPtr bufferManager,
-                                        NodeEngine::QueryManagerPtr queryManager,
-                                        Network::NetworkManagerPtr networkManager,
+const DataSourcePtr createNetworkSource(const SchemaPtr& schema,
+                                        const NodeEngine::BufferManagerPtr& bufferManager,
+                                        const NodeEngine::QueryManagerPtr& queryManager,
+                                        const Network::NetworkManagerPtr& networkManager,
                                         Network::NesPartition nesPartition,
                                         size_t numSourceLocalBuffers,
-                                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                        const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<Network::NetworkSource>(schema,
                                                     bufferManager,
                                                     queryManager,
@@ -285,16 +285,16 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
 }
 #endif
 #ifdef ENABLE_MQTT_BUILD
-const DataSourcePtr createMQTTSource(SchemaPtr schema,
-                                     NodeEngine::BufferManagerPtr bufferManager,
-                                     NodeEngine::QueryManagerPtr queryManager,
-                                     std::string serverAddress,
-                                     std::string clientId,
-                                     std::string user,
-                                     std::string topic,
+const DataSourcePtr createMQTTSource(const SchemaPtr& schema,
+                                     const NodeEngine::BufferManagerPtr& bufferManager,
+                                     const NodeEngine::QueryManagerPtr& queryManager,
+                                     const std::string& serverAddress,
+                                     const std::string& clientId,
+                                     const std::string& user,
+                                     const std::string& topic,
                                      OperatorId operatorId,
                                      size_t numSourceLocalBuffers,
-                                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                     const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<MQTTSource>(schema,
                                         bufferManager,
                                         queryManager,

@@ -29,7 +29,7 @@
 
 namespace NES {
 
-CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
+CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id)
     : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
     windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCompleteWindowType());
 }

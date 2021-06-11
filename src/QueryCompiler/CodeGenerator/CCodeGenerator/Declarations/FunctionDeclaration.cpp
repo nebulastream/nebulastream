@@ -21,7 +21,7 @@
 namespace NES::QueryCompilation {
 FunctionDeclaration::FunctionDeclaration(Code code) : functionCode(std::move(code)) {}
 
-FunctionDeclarationPtr FunctionDeclaration::create(Code code) { return std::make_shared<FunctionDeclaration>(code); }
+FunctionDeclarationPtr FunctionDeclaration::create(const Code& code) { return std::make_shared<FunctionDeclaration>(code); }
 
 const GeneratableDataTypePtr FunctionDeclaration::getType() const { return GeneratableDataTypePtr(); }
 const std::string FunctionDeclaration::getIdentifierName() const { return ""; }

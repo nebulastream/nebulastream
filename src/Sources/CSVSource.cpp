@@ -26,15 +26,16 @@
 #include <cstring>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace NES {
 
-CSVSource::CSVSource(SchemaPtr schema,
+CSVSource::CSVSource(const SchemaPtr& schema,
                      NodeEngine::BufferManagerPtr bufferManager,
                      NodeEngine::QueryManagerPtr queryManager,
-                     const std::string filePath,
-                     const std::string delimiter,
+                     const std::string& filePath,
+                     const std::string& delimiter,
                      uint64_t numberOfTuplesToProducePerBuffer,
                      uint64_t numBuffersToProcess,
                      uint64_t frequency,
@@ -43,7 +44,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, successors),
+    : DataSource(schema, std::move(bufferManager), std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode, std::move(successors)),
       filePath(filePath), delimiter(delimiter), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
       currentPosInFile(0), skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
@@ -121,7 +122,7 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
     uint64_t tupCnt = 0;
     std::vector<PhysicalTypePtr> physicalTypes;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto field : schema->fields) {
+    for (const auto& field : schema->fields) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
     }

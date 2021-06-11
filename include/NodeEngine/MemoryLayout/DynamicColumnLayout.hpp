@@ -43,21 +43,21 @@ class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_share
      * @param checkBoundaries
      * @return created DynamicColumnLayout as a shared ptr
      */
-    static DynamicColumnLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
+    static DynamicColumnLayoutPtr create(const SchemaPtr& schema, bool checkBoundaries);
 
     /**
      * Binds a memoryLayout to a tupleBuffer
      * @param tupleBuffer
      * @return shared_ptr to DynamicRowLayoutBuffer
      */
-    DynamicColumnLayoutBufferPtr bind(TupleBuffer tupleBuffer);
+    DynamicColumnLayoutBufferPtr bind(const TupleBuffer& tupleBuffer);
 
     /**
      * @brief Constructor for DynamicColumnLayout
      * @param checkBoundaries
      * @param schema
      */
-    DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema);
+    DynamicColumnLayout(bool checkBoundaries, const SchemaPtr& schema);
 };
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout

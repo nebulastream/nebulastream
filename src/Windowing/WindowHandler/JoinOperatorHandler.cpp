@@ -20,11 +20,11 @@
 namespace NES::Join {
 
 JoinOperatorHandlerPtr
-JoinOperatorHandler::create(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr joinHandler) {
+JoinOperatorHandler::create(const LogicalJoinDefinitionPtr& joinDefinition, const SchemaPtr& resultSchema, const AbstractJoinHandlerPtr& joinHandler) {
     return std::make_shared<JoinOperatorHandler>(joinDefinition, resultSchema, joinHandler);
 }
 
-JoinOperatorHandlerPtr JoinOperatorHandler::create(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema) {
+JoinOperatorHandlerPtr JoinOperatorHandler::create(const LogicalJoinDefinitionPtr& joinDefinition, const SchemaPtr& resultSchema) {
     return std::make_shared<JoinOperatorHandler>(joinDefinition, resultSchema);
 }
 
@@ -43,7 +43,7 @@ JoinOperatorHandler::JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition
 
 LogicalJoinDefinitionPtr JoinOperatorHandler::getJoinDefinition() { return joinDefinition; }
 
-void JoinOperatorHandler::setJoinHandler(AbstractJoinHandlerPtr joinHandler) { this->joinHandler = joinHandler; }
+void JoinOperatorHandler::setJoinHandler(AbstractJoinHandlerPtr joinHandler) { this->joinHandler = std::move(joinHandler); }
 
 SchemaPtr JoinOperatorHandler::getResultSchema() { return resultSchema; }
 void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, NodeEngine::StateManagerPtr stateManager) {

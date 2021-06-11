@@ -85,7 +85,7 @@ class AttributeSortRule : public BaseRewriteRule {
      * @param expression: the input logical expression
      * @return pointer to the updated expression
      */
-    ExpressionNodePtr sortAttributesInLogicalExpressions(ExpressionNodePtr expression);
+    ExpressionNodePtr sortAttributesInLogicalExpressions(const ExpressionNodePtr& expression);
 
     /**
      * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic expression of type
@@ -94,12 +94,12 @@ class AttributeSortRule : public BaseRewriteRule {
      * @return: vector of expression containing commutative field access or constant expression type
      */
     template<class ExpressionType>
-    std::vector<ExpressionNodePtr> fetchCommutativeFields(ExpressionNodePtr expression) {
+    std::vector<ExpressionNodePtr> fetchCommutativeFields(const ExpressionNodePtr& expression) {
         std::vector<ExpressionNodePtr> commutativeFields;
         if (expression->instanceOf<FieldAccessExpressionNode>() || expression->instanceOf<ConstantValueExpressionNode>()) {
             commutativeFields.push_back(expression);
         } else if (expression->template instanceOf<ExpressionType>()) {
-            for (auto child : expression->getChildren()) {
+            for (const auto& child : expression->getChildren()) {
                 auto childCommutativeFields = fetchCommutativeFields<ExpressionType>(child->template as<ExpressionNode>());
                 commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
             }
@@ -113,9 +113,9 @@ class AttributeSortRule : public BaseRewriteRule {
      * @param originalExpression: the original expression
      * @param updatedExpression: the updated expression
      */
-    bool replaceCommutativeExpressions(ExpressionNodePtr parentExpression,
-                                       ExpressionNodePtr originalExpression,
-                                       ExpressionNodePtr updatedExpression);
+    bool replaceCommutativeExpressions(const ExpressionNodePtr& parentExpression,
+                                       const ExpressionNodePtr& originalExpression,
+                                       const ExpressionNodePtr& updatedExpression);
 
     /**
      * @brief Fetch the value of the left most constant expression or the name of the left most field access expression within

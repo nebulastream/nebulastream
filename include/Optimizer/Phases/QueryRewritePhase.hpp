@@ -57,7 +57,7 @@ class QueryRewritePhase {
      * @param queryPlan : the input query plan
      * @return updated query plan
      */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+    QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
 
     ~QueryRewritePhase();
 

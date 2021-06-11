@@ -63,7 +63,7 @@ OperatorNodePtr OperatorNode::duplicate() {
     return copyOperator;
 }
 
-OperatorNodePtr OperatorNode::getDuplicateOfParent(OperatorNodePtr operatorNode) {
+OperatorNodePtr OperatorNode::getDuplicateOfParent(const OperatorNodePtr& operatorNode) {
     NES_DEBUG("OperatorNode: create copy of the input operator");
     const OperatorNodePtr& copyOfOperator = operatorNode->copy();
     if (operatorNode->getParents().empty()) {
@@ -79,7 +79,7 @@ OperatorNodePtr OperatorNode::getDuplicateOfParent(OperatorNodePtr operatorNode)
     return copyOfOperator;
 }
 
-OperatorNodePtr OperatorNode::getDuplicateOfChild(OperatorNodePtr operatorNode) {
+OperatorNodePtr OperatorNode::getDuplicateOfChild(const OperatorNodePtr& operatorNode) {
     NES_DEBUG("OperatorNode: create copy of the input operator");
     OperatorNodePtr copyOfOperator = operatorNode->copy();
     if (operatorNode->getChildren().empty()) {
@@ -108,7 +108,7 @@ bool OperatorNode::addChild(NodePtr newNode) {
     }
 
     std::vector<NodePtr> currentChildren = getChildren();
-    auto found = std::find_if(currentChildren.begin(), currentChildren.end(), [&](NodePtr child) {
+    auto found = std::find_if(currentChildren.begin(), currentChildren.end(), [&](const NodePtr& child) {
         return child->as<OperatorNode>()->getId() == newNode->as<OperatorNode>()->getId();
     });
 
@@ -135,7 +135,7 @@ bool OperatorNode::addParent(NodePtr newNode) {
     }
 
     std::vector<NodePtr> currentParents = getParents();
-    auto found = std::find_if(currentParents.begin(), currentParents.end(), [&](NodePtr child) {
+    auto found = std::find_if(currentParents.begin(), currentParents.end(), [&](const NodePtr& child) {
         return child->as<OperatorNode>()->getId() == newNode->as<OperatorNode>()->getId();
     });
 
@@ -163,10 +163,10 @@ NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorId) {
     return nullptr;
 }
 
-void OperatorNode::addProperty(std::string key, std::any value) { properties.insert(std::make_pair(key, value)); }
+void OperatorNode::addProperty(const std::string& key, const std::any& value) { properties.insert(std::make_pair(key, value)); }
 
-std::any OperatorNode::getProperty(std::string key) { return properties.at(key); }
+std::any OperatorNode::getProperty(const std::string& key) { return properties.at(key); }
 
-void OperatorNode::removeProperty(std::string key) { properties.erase(key); }
+void OperatorNode::removeProperty(const std::string& key) { properties.erase(key); }
 
 }// namespace NES

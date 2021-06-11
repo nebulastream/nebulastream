@@ -28,9 +28,9 @@ PipelineQueryPlanPtr PipelineQueryPlan::create(QueryId queryId, QuerySubPlanId q
 PipelineQueryPlan::PipelineQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId)
     : queryId(queryId), querySubPlanId(querySubPlanId){};
 
-void PipelineQueryPlan::addPipeline(OperatorPipelinePtr pipeline) { pipelines.emplace_back(pipeline); }
+void PipelineQueryPlan::addPipeline(const OperatorPipelinePtr& pipeline) { pipelines.emplace_back(pipeline); }
 
-void PipelineQueryPlan::removePipeline(OperatorPipelinePtr pipeline) {
+void PipelineQueryPlan::removePipeline(const OperatorPipelinePtr& pipeline) {
     pipeline->clearPredecessors();
     pipeline->clearSuccessors();
     pipelines.erase(std::remove(pipelines.begin(), pipelines.end(), pipeline), pipelines.end());
@@ -38,7 +38,7 @@ void PipelineQueryPlan::removePipeline(OperatorPipelinePtr pipeline) {
 
 const std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSinkPipelines() const {
     std::vector<OperatorPipelinePtr> sinks;
-    std::copy_if(pipelines.begin(), pipelines.end(), std::back_inserter(sinks), [](OperatorPipelinePtr pipeline) {
+    std::copy_if(pipelines.begin(), pipelines.end(), std::back_inserter(sinks), [](const OperatorPipelinePtr& pipeline) {
         return pipeline->getSuccessors().empty();
     });
     return sinks;
@@ -46,7 +46,7 @@ const std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSinkPipelines() con
 
 const std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSourcePipelines() const {
     std::vector<OperatorPipelinePtr> sources;
-    std::copy_if(pipelines.begin(), pipelines.end(), std::back_inserter(sources), [](OperatorPipelinePtr pipeline) {
+    std::copy_if(pipelines.begin(), pipelines.end(), std::back_inserter(sources), [](const OperatorPipelinePtr& pipeline) {
         return pipeline->getPredecessors().empty();
     });
     return sources;

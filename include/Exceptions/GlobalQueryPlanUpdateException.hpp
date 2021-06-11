@@ -27,7 +27,7 @@ namespace NES {
  */
 class GlobalQueryPlanUpdateException : public std::runtime_error {
   public:
-    explicit GlobalQueryPlanUpdateException(std::string message);
+    explicit GlobalQueryPlanUpdateException(const std::string& message);
 };
 
 }// namespace NES

@@ -62,14 +62,14 @@ class Pattern : public Query {
      * @param sourceStreamName name of the stream to monitor. This name has to be registered in the query catalog.
      * @return the pattern
      */
-    static Pattern from(const std::string sourceStreamName);
+    static Pattern from(std::string& sourceStreamName);
 
     /**
      * @brief Add sink operator for the query.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor
      */
-    Pattern& sink(const SinkDescriptorPtr sinkDescriptor) override;
+    Pattern& sink(SinkDescriptorPtr sinkDescriptor) override;
 
     [[nodiscard]] const std::string& getPatternName() const;
     void setPatternName(const std::string& patternName);

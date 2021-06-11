@@ -41,7 +41,7 @@ class StructDeclaration : public Declaration {
 
     [[nodiscard]] DeclarationPtr getField(const std::string& field_name) const;
 
-    [[nodiscard]] const bool containsField(const std::string& field_name, const DataTypePtr dataType) const;
+    [[nodiscard]] const bool containsField(const std::string& field_name, DataTypePtr& dataType) const;
 
     [[nodiscard]] VariableDeclaration getVariableDeclaration(const std::string& field_name) const;
 

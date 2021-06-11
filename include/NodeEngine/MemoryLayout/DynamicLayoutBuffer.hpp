@@ -64,7 +64,7 @@ class DynamicLayoutBuffer {
      * @param jthField
      * @return
      */
-    virtual uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) = 0;
+    virtual uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, bool boundaryChecks) = 0;
 
   protected:
     TupleBuffer tupleBuffer;

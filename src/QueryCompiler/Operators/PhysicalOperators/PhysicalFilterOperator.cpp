@@ -22,17 +22,17 @@ PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                ExpressionNodePtr predicate)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), predicate(std::move(predicate)) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), predicate(std::move(predicate)) {}
 
 PhysicalOperatorPtr
-PhysicalFilterOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
+PhysicalFilterOperator::create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const ExpressionNodePtr& expression) {
     return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, expression);
 }
 
 ExpressionNodePtr PhysicalFilterOperator::getPredicate() { return predicate; }
 
 PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, expression);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expression));
 }
 
 const std::string PhysicalFilterOperator::toString() const { return "PhysicalFilterOperator"; }

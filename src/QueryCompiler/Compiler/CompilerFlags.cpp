@@ -79,7 +79,7 @@ CompilerFlagsPtr CompilerFlags::createOptimizingCompilerFlags() {
     return flags;
 }
 
-void CompilerFlags::addFlag(std::string flag) { compilerFlags.push_back(flag); }
+void CompilerFlags::addFlag(const std::string& flag) { compilerFlags.push_back(flag); }
 
 std::vector<std::string> CompilerFlags::getFlags() { return compilerFlags; }
 

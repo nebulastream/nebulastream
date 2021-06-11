@@ -49,7 +49,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      * @return a correctly initialized shared ptr to LambdaSourceDescriptor
      */
     static std::shared_ptr<LambdaSourceDescriptor>
-    create(SchemaPtr schema,
+    create(const SchemaPtr& schema,
            std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProcess,
            uint64_t gatheringValue,

@@ -42,7 +42,7 @@ class OperatorSerializationUtil {
      * @param serializedParent The corresponding protobuff object, which is used to capture the state of the object.
      * @return the modified serializableOperator
      */
-    static SerializableOperator* serializeOperator(OperatorNodePtr operatorNode, SerializableOperator* serializedOperator);
+    static SerializableOperator* serializeOperator(const OperatorNodePtr& operatorNode, SerializableOperator* serializedOperator);
 
     /**
      * @brief De-serializes the input SerializableOperator only
@@ -57,28 +57,28 @@ class OperatorSerializationUtil {
     * @param sourceOperator The source operator node.
     * @return the serialized SerializableOperator_SourceDetails
     */
-    static SerializableOperator_SourceDetails serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator);
+    static SerializableOperator_SourceDetails serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator);
 
     /**
      * @brief Serializes an sink operator and all its properties to a SerializableOperator_SinkDetails object.
      * @param sinkOperator The sink operator node.
      * @return the serialized SerializableOperator_SinkDetails.
      */
-    static SerializableOperator_SinkDetails serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator);
+    static SerializableOperator_SinkDetails serializeSinkOperator(const SinkLogicalOperatorNodePtr& sinkOperator);
 
     /**
      * @brief Serializes an all window operator and all its properties to a SerializableOperator_WindowDetails object.
      * @param WindowLogicalOperatorNode The window operator node.
      * @return the serialized SerializableOperator_WindowDetails.
      */
-    static SerializableOperator_WindowDetails serializeWindowOperator(WindowOperatorNodePtr windowOperator);
+    static SerializableOperator_WindowDetails serializeWindowOperator(const WindowOperatorNodePtr& windowOperator);
 
     /**
      * @brief Serializes an all join operator and all its properties to a SerializableOperator_JoinDetails object.
      * @param JoinLogicalOperatorNodePtr The window operator node.
      * @return the serialized SerializableOperator_SinkDetails.
      */
-    static SerializableOperator_JoinDetails serializeJoinOperator(JoinLogicalOperatorNodePtr joinOperator);
+    static SerializableOperator_JoinDetails serializeJoinOperator(const JoinLogicalOperatorNodePtr& joinOperator);
 
     /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
@@ -111,7 +111,7 @@ class OperatorSerializationUtil {
      * @param sourceDetails The source details object.
      * @return the serialized SerializableOperator_SourceDetails.
      */
-    static SerializableOperator_SourceDetails* serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor,
+    static SerializableOperator_SourceDetails* serializeSourceSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
                                                                                SerializableOperator_SourceDetails* sourceDetails);
 
     /**
@@ -127,7 +127,7 @@ class OperatorSerializationUtil {
      * @param sinkDetails The sink details object.
      * @return the serialized SerializableOperator_SinkDetails.
      */
-    static SerializableOperator_SinkDetails* serializeSinkDescriptor(SinkDescriptorPtr sinkDescriptor,
+    static SerializableOperator_SinkDetails* serializeSinkDescriptor(const SinkDescriptorPtr& sinkDescriptor,
                                                                      SerializableOperator_SinkDetails* sinkDetails);
 
     /**
@@ -143,7 +143,7 @@ class OperatorSerializationUtil {
      * @return serialized watermark operator
      */
     static SerializableOperator_WatermarkStrategyDetails
-    serializeWatermarkAssignerOperator(WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator);
+    serializeWatermarkAssignerOperator(const WatermarkAssignerLogicalOperatorNodePtr& watermarkAssignerOperator);
 
     /*
      * @brief Serializes a watermark strategy descriptor
@@ -152,7 +152,7 @@ class OperatorSerializationUtil {
      * @return  the serialized watermark strategy
      */
     static SerializableOperator_WatermarkStrategyDetails*
-    serializeWatermarkStrategyDescriptor(Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
+    serializeWatermarkStrategyDescriptor(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor,
                                          SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails);
 
     /*

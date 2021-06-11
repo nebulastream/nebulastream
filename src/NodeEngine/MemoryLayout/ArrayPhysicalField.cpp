@@ -33,7 +33,7 @@ std::shared_ptr<PhysicalField> ArrayPhysicalField::operator[](uint64_t arrayInde
     return PhysicalFieldUtil::createPhysicalField(componentField, bufferOffset + offsetInArray);
 }
 
-PhysicalFieldPtr createArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset) {
+PhysicalFieldPtr createArrayPhysicalField(const PhysicalTypePtr& componentField, uint64_t bufferOffset) {
     return std::make_shared<ArrayPhysicalField>(componentField, bufferOffset);
 }
 }// namespace NES::NodeEngine

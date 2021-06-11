@@ -33,7 +33,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class TopologyNode : public Node {
 
   public:
-    static TopologyNodePtr create(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
+    static TopologyNodePtr create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
 
     /**
      * @brief method to get the id of the node
@@ -108,42 +108,42 @@ class TopologyNode : public Node {
      * @param key key of the new property
      * @param value value of the new property
      */
-    void addNodeProperty(std::string key, std::any value);
+    void addNodeProperty(const std::string& key, const std::any& value);
 
     /**
      * @brief Get a the value of a property
      * @param key key of the value to retrieve
      * @return value of the property with the given key
      */
-    std::any getNodeProperty(std::string key);
+    std::any getNodeProperty(const std::string& key);
 
     /**
      * @brief Remove a property from the stored properties map
      * @param key key of the property to remove
      * @return true if the removal is successful
      */
-    bool removeNodeProperty(std::string key);
+    bool removeNodeProperty(const std::string& key);
 
     /**
      * @brief add a new link property to the stored properties map
      * @param linked topology node to which the property will be associated
      * @param value of the link property
      */
-    void addLinkProperty(TopologyNodePtr linkedNode, LinkPropertyPtr topologyLink);
+    void addLinkProperty(const TopologyNodePtr& linkedNode, const LinkPropertyPtr& topologyLink);
 
     /**
      * @brief get a the value of a link property
      * @param linked topology node associated with the link property to retrieve
      * @return value of the link property
      */
-    LinkPropertyPtr getLinkProperty(TopologyNodePtr linkedNode);
+    LinkPropertyPtr getLinkProperty(const TopologyNodePtr& linkedNode);
 
     /**
      * @brief remove a a link property from the stored map
      * @param linked topology node associated with the link property to remove
      * @return true if the removal is successful
      */
-    bool removeLinkProperty(TopologyNodePtr linkedNode);
+    bool removeLinkProperty(const TopologyNodePtr& linkedNode);
 
   private:
     uint64_t id;

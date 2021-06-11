@@ -39,7 +39,7 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
      * @param resultSchema window result schema
      * @return WindowOperatorHandlerPtr
      */
-    static WindowOperatorHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
+    static WindowOperatorHandlerPtr create(const LogicalWindowDefinitionPtr& windowDefinition, const SchemaPtr& resultSchema);
 
     /**
     * @brief Factory to create new WindowOperatorHandler
@@ -49,7 +49,7 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
     * @return WindowOperatorHandlerPtr
     */
     static WindowOperatorHandlerPtr
-    create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema, AbstractWindowHandlerPtr windowHandler);
+    create(const LogicalWindowDefinitionPtr& windowDefinition, const SchemaPtr& resultSchema, const AbstractWindowHandlerPtr& windowHandler);
 
     /**
      * @brief Sets the window handler

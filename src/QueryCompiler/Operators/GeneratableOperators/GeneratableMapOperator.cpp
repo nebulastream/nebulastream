@@ -28,18 +28,18 @@ GeneratableMapOperator::GeneratableMapOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                FieldAssignmentExpressionNodePtr mapExpression)
-    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), mapExpression(std::move(mapExpression)) {}
+    : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)), mapExpression(std::move(mapExpression)) {}
 
 GeneratableOperatorPtr
 GeneratableMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, mapExpression);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(mapExpression));
 }
 
 GeneratableOperatorPtr GeneratableMapOperator::create(OperatorId id,
                                                       SchemaPtr inputSchema,
                                                       SchemaPtr outputSchema,
                                                       FieldAssignmentExpressionNodePtr mapExpression) {
-    return std::make_shared<GeneratableMapOperator>(GeneratableMapOperator(id, inputSchema, outputSchema, mapExpression));
+    return std::make_shared<GeneratableMapOperator>(GeneratableMapOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(mapExpression)));
 }
 
 void GeneratableMapOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

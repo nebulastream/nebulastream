@@ -94,15 +94,15 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
     TestPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
                                  NodeEngine::BufferManagerPtr bufferManager,
                                  NodeEngine::Execution::OperatorHandlerPtr operatorHandler)
-        : TestPipelineExecutionContext(queryManager,
-                                       bufferManager,
-                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>{operatorHandler}) {}
+        : TestPipelineExecutionContext(std::move(queryManager),
+                                       std::move(bufferManager),
+                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>{std::move(operatorHandler)}) {}
     TestPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
                                  NodeEngine::BufferManagerPtr bufferManager,
                                  std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
             0,
-            queryManager,
+            std::move(queryManager),
             std::move(bufferManager),
             [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
@@ -118,7 +118,7 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
     std::vector<TupleBuffer> buffers;
 };
 
-const DataSourcePtr createTestSourceCodeGen(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGen(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()),
                                            bPtr,
                                            dPtr,
@@ -134,7 +134,7 @@ class SelectionDataGenSource : public GeneratorSource {
                            NodeEngine::BufferManagerPtr bPtr,
                            NodeEngine::QueryManagerPtr dPtr,
                            const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
+        : GeneratorSource(std::move(schema), std::move(bPtr), std::move(dPtr), pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
     ~SelectionDataGenSource() override = default;
 
@@ -167,7 +167,7 @@ class SelectionDataGenSource : public GeneratorSource {
     };
 };
 
-const DataSourcePtr createTestSourceCodeGenFilter(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGenFilter(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
     DataSourcePtr source(std::make_shared<SelectionDataGenSource>(Schema::create()
                                                                       ->addField("id", DataTypeFactory::createUInt32())
                                                                       ->addField("value", DataTypeFactory::createUInt32())
@@ -185,7 +185,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
                                         NodeEngine::BufferManagerPtr bPtr,
                                         NodeEngine::QueryManagerPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
+        : GeneratorSource(std::move(schema), std::move(bPtr), std::move(dPtr), pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
     ~PredicateTestingDataGeneratorSource() override = default;
 
@@ -223,7 +223,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createTestSourceCodeGenPredicate(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGenPredicate(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
     DataSourcePtr source(
         std::make_shared<PredicateTestingDataGeneratorSource>(Schema::create()
                                                                   ->addField("id", DataTypeFactory::createUInt32())
@@ -245,7 +245,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
                                      NodeEngine::BufferManagerPtr bPtr,
                                      NodeEngine::QueryManagerPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
+        : GeneratorSource(std::move(schema), std::move(bPtr), std::move(dPtr), pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
     ~WindowTestingDataGeneratorSource() override = default;
 
@@ -284,7 +284,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
                                        NodeEngine::BufferManagerPtr bPtr,
                                        NodeEngine::QueryManagerPtr dPtr,
                                        const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
+        : GeneratorSource(std::move(schema), std::move(bPtr), std::move(dPtr), pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
     ~WindowTestingWindowGeneratorSource() override = default;
 
@@ -321,7 +321,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createWindowTestDataSource(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
+const DataSourcePtr createWindowTestDataSource(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
     DataSourcePtr source(
         std::make_shared<WindowTestingDataGeneratorSource>(Schema::create()
                                                                ->addField("window$key", DataTypeFactory::createUInt64())
@@ -333,14 +333,14 @@ const DataSourcePtr createWindowTestDataSource(NodeEngine::BufferManagerPtr bPtr
 }
 
 const DataSourcePtr
-createWindowTestSliceSource(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr, SchemaPtr schema) {
+createWindowTestSliceSource(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr, const SchemaPtr& schema) {
     DataSourcePtr source(std::make_shared<WindowTestingWindowGeneratorSource>(schema, bPtr, dPtr, 10));
     return source;
 }
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType, class sumType>
 std::shared_ptr<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>
-createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema) {
+createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, const SchemaPtr& resultSchema) {
 
     auto aggregation = sumType::create();
     auto trigger = Windowing::ExecutableOnTimeTriggerPolicy::create(1000);
@@ -1028,10 +1028,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
                             ->addField(createField("window$start", UINT64))
                             ->addField(createField("window$end", UINT64))
                             ->addField(AttributeField::create("window$key", joinDef->getLeftJoinKey()->getStamp()));
-    for (auto field : input_schema->fields) {
+    for (const auto& field : input_schema->fields) {
         outputSchema = outputSchema->addField(field->getName(), field->getDataType());
     }
-    for (auto field : input_schema->fields) {
+    for (const auto& field : input_schema->fields) {
         outputSchema = outputSchema->addField(field->getName(), field->getDataType());
     }
     joinDef->updateOutputDefinition(outputSchema);

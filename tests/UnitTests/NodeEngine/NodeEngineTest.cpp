@@ -33,6 +33,7 @@
 #include <Util/TestUtils.hpp>
 #include <future>
 #include <iostream>
+#include <utility>
 
 using namespace std;
 using namespace NES::Windowing;
@@ -116,7 +117,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<NodeEngine::BufferManager>(bufferSize, numBuffers);
         auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
-        auto networkManagerCreator = [=](NodeEngine::NodeEnginePtr engine) {
+        auto networkManagerCreator = [=](const NodeEngine::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(hostname,
                                                    port,
                                                    Network::ExchangeProtocol(partitionManager, engine),
@@ -227,7 +228,7 @@ void testOutput() {
     EXPECT_TRUE(response == 0);
 }
 
-void testOutput(std::string path) {
+void testOutput(const std::string& path) {
     ifstream testFile(path.c_str());
     EXPECT_TRUE(testFile.good());
     std::ifstream ifs(path.c_str());
@@ -239,7 +240,7 @@ void testOutput(std::string path) {
     EXPECT_TRUE(response == 0);
 }
 
-void testOutput(std::string path, std::string expectedOutput) {
+void testOutput(const std::string& path, const std::string& expectedOutput) {
     ifstream testFile(path.c_str());
     EXPECT_TRUE(testFile.good());
     std::ifstream ifs(path.c_str());
@@ -255,7 +256,7 @@ class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExe
   public:
     MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
                                    NodeEngine::BufferManagerPtr bufferManager,
-                                   DataSinkPtr sink)
+                                   const DataSinkPtr& sink)
         : PipelineExecutionContext(
             0,
             std::move(queryManager),
@@ -271,7 +272,7 @@ class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExe
         };
 };
 
-auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
+auto setupQEP(const NodeEnginePtr& engine, QueryId queryId) {
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
 
     DataSinkPtr sink = createTextFileSink(sch, queryId, engine, filePath, false);
@@ -626,7 +627,7 @@ void assertKiller() {
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerPipeline)
-            : NodeEngine(config,
+            : NodeEngine(std::move(config),
                          std::move(buffMgr),
                          std::move(queryMgr),
                          std::move(netFuncInit),

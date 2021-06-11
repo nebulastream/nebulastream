@@ -41,7 +41,7 @@ bool LogicalBinaryOperatorNode::inferSchema() {
     //Identify different type of schemas from children operators
     for (auto& child : children) {
         auto childOutputSchema = child->as<OperatorNode>()->getOutputSchema();
-        auto found = std::find_if(distinctSchemas.begin(), distinctSchemas.end(), [&](SchemaPtr distinctSchema) {
+        auto found = std::find_if(distinctSchemas.begin(), distinctSchemas.end(), [&](const SchemaPtr& distinctSchema) {
             return childOutputSchema->equals(distinctSchema, false);
         });
         if (found == distinctSchemas.end()) {
@@ -58,9 +58,9 @@ bool LogicalBinaryOperatorNode::inferSchema() {
     return true;
 }
 
-std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getOperatorsBySchema(SchemaPtr schema) {
+std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getOperatorsBySchema(const SchemaPtr& schema) {
     std::vector<OperatorNodePtr> operators;
-    for (auto child : getChildren()) {
+    for (const auto& child : getChildren()) {
         auto childOperator = child->as<OperatorNode>();
         if (childOperator->getOutputSchema()->equals(schema, false)) {
             operators.emplace_back(childOperator);

@@ -21,6 +21,7 @@
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <utility>
 namespace NES {
 
 /**
@@ -29,12 +30,12 @@ namespace NES {
 class TestQuery : public Query {
   public:
     static Query from(SourceDescriptorPtr descriptor) {
-        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(std::move(std::move(descriptor)));
         auto queryPlan = QueryPlan::create(sourceOperator);
         return Query(queryPlan);
     }
     static Query from(SchemaPtr inputSchme) {
-        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(inputSchme));
+        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(std::move(inputSchme))));
         auto queryPlan = QueryPlan::create(sourceOperator);
         return Query(queryPlan);
     }

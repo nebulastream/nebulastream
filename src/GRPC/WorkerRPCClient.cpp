@@ -30,7 +30,7 @@ WorkerRPCClient::WorkerRPCClient() { NES_DEBUG("WorkerRPCClient()"); }
 
 WorkerRPCClient::~WorkerRPCClient() { NES_DEBUG("~WorkerRPCClient()"); }
 
-bool WorkerRPCClient::registerQuery(std::string address, QueryPlanPtr queryPlan) {
+bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_DEBUG("WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId
@@ -61,7 +61,7 @@ bool WorkerRPCClient::registerQuery(std::string address, QueryPlanPtr queryPlan)
     throw Exception("Error while WorkerRPCClient::registerQuery");
 }
 
-bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueuePtr cq) {
+bool WorkerRPCClient::registerQueryAsync(const std::string& address, const QueryPlanPtr& queryPlan, const CompletionQueuePtr& cq) {
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_DEBUG("WorkerRPCClient::registerQueryAsync address=" << address << " queryId=" << queryId
@@ -100,7 +100,7 @@ bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr query
     return true;
 }
 
-bool WorkerRPCClient::checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> queues, RpcClientModes mode) {
+bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
     NES_DEBUG("start checkAsyncResult for mode=" << mode << " for " << queues.size() << " queues");
     bool result = true;
     for (auto& queue : queues) {
@@ -143,7 +143,7 @@ bool WorkerRPCClient::checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> qu
     NES_DEBUG("checkAsyncResult for mode=" << mode << " succeed");
     return result;
 }
-bool WorkerRPCClient::unregisterQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq) {
+bool WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address=" << address << " queryId=" << queryId);
 
     UnregisterQueryRequest request;
@@ -175,7 +175,7 @@ bool WorkerRPCClient::unregisterQueryAsync(std::string address, QueryId queryId,
     return true;
 }
 
-bool WorkerRPCClient::unregisterQuery(std::string address, QueryId queryId) {
+bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId queryId) {
     NES_DEBUG("WorkerRPCClient::unregisterQuery address=" << address << " queryId=" << queryId);
 
     UnregisterQueryRequest request;
@@ -198,7 +198,7 @@ bool WorkerRPCClient::unregisterQuery(std::string address, QueryId queryId) {
     throw Exception("Error while WorkerRPCClient::unregisterQuery");
 }
 
-bool WorkerRPCClient::startQuery(std::string address, QueryId queryId) {
+bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
     NES_DEBUG("WorkerRPCClient::startQuery address=" << address << " queryId=" << queryId);
 
     StartQueryRequest request;
@@ -222,7 +222,7 @@ bool WorkerRPCClient::startQuery(std::string address, QueryId queryId) {
     throw Exception("Error while WorkerRPCClient::startQuery");
 }
 
-bool WorkerRPCClient::startQueryAsyn(std::string address, QueryId queryId, CompletionQueuePtr cq) {
+bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::startQueryAsync address=" << address << " queryId=" << queryId);
 
     StartQueryRequest request;
@@ -254,7 +254,7 @@ bool WorkerRPCClient::startQueryAsyn(std::string address, QueryId queryId, Compl
     return true;
 }
 
-bool WorkerRPCClient::stopQuery(std::string address, QueryId queryId) {
+bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId) {
     NES_DEBUG("WorkerRPCClient::stopQuery address=" << address << " queryId=" << queryId);
 
     StopQueryRequest request;
@@ -277,7 +277,7 @@ bool WorkerRPCClient::stopQuery(std::string address, QueryId queryId) {
     throw Exception("Error while WorkerRPCClient::stopQuery");
 }
 
-bool WorkerRPCClient::stopQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq) {
+bool WorkerRPCClient::stopQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::stopQueryAsync address=" << address << " queryId=" << queryId);
 
     StopQueryRequest request;
@@ -309,7 +309,7 @@ bool WorkerRPCClient::stopQueryAsync(std::string address, QueryId queryId, Compl
     return true;
 }
 
-bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, MonitoringPlanPtr plan) {
+bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const MonitoringPlanPtr& plan) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
 
     MonitoringRegistrationRequest request;

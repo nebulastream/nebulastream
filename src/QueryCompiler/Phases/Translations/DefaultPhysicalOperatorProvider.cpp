@@ -45,6 +45,7 @@
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
@@ -52,11 +53,11 @@ PhysicalOperatorProviderPtr DefaultPhysicalOperatorProvider::create() {
     return std::make_shared<DefaultPhysicalOperatorProvider>();
 }
 
-bool DefaultPhysicalOperatorProvider::isDemultiplex(LogicalOperatorNodePtr operatorNode) {
+bool DefaultPhysicalOperatorProvider::isDemultiplex(const LogicalOperatorNodePtr& operatorNode) {
     return operatorNode->getParents().size() > 1;
 }
 
-void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(const LogicalOperatorNodePtr& operatorNode) {
     auto operatorOutputSchema = operatorNode->getOutputSchema();
     // A demultiplex operator has the same output schema as its child operator.
     auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create(operatorOutputSchema);
@@ -64,7 +65,7 @@ void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(LogicalOp
     operatorNode->insertBetweenThisAndParentNodes(demultiplexOperator);
 }
 
-void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const LogicalOperatorNodePtr& operatorNode) {
     // the multiplex operator has the same schema as the output schema of the operator node.
     auto multiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndChildNodes(multiplexOperator);
@@ -85,7 +86,7 @@ void DefaultPhysicalOperatorProvider::lower(QueryPlanPtr queryPlan, LogicalOpera
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerUnaryOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode) {
 
     // If a unary operator has more then one parent, we introduce a implicit multiplex operator before.
     if (operatorNode->getChildren().size() > 1) {
@@ -127,7 +128,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(QueryPlanPtr queryPlan,
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerBinaryOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode) {
 
     if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         lowerUnionOperator(queryPlan, operatorNode);
@@ -138,7 +139,7 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(QueryPlanPtr queryPlan
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerUnionOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerUnionOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
 
     auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
     // this assumes that we applies the ProjectBeforeUnionRule and the input across all children is the same.
@@ -150,7 +151,7 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(QueryPlanPtr, LogicalOp
     operatorNode->replace(physicalMultiplexOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerProjectOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
     auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(projectOperator->getInputSchema(),
                                                                                       projectOperator->getOutputSchema(),
@@ -158,7 +159,7 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(QueryPlanPtr, Logical
     operatorNode->replace(physicalProjectOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerMapOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
     auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(mapOperator->getInputSchema(),
                                                                               mapOperator->getOutputSchema(),
@@ -166,15 +167,15 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(QueryPlanPtr, LogicalOper
     operatorNode->replace(physicalMapOperator);
 }
 
-OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator,
+OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator,
                                                                            SchemaPtr outputSchema,
                                                                            std::vector<OperatorNodePtr> children) {
     NES_ASSERT(!children.empty(), "Their should be children for operator " << joinOperator->toString());
     if (children.size() > 1) {
-        auto demultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(outputSchema);
+        auto demultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(std::move(outputSchema));
         demultiplexOperator->setOutputSchema(joinOperator->getOutputSchema());
         demultiplexOperator->addParent(joinOperator);
-        for (auto child : children) {
+        for (const auto& child : children) {
             child->removeParent(joinOperator);
             child->addParent(demultiplexOperator);
         }
@@ -183,7 +184,7 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(JoinL
     return children[0];
 }
 
-void DefaultPhysicalOperatorProvider::lowerJoinOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
     // create join operator handler, to establish a common runtime object for build and prob.
     auto joinOperatorHandler =
@@ -212,7 +213,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(QueryPlanPtr, LogicalOpe
     operatorNode->replace(joinSink);
 }
 
-void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
     auto physicalWatermarkAssignment = PhysicalOperators::PhysicalWatermarkAssignmentOperator::create(
         logicalWatermarkAssignment->getInputSchema(),
@@ -222,7 +223,7 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(QueryPlan
     operatorNode->replace(physicalWatermarkAssignment);
 }
 
-void DefaultPhysicalOperatorProvider::lowerWindowOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto windowOperator = operatorNode->as<WindowOperatorNode>();
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();

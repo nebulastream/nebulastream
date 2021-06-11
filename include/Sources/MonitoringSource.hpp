@@ -33,11 +33,11 @@ using MetricCatalogPtr = std::shared_ptr<MetricCatalog>;
 
 class MonitoringSource : public DefaultSource {
   public:
-    MonitoringSource(MonitoringPlanPtr monitoringPlan,
+    MonitoringSource(const MonitoringPlanPtr& monitoringPlan,
                      MetricCatalogPtr metricCatalog,
                      NodeEngine::BufferManagerPtr bufferManager,
                      NodeEngine::QueryManagerPtr queryManager,
-                     const uint64_t numbersOfBufferToProduce,
+                     uint64_t numbersOfBufferToProduce,
                      uint64_t frequency,
                      OperatorId operatorId,
                      size_t numSourceLocalBuffers,

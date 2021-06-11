@@ -35,11 +35,11 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr
 }
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
 
-uint64_t CoordinatorEngine::registerNode(std::string address,
+uint64_t CoordinatorEngine::registerNode(const std::string& address,
                                          int64_t grpcPort,
                                          int64_t dataPort,
                                          uint16_t numberOfSlots,
-                                         NodeStatsPtr nodeStats,
+                                         const NodeStatsPtr& nodeStats,
                                          NodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
                                                           << " nodeProperties=" << nodeStats->DebugString() << " type=" << type);
@@ -150,9 +150,9 @@ bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
 }
 
 bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
-                                               std::string sourceType,
-                                               std::string physicalStreamName,
-                                               std::string logicalStreamName) {
+                                               const std::string& sourceType,
+                                               const std::string& physicalStreamName,
+                                               const std::string& logicalStreamName) {
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id "
               << nodeId << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
@@ -168,7 +168,7 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
     return success;
 }
 
-bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, std::string physicalStreamName, std::string logicalStreamName) {
+bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, const std::string& physicalStreamName, const std::string& logicalStreamName) {
     NES_DEBUG("CoordinatorEngine::UnregisterPhysicalStream: try to remove physical stream with name "
               << physicalStreamName << " logical name " << logicalStreamName << " workerId=" << nodeId);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
@@ -184,7 +184,7 @@ bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, std::string ph
     return success;
 }
 
-bool CoordinatorEngine::registerLogicalStream(std::string logicalStreamName, std::string schemaString) {
+bool CoordinatorEngine::registerLogicalStream(const std::string& logicalStreamName, const std::string& schemaString) {
     NES_DEBUG("CoordinatorEngine::registerLogicalStream: register logical stream=" << logicalStreamName
                                                                                    << " schema=" << schemaString);
     std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
@@ -195,7 +195,7 @@ bool CoordinatorEngine::registerLogicalStream(std::string logicalStreamName, std
     return success;
 }
 
-bool CoordinatorEngine::unregisterLogicalStream(std::string logicalStreamName) {
+bool CoordinatorEngine::unregisterLogicalStream(const std::string& logicalStreamName) {
     std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
     NES_DEBUG("CoordinatorEngine::unregisterLogicalStream: register logical stream=" << logicalStreamName);
     bool success = streamCatalog->removeLogicalStream(logicalStreamName);
@@ -259,7 +259,7 @@ bool CoordinatorEngine::removeParent(uint64_t childId, uint64_t parentId) {
     NES_DEBUG("CoordinatorEngine::AddParent: sensorParent node " << parentId << " exists");
 
     std::vector<NodePtr> children = parentNode->getChildren();
-    auto found = std::find_if(children.begin(), children.end(), [&](NodePtr node) {
+    auto found = std::find_if(children.begin(), children.end(), [&](const NodePtr& node) {
         return node->as<TopologyNode>()->getId() == childId;
     });
 

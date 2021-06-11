@@ -43,7 +43,7 @@ class PlanJsonGenerator {
      * @param the id of the query
      * @return a JSON object representing the query plan
      */
-    static web::json::value getQueryPlanAsJson(QueryPlanPtr queryPlan);
+    static web::json::value getQueryPlanAsJson(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief get the json representation of execution plan of a query
@@ -51,7 +51,7 @@ class PlanJsonGenerator {
      * @param id of the query
      * @return
      */
-    static web::json::value getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan,
+    static web::json::value getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                    QueryId queryId = INVALID_QUERY_ID);
 
   private:
@@ -62,13 +62,13 @@ class PlanJsonGenerator {
      * @param edges JSON array to store the traversed edge
      */
     static void
-    getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes, std::vector<web::json::value>& edges);
+    getChildren(OperatorNodePtr& root, std::vector<web::json::value>& nodes, std::vector<web::json::value>& edges);
 
     /**
      * @param an operator node
      * @return the type of operator in String
      */
-    static std::string getOperatorType(OperatorNodePtr operatorNode);
+    static std::string getOperatorType(const OperatorNodePtr& operatorNode);
 };
 }// namespace NES
 #endif//NES_PLANJSONGENERATOR_HPP

@@ -48,6 +48,7 @@
 #include <random>
 #include <sstream>
 #include <unistd.h>
+#include <utility>
 
 namespace NES {
 
@@ -242,7 +243,7 @@ std::uint64_t UtilityFunctions::generateIdInt() {
     return hash_fn(linkID_string);
 }
 
-std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::string& input, std::string s1, std::string s2) {
+std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& s1, const std::string& s2) {
     unsigned firstDelimPos = input.find(s1);
     unsigned endPosOfFirstDelim = firstDelimPos + s1.length();
 
@@ -251,7 +252,7 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
 
-std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string& s, std::string delim) {
+std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string& s, const std::string& delim) {
     std::string copy = s;
     size_t pos = 0;
     std::vector<std::string> elems;
@@ -274,7 +275,7 @@ std::string UtilityFunctions::printTupleBufferAsText(NodeEngine::TupleBuffer& bu
     return ss.str();
 }
 
-std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, SchemaPtr schema) {
+std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, const SchemaPtr& schema) {
     if (!buffer.isValid()) {
         return "INVALID_BUFFER_PTR";
     }
@@ -328,7 +329,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, SchemaPtr schema) {
+std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto buffer = tbuffer.getBuffer<char>();
@@ -352,7 +353,7 @@ std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbu
     return ss.str();
 }
 
-void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr) {
+void UtilityFunctions::findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
     // Get the first occurrence
     uint64_t pos = data.find(toSearch);
     // Repeat till end is reached
@@ -364,14 +365,14 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch
     }
 }
 
-const std::string UtilityFunctions::replaceFirst(std::string origin, std::string search, std::string replace) {
+const std::string UtilityFunctions::replaceFirst(std::string origin, const std::string& search, const std::string& replace) {
     if (origin.find(search) != std::string::npos) {
         return origin.replace(origin.find(search), search.size(), replace);
     }
     return origin;
 }
 
-const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
+const std::string UtilityFunctions::toCSVString(const SchemaPtr& schema) {
     std::stringstream ss;
     for (auto& f : schema->fields) {
         ss << f->toString() << ",";
@@ -423,7 +424,7 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
 
     web::json::value topologyJson{};
 
-    std::deque<TopologyNodePtr> parentToAdd{root};
+    std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
     std::deque<TopologyNodePtr> childToAdd;
 
     std::vector<web::json::value> nodes = {};
@@ -465,7 +466,7 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     return topologyJson;
 }
 
-bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan,
+bool UtilityFunctions::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                                         std::vector<std::map<std::string, std::any>> properties) {
     // count the number of operators in the query
     auto queryPlanIterator = QueryPlanIterator(queryPlan);

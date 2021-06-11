@@ -27,11 +27,11 @@ FieldAccessExpressionNode::FieldAccessExpressionNode(FieldAccessExpressionNode* 
     : ExpressionNode(other), fieldName(other->getFieldName()){};
 
 ExpressionNodePtr FieldAccessExpressionNode::create(DataTypePtr stamp, std::string fieldName) {
-    return std::make_shared<FieldAccessExpressionNode>(FieldAccessExpressionNode(stamp, fieldName));
+    return std::make_shared<FieldAccessExpressionNode>(FieldAccessExpressionNode(std::move(stamp), std::move(fieldName)));
 }
 
 ExpressionNodePtr FieldAccessExpressionNode::create(std::string fieldName) {
-    return create(DataTypeFactory::createUndefined(), fieldName);
+    return create(DataTypeFactory::createUndefined(), std::move(fieldName));
 }
 
 bool FieldAccessExpressionNode::equal(const NodePtr rhs) const {
@@ -44,7 +44,7 @@ bool FieldAccessExpressionNode::equal(const NodePtr rhs) const {
 
 const std::string FieldAccessExpressionNode::getFieldName() { return fieldName; }
 
-void FieldAccessExpressionNode::updateFieldName(std::string fieldName) { this->fieldName = fieldName; }
+void FieldAccessExpressionNode::updateFieldName(std::string fieldName) { this->fieldName = std::move(fieldName); }
 
 const std::string FieldAccessExpressionNode::toString() const {
     return "FieldAccessNode(" + fieldName + "[" + stamp->toString() + "])";

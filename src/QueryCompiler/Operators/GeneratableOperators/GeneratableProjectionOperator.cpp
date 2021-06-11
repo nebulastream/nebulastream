@@ -25,19 +25,19 @@ GeneratableProjectionOperator::GeneratableProjectionOperator(OperatorId id,
                                                              SchemaPtr inputSchema,
                                                              SchemaPtr outputSchema,
                                                              std::vector<ExpressionNodePtr> expressions)
-    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), expressions(std::move(expressions)) {}
+    : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)), expressions(std::move(expressions)) {}
 
 GeneratableOperatorPtr GeneratableProjectionOperator::create(OperatorId id,
                                                              SchemaPtr inputSchema,
                                                              SchemaPtr outputSchema,
                                                              std::vector<ExpressionNodePtr> expressions) {
     return std::make_shared<GeneratableProjectionOperator>(
-        GeneratableProjectionOperator(id, inputSchema, outputSchema, expressions));
+        GeneratableProjectionOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(expressions)));
 }
 
 GeneratableOperatorPtr
 GeneratableProjectionOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, expressions);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expressions));
 }
 
 void GeneratableProjectionOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

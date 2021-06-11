@@ -17,14 +17,15 @@
 #ifdef ENABLE_MQTT_BUILD
 #include <Util/Logger.hpp>
 #include <Util/MQTTClientWrapper.hpp>
+#include <utility>
 
 namespace NES {
 const std::chrono::duration<int64_t> MAX_WAIT_FOR_BROKER_CONNECT = std::chrono::seconds(20);
 MQTTClientWrapper::MQTTClientWrapper(bool useAsyncClient,
-                                     const std::string address,
-                                     const std::string clientId,
+                                     const std::string& address,
+                                     const std::string& clientId,
                                      uint64_t maxBufferedMSGs,
-                                     std::string topic,
+                                     const std::string& topic,
                                      int qualityOfService) {
     this->useAsyncClient = useAsyncClient;
     this->topic = topic;
@@ -43,7 +44,7 @@ mqtt::client_ptr MQTTClientWrapper::getSyncClient() { return useAsyncClient ? nu
 
 void MQTTClientWrapper::connect(mqtt::connect_options connOpts) {
     if (useAsyncClient) {
-        asyncClient->connect(connOpts)->wait_for(MAX_WAIT_FOR_BROKER_CONNECT);
+        asyncClient->connect(std::move(connOpts))->wait_for(MAX_WAIT_FOR_BROKER_CONNECT);
     } else {
         syncClient->connect();
     }

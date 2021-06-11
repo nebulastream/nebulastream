@@ -46,6 +46,7 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <gtest/gtest.h>
 #include <random>
+#include <utility>
 
 using namespace std;
 
@@ -82,7 +83,7 @@ class TestSink : public SinkMedium {
   public:
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
-    TestSink(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
+    TestSink(const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0){};
 
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override {
@@ -112,7 +113,7 @@ class TestSink : public SinkMedium {
     std::promise<uint64_t> completed;
 };
 
-void fillBuffer(TupleBuffer& buf, NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr memoryLayout) {
+void fillBuffer(TupleBuffer& buf, const NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout) {
 
     auto bindedRowLayout = memoryLayout->bind(buf);
     auto recordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
@@ -635,7 +636,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                 networkSink->reconfigure(rt, workerContext);
                 std::mt19937 rnd;
                 std::uniform_int_distribution gen(50'000, 100'000);
-                auto buffMgr = bMgr;
+                const auto& buffMgr = bMgr;
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = buffMgr->getBufferBlocking();
                     for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
@@ -726,7 +727,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<NodeEngine::BufferManager>(bufferSize, numBuffers);
         auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
-        auto networkManagerCreator = [=](NodeEngine::NodeEnginePtr engine) {
+        auto networkManagerCreator = [=](const NodeEngine::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(hostname,
                                                    port,
                                                    Network::ExchangeProtocol(partitionManager, engine),
@@ -893,10 +894,10 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     auto networkSourceDescriptor1 = std::make_shared<TestUtils::TestSourceDescriptor>(
         schema,
         [&](OperatorId,
-            SourceDescriptorPtr,
-            NodeEngine::NodeEnginePtr,
+            const SourceDescriptorPtr&,
+            const NodeEngine::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) -> DataSourcePtr {
             return std::make_shared<NetworkSource>(schema,
                                                    nodeEngine->getBufferManager(),
                                                    nodeEngine->getQueryManager(),
@@ -924,8 +925,8 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         schema,
         [&](OperatorId,
-            SourceDescriptorPtr,
-            NodeEngine::NodeEnginePtr,
+            const SourceDescriptorPtr&,
+            const NodeEngine::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(schema,
@@ -933,7 +934,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                                  nodeEngine->getQueryManager(),
                                                                  1,
                                                                  numSourceLocalBuffers,
-                                                                 successors);
+                                                                 std::move(successors));
         });
 
     auto networkSink = std::make_shared<NetworkSink>(schema,

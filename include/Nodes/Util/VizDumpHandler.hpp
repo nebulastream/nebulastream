@@ -73,7 +73,7 @@ class VizNode {
     /**
      * @brief Add properties to the node
      */
-    void addProperty(std::tuple<std::string, std::string>);
+    void addProperty(const std::tuple<std::string, std::string>&);
 
     /**
      * @brief Serialize the edge to the nezviz format.
@@ -128,7 +128,7 @@ class VizDumpHandler : public DumpHandler {
      */
     explicit VizDumpHandler(std::string rootDir);
 
-    void dump(const NodePtr node) override;
+    void dump(NodePtr node) override;
 
     /**
      * @brief Dump a query plan with a specific context and scope.
@@ -147,9 +147,9 @@ class VizDumpHandler : public DumpHandler {
     void dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr pipelinePlan) override;
 
   private:
-    static void extractNodeProperties(detail::VizNode& node, OperatorNodePtr operatorNode);
-    void dump(QueryPlanPtr queryPlan, std::string parent, detail::VizGraph& graph);
-    void writeToFile(std::string scope, std::string name, std::string content);
+    static void extractNodeProperties(detail::VizNode& node, const OperatorNodePtr& operatorNode);
+    void dump(QueryPlanPtr queryPlan, const std::string& parent, detail::VizGraph& graph);
+    void writeToFile(const std::string& scope, const std::string& name, const std::string& content);
     std::string rootDir;
 };
 

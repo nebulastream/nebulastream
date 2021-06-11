@@ -23,13 +23,13 @@ namespace NES {
 
 AttributeField::AttributeField(std::string name, DataTypePtr dataType) : name(std::move(name)), dataType(std::move(dataType)) {}
 
-AttributeFieldPtr AttributeField::create(std::string name, DataTypePtr dataType) {
+AttributeFieldPtr AttributeField::create(const std::string& name, const DataTypePtr& dataType) {
     return std::make_shared<AttributeField>(name, dataType);
 }
 
 std::string AttributeField::getName() const { return name; }
 
-void AttributeField::setName(std::string newName) { this->name = newName; }
+void AttributeField::setName(std::string newName) { this->name = std::move(newName); }
 
 DataTypePtr AttributeField::getDataType() const { return dataType; }
 
@@ -39,7 +39,7 @@ const std::string AttributeField::toString() const {
     return ss.str();
 }
 
-bool AttributeField::isEqual(AttributeFieldPtr attr) {
+bool AttributeField::isEqual(const AttributeFieldPtr& attr) {
     if (!attr) {
         return false;
     }

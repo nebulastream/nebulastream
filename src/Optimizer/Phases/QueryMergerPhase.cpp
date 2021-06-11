@@ -19,11 +19,12 @@
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
 QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule) {
-    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(context, queryMergerRule));
+    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(std::move(context), queryMergerRule));
 }
 
 QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRuleName) {
@@ -33,7 +34,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
             queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
             break;
         case QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule:
-            queryMergerRule = Z3SignatureBasedCompleteQueryMergerRule::create(context);
+            queryMergerRule = Z3SignatureBasedCompleteQueryMergerRule::create(std::move(context));
             break;
         case QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule:
         case QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule:
@@ -47,7 +48,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
 
 bool QueryMergerPhase::execute(GlobalQueryPlanPtr globalQueryPlan) {
     NES_DEBUG("QueryMergerPhase: Executing query merger phase.");
-    return queryMergerRule->apply(globalQueryPlan);
+    return queryMergerRule->apply(std::move(globalQueryPlan));
 }
 
 }// namespace NES::Optimizer

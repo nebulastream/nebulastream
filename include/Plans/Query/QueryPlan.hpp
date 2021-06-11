@@ -84,7 +84,7 @@ class QueryPlan {
      * @brief Appends an operator to the query plan and make the new operator as root.
      * @param operatorNode : new operator
      */
-    void appendOperatorAsNewRoot(OperatorNodePtr operatorNode);
+    void appendOperatorAsNewRoot(const OperatorNodePtr& operatorNode);
 
     /**
      * @brief Pre-pend the pre-existing operator to the leaf of the query plan.
@@ -93,7 +93,7 @@ class QueryPlan {
      * Note: this operation will add the pre-existing operator without assigning it a new Id.
      * @param operatorNode
      */
-    void prependOperatorAsLeafNode(OperatorNodePtr operatorNode);
+    void prependOperatorAsLeafNode(const OperatorNodePtr& operatorNode);
 
     /**
      * @brief Returns string representation of the query.
@@ -112,7 +112,7 @@ class QueryPlan {
      * Note: improves this when we have to due with multi-root use case.
      * @param root
      */
-    void addRootOperator(OperatorNodePtr root);
+    void addRootOperator(const OperatorNodePtr& root);
 
     /**
      * remove the an operator from the root operator list.
@@ -126,14 +126,14 @@ class QueryPlan {
     * @param newOperator
     * @return true if operator was replaced.
     */
-    bool replaceOperator(OperatorNodePtr oldOperator, OperatorNodePtr newOperator);
+    bool replaceOperator(const OperatorNodePtr& oldOperator, const OperatorNodePtr& newOperator);
 
     /**
      * replaces a particular root operator with a new one.
      * @param root
      * @return true if operator was replaced.
      */
-    bool replaceRootOperator(OperatorNodePtr oldRoot, OperatorNodePtr newRoot);
+    bool replaceRootOperator(const OperatorNodePtr& oldRoot, const OperatorNodePtr& newRoot);
 
     /**
      * @brief Get all the operators of a specific type
@@ -147,7 +147,7 @@ class QueryPlan {
         // Maintain a list of visited nodes as there are multiple root nodes
         std::set<uint64_t> visitedOpIds;
         NES_TRACE("QueryPlan: Iterate over all root nodes to find the operator.");
-        for (auto rootOperator : rootOperators) {
+        for (const auto& rootOperator : rootOperators) {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
             for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
                 auto visitingOp = (*itr)->as<OperatorNode>();
@@ -251,7 +251,7 @@ class QueryPlan {
      * @param operatorToRemove:
      * @return true if successful else false
      */
-    bool removeOperatorFromPlan(OperatorNodePtr operatorToRemove);
+    bool removeOperatorFromPlan(const OperatorNodePtr& operatorToRemove);
 
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;

@@ -48,7 +48,7 @@ class MonitoringManager {
      * @param monitoringPlan
      * @return True, if successful, else false
      */
-    bool registerRemoteMonitoringPlans(std::vector<uint64_t> nodeIds, MonitoringPlanPtr monitoringPlan);
+    bool registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, const MonitoringPlanPtr& monitoringPlan);
 
     /**
      * @brief Get the monitoring data for a given node.

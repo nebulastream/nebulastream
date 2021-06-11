@@ -62,7 +62,7 @@ class PipelineQueryPlanIterator {
         OperatorPipelinePtr operator*();
 
       private:
-        explicit iterator(PipelineQueryPlanPtr current);
+        explicit iterator(const PipelineQueryPlanPtr& current);
         explicit iterator();
         std::stack<OperatorPipelinePtr> workStack;
     };

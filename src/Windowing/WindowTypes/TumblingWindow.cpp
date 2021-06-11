@@ -24,10 +24,10 @@
 namespace NES::Windowing {
 
 TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
-    : WindowType(timeCharacteristic), size(std::move(size)) {}
+    : WindowType(std::move(timeCharacteristic)), size(std::move(size)) {}
 
 WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size) {
-    return std::make_shared<TumblingWindow>(TumblingWindow(timeCharacteristic, size));
+    return std::make_shared<TumblingWindow>(TumblingWindow(std::move(timeCharacteristic), std::move(size)));
 }
 
 uint64_t TumblingWindow::calculateNextWindowEnd(uint64_t currentTs) const {

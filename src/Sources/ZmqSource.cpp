@@ -22,6 +22,7 @@
 #include <cstring>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <zmq.hpp>
 
 namespace NES {
@@ -35,7 +36,7 @@ ZmqSource::ZmqSource(SchemaPtr schema,
                      uint64_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, successors), host(host),
+    : DataSource(std::move(schema), std::move(bufferManager), std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode, std::move(successors)), host(host),
       port(port), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
     NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
 }

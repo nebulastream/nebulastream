@@ -26,7 +26,7 @@ namespace NES {
 
 SinkMediumTypes FileSink::getSinkMediumType() { return FILE_SINK; }
 
-FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append, QuerySubPlanId parentPlanId)
+FileSink::FileSink(SinkFormatPtr format, const std::string& filePath, bool append, QuerySubPlanId parentPlanId)
     : SinkMedium(std::move(format), parentPlanId) {
     this->filePath = filePath;
     this->append = append;

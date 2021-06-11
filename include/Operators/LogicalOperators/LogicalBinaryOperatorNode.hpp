@@ -47,7 +47,7 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
     std::vector<OperatorNodePtr> getRightOperators();
 
   private:
-    std::vector<OperatorNodePtr> getOperatorsBySchema(SchemaPtr schema);
+    std::vector<OperatorNodePtr> getOperatorsBySchema(const SchemaPtr& schema);
 };
 }// namespace NES
 

@@ -28,7 +28,7 @@ namespace NES::NodeEngine {
 
 PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(std::move(schemaPtr)){};
 
-PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(SchemaPtr schema) { return std::make_shared<PhysicalSchema>(schema); }
+PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(const SchemaPtr& schema) { return std::make_shared<PhysicalSchema>(schema); }
 
 PhysicalFieldPtr PhysicalSchema::createPhysicalField(uint64_t fieldIndex, uint64_t bufferOffset) {
     NES_ASSERT(validFieldIndex(fieldIndex), "field index invalid");

@@ -55,14 +55,14 @@ const ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, Work
     return ExecutionResult::Error;
 }
 
-bool ExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {
+bool ExecutablePipeline::setup(const QueryManagerPtr&, const BufferManagerPtr&) {
     return executablePipelineStage->setup(*pipelineContext.get()) == 0;
 }
 
-bool ExecutablePipeline::start(StateManagerPtr stateManager) {
+bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
     auto expected = PipelineStatus::PipelineCreated;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineRunning)) {
-        for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
+        for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
             operatorHandler->start(pipelineContext, stateManager);
         }
         executablePipelineStage->start(*pipelineContext.get());
@@ -74,7 +74,7 @@ bool ExecutablePipeline::start(StateManagerPtr stateManager) {
 bool ExecutablePipeline::stop() {
     auto expected = PipelineStatus::PipelineRunning;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineStopped)) {
-        for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
+        for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
             operatorHandler->stop(pipelineContext);
         }
         auto ret = executablePipelineStage->stop(*pipelineContext.get()) == 0;
@@ -95,10 +95,10 @@ bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
 ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
                                                  QuerySubPlanId querySubPlanId,
-                                                 PipelineExecutionContextPtr pipelineExecutionContext,
-                                                 ExecutablePipelineStagePtr executablePipelineStage,
+                                                 const PipelineExecutionContextPtr& pipelineExecutionContext,
+                                                 const ExecutablePipelineStagePtr& executablePipelineStage,
                                                  uint32_t numOfProducingPipelines,
-                                                 std::vector<SuccessorExecutablePipeline> successorPipelines,
+                                                 const std::vector<SuccessorExecutablePipeline>& successorPipelines,
                                                  bool reconfiguration) {
     NES_ASSERT2_FMT(executablePipelineStage != nullptr,
                     "Executable pipelinestage is null for " << pipelineId
@@ -121,7 +121,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
     NES_ASSERT2_FMT(isRunning(), "Going to reconfigure a non-running pipeline!");
     NES_DEBUG("Going to reconfigure pipeline belonging to query id: " << querySubPlanId << " stage id: " << pipelineId);
     Reconfigurable::reconfigure(task, context);
-    for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
+    for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
         operatorHandler->reconfigure(task, context);
     }
     for (auto successorPipeline : successorPipelines) {
@@ -131,7 +131,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
     }
 }
 
-void ExecutablePipeline::addSuccessor(SuccessorExecutablePipeline successorPipeline) {
+void ExecutablePipeline::addSuccessor(const SuccessorExecutablePipeline& successorPipeline) {
     NES_ASSERT2_FMT(!isRunning(), "It is not allowed to add pipelines during execution!");
     successorPipelines.emplace_back(successorPipeline);
 }
@@ -149,7 +149,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
             if (prevProducerCounter == 1) {//all producers sent EOS
                 NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: " << querySubPlanId << " stage id: "
                                                                                            << pipelineId << " reached prev=1");
-                for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
+                for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->postReconfigurationCallback(task);
                 }
                 stop();

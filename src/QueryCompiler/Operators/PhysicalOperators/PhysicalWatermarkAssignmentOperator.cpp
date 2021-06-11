@@ -23,13 +23,13 @@ PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       watermarkStrategyDescriptor(std::move(watermarkStrategyDescriptor)) {}
 PhysicalOperatorPtr
 PhysicalWatermarkAssignmentOperator::create(OperatorId id,
-                                            SchemaPtr inputSchema,
-                                            SchemaPtr outputSchema,
-                                            Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
+                                            const SchemaPtr& inputSchema,
+                                            const SchemaPtr& outputSchema,
+                                            const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor) {
     return std::make_shared<PhysicalWatermarkAssignmentOperator>(id, inputSchema, outputSchema, watermarkStrategyDescriptor);
 }
 
@@ -41,7 +41,7 @@ PhysicalOperatorPtr
 PhysicalWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
                                             SchemaPtr outputSchema,
                                             Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, watermarkStrategyDescriptor);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
 }
 
 const std::string PhysicalWatermarkAssignmentOperator::toString() const { return "PhysicalWatermarkAssignmentOperator"; }

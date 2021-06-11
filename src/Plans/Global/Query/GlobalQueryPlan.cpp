@@ -28,7 +28,7 @@ GlobalQueryPlan::GlobalQueryPlan() = default;
 
 GlobalQueryPlanPtr GlobalQueryPlan::create() { return std::make_shared<GlobalQueryPlan>(GlobalQueryPlan()); }
 
-bool GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
+bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     QueryId inputQueryPlanId = queryPlan->getQueryId();
     if (inputQueryPlanId == INVALID_QUERY_ID) {
         throw Exception("GlobalQueryPlan: Can not add query plan with invalid id.");
@@ -80,7 +80,7 @@ SharedQueryId GlobalQueryPlan::getSharedQueryIdForQuery(QueryId queryId) {
     return INVALID_SHARED_QUERY_ID;
 }
 
-bool GlobalQueryPlan::updateSharedQueryMetadata(SharedQueryMetaDataPtr sharedQueryMetaData) {
+bool GlobalQueryPlan::updateSharedQueryMetadata(const SharedQueryMetaDataPtr& sharedQueryMetaData) {
     NES_INFO("GlobalQueryPlan: updating the shared query metadata information");
     auto sharedQueryId = sharedQueryMetaData->getSharedQueryId();
     sharedQueryIdToMetaDataMap[sharedQueryId] = sharedQueryMetaData;

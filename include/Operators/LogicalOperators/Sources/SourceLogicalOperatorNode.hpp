@@ -26,7 +26,7 @@ namespace NES {
  */
 class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    explicit SourceLogicalOperatorNode(SourceDescriptorPtr sourceDescriptor, OperatorId id);
+    explicit SourceLogicalOperatorNode(const SourceDescriptorPtr& sourceDescriptor, OperatorId id);
 
     /**
      * @brief Returns the source descriptor of the source operators.
@@ -47,7 +47,7 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode {
      */
     bool inferSchema() override;
 
-    bool equal(const NodePtr rhs) const override;
+    bool equal(NodePtr rhs) const override;
     void inferStringSignature() override;
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;

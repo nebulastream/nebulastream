@@ -63,9 +63,9 @@ static Yaml::Node g_NoneNode;
 
 // Global function definitions. Implemented at end of this source file.
 static std::string ExceptionMessage(const std::string& message, ReaderLine& line);
-static std::string ExceptionMessage(const std::string& message, ReaderLine& line, const size_t errorPos);
-static std::string ExceptionMessage(const std::string& message, const size_t errorLine, const size_t errorPos);
-static std::string ExceptionMessage(const std::string& message, const size_t errorLine, const std::string& data);
+static std::string ExceptionMessage(const std::string& message, ReaderLine& line, size_t errorPos);
+static std::string ExceptionMessage(const std::string& message, size_t errorLine, size_t errorPos);
+static std::string ExceptionMessage(const std::string& message, size_t errorLine, const std::string& data);
 
 static bool FindQuote(const std::string& input, size_t& start, size_t& end, size_t searchPos = 0);
 static size_t FindNotCited(const std::string& input, char token, size_t& preQuoteCount);
@@ -97,12 +97,12 @@ class TypeImp {
     [[nodiscard]] virtual const std::string& GetData() const = 0;
     virtual bool SetData(const std::string& data) = 0;
     [[nodiscard]] virtual size_t GetSize() const = 0;
-    virtual Node* GetNode(const size_t index) = 0;
+    virtual Node* GetNode(size_t index) = 0;
     virtual Node* GetNode(const std::string& key) = 0;
-    virtual Node* Insert(const size_t index) = 0;
+    virtual Node* Insert(size_t index) = 0;
     virtual Node* PushFront() = 0;
     virtual Node* PushBack() = 0;
-    virtual void Erase(const size_t index) = 0;
+    virtual void Erase(size_t index) = 0;
     virtual void Erase(const std::string& key) = 0;
 };
 

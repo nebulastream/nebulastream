@@ -20,10 +20,11 @@
 #include <Util/UtilityFunctions.hpp>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace NES {
 PrintSink::PrintSink(SinkFormatPtr format, QuerySubPlanId parentPlanId, std::ostream& pOutputStream)
-    : SinkMedium(format, parentPlanId), outputStream(pOutputStream) {}
+    : SinkMedium(std::move(format), parentPlanId), outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;
 

@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 #include <map>
+#include <utility>
 #include <vector>
 
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
@@ -84,15 +85,15 @@ class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExe
     MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
                                    NodeEngine::BufferManagerPtr bufferManager,
                                    NodeEngine::Execution::OperatorHandlerPtr operatorHandler)
-        : MockedPipelineExecutionContext(queryManager,
-                                         bufferManager,
-                                         std::vector<NodeEngine::Execution::OperatorHandlerPtr>{operatorHandler}) {}
+        : MockedPipelineExecutionContext(std::move(queryManager),
+                                         std::move(bufferManager),
+                                         std::vector<NodeEngine::Execution::OperatorHandlerPtr>{std::move(operatorHandler)}) {}
     MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
                                    NodeEngine::BufferManagerPtr bufferManager,
                                    std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
             0,
-            queryManager,
+            std::move(queryManager),
             std::move(bufferManager),
             [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
@@ -186,8 +187,8 @@ TEST_F(WindowManagerTest, testCheckSlice) {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType, class sumType>
 std::shared_ptr<Windowing::AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>
-createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                    SchemaPtr resultSchema,
+createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+                    const SchemaPtr& resultSchema,
                     PartialAggregateType partialAggregateInitialValue) {
 
     auto aggregation = sumType::create();

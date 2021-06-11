@@ -57,9 +57,9 @@ std::string detail::VizGraph::serialize() {
 detail::VizNode::VizNode(std::string id, std::string label, std::string parent)
     : id(std::move(id)), label(std::move(label)), parent(std::move(parent)) {}
 
-void detail::VizNode::addProperty(std::tuple<std::string, std::string> item) { properties.emplace_back(item); }
+void detail::VizNode::addProperty(const std::tuple<std::string, std::string>& item) { properties.emplace_back(item); }
 
-detail::VizNode::VizNode(std::string id, std::string label) : VizNode(id, label, "") {}
+detail::VizNode::VizNode(std::string id, std::string label) : VizNode(std::move(id), std::move(label), "") {}
 
 std::string detail::VizNode::serialize() {
     std::stringstream ss;
@@ -121,14 +121,14 @@ void VizDumpHandler::dump(std::string context, std::string scope, QueryPlanPtr q
     writeToFile(context, scope, graph.serialize());
 }
 
-void VizDumpHandler::dump(QueryPlanPtr queryPlan, std::string parent, detail::VizGraph& graph) {
-    auto queryPlanIter = QueryPlanIterator(queryPlan);
+void VizDumpHandler::dump(QueryPlanPtr queryPlan, const std::string& parent, detail::VizGraph& graph) {
+    auto queryPlanIter = QueryPlanIterator(std::move(queryPlan));
     for (auto op : queryPlanIter) {
         auto operatorNode = op->as<OperatorNode>();
         auto vizNode = detail::VizNode(std::to_string(operatorNode->getId()), op->toString(), parent);
         extractNodeProperties(vizNode, operatorNode);
         graph.nodes.emplace_back(vizNode);
-        for (auto child : operatorNode->getChildren()) {
+        for (const auto& child : operatorNode->getChildren()) {
             auto childOperator = child->as<OperatorNode>();
             auto edgeId = std::to_string(operatorNode->getId()) + "_" + std::to_string(childOperator->getId());
             auto vizEdge = detail::VizEdge(edgeId, std::to_string(operatorNode->getId()), std::to_string(childOperator->getId()));
@@ -141,12 +141,12 @@ void VizDumpHandler::dump(std::string scope, std::string name, QueryCompilation:
     NES_DEBUG("Dump query plan: " << pipelinePlan->getQueryId() << " : " << pipelinePlan->getQuerySubPlanId() << " for scope "
                                   << scope);
     auto graph = detail::VizGraph("graph");
-    for (auto pipeline : pipelinePlan->getPipelines()) {
+    for (const auto& pipeline : pipelinePlan->getPipelines()) {
         auto currentId = "p_" + std::to_string(pipeline->getPipelineId());
         auto vizNode = detail::VizNode(currentId, "Pipeline");
         graph.nodes.emplace_back(vizNode);
         dump(pipeline->getQueryPlan(), currentId, graph);
-        for (auto successor : pipeline->getSuccessors()) {
+        for (const auto& successor : pipeline->getSuccessors()) {
             auto successorId = "p_" + std::to_string(successor->getPipelineId());
             auto edgeId = currentId + "_" + successorId;
             auto vizEdge = detail::VizEdge(edgeId, currentId, successorId);
@@ -156,7 +156,7 @@ void VizDumpHandler::dump(std::string scope, std::string name, QueryCompilation:
     writeToFile(scope, name, graph.serialize());
 }
 
-void VizDumpHandler::writeToFile(std::string scope, std::string name, std::string content) {
+void VizDumpHandler::writeToFile(const std::string& scope, const std::string& name, const std::string& content) {
     std::ofstream outputFile;
     auto scopeDir = rootDir + std::filesystem::path::preferred_separator + scope;
     auto fileName = scopeDir + std::filesystem::path::preferred_separator + name + ".nesviz";
@@ -169,7 +169,7 @@ void VizDumpHandler::writeToFile(std::string scope, std::string name, std::strin
     outputFile << content;
     outputFile.close();
 }
-void VizDumpHandler::extractNodeProperties(detail::VizNode& node, OperatorNodePtr operatorNode) {
+void VizDumpHandler::extractNodeProperties(detail::VizNode& node, const OperatorNodePtr& operatorNode) {
     //node.addProperty({"NodeSourceLocation", operatorNode->getNodeSourceLocation()});
     if (operatorNode->instanceOf<QueryCompilation::ExecutableOperator>()) {
         auto executableOperator = operatorNode->as<QueryCompilation::ExecutableOperator>();

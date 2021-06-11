@@ -25,7 +25,7 @@ TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort
     : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0) {}
 
 TopologyNodePtr
-TopologyNode::create(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {
+TopologyNode::create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {
     return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources);
 }
 
@@ -35,7 +35,7 @@ uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 
 uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
-void TopologyNode::setNodeStats(NodeStatsPtr nodeStats) { this->nodeStats = nodeStats; }
+void TopologyNode::setNodeStats(NodeStatsPtr nodeStats) { this->nodeStats = std::move(nodeStats); }
 
 NodeStatsPtr TopologyNode::getNodeStats() { return nodeStats; }
 
@@ -72,7 +72,7 @@ const std::string TopologyNode::toString() const {
 
 bool TopologyNode::containAsParent(NodePtr node) {
     std::vector<NodePtr> ancestors = this->getAndFlattenAllAncestors();
-    auto found = std::find_if(ancestors.begin(), ancestors.end(), [node](NodePtr familyMember) {
+    auto found = std::find_if(ancestors.begin(), ancestors.end(), [node](const NodePtr& familyMember) {
         return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
     });
     return found != ancestors.end();
@@ -80,15 +80,15 @@ bool TopologyNode::containAsParent(NodePtr node) {
 
 bool TopologyNode::containAsChild(NodePtr node) {
     std::vector<NodePtr> children = this->getAndFlattenAllChildren(false);
-    auto found = std::find_if(children.begin(), children.end(), [node](NodePtr familyMember) {
+    auto found = std::find_if(children.begin(), children.end(), [node](const NodePtr& familyMember) {
         return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
     });
     return found != children.end();
 }
 
-void TopologyNode::addNodeProperty(std::string key, std::any value) { nodeProperties.insert(std::make_pair(key, value)); }
+void TopologyNode::addNodeProperty(const std::string& key, const std::any& value) { nodeProperties.insert(std::make_pair(key, value)); }
 
-std::any TopologyNode::getNodeProperty(std::string key) {
+std::any TopologyNode::getNodeProperty(const std::string& key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {
         NES_ERROR("TopologyNode: Property '" << key << "'does not exist");
         NES_THROW_RUNTIME_ERROR("TopologyNode: Property '" << key << "'does not exist");
@@ -97,7 +97,7 @@ std::any TopologyNode::getNodeProperty(std::string key) {
     }
 }
 
-bool TopologyNode::removeNodeProperty(std::string key) {
+bool TopologyNode::removeNodeProperty(const std::string& key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {
         NES_ERROR("TopologyNode: Property '" << key << "' does not exist");
         return false;
@@ -105,10 +105,10 @@ bool TopologyNode::removeNodeProperty(std::string key) {
     nodeProperties.erase(key);
     return true;
 }
-void TopologyNode::addLinkProperty(TopologyNodePtr linkedNode, LinkPropertyPtr topologyLink) {
+void TopologyNode::addLinkProperty(const TopologyNodePtr& linkedNode, const LinkPropertyPtr& topologyLink) {
     linkProperties.insert(std::make_pair(linkedNode, topologyLink));
 }
-LinkPropertyPtr TopologyNode::getLinkProperty(TopologyNodePtr linkedNode) {
+LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode) == linkProperties.end()) {
         NES_ERROR("TopologyNode: Link property with node '" << linkedNode->getId() << "' does not exist");
         NES_THROW_RUNTIME_ERROR("TopologyNode: Link property to node with id='" << linkedNode->getId() << "' does not exist");
@@ -116,7 +116,7 @@ LinkPropertyPtr TopologyNode::getLinkProperty(TopologyNodePtr linkedNode) {
         return linkProperties.at(linkedNode);
     }
 }
-bool TopologyNode::removeLinkProperty(TopologyNodePtr linkedNode) {
+bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode) == linkProperties.end()) {
         NES_ERROR("TopologyNode: Link property to node with id='" << linkedNode << "' does not exist");
         return false;

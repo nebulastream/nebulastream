@@ -15,13 +15,14 @@
 */
 
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableOperator::GeneratableOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema)
     : OperatorNode(id), UnaryOperatorNode(id) {
-    UnaryOperatorNode::setInputSchema(inputSchema);
-    UnaryOperatorNode::setOutputSchema(outputSchema);
+    UnaryOperatorNode::setInputSchema(std::move(inputSchema));
+    UnaryOperatorNode::setOutputSchema(std::move(outputSchema));
 }
 
 void GeneratableOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}

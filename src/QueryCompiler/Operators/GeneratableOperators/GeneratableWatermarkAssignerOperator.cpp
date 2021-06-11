@@ -30,7 +30,7 @@ GeneratableOperatorPtr
 GeneratableWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, watermarkStrategyDescriptor);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
 }
 
 GeneratableOperatorPtr
@@ -39,7 +39,7 @@ GeneratableWatermarkAssignmentOperator::create(OperatorId id,
                                                SchemaPtr outputSchema,
                                                Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     return std::make_shared<GeneratableWatermarkAssignmentOperator>(
-        GeneratableWatermarkAssignmentOperator(id, inputSchema, outputSchema, watermarkStrategyDescriptor));
+        GeneratableWatermarkAssignmentOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor)));
 }
 
 GeneratableWatermarkAssignmentOperator::GeneratableWatermarkAssignmentOperator(
@@ -47,7 +47,7 @@ GeneratableWatermarkAssignmentOperator::GeneratableWatermarkAssignmentOperator(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
-    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema),
+    : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       watermarkStrategyDescriptor(std::move(watermarkStrategyDescriptor)) {}
 
 void GeneratableWatermarkAssignmentOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

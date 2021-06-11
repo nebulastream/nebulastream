@@ -89,7 +89,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * respective map
      * @param QueryExecutionPlan to be deployed
      */
-    bool registerQuery(Execution::ExecutableQueryPlanPtr qep);
+    bool registerQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
     /**
      * @brief deregister a query by extracting sources, windows and sink and remove them
@@ -97,7 +97,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param QueryExecutionPlan to be deployed
      * @return bool indicating if register was successful
      */
-    bool deregisterQuery(Execution::ExecutableQueryPlanPtr qep);
+    bool deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
     /**
      * @brief process task from task queue
@@ -118,7 +118,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param Pointer to the tuple buffer containing the data
      * @param Pointer to the source at which the data arrived
      */
-    void addWork(const OperatorId sourceId, TupleBuffer& buf);
+    void addWork(OperatorId sourceId, TupleBuffer& buf);
 
     /**
      * @brief add work to the query manager, this methods is source-driven and is called
@@ -149,7 +149,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool startQuery(Execution::ExecutableQueryPlanPtr qep, StateManagerPtr stateManager);
+    bool startQuery(const Execution::ExecutableQueryPlanPtr& qep, StateManagerPtr stateManager);
 
     /**
      * @brief method to start a query
@@ -157,14 +157,14 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param graceful stop the query gracefully or not
      * @return bool indicating success
      */
-    bool stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful = false);
+    bool stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful = false);
 
     /**
     * @brief method to fail a query
     * @param qep of the query to fail
     * @return bool indicating success
     */
-    static bool failQuery(Execution::ExecutableQueryPlanPtr qep);
+    static bool failQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
     /**
      * @brief notify all waiting threads in getWork() to wake up and finish up
@@ -195,7 +195,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId,
-                                   ReconfigurationMessage reconfigurationMessage,
+                                   const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false);
 
     /**
@@ -204,7 +204,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param graceful hard or soft termination
      * @return true if it went through
      */
-    bool addEndOfStream(DataSourcePtr source, bool graceful = true) { return addEndOfStream(source->getOperatorId(), graceful); }
+    bool addEndOfStream(const DataSourcePtr& source, bool graceful = true) { return addEndOfStream(source->getOperatorId(), graceful); }
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source

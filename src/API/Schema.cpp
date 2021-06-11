@@ -24,6 +24,7 @@
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -33,7 +34,7 @@ SchemaPtr Schema::create() { return std::make_shared<Schema>(); }
 
 uint64_t Schema::getSize() const { return fields.size(); }
 
-Schema::Schema(const SchemaPtr query) { copyFields(query); }
+Schema::Schema(const SchemaPtr& query) { copyFields(query); }
 
 SchemaPtr Schema::copy() const { return std::make_shared<Schema>(*this); }
 
@@ -49,14 +50,14 @@ uint64_t Schema::getSchemaSizeInBytes() const {
     return size;
 }
 
-SchemaPtr Schema::copyFields(SchemaPtr otherSchema) {
-    for (AttributeFieldPtr attribute : otherSchema->fields) {
+SchemaPtr Schema::copyFields(const SchemaPtr& otherSchema) {
+    for (const AttributeFieldPtr& attribute : otherSchema->fields) {
         fields.push_back(attribute->copy());
     }
     return copy();
 }
 
-SchemaPtr Schema::addField(AttributeFieldPtr attribute) {
+SchemaPtr Schema::addField(const AttributeFieldPtr& attribute) {
     if (attribute) {
         fields.push_back(attribute->copy());
     }
@@ -67,9 +68,9 @@ SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
     return addField(name, DataTypeFactory::createType(type));
 }
 
-SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) { return addField(AttributeField::create(name, data)); }
+SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) { return addField(AttributeField::create(name, std::move(data))); }
 
-void Schema::removeField(AttributeFieldPtr field) {
+void Schema::removeField(const AttributeFieldPtr& field) {
     auto it = fields.begin();
     while (it != fields.end()) {
         if (it->get()->getName() == field->getName()) {
@@ -80,7 +81,7 @@ void Schema::removeField(AttributeFieldPtr field) {
     }
 }
 
-void Schema::replaceField(const std::string& name, DataTypePtr type) {
+void Schema::replaceField(const std::string& name, const DataTypePtr& type) {
     for (auto& field : fields) {
         if (field->getName() == name) {
             field = AttributeField::create(name, type);
@@ -107,7 +108,7 @@ AttributeFieldPtr Schema::get(uint32_t index) {
     throw std::invalid_argument("field id " + std::to_string(index) + " does not exist");
 }
 
-bool Schema::equals(SchemaPtr schema, bool considerOrder) {
+bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
     if (schema->fields.size() != fields.size()) {
         return false;
     }
@@ -119,7 +120,7 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
         }
         return true;
     }
-    for (AttributeFieldPtr fieldAttribute : fields) {
+    for (const AttributeFieldPtr& fieldAttribute : fields) {
         auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->getName());
         if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
             return false;
@@ -128,7 +129,7 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
     return true;
 }
 
-bool Schema::hasEqualTypes(SchemaPtr otherSchema) {
+bool Schema::hasEqualTypes(const SchemaPtr& otherSchema) {
     auto otherFields = otherSchema->fields;
     //Check if the number of filed are same or not
     if (otherFields.size() != fields.size()) {
@@ -162,7 +163,7 @@ const std::string Schema::getStreamNameQualifier() const {
 }
 
 AttributeFieldPtr createField(std::string name, BasicType type) {
-    return AttributeField::create(name, DataTypeFactory::createType(type));
+    return AttributeField::create(std::move(name), DataTypeFactory::createType(type));
 }
 
 std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() {

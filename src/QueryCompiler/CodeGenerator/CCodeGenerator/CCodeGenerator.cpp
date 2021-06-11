@@ -68,7 +68,7 @@
 namespace NES::QueryCompilation {
 CCodeGenerator::CCodeGenerator() : CodeGenerator(), compiler(Compiler::create()) {}
 
-StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string structName, SchemaPtr schema) {
+StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::string& structName, const SchemaPtr& schema) {
     /* struct definition for tuples */
     StructDeclaration structDeclarationTuple = StructDeclaration::create(structName, "");
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
@@ -85,14 +85,14 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string str
 }
 
 const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& structDeclaration,
-                                                            const AttributeFieldPtr field) {
+                                                            const AttributeFieldPtr& field) {
     if (structDeclaration.getField(field->getName())) {
         return std::make_shared<VariableDeclaration>(structDeclaration.getVariableDeclaration(field->getName()));
     }
     return VariableDeclarationPtr();
 }
 
-const std::string toString(void*, DataTypePtr) {
+const std::string toString(void*, const DataTypePtr&) {
     //     if(type->)
     return "";
 }
@@ -202,7 +202,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     }
 
     auto recordHandler = context->getRecordHandler();
-    for (AttributeFieldPtr field : inputSchema->fields) {
+    for (const AttributeFieldPtr& field : inputSchema->fields) {
         auto variable = getVariableDeclarationForField(code->structDeclarationInputTuples[0], field);
 
         auto fieldRefStatement =
@@ -218,7 +218,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
 
 bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> projectExpressions, PipelineContextPtr context) {
     auto recordHandler = context->getRecordHandler();
-    for (auto expression : projectExpressions) {
+    for (const auto& expression : projectExpressions) {
         if (expression->instanceOf<FieldRenameExpressionNode>()) {
             // if rename expression add the attribute to the record handler.
             auto fieldRenameExpression = expression->as<FieldRenameExpressionNode>();
@@ -316,7 +316,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
                                           .copy());
 
     auto recordHandler = context->getRecordHandler();
-    for (auto field : context->resultSchema->fields) {
+    for (const auto& field : context->resultSchema->fields) {
 
         auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
         if (!resultRecordFieldVariableDeclaration) {
@@ -454,7 +454,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
     return true;
 }
 
-void CCodeGenerator::generateCodeForWatermarkUpdaterWindow(PipelineContextPtr context, VariableDeclaration handler) {
+void CCodeGenerator::generateCodeForWatermarkUpdaterWindow(const PipelineContextPtr& context, const VariableDeclaration& handler) {
     auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateMaxTs");
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
@@ -463,7 +463,7 @@ void CCodeGenerator::generateCodeForWatermarkUpdaterWindow(PipelineContextPtr co
     context->code->cleanupStmts.push_back(updateAllWatermarkTsFunctionCallStatement.createCopy());
 }
 
-void CCodeGenerator::generateCodeForWatermarkUpdaterJoin(PipelineContextPtr context, VariableDeclaration handler, bool leftSide) {
+void CCodeGenerator::generateCodeForWatermarkUpdaterJoin(const PipelineContextPtr& context, const VariableDeclaration& handler, bool leftSide) {
     auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateMaxTs");
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
@@ -482,9 +482,9 @@ void CCodeGenerator::generateCodeForWatermarkUpdaterJoin(PipelineContextPtr cont
     context->code->cleanupStmts.push_back(updateAllWatermarkTsFunctionCallStatement.createCopy());
 }
 
-void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
-                                                   VariableDeclaration varDeclResultTuple,
-                                                   StructDeclaration structDeclarationResultTuple) {
+void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
+                                                   const VariableDeclaration& varDeclResultTuple,
+                                                   const StructDeclaration& structDeclarationResultTuple) {
     NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check");
 
     auto code = context->code;
@@ -1702,11 +1702,11 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
  * auto partialAggregateInitialValue = 0;
  * Windowing::ExecutableSumAggregation<int64_t>::create()
  */
-void CCodeGenerator::generateCodeForAggregationInitialization(BlockScopeStatementPtr setupScope,
-                                                              VariableDeclaration executableAggregation,
-                                                              VariableDeclaration partialAggregateInitialValue,
-                                                              GeneratableDataTypePtr aggregationInputType,
-                                                              Windowing::WindowAggregationDescriptorPtr aggregation) {
+void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeStatementPtr& setupScope,
+                                                              const VariableDeclaration& executableAggregation,
+                                                              const VariableDeclaration& partialAggregateInitialValue,
+                                                              const GeneratableDataTypePtr& aggregationInputType,
+                                                              const Windowing::WindowAggregationDescriptorPtr& aggregation) {
     FunctionCallStatementPtr createAggregateCall;
     auto tf = getTypeFactory();
 
@@ -1927,7 +1927,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
                              ->addParameter(code->varDeclarationExecutionContext)
                              ->returns(tf->createDataType(DataTypeFactory::createUInt32()));
 
-    for (auto setupScope : context->getSetupScopes()) {
+    for (const auto& setupScope : context->getSetupScopes()) {
         setupFunction->addStatement(setupScope);
     }
 
@@ -1939,7 +1939,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
                              ->addParameter(code->varDeclarationExecutionContext)
                              ->returns(tf->createDataType(DataTypeFactory::createUInt32()));
 
-    for (auto startScope : context->getStartScopes()) {
+    for (const auto& startScope : context->getStartScopes()) {
         startFunction->addStatement(startScope);
     }
 
@@ -2042,34 +2042,34 @@ NodeEngine::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(Pipeli
     return CompiledExecutablePipelineStage::create(compiledCode, arity, src);
 }
 
-BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(VariableDeclaration pipelineContext) {
+BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(const VariableDeclaration& pipelineContext) {
     auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
     return VarRef(pipelineContext).accessRef(allocateTupleBuffer);
 }
 
-BinaryOperatorStatement CCodeGenerator::getBufferSize(VariableDeclaration tupleBufferVariable) {
+BinaryOperatorStatement CCodeGenerator::getBufferSize(const VariableDeclaration& tupleBufferVariable) {
     auto getBufferSizeFunctionCall = FunctionCallStatement("getBufferSize");
     return VarRef(tupleBufferVariable).accessRef(getBufferSizeFunctionCall);
 }
 
-BinaryOperatorStatement CCodeGenerator::setNumberOfTuples(VariableDeclaration tupleBufferVariable,
-                                                          VariableDeclaration numberOfResultTuples) {
+BinaryOperatorStatement CCodeGenerator::setNumberOfTuples(const VariableDeclaration& tupleBufferVariable,
+                                                          const VariableDeclaration& numberOfResultTuples) {
     auto setNumberOfTupleFunctionCall = FunctionCallStatement("setNumberOfTuples");
     setNumberOfTupleFunctionCall.addParameter(VarRef(numberOfResultTuples));
     /* set number of output tuples to result buffer */
     return VarRef(tupleBufferVariable).accessRef(setNumberOfTupleFunctionCall);
 }
 
-BinaryOperatorStatement CCodeGenerator::setWatermark(VariableDeclaration tupleBufferVariable,
-                                                     VariableDeclaration inputBufferVariable) {
+BinaryOperatorStatement CCodeGenerator::setWatermark(const VariableDeclaration& tupleBufferVariable,
+                                                     const VariableDeclaration& inputBufferVariable) {
     auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
     setWatermarkFunctionCall.addParameter(getWatermark(inputBufferVariable));
     /* copy watermark */
     return VarRef(tupleBufferVariable).accessRef(setWatermarkFunctionCall);
 }
 
-BinaryOperatorStatement CCodeGenerator::setOriginId(VariableDeclaration tupleBufferVariable,
-                                                    VariableDeclaration inputBufferVariable) {
+BinaryOperatorStatement CCodeGenerator::setOriginId(const VariableDeclaration& tupleBufferVariable,
+                                                    const VariableDeclaration& inputBufferVariable) {
     auto setOriginIdFunctionCall = FunctionCallStatement("setOriginId");
     setOriginIdFunctionCall.addParameter(getOriginId(inputBufferVariable));
     /* copy watermark */
@@ -2079,24 +2079,24 @@ BinaryOperatorStatement CCodeGenerator::setOriginId(VariableDeclaration tupleBuf
 CCodeGenerator::~CCodeGenerator() = default;
 ;
 
-BinaryOperatorStatement CCodeGenerator::emitTupleBuffer(VariableDeclaration pipelineContext,
-                                                        VariableDeclaration tupleBufferVariable,
-                                                        VariableDeclaration workerContextVariable) {
+BinaryOperatorStatement CCodeGenerator::emitTupleBuffer(const VariableDeclaration& pipelineContext,
+                                                        const VariableDeclaration& tupleBufferVariable,
+                                                        const VariableDeclaration& workerContextVariable) {
     auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
     emitTupleBuffer.addParameter(VarRef(tupleBufferVariable));
     emitTupleBuffer.addParameter(VarRef(workerContextVariable));
     return VarRef(pipelineContext).accessRef(emitTupleBuffer);
 }
-BinaryOperatorStatement CCodeGenerator::getBuffer(VariableDeclaration tupleBufferVariable) {
+BinaryOperatorStatement CCodeGenerator::getBuffer(const VariableDeclaration& tupleBufferVariable) {
     auto getBufferFunctionCall = FunctionCallStatement("getBuffer");
     return VarRef(tupleBufferVariable).accessRef(getBufferFunctionCall);
 }
-BinaryOperatorStatement CCodeGenerator::getWatermark(VariableDeclaration tupleBufferVariable) {
+BinaryOperatorStatement CCodeGenerator::getWatermark(const VariableDeclaration& tupleBufferVariable) {
     auto getWatermarkFunctionCall = FunctionCallStatement("getWatermark");
     return VarRef(tupleBufferVariable).accessRef(getWatermarkFunctionCall);
 }
 
-BinaryOperatorStatement CCodeGenerator::getOriginId(VariableDeclaration tupleBufferVariable) {
+BinaryOperatorStatement CCodeGenerator::getOriginId(const VariableDeclaration& tupleBufferVariable) {
     auto getWatermarkFunctionCall = FunctionCallStatement("getOriginId");
     return VarRef(tupleBufferVariable).accessRef(getWatermarkFunctionCall);
 }
@@ -2104,9 +2104,9 @@ BinaryOperatorStatement CCodeGenerator::getOriginId(VariableDeclaration tupleBuf
 #define TO_CODE(type) tf->createDataType(type)->getCode()->code_
 
 BinaryOperatorStatement
-CCodeGenerator::getAggregationWindowHandler(VariableDeclaration pipelineContextVariable,
+CCodeGenerator::getAggregationWindowHandler(const VariableDeclaration& pipelineContextVariable,
                                             DataTypePtr keyType,
-                                            Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) {
+                                            const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor) {
     auto tf = getTypeFactory();
     // determine the partialAggregate parameter based on the aggregation type
     // Avg aggregation uses AVGPartialType, other aggregates use their getPartialAggregateStamp
@@ -2124,10 +2124,10 @@ CCodeGenerator::getAggregationWindowHandler(VariableDeclaration pipelineContextV
     return VarRef(pipelineContextVariable).accessPtr(call);
 }
 
-BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable,
+BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(const VariableDeclaration& pipelineContextVariable,
                                                              DataTypePtr keyType,
-                                                             std::string leftType,
-                                                             std::string rightType) {
+                                                             const std::string& leftType,
+                                                             const std::string& rightType) {
 
     auto tf = getTypeFactory();
     auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(keyType) + "," + leftType
@@ -2135,33 +2135,33 @@ BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration
     return VarRef(pipelineContextVariable).accessPtr(call);
 }
 
-BinaryOperatorStatement CCodeGenerator::getStateVariable(VariableDeclaration windowHandlerVariable) {
+BinaryOperatorStatement CCodeGenerator::getStateVariable(const VariableDeclaration& windowHandlerVariable) {
     auto call = FunctionCallStatement("getTypedWindowState");
     return VarRef(windowHandlerVariable).accessPtr(call);
 }
 
-BinaryOperatorStatement CCodeGenerator::getLeftJoinState(VariableDeclaration windowHandlerVariable) {
+BinaryOperatorStatement CCodeGenerator::getLeftJoinState(const VariableDeclaration& windowHandlerVariable) {
     auto call = FunctionCallStatement("getLeftJoinState");
     return VarRef(windowHandlerVariable).accessPtr(call);
 }
 
-BinaryOperatorStatement CCodeGenerator::getRightJoinState(VariableDeclaration windowHandlerVariable) {
+BinaryOperatorStatement CCodeGenerator::getRightJoinState(const VariableDeclaration& windowHandlerVariable) {
     auto call = FunctionCallStatement("getRightJoinState");
     return VarRef(windowHandlerVariable).accessPtr(call);
 }
 
-BinaryOperatorStatement CCodeGenerator::getWindowManager(VariableDeclaration windowHandlerVariable) {
+BinaryOperatorStatement CCodeGenerator::getWindowManager(const VariableDeclaration& windowHandlerVariable) {
     auto call = FunctionCallStatement("getWindowManager");
     return VarRef(windowHandlerVariable).accessPtr(call);
 }
 
-TypeCastExprStatement CCodeGenerator::getTypedBuffer(VariableDeclaration tupleBufferVariable,
-                                                     StructDeclaration structDeclaration) {
+TypeCastExprStatement CCodeGenerator::getTypedBuffer(const VariableDeclaration& tupleBufferVariable,
+                                                     const StructDeclaration& structDeclaration) {
     auto tf = getTypeFactory();
     return TypeCast(getBuffer(tupleBufferVariable), tf->createPointer(tf->createUserDefinedType(structDeclaration)));
 }
-VariableDeclaration CCodeGenerator::getWindowOperatorHandler(PipelineContextPtr context,
-                                                             VariableDeclaration tupleBufferVariable,
+VariableDeclaration CCodeGenerator::getWindowOperatorHandler(const PipelineContextPtr& context,
+                                                             const VariableDeclaration& tupleBufferVariable,
                                                              uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     auto executionContextRef = VarRefStatement(tupleBufferVariable);
@@ -2177,8 +2177,8 @@ VariableDeclaration CCodeGenerator::getWindowOperatorHandler(PipelineContextPtr 
     return windowOperatorHandlerDeclaration;
 }
 
-VariableDeclaration CCodeGenerator::getJoinOperatorHandler(PipelineContextPtr context,
-                                                           VariableDeclaration tupleBufferVariable,
+VariableDeclaration CCodeGenerator::getJoinOperatorHandler(const PipelineContextPtr& context,
+                                                           const VariableDeclaration& tupleBufferVariable,
                                                            uint64_t joinOperatorIndex) {
     auto tf = getTypeFactory();
     auto executionContextRef = VarRefStatement(tupleBufferVariable);

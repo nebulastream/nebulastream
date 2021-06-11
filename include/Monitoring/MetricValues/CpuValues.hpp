@@ -44,7 +44,7 @@ class CpuValues {
      * @param prefix
      * @return The object
      */
-    static CpuValues fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static CpuValues fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Stream operator to convert the object to string

@@ -82,7 +82,7 @@ class SharedQueryMetaData {
      * @param queryMetaData :  the input query metadata
      * @return true if successful else false
      */
-    bool addSharedQueryMetaData(SharedQueryMetaDataPtr queryMetaData);
+    bool addSharedQueryMetaData(const SharedQueryMetaDataPtr& queryMetaData);
 
     /**
      * @brief Remove a Query Id and associated Global Query Node with sink operators and clear the sink global query node lists
@@ -162,7 +162,7 @@ class SharedQueryMetaData {
     void setAsOld();
 
   private:
-    explicit SharedQueryMetaData(QueryPlanPtr queryPlan);
+    explicit SharedQueryMetaData(const QueryPlanPtr& queryPlan);
 
     SharedQueryId sharedQueryId;
     QueryPlanPtr queryPlan;

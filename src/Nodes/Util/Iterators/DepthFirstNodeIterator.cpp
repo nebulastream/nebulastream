@@ -26,7 +26,7 @@ DepthFirstNodeIterator::iterator DepthFirstNodeIterator::begin() { return iterat
 
 DepthFirstNodeIterator::iterator DepthFirstNodeIterator::end() { return iterator(); }
 
-DepthFirstNodeIterator::iterator::iterator(NodePtr current) { workStack.push(current); }
+DepthFirstNodeIterator::iterator::iterator(const NodePtr& current) { workStack.push(current); }
 
 DepthFirstNodeIterator::iterator::iterator() = default;
 
@@ -46,7 +46,7 @@ DepthFirstNodeIterator::iterator& DepthFirstNodeIterator::iterator::operator++()
     } else {
         auto current = workStack.top();
         workStack.pop();
-        for (auto child : current->getChildren()) {
+        for (const auto& child : current->getChildren()) {
             workStack.push(child);
         }
     }

@@ -21,6 +21,7 @@
 #include <filesystem>
 #include <string>
 #include <thread>
+#include <utility>
 
 namespace NES {
 
@@ -146,11 +147,11 @@ void WorkerConfig::resetWorkerOptions() {
 
 StringConfigOption WorkerConfig::getLocalWorkerIp() { return localWorkerIp; }
 
-void WorkerConfig::setLocalWorkerIp(std::string localWorkerIpValue) { localWorkerIp->setValue(localWorkerIpValue); }
+void WorkerConfig::setLocalWorkerIp(std::string localWorkerIpValue) { localWorkerIp->setValue(std::move(localWorkerIpValue)); }
 
 StringConfigOption WorkerConfig::getCoordinatorIp() { return coordinatorIp; }
 
-void WorkerConfig::setCoordinatorIp(std::string coordinatorIpValue) { coordinatorIp->setValue(coordinatorIpValue); }
+void WorkerConfig::setCoordinatorIp(std::string coordinatorIpValue) { coordinatorIp->setValue(std::move(coordinatorIpValue)); }
 
 IntConfigOption WorkerConfig::getCoordinatorPort() { return coordinatorPort; }
 
@@ -174,11 +175,11 @@ void WorkerConfig::setNumWorkerThreads(uint16_t numWorkerThreadsValue) { numWork
 
 StringConfigOption WorkerConfig::getParentId() { return parentId; }
 
-void WorkerConfig::setParentId(std::string parentIdValue) { parentId->setValue(parentIdValue); }
+void WorkerConfig::setParentId(std::string parentIdValue) { parentId->setValue(std::move(parentIdValue)); }
 
 StringConfigOption WorkerConfig::getLogLevel() { return logLevel; }
 
-void WorkerConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(logLevelValue); }
+void WorkerConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(std::move(logLevelValue)); }
 
 IntConfigOption WorkerConfig::getNumberOfBuffersInGlobalBufferManager() { return numberOfBuffersInGlobalBufferManager; }
 IntConfigOption WorkerConfig::getnumberOfBuffersPerPipeline() { return numberOfBuffersPerPipeline; }

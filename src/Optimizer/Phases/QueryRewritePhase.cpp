@@ -40,7 +40,7 @@ QueryRewritePhase::QueryRewritePhase(bool applyRulesImprovingSharingIdentificati
 
 QueryRewritePhase::~QueryRewritePhase() { NES_DEBUG("~QueryRewritePhase()"); }
 
-QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
     auto duplicateQueryPlan = queryPlan->copy();
     if (applyRulesImprovingSharingIdentification) {
         duplicateQueryPlan = attributeSortRule->apply(duplicateQueryPlan);

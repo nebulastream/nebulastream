@@ -41,7 +41,7 @@ class ProjectionLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
-    bool equal(const NodePtr rhs) const override;
+    bool equal(NodePtr rhs) const override;
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     void inferStringSignature() override;

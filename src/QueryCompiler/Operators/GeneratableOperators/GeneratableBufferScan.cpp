@@ -17,18 +17,19 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
-GeneratableBufferScan::GeneratableBufferScan(OperatorId id, SchemaPtr inputSchema)
+GeneratableBufferScan::GeneratableBufferScan(OperatorId id, const SchemaPtr& inputSchema)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, inputSchema) {}
 
 GeneratableOperatorPtr GeneratableBufferScan::create(SchemaPtr inputSchema) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema));
 }
 
 GeneratableOperatorPtr GeneratableBufferScan::create(OperatorId id, SchemaPtr inputSchema) {
-    return std::make_shared<GeneratableBufferScan>(GeneratableBufferScan(id, inputSchema));
+    return std::make_shared<GeneratableBufferScan>(GeneratableBufferScan(id, std::move(inputSchema)));
 }
 
 void GeneratableBufferScan::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {

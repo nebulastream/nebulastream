@@ -54,7 +54,7 @@ class DataTypeToZ3ExprUtil {
      * @param context: the z3 context
      * @return expression and field map for the field
      */
-    static Z3ExprAndFieldMapPtr createForField(std::string fieldName, DataTypePtr dataType, z3::ContextPtr context);
+    static Z3ExprAndFieldMapPtr createForField(const std::string& fieldName, const DataTypePtr& dataType, const z3::ContextPtr& context);
 
     /**
      * @brief Create Z3 expression for data value of specific type
@@ -62,7 +62,7 @@ class DataTypeToZ3ExprUtil {
      * @param context: Z3 context
      * @return expression and field map for the data value
      */
-    static Z3ExprAndFieldMapPtr createForDataValue(ValueTypePtr valueType, z3::ContextPtr context);
+    static Z3ExprAndFieldMapPtr createForDataValue(const ValueTypePtr& valueType, const z3::ContextPtr& context);
 };
 }// namespace NES::Optimizer
 

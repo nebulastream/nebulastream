@@ -153,8 +153,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1Children : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2Children : updatedRootOperators1[1]->getChildren()) {
+    for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
             EXPECT_EQ(sink1Children, sink2Children);
         }
     }
@@ -240,8 +240,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1Child : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2Child : updatedRootOperators1[1]->getChildren()) {
+    for (const auto& sink1Child : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2Child : updatedRootOperators1[1]->getChildren()) {
             EXPECT_NE(sink1Child, sink2Child);
             auto sink1ChildGrandChild = sink1Child->getChildren();
             auto sink2ChildGrandChild = sink2Child->getChildren();
@@ -323,8 +323,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }

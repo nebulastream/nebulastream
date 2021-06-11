@@ -47,14 +47,14 @@ class MQTTSink : public SinkMedium {
     // TODO change MSGS to Messages
     MQTTSink(SinkFormatPtr sinkFormat,
              QuerySubPlanId parentPlanId,
-             const std::string address,
-             const std::string clientId,
-             const std::string topic,
-             const std::string user,
+             std::string& address,
+             std::string& clientId,
+             std::string& topic,
+             std::string& user,
              uint64_t maxBufferedMSGs,
-             const MQTTSinkDescriptor::TimeUnits timeUnit,
+             MQTTSinkDescriptor::TimeUnits timeUnit,
              uint64_t messageDelay,
-             const MQTTSinkDescriptor::ServiceQualities qualityOfService,
+             MQTTSinkDescriptor::ServiceQualities qualityOfService,
              bool asynchronousClient);
     ~MQTTSink() override;
 

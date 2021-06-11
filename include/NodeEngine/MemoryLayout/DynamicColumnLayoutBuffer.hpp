@@ -21,6 +21,7 @@
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <cstdint>
+#include <utility>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
@@ -49,7 +50,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
      * @return field index from the fieldName
      */
     [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
-        return dynamicColLayout->getFieldIndexFromName(fieldName);
+        return dynamicColLayout->getFieldIndexFromName(std::move(fieldName));
     };
 
     /**
@@ -59,7 +60,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
      * @param boundaryChecks
      * @return calculated offset
      */
-    uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) override;
+    uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, bool boundaryChecks) override;
 
     /**
      * @brief Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.

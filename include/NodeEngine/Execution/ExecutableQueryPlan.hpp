@@ -94,7 +94,7 @@ class ExecutableQueryPlan : public Reconfigurable {
      * @param stateManager pointer to the current state manager
      * @return Success if the query plan started
      */
-    bool start(StateManagerPtr stateManager);
+    bool start(const StateManagerPtr& stateManager);
 
     /**
      * @brief Stop the query plan and free all associated resources.

@@ -51,7 +51,7 @@ class NetworkManager {
     static std::shared_ptr<NetworkManager> create(const std::string& hostname,
                                                   uint16_t port,
                                                   Network::ExchangeProtocol&& exchangeProtocol,
-                                                  NodeEngine::BufferManagerPtr bufferManager,
+                                                  const NodeEngine::BufferManagerPtr& bufferManager,
                                                   uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
@@ -61,7 +61,7 @@ class NetworkManager {
      * @param the underlying network source
      * @return true if the partition was registered for the first time, false otherwise
      */
-    bool registerSubpartitionConsumer(NesPartition nesPartition, std::shared_ptr<DataEmitter> emitter);
+    bool registerSubpartitionConsumer(NesPartition nesPartition, const std::shared_ptr<DataEmitter>& emitter);
 
     /**
      * @brief This method is called on the receiver side to remove a SubpartitionConsumer.
@@ -102,7 +102,7 @@ class NetworkManager {
     explicit NetworkManager(const std::string& hostname,
                             uint16_t port,
                             ExchangeProtocol&& exchangeProtocol,
-                            NodeEngine::BufferManagerPtr bufferManager,
+                            const NodeEngine::BufferManagerPtr& bufferManager,
                             uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**

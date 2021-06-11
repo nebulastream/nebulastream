@@ -26,6 +26,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
@@ -33,14 +34,14 @@ std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPt
                                                            TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
                                                            StreamCatalogPtr streamCatalog) {
-    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
+    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), std::move(streamCatalog)));
 }
 
 BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                    TopologyPtr topology,
                                    TypeInferencePhasePtr typeInferencePhase,
                                    StreamCatalogPtr streamCatalog)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog) {}
+    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), std::move(streamCatalog)) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     const QueryId queryId = queryPlan->getQueryId();
@@ -82,7 +83,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     }
 }
 
-void BottomUpStrategy::placeQueryPlanOnTopology(QueryPlanPtr queryPlan) {
+void BottomUpStrategy::placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan) {
 
     QueryId queryId = queryPlan->getQueryId();
     NES_DEBUG("BottomUpStrategy: Get the all source operators for performing the placement.");
@@ -103,7 +104,7 @@ void BottomUpStrategy::placeQueryPlanOnTopology(QueryPlanPtr queryPlan) {
 }
 
 void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId,
-                                                   OperatorNodePtr operatorNode,
+                                                   const OperatorNodePtr& operatorNode,
                                                    TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("BottomUpStrategy: Place " << operatorNode);
@@ -204,7 +205,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId,
 }
 
 QueryPlanPtr
-BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNodePtr operatorNode, ExecutionNodePtr executionNode) {
+BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, const OperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode) {
 
     NES_DEBUG("BottomUpStrategy: Get candidate query plan for the operator " << operatorNode << " on execution node with id "
                                                                              << executionNode->getId());
@@ -224,7 +225,7 @@ BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNodePtr operato
     std::vector<NodePtr> children = operatorNode->getChildren();
     //NOTE: we do not check for parent operators as we are performing bottom up placement.
     for (auto& child : children) {
-        auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](QueryPlanPtr querySubPlan) {
+        auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](const QueryPlanPtr& querySubPlan) {
             return querySubPlan->hasOperatorWithId(child->as<OperatorNode>()->getId());
         });
 
@@ -266,7 +267,7 @@ BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNodePtr operato
     return candidateQueryPlan;
 }
 
-std::vector<TopologyNodePtr> BottomUpStrategy::getTopologyNodesForChildrenOperators(OperatorNodePtr operatorNode) {
+std::vector<TopologyNodePtr> BottomUpStrategy::getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode) {
 
     std::vector<TopologyNodePtr> childTopologyNodes;
     NES_DEBUG("BottomUpStrategy: Get topology nodes with children operators");

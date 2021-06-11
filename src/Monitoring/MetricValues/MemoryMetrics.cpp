@@ -53,7 +53,7 @@ void writeToBuffer(const MemoryMetrics& metrics, NodeEngine::TupleBuffer& buf, u
     buf.setNumberOfTuples(1);
 }
 
-MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+MemoryMetrics MemoryMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     MemoryMetrics output{};
     //get index where the schema for MemoryMetrics is starting
     auto i = schema->getIndex(prefix + "TOTAL_RAM");

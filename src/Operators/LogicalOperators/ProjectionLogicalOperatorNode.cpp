@@ -102,7 +102,7 @@ void ProjectionLogicalOperatorNode::inferStringSignature() {
     }
     std::sort(fields.begin(), fields.end());
     signatureStream << "PROJECTION(";
-    for (auto field : fields) {
+    for (const auto& field : fields) {
         signatureStream << " " << field << " ";
     }
     signatureStream << ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();

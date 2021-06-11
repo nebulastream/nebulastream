@@ -38,10 +38,10 @@ namespace NES {
 
 DataSourcePtr
 ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
-                                                 SourceDescriptorPtr sourceDescriptor,
-                                                 NodeEngine::NodeEnginePtr nodeEngine,
+                                                 const SourceDescriptorPtr& sourceDescriptor,
+                                                 const NodeEngine::NodeEnginePtr& nodeEngine,
                                                  size_t numSourceLocalBuffers,
-                                                 std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                                 const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
     NES_ASSERT(nodeEngine, "invalid engine");
     auto bufferManager = nodeEngine->getBufferManager();
     auto queryManager = nodeEngine->getQueryManager();

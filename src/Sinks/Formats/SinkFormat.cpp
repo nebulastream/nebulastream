@@ -28,10 +28,10 @@ SinkFormat::SinkFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferMana
 
 SchemaPtr SinkFormat::getSchemaPtr() { return schema; }
 
-void SinkFormat::setSchemaPtr(SchemaPtr schema) { this->schema = schema; }
+void SinkFormat::setSchemaPtr(SchemaPtr schema) { this->schema = std::move(schema); }
 
 NodeEngine::BufferManagerPtr SinkFormat::getBufferManager() { return bufferManager; }
 
-void SinkFormat::setBufferManager(NodeEngine::BufferManagerPtr bufferManager) { this->bufferManager = bufferManager; }
+void SinkFormat::setBufferManager(NodeEngine::BufferManagerPtr bufferManager) { this->bufferManager = std::move(bufferManager); }
 
 }// namespace NES

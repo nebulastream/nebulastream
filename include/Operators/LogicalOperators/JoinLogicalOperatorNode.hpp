@@ -43,7 +43,7 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     //infer schema of two child operators
     bool inferSchema() override;
     OperatorNodePtr copy() override;
-    bool equal(const NodePtr rhs) const override;
+    bool equal(NodePtr rhs) const override;
     void inferStringSignature() override;
 
   private:

@@ -25,13 +25,13 @@
 
 namespace NES::Network {
 
-OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, const std::string address)
+OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, const std::string& address)
     : zmqSocket(std::move(zmqSocket)), channelId(channelId), socketAddr(address), isClosed(false) {
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
 }
 
-std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::context_t> zmqContext,
-                                                     const std::string socketAddr,
+std::unique_ptr<OutputChannel> OutputChannel::create(const std::shared_ptr<zmq::context_t>& zmqContext,
+                                                     const std::string& socketAddr,
                                                      NesPartition nesPartition,
                                                      ExchangeProtocol& protocol,
                                                      std::chrono::seconds waitTime,

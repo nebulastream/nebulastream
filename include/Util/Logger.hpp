@@ -58,7 +58,7 @@ static std::string getDebugLevelAsString(DebugLevel level) {
 
 DISABLE_WARNING_PUSH
 DISABLE_WARNING_UNREFERENCED_FUNCTION
-static DebugLevel getDebugLevelFromString(std::string level) {
+static DebugLevel getDebugLevelFromString(const std::string& level) {
     if (level == "LOG_NONE") {
         return LOG_NONE;
     }
@@ -314,7 +314,7 @@ struct LoggingBlackHole {
 
 namespace NES {
 namespace NodeEngine {
-void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
+void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
 }
 }// namespace NES
 
@@ -430,7 +430,7 @@ static void setLogLevel(DebugLevel level) {
 }
 DISABLE_WARNING_PUSH
 DISABLE_WARNING_UNREFERENCED_FUNCTION
-static void setupLogging(std::string logFileName, DebugLevel level) {
+static void setupLogging(const std::string& logFileName, DebugLevel level) {
     std::cout << "Logger: SETUP_LOGGING" << std::endl;
     // create PatternLayout
     log4cxx::LayoutPtr layoutPtr(

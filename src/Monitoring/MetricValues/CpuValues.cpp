@@ -44,7 +44,7 @@ SchemaPtr CpuValues::getSchema(const std::string& prefix) {
     return schema;
 }
 
-CpuValues CpuValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+CpuValues CpuValues::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     CpuValues output{};
     //get index where the schema for CpuValues is starting
     auto i = schema->getIndex(prefix + "user");

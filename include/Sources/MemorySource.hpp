@@ -40,7 +40,7 @@ class MemorySource : public GeneratorSource {
      * @param operatorId the valid id of the source
      */
     explicit MemorySource(SchemaPtr schema,
-                          std::shared_ptr<uint8_t> memoryArea,
+                          const std::shared_ptr<uint8_t>& memoryArea,
                           size_t memoryAreaSize,
                           NodeEngine::BufferManagerPtr bufferManager,
                           NodeEngine::QueryManagerPtr queryManager,

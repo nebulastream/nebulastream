@@ -33,21 +33,21 @@ namespace NES::API {
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Sum(ExpressionItem onField);
+Windowing::WindowAggregationPtr Sum(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Min Aggregation function on a particular field.
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Min(ExpressionItem onField);
+Windowing::WindowAggregationPtr Min(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Max Aggregation function on a particular field.
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Max(ExpressionItem onField);
+Windowing::WindowAggregationPtr Max(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Cun Aggregation function on a particular field.
@@ -60,14 +60,14 @@ Windowing::WindowAggregationPtr Count();
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Avg(ExpressionItem onField);
+Windowing::WindowAggregationPtr Avg(const ExpressionItem& onField);
 
 /**
  * @brief Defines event time as a time characteristic for a window.
  * @param ExpressionItem which defines the field name.
  * @return A descriptor of the time characteristic.
  */
-Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField);
+Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField);
 
 /**
  * @brief Defines event time as a time characteristic for a window.
@@ -75,7 +75,7 @@ Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField);
  * @param Timeunit
  * @return A descriptor of the time characteristic.
  */
-Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField, Windowing::TimeUnit unit);
+Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, Windowing::TimeUnit unit);
 
 /**
  * @brief Defines a ingestion time as a time characteristic for a window.

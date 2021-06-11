@@ -40,7 +40,7 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
     explicit ReconfigurationPipelineExecutionContext(QuerySubPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
         : Execution::PipelineExecutionContext(
             queryExecutionPlanId,
-            queryManager,
+            std::move(queryManager),
             LocalBufferPoolPtr(),
             [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
             },
@@ -166,7 +166,7 @@ void QueryManager::destroy() {
     }
 }
 
-bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
+bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
     NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep->getQueryId() << " subquery=" << qep->getQuerySubPlanId());
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "QueryManager::registerQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
@@ -205,7 +205,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     return true;
 }
 
-bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep, StateManagerPtr stateManager) {
+bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep, StateManagerPtr stateManager) {
     NES_DEBUG("QueryManager::startQuery: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "QueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
@@ -215,7 +215,7 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep, StateManage
 
     // TODO do not change the start sequence plz
     // 1. start the qep and handlers, if any
-    if (!qep->setup() || !qep->start(stateManager)) {
+    if (!qep->setup() || !qep->start(std::move(stateManager))) {
         NES_FATAL_ERROR("QueryManager: query execution plan could not started");
         return false;
     }
@@ -270,7 +270,7 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep, StateManage
     return true;
 }
 
-bool QueryManager::deregisterQuery(Execution::ExecutableQueryPlanPtr qep) {
+bool QueryManager::deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep) {
     NES_DEBUG("QueryManager::deregisterAndUndeployQuery: query" << qep);
 
     std::unique_lock lock(queryMutex);
@@ -308,7 +308,7 @@ bool QueryManager::deregisterQuery(Execution::ExecutableQueryPlanPtr qep) {
     return succeed;
 }
 
-bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr) {
+bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr&) {
     NES_NOT_IMPLEMENTED();
 #if 0
     NES_DEBUG("QueryManager::failQuery: query" << qep);
@@ -397,7 +397,7 @@ void QueryManager::poisonWorkers() {
 #endif
 }
 
-bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful) {
+bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful) {
     NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId() << " graceful=" << graceful);
     bool ret = true;
     //    std::unique_lock lock(queryMutex);
@@ -468,7 +468,7 @@ void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
     if (sourceIdToSuccessorMap.find(sourceId) != sourceIdToSuccessorMap.end()) {
         auto executablePipelines = sourceIdToSuccessorMap[sourceId];
         // iterate over all executable pipelines
-        for (auto executablePipeline : executablePipelines) {
+        for (const auto& executablePipeline : executablePipelines) {
             NES_DEBUG("Add Work for executable from network source " << sourceId << " origin id: " << buf.getOriginId());
             // create task
             auto task = Task(executablePipeline, buf);
@@ -487,7 +487,7 @@ void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
     }
 }
 
-bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage message, bool blocking) {
+bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, const ReconfigurationMessage& message, bool blocking) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
               << queryExecutionPlanId << " blocking=" << blocking << " type " << message.getType());
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");

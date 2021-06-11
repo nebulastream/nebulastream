@@ -19,10 +19,11 @@
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
+#include <utility>
 
 namespace NES {
 
-JsonFormat::JsonFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
+JsonFormat::JsonFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
 std::vector<NodeEngine::TupleBuffer> JsonFormat::getData(NodeEngine::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 

@@ -79,7 +79,7 @@ class NetworkSource : public DataSource {
      * @param bufferManager
      * @param queryManager
      */
-    static void runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr);
+    static void runningRoutine(const NodeEngine::BufferManagerPtr&, const NodeEngine::QueryManagerPtr&);
 
     /**
      * @brief

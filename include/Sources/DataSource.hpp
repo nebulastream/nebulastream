@@ -69,7 +69,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr schema,
+    explicit DataSource(const SchemaPtr& schema,
                         NodeEngine::BufferManagerPtr bufferManager,
                         NodeEngine::QueryManagerPtr queryManager,
                         OperatorId operatorId,
@@ -197,7 +197,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      */
     void setOperatorId(OperatorId operatorId);
 
-    static GatheringMode getGatheringModeFromString(std::string mode);
+    static GatheringMode getGatheringModeFromString(const std::string& mode);
 
     /**
      * @brief Returns the list of successor pipelines.

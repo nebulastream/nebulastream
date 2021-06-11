@@ -84,13 +84,13 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
      * @return a constructed LambdaSourceStreamConfig
      */
     static AbstractPhysicalStreamConfigPtr
-    create(std::string sourceType,
-           std::string physicalStreamName,
-           std::string logicalStreamName,
+    create(const std::string& sourceType,
+           const std::string& physicalStreamName,
+           const std::string& logicalStreamName,
            std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProcess,
            uint64_t gatheringValue,
-           std::string gatheringMode);
+           const std::string& gatheringMode);
 
   private:
     std::string sourceType;

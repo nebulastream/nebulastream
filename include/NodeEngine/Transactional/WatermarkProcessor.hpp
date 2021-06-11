@@ -42,13 +42,13 @@ class WatermarkProcessor {
      * @brief Creates a new watermark processor, for a specific number of origins.
      * @param numberOfOrigins
      */
-    explicit WatermarkProcessor(const uint64_t numberOfOrigins);
+    explicit WatermarkProcessor(uint64_t numberOfOrigins);
 
     /**
      * @brief Creates a new watermark processor, for a specific number of origins.
      * @param numberOfOrigins
      */
-    static std::shared_ptr<WatermarkProcessor> create(const uint64_t numberOfOrigins);
+    static std::shared_ptr<WatermarkProcessor> create(uint64_t numberOfOrigins);
 
     /**
      * @brief Processes a watermark barrier.

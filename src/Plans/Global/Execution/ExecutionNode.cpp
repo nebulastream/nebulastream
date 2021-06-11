@@ -26,19 +26,20 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <set>
+#include <utility>
 
 namespace NES {
 
-ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode)
+ExecutionNode::ExecutionNode(const TopologyNodePtr& physicalNode, QueryId queryId, OperatorNodePtr operatorNode)
     : id(physicalNode->getId()), topologyNode(physicalNode) {
     QueryPlanPtr queryPlan = QueryPlan::create();
-    queryPlan->appendOperatorAsNewRoot(operatorNode);
+    queryPlan->appendOperatorAsNewRoot(std::move(operatorNode));
     queryPlan->setQueryId(queryId);
     std::vector<QueryPlanPtr> querySubPlans{queryPlan};
     mapOfQuerySubPlans.emplace(queryId, querySubPlans);
 }
 
-ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode) : id(physicalNode->getId()), topologyNode(physicalNode) {}
+ExecutionNode::ExecutionNode(const TopologyNodePtr& physicalNode) : id(physicalNode->getId()), topologyNode(physicalNode) {}
 
 bool ExecutionNode::hasQuerySubPlans(QueryId queryId) {
     NES_DEBUG("ExecutionNode : Checking if a query sub plan exists with id " << queryId);
@@ -71,13 +72,13 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
 
     std::vector<QueryPlanPtr> querySubPlans = getQuerySubPlans(queryId);
     uint32_t occupiedResources = 0;
-    for (auto querySubPlan : querySubPlans) {
+    for (const auto& querySubPlan : querySubPlans) {
         NES_DEBUG("ExecutionNode : calculate the number of resources occupied by the query sub plan and release them");
         auto roots = querySubPlan->getRootOperators();
         // vector keeping track of already visited nodes.
         std::set<u_int64_t> visitedOpIds;
         NES_DEBUG("ExecutionNode : Iterate over all root nodes in the query sub graph to calculate occupied resources");
-        for (auto root : roots) {
+        for (const auto& root : roots) {
             NES_DEBUG("ExecutionNode : Iterate the root node using BFS");
             auto bfsIterator = BreadthFirstNodeIterator(root);
             for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
@@ -116,7 +117,7 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
     return occupiedResources;
 }
 
-bool ExecutionNode::addNewQuerySubPlan(QueryId queryId, QueryPlanPtr querySubPlan) {
+bool ExecutionNode::addNewQuerySubPlan(QueryId queryId, const QueryPlanPtr& querySubPlan) {
     if (hasQuerySubPlans(queryId)) {
         NES_DEBUG("ExecutionNode: Adding a new entry to the collection of query sub plans after assigning the id : " << queryId);
         std::vector<QueryPlanPtr> querySubPlans = mapOfQuerySubPlans[queryId];
@@ -133,7 +134,7 @@ bool ExecutionNode::addNewQuerySubPlan(QueryId queryId, QueryPlanPtr querySubPla
 bool ExecutionNode::updateQuerySubPlans(QueryId queryId, std::vector<QueryPlanPtr> querySubPlans) {
     NES_DEBUG("ExecutionNode: Updating the query sub plan with id : " << queryId << " to the collection of query sub plans");
     if (hasQuerySubPlans(queryId)) {
-        mapOfQuerySubPlans[queryId] = querySubPlans;
+        mapOfQuerySubPlans[queryId] = std::move(querySubPlans);
         NES_DEBUG("ExecutionNode: Updated the query sub plan with id : " << queryId << " to the collection of query sub plans");
         return true;
     }
@@ -147,11 +148,11 @@ const std::string ExecutionNode::toString() const {
 }
 
 ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) {
-    return std::make_shared<ExecutionNode>(ExecutionNode(physicalNode, queryId, operatorNode));
+    return std::make_shared<ExecutionNode>(ExecutionNode(std::move(physicalNode), queryId, std::move(operatorNode)));
 }
 
 ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode) {
-    return std::make_shared<ExecutionNode>(ExecutionNode(physicalNode));
+    return std::make_shared<ExecutionNode>(ExecutionNode(std::move(physicalNode)));
 }
 
 uint64_t ExecutionNode::getId() { return id; }
@@ -165,8 +166,8 @@ const std::vector<std::string> ExecutionNode::toMultilineString() {
     std::vector<std::string> lines;
     lines.push_back(toString());
 
-    for (auto mapOfQuerySubPlan : mapOfQuerySubPlans) {
-        for (auto queryPlan : mapOfQuerySubPlan.second) {
+    for (const auto& mapOfQuerySubPlan : mapOfQuerySubPlans) {
+        for (const auto& queryPlan : mapOfQuerySubPlan.second) {
             lines.push_back("QuerySubPlan(queryId:" + std::to_string(mapOfQuerySubPlan.first)
                             + ", querySubPlanId:" + std::to_string(queryPlan->getQuerySubPlanId()) + ")");
 

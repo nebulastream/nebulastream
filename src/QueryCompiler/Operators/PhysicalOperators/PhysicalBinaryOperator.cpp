@@ -14,14 +14,15 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema)
     : OperatorNode(id), PhysicalOperator(id), BinaryOperatorNode(id) {
-    BinaryOperatorNode::setLeftInputSchema(leftSchema);
-    BinaryOperatorNode::setRightInputSchema(rightSchema);
-    BinaryOperatorNode::setOutputSchema(outputSchema);
+    BinaryOperatorNode::setLeftInputSchema(std::move(leftSchema));
+    BinaryOperatorNode::setRightInputSchema(std::move(rightSchema));
+    BinaryOperatorNode::setOutputSchema(std::move(outputSchema));
 }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

@@ -30,9 +30,9 @@ class SyntacticQueryValidationTest : public testing::Test {
     }
     void TearDown() override { NES_INFO("Tear down SyntacticQueryValidationTest class."); }
 
-    static void PrintQString(std::string s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
+    static void PrintQString(const std::string& s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
 
-    void TestForException(std::string queryString) {
+    void TestForException(const std::string& queryString) {
         PrintQString(queryString);
         auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create();
         EXPECT_THROW(syntacticQueryValidation->checkValidity(queryString), InvalidQueryException);

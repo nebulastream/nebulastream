@@ -21,6 +21,7 @@
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <cstdint>
+#include <utility>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
@@ -45,7 +46,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @return field index from the fieldName
      */
     [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
-        return dynamicRowLayout->getFieldIndexFromName(fieldName);
+        return dynamicRowLayout->getFieldIndexFromName(std::move(fieldName));
     };
     /**
      * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes
@@ -54,7 +55,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @param boundaryChecks if true will check if access is allowed
      * @return calculated offset
      */
-    uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) override;
+    uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, bool boundaryChecks) override;
 
     /**
      * @brief Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.

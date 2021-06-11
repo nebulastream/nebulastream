@@ -50,21 +50,21 @@ class FunctionDefinition : public std::enable_shared_from_this<FunctionDefinitio
      * @param variableDeclaration VariableDeclaration
      * @return FunctionDefinitionPtr
      */
-    FunctionDefinitionPtr addParameter(VariableDeclaration variableDeclaration);
+    FunctionDefinitionPtr addParameter(const VariableDeclaration& variableDeclaration);
 
     /**
      * @brief Adds a statement to the function body.
      * @param statement StatementPtr
      * @return FunctionDefinitionPtr
      */
-    FunctionDefinitionPtr addStatement(StatementPtr statement);
+    FunctionDefinitionPtr addStatement(const StatementPtr& statement);
 
     /**
      * @brief Adds a variable declaration to this function.
      * @param variableDeclaration VariableDeclaration
      * @return FunctionDefinitionPtr
      */
-    FunctionDefinitionPtr addVariableDeclaration(VariableDeclaration variableDeclaration);
+    FunctionDefinitionPtr addVariableDeclaration(const VariableDeclaration& variableDeclaration);
 
     /**
      * @brief Creates the declaration of this function.
