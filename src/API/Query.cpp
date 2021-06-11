@@ -127,7 +127,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
 
     auto rightQueryPlan = subQuery.getQueryPlan();
-    NES_ASSERT(rightQueryPlan && rightQueryPlan->getRootOperators().size() > 0, "invalid right query plan");
+    NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid right query plan");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
     auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
     auto rightJoinType = rootOperatorRhs->getOutputSchema();

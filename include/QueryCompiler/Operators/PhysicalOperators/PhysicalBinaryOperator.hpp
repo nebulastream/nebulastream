@@ -28,7 +28,7 @@ namespace PhysicalOperators {
  */
 class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperatorNode {
   protected:
-    PhysicalBinaryOperator(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema, SchemaPtr outputSchema);
+    PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema);
 };
 
 }// namespace PhysicalOperators

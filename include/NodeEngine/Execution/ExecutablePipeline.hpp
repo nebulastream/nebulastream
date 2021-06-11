@@ -68,7 +68,7 @@ class ExecutablePipeline : public Reconfigurable {
      * @return ExecutablePipelinePtr
      */
     static ExecutablePipelinePtr create(uint64_t pipelineId,
-                                        QuerySubPlanId qepId,
+                                        QuerySubPlanId querySubPlanId,
                                         PipelineExecutionContextPtr pipelineExecutionContext,
                                         ExecutablePipelineStagePtr executablePipelineStage,
                                         uint32_t numOfProducingPipelines,
@@ -153,7 +153,7 @@ class ExecutablePipeline : public Reconfigurable {
      * @brief Adds a new successor pipeline
      * @param predecessorPipeline
      */
-    void addSuccessor(SuccessorExecutablePipeline predecessorPipeline);
+    void addSuccessor(SuccessorExecutablePipeline successorPipeline);
 
   private:
     const uint64_t pipelineId;

@@ -42,7 +42,7 @@ class QueryPlacementRefinementPhase {
      * @param queryId
      * @return success
      */
-    bool execute(QueryId queryId);
+    static bool execute(QueryId queryId);
 
     ~QueryPlacementRefinementPhase();
 

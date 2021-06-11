@@ -78,10 +78,9 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     std::shared_ptr<SourceType> as() {
         if (instanceOf<SourceType>()) {
             return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
-        } else {
-            NES_FATAL_ERROR("SourceDescriptor: We performed an invalid cast");
+        }             NES_FATAL_ERROR("SourceDescriptor: We performed an invalid cast");
             throw std::bad_cast();
-        }
+       
     }
 
     /**

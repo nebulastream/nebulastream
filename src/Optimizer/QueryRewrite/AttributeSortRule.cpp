@@ -68,7 +68,7 @@ NES::ExpressionNodePtr AttributeSortRule::sortAttributesInExpression(NES::Expres
     NES_DEBUG("Sorting attributed for input expression " << expression->toString());
     if (expression->instanceOf<NES::LogicalExpressionNode>()) {
         return sortAttributesInLogicalExpressions(expression);
-    } else if (expression->instanceOf<NES::ArithmeticalExpressionNode>()) {
+    } if (expression->instanceOf<NES::ArithmeticalExpressionNode>()) {
         return sortAttributesInArithmeticalExpressions(expression);
     } else if (expression->instanceOf<NES::FieldAssignmentExpressionNode>()) {
         auto fieldAssignmentExpressionNode = expression->as<NES::FieldAssignmentExpressionNode>();
@@ -163,7 +163,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
         }
 
         return AddExpressionNode::create(sortedLeft, sortedRight);
-    } else if (expression->instanceOf<SubExpressionNode>()) {
+    } if (expression->instanceOf<SubExpressionNode>()) {
         auto subExpressionNode = expression->as<SubExpressionNode>();
         auto left = subExpressionNode->getLeft();
         auto right = subExpressionNode->getRight();
@@ -341,7 +341,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
             }
         }
         return AndExpressionNode::create(sortedLeft, sortedRight);
-    } else if (expression->instanceOf<OrExpressionNode>()) {
+    } if (expression->instanceOf<OrExpressionNode>()) {
         auto orExpressionNode = expression->as<OrExpressionNode>();
         auto left = orExpressionNode->getLeft();
         auto right = orExpressionNode->getRight();
@@ -515,7 +515,7 @@ bool AttributeSortRule::replaceCommutativeExpressions(ExpressionNodePtr parentEx
         binaryExpression->removeChildren();
         binaryExpression->setChildren(updatedExpression, rightChild);
         return true;
-    } else if (rightChild.get() == originalExpression.get()) {
+    } if (rightChild.get() == originalExpression.get()) {
         binaryExpression->removeChildren();
         binaryExpression->setChildren(leftChild, updatedExpression);
         return true;
@@ -540,8 +540,7 @@ std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(ExpressionN
 
     if (startPoint->instanceOf<FieldAccessExpressionNode>()) {
         return startPoint->template as<FieldAccessExpressionNode>()->getFieldName();
-    } else {
-        const ValueTypePtr& constantValue = startPoint->as<ConstantValueExpressionNode>()->getConstantValue();
+    }         const ValueTypePtr& constantValue = startPoint->as<ConstantValueExpressionNode>()->getConstantValue();
         if (auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue); basicValueType) {
             return basicValueType->value;
         }
@@ -551,7 +550,7 @@ std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(ExpressionN
         }
 
         NES_THROW_RUNTIME_ERROR("AttributeSortRule not equipped for handling value type!");
-    }
+   
 }
 
 }// namespace NES::Optimizer

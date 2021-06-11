@@ -43,7 +43,7 @@ class SemanticQueryValidation {
     /**
      * @brief Checks if the stream source in the provided QueryPlan is valid
      */
-    void sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
+    static void sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Throws InvalidQueryException with formatted exception message
@@ -53,12 +53,12 @@ class SemanticQueryValidation {
     /**
      * @brief Deletes a substring from a string
      */
-    void eraseAllSubStr(std::string& mainStr, const std::string& toErase);
+    static void eraseAllSubStr(std::string& mainStr, const std::string& toErase);
 
     /**
      * @brief Replaces all occurances of a substring in a string
      */
-    void findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr);
+    static void findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr);
 
   public:
     /**

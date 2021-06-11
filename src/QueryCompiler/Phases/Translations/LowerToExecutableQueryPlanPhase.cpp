@@ -95,7 +95,7 @@ NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPha
         auto executableSink = processSink(pipeline, sources, sinks, executablePipelines, nodeEngine, queryId, subQueryPlanId);
         pipelineToExecutableMap[pipeline->getPipelineId()] = executableSink;
         return executableSink;
-    } else if (pipeline->isOperatorPipeline()) {
+    } if (pipeline->isOperatorPipeline()) {
         auto executablePipeline = processOperatorPipeline(pipeline,
                                                           sources,
                                                           sinks,

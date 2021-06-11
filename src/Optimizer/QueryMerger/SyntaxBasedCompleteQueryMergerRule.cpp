@@ -144,11 +144,10 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(OperatorNodePtr target
         if (targetHostOperatorMap[targetOperator->getId()] == hostOperator->getId()) {
             NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Already matched so skipping rest of the check.");
             return true;
-        } else {
-            NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Not matched as target operator was matched to another number of "
+        }             NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Not matched as target operator was matched to another number of "
                         "sources in target and address query plans are different.");
             return false;
-        }
+       
     }
 
     if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {

@@ -80,9 +80,8 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
         if (sinkDescriptor->instanceOf<TestSinkDescriptor>()) {
             auto testSinkDescriptor = sinkDescriptor->as<TestSinkDescriptor>();
             return testSinkDescriptor->getSink();
-        } else {
-            return DataSinkProvider::lower(operatorId, sinkDescriptor, schema, nodeEngine, querySubPlanId);
-        }
+        }             return DataSinkProvider::lower(operatorId, sinkDescriptor, schema, nodeEngine, querySubPlanId);
+       
     }
 };
 
@@ -100,9 +99,8 @@ class TestSourceProvider : public QueryCompilation::DataSourceProvider {
                                                 nodeEngine,
                                                 compilerOptions->getNumSourceLocalBuffers(),
                                                 successors);
-        } else {
-            return DataSourceProvider::lower(operatorId, sourceDescriptor, nodeEngine, successors);
-        }
+        }             return DataSourceProvider::lower(operatorId, sourceDescriptor, nodeEngine, successors);
+       
     }
 };
 

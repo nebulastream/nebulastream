@@ -39,7 +39,7 @@ class GeneratableAvgAggregation : public GeneratableWindowAggregation {
      * @param inputRef input value reference
      */
     void compileLiftCombine(CompoundStatementPtr currentCode,
-                            BinaryOperatorStatement expressionStatement,
+                            BinaryOperatorStatement partialRef,
                             RecordHandlerPtr recordHandler) override;
 };
 

@@ -176,7 +176,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief release all resource of the node engine
      * @param withError true if the node engine stopped with an error
      */
-    bool stop(bool withError = false);
+    bool stop(bool markQueriesAsFailed = false);
 
     /**
      * @brief gets the node properties.

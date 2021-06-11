@@ -107,8 +107,8 @@ class DistributeWindowRule : public BaseRewriteRule {
 
   private:
     explicit DistributeWindowRule();
-    void createCentralWindowOperator(WindowOperatorNodePtr currentWindowOperator);
-    void createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperaotr, QueryPlanPtr queryPlan);
+    static void createCentralWindowOperator(WindowOperatorNodePtr windowOp);
+    static void createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperator, QueryPlanPtr queryPlan);
 };
 }// namespace NES::Optimizer
 #endif//NES_DistributeWindowRule_HPP

@@ -25,7 +25,7 @@ namespace NES::Windowing {
  */
 class TimeUnit : public WindowMeasure {
   public:
-    explicit TimeUnit(uint64_t multiplier);
+    explicit TimeUnit(uint64_t offset);
 
     /**
      * @brief gets the multiplier to convert this to milliseconds

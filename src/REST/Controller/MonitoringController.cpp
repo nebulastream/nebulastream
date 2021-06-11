@@ -43,7 +43,7 @@ void MonitoringController::handleGet(std::vector<utility::string_t> path, http_r
             auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesAsJson();
             successMessageImpl(message, metricsJson);
             return;
-        } else if (path.size() == 3) {
+        } if (path.size() == 3) {
             auto strNodeId = path[2];
 
             if (strNodeId == "prometheus") {
@@ -116,14 +116,13 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
                                 message.reply(status_codes::BadRequest, "The provided node ID " + strNodeId + " is not valid.");
                             }
                             return;
-                        } else {
-                            //otherwise get metrics from all nodes via prometheus
+                        }                             //otherwise get metrics from all nodes via prometheus
                             NES_DEBUG(
                                 "MonitoringController: handlePost -metrics: Querying all nodes via prometheus node exporter");
                             auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesViaPrometheusAsJson();
                             successMessageImpl(message, metricsJson);
                             return;
-                        }
+                       
                     } else {
                         NES_DEBUG("MonitoringController: handlePost -metrics: unable to determine endpoint " + endpoint);
                         throw std::invalid_argument("Unable to determine endpoint " + endpoint);

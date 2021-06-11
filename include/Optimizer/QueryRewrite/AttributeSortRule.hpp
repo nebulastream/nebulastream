@@ -123,7 +123,7 @@ class AttributeSortRule : public BaseRewriteRule {
      * @param expression: the input expression
      * @return the name or value of field or constant expression
      */
-    std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression);
+    static std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression);
 };
 }// namespace NES::Optimizer
 #endif//NES_ATTRIBUTESORTRULE_HPP

@@ -503,7 +503,7 @@ TopologyNodePtr Topology::findCommonNodeBetween(std::vector<TopologyNodePtr> chi
     if (commonChildForParents->getId() == commonAncestorForChildren->getId()) {
         NES_DEBUG("Topology: Both common child and ancestor are same node. Returning as result.");
         return commonChildForParents;
-    } else if (commonChildForParents->containAsChild(commonAncestorForChildren)) {
+    } if (commonChildForParents->containAsChild(commonAncestorForChildren)) {
         NES_DEBUG("Topology: Returning the common children of the parent topology nodes");
         return commonChildForParents;
     } else if (!commonChildForParents->containAsParent(commonAncestorForChildren)) {
@@ -520,7 +520,7 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(TopologyNodePtr sourceNo
     if (sourceNode->getId() == destinationNode->getId()) {
         NES_DEBUG("Topology: Both source and destination are same node.");
         return {sourceNode};
-    } else if (!sourceNode->containAsParent(destinationNode)) {
+    } if (!sourceNode->containAsParent(destinationNode)) {
         NES_WARNING("Topology: source node is not connected to the destination node.");
         return {};
     }

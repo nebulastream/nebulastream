@@ -37,7 +37,7 @@ class CodeGenerationPhase {
      * @param pipeline PipelineQueryPlanPtr
      * @return PipelineQueryPlanPtr
      */
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr queryPlan);
 
     /**
      * @brief Generates code for a particular pipeline.
@@ -47,7 +47,7 @@ class CodeGenerationPhase {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:
-    void generate(OperatorNodePtr rootOperator, std::function<void(GeneratableOperators::GeneratableOperatorPtr)> applyFunction);
+    static void generate(OperatorNodePtr rootOperator, std::function<void(GeneratableOperators::GeneratableOperatorPtr)> applyFunction);
 };
 }// namespace QueryCompilation
 };// namespace NES

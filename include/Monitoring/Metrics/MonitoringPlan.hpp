@@ -106,7 +106,7 @@ class MonitoringPlan {
 
   private:
     explicit MonitoringPlan(const std::vector<MetricValueType>& metrics);
-    explicit MonitoringPlan(const SerializableMonitoringPlan& shippable);
+    explicit MonitoringPlan(const SerializableMonitoringPlan& plan);
 
     //the metrics for monitoring
     bool cpuMetrics;

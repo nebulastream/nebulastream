@@ -56,7 +56,7 @@ class ConstantValueExpressionNode : public ExpressionNode {
      * @param otherNode
      * @return true if they are equal
      */
-    bool equal(const NodePtr otherNode) const override;
+    bool equal(const NodePtr rhs) const override;
 
     /**
     * @brief Create a deep copy of this expression node.

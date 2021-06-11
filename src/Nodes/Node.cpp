@@ -258,9 +258,8 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
             newNode->addChild(currentNode);
         }
         return true;
-    } else {
-        NES_ERROR("Node: could not remove child from  old node:" << oldNode->toString());
-    }
+    }         NES_ERROR("Node: could not remove child from  old node:" << oldNode->toString());
+   
 
     success = removeParent(oldNode);
     NES_DEBUG("Node: remove parent old node:" << oldNode->toString());
@@ -270,9 +269,8 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
             newNode->addParent(currentNode);
         }
         return true;//TODO: I think this is wrong
-    } else {
-        NES_ERROR("Node: could not remove parent from  old node:" << oldNode->toString());
-    }
+    }         NES_ERROR("Node: could not remove parent from  old node:" << oldNode->toString());
+   
 
     return false;
 }
@@ -631,7 +629,7 @@ bool Node::isCyclicHelper(Node& node) {
     for (auto&& n : node.children) {
         if (!n->visited && isCyclicHelper(*n.get())) {
             return true;
-        } else if (n->recStack) {
+        } if (n->recStack) {
             return true;
         }
     }

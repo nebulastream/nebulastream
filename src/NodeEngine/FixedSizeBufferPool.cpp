@@ -68,7 +68,7 @@ size_t FixedSizeBufferPool::getAvailableExclusiveBuffers() const {
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::seconds timeout) {
     std::unique_lock lock(mutex);
     auto pred = [this]() {
-        return exclusiveBuffers.size() > 0;// false if waiting must be continued
+        return !exclusiveBuffers.empty();// false if waiting must be continued
     };
     if (!cvar.wait_for(lock, timeout, std::move(pred))) {
         return std::nullopt;
@@ -78,16 +78,15 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::se
     lock.unlock();
     if (memSegment->controlBlock->prepare()) {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
-    } else {
-        NES_THROW_RUNTIME_ERROR(
+    }         NES_THROW_RUNTIME_ERROR(
             "[FixedSizeBufferPool] got buffer with invalid reference counter: " << memSegment->controlBlock->getReferenceCount());
-    }
+   
 }
 
 TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
     // try to get an exclusive buffer
     std::unique_lock lock(mutex);
-    while (exclusiveBuffers.size() == 0) {
+    while (exclusiveBuffers.empty()) {
         cvar.wait(lock);
     }
     auto memSegment = exclusiveBuffers.front();
@@ -95,10 +94,9 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
     exclusiveBuffers.pop_front();
     if (memSegment->controlBlock->prepare()) {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
-    } else {
-        NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
+    }         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
                                 << memSegment->controlBlock->getReferenceCount());
-    }
+   
 }
 
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {

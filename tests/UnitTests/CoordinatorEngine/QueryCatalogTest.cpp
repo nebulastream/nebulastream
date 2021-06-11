@@ -97,7 +97,7 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     //Assert
     EXPECT_TRUE(catalogEntry);
     registeredQueries = queryCatalog->getQueries(QueryStatus::Registered);
-    EXPECT_TRUE(registeredQueries.size() == 0);
+    EXPECT_TRUE(registeredQueries.empty());
     std::map<uint64_t, QueryCatalogEntryPtr> queriesMarkedForStop = queryCatalog->getQueries(QueryStatus::MarkedForStop);
     EXPECT_TRUE(queriesMarkedForStop.size() == 1);
 }

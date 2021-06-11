@@ -32,7 +32,7 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param filePath the path to the output file
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string filePath, std::string sinkFormat, std::string append);
+    static SinkDescriptorPtr create(std::string fileName, std::string sinkFormat, std::string append);
 
     /**
      * @brief Factory method to create a new file sink descriptor as default
@@ -40,7 +40,7 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param filePath the path to the output file
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string filePath);
+    static SinkDescriptorPtr create(std::string fileName);
 
     /**
      * @brief Get the file name where the data is to be written

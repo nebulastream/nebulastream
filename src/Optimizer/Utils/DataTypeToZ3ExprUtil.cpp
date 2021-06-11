@@ -56,8 +56,7 @@ Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr value
     if (valueType->dataType->isArray()) {
         NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data value of array type.");
         return nullptr;
-    } else {
-        auto basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
+    }         auto basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
         auto valueType = basicValueType->dataType;
         z3::ExprPtr expr;
         if (valueType->isUndefined()) {
@@ -79,6 +78,6 @@ Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr value
             return nullptr;
         }
         return Z3ExprAndFieldMap::create(expr, {});
-    }
+   
 }
 }// namespace NES::Optimizer

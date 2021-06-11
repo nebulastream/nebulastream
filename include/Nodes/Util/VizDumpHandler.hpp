@@ -144,10 +144,10 @@ class VizDumpHandler : public DumpHandler {
      * @param scope the scope
      * @param plan the query plan
      */
-    void dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr ptr) override;
+    void dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr pipelinePlan) override;
 
   private:
-    void extractNodeProperties(detail::VizNode& node, OperatorNodePtr operatorNode);
+    static void extractNodeProperties(detail::VizNode& node, OperatorNodePtr operatorNode);
     void dump(QueryPlanPtr queryPlan, std::string parent, detail::VizGraph& graph);
     void writeToFile(std::string scope, std::string name, std::string content);
     std::string rootDir;

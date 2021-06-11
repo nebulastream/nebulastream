@@ -43,7 +43,7 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(ExpressionNodeP
     NES_DEBUG("Creating Z3 expression for input expression " << expression->toString());
     if (expression->instanceOf<LogicalExpressionNode>()) {
         return createForLogicalExpressions(expression, context);
-    } else if (expression->instanceOf<ArithmeticalExpressionNode>()) {
+    } if (expression->instanceOf<ArithmeticalExpressionNode>()) {
         return createForArithmeticalExpressions(expression, context);
     } else if (expression->instanceOf<ConstantValueExpressionNode>()) {
         auto constantValueExpression = expression->as<ConstantValueExpressionNode>();
@@ -77,7 +77,7 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(Ex
         Z3_ast array[] = {*left->getExpr(), *right->getExpr()};
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_add(*context, 2, array)));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
-    } else if (expression->instanceOf<SubExpressionNode>()) {
+    } if (expression->instanceOf<SubExpressionNode>()) {
         auto subExpressionNode = expression->as<SubExpressionNode>();
         auto left = createForExpression(subExpressionNode->getLeft(), context);
         auto right = createForExpression(subExpressionNode->getRight(), context);
@@ -132,7 +132,7 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(Express
         Z3_ast array[] = {*left->getExpr(), *right->getExpr()};
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
-    } else if (expression->instanceOf<OrExpressionNode>()) {
+    } if (expression->instanceOf<OrExpressionNode>()) {
         auto orExpressionNode = expression->as<OrExpressionNode>();
         auto left = createForExpression(orExpressionNode->getLeft(), context);
         auto right = createForExpression(orExpressionNode->getRight(), context);

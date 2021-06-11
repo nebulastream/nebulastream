@@ -118,7 +118,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param Pointer to the tuple buffer containing the data
      * @param Pointer to the source at which the data arrived
      */
-    void addWork(const OperatorId operatorId, TupleBuffer& buf);
+    void addWork(const OperatorId sourceId, TupleBuffer& buf);
 
     /**
      * @brief add work to the query manager, this methods is source-driven and is called
@@ -126,7 +126,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param Pointer to the tuple buffer containing the data
      * @param Pointer to the pipeline stage that will be executed next
      */
-    void addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline nextPipeline);
+    void addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable);
 
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
@@ -164,7 +164,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     * @param qep of the query to fail
     * @return bool indicating success
     */
-    bool failQuery(Execution::ExecutableQueryPlanPtr qep);
+    static bool failQuery(Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief notify all waiting threads in getWork() to wake up and finish up
@@ -212,7 +212,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param graceful hard or soft termination
      * @return true if it went through
      */
-    bool addEndOfStream(OperatorId operatorId, bool graceful = true);
+    bool addEndOfStream(OperatorId sourceId, bool graceful = true);
 
     /**
      * @return true if thread pool is running

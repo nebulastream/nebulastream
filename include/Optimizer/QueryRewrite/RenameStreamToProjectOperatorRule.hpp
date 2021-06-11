@@ -43,7 +43,7 @@ class RenameStreamToProjectOperatorRule : public BaseRewriteRule {
      * @param operatorNode : the rename stream operator
      * @return pointer to the converted project operator
      */
-    OperatorNodePtr convert(OperatorNodePtr operatorNode);
+    static OperatorNodePtr convert(OperatorNodePtr operatorNode);
 };
 
 }// namespace NES::Optimizer

@@ -84,7 +84,7 @@ class RestServer {
    * @brief method to stop rest server
    * @return bool indicating sucesss
    */
-    bool stop();
+    static bool stop();
 
   private:
     RestEnginePtr restEngine;

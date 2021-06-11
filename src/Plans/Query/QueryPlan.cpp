@@ -143,13 +143,12 @@ bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
         if (rootOperator->getId() == operatorId) {
             NES_DEBUG("QueryPlan: Found operator " << operatorId << " in the query plan");
             return true;
-        } else {
-            for (auto& child : rootOperator->getChildren()) {
+        }             for (auto& child : rootOperator->getChildren()) {
                 if (child->as<OperatorNode>()->getChildWithOperatorId(operatorId)) {
                     return true;
                 }
             }
-        }
+       
     }
     NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
     return false;
@@ -161,14 +160,13 @@ OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
         if (rootOperator->getId() == operatorId) {
             NES_DEBUG("QueryPlan: Found operator " << operatorId << " in the query plan");
             return rootOperator;
-        } else {
-            for (auto& child : rootOperator->getChildren()) {
+        }             for (auto& child : rootOperator->getChildren()) {
                 NodePtr found = child->as<OperatorNode>()->getChildWithOperatorId(operatorId);
                 if (found) {
                     return found->as<OperatorNode>();
                 }
             }
-        }
+       
     }
     NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
     return nullptr;

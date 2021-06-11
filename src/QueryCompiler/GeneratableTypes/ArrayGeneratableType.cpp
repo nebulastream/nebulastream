@@ -41,11 +41,10 @@ const CodeExpressionPtr ArrayGeneratableType::getCode() const {
 
 CodeExpressionPtr ArrayGeneratableType::getDeclarationCode(std::string identifier) const {
     CodeExpressionPtr ptr;
-    if (identifier != "") {
+    if (!identifier.empty()) {
         return combine(getCode(), std::make_shared<CodeExpression>(std::move(identifier)));
-    } else {
-        ptr = component->getCode();
-    }
+    }         ptr = component->getCode();
+   
     return ptr;
 }
 }// namespace NES::QueryCompilation

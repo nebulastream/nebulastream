@@ -58,7 +58,7 @@ class MQTTSink : public SinkMedium {
              bool asynchronousClient);
     ~MQTTSink() override;
 
-    bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;
+    bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) override;
     void setup() override { connect(); };
     void shutdown() override{};
 

@@ -97,7 +97,7 @@ void RestEngine::handleGet(http_request request) {
         if (paths[0] == "query") {
             queryController->handleGet(paths, request);
             return;
-        } else if (paths[0] == "streamCatalog") {
+        } if (paths[0] == "streamCatalog") {
             streamCatalogController->handleGet(paths, request);
             return;
         } else if (paths[0] == "queryCatalog") {
@@ -125,7 +125,7 @@ void RestEngine::handlePost(http_request request) {
         if (paths[0] == "query" || paths[0] == "pattern") {
             queryController->handlePost(paths, request);
             return;
-        } else if (paths[0] == "streamCatalog") {
+        } if (paths[0] == "streamCatalog") {
             streamCatalogController->handlePost(paths, request);
             return;
         } else if (paths[0] == "monitoring") {
@@ -145,7 +145,7 @@ void RestEngine::handleDelete(http_request request) {
         if (paths[0] == "streamCatalog") {
             streamCatalogController->handleDelete(paths, request);
             return;
-        } else if (paths[0] == "query") {
+        } if (paths[0] == "query") {
             queryController->handleDelete(paths, request);
             return;
         }

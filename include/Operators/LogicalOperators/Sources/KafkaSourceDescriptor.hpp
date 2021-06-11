@@ -34,8 +34,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       bool autoCommit,
                                       uint64_t kafkaConnectTimeout);
     static SourceDescriptorPtr create(SchemaPtr schema,
-                                      std::string streamName,
                                       std::string brokers,
+                                      std::string streamName,
                                       std::string topic,
                                       std::string groupId,
                                       bool autoCommit,

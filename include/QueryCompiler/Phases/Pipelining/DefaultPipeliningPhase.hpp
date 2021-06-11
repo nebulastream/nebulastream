@@ -44,7 +44,7 @@ class DefaultPipeliningPhase : public PipeliningPhase {
                      std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                      OperatorPipelinePtr currentPipeline,
                      PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processSource(PipelineQueryPlanPtr pipelinePlan,
+    static void processSource(PipelineQueryPlanPtr pipelinePlan,
                        std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                        OperatorPipelinePtr currentPipeline,
                        PhysicalOperators::PhysicalOperatorPtr sourceOperator);

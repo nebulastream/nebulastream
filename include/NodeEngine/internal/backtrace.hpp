@@ -766,7 +766,7 @@ class StackTraceImplBase {
 
 class StackTraceImplHolder : public StackTraceImplBase {
   public:
-    [[nodiscard]] size_t size() const { return _stacktrace.size() ? _stacktrace.size() - skip_n_firsts() : 0; }
+    [[nodiscard]] size_t size() const { return !_stacktrace.empty() ? _stacktrace.size() - skip_n_firsts() : 0; }
     Trace operator[](size_t idx) const {
         if (idx >= size()) {
             return Trace();
@@ -1055,9 +1055,8 @@ class TraceResolverLinuxBase : public TraceResolverImplBase {
             // but display the path that /proc/self/exe links to.
             symbol_info.dli_fname = "/proc/self/exe";
             return exec_path_;
-        } else {
-            return symbol_info.dli_fname;
-        }
+        }             return symbol_info.dli_fname;
+       
     }
 
   private:
@@ -1658,7 +1657,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
         }
 
         deep_first_search_by_pc(cudie, trace_addr - mod_bias, inliners_search_cb(trace));
-        if (trace.source.function.size() == 0) {
+        if (trace.source.function.empty()) {
             // fallback.
             trace.source.function = trace.object_function;
         }
@@ -3449,7 +3448,7 @@ class SourceFile {
   private:
     details::handle<std::ifstream*, details::default_delete<std::ifstream*>> _file;
 
-    std::vector<std::string> get_paths_from_env_variable_impl() {
+    static std::vector<std::string> get_paths_from_env_variable_impl() {
         std::vector<std::string> paths;
         const char* prefixes_str = std::getenv("BACKWARD_CXX_SOURCE_PREFIXES");
         if (prefixes_str && prefixes_str[0]) {
@@ -3690,7 +3689,7 @@ class Printer {
         }
     }
 
-    void print_header(std::ostream& os, size_t thread_id) {
+    static void print_header(std::ostream& os, size_t thread_id) {
         os << "Stack trace (most recent call last)";
         if (thread_id) {
             os << " in thread " << thread_id;
@@ -3702,7 +3701,7 @@ class Printer {
         os << "#" << std::left << std::setw(2) << trace.idx << std::right;
         bool already_indented = true;
 
-        if (!trace.source.filename.size() || object) {
+        if (trace.source.filename.empty() || object) {
             os << "   Object \"" << trace.object_filename << "\", at " << trace.addr << ", in " << trace.object_function << "\n";
             already_indented = false;
         }
@@ -3719,7 +3718,7 @@ class Printer {
             already_indented = false;
         }
 
-        if (trace.source.filename.size()) {
+        if (!trace.source.filename.empty()) {
             if (!already_indented) {
                 os << "   ";
             }

@@ -71,7 +71,7 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
      * @brief Recycle a pooled buffer that is might be exclusive to the pool
      * @param buffer
      */
-    void recyclePooledBuffer(detail::MemorySegment* buffer) override;
+    void recyclePooledBuffer(detail::MemorySegment* memSegment) override;
 
     /**
      * @brief This calls is not supported and raises runtime error

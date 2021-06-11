@@ -41,7 +41,7 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
      */
     explicit CompiledExecutablePipelineStage(CompiledCodePtr compiledCode, PipelineStageArity arity, std::string sourceCode);
     static NodeEngine::Execution::ExecutablePipelineStagePtr
-    create(CompiledCodePtr compiledCode, PipelineStageArity arity, std::string src = "");
+    create(CompiledCodePtr compiledCode, PipelineStageArity arity, std::string sourceCode = "");
     ~CompiledExecutablePipelineStage();
 
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;

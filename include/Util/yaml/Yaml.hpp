@@ -83,7 +83,7 @@ struct StringConverter<std::string> {
     static std::string Get(const std::string& data) { return data; }
 
     static std::string Get(const std::string& data, const std::string& defaultValue) {
-        if (data.size() == 0) {
+        if (data.empty()) {
             return defaultValue;
         }
         return data;
@@ -103,7 +103,7 @@ struct StringConverter<bool> {
     }
 
     static bool Get(const std::string& data, const bool& defaultValue) {
-        if (data.size() == 0) {
+        if (data.empty()) {
             return defaultValue;
         }
 

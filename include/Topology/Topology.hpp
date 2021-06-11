@@ -143,7 +143,7 @@ class Topology {
      * @param startNodes : start nodes of the sub-graphs to be merged
      * @return start nodes of the merged sub-graph
      */
-    std::vector<TopologyNodePtr> mergeSubGraphs(std::vector<TopologyNodePtr> startNodes);
+    static std::vector<TopologyNodePtr> mergeSubGraphs(std::vector<TopologyNodePtr> startNodes);
 
     /**
      * @brief Find the immediate common ancestor for the set of Topology nodes
@@ -157,7 +157,7 @@ class Topology {
      * @param topologyNodes: the set of topology nodes
      * @return the immediate common child.
      */
-    TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
+    static TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
 
     /**
      * @brief Find a node location that can be reachable from both the

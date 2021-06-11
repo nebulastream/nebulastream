@@ -142,10 +142,9 @@ bool QueryCatalog::queryExists(QueryId queryId) {
     if (queries.count(queryId) > 0) {
         NES_DEBUG("QueryCatalog: query with id " << queryId << " exists");
         return true;
-    } else {
-        NES_DEBUG("QueryCatalog: query with id " << queryId << " does not exist");
+    }         NES_DEBUG("QueryCatalog: query with id " << queryId << " does not exist");
         return false;
-    }
+   
 }
 
 std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueries(QueryStatus requestedStatus) {

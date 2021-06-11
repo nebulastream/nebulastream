@@ -306,7 +306,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
         auto left = deserializeExpression(serializedExpressionNode.release_left());
         auto right = deserializeExpression(serializedExpressionNode.release_right());
         return AddExpressionNode::create(left, right);
-    } else if (serializedExpression->details().Is<SerializableExpression_SubExpression>()) {
+    } if (serializedExpression->details().Is<SerializableExpression_SubExpression>()) {
         // de-serialize SUB expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as SUB expression node.");
         auto serializedExpressionNode = SerializableExpression_SubExpression();
@@ -359,7 +359,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(Ser
         auto left = deserializeExpression(serializedExpressionNode.release_left());
         auto right = deserializeExpression(serializedExpressionNode.release_right());
         return AndExpressionNode::create(left, right);
-    } else if (serializedExpression->details().Is<SerializableExpression_OrExpression>()) {
+    } if (serializedExpression->details().Is<SerializableExpression_OrExpression>()) {
         // de-serialize or expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize logical expression as OR expression node.");
         auto serializedExpressionNode = SerializableExpression_OrExpression();

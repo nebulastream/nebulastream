@@ -101,10 +101,9 @@ bool TopologyNode::removeNodeProperty(std::string key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {
         NES_ERROR("TopologyNode: Property '" << key << "' does not exist");
         return false;
-    } else {
-        nodeProperties.erase(key);
+    }         nodeProperties.erase(key);
         return true;
-    }
+   
 }
 void TopologyNode::addLinkProperty(TopologyNodePtr linkedNode, LinkPropertyPtr topologyLink) {
     linkProperties.insert(std::make_pair(linkedNode, topologyLink));
@@ -121,10 +120,9 @@ bool TopologyNode::removeLinkProperty(TopologyNodePtr linkedNode) {
     if (linkProperties.find(linkedNode) == linkProperties.end()) {
         NES_ERROR("TopologyNode: Link property to node with id='" << linkedNode << "' does not exist");
         return false;
-    } else {
-        linkProperties.erase(linkedNode);
+    }         linkProperties.erase(linkedNode);
         return true;
-    }
+   
 }
 
 }// namespace NES

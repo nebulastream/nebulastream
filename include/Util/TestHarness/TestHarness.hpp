@@ -271,7 +271,7 @@ class TestHarness {
                 sourceCount++;
             }
         }
-        if (testHarnessWorkers.size() == 0) {
+        if (testHarnessWorkers.empty()) {
             NES_THROW_RUNTIME_ERROR("TestHarness: No worker added to the test harness");
         } else if (sourceCount == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: No worker with source added to the test harness");

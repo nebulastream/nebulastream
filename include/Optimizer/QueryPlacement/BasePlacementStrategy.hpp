@@ -143,7 +143,7 @@ class BasePlacementStrategy {
      * @param sourceTopologyNode : the topology node to which sink operator will send the data
      * @return the instance of network sink operator
      */
-    OperatorNodePtr
+    static OperatorNodePtr
     createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, const TopologyNodePtr& sourceTopologyNode);
 
     /**
@@ -153,7 +153,7 @@ class BasePlacementStrategy {
      * @param operatorId : the operator id of the source network operator
      * @return the instance of network source operator
      */
-    OperatorNodePtr createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId);
+    static OperatorNodePtr createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId);
 
     /**
      * @brief Attach network source or sink operator to the given operator

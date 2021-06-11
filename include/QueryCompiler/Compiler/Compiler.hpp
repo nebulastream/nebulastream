@@ -62,26 +62,26 @@ class Compiler {
      * @brief create a unique file name in the following structure: gen_query_%d-%m-%Y_%H-%M-%S
      * @return file name
      */
-    std::string getFileName();
+    static std::string getFileName();
 
     /**
      * @brief Calls the system compiler with a set of compiler flags.
      * @param args CompilerFlagsPtr
      */
-    void callSystemCompiler(CompilerFlagsPtr args, std::string const& filename);
+    static void callSystemCompiler(CompilerFlagsPtr flags, std::string const& filename);
 
     /**
      * @brief Helper function to write source code to a file
      * @param filename
      * @param source
      */
-    void writeSourceToFile(const std::string& filename, const std::string& source);
+    static void writeSourceToFile(const std::string& filename, const std::string& source);
 
     /**
      * @brief Helper function to format and print a source file using clang-format. This function is creating a temp file.
      * @param filename
      */
-    std::string formatAndPrintSource(const std::string& filename);
+    static std::string formatAndPrintSource(const std::string& filename);
 
     const static std::string NESIncludePath;
     const static std::string DEBSIncludePath;

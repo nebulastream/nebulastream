@@ -66,7 +66,7 @@ const Code ClassDeclaration::getCode() const {
     return classCode.str();
 }
 
-std::string ClassDeclaration::generateFunctions(std::vector<FunctionDefinitionPtr>& functions) const {
+std::string ClassDeclaration::generateFunctions(std::vector<FunctionDefinitionPtr>& functions) {
     std::stringstream classCode;
     for (const auto& function : functions) {
         auto functionDeclaration = function->getDeclaration();
@@ -75,7 +75,7 @@ std::string ClassDeclaration::generateFunctions(std::vector<FunctionDefinitionPt
     return classCode.str();
 }
 
-std::string ClassDeclaration::generateConstructors(std::vector<ConstructorDefinitionPtr>& ctors) const {
+std::string ClassDeclaration::generateConstructors(std::vector<ConstructorDefinitionPtr>& ctors) {
     std::stringstream classCode;
     for (const auto& ctor : ctors) {
         auto functionDeclaration = ctor->getDeclaration();

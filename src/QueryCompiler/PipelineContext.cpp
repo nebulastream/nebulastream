@@ -35,7 +35,7 @@ void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable
 BlockScopeStatementPtr PipelineContext::createSetupScope() { return setupScopes.emplace_back(BlockScopeStatement::create()); }
 BlockScopeStatementPtr PipelineContext::createStartScope() { return startScopes.emplace_back(BlockScopeStatement::create()); }
 
-bool PipelineContext::hasNextPipeline() const { return this->nextPipelines.size() != 0; }
+bool PipelineContext::hasNextPipeline() const { return !this->nextPipelines.empty(); }
 
 RecordHandlerPtr PipelineContext::getRecordHandler() { return this->recordHandler; }
 

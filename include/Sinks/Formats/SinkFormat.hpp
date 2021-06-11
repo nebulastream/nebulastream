@@ -67,7 +67,7 @@ class SinkFormat {
     void setSchemaPtr(SchemaPtr schema);
 
     NodeEngine::BufferManagerPtr getBufferManager();
-    void setBufferManager(NodeEngine::BufferManagerPtr schema);
+    void setBufferManager(NodeEngine::BufferManagerPtr bufferManager);
 
   protected:
     SchemaPtr schema;

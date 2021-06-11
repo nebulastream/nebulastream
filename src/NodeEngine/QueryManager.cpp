@@ -694,15 +694,14 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
         if (ret == ExecutionResult::Ok || ret == ExecutionResult::Finished) {
             completedWork(task, workerContext);
             return ret;
-        } else if (ret == ExecutionResult::AllFinished) {
+        } if (ret == ExecutionResult::AllFinished) {
             return ret;
         }
         return ExecutionResult::Error;
-    } else {
-        NES_DEBUG("QueryManager: Thread pool was shut down but has still tasks");
+    }         NES_DEBUG("QueryManager: Thread pool was shut down but has still tasks");
         lock.unlock();
         return terminateLoop(workerContext);
-    }
+   
 #else
     Task task;
     if (running) {

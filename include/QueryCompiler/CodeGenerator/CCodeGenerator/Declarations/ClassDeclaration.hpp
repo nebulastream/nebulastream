@@ -40,8 +40,8 @@ class ClassDeclaration : public Declaration {
     [[nodiscard]] const DeclarationPtr copy() const override;
 
   private:
-    std::string generateFunctions(std::vector<FunctionDefinitionPtr>& functions) const;
-    std::string generateConstructors(std::vector<ConstructorDefinitionPtr>& functions) const;
+    static std::string generateFunctions(std::vector<FunctionDefinitionPtr>& functions) ;
+    static std::string generateConstructors(std::vector<ConstructorDefinitionPtr>& ctors) ;
     [[nodiscard]] std::string generateBaseClassNames() const;
     ClassDefinitionPtr classDefinition;
 };

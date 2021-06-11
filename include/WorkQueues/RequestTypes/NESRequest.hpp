@@ -61,9 +61,8 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
     std::shared_ptr<RequestType> as() {
         if (instanceOf<RequestType>()) {
             return std::dynamic_pointer_cast<RequestType>(this->shared_from_this());
-        } else {
-            throw std::logic_error("NESRequest:: we performed an invalid cast of operator ");
-        }
+        }             throw std::logic_error("NESRequest:: we performed an invalid cast of operator ");
+       
     }
 
     virtual std::string toString() = 0;

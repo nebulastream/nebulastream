@@ -24,7 +24,7 @@ namespace NES::Windowing {
  */
 class SlidingWindow : public WindowType {
   public:
-    static WindowTypePtr of(TimeCharacteristicPtr timeType, TimeMeasure size, TimeMeasure slide);
+    static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
 
     /**
     * Calculates the next window end based on a given timestamp.
@@ -62,7 +62,7 @@ class SlidingWindow : public WindowType {
     std::string toString() override;
 
   private:
-    SlidingWindow(TimeCharacteristicPtr timeType, TimeMeasure size, TimeMeasure slide);
+    SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;
     const TimeMeasure slide;
 };

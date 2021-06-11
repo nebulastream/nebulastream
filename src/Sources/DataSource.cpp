@@ -41,7 +41,7 @@ DataSource::GatheringMode DataSource::getGatheringModeFromString(std::string mod
     UtilityFunctions::trim(mode);
     if (mode == "frequency") {
         return GatheringMode::FREQUENCY_MODE;
-    } else if (mode == "ingestionrate") {
+    } if (mode == "ingestionrate") {
         return GatheringMode::INGESTION_RATE_MODE;
     } else {
         NES_THROW_RUNTIME_ERROR("mode not supported " << mode);

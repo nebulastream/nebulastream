@@ -61,7 +61,7 @@ class OutputChannel {
      * @return
      */
     static OutputChannelPtr create(std::shared_ptr<zmq::context_t> zmqContext,
-                                   const std::string address,
+                                   const std::string socketAddr,
                                    NesPartition nesPartition,
                                    ExchangeProtocol& protocol,
                                    std::chrono::seconds waitTime,
@@ -80,7 +80,7 @@ class OutputChannel {
      * @brief Method to handle the error
      * @param the error message
      */
-    void onError(Messages::ErrorMessage& errorMsg);
+    static void onError(Messages::ErrorMessage& errorMsg);
 
     /**
      * Close the outchannel and send EndOfStream message to consumer
