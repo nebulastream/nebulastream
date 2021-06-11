@@ -95,7 +95,7 @@ std::optional<NodeEngine::TupleBuffer> OPCSource::receiveData() {
     }
 }
 
-const std::string OPCSource::toString() const {
+std::string OPCSource::toString() const {
 
     char* ident = (char*) UA_malloc(sizeof(char) * nodeId.identifier.string.length + 1);
     memcpy(ident, nodeId.identifier.string.data, nodeId.identifier.string.length);
@@ -162,13 +162,13 @@ bool OPCSource::disconnect() {
 
 SourceType OPCSource::getType() const { return OPC_SOURCE; }
 
-const std::string OPCSource::getUrl() const { return url; }
+std::string OPCSource::getUrl() const { return url; }
 
 UA_NodeId OPCSource::getNodeId() const { return nodeId; }
 
-const std::string OPCSource::getUser() const { return user; }
+std::string OPCSource::getUser() const { return user; }
 
-const std::string OPCSource::getPassword() const { return password; }
+std::string OPCSource::getPassword() const { return password; }
 
 }// namespace NES
 #endif

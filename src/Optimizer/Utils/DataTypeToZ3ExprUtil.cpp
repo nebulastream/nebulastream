@@ -58,24 +58,24 @@ Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr value
         return nullptr;
     }
     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
-    auto valueType = basicValueType->dataType;
+    auto valueTypeType = basicValueType->dataType;
     z3::ExprPtr expr;
-    if (valueType->isUndefined()) {
+    if (valueTypeType->isUndefined()) {
         NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data value of undefined type.");
-    } else if (valueType->isInteger()) {
+    } else if (valueTypeType->isInteger()) {
         expr = std::make_shared<z3::expr>(context->int_val(std::stoi(basicValueType->value)));
-    } else if (valueType->isFloat()) {
+    } else if (valueTypeType->isFloat()) {
         expr = std::make_shared<z3::expr>(context->fpa_val(std::stod(basicValueType->value)));
-    } else if (valueType->isBoolean()) {
+    } else if (valueTypeType->isBoolean()) {
         bool const val =
             (strcasecmp(basicValueType->value.c_str(), "true") == 0 || std::atoi(basicValueType->value.c_str()) != 0);
         expr = std::make_shared<z3::expr>(context->bool_val(val));
-    } else if (valueType->isChar()) {
+    } else if (valueTypeType->isChar()) {
         expr = std::make_shared<z3::expr>(context->string_val(basicValueType->value));
-    } else if (valueType->isCharArray()) {// TODO: Enable Arrays for z3.
+    } else if (valueTypeType->isCharArray()) {// TODO: Enable Arrays for z3.
         expr = std::make_shared<z3::expr>(context->string_val(basicValueType->value));
     } else {
-        NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + valueType->toString());
+        NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + valueTypeType->toString());
         return nullptr;
     }
     return Z3ExprAndFieldMap::create(expr, {});

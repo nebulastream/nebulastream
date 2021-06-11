@@ -63,13 +63,13 @@ class ZmqSource : public DataSource {
      * @brief override the toString method for the zmq source
      * @return returns string describing the zmq source
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief The address address for the ZMQ
      * @return ZMQ address
      */
-    const std::string& getHost() const;
+    std::string const & getHost() const;
 
     /**
      * @brief The port of the ZMQ

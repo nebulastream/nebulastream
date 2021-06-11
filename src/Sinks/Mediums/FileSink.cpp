@@ -49,7 +49,7 @@ FileSink::~FileSink() {
     outputFile.close();
 }
 
-const std::string FileSink::toString() const {
+std::string FileSink::toString() const {
     std::stringstream ss;
     ss << "FileSink(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
@@ -116,6 +116,6 @@ bool FileSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
     return true;
 }
 
-const std::string FileSink::getFilePath() const { return filePath; }
+std::string FileSink::getFilePath() const { return filePath; }
 
 }// namespace NES

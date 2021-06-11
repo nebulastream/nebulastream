@@ -89,7 +89,7 @@ std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
     return buffer;
 }
 
-const std::string CSVSource::toString() const {
+std::string CSVSource::toString() const {
     std::stringstream ss;
     ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count()
        << "ms"
@@ -220,11 +220,11 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }
 
-const std::string CSVSource::getFilePath() const { return filePath; }
+std::string CSVSource::getFilePath() const { return filePath; }
 
-const std::string CSVSource::getDelimiter() const { return delimiter; }
+std::string CSVSource::getDelimiter() const { return delimiter; }
 
-const uint64_t CSVSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+uint64_t CSVSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 
 bool CSVSource::getSkipHeader() const { return skipHeader; }
 }// namespace NES

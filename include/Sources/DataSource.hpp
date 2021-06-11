@@ -116,7 +116,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * @Note this function is overwritten by the particular data source
      * @return string with name and additional information about the source
      */
-    virtual const std::string toString() const = 0;
+    virtual std::string toString() const = 0;
 
     /**
      * @brief get source Type

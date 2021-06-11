@@ -34,7 +34,7 @@ bool NullOutputSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine:
     return true;
 }
 
-const std::string NullOutputSink::toString() const {
+std::string NullOutputSink::toString() const {
     std::stringstream ss;
     ss << "NULL_SINK(";
     ss << ")";

@@ -60,7 +60,7 @@ class NetworkSink : public SinkMedium {
     /**
      * @return the string representation of the network sink
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief reconfiguration machinery for the network sink

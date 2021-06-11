@@ -51,18 +51,18 @@ class KafkaSink : public SinkMedium {
     /**
      * @brief Get broker list
      */
-    const std::string getBrokers() const;
+    std::string getBrokers() const;
 
     /**
      * @brief Get kafka topic name
      */
-    const std::string getTopic() const;
+    std::string getTopic() const;
 
     /**
      * @brief Get kafka producer timeout
      */
     const uint64_t getKafkaProducerTimeout() const;
-    const std::string toString() const override;
+    std::string toString() const override;
 
   private:
     void _connect();

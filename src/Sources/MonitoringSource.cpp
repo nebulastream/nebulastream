@@ -73,7 +73,7 @@ std::optional<NodeEngine::TupleBuffer> MonitoringSource::receiveData() {
 
 SourceType MonitoringSource::getType() const { return MONITORING_SOURCE; }
 
-const std::string MonitoringSource::toString() const {
+std::string MonitoringSource::toString() const {
     std::stringstream ss;
     ss << "MonitoringSource(SCHEMA(" << schema->toString() << ")"
        << ")";

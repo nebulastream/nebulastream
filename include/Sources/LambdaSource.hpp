@@ -56,7 +56,7 @@ class LambdaSource : public GeneratorSource {
     * @brief Provides a string representation of the source
     * @return The string representation of the source
     */
-    const std::string toString() const override;
+    std::string toString() const override;
     /**
      * @brief method to stop the source.
      * 1.) check if bool running is false, if false return, if not stop source

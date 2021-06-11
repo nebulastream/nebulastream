@@ -60,7 +60,7 @@ class MemorySource : public GeneratorSource {
      * @brief Provides a string representation of the source
      * @return The string representation of the source
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief Provides the type of the source

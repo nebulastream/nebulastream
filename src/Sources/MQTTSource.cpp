@@ -100,7 +100,7 @@ std::optional<NodeEngine::TupleBuffer> MQTTSource::receiveData() {
     return std::nullopt;
 }
 
-const std::string MQTTSource::toString() const {
+std::string MQTTSource::toString() const {
     std::stringstream ss;
     ss << "MQTTSOURCE(";
     ss << "SCHEMA(" << schema->toString() << "), ";

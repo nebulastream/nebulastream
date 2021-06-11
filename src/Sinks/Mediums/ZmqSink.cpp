@@ -133,7 +133,7 @@ bool ZmqSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worker
     return true;
 }
 
-const std::string ZmqSink::toString() const {
+std::string ZmqSink::toString() const {
     std::stringstream ss;
     ss << "ZMQ_SINK(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
@@ -181,6 +181,6 @@ bool ZmqSink::disconnect() {
 
 int ZmqSink::getPort() { return this->port; }
 
-const std::string ZmqSink::getHost() const { return host; }
+std::string ZmqSink::getHost() const { return host; }
 
 }// namespace NES

@@ -82,28 +82,28 @@ class MQTTSource : public DataSource {
      * @brief override the toString method for the mqtt source
      * @return returns string describing the mqtt source
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief getter for ServerAddress
      * @return serverAddress
      */
-    const std::string& getServerAddress() const;
+    std::string const & getServerAddress() const;
     /**
      * @brief getter for clientId
      * @return clientId
      */
-    const std::string& getClientId() const;
+    std::string const & getClientId() const;
     /**
      * @brief getter for user
      * @return user
      */
-    const std::string& getUser() const;
+    std::string const & getUser() const;
     /**
      * @brief getter for topic
      * @return topic
      */
-    const std::string& getTopic() const;
+    std::string const & getTopic() const;
 
     /**
     * @brief Get source type

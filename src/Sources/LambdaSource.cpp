@@ -89,7 +89,7 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     return buffer;
 }
 
-const std::string LambdaSource::toString() const { return "LambdaSource"; }
+std::string LambdaSource::toString() const { return "LambdaSource"; }
 
 bool LambdaSource::stop(bool) { return this->DataSource::stop(false); }
 
