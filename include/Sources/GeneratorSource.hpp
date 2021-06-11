@@ -64,7 +64,7 @@ class GeneratorSource : public DataSource {
      * @brief override the toString method for the generator source
      * @return returns string describing the generator source
      */
-    const std::string toString() const override;
+    std::string toString() const override;
     SourceType getType() const override;
 
     ~GeneratorSource() override;

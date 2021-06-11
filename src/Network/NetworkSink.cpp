@@ -62,7 +62,7 @@ void NetworkSink::shutdown() {
     NES_DEBUG("NetworkSink: shutdown() called " << nesPartition.toString() << " qep " << parentPlanId);
 }
 
-const std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
+std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
 void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString() << " parent plan " << parentPlanId);

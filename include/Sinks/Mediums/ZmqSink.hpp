@@ -36,7 +36,7 @@ class ZmqSink : public SinkMedium {
     bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) override;
     void setup() override { connect(); };
     void shutdown() override{};
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief Get zmq sink port
@@ -46,7 +46,7 @@ class ZmqSink : public SinkMedium {
     /**
      * @brief Get Zmq address name
      */
-    const std::string getHost() const;
+    std::string getHost() const;
 
     /**
     * @brief method to return the type of medium

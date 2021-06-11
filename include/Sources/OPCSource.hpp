@@ -71,13 +71,13 @@ class OPCSource : public DataSource {
      * @brief override the toString method for the opc source
      * @return returns string describing the opc source
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief The url of the OPC server
      * @return OPC url
      */
-    const std::string getUrl() const;
+    std::string getUrl() const;
 
     /**
      * @brief get desired OPC node id
@@ -89,13 +89,13 @@ class OPCSource : public DataSource {
      * @brief get user name for OPC server
      * @return opc server user name
      */
-    const std::string getUser() const;
+    std::string getUser() const;
 
     /**
      * @brief get password for OPC server
      * @return opc server password
      */
-    const std::string getPassword() const;
+    std::string getPassword() const;
 
     /**
      * @brief Get source type

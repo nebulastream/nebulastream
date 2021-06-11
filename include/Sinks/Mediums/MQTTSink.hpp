@@ -78,25 +78,25 @@ class MQTTSink : public SinkMedium {
      * @brief get address information from a MQTT sink client
      * @return address of MQTT broker
      */
-    const std::string getAddress() const;
+    std::string getAddress() const;
 
     /**
      * @brief get clientId information from a MQTT sink client
      * @return id used by client
      */
-    const std::string getClientId() const;
+    std::string getClientId() const;
 
     /**
      * @brief get topic information from a MQTT sink client
      * @return topic to which MQTT client sends messages
      */
-    const std::string getTopic() const;
+    std::string getTopic() const;
 
     /**
      * @brief get user name for a MQTT sink client
      * @return user name used by MQTT client
      */
-    const std::string getUser() const;
+    std::string getUser() const;
 
     /**
      * @brief get the number of MSGs that can maximally be buffered (default is 60)
@@ -131,7 +131,7 @@ class MQTTSink : public SinkMedium {
     /**
      * @brief Print MQTT Sink (schema, address, port, clientId, topic, user)
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
     * @brief method to return the type of medium

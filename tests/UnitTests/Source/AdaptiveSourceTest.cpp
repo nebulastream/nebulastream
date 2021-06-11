@@ -73,7 +73,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     std::string filePath;
     std::chrono::milliseconds intervalIncrease{};
 
-    const std::string toString() const override {
+    std::string toString() const override {
         std::stringstream ss;
         ss << "ADAPTIVE_CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath
            << " gatherInterval=" << this->getGatheringIntervalCount() << "ms, numBuff=" << this->numBuffersToProcess << ")";

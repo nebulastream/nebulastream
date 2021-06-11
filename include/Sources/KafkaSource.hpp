@@ -51,22 +51,22 @@ class KafkaSource : public DataSource {
      * @brief override the toString method for the kafka source
      * @return returns string describing the kafka source
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief Get kafka brokers
      */
-    const std::string getBrokers() const;
+    std::string getBrokers() const;
 
     /**
      * @brief Get kafka topic
      */
-    const std::string getTopic() const;
+    std::string getTopic() const;
 
     /**
      * @brief Get kafka group id
      */
-    const std::string getGroupId() const;
+    std::string getGroupId() const;
 
     /**
      * @brief If kafka offset is to be committed automatically

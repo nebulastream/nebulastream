@@ -70,13 +70,13 @@ class OPCSink : public SinkMedium {
      * @brief override the toSting method for the OPC sink
      * @return returns string describing the OPC sink
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      *
      * @brief get url
      */
-    const std::string getUrl() const;
+    std::string getUrl() const;
 
     /**
     * @brief get desired OPC node id
@@ -88,13 +88,13 @@ class OPCSink : public SinkMedium {
      *
      * @brief get OPC server user name
      */
-    const std::string getUser() const;
+    std::string getUser() const;
 
     /**
      *
      * @brief get OPC server password
      */
-    const std::string getPassword() const;
+    std::string getPassword() const;
 
     /**
     * @brief method to return the type of medium

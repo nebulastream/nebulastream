@@ -117,7 +117,7 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     return buffer;
 }
 
-const std::string MemorySource::toString() const { return "MemorySource"; }
+std::string MemorySource::toString() const { return "MemorySource"; }
 
 NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
 }// namespace NES

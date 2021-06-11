@@ -66,12 +66,12 @@ class FileSink : public SinkMedium {
      * @brief override the toString method for the file output sink
      * @return returns string describing the file output sink
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief get file path
      */
-    const std::string getFilePath() const;
+    std::string getFilePath() const;
 
     /**
     * @brief method to return the type of medium

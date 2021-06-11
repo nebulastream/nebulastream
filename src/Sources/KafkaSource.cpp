@@ -82,7 +82,7 @@ std::optional<NodeEngine::TupleBuffer> KafkaSource::receiveData() {
     return std::nullopt;
 }
 
-const std::string KafkaSource::toString() const {
+std::string KafkaSource::toString() const {
     std::stringstream ss;
     ss << "KAFKA_SOURCE(";
     ss << "SCHEMA(" << schema->toString() << "), ";
@@ -117,11 +117,11 @@ void KafkaSource::_connect() {
 
 SourceType KafkaSource::getType() const { return KAFKA_SOURCE; }
 
-const std::string KafkaSource::getBrokers() const { return brokers; }
+std::string KafkaSource::getBrokers() const { return brokers; }
 
-const std::string KafkaSource::getTopic() const { return topic; }
+std::string KafkaSource::getTopic() const { return topic; }
 
-const std::string KafkaSource::getGroupId() const { return groupId; }
+std::string KafkaSource::getGroupId() const { return groupId; }
 
 bool KafkaSource::isAutoCommit() const { return autoCommit; }
 

@@ -68,7 +68,7 @@ class NullOutputSink : public SinkMedium {
      * @brief override the toString method for the print sink
      * @return returns string describing the print sink
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
     * @brief method to return the type of medium

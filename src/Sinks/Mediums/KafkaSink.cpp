@@ -58,7 +58,7 @@ bool KafkaSink::writeData(NodeEngine::TupleBuffer& input_buffer) {
     return true;
 }
 
-const std::string KafkaSink::toString() const {
+std::string KafkaSink::toString() const {
     std::stringstream ss;
     ss << "KAFKA_SINK(";
     ss << "BROKER(" << brokers << "), ";
@@ -86,8 +86,8 @@ void KafkaSink::_connect() {
     // }
 }
 
-const std::string KafkaSink::getBrokers() const { return brokers; }
-const std::string KafkaSink::getTopic() const { return topic; }
+std::string KafkaSink::getBrokers() const { return brokers; }
+std::string KafkaSink::getTopic() const { return topic; }
 const uint64_t KafkaSink::getKafkaProducerTimeout() const { return kafkaProducerTimeout.count(); }
 SinkMediumTypes KafkaSink::getSinkMediumType() { return KAFKA_SINK; }
 

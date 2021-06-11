@@ -51,7 +51,7 @@ class MonitoringSource : public DefaultSource {
      * @brief override the toString method for the binary source
      * @return returns string describing the binary source
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
   private:
     MonitoringPlanPtr monitoringPlan;

@@ -48,7 +48,7 @@ std::optional<NodeEngine::TupleBuffer> BinarySource::receiveData() {
     return buf;
 }
 
-const std::string BinarySource::toString() const {
+std::string BinarySource::toString() const {
     std::stringstream ss;
     ss << "BINARY_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << file_path << ")";
     return ss.str();

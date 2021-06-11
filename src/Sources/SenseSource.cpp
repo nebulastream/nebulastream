@@ -53,7 +53,7 @@ std::optional<NodeEngine::TupleBuffer> SenseSource::receiveData() {
     return buf;
 }
 
-const std::string SenseSource::toString() const {
+std::string SenseSource::toString() const {
     std::stringstream ss;
     ss << "SenseSource(SCHEMA(" << schema->toString() << "), UDSF=" << udsf << endl;
     return ss.str();

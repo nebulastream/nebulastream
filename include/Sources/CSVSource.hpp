@@ -66,7 +66,7 @@ class CSVSource : public DataSource {
      * @brief override the toString method for the csv source
      * @return returns string describing the binary source
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief Get source type
@@ -77,17 +77,17 @@ class CSVSource : public DataSource {
     /**
      * @brief Get file path for the csv file
      */
-    const std::string getFilePath() const;
+    std::string getFilePath() const;
 
     /**
      * @brief Get the csv file delimiter
      */
-    const std::string getDelimiter() const;
+    std::string getDelimiter() const;
 
     /**
      * @brief Get number of tuples per buffer
      */
-    const uint64_t getNumberOfTuplesToProducePerBuffer() const;
+    uint64_t getNumberOfTuplesToProducePerBuffer() const;
 
     /**
      * @brief getter for skip header

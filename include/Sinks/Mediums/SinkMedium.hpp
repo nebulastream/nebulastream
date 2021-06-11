@@ -86,7 +86,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
      * @Note this function is overwritten by the particular data sink
      * @return string with name and additional information about the sink
      */
-    virtual const std::string toString() const = 0;
+    virtual std::string toString() const = 0;
 
     /**
    * @brief method to return the current schema of the sink

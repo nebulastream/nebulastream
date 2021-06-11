@@ -48,7 +48,7 @@ std::optional<NodeEngine::TupleBuffer> NetworkSource::receiveData() {
 
 SourceType NetworkSource::getType() const { return NETWORK_SOURCE; }
 
-const std::string NetworkSource::toString() const { return "NetworkSource: " + nesPartition.toString(); }
+std::string NetworkSource::toString() const { return "NetworkSource: " + nesPartition.toString(); }
 
 bool NetworkSource::start() {
     NES_DEBUG("NetworkSource: start called on " << nesPartition);

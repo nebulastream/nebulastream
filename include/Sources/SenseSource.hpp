@@ -55,7 +55,7 @@ class SenseSource : public DataSource {
      * @brief override the toString method for the csv source
      * @return returns string describing the binary source
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief Get source type

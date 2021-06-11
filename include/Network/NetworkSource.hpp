@@ -53,7 +53,7 @@ class NetworkSource : public DataSource {
      * @brief override the toString method
      * @return returns string describing the network source
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief Get source type
