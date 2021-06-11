@@ -18,6 +18,7 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <boost/process.hpp>
+#include <Util/subprocess.h>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
@@ -70,6 +71,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
 
     string coordinatorRPCPort = std::to_string(rpcPort);
     string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
+    struct subprocess_s subprocess;
+    int result = subprocess_create(cmdCoord, 0, &subprocess);
+    NES_INFO("XXX check subprocess started");
+    EXPECT_TRUE(result == 0);
     bp::child coordinatorProc(cmdCoord.c_str());
 
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
