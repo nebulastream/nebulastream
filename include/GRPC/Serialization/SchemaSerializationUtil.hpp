@@ -39,7 +39,7 @@ class SchemaSerializationUtil {
      * @param serializedSchema The corresponding protobuff object, which is used to capture the state of the object.
      * @return the modified serializedSchema
      */
-    static SerializableSchemaPtr serializeSchema(SchemaPtr schema, SerializableSchema* serializedSchema);
+    static SerializableSchemaPtr serializeSchema(const SchemaPtr& schema, SerializableSchema* serializedSchema);
 
     /**
     * @brief De-serializes the SerializableSchema and all its fields to a SchemaPtr

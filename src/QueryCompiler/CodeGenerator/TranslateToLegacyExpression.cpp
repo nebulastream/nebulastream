@@ -48,7 +48,7 @@ TranslateToLegacyExpression::TranslateToLegacyExpression() = default;
  * Translate the expression node into the corresponding user api expression of the legacy api.
  * To this end we first cast the expression node in the right subtype and then translate it.
  */
-LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(ExpressionNodePtr expression) {
+LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const ExpressionNodePtr& expression) {
     if (expression->instanceOf<LogicalExpressionNode>()) {
         // Translate logical expressions to the legacy representation
         return transformLogicalExpressions(expression);
@@ -74,7 +74,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(ExpressionN
     ;
 }
 
-LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpressions(ExpressionNodePtr expression) {
+LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpressions(const ExpressionNodePtr& expression) {
     if (expression->instanceOf<AddExpressionNode>()) {
         // Translate add expression node.
         auto addExpressionNode = expression->as<AddExpressionNode>();
@@ -121,7 +121,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
     NES_NOT_IMPLEMENTED();
 }
 
-LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(ExpressionNodePtr expression) {
+LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(const ExpressionNodePtr& expression) {
     if (expression->instanceOf<AndExpressionNode>()) {
         // Translate and expression node.
         auto andExpressionNode = expression->as<AndExpressionNode>();

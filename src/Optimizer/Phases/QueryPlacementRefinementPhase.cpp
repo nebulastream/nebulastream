@@ -16,17 +16,18 @@
 
 #include <Optimizer/Phases/QueryPlacementRefinementPhase.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
 QueryPlacementRefinementPhasePtr QueryPlacementRefinementPhase::create(GlobalExecutionPlanPtr globalPlan) {
-    return std::make_shared<QueryPlacementRefinementPhase>(QueryPlacementRefinementPhase(globalPlan));
+    return std::make_shared<QueryPlacementRefinementPhase>(QueryPlacementRefinementPhase(std::move(globalPlan)));
 }
 
 QueryPlacementRefinementPhase::~QueryPlacementRefinementPhase() { NES_DEBUG("~QueryPlacementRefinementPhase()"); }
 QueryPlacementRefinementPhase::QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan) {
     NES_DEBUG("QueryPlacementRefinementPhase()");
-    globalExecutionPlan = globalPlan;
+    globalExecutionPlan = std::move(globalPlan);
 }
 
 bool QueryPlacementRefinementPhase::execute(QueryId queryId) {

@@ -27,7 +27,7 @@ namespace NES {
 
 TopologyController::TopologyController(TopologyPtr topology) : topology(std::move(topology)) {}
 
-void TopologyController::handleGet(std::vector<utility::string_t> paths, http_request message) {
+void TopologyController::handleGet(const std::vector<utility::string_t>& paths, const http_request& message) {
     NES_DEBUG("TopologyController: GET Topology");
 
     topology->print();

@@ -56,12 +56,12 @@ LogicalWindowDefinition::LogicalWindowDefinition(FieldAccessExpressionNodePtr on
 
 bool LogicalWindowDefinition::isKeyed() { return onKey != nullptr; }
 
-LogicalWindowDefinitionPtr LogicalWindowDefinition::create(WindowAggregationPtr windowAggregation,
-                                                           WindowTypePtr windowType,
-                                                           DistributionCharacteristicPtr distChar,
+LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const WindowAggregationPtr& windowAggregation,
+                                                           const WindowTypePtr& windowType,
+                                                           const DistributionCharacteristicPtr& distChar,
                                                            uint64_t numberOfInputEdges,
-                                                           WindowTriggerPolicyPtr triggerPolicy,
-                                                           WindowActionDescriptorPtr triggerAction,
+                                                           const WindowTriggerPolicyPtr& triggerPolicy,
+                                                           const WindowActionDescriptorPtr& triggerAction,
                                                            uint64_t allowedLateness) {
     return std::make_shared<LogicalWindowDefinition>(windowAggregation,
                                                      windowType,
@@ -73,12 +73,12 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(WindowAggregationPtr 
 }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey,
-                                                           WindowAggregationPtr windowAggregation,
-                                                           WindowTypePtr windowType,
-                                                           DistributionCharacteristicPtr distChar,
+                                                           const WindowAggregationPtr& windowAggregation,
+                                                           const WindowTypePtr& windowType,
+                                                           const DistributionCharacteristicPtr& distChar,
                                                            uint64_t numberOfInputEdges,
-                                                           WindowTriggerPolicyPtr triggerPolicy,
-                                                           WindowActionDescriptorPtr triggerAction,
+                                                           const WindowTriggerPolicyPtr& triggerPolicy,
+                                                           const WindowActionDescriptorPtr& triggerAction,
                                                            uint64_t allowedLateness) {
     return std::make_shared<LogicalWindowDefinition>(onKey.getExpressionNode()->as<FieldAccessExpressionNode>(),
                                                      windowAggregation,
@@ -90,13 +90,13 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey,
                                                      allowedLateness);
 }
 
-LogicalWindowDefinitionPtr LogicalWindowDefinition::create(FieldAccessExpressionNodePtr onKey,
-                                                           WindowAggregationPtr windowAggregation,
-                                                           WindowTypePtr windowType,
-                                                           DistributionCharacteristicPtr distChar,
+LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const FieldAccessExpressionNodePtr& onKey,
+                                                           const WindowAggregationPtr& windowAggregation,
+                                                           const WindowTypePtr& windowType,
+                                                           const DistributionCharacteristicPtr& distChar,
                                                            uint64_t numberOfInputEdges,
-                                                           WindowTriggerPolicyPtr triggerPolicy,
-                                                           WindowActionDescriptorPtr triggerAction,
+                                                           const WindowTriggerPolicyPtr& triggerPolicy,
+                                                           const WindowActionDescriptorPtr& triggerAction,
                                                            uint64_t allowedLateness) {
     return std::make_shared<LogicalWindowDefinition>(onKey,
                                                      windowAggregation,
@@ -137,7 +137,7 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::copy() {
                   allowedLateness);
 }
 WindowTriggerPolicyPtr LogicalWindowDefinition::getTriggerPolicy() const { return triggerPolicy; }
-void LogicalWindowDefinition::setTriggerPolicy(WindowTriggerPolicyPtr triggerPolicy) { this->triggerPolicy = triggerPolicy; }
+void LogicalWindowDefinition::setTriggerPolicy(WindowTriggerPolicyPtr triggerPolicy) { this->triggerPolicy = std::move(triggerPolicy); }
 
 WindowActionDescriptorPtr LogicalWindowDefinition::getTriggerAction() const { return triggerAction; }
 

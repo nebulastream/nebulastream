@@ -26,7 +26,7 @@ NESRequestQueue::NESRequestQueue(uint64_t batchSize) : newRequestAvailable(false
 
 NESRequestQueue::~NESRequestQueue() { NES_DEBUG("~QueryRequestQueue()"); }
 
-bool NESRequestQueue::add(NESRequestPtr request) {
+bool NESRequestQueue::add(const NESRequestPtr& request) {
     std::unique_lock<std::mutex> lock(requestMutex);
     NES_INFO("QueryRequestQueue: Adding a new query request : " << request->toString());
     //TODO: identify and handle if more than one request for same query exists in the queue

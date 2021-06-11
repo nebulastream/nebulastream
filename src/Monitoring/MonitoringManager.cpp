@@ -44,7 +44,7 @@ MonitoringManager::~MonitoringManager() {
     topology.reset();
 }
 
-bool MonitoringManager::registerRemoteMonitoringPlans(std::vector<uint64_t> nodeIds, MonitoringPlanPtr monitoringPlan) {
+bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, const MonitoringPlanPtr& monitoringPlan) {
     if (!monitoringPlan) {
         NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
         return false;

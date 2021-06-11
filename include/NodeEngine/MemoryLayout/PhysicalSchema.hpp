@@ -30,7 +30,7 @@ namespace NES::NodeEngine {
 class PhysicalSchema {
   public:
     explicit PhysicalSchema(SchemaPtr schemaPtr);
-    static PhysicalSchemaPtr createPhysicalSchema(SchemaPtr schema);
+    static PhysicalSchemaPtr createPhysicalSchema(const SchemaPtr& schema);
 
     /**
      * @brief returns size of one record in bytes.

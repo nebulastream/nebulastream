@@ -70,7 +70,7 @@ class WindowType {
      * @param schema : the schema of the window
      * @return true if success else false
      */
-    bool inferStamp(SchemaPtr schema);
+    bool inferStamp(const SchemaPtr& schema);
 
   protected:
     TimeCharacteristicPtr timeCharacteristic;

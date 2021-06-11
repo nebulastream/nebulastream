@@ -17,5 +17,5 @@
 #include "Exceptions/InvalidQueryException.hpp"
 
 namespace NES {
-InvalidQueryException::InvalidQueryException(std::string message) : std::runtime_error(message) {}
+InvalidQueryException::InvalidQueryException(const std::string& message) : std::runtime_error(message) {}
 }// namespace NES

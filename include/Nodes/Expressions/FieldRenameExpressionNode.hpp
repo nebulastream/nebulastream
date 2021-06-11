@@ -35,7 +35,7 @@ class FieldRenameExpressionNode : public ExpressionNode {
     static ExpressionNodePtr create(FieldAccessExpressionNodePtr originalField, std::string newFieldName);
 
     const std::string toString() const override;
-    bool equal(const NodePtr rhs) const override;
+    bool equal(NodePtr rhs) const override;
 
     const std::string getNewFieldName();
 
@@ -57,7 +57,7 @@ class FieldRenameExpressionNode : public ExpressionNode {
     explicit FieldRenameExpressionNode(FieldRenameExpressionNode* other);
 
   private:
-    FieldRenameExpressionNode(FieldAccessExpressionNodePtr originalField, std::string newFieldName);
+    FieldRenameExpressionNode(const FieldAccessExpressionNodePtr& originalField, std::string newFieldName);
 
     FieldAccessExpressionNodePtr originalField;
     std::string newFieldName;

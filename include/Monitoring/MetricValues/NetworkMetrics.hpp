@@ -46,7 +46,7 @@ class NetworkMetrics {
      * @param prefix A prefix that is appended to the schema fields
      * @return The NetworkMetrics object
      */
-    static NetworkMetrics fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static NetworkMetrics fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json

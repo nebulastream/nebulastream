@@ -28,20 +28,20 @@ StreamCatalogEntry::StreamCatalogEntry(std::string sourceType,
     : sourceType(std::move(sourceType)), physicalStreamName(std::move(physicalStreamName)),
       logicalStreamName(std::move(logicalStreamName)), node(std::move(node)) {}
 
-StreamCatalogEntry::StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node)
+StreamCatalogEntry::StreamCatalogEntry(const AbstractPhysicalStreamConfigPtr& config, TopologyNodePtr node)
     : sourceType(config->getSourceType()), physicalStreamName(config->getPhysicalStreamName()),
       logicalStreamName(config->getLogicalStreamName()), node(std::move(node)) {
     // nop
 }
 
-StreamCatalogEntryPtr StreamCatalogEntry::create(std::string sourceType,
-                                                 std::string physicalStreamName,
-                                                 std::string logicalStreamName,
-                                                 TopologyNodePtr node) {
+StreamCatalogEntryPtr StreamCatalogEntry::create(const std::string& sourceType,
+                                                 const std::string& physicalStreamName,
+                                                 const std::string& logicalStreamName,
+                                                 const TopologyNodePtr& node) {
     return std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, node);
 }
 
-StreamCatalogEntryPtr StreamCatalogEntry::create(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node) {
+StreamCatalogEntryPtr StreamCatalogEntry::create(const AbstractPhysicalStreamConfigPtr& config, const TopologyNodePtr& node) {
     return std::make_shared<StreamCatalogEntry>(config, node);
 }
 

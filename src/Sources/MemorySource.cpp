@@ -21,10 +21,11 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <cmath>
+#include <utility>
 namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema,
-                           std::shared_ptr<uint8_t> memoryArea,
+                           const std::shared_ptr<uint8_t>& memoryArea,
                            size_t memoryAreaSize,
                            NodeEngine::BufferManagerPtr bufferManager,
                            NodeEngine::QueryManagerPtr queryManager,
@@ -41,7 +42,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                       operatorId,
                       numSourceLocalBuffers,
                       gatheringMode,
-                      successors),
+                      std::move(successors)),
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0) {
     this->numBuffersToProcess = numBuffersToProcess;
     if (gatheringMode == GatheringMode::FREQUENCY_MODE) {

@@ -39,10 +39,10 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
                                                    TypeInferencePhasePtr typeInferencePhase,
                                                    StreamCatalogPtr streamCatalog) {
     return std::make_shared<QueryPlacementPhase>(
-        QueryPlacementPhase(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
+        QueryPlacementPhase(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), std::move(streamCatalog)));
 }
 
-bool QueryPlacementPhase::execute(std::string placementStrategy, QueryPlanPtr queryPlan) {
+bool QueryPlacementPhase::execute(const std::string& placementStrategy, QueryPlanPtr queryPlan) {
     NES_INFO("NESOptimizer: Placing input Query Plan on Global Execution Plan");
     NES_INFO("NESOptimizer: Get the placement strategy");
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
@@ -56,7 +56,7 @@ bool QueryPlacementPhase::execute(std::string placementStrategy, QueryPlanPtr qu
         NES_ERROR("NESOptimizer: unable to find placement strategy for " + placementStrategy);
         return false;
     }
-    return placementStrategyPtr->updateGlobalExecutionPlan(queryPlan);
+    return placementStrategyPtr->updateGlobalExecutionPlan(std::move(queryPlan));
 }
 
 }// namespace NES::Optimizer

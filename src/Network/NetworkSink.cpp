@@ -21,12 +21,12 @@
 
 namespace NES::Network {
 
-NetworkSink::NetworkSink(SchemaPtr schema,
+NetworkSink::NetworkSink(const SchemaPtr& schema,
                          QuerySubPlanId parentPlanId,
                          NetworkManagerPtr networkManager,
-                         const NodeLocation nodeLocation,
+                         const NodeLocation& nodeLocation,
                          NesPartition nesPartition,
-                         NodeEngine::BufferManagerPtr bufferManager,
+                         const NodeEngine::BufferManagerPtr& bufferManager,
                          NodeEngine::QueryManagerPtr queryManager,
                          std::chrono::seconds waitTime,
                          uint8_t retryTimes)

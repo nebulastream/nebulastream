@@ -46,7 +46,7 @@ void writeToBuffer(const DiskMetrics& metric, NodeEngine::TupleBuffer& buf, uint
     buf.setNumberOfTuples(1);
 }
 
-DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+DiskMetrics DiskMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     DiskMetrics output{};
     auto i = schema->getIndex(prefix);
 

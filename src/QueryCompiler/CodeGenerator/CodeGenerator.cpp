@@ -17,6 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/FunctionCallStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 CodeGenerator::CodeGenerator() = default;
@@ -24,5 +25,5 @@ CodeGenerator::CodeGenerator() = default;
 CodeGenerator::~CodeGenerator() = default;
 
 CompilerTypesFactoryPtr CodeGenerator::getTypeFactory() { return std::make_shared<GeneratableTypesFactory>(); }
-FunctionCallStatementPtr CodeGenerator::call(std::string function) { return FunctionCallStatement::create(function); }
+FunctionCallStatementPtr CodeGenerator::call(std::string function) { return FunctionCallStatement::create(std::move(function)); }
 }// namespace NES::QueryCompilation

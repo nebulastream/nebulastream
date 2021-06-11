@@ -34,7 +34,7 @@ MonitoringController::MonitoringController(MonitoringServicePtr mService) : moni
     NES_DEBUG("MonitoringController: Initializing");
 }
 
-void MonitoringController::handleGet(std::vector<utility::string_t> path, http_request message) {
+void MonitoringController::handleGet(std::vector<utility::string_t> path, const http_request& message) {
     NES_DEBUG("MonitoringController: Processing GET request");
     if (path.size() > 1 && path.size() < 4 && path[1] == "metrics") {
         NES_DEBUG("MonitoringController: GET metrics with path size " + std::to_string(path.size()));

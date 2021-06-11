@@ -54,7 +54,7 @@ SchemaPtr NetworkValues::getSchema(const std::string& prefix) {
     return schema;
 }
 
-NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+NetworkValues NetworkValues::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     NetworkValues output{};
     auto i = schema->getIndex(prefix);
     auto nvSchemaSize = NetworkValues::getSchema("")->getSize();

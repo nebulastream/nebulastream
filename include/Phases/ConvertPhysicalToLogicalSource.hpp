@@ -37,7 +37,7 @@ class ConvertPhysicalToLogicalSource {
      * @param dataSource the input data source object defining the physical source
      * @return the logical source descriptor
      */
-    static SourceDescriptorPtr createSourceDescriptor(DataSourcePtr dataSource);
+    static SourceDescriptorPtr createSourceDescriptor(const DataSourcePtr& dataSource);
 
   private:
     ConvertPhysicalToLogicalSource() = default;

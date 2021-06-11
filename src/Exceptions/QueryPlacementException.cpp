@@ -17,7 +17,7 @@
 #include "Exceptions/QueryPlacementException.hpp"
 
 namespace NES {
-QueryPlacementException::QueryPlacementException(SharedQueryId sharedQueryId, std::string message)
+QueryPlacementException::QueryPlacementException(SharedQueryId sharedQueryId, const std::string& message)
     : std::runtime_error(message), sharedQueryId(sharedQueryId) {}
 
 SharedQueryId QueryPlacementException::getSharedQueryId() { return sharedQueryId; }

@@ -51,7 +51,7 @@ class DynamicRowLayoutField {
      * @tparam T type of field
      * @return field handler via a fieldName and a layoutBuffer
      */
-    static inline DynamicRowLayoutField<T, boundaryChecks> create(std::string fieldName,
+    static inline DynamicRowLayoutField<T, boundaryChecks> create(const std::string& fieldName,
                                                                   std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer);
 
     /**
@@ -98,7 +98,7 @@ DynamicRowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::share
 
 template<class T, bool boundaryChecks>
 inline DynamicRowLayoutField<T, boundaryChecks>
-DynamicRowLayoutField<T, boundaryChecks>::create(std::string fieldName, std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer) {
+DynamicRowLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer) {
     auto fieldIndex = layoutBuffer->getFieldIndexFromName(fieldName);
     if (fieldIndex.has_value()) {
         return DynamicRowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layoutBuffer);

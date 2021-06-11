@@ -24,11 +24,12 @@
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
 Z3SignatureBasedCompleteQueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context) {
-    signatureEqualityUtil = SignatureEqualityUtil::create(context);
+    signatureEqualityUtil = SignatureEqualityUtil::create(std::move(context));
 }
 
 Z3SignatureBasedCompleteQueryMergerRule::~Z3SignatureBasedCompleteQueryMergerRule() {
@@ -36,7 +37,7 @@ Z3SignatureBasedCompleteQueryMergerRule::~Z3SignatureBasedCompleteQueryMergerRul
 }
 
 Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRule::create(z3::ContextPtr context) {
-    return std::make_shared<Z3SignatureBasedCompleteQueryMergerRule>(Z3SignatureBasedCompleteQueryMergerRule(context));
+    return std::make_shared<Z3SignatureBasedCompleteQueryMergerRule>(Z3SignatureBasedCompleteQueryMergerRule(std::move(context)));
 }
 
 bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {

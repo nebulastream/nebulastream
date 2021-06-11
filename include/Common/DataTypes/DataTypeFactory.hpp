@@ -149,7 +149,7 @@ class DataTypeFactory {
      * @param component component type of the array
      * @return DataTypePtr
      */
-    static DataTypePtr createArray(uint64_t length, DataTypePtr component);
+    static DataTypePtr createArray(uint64_t length, const DataTypePtr& component);
 
     /**
     * @brief Creates a new Char data type.

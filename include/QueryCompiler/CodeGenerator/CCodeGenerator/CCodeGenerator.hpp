@@ -201,58 +201,58 @@ class CCodeGenerator : public CodeGenerator {
     CompilerPtr compiler;
 
   private:
-    static BinaryOperatorStatement getBuffer(VariableDeclaration tupleBufferVariable);
+    static BinaryOperatorStatement getBuffer(const VariableDeclaration& tupleBufferVariable);
     VariableDeclaration
-    getWindowOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable, uint64_t index);
-    static BinaryOperatorStatement getWatermark(VariableDeclaration tupleBufferVariable);
-    static BinaryOperatorStatement getOriginId(VariableDeclaration tupleBufferVariable);
+    getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
+    static BinaryOperatorStatement getWatermark(const VariableDeclaration& tupleBufferVariable);
+    static BinaryOperatorStatement getOriginId(const VariableDeclaration& tupleBufferVariable);
 
-    TypeCastExprStatement getTypedBuffer(VariableDeclaration tupleBufferVariable, StructDeclaration structDeclaration);
-    static BinaryOperatorStatement getBufferSize(VariableDeclaration tupleBufferVariable);
-    static BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable,
-                                                     VariableDeclaration numberOfResultTuples);
-    BinaryOperatorStatement setWatermark(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
-    BinaryOperatorStatement setOriginId(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
+    TypeCastExprStatement getTypedBuffer(const VariableDeclaration& tupleBufferVariable, const StructDeclaration& structDeclaration);
+    static BinaryOperatorStatement getBufferSize(const VariableDeclaration& tupleBufferVariable);
+    static BinaryOperatorStatement setNumberOfTuples(const VariableDeclaration& tupleBufferVariable,
+                                                     const VariableDeclaration& numberOfResultTuples);
+    BinaryOperatorStatement setWatermark(const VariableDeclaration& tupleBufferVariable, const VariableDeclaration& inputBufferVariable);
+    BinaryOperatorStatement setOriginId(const VariableDeclaration& tupleBufferVariable, const VariableDeclaration& inputBufferVariable);
 
-    static BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
-    static BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,
-                                                   VariableDeclaration tupleBufferVariable,
-                                                   VariableDeclaration workerContextVariable);
-    void generateTupleBufferSpaceCheck(PipelineContextPtr context,
-                                       VariableDeclaration varDeclResultTuple,
-                                       StructDeclaration structDeclarationResultTuple);
+    static BinaryOperatorStatement allocateTupleBuffer(const VariableDeclaration& pipelineContext);
+    static BinaryOperatorStatement emitTupleBuffer(const VariableDeclaration& pipelineContext,
+                                                   const VariableDeclaration& tupleBufferVariable,
+                                                   const VariableDeclaration& workerContextVariable);
+    void generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
+                                       const VariableDeclaration& varDeclResultTuple,
+                                       const StructDeclaration& structDeclarationResultTuple);
 
-    static StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
+    static StructDeclaration getStructDeclarationFromSchema(const std::string& structName, const SchemaPtr& schema);
 
-    BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable,
+    BinaryOperatorStatement getAggregationWindowHandler(const VariableDeclaration& pipelineContextVariable,
                                                         DataTypePtr keyType,
-                                                        Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
+                                                        const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor);
 
-    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable,
+    BinaryOperatorStatement getJoinWindowHandler(const VariableDeclaration& pipelineContextVariable,
                                                  DataTypePtr KeyType,
-                                                 std::string leftType,
-                                                 std::string rightType);
+                                                 const std::string& leftType,
+                                                 const std::string& rightType);
 
-    static BinaryOperatorStatement getStateVariable(VariableDeclaration);
+    static BinaryOperatorStatement getStateVariable(const VariableDeclaration&);
 
-    static BinaryOperatorStatement getLeftJoinState(VariableDeclaration windowHandlerVariable);
-    static BinaryOperatorStatement getRightJoinState(VariableDeclaration windowHandlerVariable);
+    static BinaryOperatorStatement getLeftJoinState(const VariableDeclaration& windowHandlerVariable);
+    static BinaryOperatorStatement getRightJoinState(const VariableDeclaration& windowHandlerVariable);
 
-    static BinaryOperatorStatement getWindowManager(VariableDeclaration);
+    static BinaryOperatorStatement getWindowManager(const VariableDeclaration&);
 
-    void generateCodeForWatermarkUpdaterWindow(PipelineContextPtr context, VariableDeclaration handler);
-    void generateCodeForWatermarkUpdaterJoin(PipelineContextPtr context, VariableDeclaration handler, bool leftSide);
+    void generateCodeForWatermarkUpdaterWindow(const PipelineContextPtr& context, const VariableDeclaration& handler);
+    void generateCodeForWatermarkUpdaterJoin(const PipelineContextPtr& context, const VariableDeclaration& handler, bool leftSide);
 
-    void generateCodeForAggregationInitialization(BlockScopeStatementPtr setupScope,
-                                                  VariableDeclaration executableAggregation,
-                                                  VariableDeclaration partialAggregateInitialValue,
-                                                  GeneratableDataTypePtr aggregationInputType,
-                                                  Windowing::WindowAggregationDescriptorPtr aggregation);
+    void generateCodeForAggregationInitialization(const BlockScopeStatementPtr& setupScope,
+                                                  const VariableDeclaration& executableAggregation,
+                                                  const VariableDeclaration& partialAggregateInitialValue,
+                                                  const GeneratableDataTypePtr& aggregationInputType,
+                                                  const Windowing::WindowAggregationDescriptorPtr& aggregation);
 
     StructDeclaration getStructDeclarationFromWindow(std::string structName);
 
     VariableDeclaration
-    getJoinOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable, uint64_t joinOperatorIndex);
+    getJoinOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t joinOperatorIndex);
 };
 }// namespace QueryCompilation
 }// namespace NES

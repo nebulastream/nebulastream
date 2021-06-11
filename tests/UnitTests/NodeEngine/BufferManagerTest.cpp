@@ -134,7 +134,8 @@ TEST_F(BufferManagerTest, bufferManagerMtAccess) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 
     std::vector<std::thread> threads;
-    for (int i = 0; i < 4; i++) {
+    threads.reserve(4);
+for (int i = 0; i < 4; i++) {
         threads.emplace_back([&bufferManager]() {
             for (int i = 0; i < 50; ++i) {
                 auto buf = bufferManager->getBufferBlocking();
@@ -165,7 +166,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
-    for (int i = 0; i < producer_threads; i++) {
+    prod_threads.reserve(producer_threads);
+for (int i = 0; i < producer_threads; i++) {
         prod_threads.emplace_back([&workQueue, &mutex, &cvar, &bufferManager]() {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
@@ -181,7 +183,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
             }
         });
     }
-    for (int i = 0; i < consumer_threads; i++) {
+    con_threads.reserve(consumer_threads);
+for (int i = 0; i < consumer_threads; i++) {
         con_threads.emplace_back([&workQueue, &mutex, &cvar]() {
             std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
             while (true) {
@@ -235,7 +238,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoSingleton) {
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
-    for (int i = 0; i < producer_threads; i++) {
+    prod_threads.reserve(producer_threads);
+for (int i = 0; i < producer_threads; i++) {
         prod_threads.emplace_back([&workQueue, &mutex, &cvar, bufferManager]() {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
@@ -251,7 +255,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoSingleton) {
             }
         });
     }
-    for (int i = 0; i < consumer_threads; i++) {
+    con_threads.reserve(consumer_threads);
+for (int i = 0; i < consumer_threads; i++) {
         con_threads.emplace_back([&workQueue, &mutex, &cvar]() {
             std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
             while (true) {
@@ -289,7 +294,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoSingleton) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
-TupleBuffer getBufferTimeout(std::shared_ptr<NodeEngine::BufferManager> bufferManager, std::chrono::milliseconds&& timeout) {
+TupleBuffer getBufferTimeout(const std::shared_ptr<NodeEngine::BufferManager>& bufferManager, std::chrono::milliseconds&& timeout) {
     std::optional<TupleBuffer> opt;
     while (!(opt = bufferManager->getBufferTimeout(timeout)).has_value()) {
         // nop
@@ -314,7 +319,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
-    for (int i = 0; i < producer_threads; i++) {
+    prod_threads.reserve(producer_threads);
+for (int i = 0; i < producer_threads; i++) {
         prod_threads.emplace_back([&workQueue, &mutex, &cvar, bufferManager]() {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
@@ -330,7 +336,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
             }
         });
     }
-    for (int i = 0; i < consumer_threads; i++) {
+    con_threads.reserve(consumer_threads);
+for (int i = 0; i < consumer_threads; i++) {
         con_threads.emplace_back([&workQueue, &mutex, &cvar]() {
             std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
             while (true) {
@@ -405,7 +412,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
-    for (int i = 0; i < producer_threads; i++) {
+    prod_threads.reserve(producer_threads);
+for (int i = 0; i < producer_threads; i++) {
         prod_threads.emplace_back([&workQueue, &mutex, &cvar, bufferManager]() {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
@@ -424,7 +432,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
             }
         });
     }
-    for (int i = 0; i < consumer_threads; i++) {
+    con_threads.reserve(consumer_threads);
+for (int i = 0; i < consumer_threads; i++) {
         con_threads.emplace_back([&workQueue, &mutex, &cvar]() {
             std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
             while (true) {
@@ -484,7 +493,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
     constexpr uint32_t consumer_threads = 4;
 
     auto localPool = bufferManager->createLocalBufferPool(32);
-    for (int i = 0; i < producer_threads; i++) {
+    prod_threads.reserve(producer_threads);
+for (int i = 0; i < producer_threads; i++) {
         prod_threads.emplace_back([&workQueue, &mutex, &cvar, localPool]() {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
@@ -501,7 +511,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
             }
         });
     }
-    for (int i = 0; i < consumer_threads; i++) {
+    con_threads.reserve(consumer_threads);
+for (int i = 0; i < consumer_threads; i++) {
         con_threads.emplace_back([&workQueue, &mutex, &cvar]() {
             std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
             while (true) {
@@ -560,7 +571,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
-    for (int i = 0; i < producer_threads; i++) {
+    prod_threads.reserve(producer_threads);
+for (int i = 0; i < producer_threads; i++) {
         prod_threads.emplace_back([&workQueue, &mutex, &cvar, &bufferManager]() {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
@@ -578,7 +590,8 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
         });
     }
     auto localPool = bufferManager->createLocalBufferPool(32);
-    for (int i = 0; i < consumer_threads; i++) {
+    con_threads.reserve(consumer_threads);
+for (int i = 0; i < consumer_threads; i++) {
         con_threads.emplace_back([&workQueue, &mutex, &cvar, localPool]() {
             std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
             while (true) {

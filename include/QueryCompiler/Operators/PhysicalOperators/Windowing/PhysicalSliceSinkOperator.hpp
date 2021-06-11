@@ -35,7 +35,7 @@ class PhysicalSliceSinkOperator : public PhysicalWindowOperator, public Abstract
                               SchemaPtr outputSchema,
                               Windowing::WindowOperatorHandlerPtr handler);
     static PhysicalOperatorPtr
-    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler);
+    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Windowing::WindowOperatorHandlerPtr& handler);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler);
     const std::string toString() const override;
     OperatorNodePtr copy() override;

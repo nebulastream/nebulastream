@@ -92,7 +92,7 @@ class GlobalQueryPlanUpdatePhase {
 
   private:
     explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog,
-                                        StreamCatalogPtr streamCatalog,
+                                        const StreamCatalogPtr& streamCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
                                         bool enableQueryMerging,

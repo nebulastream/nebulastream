@@ -30,7 +30,7 @@
 namespace NES::QueryCompilation {
 ClassDeclaration::ClassDeclaration(ClassDefinitionPtr classDefinition) : classDefinition(std::move(classDefinition)) {}
 
-ClassDeclarationPtr ClassDeclaration::create(ClassDefinitionPtr classDefinition) {
+ClassDeclarationPtr ClassDeclaration::create(const ClassDefinitionPtr& classDefinition) {
     return std::make_shared<ClassDeclaration>(classDefinition);
 }
 

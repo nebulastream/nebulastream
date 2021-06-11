@@ -59,7 +59,7 @@ class RunQueryRequest : public NESRequest {
     std::string toString() override;
 
   private:
-    explicit RunQueryRequest(QueryPlanPtr queryPlan, std::string queryPlacementStrategy);
+    explicit RunQueryRequest(const QueryPlanPtr& queryPlan, std::string queryPlacementStrategy);
     QueryPlanPtr queryPlan;
     std::string queryPlacementStrategy;
 };

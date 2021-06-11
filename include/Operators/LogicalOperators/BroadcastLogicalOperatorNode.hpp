@@ -31,7 +31,7 @@ class BroadcastLogicalOperatorNode : public ExchangeOperatorNode, public Logical
     ~BroadcastLogicalOperatorNode() override = default;
 
     bool inferSchema() override;
-    bool equal(const NodePtr rhs) const override;
+    bool equal(NodePtr rhs) const override;
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;

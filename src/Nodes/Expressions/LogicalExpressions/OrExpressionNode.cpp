@@ -21,7 +21,7 @@ OrExpressionNode::OrExpressionNode() : LogicalBinaryExpressionNode(){};
 
 OrExpressionNode::OrExpressionNode(OrExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr OrExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr OrExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto orNode = std::make_shared<OrExpressionNode>();
     orNode->setChildren(left, right);
     return orNode;

@@ -21,15 +21,15 @@
 
 namespace NES::Windowing {
 
-EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(ExpressionItem onField,
+EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(const ExpressionItem& onField,
                                                                            TimeMeasure allowedLateness,
                                                                            TimeUnit unit)
     : onField(onField), unit(std::move(unit)), allowedLateness(std::move(allowedLateness)) {}
 
 WatermarkStrategyDescriptorPtr
-EventTimeWatermarkStrategyDescriptor::create(ExpressionItem onField, TimeMeasure allowedLateness, TimeUnit unit) {
+EventTimeWatermarkStrategyDescriptor::create(const ExpressionItem& onField, TimeMeasure allowedLateness, TimeUnit unit) {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
-        Windowing::EventTimeWatermarkStrategyDescriptor(onField, allowedLateness, unit));
+        Windowing::EventTimeWatermarkStrategyDescriptor(onField, std::move(allowedLateness), std::move(unit)));
 }
 ExpressionItem EventTimeWatermarkStrategyDescriptor::getOnField() { return onField; }
 TimeMeasure EventTimeWatermarkStrategyDescriptor::getAllowedLateness() { return allowedLateness; }

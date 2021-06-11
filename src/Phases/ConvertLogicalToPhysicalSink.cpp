@@ -34,9 +34,9 @@
 namespace NES {
 
 DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
-                                                         SinkDescriptorPtr sinkDescriptor,
-                                                         SchemaPtr schema,
-                                                         NodeEngine::NodeEnginePtr nodeEngine,
+                                                         const SinkDescriptorPtr& sinkDescriptor,
+                                                         const SchemaPtr& schema,
+                                                         const NodeEngine::NodeEnginePtr& nodeEngine,
                                                          QuerySubPlanId querySubPlanId) {
     NES_DEBUG("Convert sink " << operatorId);
     NES_ASSERT(nodeEngine, "Invalid node engine");

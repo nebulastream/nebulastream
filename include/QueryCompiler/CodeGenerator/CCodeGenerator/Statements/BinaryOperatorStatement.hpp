@@ -29,9 +29,9 @@ const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type);
 
 class BinaryOperatorStatement : public ExpressionStatment {
   public:
-    BinaryOperatorStatement(ExpressionStatmentPtr lhs,
+    BinaryOperatorStatement(const ExpressionStatmentPtr& lhs,
                             const BinaryOperatorType& op,
-                            ExpressionStatmentPtr rhs,
+                            const ExpressionStatmentPtr& rhs,
                             BracketMode bracket_mode = NO_BRACKETS);
 
     BinaryOperatorStatement(const ExpressionStatment& lhs,

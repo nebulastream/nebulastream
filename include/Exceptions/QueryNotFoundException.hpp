@@ -26,7 +26,7 @@ namespace NES {
  */
 class QueryNotFoundException : public std::runtime_error {
   public:
-    explicit QueryNotFoundException(std::string message);
+    explicit QueryNotFoundException(const std::string& message);
 };
 }// namespace NES
 #endif//NES_QUERYNOTFOUNDEXCEPTION_HPP

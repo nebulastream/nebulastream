@@ -17,12 +17,13 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <sstream>
+#include <utility>
 
 namespace NES {
 
-BasicPhysicalType::BasicPhysicalType(DataTypePtr type, NativeType nativeType) : PhysicalType(type), nativeType(nativeType) {}
+BasicPhysicalType::BasicPhysicalType(DataTypePtr type, NativeType nativeType) : PhysicalType(std::move(type)), nativeType(nativeType) {}
 
-PhysicalTypePtr BasicPhysicalType::create(DataTypePtr type, NativeType nativeType) {
+PhysicalTypePtr BasicPhysicalType::create(const DataTypePtr& type, NativeType nativeType) {
     return std::make_shared<BasicPhysicalType>(type, nativeType);
 }
 

@@ -28,8 +28,8 @@ class PowExpressionNode final : public ArithmeticalBinaryExpressionNode {
     /**
      * @brief Create a new POWER expression
      */
-    static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
-    bool equal(const NodePtr rhs) const final;
+    static ExpressionNodePtr create(ExpressionNodePtr& left, ExpressionNodePtr& right);
+    bool equal(NodePtr rhs) const final;
     const std::string toString() const final;
 
     /**

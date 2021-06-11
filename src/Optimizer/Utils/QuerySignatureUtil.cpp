@@ -41,7 +41,7 @@
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::ContextPtr context, OperatorNodePtr operatorNode) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::ContextPtr& context, const OperatorNodePtr& operatorNode) {
 
     NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
 
@@ -102,8 +102,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
 }
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(z3::ContextPtr context,
-                                                                    SourceLogicalOperatorNodePtr sourceOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(const z3::ContextPtr& context,
+                                                                    const SourceLogicalOperatorNodePtr& sourceOperator) {
 
     //Compute the column expressions for the source
     std::vector<std::string> columns;
@@ -129,7 +129,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(z3::ContextP
     return QuerySignature::create(std::move(conditions), std::move(columns), updatedSchemaFieldToExprMaps, {});
 }
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(ProjectionLogicalOperatorNodePtr projectOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const ProjectionLogicalOperatorNodePtr& projectOperator) {
 
     //Get all children operators
     auto children = projectOperator->getChildren();
@@ -191,7 +191,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(ProjectionL
                                   std::move(windowExpressions));
 }
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr context, MapLogicalOperatorNodePtr mapOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::ContextPtr& context, const MapLogicalOperatorNodePtr& mapOperator) {
 
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = mapOperator->getChildren();
@@ -249,8 +249,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
                                   std::move(windowsExpressions));
 }
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextPtr context,
-                                                                    FilterLogicalOperatorNodePtr filterOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::ContextPtr& context,
+                                                                    const FilterLogicalOperatorNodePtr& filterOperator) {
 
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = filterOperator->getChildren();
@@ -310,8 +310,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
 }
 
 QuerySignaturePtr
-QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context,
-                                                     WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator) {
+QuerySignatureUtil::createQuerySignatureForWatermark(const z3::ContextPtr& context,
+                                                     const WatermarkAssignerLogicalOperatorNodePtr& watermarkAssignerOperator) {
 
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = watermarkAssignerOperator->getChildren();
@@ -368,8 +368,8 @@ QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context,
                                   std::move(windowExpressions));
 }
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPtr context,
-                                                                   UnionLogicalOperatorNodePtr unionOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::ContextPtr& context,
+                                                                   const UnionLogicalOperatorNodePtr& unionOperator) {
 
     NES_DEBUG("QuerySignatureUtil: Computing Signature from children signatures");
     auto children = unionOperator->getChildren();
@@ -427,8 +427,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPt
                                   std::move(windowExpressions));
 }
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr context,
-                                                                  JoinLogicalOperatorNodePtr joinOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::ContextPtr& context,
+                                                                  const JoinLogicalOperatorNodePtr& joinOperator) {
 
     //Compute intermediate signature by performing CNFs of all child signatures
     std::vector<NodePtr> children = joinOperator->getChildren();
@@ -563,8 +563,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
                                   std::move(windowExpressions));
 }
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextPtr context,
-                                                                    WindowLogicalOperatorNodePtr windowOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::ContextPtr& context,
+                                                                    const WindowLogicalOperatorNodePtr& windowOperator) {
 
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = windowOperator->getChildren();

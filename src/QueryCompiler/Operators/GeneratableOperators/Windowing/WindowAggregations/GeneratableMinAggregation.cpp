@@ -28,7 +28,7 @@ GeneratableMinAggregation::GeneratableMinAggregation(Windowing::WindowAggregatio
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
 GeneratableWindowAggregationPtr
-GeneratableMinAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
+GeneratableMinAggregation::create(const Windowing::WindowAggregationDescriptorPtr& aggregationDescriptor) {
     return std::make_shared<GeneratableMinAggregation>(aggregationDescriptor);
 }
 

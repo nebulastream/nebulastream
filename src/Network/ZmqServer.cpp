@@ -97,7 +97,7 @@ bool ZmqServer::stop() {
     return true;
 }
 
-void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::shared_ptr<std::promise<bool>> startPromise) {
+void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std::promise<bool>>& startPromise) {
     // option of linger time until port is closed
     int linger = -1;
     zmq::socket_t frontendSocket(*zmqContext, zmq::socket_type::router);
@@ -173,7 +173,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::shared_ptr<std::prom
     }
 }
 
-void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int index) {
+void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& barrier, int index) {
     zmq::socket_t dispatcherSocket(*zmqContext, zmq::socket_type::dealer);
     try {
         dispatcherSocket.connect(dispatcherPipe);

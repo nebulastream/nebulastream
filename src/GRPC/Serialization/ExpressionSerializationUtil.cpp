@@ -38,7 +38,7 @@
 #include <SerializableExpression.pb.h>
 namespace NES {
 
-SerializableExpression* ExpressionSerializationUtil::serializeExpression(ExpressionNodePtr expression,
+SerializableExpression* ExpressionSerializationUtil::serializeExpression(const ExpressionNodePtr& expression,
                                                                          SerializableExpression* serializedExpression) {
     NES_DEBUG("ExpressionSerializationUtil:: serialize expression " << expression->toString());
     // serialize expression node depending on its type.
@@ -163,7 +163,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
     return expressionNodePtr;
 }
 
-void ExpressionSerializationUtil::serializeArithmeticalExpressions(ExpressionNodePtr expression,
+void ExpressionSerializationUtil::serializeArithmeticalExpressions(const ExpressionNodePtr& expression,
                                                                    SerializableExpression* serializedExpression) {
     NES_DEBUG("ExpressionSerializationUtil:: serialize arithmetical expression " << expression->toString());
     if (expression->instanceOf<AddExpressionNode>()) {
@@ -221,7 +221,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(ExpressionNod
     }
 }
 
-void ExpressionSerializationUtil::serializeLogicalExpressions(ExpressionNodePtr expression,
+void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNodePtr& expression,
                                                               SerializableExpression* serializedExpression) {
     NES_DEBUG("ExpressionSerializationUtil:: serialize logical expression " << expression->toString());
     if (expression->instanceOf<AndExpressionNode>()) {

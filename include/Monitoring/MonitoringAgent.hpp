@@ -40,16 +40,16 @@ using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 class MonitoringAgent {
   public:
     MonitoringAgent();
-    MonitoringAgent(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr catalog);
+    MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog);
     static MonitoringAgentPtr create();
-    static MonitoringAgentPtr create(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr catalog);
+    static MonitoringAgentPtr create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog);
 
     /**
      * @brief Register a monitoring plan at the local worker. The plan is indicating which metrics to collect.
      * @param monitoringPlan
      * @return the schema of the monitoring plan
      */
-    SchemaPtr registerMonitoringPlan(MonitoringPlanPtr monitoringPlan);
+    SchemaPtr registerMonitoringPlan(const MonitoringPlanPtr& monitoringPlan);
 
     /**
      * @brief Collect the metrics and store them in to the given tuple buffer. The collected metrics depend on the monitoring plan.

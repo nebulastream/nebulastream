@@ -34,7 +34,7 @@ class BaseController {
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleGet(std::vector<utility::string_t> path, http_request request);
+    void handleGet(const std::vector<utility::string_t>& path, http_request request);
 
     /**
      * @brief Handle the put request from the user
@@ -55,7 +55,7 @@ class BaseController {
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleDelete(std::vector<utility::string_t> path, http_request request);
+    void handleDelete(const std::vector<utility::string_t>& path, http_request request);
 
     /**
      * @brief Handle the patch request from the user
@@ -69,30 +69,30 @@ class BaseController {
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleHead(std::vector<utility::string_t> path, http_request request);
+    void handleHead(const std::vector<utility::string_t>& path, http_request request);
 
     /**
      * @brief Handle trace request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleTrace(std::vector<utility::string_t> path, http_request request);
+    void handleTrace(const std::vector<utility::string_t>& path, http_request request);
 
     /**
      * @brief Handle unionWith request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleMerge(std::vector<utility::string_t> path, http_request request);
+    void handleMerge(const std::vector<utility::string_t>& path, http_request request);
 
     /**
      * @brief set http response options
      * @param request : the message from the user
      */
-    static void handleOptions(http_request request);
+    static void handleOptions(const http_request& request);
 
     static json::value responseNotImpl(const http::method& method, utility::string_t path);
-    static void internalServerErrorImpl(web::http::http_request message);
+    static void internalServerErrorImpl(const web::http::http_request& message);
     static void successMessageImpl(const web::http::http_request& message, const web::json::value& result);
     static void successMessageImpl(const web::http::http_request& message, const utf8string& result);
 

@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 const StatementPtr ExpressionStatment::createCopy() const { return this->copy(); }
@@ -29,7 +30,7 @@ BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatment& 
     return BinaryOperatorStatement(*this, MEMBER_SELECT_POINTER_OP, ref);
 }
 
-BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatmentPtr ref) {
+BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatmentPtr& ref) {
     return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_POINTER_OP, ref);
 }
 
@@ -38,7 +39,7 @@ BinaryOperatorStatement ExpressionStatment::accessRef(const ExpressionStatment& 
 }
 
 BinaryOperatorStatement ExpressionStatment::accessRef(ExpressionStatmentPtr ref) {
-    return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_REFERENCE_OP, ref);
+    return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_REFERENCE_OP, std::move(ref));
 }
 
 BinaryOperatorStatement ExpressionStatment::assign(const ExpressionStatment& ref) {
@@ -46,6 +47,6 @@ BinaryOperatorStatement ExpressionStatment::assign(const ExpressionStatment& ref
 }
 
 BinaryOperatorStatement ExpressionStatment::assign(ExpressionStatmentPtr ref) {
-    return BinaryOperatorStatement(this->copy(), ASSIGNMENT_OP, ref);
+    return BinaryOperatorStatement(this->copy(), ASSIGNMENT_OP, std::move(ref));
 }
 }// namespace NES::QueryCompilation

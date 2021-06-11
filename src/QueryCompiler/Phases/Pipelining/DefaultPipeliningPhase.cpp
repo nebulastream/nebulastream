@@ -31,7 +31,7 @@ namespace NES::QueryCompilation {
 DefaultPipeliningPhase::DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy)
     : operatorFusionPolicy(std::move(operatorFusionPolicy)) {}
 
-PipeliningPhasePtr DefaultPipeliningPhase::create(OperatorFusionPolicyPtr operatorFusionPolicy) {
+PipeliningPhasePtr DefaultPipeliningPhase::create(const OperatorFusionPolicyPtr& operatorFusionPolicy) {
     return std::make_shared<DefaultPipeliningPhase>(operatorFusionPolicy);
 }
 
@@ -41,7 +41,7 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG("Pipeline: query id: " << queryPlan->getQueryId() << " - " << queryPlan->getQuerySubPlanId());
     std::map<OperatorNodePtr, OperatorPipelinePtr> pipelineOperatorMap;
     auto pipelinePlan = PipelineQueryPlan::create(queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
-    for (auto sinkOperators : queryPlan->getRootOperators()) {
+    for (const auto& sinkOperators : queryPlan->getRootOperators()) {
         // create a new pipeline for each sink
         auto pipeline = OperatorPipeline::createSinkPipeline();
         pipeline->prependOperator(sinkOperators->copy());
@@ -51,10 +51,10 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(QueryPlanPtr queryPlan) {
     return pipelinePlan;
 }
 
-void DefaultPipeliningPhase::processMultiplex(PipelineQueryPlanPtr pipelinePlan,
+void DefaultPipeliningPhase::processMultiplex(const PipelineQueryPlanPtr& pipelinePlan,
                                               std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                               OperatorPipelinePtr currentPipeline,
-                                              PhysicalOperators::PhysicalOperatorPtr currentOperator) {
+                                              const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     // if the current pipeline has no operators we will remove it, because we want to omit empty pipelines
     if (!currentPipeline->hasOperators()) {
         auto successorPipeline = currentPipeline->getSuccessors()[0];
@@ -62,7 +62,7 @@ void DefaultPipeliningPhase::processMultiplex(PipelineQueryPlanPtr pipelinePlan,
         currentPipeline = successorPipeline;
     }
     // for all children operators add a new pipeline
-    for (auto node : currentOperator->getChildren()) {
+    for (const auto& node : currentOperator->getChildren()) {
         auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
@@ -70,10 +70,10 @@ void DefaultPipeliningPhase::processMultiplex(PipelineQueryPlanPtr pipelinePlan,
     }
 }
 
-void DefaultPipeliningPhase::processDemultiplex(PipelineQueryPlanPtr pipelinePlan,
+void DefaultPipeliningPhase::processDemultiplex(const PipelineQueryPlanPtr& pipelinePlan,
                                                 std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                                 OperatorPipelinePtr currentPipeline,
-                                                PhysicalOperators::PhysicalOperatorPtr currentOperator) {
+                                                const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     // if the current pipeline has no operators we will remove it, because we want to omit empty pipelines
     if (!currentPipeline->hasOperators()) {
         auto successorPipeline = currentPipeline->getSuccessors()[0];
@@ -96,13 +96,13 @@ void DefaultPipeliningPhase::processDemultiplex(PipelineQueryPlanPtr pipelinePla
     }
 }
 
-void DefaultPipeliningPhase::processPipelineBreakerOperator(PipelineQueryPlanPtr pipelinePlan,
+void DefaultPipeliningPhase::processPipelineBreakerOperator(const PipelineQueryPlanPtr& pipelinePlan,
                                                             std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                                                            OperatorPipelinePtr currentPipeline,
-                                                            PhysicalOperators::PhysicalOperatorPtr currentOperator) {
+                                                            const OperatorPipelinePtr& currentPipeline,
+                                                            const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     // for pipeline breakers we create an new pipeline
     currentPipeline->prependOperator(currentOperator->as<PhysicalOperators::PhysicalOperator>()->copy());
-    for (auto node : currentOperator->getChildren()) {
+    for (const auto& node : currentOperator->getChildren()) {
         auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
@@ -110,22 +110,22 @@ void DefaultPipeliningPhase::processPipelineBreakerOperator(PipelineQueryPlanPtr
     }
 }
 
-void DefaultPipeliningPhase::processFusibleOperator(PipelineQueryPlanPtr pipelinePlan,
+void DefaultPipeliningPhase::processFusibleOperator(const PipelineQueryPlanPtr& pipelinePlan,
                                                     std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                                                    OperatorPipelinePtr currentPipeline,
-                                                    PhysicalOperators::PhysicalOperatorPtr currentOperator) {
+                                                    const OperatorPipelinePtr& currentPipeline,
+                                                    const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     // for operator we can fuse, we just append them to the current pipelie.
     currentPipeline->prependOperator(currentOperator->copy());
-    for (auto node : currentOperator->getChildren()) {
+    for (const auto& node : currentOperator->getChildren()) {
         process(pipelinePlan, pipelineOperatorMap, currentPipeline, node->as<PhysicalOperators::PhysicalOperator>());
     }
 }
 
-void DefaultPipeliningPhase::processSink(PipelineQueryPlanPtr pipelinePlan,
+void DefaultPipeliningPhase::processSink(const PipelineQueryPlanPtr& pipelinePlan,
                                          std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                                         OperatorPipelinePtr currentPipeline,
-                                         PhysicalOperators::PhysicalOperatorPtr currentOperator) {
-    for (auto child : currentOperator->getChildren()) {
+                                         const OperatorPipelinePtr& currentPipeline,
+                                         const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
+    for (const auto& child : currentOperator->getChildren()) {
         auto cp = OperatorPipeline::create();
         pipelinePlan->addPipeline(cp);
         cp->addSuccessor(currentPipeline);
@@ -133,10 +133,10 @@ void DefaultPipeliningPhase::processSink(PipelineQueryPlanPtr pipelinePlan,
     }
 }
 
-void DefaultPipeliningPhase::processSource(PipelineQueryPlanPtr pipeline,
+void DefaultPipeliningPhase::processSource(const PipelineQueryPlanPtr& pipeline,
                                            std::map<OperatorNodePtr, OperatorPipelinePtr>&,
                                            OperatorPipelinePtr currentPipeline,
-                                           PhysicalOperators::PhysicalOperatorPtr sourceOperator) {
+                                           const PhysicalOperators::PhysicalOperatorPtr& sourceOperator) {
     // Source operators will always be part of their own pipeline.
     if (currentPipeline->hasOperators()) {
         auto newPipeline = OperatorPipeline::create();
@@ -148,10 +148,10 @@ void DefaultPipeliningPhase::processSource(PipelineQueryPlanPtr pipeline,
     currentPipeline->prependOperator(sourceOperator->copy());
 }
 
-void DefaultPipeliningPhase::process(PipelineQueryPlanPtr pipeline,
+void DefaultPipeliningPhase::process(const PipelineQueryPlanPtr& pipeline,
                                      std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                                     OperatorPipelinePtr currentPipeline,
-                                     PhysicalOperators::PhysicalOperatorPtr currentOperators) {
+                                     const OperatorPipelinePtr& currentPipeline,
+                                     const PhysicalOperators::PhysicalOperatorPtr& currentOperators) {
 
     // Pipelining only works on physical operators.
     if (!currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>()) {

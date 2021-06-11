@@ -28,7 +28,7 @@ class VariableDeclaration : public Declaration {
   public:
     VariableDeclaration(const VariableDeclaration& var_decl);
     static VariableDeclaration create(DataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
-    static VariableDeclaration create(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
+    static VariableDeclaration create(const GeneratableDataTypePtr& type, const std::string& identifier, ValueTypePtr value = nullptr);
 
     [[nodiscard]] const GeneratableDataTypePtr getType() const override;
     [[nodiscard]] const std::string getIdentifierName() const override;

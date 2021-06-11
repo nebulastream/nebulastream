@@ -47,7 +47,7 @@ class LogicalOperatorNode : public virtual OperatorNode {
      * @brief Get the First Order Logic formula representation by the Z3 expression
      * @param context: the shared pointer to the z3::context
      */
-    void inferZ3Signature(z3::ContextPtr context);
+    void inferZ3Signature(const z3::ContextPtr& context);
 
     /**
      * @brief Set the Z3 signature for the logical operator

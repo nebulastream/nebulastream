@@ -50,7 +50,7 @@ class GeneratableFilterOperator : public GeneratableOperator {
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableFilterOperator(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate);
+    GeneratableFilterOperator(OperatorId id, const SchemaPtr& inputSchema, ExpressionNodePtr predicate);
     ExpressionNodePtr predicate;
 };
 }// namespace GeneratableOperators

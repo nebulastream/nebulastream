@@ -58,7 +58,7 @@ std::vector<std::string> NetworkMetrics::getInterfaceNames() {
     return keys;
 }
 
-NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+NetworkMetrics NetworkMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     auto output = NetworkMetrics();
     auto i = schema->getIndex(prefix + "INTERFACE_NO");
     auto fieldName = schema->fields[i]->getName();
@@ -75,7 +75,7 @@ NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuf
             NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");
 
             auto networkValue = NetworkValues::fromBuffer(schema, buf, prefix + "Intfs[" + std::to_string(n + 1) + "]_");
-            output.addNetworkValues(std::move(networkValue));
+            output.addNetworkValues(networkValue);
         }
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkMetrics: Metrics could not be parsed from schema " + schema->toString());

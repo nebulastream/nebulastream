@@ -31,7 +31,7 @@ uint64_t EventTimeWatermarkStrategy::getAllowedLateness() { return allowedLatene
 WatermarkStrategy::Type EventTimeWatermarkStrategy::getType() { return WatermarkStrategy::EventTimeWatermark; }
 
 EventTimeWatermarkStrategyPtr
-EventTimeWatermarkStrategy::create(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness, uint64_t multiplier) {
+EventTimeWatermarkStrategy::create(const FieldAccessExpressionNodePtr& onField, uint64_t allowedLateness, uint64_t multiplier) {
     return std::make_shared<Windowing::EventTimeWatermarkStrategy>(onField, allowedLateness, multiplier);
 }
 uint64_t EventTimeWatermarkStrategy::getMultiplier() { return multiplier; }

@@ -59,7 +59,7 @@ class DistributeWindowRuleTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down DistributeWindowRuleTest test class."); }
 };
 
-void setupSensorNodeAndStreamCatalogTwoNodes(StreamCatalogPtr streamCatalog) {
+void setupSensorNodeAndStreamCatalogTwoNodes(const StreamCatalogPtr& streamCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
@@ -79,7 +79,7 @@ void setupSensorNodeAndStreamCatalogTwoNodes(StreamCatalogPtr streamCatalog) {
     streamCatalog->addPhysicalStream("default_logical", sce2);
 }
 
-void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
+void setupSensorNodeAndStreamCatalogFiveNodes(const StreamCatalogPtr& streamCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyPtr topology = Topology::create();
 
@@ -113,7 +113,7 @@ void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
     streamCatalog->addPhysicalStream("default_logical", sce5);
 }
 
-void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
+void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
     NES_INFO("Setup DistributeWindowRuleTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 

@@ -21,7 +21,7 @@
 namespace NES::QueryCompilation {
 NamespaceDeclaration::NamespaceDeclaration(Code code) : namespaceCode(std::move(code)) {}
 
-NamespaceDeclarationPtr NamespaceDeclaration::create(Code code) { return std::make_shared<NamespaceDeclaration>(code); }
+NamespaceDeclarationPtr NamespaceDeclaration::create(const Code& code) { return std::make_shared<NamespaceDeclaration>(code); }
 
 const GeneratableDataTypePtr NamespaceDeclaration::getType() const { return GeneratableDataTypePtr(); }
 const std::string NamespaceDeclaration::getIdentifierName() const { return ""; }

@@ -68,7 +68,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
 
                     auto hostSinkOperator = std::find_if(hostSinkOperators.begin(),
                                                          hostSinkOperators.end(),
-                                                         [hostSinkOperatorId](OperatorNodePtr hostOperator) {
+                                                         [hostSinkOperatorId](const OperatorNodePtr& hostOperator) {
                                                              return hostOperator->getId() == hostSinkOperatorId;
                                                          });
 
@@ -110,8 +110,8 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
     return true;
 }
 
-bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan,
-                                                            QueryPlanPtr hostQueryPlan,
+bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
+                                                            const QueryPlanPtr& hostQueryPlan,
                                                             std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
     NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: check if the target and address query plans are syntactically equal or not");
@@ -135,8 +135,8 @@ bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQ
     return false;
 }
 
-bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator,
-                                                          OperatorNodePtr hostOperator,
+bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorNodePtr& targetOperator,
+                                                          const OperatorNodePtr& hostOperator,
                                                           std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
     NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Check if the target and address operator are syntactically equal or not.");

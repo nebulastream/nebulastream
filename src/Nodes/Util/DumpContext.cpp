@@ -24,7 +24,7 @@ DumpContext::DumpContext(std::string contextIdentifier) : context(std::move(cont
 
 DumpContextPtr DumpContext::create() { return std::make_shared<DumpContext>("NullContext"); }
 
-DumpContextPtr DumpContext::create(std::string contextIdentifier) {
+DumpContextPtr DumpContext::create(const std::string& contextIdentifier) {
     // add time to identifier
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
@@ -33,23 +33,23 @@ DumpContextPtr DumpContext::create(std::string contextIdentifier) {
     return std::make_shared<DumpContext>(ss.str());
 }
 
-void DumpContext::registerDumpHandler(DebugDumpHandlerPtr debugDumpHandler) { dumpHandlers.push_back(debugDumpHandler); }
+void DumpContext::registerDumpHandler(const DebugDumpHandlerPtr& debugDumpHandler) { dumpHandlers.push_back(debugDumpHandler); }
 
-void DumpContext::dump(const NodePtr node) {
+void DumpContext::dump(const NodePtr& node) {
     NES_DEBUG("Dump node - " << context);
     for (auto& handler : dumpHandlers) {
         handler->dump(node);
     }
 }
 
-void DumpContext::dump(std::string scope, const QueryPlanPtr queryPlan) {
+void DumpContext::dump(const std::string& scope, const QueryPlanPtr& queryPlan) {
     NES_DEBUG("Dump query plan - " << context + "-" << scope);
     for (auto& handler : dumpHandlers) {
         handler->dump(context, scope, queryPlan);
     }
 }
 
-void DumpContext::dump(std::string scope, const QueryCompilation::PipelineQueryPlanPtr queryPlan) {
+void DumpContext::dump(const std::string& scope, const QueryCompilation::PipelineQueryPlanPtr& queryPlan) {
     NES_DEBUG("Dump pipelined query plan - " << context + "-" << scope);
     for (auto& handler : dumpHandlers) {
         handler->dump(context, scope, queryPlan);

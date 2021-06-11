@@ -24,29 +24,30 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <utility>
 namespace NES {
 
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
-    return AddExpressionNode::create(leftExp, rightExp);
+    return AddExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
 ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
-    return SubExpressionNode::create(leftExp, rightExp);
+    return SubExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
 ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
-    return MulExpressionNode::create(leftExp, rightExp);
+    return MulExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
 ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
-    return DivExpressionNode::create(leftExp, rightExp);
+    return DivExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
-    return PowExpressionNode::create(leftExp, rightExp);
+    return PowExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
-ExpressionNodePtr ABS(ExpressionNodePtr exp) {
+ExpressionNodePtr ABS(const ExpressionNodePtr& exp) {
     // TODO: implement the ABS value in the coming compiler (unary operators are not planned for the legacy system), then remove this error
     NES_FATAL_ERROR("ArithmeticExpressions: Unary expressions available in C++ API but not supported in the "
                     "legacy compiler: ABS("
@@ -56,48 +57,48 @@ ExpressionNodePtr ABS(ExpressionNodePtr exp) {
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp) {
-    return leftExp
+    return std::move(leftExp)
         + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp) {
-    return leftExp
+    return std::move(leftExp)
         - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp, int) {
-    return leftExp
+    return std::move(leftExp)
         + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp, int) {
-    return leftExp
+    return std::move(leftExp)
         - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 // calls of Binary operators with one or two ExpressionItems
-ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() + rightExp; }
+ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() + std::move(rightExp); }
 
-ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() - rightExp; }
+ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() - std::move(rightExp); }
 
-ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() * rightExp; }
+ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() * std::move(rightExp); }
 
-ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() / rightExp; }
+ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() / std::move(rightExp); }
 
 ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
-    return POWER(leftExp.getExpressionNode(), rightExp);
+    return POWER(leftExp.getExpressionNode(), std::move(rightExp));
 }
 
-ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp + rightExp.getExpressionNode(); }
+ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return std::move(leftExp) + rightExp.getExpressionNode(); }
 
-ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp - rightExp.getExpressionNode(); }
+ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return std::move(leftExp) - rightExp.getExpressionNode(); }
 
-ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp * rightExp.getExpressionNode(); }
+ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return std::move(leftExp) * rightExp.getExpressionNode(); }
 
-ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp / rightExp.getExpressionNode(); }
+ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return std::move(leftExp) / rightExp.getExpressionNode(); }
 
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
-    return POWER(leftExp, rightExp.getExpressionNode());
+    return POWER(std::move(leftExp), rightExp.getExpressionNode());
 }
 
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionItem rightExp) {

@@ -93,7 +93,7 @@ class ConfigOption {
      * @param other: other config option
      * @return true if equal else return false
      */
-    bool equals(std::any other) {
+    bool equals(const std::any& other) {
         if (this == other) {
             return true;
         }

@@ -34,7 +34,7 @@ class QueryDeploymentException : public std::runtime_error {
      * @param sharedQueryId: the shared query id that failed
      * @param message : the reason for failure
      */
-    explicit QueryDeploymentException(SharedQueryId sharedQueryId, std::string message);
+    explicit QueryDeploymentException(SharedQueryId sharedQueryId, const std::string& message);
 
     SharedQueryId getSharedQueryId();
 

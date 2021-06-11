@@ -23,7 +23,7 @@ SubExpressionNode::SubExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpr
 
 SubExpressionNode::SubExpressionNode(SubExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr SubExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr SubExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto subNode = std::make_shared<SubExpressionNode>(left->getStamp());
     subNode->setChildren(left, right);
     return subNode;

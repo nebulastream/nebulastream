@@ -39,7 +39,7 @@ std::string QueryCatalogEntry::getQueryStatusAsString() const { return queryStat
 
 void QueryCatalogEntry::setQueryStatus(QueryStatus queryStatus) { this->queryStatus = queryStatus; }
 
-void QueryCatalogEntry::setFailureReason(std::string failureReason) { this->failureReason = failureReason; }
+void QueryCatalogEntry::setFailureReason(std::string failureReason) { this->failureReason = std::move(failureReason); }
 
 std::string QueryCatalogEntry::getFailureReason() { return failureReason; }
 

@@ -43,7 +43,7 @@ class DynamicMemoryLayout {
      * @param fieldName
      * @return either field index for fieldName or empty optinal
      */
-    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const;
+    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const std::string& fieldName) const;
 
     /**
      * @brief Abstract copy method

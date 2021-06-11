@@ -23,10 +23,10 @@
 namespace NES::Windowing {
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
-    : WindowType(timeCharacteristic), size(std::move(size)), slide(std::move(slide)) {}
+    : WindowType(std::move(timeCharacteristic)), size(std::move(size)), slide(std::move(slide)) {}
 
 WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
-    return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));
+    return std::make_shared<SlidingWindow>(SlidingWindow(std::move(timeCharacteristic), std::move(size), std::move(slide)));
 }
 
 void SlidingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const {

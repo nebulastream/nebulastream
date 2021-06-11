@@ -83,14 +83,14 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryAreaSize the size of the memory area
      * @return a constructed MemorySourceStreamConfig
      */
-    static AbstractPhysicalStreamConfigPtr create(std::string sourceType,
-                                                  std::string physicalStreamName,
-                                                  std::string logicalStreamName,
+    static AbstractPhysicalStreamConfigPtr create(const std::string& sourceType,
+                                                  const std::string& physicalStreamName,
+                                                  const std::string& logicalStreamName,
                                                   uint8_t* memoryArea,
                                                   size_t memoryAreaSize,
                                                   uint64_t numBuffersToProcess,
                                                   uint64_t gatheringValue,
-                                                  std::string gatheringMode);
+                                                  const std::string& gatheringMode);
 
   private:
     std::string sourceType;

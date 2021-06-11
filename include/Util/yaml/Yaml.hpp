@@ -137,7 +137,7 @@ class Exception : public std::runtime_error {
         * @param type       Type of exception.
         *
         */
-    Exception(const std::string& message, const eType type);
+    Exception(const std::string& message, eType type);
 
     /**
         * @breif Get type of exception.
@@ -441,7 +441,7 @@ class Node {
         *        Adding new item to end of sequence if index is larger than sequence size.
         *
         */
-    Node& Insert(const size_t index);
+    Node& Insert(size_t index);
 
     /**
         * @breif Add new sequence index to back.
@@ -465,7 +465,7 @@ class Node {
         * @param key    Map key. Creates a new node if key is unknown.
         *
         */
-    Node& operator[](const size_t index);
+    Node& operator[](size_t index);
     Node& operator[](const std::string& key);
 
     /**
@@ -473,7 +473,7 @@ class Node {
         *        No action if node is not a sequence or map.
         *
         */
-    void Erase(const size_t index);
+    void Erase(size_t index);
     void Erase(const std::string& key);
 
     /**
@@ -527,7 +527,7 @@ class Node {
 void Parse(Node& root, const char* filename);
 void Parse(Node& root, std::iostream& stream);
 void Parse(Node& root, const std::string& string);
-void Parse(Node& root, const char* buffer, const size_t size);
+void Parse(Node& root, const char* buffer, size_t size);
 
 /**
     * @breif    Serialization configuration structure,
@@ -546,10 +546,10 @@ struct SerializeConfig {
         * @param mapScalarNewline       Put scalars on a new line if parent node is a map.
         *
         */
-    explicit SerializeConfig(const size_t spaceIndentation = 2,
-                             const size_t scalarMaxLength = 64,
-                             const bool sequenceMapNewline = false,
-                             const bool mapScalarNewline = false);
+    explicit SerializeConfig(size_t spaceIndentation = 2,
+                             size_t scalarMaxLength = 64,
+                             bool sequenceMapNewline = false,
+                             bool mapScalarNewline = false);
 
     size_t SpaceIndentation;///< Number of spaces per indentation.
     size_t ScalarMaxLength; ///< Maximum length of scalars. Serialized as folder scalars if exceeded.

@@ -45,7 +45,7 @@ LambdaSource::LambdaSource(
                       operatorId,
                       numSourceLocalBuffers,
                       gatheringMode,
-                      successors),
+                      std::move(successors)),
       generationFunction(std::move(generationFunction)) {
     NES_DEBUG("Create LambdaSource with id=" << operatorId << "func is " << (generationFunction ? "callable" : "not callable"));
     if (this->gatheringMode == GatheringMode::FREQUENCY_MODE) {

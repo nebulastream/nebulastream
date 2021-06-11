@@ -28,34 +28,34 @@ namespace QueryCompilation {
 class LowerToExecutableQueryPlanPhase {
   public:
     LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider);
-    static LowerToExecutableQueryPlanPhasePtr create(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider);
-    NodeEngine::Execution::ExecutableQueryPlanPtr apply(PipelineQueryPlanPtr pipelineQueryPlan,
-                                                        NodeEngine::NodeEnginePtr nodeEngine);
+    static LowerToExecutableQueryPlanPhasePtr create(const DataSinkProviderPtr& sinkProvider, const DataSourceProviderPtr& sourceProvider);
+    NodeEngine::Execution::ExecutableQueryPlanPtr apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
+                                                        const NodeEngine::NodeEnginePtr& nodeEngine);
 
   private:
     DataSinkProviderPtr sinkProvider;
     DataSourceProviderPtr sourceProvider;
-    void processSource(OperatorPipelinePtr pipeline,
+    void processSource(const OperatorPipelinePtr& pipeline,
                        std::vector<DataSourcePtr>& sources,
                        std::vector<DataSinkPtr>& sinks,
                        std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
-                       NodeEngine::NodeEnginePtr nodeEngine,
+                       const NodeEngine::NodeEnginePtr& nodeEngine,
                        QueryId queryId,
                        QuerySubPlanId subQueryPlanId,
                        std::map<uint64_t, NodeEngine::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
     NodeEngine::Execution::SuccessorExecutablePipeline
-    processSuccessor(OperatorPipelinePtr pipeline,
+    processSuccessor(const OperatorPipelinePtr& pipeline,
                      std::vector<DataSourcePtr>& sources,
                      std::vector<DataSinkPtr>& sinks,
                      std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
-                     NodeEngine::NodeEnginePtr nodeEngine,
+                     const NodeEngine::NodeEnginePtr& nodeEngine,
                      QueryId queryId,
                      QuerySubPlanId subQueryPlanId,
                      std::map<uint64_t, NodeEngine::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
     NodeEngine::Execution::SuccessorExecutablePipeline
-    processSink(OperatorPipelinePtr pipeline,
+    processSink(const OperatorPipelinePtr& pipeline,
                 std::vector<DataSourcePtr>& sources,
                 std::vector<DataSinkPtr>& sinks,
                 std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
@@ -64,11 +64,11 @@ class LowerToExecutableQueryPlanPhase {
                 QuerySubPlanId subQueryPlanId);
 
     NodeEngine::Execution::SuccessorExecutablePipeline
-    processOperatorPipeline(OperatorPipelinePtr pipeline,
+    processOperatorPipeline(const OperatorPipelinePtr& pipeline,
                             std::vector<DataSourcePtr>& sources,
                             std::vector<DataSinkPtr>& sinks,
                             std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
-                            NodeEngine::NodeEnginePtr nodeEngine,
+                            const NodeEngine::NodeEnginePtr& nodeEngine,
                             QueryId queryId,
                             QuerySubPlanId subQueryPlanId,
                             std::map<uint64_t, NodeEngine::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);

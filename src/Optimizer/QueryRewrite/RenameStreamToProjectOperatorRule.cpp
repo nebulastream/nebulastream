@@ -39,7 +39,7 @@ QueryPlanPtr RenameStreamToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-OperatorNodePtr RenameStreamToProjectOperatorRule::convert(OperatorNodePtr operatorNode) {
+OperatorNodePtr RenameStreamToProjectOperatorRule::convert(const OperatorNodePtr& operatorNode) {
     //Fetch the new stream name and input schema for the as operator
     auto renameStreamOperator = operatorNode->as<RenameStreamOperatorNode>();
     auto newStreamName = renameStreamOperator->getNewStreamName();
@@ -47,7 +47,7 @@ OperatorNodePtr RenameStreamToProjectOperatorRule::convert(OperatorNodePtr opera
 
     std::vector<ExpressionNodePtr> projectionAttributes;
     //Iterate over the input schema and add a new field rename expression
-    for (auto field : inputSchema->fields) {
+    for (const auto& field : inputSchema->fields) {
         //compute the new name for the field by added new stream name as field qualifier
         std::string fieldName = field->getName();
         //Compute new name without field qualifier

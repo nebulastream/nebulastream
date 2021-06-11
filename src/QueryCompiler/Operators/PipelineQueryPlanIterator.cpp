@@ -33,7 +33,7 @@ std::vector<OperatorPipelinePtr> PipelineQueryPlanIterator::snapshot() {
     return nodes;
 }
 
-PipelineQueryPlanIterator::iterator::iterator(PipelineQueryPlanPtr current) {
+PipelineQueryPlanIterator::iterator::iterator(const PipelineQueryPlanPtr& current) {
     auto rootOperators = current->getSourcePipelines();
     for (int64_t i = rootOperators.size() - 1; i >= 0; i--) {
         workStack.push(rootOperators[i]);

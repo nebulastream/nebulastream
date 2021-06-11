@@ -28,7 +28,7 @@ class BinaryExpressionNode : public ExpressionNode {
     /**
      * @brief set the children node of this expression.
      */
-    void setChildren(const ExpressionNodePtr left, const ExpressionNodePtr right);
+    void setChildren(ExpressionNodePtr& left, ExpressionNodePtr& right);
 
     /**
      * @brief gets the left children.

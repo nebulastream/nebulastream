@@ -31,7 +31,7 @@ class ConstructorDeclaration : public Declaration {
 
   public:
     explicit ConstructorDeclaration(Code code);
-    static ConstructorDeclarationPtr create(Code code);
+    static ConstructorDeclarationPtr create(const Code& code);
 
     [[nodiscard]] const GeneratableDataTypePtr getType() const override;
     [[nodiscard]] const std::string getIdentifierName() const override;

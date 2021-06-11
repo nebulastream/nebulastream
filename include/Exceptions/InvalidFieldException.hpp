@@ -27,7 +27,7 @@ namespace NES {
 class InvalidFieldException : public std::runtime_error {
 
   public:
-    explicit InvalidFieldException(std::string msg);
+    explicit InvalidFieldException(const std::string& msg);
 };
 }// namespace NES
 

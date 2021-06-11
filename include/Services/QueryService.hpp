@@ -61,7 +61,7 @@ class QueryService {
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
-    uint64_t validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName);
+    uint64_t validateAndQueueAddRequest(const std::string& queryString, const std::string& placementStrategyName);
 
     /**
      * @deprecated NOT TO BE USED
@@ -71,7 +71,7 @@ class QueryService {
      * @param placementStrategyName : Name of the placement strategy
      * @return query id
      */
-    uint64_t addQueryRequest(std::string queryString, Query query, std::string placementStrategyName);
+    uint64_t addQueryRequest(const std::string& queryString, Query query, const std::string& placementStrategyName);
 
     /**
      * @brief This method is used for submitting the queries directly to the system.
@@ -79,7 +79,7 @@ class QueryService {
      * @param placementStrategyName : Name of the placement strategy
      * @return query id
      */
-    uint64_t addQueryRequest(QueryPlanPtr queryPlan, std::string placementStrategyName);
+    uint64_t addQueryRequest(const QueryPlanPtr& queryPlan, const std::string& placementStrategyName);
 
     /**
      * @brief
@@ -88,7 +88,7 @@ class QueryService {
      * @param placementStrategyName : Name of the placement strategy
      * @return query id
      */
-    uint64_t addQueryRequest(std::string queryString, QueryPlanPtr queryPlan, std::string placementStrategyName);
+    uint64_t addQueryRequest(const std::string& queryString, const QueryPlanPtr& queryPlan, const std::string& placementStrategyName);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

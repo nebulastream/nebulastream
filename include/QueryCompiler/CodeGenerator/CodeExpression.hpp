@@ -31,6 +31,6 @@ class CodeExpression {
     std::string const code_;
 };
 
-const CodeExpressionPtr combine(const CodeExpressionPtr lhs, const CodeExpressionPtr rhs);
+const CodeExpressionPtr combine(CodeExpressionPtr& lhs, CodeExpressionPtr& rhs);
 
 }// namespace NES::QueryCompilation

@@ -44,20 +44,20 @@ LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProvide
                                                                  DataSourceProviderPtr sourceProvider)
     : sinkProvider(std::move(sinkProvider)), sourceProvider(std::move(sourceProvider)){};
 
-LowerToExecutableQueryPlanPhasePtr LowerToExecutableQueryPlanPhase::create(DataSinkProviderPtr sinkProvider,
-                                                                           DataSourceProviderPtr sourceProvider) {
+LowerToExecutableQueryPlanPhasePtr LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider,
+                                                                           const DataSourceProviderPtr& sourceProvider) {
     return std::make_shared<LowerToExecutableQueryPlanPhase>(sinkProvider, sourceProvider);
 }
 
-NodeEngine::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::apply(PipelineQueryPlanPtr pipelineQueryPlan,
-                                                                                     NodeEngine::NodeEnginePtr nodeEngine) {
+NodeEngine::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
+                                                                                     const NodeEngine::NodeEnginePtr& nodeEngine) {
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<NodeEngine::Execution::ExecutablePipelinePtr> executablePipelines;
     std::map<uint64_t, NodeEngine::Execution::SuccessorExecutablePipeline> pipelineToExecutableMap;
     //Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
-    for (auto pipeline : sourcePipelines) {
+    for (const auto& pipeline : sourcePipelines) {
         processSource(pipeline,
                       sources,
                       sinks,
@@ -77,11 +77,11 @@ NodeEngine::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::a
                                                                         nodeEngine->getBufferManager());
 }
 NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSuccessor(
-    OperatorPipelinePtr pipeline,
+    const OperatorPipelinePtr& pipeline,
     std::vector<DataSourcePtr>& sources,
     std::vector<DataSinkPtr>& sinks,
     std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
-    NodeEngine::NodeEnginePtr nodeEngine,
+    const NodeEngine::NodeEnginePtr& nodeEngine,
     QueryId queryId,
     QuerySubPlanId subQueryPlanId,
     std::map<uint64_t, NodeEngine::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
@@ -112,11 +112,11 @@ NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPha
 }
 
 void LowerToExecutableQueryPlanPhase::processSource(
-    OperatorPipelinePtr pipeline,
+    const OperatorPipelinePtr& pipeline,
     std::vector<DataSourcePtr>& sources,
     std::vector<DataSinkPtr>& sinks,
     std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
-    NodeEngine::NodeEnginePtr nodeEngine,
+    const NodeEngine::NodeEnginePtr& nodeEngine,
     QueryId queryId,
     QuerySubPlanId subQueryPlanId,
     std::map<uint64_t, NodeEngine::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
@@ -135,7 +135,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     }
 
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
-    for (auto successor : pipeline->getSuccessors()) {
+    for (const auto& successor : pipeline->getSuccessors()) {
         auto executableSuccessor = processSuccessor(successor,
                                                     sources,
                                                     sinks,
@@ -152,7 +152,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
 }
 
 NodeEngine::Execution::SuccessorExecutablePipeline
-LowerToExecutableQueryPlanPhase::processSink(OperatorPipelinePtr pipeline,
+LowerToExecutableQueryPlanPhase::processSink(const OperatorPipelinePtr& pipeline,
                                              std::vector<DataSourcePtr>&,
                                              std::vector<DataSinkPtr>& sinks,
                                              std::vector<NodeEngine::Execution::ExecutablePipelinePtr>&,
@@ -164,18 +164,18 @@ LowerToExecutableQueryPlanPhase::processSink(OperatorPipelinePtr pipeline,
     auto sink = sinkProvider->lower(sinkOperator->getId(),
                                     sinkOperator->getSinkDescriptor(),
                                     sinkOperator->getOutputSchema(),
-                                    nodeEngine,
+                                    std::move(nodeEngine),
                                     subQueryPlanId);
     sinks.emplace_back(sink);
     return sink;
 }
 
 NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processOperatorPipeline(
-    OperatorPipelinePtr pipeline,
+    const OperatorPipelinePtr& pipeline,
     std::vector<DataSourcePtr>& sources,
     std::vector<DataSinkPtr>& sinks,
     std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
-    NodeEngine::NodeEnginePtr nodeEngine,
+    const NodeEngine::NodeEnginePtr& nodeEngine,
     QueryId queryId,
     QuerySubPlanId subQueryPlanId,
     std::map<uint64_t, NodeEngine::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
@@ -184,7 +184,7 @@ NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPha
     auto executableOperator = rootOperator->as<ExecutableOperator>();
 
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
-    for (auto successor : pipeline->getSuccessors()) {
+    for (const auto& successor : pipeline->getSuccessors()) {
         auto executableSuccessor = processSuccessor(successor,
                                                     sources,
                                                     sinks,

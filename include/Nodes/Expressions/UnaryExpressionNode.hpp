@@ -29,7 +29,7 @@ class UnaryExpressionNode : public ExpressionNode {
      * @brief set the child node of this expression.
      * @param child ExpressionNodePtr
      */
-    void setChild(ExpressionNodePtr child);
+    void setChild(const ExpressionNodePtr& child);
 
     /**
      * @brief returns the child of this expression

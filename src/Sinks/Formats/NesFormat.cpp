@@ -22,9 +22,10 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
+#include <utility>
 namespace NES {
 
-NesFormat::NesFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
+NesFormat::NesFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(std::move(schema), std::move(bufferManager)) {
     serializedSchema = std::make_shared<SerializableSchema>();
 }
 

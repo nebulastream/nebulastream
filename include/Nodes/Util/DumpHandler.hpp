@@ -39,7 +39,7 @@ class DumpHandler {
     /**
     * Dump the specific node and its children.
     */
-    virtual void dump(const NodePtr node) = 0;
+    virtual void dump(NodePtr node) = 0;
 
     /**
      * @brief Dump a query plan.

@@ -51,7 +51,7 @@ class GeneratableBufferScan : public GeneratableOperator {
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableBufferScan(OperatorId id, SchemaPtr inputSchema);
+    GeneratableBufferScan(OperatorId id, const SchemaPtr& inputSchema);
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

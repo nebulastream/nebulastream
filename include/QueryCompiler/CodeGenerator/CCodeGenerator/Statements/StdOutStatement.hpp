@@ -25,7 +25,7 @@ namespace QueryCompilation {
  */
 class StdOutStatement : public Statement {
   public:
-    explicit StdOutStatement(const std::string message);
+    explicit StdOutStatement(std::string& message);
 
     [[nodiscard]] StatementType getStamentType() const override;
 

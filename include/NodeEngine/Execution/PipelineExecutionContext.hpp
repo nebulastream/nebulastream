@@ -41,8 +41,8 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
      */
     explicit PipelineExecutionContext(QuerySubPlanId queryId,
-                                      QueryManagerPtr queryManager,
-                                      BufferManagerPtr bufferManager,
+                                      const QueryManagerPtr& queryManager,
+                                      const BufferManagerPtr& bufferManager,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                       std::vector<OperatorHandlerPtr> operatorHandlers,
@@ -56,7 +56,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
      */
     explicit PipelineExecutionContext(QuerySubPlanId queryId,
-                                      QueryManagerPtr queryManager,
+                                      const QueryManagerPtr& queryManager,
                                       LocalBufferPoolPtr bufferManager,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,

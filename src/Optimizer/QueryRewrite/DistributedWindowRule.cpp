@@ -57,7 +57,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-void DistributeWindowRule::createCentralWindowOperator(WindowOperatorNodePtr windowOp) {
+void DistributeWindowRule::createCentralWindowOperator(const WindowOperatorNodePtr& windowOp) {
     NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp << " "
                                                                                                << windowOp->toString());
     windowOp->getWindowDefinition()->setOriginId(windowOp->getId());
@@ -68,7 +68,7 @@ void DistributeWindowRule::createCentralWindowOperator(WindowOperatorNodePtr win
     windowOp->replace(newWindowOp);
 }
 
-void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperator, QueryPlanPtr queryPlan) {
+void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator, const QueryPlanPtr& queryPlan) {
     // To distribute the window operator we replace the current window operator with 1 WindowComputationOperator (performs the final aggregate)
     // and n SliceCreationOperators.
     // To this end, we have to a the window definitions in the following way:

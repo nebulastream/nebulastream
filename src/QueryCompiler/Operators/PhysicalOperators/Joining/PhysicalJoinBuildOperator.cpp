@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -21,13 +22,13 @@ PhysicalOperatorPtr PhysicalJoinBuildOperator::create(SchemaPtr inputSchema,
                                                       SchemaPtr outputSchema,
                                                       Join::JoinOperatorHandlerPtr operatorHandler,
                                                       JoinBuildSide buildSide) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler), buildSide);
 }
 
 PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id,
-                                                      SchemaPtr inputSchema,
-                                                      SchemaPtr outputSchema,
-                                                      Join::JoinOperatorHandlerPtr operatorHandler,
+                                                      const SchemaPtr& inputSchema,
+                                                      const SchemaPtr& outputSchema,
+                                                      const Join::JoinOperatorHandlerPtr& operatorHandler,
                                                       JoinBuildSide buildSide) {
     return std::make_shared<PhysicalJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler, buildSide);
 }
@@ -37,7 +38,7 @@ PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id,
                                                      SchemaPtr outputSchema,
                                                      Join::JoinOperatorHandlerPtr operatorHandler,
                                                      JoinBuildSide buildSide)
-    : OperatorNode(id), PhysicalJoinOperator(operatorHandler), PhysicalUnaryOperator(id, inputSchema, outputSchema),
+    : OperatorNode(id), PhysicalJoinOperator(std::move(operatorHandler)), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       joinBuildSide(buildSide){};
 
 const std::string PhysicalJoinBuildOperator::toString() const { return "PhysicalJoinBuildOperator"; }

@@ -21,7 +21,7 @@
 #include <z3++.h>
 
 namespace NES {
-SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor, OperatorId id)
+SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr& sinkDescriptor, OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), sinkDescriptor(sinkDescriptor) {}
 
 SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() { return sinkDescriptor; }

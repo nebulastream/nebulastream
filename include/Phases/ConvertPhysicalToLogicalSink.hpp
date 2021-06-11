@@ -39,7 +39,7 @@ class ConvertPhysicalToLogicalSink {
      * @param dataSink the input data sink object defining the physical sink
      * @return the logical sink descriptor
      */
-    static SinkDescriptorPtr createSinkDescriptor(DataSinkPtr dataSink);
+    static SinkDescriptorPtr createSinkDescriptor(const DataSinkPtr& dataSink);
 
   private:
     ConvertPhysicalToLogicalSink() = default;

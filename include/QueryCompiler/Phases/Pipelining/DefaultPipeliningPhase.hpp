@@ -31,39 +31,39 @@ class DefaultPipeliningPhase : public PipeliningPhase {
      * @param operatorFusionPolicy Policy to determine if an operator can be fused.
      * @return PipeliningPhasePtr
      */
-    static PipeliningPhasePtr create(OperatorFusionPolicyPtr operatorFusionPolicy);
+    static PipeliningPhasePtr create(const OperatorFusionPolicyPtr& operatorFusionPolicy);
     explicit DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy);
     PipelineQueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   protected:
-    void process(PipelineQueryPlanPtr pipeline,
+    void process(const PipelineQueryPlanPtr& pipeline,
                  std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                 OperatorPipelinePtr currentPipeline,
-                 PhysicalOperators::PhysicalOperatorPtr currentOperators);
-    void processSink(PipelineQueryPlanPtr pipelinePlan,
+                 const OperatorPipelinePtr& currentPipeline,
+                 const PhysicalOperators::PhysicalOperatorPtr& currentOperators);
+    void processSink(const PipelineQueryPlanPtr& pipelinePlan,
                      std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                     OperatorPipelinePtr currentPipeline,
-                     PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    static void processSource(PipelineQueryPlanPtr pipelinePlan,
+                     const OperatorPipelinePtr& currentPipeline,
+                     const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
+    static void processSource(const PipelineQueryPlanPtr& pipelinePlan,
                               std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                               OperatorPipelinePtr currentPipeline,
-                              PhysicalOperators::PhysicalOperatorPtr sourceOperator);
-    void processMultiplex(PipelineQueryPlanPtr pipelinePlan,
+                              const PhysicalOperators::PhysicalOperatorPtr& sourceOperator);
+    void processMultiplex(const PipelineQueryPlanPtr& pipelinePlan,
                           std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                           OperatorPipelinePtr currentPipeline,
-                          PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processDemultiplex(PipelineQueryPlanPtr pipelinePlan,
+                          const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
+    void processDemultiplex(const PipelineQueryPlanPtr& pipelinePlan,
                             std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                             OperatorPipelinePtr currentPipeline,
-                            PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processFusibleOperator(PipelineQueryPlanPtr pipelinePlan,
+                            const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
+    void processFusibleOperator(const PipelineQueryPlanPtr& pipelinePlan,
                                 std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                                OperatorPipelinePtr currentPipeline,
-                                PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processPipelineBreakerOperator(PipelineQueryPlanPtr pipelinePlan,
+                                const OperatorPipelinePtr& currentPipeline,
+                                const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
+    void processPipelineBreakerOperator(const PipelineQueryPlanPtr& pipelinePlan,
                                         std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                                        OperatorPipelinePtr currentPipeline,
-                                        PhysicalOperators::PhysicalOperatorPtr currentOperator);
+                                        const OperatorPipelinePtr& currentPipeline,
+                                        const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
 
   private:
     OperatorFusionPolicyPtr operatorFusionPolicy;

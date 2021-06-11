@@ -55,7 +55,7 @@ class FilterPushDownRuleTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down FilterPushDownTest test class."); }
 };
 
-void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
+void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
     NES_INFO("Setup FilterPushDownTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 

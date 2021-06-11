@@ -32,13 +32,13 @@
 namespace NES::QueryCompilation {
 
 Predicate::Predicate(const BinaryOperatorType& op,
-                     const LegacyExpressionPtr left,
-                     const LegacyExpressionPtr right,
+                     const LegacyExpressionPtr& left,
+                     const LegacyExpressionPtr& right,
                      std::string functionCallOverload,
                      bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload(std::move(functionCallOverload)) {}
 
-Predicate::Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr left, const LegacyExpressionPtr right, bool bracket)
+Predicate::Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr& left, const LegacyExpressionPtr& right, bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload("") {}
 
 LegacyExpressionPtr Predicate::copy() const { return std::make_shared<Predicate>(*this); }
@@ -203,7 +203,7 @@ bool PredicateItem::equals(const LegacyExpression& _rhs) const {
 
 const ValueTypePtr& PredicateItem::getValue() const { return value; }
 
-Field::Field(AttributeFieldPtr field) : PredicateItem(field), _name(field->getName()) {}
+Field::Field(const AttributeFieldPtr& field) : PredicateItem(field), _name(field->getName()) {}
 
 const PredicatePtr createPredicate(const LegacyExpression& expression) {
     PredicatePtr value = std::dynamic_pointer_cast<Predicate>(expression.copy());

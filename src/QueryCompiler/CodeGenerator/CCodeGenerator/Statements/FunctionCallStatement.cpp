@@ -43,9 +43,9 @@ void FunctionCallStatement::addParameter(const ExpressionStatment& expr) { expre
 
 void FunctionCallStatement::addParameter(ExpressionStatmentPtr expr) { expressions.push_back(expr); }
 
-FunctionCallStatement::FunctionCallStatement(const std::string functionname) : functionName(functionname) {}
+FunctionCallStatement::FunctionCallStatement(const std::string& functionname) : functionName(functionname) {}
 
-FunctionCallStatementPtr FunctionCallStatement::create(const std::string functionname) {
+FunctionCallStatementPtr FunctionCallStatement::create(const std::string& functionname) {
     return std::make_shared<FunctionCallStatement>(functionname);
 }
 }// namespace NES::QueryCompilation

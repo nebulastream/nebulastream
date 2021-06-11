@@ -41,7 +41,7 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(WorkerConfigPtr workerConfig, NesNodeType type)
+NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
     : coordinatorIp(std::move(workerConfig->getCoordinatorIp()->getValue())),
       coordinatorPort(workerConfig->getCoordinatorPort()->getValue()),
       localWorkerIp(std::move(workerConfig->getLocalWorkerIp()->getValue())),
@@ -68,13 +68,13 @@ NesWorker::~NesWorker() {
 
 bool NesWorker::setWithRegister(PhysicalStreamConfigPtr conf) {
     withRegisterStream = true;
-    this->conf = conf;
+    this->conf = std::move(conf);
     return true;
 }
 
 bool NesWorker::setWithParent(std::string parentId) {
     withParent = true;
-    this->parentId = parentId;
+    this->parentId = std::move(parentId);
     return true;
 }
 
@@ -103,7 +103,7 @@ void NesWorker::handleRpcs(WorkerRPCServer& service) {
     }
 }
 
-void NesWorker::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom) {
+void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom) {
     WorkerRPCServer service(nodeEngine, monitoringAgent);
     ServerBuilder builder;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials());
@@ -290,24 +290,24 @@ bool NesWorker::registerLogicalStream(std::string name, std::string path) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "Connection failed");
-    bool success = coordinatorRpcClient->registerLogicalStream(name, path);
+    bool success = coordinatorRpcClient->registerLogicalStream(std::move(name), std::move(path));
     NES_DEBUG("NesWorker::registerLogicalStream success=" << success);
     return success;
 }
 
 bool NesWorker::unregisterLogicalStream(std::string logicalName) {
-    bool success = coordinatorRpcClient->unregisterLogicalStream(logicalName);
+    bool success = coordinatorRpcClient->unregisterLogicalStream(std::move(logicalName));
     NES_DEBUG("NesWorker::unregisterLogicalStream success=" << success);
     return success;
 }
 
 bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string physicalName) {
-    bool success = coordinatorRpcClient->unregisterPhysicalStream(logicalName, physicalName);
+    bool success = coordinatorRpcClient->unregisterPhysicalStream(std::move(logicalName), std::move(physicalName));
     NES_DEBUG("NesWorker::unregisterPhysicalStream success=" << success);
     return success;
 }
 
-bool NesWorker::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
+bool NesWorker::registerPhysicalStream(const AbstractPhysicalStreamConfigPtr& conf) {
     NES_ASSERT(conf, "invalid configuration");
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);

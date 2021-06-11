@@ -54,7 +54,7 @@ class ProjectBeforeUnionOperatorRuleTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down ProjectBeforeUnionOperatorRuleTest test class."); }
 
-    void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
+    void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
         NES_INFO("Setup FilterPushDownTest test case.");
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();

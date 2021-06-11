@@ -44,7 +44,7 @@ class NesWorker {
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(WorkerConfigPtr workerConfig, NesNodeType type);
+    explicit NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type);
 
     /**
      * @brief default dtor
@@ -111,7 +111,7 @@ class NesWorker {
      * @param config of the stream
      * @return bool indicating success
      */
-    bool registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf);
+    bool registerPhysicalStream(const AbstractPhysicalStreamConfigPtr& conf);
 
     /**
     * @brief method to deregister physical stream with the coordinator
@@ -173,7 +173,7 @@ class NesWorker {
     /**
    * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
    */
-    void buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom);
+    void buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom);
     void handleRpcs(WorkerRPCServer& service);
 
     std::unique_ptr<grpc::Server> rpcServer;

@@ -32,7 +32,7 @@ template<class KeyType, class InputType, class PartialAggregateType, class Final
 class AggregationWindowHandler : public AbstractWindowHandler {
   public:
     explicit AggregationWindowHandler(
-        LogicalWindowDefinitionPtr windowDefinition,
+        const LogicalWindowDefinitionPtr& windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
         BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction,

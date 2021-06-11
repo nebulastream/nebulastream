@@ -35,7 +35,7 @@ class FileBuilder {
 
   public:
     static FileBuilder create(const std::string& file_name);
-    FileBuilder& addDeclaration(const DeclarationPtr);
+    FileBuilder& addDeclaration(DeclarationPtr&);
     CodeFile build();
 };
 }// namespace QueryCompilation

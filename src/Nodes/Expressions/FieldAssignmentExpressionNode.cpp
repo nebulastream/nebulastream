@@ -27,8 +27,8 @@ FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp) 
 FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other)
     : BinaryExpressionNode(other){};
 
-FieldAssignmentExpressionNodePtr FieldAssignmentExpressionNode::create(FieldAccessExpressionNodePtr fieldAccess,
-                                                                       ExpressionNodePtr expressionNodePtr) {
+FieldAssignmentExpressionNodePtr FieldAssignmentExpressionNode::create(const FieldAccessExpressionNodePtr& fieldAccess,
+                                                                       const ExpressionNodePtr& expressionNodePtr) {
     auto fieldAssignment = std::make_shared<FieldAssignmentExpressionNode>(expressionNodePtr->getStamp());
     fieldAssignment->setChildren(fieldAccess, expressionNodePtr);
     return fieldAssignment;

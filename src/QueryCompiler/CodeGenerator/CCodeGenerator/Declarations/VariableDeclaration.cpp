@@ -60,14 +60,14 @@ VariableDeclaration::VariableDeclaration(GeneratableDataTypePtr type, std::strin
 VariableDeclaration::VariableDeclaration(const VariableDeclaration& var_decl)
     : type_(var_decl.type_), identifier_(var_decl.identifier_), init_value_(var_decl.init_value_) {}
 
-VariableDeclaration VariableDeclaration::create(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value) {
+VariableDeclaration VariableDeclaration::create(const GeneratableDataTypePtr& type, const std::string& identifier, ValueTypePtr value) {
     if (!type) {
         NES_ERROR("DataTypePtr type is nullptr!");
     }
-    return VariableDeclaration(type, identifier, value);
+    return VariableDeclaration(type, identifier, std::move(value));
 }
 VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::string& identifier, ValueTypePtr value) {
     auto typeFactory = GeneratableTypesFactory();
-    return VariableDeclaration(typeFactory.createDataType(type), identifier, value);
+    return VariableDeclaration(typeFactory.createDataType(std::move(type)), identifier, std::move(value));
 }
 }// namespace NES::QueryCompilation

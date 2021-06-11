@@ -69,9 +69,9 @@ std::vector<SinkLogicalOperatorNodePtr> QueryPlan::getSinkOperators() {
     return sinkOperators;
 }
 
-void QueryPlan::appendOperatorAsNewRoot(OperatorNodePtr operatorNode) {
+void QueryPlan::appendOperatorAsNewRoot(const OperatorNodePtr& operatorNode) {
     NES_DEBUG("QueryPlan: Appending operator " << operatorNode->toString() << " as new root of the plan.");
-    for (auto rootOperator : rootOperators) {
+    for (const auto& rootOperator : rootOperators) {
         if (!rootOperator->addParent(operatorNode)) {
             NES_THROW_RUNTIME_ERROR("QueryPlan: Unable to add operator " + operatorNode->toString() + " as parent to "
                                     + rootOperator->toString());
@@ -83,7 +83,7 @@ void QueryPlan::appendOperatorAsNewRoot(OperatorNodePtr operatorNode) {
     rootOperators.push_back(operatorNode);
 }
 
-void QueryPlan::prependOperatorAsLeafNode(OperatorNodePtr operatorNode) {
+void QueryPlan::prependOperatorAsLeafNode(const OperatorNodePtr& operatorNode) {
     NES_DEBUG("QueryPlan: Prepending operator " << operatorNode->toString() << " as new leaf of the plan.");
     auto leafOperators = getLeafOperators();
     if (leafOperators.empty()) {
@@ -91,7 +91,7 @@ void QueryPlan::prependOperatorAsLeafNode(OperatorNodePtr operatorNode) {
         rootOperators.push_back(operatorNode);
     } else {
         NES_DEBUG("QueryPlan: Adding operator as child to all the leaf nodes.");
-        for (auto leafOperator : leafOperators) {
+        for (const auto& leafOperator : leafOperators) {
             leafOperator->addChild(operatorNode);
         }
     }
@@ -100,7 +100,7 @@ void QueryPlan::prependOperatorAsLeafNode(OperatorNodePtr operatorNode) {
 std::string QueryPlan::toString() {
     std::stringstream ss;
     auto dumpHandler = ConsoleDumpHandler::create(ss);
-    for (auto rootOperator : rootOperators) {
+    for (const auto& rootOperator : rootOperators) {
         dumpHandler->dump(rootOperator);
     }
     return ss.str();
@@ -118,7 +118,7 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
     // Maintain a list of visited nodes as there are multiple root nodes
     std::set<u_int64_t> visitedOpIds;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
-    for (auto rootOperator : rootOperators) {
+    for (const auto& rootOperator : rootOperators) {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
         for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
             auto visitingOp = (*itr)->as<OperatorNode>();
@@ -139,7 +139,7 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
 
 bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
-    for (auto rootOperator : rootOperators) {
+    for (const auto& rootOperator : rootOperators) {
         if (rootOperator->getId() == operatorId) {
             NES_DEBUG("QueryPlan: Found operator " << operatorId << " in the query plan");
             return true;
@@ -176,7 +176,7 @@ QueryId QueryPlan::getQueryId() const { return queryId; }
 
 void QueryPlan::setQueryId(QueryId queryId) { QueryPlan::queryId = queryId; }
 
-void QueryPlan::addRootOperator(OperatorNodePtr root) { rootOperators.push_back(root); }
+void QueryPlan::addRootOperator(const OperatorNodePtr& root) { rootOperators.push_back(root); }
 
 QuerySubPlanId QueryPlan::getQuerySubPlanId() { return querySubPlanId; }
 
@@ -184,7 +184,7 @@ void QueryPlan::setQuerySubPlanId(uint64_t querySubPlanId) { this->querySubPlanI
 
 void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
     NES_DEBUG("QueryPlan: removing operator " << root->toString() << " as root operator.");
-    auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](OperatorNodePtr rootOperator) {
+    auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](const OperatorNodePtr& rootOperator) {
         return rootOperator->getId() == root->getId();
     });
     if (found != rootOperators.end()) {
@@ -194,7 +194,7 @@ void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
     }
 }
 
-bool QueryPlan::replaceRootOperator(OperatorNodePtr oldRoot, OperatorNodePtr newRoot) {
+bool QueryPlan::replaceRootOperator(const OperatorNodePtr& oldRoot, const OperatorNodePtr& newRoot) {
     for (auto& rootOperator : rootOperators) {
         // compares the pointers and checks if we found the correct operator.
         if (rootOperator == oldRoot) {
@@ -205,7 +205,7 @@ bool QueryPlan::replaceRootOperator(OperatorNodePtr oldRoot, OperatorNodePtr new
     return false;
 }
 
-bool QueryPlan::replaceOperator(OperatorNodePtr oldOperator, OperatorNodePtr newOperator) {
+bool QueryPlan::replaceOperator(const OperatorNodePtr& oldOperator, const OperatorNodePtr& newOperator) {
     replaceRootOperator(oldOperator, newOperator);
     oldOperator->replace(newOperator);
     return true;
@@ -263,7 +263,7 @@ QueryPlanPtr QueryPlan::copy() {
 
 bool QueryPlan::removeRootOperatorFromPlan(OperatorNodePtr rootOperatorToRemove) {
 
-    auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](OperatorNodePtr rootOperator) {
+    auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](const OperatorNodePtr& rootOperator) {
         return rootOperator->getId() == rootOperatorToRemove->getId();
     });
 
@@ -277,7 +277,7 @@ bool QueryPlan::removeRootOperatorFromPlan(OperatorNodePtr rootOperatorToRemove)
     return true;
 }
 
-bool QueryPlan::removeOperatorFromPlan(OperatorNodePtr operatorToRemove) {
+bool QueryPlan::removeOperatorFromPlan(const OperatorNodePtr& operatorToRemove) {
     auto children = operatorToRemove->getChildren();
     for (auto& child : children) {
         if (child->getParents().size() == 1) {

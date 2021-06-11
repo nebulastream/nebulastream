@@ -85,14 +85,14 @@ class OperatorNode : public Node {
      * @param newNode
      * @return bool indicating success
      */
-    bool addChild(const NodePtr newNode) override;
+    bool addChild(NodePtr newNode) override;
 
     /**
     * @brief method to add a parent to this node
     * @param newNode
     * @return bool indicating success
     */
-    bool addParent(const NodePtr newNode) override;
+    bool addParent(NodePtr newNode) override;
 
     /**
      * @brief Get the operator with input operator id
@@ -136,20 +136,20 @@ class OperatorNode : public Node {
      * @param key key of the new property
      * @param value value of the new property
      */
-    void addProperty(std::string key, std::any value);
+    void addProperty(const std::string& key, const std::any& value);
 
     /**
      * @brief Get a the value of a property
      * @param key key of the value to retrieve
      * @return value of the property with the given key
      */
-    std::any getProperty(std::string key);
+    std::any getProperty(const std::string& key);
 
     /**
      * @brief Remove a property string from the stored properties map
      * @param key key of the property to remove
      */
-    void removeProperty(std::string key);
+    void removeProperty(const std::string& key);
 
   protected:
     /**
@@ -157,14 +157,14 @@ class OperatorNode : public Node {
      * @param operatorNode: the input operator
      * @return duplicate of the input operator
      */
-    OperatorNodePtr getDuplicateOfParent(OperatorNodePtr operatorNode);
+    OperatorNodePtr getDuplicateOfParent(const OperatorNodePtr& operatorNode);
 
     /**
      * @brief get duplicate of the input operator and all its children
      * @param operatorNode: the input operator
      * @return duplicate of the input operator
      */
-    OperatorNodePtr getDuplicateOfChild(OperatorNodePtr operatorNode);
+    OperatorNodePtr getDuplicateOfChild(const OperatorNodePtr& operatorNode);
 
     /**
      * @brief Unique Identifier of the operator within a query.

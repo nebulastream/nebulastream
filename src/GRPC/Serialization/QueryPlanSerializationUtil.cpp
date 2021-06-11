@@ -24,12 +24,12 @@
 
 namespace NES {
 
-SerializableQueryPlan* QueryPlanSerializationUtil::serializeQueryPlan(QueryPlanPtr queryPlan) {
+SerializableQueryPlan* QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPlan) {
     NES_INFO("QueryPlanSerializationUtil: serializing query plan " << queryPlan->toString());
     auto serializedQueryPlan = new SerializableQueryPlan();
     std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
     NES_TRACE("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
-    for (auto rootOperator : rootOperators) {
+    for (const auto& rootOperator : rootOperators) {
         auto serializedRootOperator = serializedQueryPlan->add_rootoperators();
         OperatorSerializationUtil::serializeOperator(rootOperator, serializedRootOperator);
     }
@@ -47,7 +47,7 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     //We use the already deserialized operator whenever available other wise we deserialize the operator and add it to the map.
     std::vector<OperatorNodePtr> rootOperators;
     std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
-    for (auto serializedRootOperator : serializedQueryPlan->rootoperators()) {
+    for (const auto& serializedRootOperator : serializedQueryPlan->rootoperators()) {
         std::deque<SerializableOperator> operatorsToDeserialize;
         NES_TRACE("QueryPlanSerializationUtil: Add root operator to the Queue for deserialization");
         operatorsToDeserialize.push_back(serializedRootOperator);

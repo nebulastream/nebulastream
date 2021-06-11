@@ -37,8 +37,8 @@ namespace NES::Join {
 template<class KeyType, class ValueTypeLeft, class ValueTypeRight>
 class JoinHandler : public AbstractJoinHandler {
   public:
-    explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
-                         Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
+    explicit JoinHandler(const Join::LogicalJoinDefinitionPtr& joinDefinition,
+                         const Windowing::BaseExecutableWindowTriggerPolicyPtr& executablePolicyTrigger,
                          BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction,
                          uint64_t id)
         : AbstractJoinHandler(std::move(joinDefinition), std::move(executablePolicyTrigger)),

@@ -99,7 +99,7 @@ class BasePlacementStrategy {
      * @param queryId : the id of the query.
      * @param sourceOperators: the source operators in the query
      */
-    void mapPinnedOperatorToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
+    void mapPinnedOperatorToTopologyNodes(QueryId queryId, const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators);
 
     /**
      * @brief Get Execution node for the input topology node

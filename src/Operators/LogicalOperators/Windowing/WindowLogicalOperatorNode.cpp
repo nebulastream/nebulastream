@@ -27,7 +27,7 @@
 
 namespace NES {
 
-WindowLogicalOperatorNode::WindowLogicalOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
+WindowLogicalOperatorNode::WindowLogicalOperatorNode(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id)
     : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {}
 
 const std::string WindowLogicalOperatorNode::toString() const {

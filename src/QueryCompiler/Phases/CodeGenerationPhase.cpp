@@ -31,7 +31,7 @@ CodeGenerationPhasePtr CodeGenerationPhase::create() { return std::make_shared<C
 
 PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) {
     NES_DEBUG("Generate code for query plan " << queryPlan->getQueryId() << " - " << queryPlan->getQuerySubPlanId());
-    for (auto pipeline : queryPlan->getPipelines()) {
+    for (const auto& pipeline : queryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline);
         }
@@ -46,15 +46,15 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
     auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
     auto rootOperator = pipelineRoots[0];
-    generate(rootOperator, [&codeGenerator, &context](GeneratableOperators::GeneratableOperatorPtr operatorNode) {
+    generate(rootOperator, [&codeGenerator, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
         operatorNode->generateOpen(codeGenerator, context);
     });
 
-    generate(rootOperator, [&codeGenerator, &context](GeneratableOperators::GeneratableOperatorPtr operatorNode) {
+    generate(rootOperator, [&codeGenerator, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
         operatorNode->generateExecute(codeGenerator, context);
     });
 
-    generate(rootOperator, [&codeGenerator, &context](GeneratableOperators::GeneratableOperatorPtr operatorNode) {
+    generate(rootOperator, [&codeGenerator, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
         operatorNode->generateClose(codeGenerator, context);
     });
     auto pipelineStage = codeGenerator->compile(context);
@@ -67,8 +67,8 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
     return pipeline;
 }
 
-void CodeGenerationPhase::generate(OperatorNodePtr rootOperator,
-                                   std::function<void(GeneratableOperators::GeneratableOperatorPtr operatorNode)> applyFunction) {
+void CodeGenerationPhase::generate(const OperatorNodePtr& rootOperator,
+                                   const std::function<void(GeneratableOperators::GeneratableOperatorPtr operatorNode)>& applyFunction) {
     auto iterator = DepthFirstNodeIterator(rootOperator);
     for (auto node : iterator) {
         if (!node->instanceOf<GeneratableOperators::GeneratableOperator>()) {

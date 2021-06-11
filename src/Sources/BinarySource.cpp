@@ -20,10 +20,11 @@
 #include <Sources/DataSource.hpp>
 #include <Util/Logger.hpp>
 #include <sstream>
+#include <utility>
 
 namespace NES {
 
-BinarySource::BinarySource(SchemaPtr schema,
+BinarySource::BinarySource(const SchemaPtr& schema,
                            NodeEngine::BufferManagerPtr bufferManager,
                            NodeEngine::QueryManagerPtr queryManager,
                            const std::string& _file_path,
@@ -31,7 +32,7 @@ BinarySource::BinarySource(SchemaPtr schema,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
                            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, successors),
+    : DataSource(schema, std::move(bufferManager), std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode, std::move(successors)),
       input(std::ifstream(_file_path.c_str())), file_path(_file_path) {
     input.seekg(0, input.end);
     file_size = input.tellg();

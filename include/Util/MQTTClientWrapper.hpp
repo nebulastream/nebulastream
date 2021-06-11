@@ -36,10 +36,10 @@ class MQTTClientWrapper {
      * @return MQTTClientWrapper
      */
     MQTTClientWrapper(bool useAsyncClient,
-                      const std::string address,
-                      const std::string clientId,
+                      std::string& address,
+                      std::string& clientId,
                       uint64_t maxBufferedMSGs,
-                      const std::string topic,
+                      std::string& topic,
                       int qualityOfService);
 
     /**
@@ -65,7 +65,7 @@ class MQTTClientWrapper {
     /**
     * @brief send a string to an MQTT broker
     */
-    void sendPayload(const std::string payload);
+    void sendPayload(std::string payload);
 
     /**
      * @brief get the number of elements currently residing in the buffer (messages that have not been delivered yet)

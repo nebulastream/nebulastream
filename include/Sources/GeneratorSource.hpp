@@ -21,6 +21,7 @@
 #include <sstream>
 
 #include <Sources/DataSource.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -46,12 +47,12 @@ class GeneratorSource : public DataSource {
                     GatheringMode gatheringMode,
                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
         : DataSource(std::move(schema),
-                     bufferManager,
-                     queryManager,
+                     std::move(bufferManager),
+                     std::move(queryManager),
                      operatorId,
                      numSourceLocalBuffers,
                      gatheringMode,
-                     successors) {
+                     std::move(successors)) {
         this->numBuffersToProcess = numbersOfBufferToProduce;
     }
     /**

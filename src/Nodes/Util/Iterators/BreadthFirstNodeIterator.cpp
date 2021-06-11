@@ -26,7 +26,7 @@ BreadthFirstNodeIterator::iterator BreadthFirstNodeIterator::begin() { return it
 
 BreadthFirstNodeIterator::iterator BreadthFirstNodeIterator::end() { return iterator(); }
 
-BreadthFirstNodeIterator::iterator::iterator(NodePtr current) { workQueue.push(current); }
+BreadthFirstNodeIterator::iterator::iterator(const NodePtr& current) { workQueue.push(current); }
 
 BreadthFirstNodeIterator::iterator::iterator() = default;
 
@@ -46,7 +46,7 @@ BreadthFirstNodeIterator::iterator& BreadthFirstNodeIterator::iterator::operator
     } else {
         auto current = workQueue.front();
         workQueue.pop();
-        for (auto child : current->getChildren()) {
+        for (const auto& child : current->getChildren()) {
             workQueue.push(child);
         }
     }

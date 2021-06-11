@@ -32,7 +32,7 @@ LogicalSourceExpansionRule::LogicalSourceExpansionRule(StreamCatalogPtr streamCa
     : streamCatalog(std::move(streamCatalog)) {}
 
 LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(StreamCatalogPtr streamCatalog) {
-    return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(streamCatalog));
+    return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(std::move(streamCatalog)));
 }
 
 QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
@@ -71,7 +71,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                 for (auto& originalRootOperator : originalRootOperators) {
 
                     NES_TRACE("LogicalSourceExpansionRule: Search the duplicate operator equal to original head operator");
-                    auto found = std::find_if(family.begin(), family.end(), [&](NodePtr member) {
+                    auto found = std::find_if(family.begin(), family.end(), [&](const NodePtr& member) {
                         return member->as<OperatorNode>()->getId() == originalRootOperator->getId();
                     });
 
@@ -100,7 +100,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
 }
 
 std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>>
-LogicalSourceExpansionRule::getLogicalGraphToDuplicate(OperatorNodePtr operatorNode) {
+LogicalSourceExpansionRule::getLogicalGraphToDuplicate(const OperatorNodePtr& operatorNode) {
     NES_DEBUG("LogicalSourceExpansionRule: Get the logical graph to duplicate.");
     if (operatorNode->instanceOf<SinkLogicalOperatorNode>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()
         || operatorNode->instanceOf<UnionLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()) {

@@ -86,7 +86,7 @@
 #endif
 
 namespace NES {
-SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodePtr operatorNode,
+SerializableOperator* OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode,
                                                                    SerializableOperator* serializedOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator " << operatorNode->toString());
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
@@ -337,7 +337,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     return operatorNode;
 }
 
-SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOperator(WindowOperatorNodePtr windowOperator) {
+SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& windowOperator) {
     auto windowDetails = SerializableOperator_WindowDetails();
     auto windowDefinition = windowOperator->getWindowDefinition();
 
@@ -463,7 +463,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     return windowDetails;
 }
 
-SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperator(JoinLogicalOperatorNodePtr joinOperator) {
+SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNodePtr& joinOperator) {
     auto joinDetails = SerializableOperator_JoinDetails();
     auto joinDefinition = joinOperator->getJoinDefinition();
 
@@ -843,14 +843,14 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     //    }
 }
 SerializableOperator_SourceDetails
-OperatorSerializationUtil::serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator) {
+OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator) {
     auto sourceDetails = SerializableOperator_SourceDetails();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     serializeSourceSourceDescriptor(sourceDescriptor, &sourceDetails);
     return sourceDetails;
 }
 
-SerializableOperator_SinkDetails OperatorSerializationUtil::serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator) {
+SerializableOperator_SinkDetails OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperatorNodePtr& sinkOperator) {
     auto sinkDetails = SerializableOperator_SinkDetails();
     auto sinkDescriptor = sinkOperator->getSinkDescriptor();
     serializeSinkDescriptor(sinkDescriptor, &sinkDetails);
@@ -863,7 +863,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeSinkOperator(SerializableO
 }
 
 SerializableOperator_SourceDetails*
-OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor,
+OperatorSerializationUtil::serializeSourceSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
                                                            SerializableOperator_SourceDetails* sourceDetails) {
 
     // serialize a source descriptor and all its properties depending of its type
@@ -1136,7 +1136,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
     }
 }
 SerializableOperator_SinkDetails*
-OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescriptor,
+OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sinkDescriptor,
                                                    SerializableOperator_SinkDetails* sinkDetails) {
     // serialize a sink descriptor and all its properties depending of its type
     NES_DEBUG("OperatorSerializationUtil:: serialized SinkDescriptor ");
@@ -1341,7 +1341,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
 }
 
 SerializableOperator_WatermarkStrategyDetails
-OperatorSerializationUtil::serializeWatermarkAssignerOperator(WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator) {
+OperatorSerializationUtil::serializeWatermarkAssignerOperator(const WatermarkAssignerLogicalOperatorNodePtr& watermarkAssignerOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize watermark assigner operator ");
 
     auto watermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();
@@ -1351,7 +1351,7 @@ OperatorSerializationUtil::serializeWatermarkAssignerOperator(WatermarkAssignerL
 }
 
 SerializableOperator_WatermarkStrategyDetails* OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
-    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
+    const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor,
     SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails) {
     NES_TRACE("OperatorSerializationUtil:: serialize watermark strategy ");
 

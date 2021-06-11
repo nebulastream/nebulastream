@@ -30,9 +30,9 @@ namespace PhysicalOperators {
 class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id,
-                                      SchemaPtr inputSchema,
-                                      SchemaPtr outputSchema,
-                                      Join::JoinOperatorHandlerPtr operatorHandler,
+                                      const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const Join::JoinOperatorHandlerPtr& operatorHandler,
                                       JoinBuildSide buildSide);
     static PhysicalOperatorPtr
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);

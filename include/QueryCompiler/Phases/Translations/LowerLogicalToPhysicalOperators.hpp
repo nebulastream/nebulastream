@@ -29,7 +29,7 @@ namespace QueryCompilation {
 class LowerLogicalToPhysicalOperators {
   public:
     explicit LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider);
-    static LowerLogicalToPhysicalOperatorsPtr create(PhysicalOperatorProviderPtr provider);
+    static LowerLogicalToPhysicalOperatorsPtr create(const PhysicalOperatorProviderPtr& provider);
     QueryPlanPtr apply(QueryPlanPtr queryPlan);
 
   private:

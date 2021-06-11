@@ -29,7 +29,7 @@ class ClassDeclaration : public Declaration {
 
   public:
     explicit ClassDeclaration(ClassDefinitionPtr classDefinition);
-    static ClassDeclarationPtr create(ClassDefinitionPtr classDefinition);
+    static ClassDeclarationPtr create(const ClassDefinitionPtr& classDefinition);
 
     [[nodiscard]] const GeneratableDataTypePtr getType() const override;
     [[nodiscard]] const std::string getIdentifierName() const override;

@@ -21,18 +21,18 @@ PhysicalProjectOperator::PhysicalProjectOperator(OperatorId id,
                                                  SchemaPtr inputSchema,
                                                  SchemaPtr outputSchema,
                                                  std::vector<ExpressionNodePtr> expressions)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), expressions(std::move(expressions)) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), expressions(std::move(expressions)) {}
 
 PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id,
-                                                    SchemaPtr inputSchema,
-                                                    SchemaPtr outputSchema,
-                                                    std::vector<ExpressionNodePtr> expressions) {
+                                                    const SchemaPtr& inputSchema,
+                                                    const SchemaPtr& outputSchema,
+                                                    const std::vector<ExpressionNodePtr>& expressions) {
     return std::make_shared<PhysicalProjectOperator>(id, inputSchema, outputSchema, expressions);
 }
 
 PhysicalOperatorPtr
 PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, expressions);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expressions));
 }
 
 std::vector<ExpressionNodePtr> PhysicalProjectOperator::getExpressions() { return expressions; }

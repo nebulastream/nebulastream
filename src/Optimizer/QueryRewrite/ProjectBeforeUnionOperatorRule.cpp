@@ -51,8 +51,8 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-LogicalOperatorNodePtr ProjectBeforeUnionOperatorRule::constructProjectOperator(SchemaPtr sourceSchema,
-                                                                                SchemaPtr destinationSchema) {
+LogicalOperatorNodePtr ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& sourceSchema,
+                                                                                const SchemaPtr& destinationSchema) {
     NES_TRACE("Computing Projection operator for Source Schema " << sourceSchema->toString() << " and Destination schema "
                                                                  << destinationSchema->toString());
     //Fetch source and destination schema fields

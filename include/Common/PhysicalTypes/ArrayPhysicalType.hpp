@@ -35,7 +35,7 @@ class ArrayPhysicalType final : public PhysicalType {
      * @param component the physical component type of this array.
      */
     inline ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr component) noexcept
-        : PhysicalType(type), length(length), physicalComponentType(std::move(component)) {}
+        : PhysicalType(std::move(type)), length(length), physicalComponentType(std::move(component)) {}
 
     /**
      * @brief Factory function to create a new ArrayType Physical Type.
@@ -44,7 +44,7 @@ class ArrayPhysicalType final : public PhysicalType {
      * @param component the physical component type of this array.
      * @return PhysicalTypePtr
      */
-    static inline PhysicalTypePtr create(DataTypePtr type, uint64_t length, PhysicalTypePtr const& component) noexcept {
+    static inline PhysicalTypePtr create(const DataTypePtr& type, uint64_t length, PhysicalTypePtr const& component) noexcept {
         return std::make_shared<ArrayPhysicalType>(type, length, component);
     }
 

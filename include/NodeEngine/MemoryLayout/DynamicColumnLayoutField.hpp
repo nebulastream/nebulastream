@@ -49,7 +49,7 @@ class DynamicColumnLayoutField {
      * @tparam T type of field
      * @return field handler via a fieldName and a layoutBuffer
      */
-    static inline DynamicColumnLayoutField<T, boundaryChecks> create(std::string fieldName,
+    static inline DynamicColumnLayoutField<T, boundaryChecks> create(const std::string& fieldName,
                                                                      DynamicColumnLayoutBufferPtr layoutBuffer);
 
     /**
@@ -88,7 +88,7 @@ DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex,
 
 template<class T, bool boundaryChecks>
 DynamicColumnLayoutField<T, boundaryChecks>
-DynamicColumnLayoutField<T, boundaryChecks>::create(std::string fieldName,
+DynamicColumnLayoutField<T, boundaryChecks>::create(const std::string& fieldName,
                                                     std::shared_ptr<DynamicColumnLayoutBuffer> layoutBuffer) {
     auto fieldIndex = layoutBuffer->getFieldIndexFromName(fieldName);
     if (fieldIndex.has_value()) {

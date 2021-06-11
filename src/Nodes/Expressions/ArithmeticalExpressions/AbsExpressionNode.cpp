@@ -27,7 +27,7 @@ AbsExpressionNode::AbsExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpre
 
 AbsExpressionNode::AbsExpressionNode(AbsExpressionNode* other) : ArithmeticalUnaryExpressionNode(other) {}
 
-ExpressionNodePtr AbsExpressionNode::create(const ExpressionNodePtr child) {
+ExpressionNodePtr AbsExpressionNode::create(const ExpressionNodePtr& child) {
     auto absNode = std::make_shared<AbsExpressionNode>(child->getStamp());
     absNode->setChild(child);
     return absNode;

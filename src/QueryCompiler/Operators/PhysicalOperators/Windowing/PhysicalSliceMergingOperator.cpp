@@ -14,18 +14,19 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr
 PhysicalSliceMergingOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, handler);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(handler));
 }
 
 PhysicalOperatorPtr PhysicalSliceMergingOperator::create(OperatorId id,
-                                                         SchemaPtr inputSchema,
-                                                         SchemaPtr outputSchema,
-                                                         Windowing::WindowOperatorHandlerPtr handler) {
+                                                         const SchemaPtr& inputSchema,
+                                                         const SchemaPtr& outputSchema,
+                                                         const Windowing::WindowOperatorHandlerPtr& handler) {
     return std::make_shared<PhysicalSliceMergingOperator>(id, inputSchema, outputSchema, handler);
 }
 
@@ -33,7 +34,7 @@ PhysicalSliceMergingOperator::PhysicalSliceMergingOperator(OperatorId id,
                                                            SchemaPtr inputSchema,
                                                            SchemaPtr outputSchema,
                                                            Windowing::WindowOperatorHandlerPtr handler)
-    : OperatorNode(id), PhysicalWindowOperator(id, inputSchema, outputSchema, handler){};
+    : OperatorNode(id), PhysicalWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(handler)){};
 
 const std::string PhysicalSliceMergingOperator::toString() const { return "PhysicalSliceMergingOperator"; }
 

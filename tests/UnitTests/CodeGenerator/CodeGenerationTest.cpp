@@ -96,7 +96,7 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
                                  std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
             0,
-            queryManager,
+            std::move(queryManager),
             std::move(bufferManager),
             [this](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));

@@ -18,6 +18,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinSinkOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
@@ -25,19 +26,19 @@ GeneratableJoinSinkOperator::GeneratableJoinSinkOperator(OperatorId id,
                                                          SchemaPtr inputSchema,
                                                          SchemaPtr outputSchema,
                                                          Join::JoinOperatorHandlerPtr operatorHandler)
-    : OperatorNode(id), GeneratableJoinOperator(id, inputSchema, outputSchema, operatorHandler) {}
+    : OperatorNode(id), GeneratableJoinOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler)) {}
 
 GeneratableOperatorPtr GeneratableJoinSinkOperator::create(OperatorId id,
                                                            SchemaPtr inputSchema,
                                                            SchemaPtr outputSchema,
                                                            Join::JoinOperatorHandlerPtr operatorHandler) {
     return std::make_shared<GeneratableJoinSinkOperator>(
-        GeneratableJoinSinkOperator(id, inputSchema, outputSchema, operatorHandler));
+        GeneratableJoinSinkOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler)));
 }
 
 GeneratableOperatorPtr
 GeneratableJoinSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler));
 }
 
 void GeneratableJoinSinkOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {

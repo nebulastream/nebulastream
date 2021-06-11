@@ -29,7 +29,7 @@ static constexpr auto MANGELED_ENTRY_POINT = "_ZN3NES6createEv";
 
 using CreateFunctionPtr = NodeEngine::Execution::ExecutablePipelineStagePtr (*)();
 
-CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(CompiledCodePtr compiledCode,
+CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(const CompiledCodePtr& compiledCode,
                                                                  PipelineStageArity arity,
                                                                  std::string sourceCode)
     : base(arity), compiledCode(compiledCode), currentExecutionStage(NotInitialized), sourceCode(std::move(sourceCode)) {
@@ -38,7 +38,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(CompiledCodePtr
 }
 
 NodeEngine::Execution::ExecutablePipelineStagePtr
-CompiledExecutablePipelineStage::create(CompiledCodePtr compiledCode, PipelineStageArity arity, std::string sourceCode) {
+CompiledExecutablePipelineStage::create(const CompiledCodePtr& compiledCode, PipelineStageArity arity, const std::string& sourceCode) {
     return std::make_shared<CompiledExecutablePipelineStage>(compiledCode, arity, sourceCode);
 }
 

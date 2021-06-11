@@ -64,14 +64,14 @@ class RestServer {
    * */
     RestServer(std::string host,
                uint16_t port,
-               NesCoordinatorWeakPtr coordinator,
-               QueryCatalogPtr queryCatalog,
-               StreamCatalogPtr streamCatalog,
-               TopologyPtr topology,
-               GlobalExecutionPlanPtr globalExecutionPlan,
-               QueryServicePtr queryService,
-               MonitoringServicePtr monitoringService,
-               GlobalQueryPlanPtr globalQueryPlan);
+               const NesCoordinatorWeakPtr& coordinator,
+               const QueryCatalogPtr& queryCatalog,
+               const StreamCatalogPtr& streamCatalog,
+               const TopologyPtr& topology,
+               const GlobalExecutionPlanPtr& globalExecutionPlan,
+               const QueryServicePtr& queryService,
+               const MonitoringServicePtr& monitoringService,
+               const GlobalQueryPlanPtr& globalQueryPlan);
 
     ~RestServer();
     /**

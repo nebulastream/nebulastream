@@ -91,7 +91,7 @@ TEST_F(MonitoringStackTest, testNetworkStats) {
     auto networkMetrics = networkStats.measure();
     EXPECT_TRUE(!networkMetrics.getInterfaceNames().empty());
 
-    for (std::string intfs : networkMetrics.getInterfaceNames()) {
+    for (const std::string& intfs : networkMetrics.getInterfaceNames()) {
         NES_INFO("MonitoringStackTest: Received metrics for interface " << intfs);
     }
 }

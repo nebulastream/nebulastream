@@ -60,13 +60,13 @@ class ExchangeProtocol {
      * @brief Reaction of the zmqServer after an error occurs.
      * @param the error message
      */
-    void onServerError(const Messages::ErrorMessage error);
+    void onServerError(Messages::ErrorMessage error);
 
     /**
      * @brief Reaction of the zmqServer after an error occurs.
      * @param the error message
      */
-    void onChannelError(const Messages::ErrorMessage error);
+    void onChannelError(Messages::ErrorMessage error);
 
     /**
      * @brief Reaction of the zmqServer after an EndOfStream message is received.

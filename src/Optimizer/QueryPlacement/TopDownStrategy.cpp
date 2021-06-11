@@ -27,6 +27,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
@@ -34,14 +35,14 @@ std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr 
                                                          TopologyPtr topology,
                                                          TypeInferencePhasePtr typeInferencePhase,
                                                          StreamCatalogPtr streamCatalog) {
-    return std::make_unique<TopDownStrategy>(TopDownStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
+    return std::make_unique<TopDownStrategy>(TopDownStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), std::move(streamCatalog)));
 }
 
 TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase,
                                  StreamCatalogPtr streamCatalog)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog) {}
+    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), std::move(streamCatalog)) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
@@ -84,14 +85,14 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     }
 }
 
-void TopDownStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
+void TopDownStrategy::placeQueryPlan(const QueryPlanPtr& queryPlan) {
 
     QueryId queryId = queryPlan->getQueryId();
     NES_DEBUG("TopDownStrategy: Get the all sink operators for performing the placement.");
     const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = queryPlan->getSinkOperators();
 
     NES_TRACE("TopDownStrategy: Place all sink operators.");
-    for (auto sinkOperator : sinkOperators) {
+    for (const auto& sinkOperator : sinkOperators) {
         NES_TRACE("TopDownStrategy: Get the topology node for the sink operator.");
         //TODO: Handle when we assume more than one sink nodes
         TopologyNodePtr candidateTopologyNode = getTopologyNodeForPinnedOperator(sinkOperator->getId());
@@ -104,7 +105,7 @@ void TopDownStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
     NES_DEBUG("TopDownStrategy: Finished placing query operators into the global execution plan");
 }
 
-void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode) {
+void TopDownStrategy::placeOperator(QueryId queryId, const OperatorNodePtr& operatorNode, TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("TopDownStrategy: Place " << operatorNode);
     if ((operatorNode->hasMultipleChildrenOrParents() || operatorNode->instanceOf<SourceLogicalOperatorNode>())
@@ -158,7 +159,7 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
         NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
         //FIXME: we are considering only one root node currently
         auto candidateTopologyNodes = topology->findNodesBetween(childNodes, {candidateTopologyNode});
-        for (auto topologyNodes : candidateTopologyNodes) {
+        for (const auto& topologyNodes : candidateTopologyNodes) {
             if (topologyNodes && topologyNodes->getAvailableResources() > 0) {
                 candidateTopologyNode = topologyNodes;
                 NES_DEBUG(
@@ -203,8 +204,8 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
 }
 
 QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId,
-                                                              OperatorNodePtr candidateOperator,
-                                                              ExecutionNodePtr executionNode) {
+                                                              const OperatorNodePtr& candidateOperator,
+                                                              const ExecutionNodePtr& executionNode) {
 
     OperatorNodePtr candidateOperatorCopy = candidateOperator->copy();
     NES_DEBUG("TopDownStrategy: Get candidate query plan for the operator " << candidateOperator << " on execution node with id "
@@ -226,7 +227,7 @@ QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId,
     std::vector<NodePtr> parents = candidateOperator->getParents();
     //NOTE: we do not check for child operators as we are performing Top down placement.
     for (auto& parent : parents) {
-        auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](QueryPlanPtr querySubPlan) {
+        auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](const QueryPlanPtr& querySubPlan) {
             return querySubPlan->hasOperatorWithId(parent->as<OperatorNode>()->getId());
         });
 
@@ -258,7 +259,7 @@ QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId,
 
         if (candidateQueryPlan) {
             NES_TRACE("TopDownStrategy: Prepend candidate operator and update the plan.");
-            for (auto candidateParent : parents) {
+            for (const auto& candidateParent : parents) {
                 auto parentOperator = candidateQueryPlan->getOperatorWithId(candidateParent->as<OperatorNode>()->getId());
                 if (parentOperator) {
                     parentOperator->addChild(candidateOperatorCopy);
@@ -276,7 +277,7 @@ QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId,
     return candidateQueryPlan;
 }
 
-std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForParentOperators(OperatorNodePtr candidateOperator) {
+std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForParentOperators(const OperatorNodePtr& candidateOperator) {
 
     std::vector<TopologyNodePtr> parentTopologyNodes;
     NES_DEBUG("TopDownStrategy: Get topology nodes with parent operators");
@@ -295,7 +296,7 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForParentOperators
     return parentTopologyNodes;
 }
 
-std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators(OperatorNodePtr candidateOperator) {
+std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators(const OperatorNodePtr& candidateOperator) {
     NES_TRACE("TopDownStrategy: Get the pinned topology nodes for the source operators of the input operator.");
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = candidateOperator->getNodesByType<SourceLogicalOperatorNode>();
     if (sourceOperators.empty()) {
@@ -303,7 +304,8 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators
         throw Exception("TopDownStrategy: Unable to find the source operators to the candidate operator");
     }
     std::vector<TopologyNodePtr> childNodes;
-    for (auto& sourceOperator : sourceOperators) {
+    childNodes.reserve(sourceOperators.size());
+for (auto& sourceOperator : sourceOperators) {
         childNodes.push_back(getTopologyNodeForPinnedOperator(sourceOperator->getId()));
     }
     return childNodes;

@@ -47,7 +47,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
     return nullptr;
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(IntegerPtr integer) {
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const IntegerPtr& integer) {
     if (integer->lowerBound >= 0) {
         if (integer->getBits() <= 8) {
             return BasicPhysicalType::create(integer, BasicPhysicalType::UINT_8);
@@ -76,7 +76,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(IntegerPtr integer) 
     return nullptr;
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FloatPtr floatType) {
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const FloatPtr& floatType) {
     if (floatType->getBits() <= 32) {
         return BasicPhysicalType::create(floatType, BasicPhysicalType::FLOAT);
     }
@@ -88,12 +88,12 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FloatPtr floatType) 
     return nullptr;
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(ArrayPtr arrayType) {
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayPtr& arrayType) {
     auto const componentType = getPhysicalType(arrayType->component);
     return ArrayPhysicalType::create(arrayType, arrayType->length, componentType);
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(CharPtr charType) {
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const CharPtr& charType) {
     return BasicPhysicalType::create(charType, BasicPhysicalType::CHAR);
 }
 

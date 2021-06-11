@@ -22,7 +22,7 @@
 
 namespace NES {
 
-MapLogicalOperatorNode::MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id)
+MapLogicalOperatorNode::MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr& mapExpression, OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), mapExpression(mapExpression) {}
 
 FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() { return mapExpression; }

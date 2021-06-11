@@ -49,28 +49,28 @@ class ConstructorDefinition : public std::enable_shared_from_this<ConstructorDef
      * @param variableDeclaration VariableDeclaration
      * @return ConstructorDefinitionPtr
      */
-    ConstructorDefinitionPtr addParameter(VariableDeclaration variableDeclaration);
+    ConstructorDefinitionPtr addParameter(const VariableDeclaration& variableDeclaration);
 
     /**
      * @brief Adds a statement to the constructor body.
      * @param statement StatementPtr
      * @return FunctionDefinitionPtr
      */
-    ConstructorDefinitionPtr addStatement(StatementPtr statement);
+    ConstructorDefinitionPtr addStatement(const StatementPtr& statement);
 
     /**
      * @brief Adds a variable declaration to this constructor.
      * @param variableDeclaration VariableDeclaration
      * @return ConstructorDefinitionPtr
      */
-    ConstructorDefinitionPtr addVariableDeclaration(VariableDeclaration variableDeclaration);
+    ConstructorDefinitionPtr addVariableDeclaration(const VariableDeclaration& variableDeclaration);
 
     /**
      * @brief Adds a variable declaration to this constructor.
      * @param variableDeclaration VariableDeclaration
      * @return ConstructorDefinitionPtr
      */
-    ConstructorDefinitionPtr addInitializer(std::string&& fieldName, StatementPtr statement);
+    ConstructorDefinitionPtr addInitializer(std::string&& fieldName, const StatementPtr& statement);
 
     /**
      * @brief Creates the declaration of this constructor.

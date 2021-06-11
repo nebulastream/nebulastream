@@ -25,7 +25,7 @@ namespace NES::Network {
 NetworkManager::NetworkManager(const std::string& hostname,
                                uint16_t port,
                                ExchangeProtocol&& exchangeProtocol,
-                               NodeEngine::BufferManagerPtr bufferManager,
+                               const NodeEngine::BufferManagerPtr& bufferManager,
                                uint16_t numServerThread)
     : exchangeProtocol(exchangeProtocol),
       server(std::make_shared<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)) {
@@ -42,7 +42,7 @@ NetworkManager::~NetworkManager() { destroy(); }
 NetworkManagerPtr NetworkManager::create(const std::string& hostname,
                                          uint16_t port,
                                          Network::ExchangeProtocol&& exchangeProtocol,
-                                         NodeEngine::BufferManagerPtr bufferManager,
+                                         const NodeEngine::BufferManagerPtr& bufferManager,
                                          uint16_t numServerThread) {
     return std::make_shared<NetworkManager>(hostname, port, std::move(exchangeProtocol), bufferManager, numServerThread);
 }
@@ -53,7 +53,7 @@ bool NetworkManager::isPartitionRegistered(NesPartition nesPartition) const {
     return exchangeProtocol.getPartitionManager()->isRegistered(nesPartition);
 }
 
-bool NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition, std::shared_ptr<DataEmitter> emitter) {
+bool NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition, const std::shared_ptr<DataEmitter>& emitter) {
     NES_DEBUG("NetworkManager: Registering SubpartitionConsumer: " << nesPartition.toString());
     NES_ASSERT2_FMT(emitter, "invalid network source " << nesPartition.toString());
     return exchangeProtocol.getPartitionManager()->registerSubpartition(nesPartition, emitter);

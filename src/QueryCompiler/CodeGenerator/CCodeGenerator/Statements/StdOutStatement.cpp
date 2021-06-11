@@ -18,7 +18,7 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
 namespace NES::QueryCompilation {
-StdOutStatement::StdOutStatement(const std::string message) : message(message) {}
+StdOutStatement::StdOutStatement(const std::string& message) : message(message) {}
 
 StatementType StdOutStatement::getStamentType() const { return RETURN_STMT; }
 

@@ -27,7 +27,7 @@ namespace NES {
  */
 class InvalidArgumentException : public std::exception {
   public:
-    explicit InvalidArgumentException(std::string name, std::string value);
+    explicit InvalidArgumentException(const std::string& name, const std::string& value);
     [[nodiscard]] const char* what() const noexcept override;
 
   private:

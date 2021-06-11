@@ -28,7 +28,7 @@ GeneratableCountAggregation::GeneratableCountAggregation(Windowing::WindowAggreg
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
 GeneratableWindowAggregationPtr
-GeneratableCountAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
+GeneratableCountAggregation::create(const Windowing::WindowAggregationDescriptorPtr& aggregationDescriptor) {
     return std::make_shared<GeneratableCountAggregation>(aggregationDescriptor);
 }
 

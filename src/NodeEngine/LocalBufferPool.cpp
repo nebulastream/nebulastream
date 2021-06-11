@@ -20,7 +20,7 @@
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 
 namespace NES::NodeEngine {
-LocalBufferPool::LocalBufferPool(BufferManagerPtr bufferManager,
+LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,
                                  std::deque<detail::MemorySegment*>&& buffers,
                                  size_t numberOfReservedBuffers)
     : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers) {

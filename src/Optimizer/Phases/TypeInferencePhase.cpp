@@ -32,7 +32,7 @@ TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamC
 TypeInferencePhase::~TypeInferencePhase() { NES_DEBUG("~TypeInferencePhase()"); }
 
 TypeInferencePhasePtr TypeInferencePhase::create(StreamCatalogPtr streamCatalog) {
-    return std::make_shared<TypeInferencePhase>(TypeInferencePhase(streamCatalog));
+    return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(streamCatalog)));
 }
 
 QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
@@ -44,7 +44,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
             NES_WARNING("TypeInferencePhase: No StreamCatalog specified!");
         }
 
-        for (auto source : sources) {
+        for (const auto& source : sources) {
             auto sourceDescriptor = source->getSourceDescriptor();
 
             // if the source descriptor is only a logical stream source we have to replace it with the correct

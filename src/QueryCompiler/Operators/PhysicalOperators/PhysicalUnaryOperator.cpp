@@ -14,13 +14,14 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema)
     : OperatorNode(id), PhysicalOperator(id), UnaryOperatorNode(id) {
-    UnaryOperatorNode::setInputSchema(inputSchema);
-    UnaryOperatorNode::setOutputSchema(outputSchema);
+    UnaryOperatorNode::setInputSchema(std::move(inputSchema));
+    UnaryOperatorNode::setOutputSchema(std::move(outputSchema));
 }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

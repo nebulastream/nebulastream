@@ -17,7 +17,7 @@
 #include <Exceptions/QueryDeploymentException.hpp>
 
 namespace NES {
-QueryDeploymentException::QueryDeploymentException(SharedQueryId sharedQueryId, std::string message)
+QueryDeploymentException::QueryDeploymentException(SharedQueryId sharedQueryId, const std::string& message)
     : std::runtime_error(message), sharedQueryId(sharedQueryId) {}
 
 SharedQueryId QueryDeploymentException::getSharedQueryId() { return sharedQueryId; }

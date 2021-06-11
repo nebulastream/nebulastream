@@ -39,7 +39,7 @@
 
 namespace NES::Optimizer {
 
-Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(ExpressionNodePtr expression, z3::ContextPtr context) {
+Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(const ExpressionNodePtr& expression, const z3::ContextPtr& context) {
     NES_DEBUG("Creating Z3 expression for input expression " << expression->toString());
     if (expression->instanceOf<LogicalExpressionNode>()) {
         return createForLogicalExpressions(expression, context);
@@ -63,8 +63,8 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(ExpressionNodeP
     return nullptr;
 }
 
-Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(ExpressionNodePtr expression,
-                                                                              z3::ContextPtr context) {
+Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(const ExpressionNodePtr& expression,
+                                                                              const z3::ContextPtr& context) {
     NES_DEBUG("Create Z3 expression for arithmetical expression " << expression->toString());
     if (expression->instanceOf<AddExpressionNode>()) {
         auto addExpressionNode = expression->as<AddExpressionNode>();
@@ -120,7 +120,7 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(Ex
     return nullptr;
 }
 
-Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(ExpressionNodePtr expression, z3::ContextPtr context) {
+Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const ExpressionNodePtr& expression, const z3::ContextPtr& context) {
     NES_DEBUG("Create Z3 expression node for logical expression " << expression->toString());
     if (expression->instanceOf<AndExpressionNode>()) {
         auto andExpressionNode = expression->as<AndExpressionNode>();

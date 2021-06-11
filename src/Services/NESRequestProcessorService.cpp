@@ -46,12 +46,12 @@
 
 namespace NES {
 
-NESRequestProcessorService::NESRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                       TopologyPtr topology,
-                                                       QueryCatalogPtr queryCatalog,
-                                                       GlobalQueryPlanPtr globalQueryPlan,
-                                                       StreamCatalogPtr streamCatalog,
-                                                       WorkerRPCClientPtr workerRpcClient,
+NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                       const TopologyPtr& topology,
+                                                       const QueryCatalogPtr& queryCatalog,
+                                                       const GlobalQueryPlanPtr& globalQueryPlan,
+                                                       const StreamCatalogPtr& streamCatalog,
+                                                       const WorkerRPCClientPtr& workerRpcClient,
                                                        NESRequestQueuePtr queryRequestQueue,
                                                        bool enableQueryMerging,
                                                        Optimizer::QueryMergerRule queryMergerRule)
@@ -96,7 +96,7 @@ void NESRequestProcessorService::start() {
                 globalQueryPlanUpdatePhase->execute(nesRequests);
 
                 auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-                for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
+                for (const auto& sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
                     SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
@@ -134,7 +134,7 @@ void NESRequestProcessorService::start() {
                     sharedQueryMetaData->setAsOld();
                 }
 
-                for (auto queryRequest : nesRequests) {
+                for (const auto& queryRequest : nesRequests) {
                     auto queryId = queryRequest->getQueryId();
                     auto catalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
                     if (catalogEntry->getQueryStatus() == QueryStatus::Scheduling) {

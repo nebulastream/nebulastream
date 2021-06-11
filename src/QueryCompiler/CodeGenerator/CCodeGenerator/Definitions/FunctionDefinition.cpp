@@ -80,18 +80,18 @@ FunctionDefinitionPtr FunctionDefinition::returns(GeneratableDataTypePtr type) {
     return shared_from_this();
 }
 
-FunctionDefinitionPtr FunctionDefinition::addParameter(VariableDeclaration variableDeclaration) {
+FunctionDefinitionPtr FunctionDefinition::addParameter(const VariableDeclaration& variableDeclaration) {
     parameters.emplace_back(variableDeclaration);
     return shared_from_this();
 }
-FunctionDefinitionPtr FunctionDefinition::addStatement(StatementPtr statement) {
+FunctionDefinitionPtr FunctionDefinition::addStatement(const StatementPtr& statement) {
     if (statement) {
         statements.emplace_back(statement);
     }
     return shared_from_this();
 }
 
-FunctionDefinitionPtr FunctionDefinition::addVariableDeclaration(VariableDeclaration variableDeclaration) {
+FunctionDefinitionPtr FunctionDefinition::addVariableDeclaration(const VariableDeclaration& variableDeclaration) {
     variablDeclarations.emplace_back(variableDeclaration);
     return shared_from_this();
 }

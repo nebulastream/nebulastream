@@ -36,7 +36,7 @@ class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_f
      * @param checkBoundaries
      * @param schema
      */
-    DynamicRowLayout(bool checkBoundaries, SchemaPtr schema);
+    DynamicRowLayout(bool checkBoundaries, const SchemaPtr& schema);
 
     /**
      * @brief Copies a DynamicMemoryLayoutPtr
@@ -49,7 +49,7 @@ class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_f
      * @param checkBoundaries
      * @return created DynamicRowLayout as a shared ptr
      */
-    static DynamicRowLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
+    static DynamicRowLayoutPtr create(const SchemaPtr& schema, bool checkBoundaries);
 
     /**
      * @return fieldOffSets vector
@@ -60,7 +60,7 @@ class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_f
      * @param tupleBuffer
      * @return shared_ptr to DynamicRowLayoutBuffer
      */
-    DynamicRowLayoutBufferPtr bind(TupleBuffer tupleBuffer);
+    DynamicRowLayoutBufferPtr bind(const TupleBuffer& tupleBuffer);
 
   private:
     std::vector<FIELD_OFFSET> fieldOffSets;

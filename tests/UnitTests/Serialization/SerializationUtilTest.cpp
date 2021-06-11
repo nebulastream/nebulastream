@@ -586,9 +586,9 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
     EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
 
     std::vector<OperatorNodePtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
-    for (auto actualRootOperator : actualRootOperators) {
+    for (const auto& actualRootOperator : actualRootOperators) {
         bool found = false;
-        for (auto queryRoot : queryPlan->getRootOperators()) {
+        for (const auto& queryRoot : queryPlan->getRootOperators()) {
             if (actualRootOperator->equal(queryRoot)) {
                 EXPECT_TRUE(actualRootOperator->equalWithAllChildren(queryRoot));
                 found = true;
@@ -620,9 +620,9 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
     EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
 
     std::vector<OperatorNodePtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
-    for (auto actualRootOperator : actualRootOperators) {
+    for (const auto& actualRootOperator : actualRootOperators) {
         bool found = false;
-        for (auto queryRoot : queryPlan->getRootOperators()) {
+        for (const auto& queryRoot : queryPlan->getRootOperators()) {
             if (actualRootOperator->equal(queryRoot)) {
                 EXPECT_TRUE(actualRootOperator->equalWithAllChildren(queryRoot));
                 found = true;
@@ -637,9 +637,9 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
     std::vector<NodePtr> sourceOperatorsForRoot2 = actualRootOperators[1]->getAllLeafNodes();
     EXPECT_TRUE(sourceOperatorsForRoot1.size() == 2);
     EXPECT_TRUE(sourceOperatorsForRoot2.size() == 2);
-    for (auto sourceOperatorForRoot1 : sourceOperatorsForRoot1) {
+    for (const auto& sourceOperatorForRoot1 : sourceOperatorsForRoot1) {
         bool found = false;
-        for (auto sourceOperatorForRoot2 : sourceOperatorsForRoot2) {
+        for (const auto& sourceOperatorForRoot2 : sourceOperatorsForRoot2) {
             if (sourceOperatorForRoot1->equal(sourceOperatorForRoot2)) {
                 found = true;
             }

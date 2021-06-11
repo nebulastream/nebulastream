@@ -55,14 +55,14 @@ class Topology {
      * @param newNode : the new physical node.
      * @return true if successful
      */
-    bool addNewPhysicalNodeAsChild(TopologyNodePtr parent, TopologyNodePtr newNode);
+    bool addNewPhysicalNodeAsChild(const TopologyNodePtr& parent, const TopologyNodePtr& newNode);
 
     /**
      * @brief This method will remove a given physical node
      * @param nodeToRemove : the node to be removed
      * @return true if successful
      */
-    bool removePhysicalNode(TopologyNodePtr nodeToRemove);
+    bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);
 
     /**
      * @brief This method will find a given physical node by its id
@@ -78,7 +78,7 @@ class Topology {
      * @param destinationNode: the destination start node
      * @return physical location of the leaf node in the graph.
      */
-    std::optional<TopologyNodePtr> findAllPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode);
+    std::optional<TopologyNodePtr> findAllPathBetween(const TopologyNodePtr& startNode, const TopologyNodePtr& destinationNode);
 
     /**
      * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
@@ -86,8 +86,8 @@ class Topology {
      * @param destinationNodes: the destination Serialization
      * @return a vector of start nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
      */
-    std::vector<TopologyNodePtr> findPathBetween(std::vector<TopologyNodePtr> sourceNodes,
-                                                 std::vector<TopologyNodePtr> destinationNodes);
+    std::vector<TopologyNodePtr> findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
+                                                 const std::vector<TopologyNodePtr>& destinationNodes);
 
     /**
      * @brief a Physical Node with the ip address and grpc port exists
@@ -95,7 +95,7 @@ class Topology {
      * @param grpcPort: grpc port of the node
      * @return true if node exists else false
      */
-    bool nodeExistsWithIpAndPort(std::string ipAddress, uint32_t grpcPort);
+    bool nodeExistsWithIpAndPort(const std::string& ipAddress, uint32_t grpcPort);
 
     /**
      * @brief Print the current topology information
@@ -112,7 +112,7 @@ class Topology {
      * @brief Add a Physical node as the root node of the topology
      * @param physicalNode: Physical node to be set as root node
      */
-    void setAsRoot(TopologyNodePtr physicalNode);
+    void setAsRoot(const TopologyNodePtr& physicalNode);
 
     /**
      * @brief Remove links between
@@ -120,7 +120,7 @@ class Topology {
      * @param childNode
      * @return
      */
-    bool removeNodeAsChild(TopologyNodePtr parentNode, TopologyNodePtr childNode);
+    bool removeNodeAsChild(const TopologyNodePtr& parentNode, const TopologyNodePtr& childNode);
 
     /**
      * @brief Increase the amount of resources on the node with the id
@@ -143,7 +143,7 @@ class Topology {
      * @param startNodes : start nodes of the sub-graphs to be merged
      * @return start nodes of the merged sub-graph
      */
-    static std::vector<TopologyNodePtr> mergeSubGraphs(std::vector<TopologyNodePtr> startNodes);
+    static std::vector<TopologyNodePtr> mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes);
 
     /**
      * @brief Find the immediate common ancestor for the set of Topology nodes
@@ -173,7 +173,7 @@ class Topology {
      * @param destinationNode : the destination topology node
      * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
      */
-    std::vector<TopologyNodePtr> findNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode);
+    std::vector<TopologyNodePtr> findNodesBetween(const TopologyNodePtr& sourceNode, const TopologyNodePtr& destinationNode);
 
     /**
      * @brief Find the set of shared nodes (inclusive of) between a set of source and destination topology nodes

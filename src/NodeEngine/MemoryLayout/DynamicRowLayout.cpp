@@ -22,7 +22,7 @@
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout() {
+DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, const SchemaPtr& schema) : DynamicMemoryLayout() {
     this->checkBoundaryFieldChecks = checkBoundaries;
     this->recordSize = schema->getSchemaSizeInBytes();
     this->fieldOffSets = std::vector<FIELD_OFFSET>();
@@ -47,12 +47,12 @@ DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, SchemaPtr schema) : Dyn
  * @param bufferSize
  * @return
  */
-DynamicRowLayoutPtr DynamicRowLayout::create(SchemaPtr schema, bool checkBoundaries) {
+DynamicRowLayoutPtr DynamicRowLayout::create(const SchemaPtr& schema, bool checkBoundaries) {
 
     return std::make_shared<DynamicRowLayout>(checkBoundaries, schema);
 }
 
-DynamicRowLayoutBufferPtr DynamicRowLayout::bind(TupleBuffer tupleBuffer) {
+DynamicRowLayoutBufferPtr DynamicRowLayout::bind(const TupleBuffer& tupleBuffer) {
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
     return std::make_shared<DynamicRowLayoutBuffer>(tupleBuffer, capacity, this->shared_from_this());

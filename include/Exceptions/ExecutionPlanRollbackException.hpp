@@ -27,7 +27,7 @@ namespace NES {
  */
 class ExecutionPlanRollbackException : public std::runtime_error {
   public:
-    explicit ExecutionPlanRollbackException(std::string message);
+    explicit ExecutionPlanRollbackException(const std::string& message);
 };
 }// namespace NES
 

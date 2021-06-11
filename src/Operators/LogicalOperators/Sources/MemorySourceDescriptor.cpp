@@ -31,8 +31,8 @@ MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema,
     NES_ASSERT(this->memoryArea != nullptr && this->memoryAreaSize > 0, "invalid memory area");
 }
 
-std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(SchemaPtr schema,
-                                                                       std::shared_ptr<uint8_t> memoryArea,
+std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(const SchemaPtr& schema,
+                                                                       const std::shared_ptr<uint8_t>& memoryArea,
                                                                        size_t memoryAreaSize,
                                                                        uint64_t numBuffersToProcess,
                                                                        uint64_t gatheringValue,

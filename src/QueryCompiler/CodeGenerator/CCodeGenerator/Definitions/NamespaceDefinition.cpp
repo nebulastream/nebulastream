@@ -24,15 +24,15 @@
 namespace NES::QueryCompilation {
 NamespaceDefinition::NamespaceDefinition(std::string name) : name(std::move(name)) {}
 
-NamespaceDefinitionPtr NamespaceDefinition::create(std::string name) { return std::make_shared<NamespaceDefinition>(name); }
+NamespaceDefinitionPtr NamespaceDefinition::create(const std::string& name) { return std::make_shared<NamespaceDefinition>(name); }
 
-void NamespaceDefinition::addDeclaration(DeclarationPtr declaration) { this->declarations.emplace_back(declaration); }
+void NamespaceDefinition::addDeclaration(const DeclarationPtr& declaration) { this->declarations.emplace_back(declaration); }
 
 DeclarationPtr NamespaceDefinition::getDeclaration() {
     std::stringstream namespaceCode;
     namespaceCode << "namespace " << name;
     namespaceCode << "{";
-    for (auto declaration : declarations) {
+    for (const auto& declaration : declarations) {
         namespaceCode << declaration->getCode();
     }
     namespaceCode << "}";

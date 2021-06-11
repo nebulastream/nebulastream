@@ -34,7 +34,7 @@
 namespace NES::Optimizer {
 
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog,
-                                                       StreamCatalogPtr streamCatalog,
+                                                       const StreamCatalogPtr& streamCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
                                                        bool enableQueryMerging,
@@ -69,14 +69,14 @@ GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr
                                                                  bool enableQueryMerging,
                                                                  Optimizer::QueryMergerRule queryMergerRule) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(
-        GlobalQueryPlanUpdatePhase(queryCatalog, streamCatalog, globalQueryPlan, z3Context, enableQueryMerging, queryMergerRule));
+        GlobalQueryPlanUpdatePhase(std::move(queryCatalog), std::move(streamCatalog), std::move(globalQueryPlan), std::move(z3Context), enableQueryMerging, queryMergerRule));
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequestPtr>& nesRequests) {
     //FIXME: Proper error handling #1585
     try {
         //TODO: Parallelize this loop #1738
-        for (auto nesRequest : nesRequests) {
+        for (const auto& nesRequest : nesRequests) {
             QueryId queryId = nesRequest->getQueryId();
             if (nesRequest->instanceOf<StopQueryRequest>()) {
 

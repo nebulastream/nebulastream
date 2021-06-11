@@ -27,7 +27,7 @@ GeneratableSumAggregation::GeneratableSumAggregation(Windowing::WindowAggregatio
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
 GeneratableWindowAggregationPtr
-GeneratableSumAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
+GeneratableSumAggregation::create(const Windowing::WindowAggregationDescriptorPtr& aggregationDescriptor) {
     return std::make_shared<GeneratableSumAggregation>(aggregationDescriptor);
 }
 

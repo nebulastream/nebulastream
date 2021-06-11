@@ -51,20 +51,20 @@ class ClassDefinition : public std::enable_shared_from_this<ClassDefinition> {
      * @brief Adds a base class to the class definition.
      * @param baseClassName
      */
-    void addBaseClass(std::string baseClassName);
+    void addBaseClass(const std::string& baseClassName);
 
     /**
      * @brief Adds a method to the class definition.
      * @param visibility Visibility of the method (Public, Private)
      * @param function the function definition.
      */
-    void addMethod(Visibility visibility, FunctionDefinitionPtr function);
+    void addMethod(Visibility visibility, const FunctionDefinitionPtr& function);
 
     /**
      * @brief Adds a ctor to the class definition.
      * @param function the function definition.
      */
-    void addConstructor(ConstructorDefinitionPtr function);
+    void addConstructor(const ConstructorDefinitionPtr& function);
 
     /**
      * @brief creates the declaration of this class.

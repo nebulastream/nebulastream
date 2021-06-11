@@ -43,7 +43,7 @@ class DiskMetrics {
      * @param prefix
      * @return The object
      */
-    static DiskMetrics fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static DiskMetrics fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json

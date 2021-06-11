@@ -29,7 +29,7 @@ namespace NES {
 class QueryPlacementException : public std::runtime_error {
 
   public:
-    explicit QueryPlacementException(SharedQueryId sharedQueryId, std::string message);
+    explicit QueryPlacementException(SharedQueryId sharedQueryId, const std::string& message);
 
     SharedQueryId getSharedQueryId();
 

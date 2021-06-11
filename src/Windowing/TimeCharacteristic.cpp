@@ -29,7 +29,7 @@ TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(API::Millis
 TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit)
     : type(type), field(std::move(field)), unit(std::move(unit)) {}
 
-TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionItem fieldValue, TimeUnit unit) {
+TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionItem fieldValue, const TimeUnit& unit) {
     auto keyExpression = fieldValue.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());

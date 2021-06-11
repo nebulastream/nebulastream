@@ -40,21 +40,21 @@ class TranslateToLegacyExpression {
      * @param expression node
      * @return LegacyExpressionPtr
      */
-    LegacyExpressionPtr transformExpression(ExpressionNodePtr expression);
+    LegacyExpressionPtr transformExpression(const ExpressionNodePtr& expression);
 
     /**
      * @brief Translates logical expessions to a legacy user api expression.
      * @param expression node
      * @return LegacyExpressionPtr
      */
-    LegacyExpressionPtr transformLogicalExpressions(ExpressionNodePtr expression);
+    LegacyExpressionPtr transformLogicalExpressions(const ExpressionNodePtr& expression);
 
     /**
      * @brief Translates arithmetical expessions to a legacy user api expression.
      * @param expression node
      * @return LegacyExpressionPtr
      */
-    LegacyExpressionPtr transformArithmeticalExpressions(ExpressionNodePtr expression);
+    LegacyExpressionPtr transformArithmeticalExpressions(const ExpressionNodePtr& expression);
 };
 }// namespace QueryCompilation
 }// namespace NES

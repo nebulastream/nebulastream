@@ -125,7 +125,7 @@ class TestHarness {
          * @param schema schema of the source
          * @param physical stream name
          */
-    void checkAndAddSource(std::string logicalStreamName, SchemaPtr schema) {
+    void checkAndAddSource(const std::string& logicalStreamName, const SchemaPtr& schema) {
         // Check if logical stream already exists
         if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
             NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
@@ -150,7 +150,7 @@ class TestHarness {
          * @param physical stream name
          * @param parentId id of the parent to connect
          */
-    void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
+    void addMemorySource(const std::string& logicalStreamName, const SchemaPtr& schema, std::string physicalStreamName, uint64_t parentId) {
         // set the localWorkerRpcPort and localWorkerZmqPort based on the number of workers
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
@@ -168,7 +168,7 @@ class TestHarness {
         currentMemorySource.record = currentSourceRecords;
         currentMemorySource.schema = schema;
         currentMemorySource.logicalStreamName = logicalStreamName;
-        currentMemorySource.physicalStreamName = physicalStreamName;
+        currentMemorySource.physicalStreamName = std::move(physicalStreamName);
 
         testHarnessWorkers.push_back(currentMemorySource);
 
@@ -188,7 +188,7 @@ class TestHarness {
          */
     void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName) {
         uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
-        addMemorySource(logicalStreamName, schema, physicalStreamName, crdTopologyNodeId);
+        addMemorySource(std::move(logicalStreamName), std::move(schema), std::move(physicalStreamName), crdTopologyNodeId);
     }
 
     /**
@@ -197,7 +197,7 @@ class TestHarness {
          * @param csvSourceConf physical stream configuration for the csv source
          * @param parentId id of the parent to connect
          */
-    void addCSVSource(PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema, uint64_t parentId) {
+    void addCSVSource(const PhysicalStreamConfigPtr& csvSourceConf, SchemaPtr schema, uint64_t parentId) {
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
         wrkConf->setRpcPort(crdPort + (testHarnessWorkers.size() + 1) * 20);
@@ -213,7 +213,7 @@ class TestHarness {
 
         testHarnessWorkers.push_back(currentCsvSource);
 
-        checkAndAddSource(csvSourceConf->getLogicalStreamName(), schema);
+        checkAndAddSource(csvSourceConf->getLogicalStreamName(), std::move(schema));
     }
 
     /**
@@ -223,7 +223,7 @@ class TestHarness {
       */
     void addCSVSource(PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema) {
         uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
-        addCSVSource(csvSourceConf, schema, crdTopologyNodeId);
+        addCSVSource(std::move(csvSourceConf), std::move(schema), crdTopologyNodeId);
     }
 
     /**
@@ -266,7 +266,7 @@ class TestHarness {
     template<typename T>
     std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName, uint64_t testTimeout = 60) {
         uint64_t sourceCount = 0;
-        for (TestHarnessWorker worker : testHarnessWorkers) {
+        for (const TestHarnessWorker& worker : testHarnessWorkers) {
             if (worker.type == TestHarnessWorker::CSVSource || worker.type == TestHarnessWorker::MemorySource) {
                 sourceCount++;
             }
@@ -280,7 +280,7 @@ class TestHarness {
         QueryServicePtr queryService = crd->getQueryService();
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-        for (TestHarnessWorker worker : testHarnessWorkers) {
+        for (const TestHarnessWorker& worker : testHarnessWorkers) {
             if (worker.type == TestHarnessWorker::CSVSource) {
                 worker.wrk->registerPhysicalStream(worker.csvSourceConfig);
             } else if (worker.type == TestHarnessWorker::MemorySource) {
@@ -317,7 +317,7 @@ class TestHarness {
         //register query
         std::string queryString =
             queryWithoutSink + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-        QueryId queryId = queryService->validateAndQueueAddRequest(queryString, placementStrategyName);
+        QueryId queryId = queryService->validateAndQueueAddRequest(queryString, std::move(placementStrategyName));
 
         if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
@@ -369,7 +369,7 @@ class TestHarness {
         ifs.read(buff, length);
         std::vector<T> actualOutput(reinterpret_cast<T*>(buff), reinterpret_cast<T*>(buff) + length / sizeof(T));
 
-        for (TestHarnessWorker worker : testHarnessWorkers) {
+        for (const TestHarnessWorker& worker : testHarnessWorkers) {
             worker.wrk->stop(false);
         }
         crd->stopCoordinator(false);

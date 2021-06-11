@@ -40,7 +40,7 @@ class BasicPhysicalType final : public PhysicalType {
      * @param nativeType
      * @return PhysicalTypePtr
      */
-    static PhysicalTypePtr create(DataTypePtr type, NativeType nativeType);
+    static PhysicalTypePtr create(const DataTypePtr& type, NativeType nativeType);
 
     /**
      * @brief Indicates if this is a basic data type.

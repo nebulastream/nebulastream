@@ -46,7 +46,7 @@ class StreamCatalog {
    * TODO: what to do if logical stream exists but the new one has a different schema
    * @return bool indicating if insert was successful
    */
-    bool addLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
+    bool addLogicalStream(const std::string& logicalStreamName, SchemaPtr schemaPtr);
 
     /**
    * @brief method to add a logical stream
@@ -62,14 +62,14 @@ class StreamCatalog {
        * @param name of logical stream to delete
        * @param bool indicating the success of the removal
        */
-    bool removeLogicalStream(std::string logicalStreamName);
+    bool removeLogicalStream(const std::string& logicalStreamName);
 
     /**
    * @brief method to add a physical stream
    * @caution combination of node and name has to be unique
    * @return bool indicating success of insert stream
    */
-    bool addPhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr entry);
+    bool addPhysicalStream(const std::string& logicalStreamName, const StreamCatalogEntryPtr& entry);
 
     /**
    * @brief method to remove a physical stream
@@ -78,7 +78,7 @@ class StreamCatalog {
    * @param structure describing the entry in the catalog
    * @return bool indicating success of remove stream
    */
-    bool removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::uint64_t hashId);
+    bool removePhysicalStream(const std::string& logicalStreamName, const std::string& physicalStreamName, std::uint64_t hashId);
 
     /**
    * @brief method to remove a physical stream from its logical streams
@@ -96,7 +96,7 @@ class StreamCatalog {
      * @return bool indicating success of remove of physical stream
      */
 
-    bool removeAllPhysicalStreams(std::string physicalStreamName);
+    bool removeAllPhysicalStreams(const std::string& physicalStreamName);
 
     /**
    * @brief method to remove a physical stream from all logical streams
@@ -104,7 +104,7 @@ class StreamCatalog {
    * @return bool indicating success of remove stream
    */
 
-    SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);
+    SchemaPtr getSchemaForLogicalStream(const std::string& logicalStreamName);
 
     /**
    * @brief method to return the stream for an existing logical stream
@@ -112,7 +112,7 @@ class StreamCatalog {
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
-    LogicalStreamPtr getStreamForLogicalStream(std::string logicalStreamName);
+    LogicalStreamPtr getStreamForLogicalStream(const std::string& logicalStreamName);
 
     /**
    * @brief method to return the stream for an existing logical stream or throw exception
@@ -120,28 +120,28 @@ class StreamCatalog {
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
-    LogicalStreamPtr getStreamForLogicalStreamOrThrowException(std::string logicalStreamName);
+    LogicalStreamPtr getStreamForLogicalStreamOrThrowException(const std::string& logicalStreamName);
 
     /**
    * @brief test if logical stream with this name exists in the log to schema mapping
    * @param name of the logical stream to test
    * @return bool indicating if stream exists
    */
-    bool testIfLogicalStreamExistsInSchemaMapping(std::string logicalStreamName);
+    bool testIfLogicalStreamExistsInSchemaMapping(const std::string& logicalStreamName);
 
     /**
    * @brief test if logical stream with this name exists in the log to phy mapping
    * @param name of the logical stream to test
    * @return bool indicating if stream exists
    */
-    bool testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::string logicalStreamName);
+    bool testIfLogicalStreamExistsInLogicalToPhysicalMapping(const std::string& logicalStreamName);
 
     /**
    * @brief return all physical nodes that contribute to this logical stream
    * @param name of logical stream
    * @return list of physical nodes as pointers into the topology
    */
-    std::vector<TopologyNodePtr> getSourceNodesForLogicalStream(std::string logicalStreamName);
+    std::vector<TopologyNodePtr> getSourceNodesForLogicalStream(const std::string& logicalStreamName);
 
     /**
    * @brief reset the catalog and recreate the default_logical stream
@@ -168,7 +168,7 @@ class StreamCatalog {
      * @param logicalStreamName
      * @return
      */
-    std::vector<StreamCatalogEntryPtr> getPhysicalStreams(std::string logicalStreamName);
+    std::vector<StreamCatalogEntryPtr> getPhysicalStreams(const std::string& logicalStreamName);
 
     /**
      * @brief update an existing stream

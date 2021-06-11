@@ -34,7 +34,7 @@ ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr ABS(ExpressionNodePtr exp);
+ExpressionNodePtr ABS(const ExpressionNodePtr& exp);
 ExpressionNodePtr operator++(ExpressionNodePtr exp);
 ExpressionNodePtr operator--(ExpressionNodePtr exp);
 ExpressionNodePtr operator++(ExpressionNodePtr exp, int value);

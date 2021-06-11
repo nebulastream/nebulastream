@@ -70,7 +70,7 @@ class MonitoringPlan {
      * @brief creates a MetricGroup out of the MonitoringPlan;
      * @return
      */
-    [[nodiscard]] MetricGroupPtr createMetricGroup(MetricCatalogPtr catalog) const;
+    [[nodiscard]] MetricGroupPtr createMetricGroup(const MetricCatalogPtr& catalog) const;
 
     /**
      * @brief
@@ -78,7 +78,7 @@ class MonitoringPlan {
      * @param buf
      * @return
      */
-    GroupedValues fromBuffer(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf);
+    GroupedValues fromBuffer(const std::shared_ptr<Schema>& schema, NodeEngine::TupleBuffer& buf);
 
     /**
      * @brief Returns the schema of the class.

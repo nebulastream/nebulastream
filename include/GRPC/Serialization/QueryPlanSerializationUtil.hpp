@@ -33,7 +33,7 @@ class QueryPlanSerializationUtil {
      * @param queryPlan: The query plan
      * @return the pointer to serialized SerializableQueryPlan
      */
-    static SerializableQueryPlan* serializeQueryPlan(QueryPlanPtr queryPlan);
+    static SerializableQueryPlan* serializeQueryPlan(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr

@@ -108,7 +108,7 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
      * @param operatorNode : start operator
      * @return a tuple of duplicated operator with its duplicated downstream operator chains and a vector of original head operators
      */
-    std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>> getLogicalGraphToDuplicate(OperatorNodePtr operatorNode);
+    std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>> getLogicalGraphToDuplicate(const OperatorNodePtr& operatorNode);
 };
 }// namespace NES::Optimizer
 #endif//NES_LOGICALSOURCEEXPANSIONRULE_HPP

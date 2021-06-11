@@ -73,7 +73,7 @@ ExpressionItem ExpressionItem::rename(std::string newName) {
         NES_NOT_IMPLEMENTED();
     }
     auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
-    return FieldRenameExpressionNode::create(fieldAccessExpression, newName);
+    return FieldRenameExpressionNode::create(fieldAccessExpression, std::move(newName));
 }
 
 FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionItem assignItem) {
@@ -82,7 +82,7 @@ FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionItem assign
 
 FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionNodePtr assignExpression) {
     if (expression->instanceOf<FieldAccessExpressionNode>()) {
-        return FieldAssignmentExpressionNode::create(expression->as<FieldAccessExpressionNode>(), assignExpression);
+        return FieldAssignmentExpressionNode::create(expression->as<FieldAccessExpressionNode>(), std::move(assignExpression));
     }
     NES_FATAL_ERROR("Expression API: we can only assign something to a field access expression");
     throw IllegalArgumentException("Expression API: we can only assign something to a field access expression");

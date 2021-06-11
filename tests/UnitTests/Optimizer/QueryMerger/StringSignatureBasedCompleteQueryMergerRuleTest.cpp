@@ -153,8 +153,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries)
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1Children : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2Children : updatedRootOperators1[1]->getChildren()) {
+    for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
             EXPECT_EQ(sink1Children, sink2Children);
         }
     }
@@ -245,9 +245,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesW
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;
-        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
             if (sink1GQNChild->equal(sink2GQNChild)) {
                 found = true;
             }
@@ -327,8 +327,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -412,8 +412,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -572,8 +572,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -651,8 +651,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -729,8 +729,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -808,8 +808,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -887,8 +887,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -983,8 +983,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1079,8 +1079,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1172,9 +1172,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;
-        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
             if (sink1GQNChild->equal(sink2GQNChild)) {
                 found = true;
             }
@@ -1341,9 +1341,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;
-        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
             if (sink1GQNChild->equal(sink2GQNChild)) {
                 found = true;
             }
@@ -1505,8 +1505,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1592,9 +1592,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;
-        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
             if (sink1GQNChild->equal(sink2GQNChild)) {
                 found = true;
             }
@@ -1689,8 +1689,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1777,8 +1777,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1873,8 +1873,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1967,8 +1967,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -2061,8 +2061,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -2319,8 +2319,8 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }

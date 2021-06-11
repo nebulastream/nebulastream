@@ -57,9 +57,9 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
                           uint64_t initialGatheringInterval,
                           std::string filePath,
                           uint64_t intervalIncrease)
-        : AdaptiveSource(schema,
-                         bufferManager,
-                         queryManager,
+        : AdaptiveSource(std::move(schema),
+                         std::move(bufferManager),
+                         std::move(queryManager),
                          initialGatheringInterval,
                          1,
                          12,
@@ -116,11 +116,11 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     };
 };
 
-const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema,
-                                                NodeEngine::BufferManagerPtr bufferManager,
-                                                NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createMockCSVAdaptiveSource(const SchemaPtr& schema,
+                                                const NodeEngine::BufferManagerPtr& bufferManager,
+                                                const NodeEngine::QueryManagerPtr& queryManager,
                                                 uint64_t initialGatheringInterval,
-                                                std::string filePath,
+                                                const std::string& filePath,
                                                 uint64_t intervalIncrease) {
     return std::make_shared<MockCSVAdaptiveSource>(schema,
                                                    bufferManager,

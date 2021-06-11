@@ -24,14 +24,14 @@
 #include <utility>
 
 namespace NES {
-FieldRenameExpressionNode::FieldRenameExpressionNode(FieldAccessExpressionNodePtr originalField, std::string newFieldName)
+FieldRenameExpressionNode::FieldRenameExpressionNode(const FieldAccessExpressionNodePtr& originalField, std::string newFieldName)
     : ExpressionNode(originalField->getStamp()), originalField(originalField), newFieldName(std::move(newFieldName)){};
 
 FieldRenameExpressionNode::FieldRenameExpressionNode(FieldRenameExpressionNode* other)
     : FieldRenameExpressionNode(other->getOriginalField(), other->getNewFieldName()){};
 
 ExpressionNodePtr FieldRenameExpressionNode::create(FieldAccessExpressionNodePtr originalField, std::string newFieldName) {
-    return std::make_shared<FieldRenameExpressionNode>(FieldRenameExpressionNode(originalField, newFieldName));
+    return std::make_shared<FieldRenameExpressionNode>(FieldRenameExpressionNode(std::move(originalField), std::move(newFieldName)));
 }
 
 bool FieldRenameExpressionNode::equal(const NodePtr rhs) const {

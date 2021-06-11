@@ -28,7 +28,7 @@ namespace QueryCompilation {
 class FunctionDeclaration : public Declaration {
   public:
     explicit FunctionDeclaration(Code code);
-    static FunctionDeclarationPtr create(Code code);
+    static FunctionDeclarationPtr create(const Code& code);
 
     [[nodiscard]] const GeneratableDataTypePtr getType() const override;
     [[nodiscard]] const std::string getIdentifierName() const override;

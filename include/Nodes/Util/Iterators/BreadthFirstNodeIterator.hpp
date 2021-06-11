@@ -54,7 +54,7 @@ class BreadthFirstNodeIterator {
         NodePtr operator*();
 
       private:
-        explicit iterator(NodePtr current);
+        explicit iterator(const NodePtr& current);
         explicit iterator();
         std::queue<NodePtr> workQueue;
     };

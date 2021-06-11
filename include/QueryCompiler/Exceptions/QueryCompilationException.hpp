@@ -25,7 +25,7 @@ namespace QueryCompilation {
  */
 class QueryCompilationException : public NesRuntimeException {
   public:
-    explicit QueryCompilationException(std::string message);
+    explicit QueryCompilationException(const std::string& message);
 };
 
 }// namespace QueryCompilation

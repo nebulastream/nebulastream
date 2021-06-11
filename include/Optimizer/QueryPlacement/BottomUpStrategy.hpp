@@ -56,7 +56,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param queryPlan: query plan to place
      * @throws exception if the operator can't be placed.
      */
-    void placeQueryPlanOnTopology(QueryPlanPtr queryPlan);
+    void placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief Try to place input operator on the input topology node
@@ -64,14 +64,14 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void placeOperatorOnTopologyNode(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode);
+    void placeOperatorOnTopologyNode(QueryId queryId, const OperatorNodePtr& operatorNode, TopologyNodePtr candidateTopologyNode);
 
     /**
      * @brief Get topology node where all children operators of the input operator are placed
      * @param operatorNode: the input operator
      * @return vector of topology nodes where child operator was placed or empty if not all children operators are placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(OperatorNodePtr operatorNode);
+    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode);
 
     /**
      * @brief Get the candidate query plan where input operator is to be appended
@@ -80,7 +80,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param executionNode : the execution node where operator is to be placed
      * @return the query plan to which the input operator is to be appended
      */
-    static QueryPlanPtr getCandidateQueryPlan(QueryId queryId, OperatorNodePtr operatorNode, ExecutionNodePtr executionNode);
+    static QueryPlanPtr getCandidateQueryPlan(QueryId queryId, const OperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode);
 };
 }// namespace NES::Optimizer
 

@@ -56,7 +56,7 @@ FileBuilder FileBuilder::create(const std::string&) {
 
     return builder;
 }
-FileBuilder& FileBuilder::addDeclaration(DeclarationPtr declaration) {
+FileBuilder& FileBuilder::addDeclaration(const DeclarationPtr& declaration) {
     auto const code = declaration->getCode();
     declations << code << ";";
     return *this;

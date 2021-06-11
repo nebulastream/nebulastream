@@ -46,8 +46,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @param memoryAreaSize the size of the area of memory
      * @return a correctly initialized shared ptr to MemorySourceDescriptor
      */
-    static std::shared_ptr<MemorySourceDescriptor> create(SchemaPtr schema,
-                                                          std::shared_ptr<uint8_t> memoryArea,
+    static std::shared_ptr<MemorySourceDescriptor> create(const SchemaPtr& schema,
+                                                          const std::shared_ptr<uint8_t>& memoryArea,
                                                           size_t memoryAreaSize,
                                                           uint64_t numBuffersToProcess,
                                                           uint64_t gatheringValue,

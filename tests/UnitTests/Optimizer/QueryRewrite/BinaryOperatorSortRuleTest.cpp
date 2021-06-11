@@ -53,7 +53,7 @@ class BinaryOperatorSortRuleTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down BinaryOperatorSortRuleTest test class."); }
 };
 
-void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
+void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
     NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
     auto schema1 = Schema::create()
                        ->addField("id", BasicType::UINT32)

@@ -32,11 +32,11 @@ namespace NES::Optimizer {
 
 SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {}
 
-SemanticQueryValidationPtr SemanticQueryValidation::create(StreamCatalogPtr scp) {
+SemanticQueryValidationPtr SemanticQueryValidation::create(const StreamCatalogPtr& scp) {
     return std::make_shared<SemanticQueryValidation>(scp);
 }
 
-void SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
+void SemanticQueryValidation::checkSatisfiability(const QueryPtr& inputQuery) {
 
     // Creating a z3 context for the signature inference and the z3 solver
     z3::ContextPtr context = std::make_shared<z3::context>();
@@ -65,7 +65,7 @@ void SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
 
     // Looping through all filter operators of the Query, checking for contradicting conditions.
-    for (auto filterOp : filterOperators) {
+    for (const auto& filterOp : filterOperators) {
         Optimizer::QuerySignaturePtr qsp = filterOp->getZ3Signature();
 
         // Adding the conditions to the z3 SMT solver
@@ -97,7 +97,7 @@ void SemanticQueryValidation::handleException(std::string& predicateString) {
 
     // Removing logical stream names for better readability
     auto allLogicalStreams = streamCatalog->getAllLogicalStreamAsString();
-    for (auto logicalStream : allLogicalStreams) {
+    for (const auto& logicalStream : allLogicalStreams) {
         eraseAllSubStr(predicateString, logicalStream.first);
     }
 
@@ -112,7 +112,7 @@ void SemanticQueryValidation::eraseAllSubStr(std::string& mainStr, const std::st
     }
 }
 
-void SemanticQueryValidation::findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr) {
+void SemanticQueryValidation::findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
     size_t pos = data.find(toSearch);
     while (pos != std::string::npos) {
         data.replace(pos, toSearch.size(), replaceStr);
@@ -120,12 +120,12 @@ void SemanticQueryValidation::findAndReplaceAll(std::string& data, std::string t
     }
 }
 
-void SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
+void SemanticQueryValidation::sourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const StreamCatalogPtr& streamCatalog) {
 
     // Getting the source operators from the query plan
     auto sourceOperators = queryPlan->getSourceOperators();
 
-    for (auto source : sourceOperators) {
+    for (const auto& source : sourceOperators) {
         auto sourceDescriptor = source->getSourceDescriptor();
 
         // Filtering for logical stream sources

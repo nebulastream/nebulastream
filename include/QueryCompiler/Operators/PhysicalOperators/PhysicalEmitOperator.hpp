@@ -33,7 +33,7 @@ class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOp
      * @param id operator id
      * @param inputSchema input schema for the emit operator
      */
-    PhysicalEmitOperator(OperatorId id, SchemaPtr inputSchema);
+    PhysicalEmitOperator(OperatorId id, const SchemaPtr& inputSchema);
 
     /**
      * @brief Creates a physical emit operator
@@ -41,7 +41,7 @@ class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOp
      * @param inputSchema
      * @return PhysicalOperatorPtr
      */
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema);
 
     /**
      * @brief Creates a physical emit operator

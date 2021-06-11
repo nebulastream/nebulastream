@@ -17,18 +17,19 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
-GeneratableBufferEmit::GeneratableBufferEmit(OperatorId id, SchemaPtr outputSchema)
+GeneratableBufferEmit::GeneratableBufferEmit(OperatorId id, const SchemaPtr& outputSchema)
     : OperatorNode(id), GeneratableOperator(id, outputSchema, outputSchema){};
 
 GeneratableOperatorPtr GeneratableBufferEmit::create(OperatorId id, SchemaPtr outputSchema) {
-    return std::make_shared<GeneratableBufferEmit>(GeneratableBufferEmit(id, outputSchema));
+    return std::make_shared<GeneratableBufferEmit>(GeneratableBufferEmit(id, std::move(outputSchema)));
 }
 
 GeneratableOperatorPtr GeneratableBufferEmit::create(SchemaPtr outputSchema) {
-    return create(UtilityFunctions::getNextOperatorId(), outputSchema);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(outputSchema));
 }
 
 void GeneratableBufferEmit::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

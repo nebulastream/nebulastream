@@ -26,12 +26,13 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
 Z3SignatureBasedPartialQueryMergerRule::Z3SignatureBasedPartialQueryMergerRule(z3::ContextPtr context) {
-    signatureEqualityUtil = SignatureEqualityUtil::create(context);
+    signatureEqualityUtil = SignatureEqualityUtil::create(std::move(context));
 }
 
 Z3SignatureBasedPartialQueryMergerRule::~Z3SignatureBasedPartialQueryMergerRule() {
@@ -39,7 +40,7 @@ Z3SignatureBasedPartialQueryMergerRule::~Z3SignatureBasedPartialQueryMergerRule(
 }
 
 Z3SignatureBasedPartialQueryMergerRulePtr Z3SignatureBasedPartialQueryMergerRule::create(z3::ContextPtr context) {
-    return std::make_shared<Z3SignatureBasedPartialQueryMergerRule>(Z3SignatureBasedPartialQueryMergerRule(context));
+    return std::make_shared<Z3SignatureBasedPartialQueryMergerRule>(Z3SignatureBasedPartialQueryMergerRule(std::move(context)));
 }
 
 bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
@@ -104,7 +105,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
 
             //Iterate over all matched pairs of operators and merge the query plan
             for (auto [targetOperator, hostOperator] : targetToHostOperatorMap) {
-                for (auto targetParent : targetOperator->getParents()) {
+                for (const auto& targetParent : targetOperator->getParents()) {
                     bool addedNewParent = hostOperator->addParent(targetParent);
                     if (!addedNewParent) {
                         NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
@@ -114,7 +115,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
             }
 
             //Add all root operators from target query plan to host query plan
-            for (auto targetRootOperator : targetQueryPlan->getRootOperators()) {
+            for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
                 hostQueryPlan->addRootOperator(targetRootOperator);
             }
 

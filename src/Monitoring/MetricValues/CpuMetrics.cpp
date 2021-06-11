@@ -49,7 +49,7 @@ CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const { return cpuVa
 
 CpuValues CpuMetrics::getTotal() const { return total; }
 
-CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+CpuMetrics CpuMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     //get index where the schema for CpuMetrics is starting
     auto idx = schema->getIndex(prefix + "CORE_NO");
 

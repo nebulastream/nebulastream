@@ -30,7 +30,7 @@ class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalE
     */
     ExpressionNodePtr copy() override = 0;
 
-    bool equal(const NodePtr rhs) const override;
+    bool equal(NodePtr rhs) const override;
 
   protected:
     LogicalBinaryExpressionNode();

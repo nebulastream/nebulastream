@@ -32,13 +32,13 @@ QueryPlanPtr BinaryOperatorSortRule::apply(QueryPlanPtr queryPlanPtr) {
 
     //Find all join operators in the query plan and sort children individually.
     auto joinOperators = queryPlanPtr->getOperatorByType<JoinLogicalOperatorNode>();
-    for (auto joinOperator : joinOperators) {
+    for (const auto& joinOperator : joinOperators) {
         sortChildren(joinOperator);
     }
 
     //Find all Union operators in the query plan and sort children individually.
     auto unionOperators = queryPlanPtr->getOperatorByType<UnionLogicalOperatorNode>();
-    for (auto unionOperator : unionOperators) {
+    for (const auto& unionOperator : unionOperators) {
         sortChildren(unionOperator);
     }
 
@@ -46,7 +46,7 @@ QueryPlanPtr BinaryOperatorSortRule::apply(QueryPlanPtr queryPlanPtr) {
     return queryPlanPtr;
 }
 
-void BinaryOperatorSortRule::sortChildren(BinaryOperatorNodePtr binaryOperator) {
+void BinaryOperatorSortRule::sortChildren(const BinaryOperatorNodePtr& binaryOperator) {
     //Extract the children operators
     auto children = binaryOperator->getChildren();
     NES_ASSERT(children.size() == 2, "Binary operator should have only 2 children");

@@ -52,7 +52,7 @@ class SignatureInferencePhase {
      * @brief this method will compute the Z3 expression for all operators of the input query plan
      * @param queryPlan: the input query plan
      */
-    void execute(QueryPlanPtr queryPlan);
+    void execute(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief Get shared instance of z3 context

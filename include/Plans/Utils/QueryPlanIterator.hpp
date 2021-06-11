@@ -69,7 +69,7 @@ class QueryPlanIterator {
         NodePtr operator*();
 
       private:
-        explicit iterator(QueryPlanPtr current);
+        explicit iterator(const QueryPlanPtr& current);
         explicit iterator();
         std::stack<NodePtr> workStack;
     };

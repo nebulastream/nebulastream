@@ -38,7 +38,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @note A newNode cannot be in its own child.
      * @param newNode
      */
-    bool addChildWithEqual(const NodePtr newNode);
+    bool addChildWithEqual(NodePtr& newNode);
 
     /**
      * @brief adds a newNode as a child to the current newNode.
@@ -46,13 +46,13 @@ class Node : public std::enable_shared_from_this<Node> {
      * @note  A newNode cannot be in its own child.
      * @param newNode
      */
-    virtual bool addChild(const NodePtr newNode);
+    virtual bool addChild(NodePtr newNode);
 
     /**
      * @brief remove a node from current children.
      * @param node
      */
-    bool removeChild(const NodePtr node);
+    bool removeChild(NodePtr& node);
 
     /**
      * @brief add a parent to vector of parents
@@ -60,13 +60,13 @@ class Node : public std::enable_shared_from_this<Node> {
      *        one cannot add current node into its parents.
      * @param newNode
      */
-    virtual bool addParent(const NodePtr newNode);
+    virtual bool addParent(NodePtr newNode);
 
     /**
      * @brief remove a parent from vector of parents
      * @param node
      */
-    bool removeParent(const NodePtr node);
+    bool removeParent(NodePtr& node);
 
     /**
      * @brief Remove all parents
@@ -90,7 +90,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @param newNode
      * @param oldNode
      */
-    bool replace(NodePtr newNode, NodePtr oldNode);
+    bool replace(const NodePtr& newNode, const NodePtr& oldNode);
 
     /**
      * @brief replace current node with new node
@@ -104,21 +104,21 @@ class Node : public std::enable_shared_from_this<Node> {
      * @param oldNode the node to remove from graph
      * @return true if swapping successfully otherwise false
      */
-    bool swap(const NodePtr newNode, const NodePtr oldNode);
+    bool swap(NodePtr& newNode, NodePtr& oldNode);
 
     /**
      * @brief remove the given node together with its children
      * @param node the given node to remove
      * @return bool true if successful
      */
-    bool remove(const NodePtr node);
+    bool remove(NodePtr& node);
 
     /**
      * @brief remove the given node and add its children to the children of the current node
      * @param node
      * @return bool true if successful
      */
-    bool removeAndLevelUpChildren(const NodePtr node);
+    bool removeAndLevelUpChildren(NodePtr& node);
 
     /**
      * @brief Remove this node as child to its parents and as parent to its children. Once done, the method joins the
@@ -137,14 +137,14 @@ class Node : public std::enable_shared_from_this<Node> {
      * @param node the node to compare
      * @return bool
      */
-    bool equalWithAllChildren(const NodePtr node);
+    bool equalWithAllChildren(NodePtr& node);
 
     /**
      * @brief checks if the current node and its parents are equal a other node and its parents
      * @param node the node to compare
      * @return bool
      */
-    bool equalWithAllParents(const NodePtr node);
+    bool equalWithAllParents(NodePtr& node);
 
     /**
      * @brief check two node are equal.
@@ -166,7 +166,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @params splitNode the given splitNode to split at.
      * @return vector of multiple sub-graphs.
      */
-    std::vector<NodePtr> split(const NodePtr splitNode);
+    std::vector<NodePtr> split(NodePtr& splitNode);
 
     /**
      * @brief validation of this node
@@ -269,13 +269,13 @@ class Node : public std::enable_shared_from_this<Node> {
      * If the node is already exists as parent then skip the operation
      * @return true if operation succeeded else false
      */
-    bool insertBetweenThisAndParentNodes(const NodePtr newNode);
+    bool insertBetweenThisAndParentNodes(NodePtr& newNode);
 
     /**
     * @brief Add input node as child to the current node and add the input node as new parent to the old child
     * @return true if operation succeeded else false
     */
-    bool insertBetweenThisAndChildNodes(const NodePtr newNode);
+    bool insertBetweenThisAndChildNodes(NodePtr& newNode);
 
     /**
      * @brief To string method for the current node.
@@ -295,7 +295,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @param nodeToFind
      * @return return true if the given nodeToFind is found in the graph of root, otherwise false
      */
-    NodePtr findRecursively(const NodePtr root, const NodePtr nodeToFind);
+    NodePtr findRecursively(NodePtr& root, NodePtr& nodeToFind);
 
     /**
      * @brief Get all nodes that are parents to this node.
@@ -341,7 +341,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @param nodeToFind
      * @return return true if the given node is found, otherwise false
      */
-    bool vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NodePtr nodeToFind);
+    bool vectorContainsTheNode(const std::vector<NodePtr>& nodes, NodePtr& nodeToFind);
 
     /**
      * @brief check if an node is in given vector and returns it
@@ -349,7 +349,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @param nodeToFind
      * @return return node if the given node is found, otherwise nullpointer
      */
-    static NodePtr find(const std::vector<NodePtr>& nodes, const NodePtr nodeToFind);
+    static NodePtr find(const std::vector<NodePtr>& nodes, NodePtr& nodeToFind);
 
     /********************************************************************************
      *                   Helper functions                                           *
@@ -357,18 +357,18 @@ class Node : public std::enable_shared_from_this<Node> {
     /**
      * @brief helper function of equalWithAllParents() function
      */
-    bool equalWithAllParentsHelper(const NodePtr node1, const NodePtr node2);
+    bool equalWithAllParentsHelper(NodePtr& node1, NodePtr& node2);
     /**
      * @brief helper function of equalWithAllChildren() function
      */
-    bool equalWithAllChildrenHelper(const NodePtr node1, const NodePtr node2);
+    bool equalWithAllChildrenHelper(NodePtr& node1, NodePtr& node2);
 
     /**
      * @brief helper function of getAndFlattenAllChildren() function
      */
-    void getAndFlattenAllChildrenHelper(const NodePtr node,
+    void getAndFlattenAllChildrenHelper(NodePtr& node,
                                         std::vector<NodePtr>& allChildren,
-                                        const NodePtr excludedNode,
+                                        NodePtr& excludedNode,
                                         bool allowDuplicate);
 
     /**

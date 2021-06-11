@@ -40,7 +40,7 @@ class TopologyController : public BaseController {
      * @param path : the url of the rest request
      * @param message : the user message
      */
-    void handleGet(std::vector<utility::string_t> paths, web::http::http_request message);
+    void handleGet(const std::vector<utility::string_t>& paths, const web::http::http_request& message);
 
   private:
     TopologyPtr topology;

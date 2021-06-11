@@ -26,7 +26,7 @@
 namespace NES::QueryCompilation {
 
 LowerPhysicalToGeneratableOperatorsPtr
-LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators::create(GeneratableOperatorProviderPtr provider) {
+LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators::create(const GeneratableOperatorProviderPtr& provider) {
     return std::make_shared<LowerPhysicalToGeneratableOperators>(provider);
 }
 
@@ -34,7 +34,7 @@ LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators(Generat
     : provider(std::move(provider)) {}
 
 PipelineQueryPlanPtr LowerPhysicalToGeneratableOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
-    for (auto pipeline : pipelinedQueryPlan->getPipelines()) {
+    for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline);
         }
@@ -45,7 +45,7 @@ PipelineQueryPlanPtr LowerPhysicalToGeneratableOperators::apply(PipelineQueryPla
 OperatorPipelinePtr LowerPhysicalToGeneratableOperators::apply(OperatorPipelinePtr operatorPipeline) {
     auto queryPlan = operatorPipeline->getQueryPlan();
     auto nodes = QueryPlanIterator(queryPlan).snapshot();
-    for (auto node : nodes) {
+    for (const auto& node : nodes) {
         provider->lower(queryPlan, node->as<PhysicalOperators::PhysicalOperator>());
     }
     return operatorPipeline;

@@ -27,7 +27,7 @@
 #include <vector>
 namespace NES {
 
-SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr dataType,
+SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTypePtr& dataType,
                                                                    SerializableDataType* serializedDataType) {
     if (dataType->isUndefined()) {
         serializedDataType->set_type(SerializableDataType_Type_UNDEFINED);
@@ -106,7 +106,7 @@ std::shared_ptr<ArrayType> DataTypeSerializationUtil::deserializeArrayType(Seria
     return std::make_shared<ArrayType>(arrayDetails.dimensions(), componentType);
 }
 
-SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(ValueTypePtr valueType,
+SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(const ValueTypePtr& valueType,
                                                                      SerializableDataValue* serializedDataValue) {
 
     // serialize data value

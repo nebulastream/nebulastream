@@ -62,7 +62,7 @@ class ExecutableCompleteAggregationTriggerAction
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
             executableWindowAggregation,
-        SchemaPtr outputSchema,
+        const SchemaPtr& outputSchema,
         uint64_t id,
         PartialAggregateType partialAggregateTypeInitialValue)
         : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(executableWindowAggregation)),
@@ -131,7 +131,7 @@ class ExecutableCompleteAggregationTriggerAction
   */
     void aggregateWindows(KeyType key,
                           WindowSliceStore<PartialAggregateType>* store,
-                          LogicalWindowDefinitionPtr windowDefinition,
+                          const LogicalWindowDefinitionPtr& windowDefinition,
                           NodeEngine::TupleBuffer& tupleBuffer,
                           uint64_t currentWatermark,
                           uint64_t lastWatermark) {

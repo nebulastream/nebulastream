@@ -34,7 +34,7 @@ QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutio
 QueryDeploymentPhase::~QueryDeploymentPhase() { NES_DEBUG("~QueryDeploymentPhase()"); }
 QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                      WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<QueryDeploymentPhase>(QueryDeploymentPhase(globalExecutionPlan, workerRpcClient));
+    return std::make_shared<QueryDeploymentPhase>(QueryDeploymentPhase(std::move(globalExecutionPlan), std::move(workerRpcClient)));
 }
 
 bool QueryDeploymentPhase::execute(QueryId queryId) {
@@ -67,10 +67,10 @@ bool QueryDeploymentPhase::execute(QueryId queryId) {
     return true;
 }
 
-bool QueryDeploymentPhase::deployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryDeploymentPhase::deployQuery queryId=" << queryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
-    for (ExecutionNodePtr executionNode : executionNodes) {
+    for (const ExecutionNodePtr& executionNode : executionNodes) {
         NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id=" << executionNode->getId());
         std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
         if (querySubPlans.empty()) {
@@ -104,12 +104,12 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, std::vector<ExecutionNod
     return result;
 }
 
-bool QueryDeploymentPhase::startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryDeploymentPhase::startQuery queryId=" << queryId);
     //TODO: check if one queue can be used among multiple connections
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
-    for (ExecutionNodePtr executionNode : executionNodes) {
+    for (const ExecutionNodePtr& executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
 
         const auto& nesNode = executionNode->getTopologyNode();

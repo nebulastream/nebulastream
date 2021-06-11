@@ -27,8 +27,8 @@ namespace NES {
  */
 class TypeInferenceException : public std::runtime_error {
   public:
-    explicit TypeInferenceException(std::string message);
-    TypeInferenceException(QueryId queryId, std::string message);
+    explicit TypeInferenceException(const std::string& message);
+    TypeInferenceException(QueryId queryId, const std::string& message);
 
     QueryId getQueryId();
 

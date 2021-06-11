@@ -40,7 +40,7 @@ QueryUndeploymentPhase::~QueryUndeploymentPhase() { NES_DEBUG("~QueryUndeploymen
 QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology,
                                                          GlobalExecutionPlanPtr globalExecutionPlan,
                                                          WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(topology, globalExecutionPlan, workerRpcClient));
+    return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan), std::move(workerRpcClient)));
 }
 
 bool QueryUndeploymentPhase::execute(const QueryId queryId) {
@@ -83,7 +83,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
     return globalExecutionPlan->removeQuerySubPlans(queryId);
 }
 
-bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryUndeploymentPhase::stopQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryUndeploymentPhase:stopQuery queryId=" << queryId);
     //NOTE: the uncommented lines below have to be activated for async calls
     //    std::map<CompletionQueuePtr, uint64_t> completionQueues;
@@ -117,12 +117,12 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNod
     return true;
 }
 
-bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryUndeploymentPhase::undeployQuery queryId=" << queryId);
 
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
-    for (ExecutionNodePtr executionNode : executionNodes) {
+    for (const ExecutionNodePtr& executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
 
         const auto& nesNode = executionNode->getTopologyNode();

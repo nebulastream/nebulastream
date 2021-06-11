@@ -33,10 +33,10 @@ LambdaSourceStreamConfig::LambdaSourceStreamConfig(
     : PhysicalStreamConfig(SourceConfig::create()), sourceType(std::move(sourceType)),
       generationFunction(std::move(generationFunction)) {
     // nop
-    this->physicalStreamName = physicalStreamName;
-    this->logicalStreamName = logicalStreamName;
+    this->physicalStreamName = std::move(physicalStreamName);
+    this->logicalStreamName = std::move(logicalStreamName);
     this->numberOfBuffersToProduce = numBuffersToProcess;
-    this->gatheringMode = DataSource::getGatheringModeFromString(gatheringMode);
+    this->gatheringMode = DataSource::getGatheringModeFromString(std::move(gatheringMode));
     this->gatheringValue = gatheringValue;
 }
 
@@ -57,13 +57,13 @@ SourceDescriptorPtr LambdaSourceStreamConfig::build(SchemaPtr schema) {
 }
 
 AbstractPhysicalStreamConfigPtr LambdaSourceStreamConfig::create(
-    std::string sourceType,
-    std::string physicalStreamName,
-    std::string logicalStreamName,
+    const std::string& sourceType,
+    const std::string& physicalStreamName,
+    const std::string& logicalStreamName,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
-    std::string gatheringMode) {
+    const std::string& gatheringMode) {
     return std::make_shared<LambdaSourceStreamConfig>(sourceType,
                                                       physicalStreamName,
                                                       logicalStreamName,

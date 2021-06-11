@@ -49,7 +49,7 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
      * @param availableBuffers deque of exclusive buffers
      * @param numberOfReservedBuffers number of exclusive buffers
      */
-    explicit FixedSizeBufferPool(BufferManagerPtr bufferManager,
+    explicit FixedSizeBufferPool(const BufferManagerPtr& bufferManager,
                                  std::deque<detail::MemorySegment*>&& availableBuffers,
                                  size_t numberOfReservedBuffers);
 

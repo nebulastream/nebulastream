@@ -34,13 +34,13 @@ namespace QueryCompilation {
  */
 class NamespaceDefinition {
   public:
-    static NamespaceDefinitionPtr create(std::string name);
+    static NamespaceDefinitionPtr create(const std::string& name);
     explicit NamespaceDefinition(std::string name);
     /**
      * @brief Adds a new declaration to this namespace
      * @param declaration
      */
-    void addDeclaration(DeclarationPtr declaration);
+    void addDeclaration(const DeclarationPtr& declaration);
 
     DeclarationPtr getDeclaration();
 

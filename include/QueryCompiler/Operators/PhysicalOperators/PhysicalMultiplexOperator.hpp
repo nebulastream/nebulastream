@@ -35,8 +35,8 @@ namespace PhysicalOperators {
  */
 class PhysicalMultiplexOperator : public PhysicalOperator, public ExchangeOperatorNode {
   public:
-    PhysicalMultiplexOperator(OperatorId id, SchemaPtr schema);
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr schema);
+    PhysicalMultiplexOperator(OperatorId id, const SchemaPtr& schema);
+    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& schema);
     static PhysicalOperatorPtr create(SchemaPtr schema);
     const std::string toString() const override;
     OperatorNodePtr copy() override;

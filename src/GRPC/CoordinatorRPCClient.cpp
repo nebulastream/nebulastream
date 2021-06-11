@@ -24,7 +24,7 @@
 
 namespace NES {
 
-CoordinatorRPCClient::CoordinatorRPCClient(std::string address) : address(address) {
+CoordinatorRPCClient::CoordinatorRPCClient(const std::string& address) : address(address) {
     NES_DEBUG("CoordinatorRPCClient(): creating channels to address =" << address);
     rpcChannel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
@@ -39,7 +39,7 @@ CoordinatorRPCClient::CoordinatorRPCClient(std::string address) : address(addres
 
 CoordinatorRPCClient::~CoordinatorRPCClient() { NES_DEBUG("~CoordinatorRPCClient()"); }
 
-bool CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
+bool CoordinatorRPCClient::registerPhysicalStream(const AbstractPhysicalStreamConfigPtr& conf) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf->toString() << " workerID=" << workerId);
 
     RegisterPhysicalStreamRequest request;
@@ -62,7 +62,7 @@ bool CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPt
     return reply.success();
 }
 
-bool CoordinatorRPCClient::registerLogicalStream(std::string streamName, std::string filePath) {
+bool CoordinatorRPCClient::registerLogicalStream(const std::string& streamName, const std::string& filePath) {
     NES_DEBUG("CoordinatorRPCClient: registerLogicalStream " << streamName << " with path" << filePath);
 
     // Check if file can be found on system and read.
@@ -95,7 +95,7 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName, std::st
     return reply.success();
 }
 
-bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamName, std::string physicalStreamName) {
+bool CoordinatorRPCClient::unregisterPhysicalStream(const std::string& logicalStreamName, const std::string& physicalStreamName) {
     NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalStream physical stream" << physicalStreamName << " from logical stream ");
 
     UnregisterPhysicalStreamRequest request;
@@ -117,7 +117,7 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamNam
     return reply.success();
 }
 
-bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
+bool CoordinatorRPCClient::unregisterLogicalStream(const std::string& streamName) {
     NES_DEBUG("CoordinatorRPCClient: unregisterLogicalStream stream" << streamName);
 
     UnregisterLogicalStreamRequest request;
@@ -225,12 +225,12 @@ bool CoordinatorRPCClient::unregisterNode() {
     return reply.success();
 }
 
-bool CoordinatorRPCClient::registerNode(std::string ipAddress,
+bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t grpcPort,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         NodeType type,
-                                        NodeStats nodeStats) {
+                                        const NodeStats& nodeStats) {
     if (type == NodeType::Sensor) {
         NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
     } else if (type == NodeType::Worker) {

@@ -23,16 +23,17 @@
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <utility>
 
 namespace NES::API {
 
-Windowing::WindowAggregationPtr Sum(ExpressionItem onField) { return Windowing::SumAggregationDescriptor::on(onField); }
+Windowing::WindowAggregationPtr Sum(const ExpressionItem& onField) { return Windowing::SumAggregationDescriptor::on(onField); }
 
-Windowing::WindowAggregationPtr Avg(ExpressionItem onField) { return Windowing::AvgAggregationDescriptor::on(onField); }
+Windowing::WindowAggregationPtr Avg(const ExpressionItem& onField) { return Windowing::AvgAggregationDescriptor::on(onField); }
 
-Windowing::WindowAggregationPtr Min(ExpressionItem onField) { return Windowing::MinAggregationDescriptor::on(onField); }
+Windowing::WindowAggregationPtr Min(const ExpressionItem& onField) { return Windowing::MinAggregationDescriptor::on(onField); }
 
-Windowing::WindowAggregationPtr Max(ExpressionItem onField) { return Windowing::MaxAggregationDescriptor::on(onField); }
+Windowing::WindowAggregationPtr Max(const ExpressionItem& onField) { return Windowing::MaxAggregationDescriptor::on(onField); }
 
 Windowing::WindowAggregationPtr Count() { return Windowing::CountAggregationDescriptor::on(); }
 
@@ -56,12 +57,12 @@ Windowing::TimeUnit Hours() { return Windowing::TimeUnit(1000 * 60 * 60); }
 
 Windowing::TimeUnit Days() { return Windowing::TimeUnit(1000 * 60 * 60 * 24); }
 
-Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField) {
+Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField) {
     return Windowing::TimeCharacteristic::createEventTime(onField);
 }
 
-Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField, Windowing::TimeUnit unit) {
-    return Windowing::TimeCharacteristic::createEventTime(onField, unit);
+Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, Windowing::TimeUnit unit) {
+    return Windowing::TimeCharacteristic::createEventTime(onField, std::move(unit));
 }
 
 Windowing::TimeCharacteristicPtr IngestionTime() { return Windowing::TimeCharacteristic::createIngestionTime(); }

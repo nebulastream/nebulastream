@@ -35,7 +35,7 @@ class MonitoringController : public BaseController {
      * @param path : the url of the rest request
      * @param message : the user message
      */
-    void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
+    void handleGet(std::vector<utility::string_t> path, const web::http::http_request& message);
 
     /**
      * Handling the Post requests for the query

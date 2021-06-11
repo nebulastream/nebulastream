@@ -84,24 +84,24 @@ DeclarationPtr ConstructorDefinition::getDeclaration() {
     return ConstructorDeclaration::create(function.str());
 }
 
-ConstructorDefinitionPtr ConstructorDefinition::addInitializer(std::string&& fieldName, StatementPtr statement) {
+ConstructorDefinitionPtr ConstructorDefinition::addInitializer(std::string&& fieldName, const StatementPtr& statement) {
     fieldNameInitializers.emplace_back(std::move(fieldName));
     initializerStatements.emplace_back(statement);
     return shared_from_this();
 }
 
-ConstructorDefinitionPtr ConstructorDefinition::addParameter(VariableDeclaration variableDeclaration) {
+ConstructorDefinitionPtr ConstructorDefinition::addParameter(const VariableDeclaration& variableDeclaration) {
     parameters.emplace_back(variableDeclaration);
     return shared_from_this();
 }
-ConstructorDefinitionPtr ConstructorDefinition::addStatement(StatementPtr statement) {
+ConstructorDefinitionPtr ConstructorDefinition::addStatement(const StatementPtr& statement) {
     if (statement) {
         statements.emplace_back(statement);
     }
     return shared_from_this();
 }
 
-ConstructorDefinitionPtr ConstructorDefinition::addVariableDeclaration(VariableDeclaration variableDeclaration) {
+ConstructorDefinitionPtr ConstructorDefinition::addVariableDeclaration(const VariableDeclaration& variableDeclaration) {
     variablDeclarations.emplace_back(variableDeclaration);
     return shared_from_this();
 }

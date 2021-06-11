@@ -38,7 +38,7 @@ class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListen
      * @param exception the caught exception
      * @param stacktrace the stacktrace of the error
      */
-    virtual void onFatalException(const std::shared_ptr<std::exception>, std::string) = 0;
+    virtual void onFatalException(std::shared_ptr<std::exception>, std::string) = 0;
 };
 
 }// namespace NES

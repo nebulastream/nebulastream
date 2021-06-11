@@ -97,7 +97,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
   protected:
-    explicit PhysicalStreamConfig(SourceConfigPtr sourceConfig);
+    explicit PhysicalStreamConfig(const SourceConfigPtr& sourceConfig);
 
     std::string sourceType;
     std::string sourceConfig;

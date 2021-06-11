@@ -34,7 +34,7 @@ class ForLoopStatement : public Statement {
 
     [[nodiscard]] const StatementPtr createCopy() const override;
 
-    void addStatement(StatementPtr stmt);
+    void addStatement(const StatementPtr& stmt);
 
     const CompoundStatementPtr getCompoundStatement();
 

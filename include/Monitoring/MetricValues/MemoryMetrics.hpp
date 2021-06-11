@@ -43,7 +43,7 @@ class MemoryMetrics {
      * @param prefix
      * @return The MemoryMetrics object
      */
-    static MemoryMetrics fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static MemoryMetrics fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json

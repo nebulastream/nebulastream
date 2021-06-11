@@ -122,7 +122,7 @@ class UtilityFunctions {
    * @param delimiter2
    * @return the substring
    */
-    static std::string getFirstStringBetweenTwoDelimiters(const std::string& input, std::string s1, std::string s2);
+    static std::string getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& s1, const std::string& s2);
 
     /**
    * @brief Outputs a tuple buffer accordingly to a specific schema
@@ -139,9 +139,9 @@ class UtilityFunctions {
     * @return
     */
 
-    static std::vector<std::string> splitWithStringDelimiter(std::string& s, std::string delim);
+    static std::vector<std::string> splitWithStringDelimiter(std::string& s, const std::string& delim);
 
-    static std::string prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, SchemaPtr schema);
+    static std::string prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, const SchemaPtr& schema);
 
     /**
    * @brief Outputs a tuple buffer in text format
@@ -154,7 +154,7 @@ class UtilityFunctions {
     * @brief this method creates a string from the content of a tuple buffer
     * @return string of the buffer content
     */
-    static std::string printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, SchemaPtr schema);
+    static std::string printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, const SchemaPtr& schema);
 
     /**
       * @brief function to obtain JSON representation of a NES Topology
@@ -169,14 +169,14 @@ class UtilityFunctions {
      * @param toSearch search string
      * @param replaceStr replace string
      */
-    static void findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr);
+    static void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
 
     /**
      * @brief method to get the schema as a csv string
      * @param schema
      * @return schema as csv string
      */
-    static const std::string toCSVString(SchemaPtr schema);
+    static const std::string toCSVString(const SchemaPtr& schema);
 
     /**
      * @brief Returns the next free operator id
@@ -216,7 +216,7 @@ class UtilityFunctions {
      * @param replace - The string that is replacing the search term.
      * @return
      */
-    static const std::string replaceFirst(std::string origin, std::string search, std::string replace);
+    static const std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace);
 
     /**
      *
@@ -224,7 +224,7 @@ class UtilityFunctions {
      * @param properties properties to assign
      * @return true if the assignment success, and false otherwise
      */
-    static bool assignPropertiesToQueryOperators(QueryPlanPtr queryPlan, std::vector<std::map<std::string, std::any>> properties);
+    static bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
 
   private:
     /**

@@ -74,7 +74,7 @@ class ExecutionNode : public Node {
      * @param querySubPlan : the query sub plan
      * @return true if operation is successful
      */
-    bool addNewQuerySubPlan(QueryId queryId, QueryPlanPtr querySubPlan);
+    bool addNewQuerySubPlan(QueryId queryId, const QueryPlanPtr& querySubPlan);
 
     /**
      * Update an existing query sub plan
@@ -117,9 +117,9 @@ class ExecutionNode : public Node {
     const std::vector<std::string> toMultilineString() override;
 
   private:
-    explicit ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode);
+    explicit ExecutionNode(const TopologyNodePtr& physicalNode, QueryId queryId, OperatorNodePtr operatorNode);
 
-    explicit ExecutionNode(TopologyNodePtr physicalNode);
+    explicit ExecutionNode(const TopologyNodePtr& physicalNode);
 
     /**
      * Execution node id.

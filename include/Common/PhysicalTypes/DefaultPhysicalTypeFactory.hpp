@@ -53,28 +53,28 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     * @param integerType
     * @return PhysicalTypePtr
     */
-    static PhysicalTypePtr getPhysicalType(IntegerPtr integerType);
+    static PhysicalTypePtr getPhysicalType(const IntegerPtr& integerType);
 
     /**
     * @brief Translates a char data type into a corresponding physical type.
     * @param dataType
     * @return PhysicalTypePtr
     */
-    static PhysicalTypePtr getPhysicalType(CharPtr charType);
+    static PhysicalTypePtr getPhysicalType(const CharPtr& charType);
 
     /**
     * @brief Translates a fixed char data type into a corresponding physical type.
     * @param floatType
     * @return PhysicalTypePtr
     */
-    static PhysicalTypePtr getPhysicalType(FloatPtr floatType);
+    static PhysicalTypePtr getPhysicalType(const FloatPtr& floatType);
 
     /**
     * @brief Translates a array data type into a corresponding physical type.
     * @param arrayType
     * @return PhysicalTypePtr
     */
-    PhysicalTypePtr getPhysicalType(ArrayPtr arrayType);
+    PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType);
 };
 
 }// namespace NES

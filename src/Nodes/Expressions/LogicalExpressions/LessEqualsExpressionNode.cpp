@@ -21,7 +21,7 @@ LessEqualsExpressionNode::LessEqualsExpressionNode() : LogicalBinaryExpressionNo
 
 LessEqualsExpressionNode::LessEqualsExpressionNode(LessEqualsExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr LessEqualsExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr LessEqualsExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto lessThen = std::make_shared<LessEqualsExpressionNode>();
     lessThen->setChildren(left, right);
     return lessThen;

@@ -77,7 +77,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     static NodeEnginePtr create(const std::string& hostname,
                                 uint16_t port,
-                                PhysicalStreamConfigPtr config,
+                                const PhysicalStreamConfigPtr& config,
                                 uint16_t numThreads,
                                 uint64_t bufferSize,
                                 uint64_t numberOfBuffersInGlobalBufferManager,
@@ -87,7 +87,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(PhysicalStreamConfigPtr config,
+    explicit NodeEngine(const PhysicalStreamConfigPtr& config,
                         BufferManagerPtr&&,
                         QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
@@ -117,14 +117,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param exception
      * @param callstack
      */
-    void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override;
+    void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override;
 
     /**
      * @brief deploy registers and starts a query
      * @param new query plan
      * @return true if succeeded, else false
      */
-    bool deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
+    bool deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
 
     /**
      * @brief undeploy stops and undeploy a query
@@ -138,7 +138,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
+    bool registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
 
     /**
      * @brief registers a query
@@ -147,7 +147,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param operatorTree: query sub plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(QueryPlanPtr queryPlan);
+    bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief ungregisters a query
@@ -256,7 +256,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Set the physical stream config
      * @param config : configuration to be set
      */
-    void setConfig(AbstractPhysicalStreamConfigPtr config);
+    void setConfig(const AbstractPhysicalStreamConfigPtr& config);
 
     /**
      * @brief Creates a logical source descriptor according to a logical source descriptor
@@ -264,7 +264,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param sourceDescriptor
      * @return
      */
-    SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
+    SourceDescriptorPtr createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor);
 
   private:
     std::vector<AbstractPhysicalStreamConfigPtr> configs;

@@ -69,10 +69,10 @@ class ExecutablePipeline : public Reconfigurable {
      */
     static ExecutablePipelinePtr create(uint64_t pipelineId,
                                         QuerySubPlanId querySubPlanId,
-                                        PipelineExecutionContextPtr pipelineExecutionContext,
-                                        ExecutablePipelineStagePtr executablePipelineStage,
+                                        const PipelineExecutionContextPtr& pipelineExecutionContext,
+                                        const ExecutablePipelineStagePtr& executablePipelineStage,
                                         uint32_t numOfProducingPipelines,
-                                        std::vector<SuccessorExecutablePipeline> successorPipelines,
+                                        const std::vector<SuccessorExecutablePipeline>& successorPipelines,
                                         bool reconfiguration = false);
 
     /**
@@ -87,14 +87,14 @@ class ExecutablePipeline : public Reconfigurable {
    * @brief Initialises a pipeline stage
    * @return boolean if successful
    */
-    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
+    bool setup(const QueryManagerPtr& queryManager, const BufferManagerPtr& bufferManager);
 
     /**
      * @brief Starts a pipeline stage and passes statemanager further to the operator handler
      * @param stateManager pointer to the current state manager
      * @return Success if pipeline stage started 
      */
-    bool start(StateManagerPtr stateManager);
+    bool start(const StateManagerPtr& stateManager);
 
     /**
      * @brief Stops pipeline stage
@@ -153,7 +153,7 @@ class ExecutablePipeline : public Reconfigurable {
      * @brief Adds a new successor pipeline
      * @param predecessorPipeline
      */
-    void addSuccessor(SuccessorExecutablePipeline successorPipeline);
+    void addSuccessor(const SuccessorExecutablePipeline& successorPipeline);
 
   private:
     const uint64_t pipelineId;

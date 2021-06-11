@@ -32,10 +32,10 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
     /**
      * @brief Create untyped field read.
      */
-    static FieldAssignmentExpressionNodePtr create(FieldAccessExpressionNodePtr fieldAccess, ExpressionNodePtr expressionNodePtr);
+    static FieldAssignmentExpressionNodePtr create(const FieldAccessExpressionNodePtr& fieldAccess, const ExpressionNodePtr& expressionNodePtr);
 
     const std::string toString() const override;
-    bool equal(const NodePtr rhs) const override;
+    bool equal(NodePtr rhs) const override;
 
     /**
      * @brief return the field to which a new value is assigned.

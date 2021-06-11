@@ -27,7 +27,7 @@ DynamicMemoryLayout::DynamicMemoryLayout(bool checkBoundaryFieldChecks, uint64_t
 
 DynamicMemoryLayout::DynamicMemoryLayout() : fieldSizes(std::vector<FIELD_SIZE>()) {}
 
-std::optional<uint64_t> DynamicMemoryLayout::getFieldIndexFromName(std::string fieldName) const {
+std::optional<uint64_t> DynamicMemoryLayout::getFieldIndexFromName(const std::string& fieldName) const {
     auto nameFieldIt = nameFieldIndexMap.find(fieldName);
     if (nameFieldIt == nameFieldIndexMap.end()) {
         return std::nullopt;

@@ -61,7 +61,7 @@ class CpuMetrics {
      * @param prefix
      * @return The object
      */
-    static CpuMetrics fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static CpuMetrics fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json

@@ -22,7 +22,7 @@
 
 namespace NES {
 
-RenameStreamOperatorNode::RenameStreamOperatorNode(const std::string newStreamName, uint64_t id)
+RenameStreamOperatorNode::RenameStreamOperatorNode(const std::string& newStreamName, uint64_t id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), newStreamName(newStreamName) {}
 
 bool RenameStreamOperatorNode::isIdentical(NodePtr rhs) const {

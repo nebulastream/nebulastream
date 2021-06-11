@@ -21,7 +21,7 @@
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-DynamicColumnLayout::DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout() {
+DynamicColumnLayout::DynamicColumnLayout(bool checkBoundaries, const SchemaPtr& schema) : DynamicMemoryLayout() {
     this->checkBoundaryFieldChecks = checkBoundaries;
     this->recordSize = schema->getSchemaSizeInBytes();
     this->fieldSizes = std::vector<FIELD_SIZE>();
@@ -42,14 +42,14 @@ DynamicColumnLayout::DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema)
  * @param bufferSize
  * @return
  */
-DynamicColumnLayoutPtr DynamicColumnLayout::create(SchemaPtr schema, bool checkBoundaries) {
+DynamicColumnLayoutPtr DynamicColumnLayout::create(const SchemaPtr& schema, bool checkBoundaries) {
 
     return std::make_shared<DynamicColumnLayout>(checkBoundaries, schema);
 }
 
 DynamicMemoryLayoutPtr DynamicColumnLayout::copy() const { return std::make_shared<DynamicColumnLayout>(*this); }
 
-DynamicColumnLayoutBufferPtr DynamicColumnLayout::bind(TupleBuffer tupleBuffer) {
+DynamicColumnLayoutBufferPtr DynamicColumnLayout::bind(const TupleBuffer& tupleBuffer) {
     std::vector<COL_OFFSET_SIZE> columnOffsets;
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;

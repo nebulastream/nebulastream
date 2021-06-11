@@ -83,7 +83,7 @@ class Join {
      * @param onLeftKey
      * @return object of type JoinWhere on which equalsTo function is defined and can be called.
      */
-    [[nodiscard]] JoinWhere where(ExpressionItem onLeftKey) const;
+    [[nodiscard]] JoinWhere where(const ExpressionItem& onLeftKey) const;
 
   private:
     const Query& subQueryRhs;
@@ -98,14 +98,14 @@ class JoinWhere {
      * @param originalQuery
      * @param onLeftKey
      */
-    JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey);
+    JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey);
 
     /**
      * @brief sets the rightKey item
      * @param onRightKey
      * @return object of type JoinCondition on which windowing & the original joinWith function can be called.
      */
-    [[nodiscard]] JoinCondition equalsTo(ExpressionItem onRightKey) const;
+    [[nodiscard]] JoinCondition equalsTo(const ExpressionItem& onRightKey) const;
 
   private:
     const Query& subQueryRhs;
@@ -122,14 +122,14 @@ class JoinCondition {
     * @param onLeftKey
     * @param onRightKey
     */
-    JoinCondition(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey);
+    JoinCondition(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey, const ExpressionItem& onRightKey);
 
     /**
      * @brief: calls internal the original joinWith function with all the gathered parameters.
      * @param windowType
      * @return the query with the result of the original joinWith function is returned.
      */
-    [[nodiscard]] Query& window(const Windowing::WindowTypePtr windowType) const;
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr& windowType) const;
 
   private:
     const Query& subQueryRhs;
@@ -154,7 +154,7 @@ class Query {
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
-    WindowOperatorBuilder::WindowedQuery window(const Windowing::WindowTypePtr windowType);
+    WindowOperatorBuilder::WindowedQuery window(Windowing::WindowTypePtr& windowType);
 
     /**
      * @brief can be called on the original query with the query to be joined with and sets this query in the class Join.
@@ -169,7 +169,7 @@ class Query {
      * @param sourceStreamName name of the stream to query. This name has to be registered in the query catalog.
      * @return the query
      */
-    static Query from(const std::string sourceStreamName);
+    static Query from(std::string& sourceStreamName);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
@@ -196,7 +196,7 @@ class Query {
      * @param new stream name
      * @return the query
      */
-    Query& as(const std::string newStreamName);
+    Query& as(std::string& newStreamName);
 
     /**
      * @brief Create Query using queryPlan
@@ -212,7 +212,7 @@ class Query {
      * @param predicate as expression node
      * @return the query
      */
-    Query& filter(const ExpressionNodePtr filterExpression);
+    Query& filter(ExpressionNodePtr& filterExpression);
 
     /**
      * @brief: Create watermark assginer operator.
@@ -220,7 +220,7 @@ class Query {
      * @param delay timestamp delay of the watermark.
      * @return query.
      */
-    Query& assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor);
 
     /**
      * @brief: Map records according to a map expression.
@@ -228,14 +228,14 @@ class Query {
      * @param map expression
      * @return query
      */
-    Query& map(const FieldAssignmentExpressionNodePtr mapExpression);
+    Query& map(FieldAssignmentExpressionNodePtr& mapExpression);
 
     /**
      * @brief Add sink operator for the query.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor
      */
-    virtual Query& sink(const SinkDescriptorPtr sinkDescriptor);
+    virtual Query& sink(SinkDescriptorPtr sinkDescriptor);
 
     /**
      * @brief Gets the query plan from the current query.
@@ -264,7 +264,7 @@ class Query {
     Query& joinWith(const Query& subQueryRhs,
                     ExpressionItem onLeftKey,
                     ExpressionItem onRightKey,
-                    const Windowing::WindowTypePtr windowType);
+                    Windowing::WindowTypePtr& windowType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
@@ -273,7 +273,7 @@ class Query {
      * @param aggregation Window aggregation function.
      * @return query.
      */
-    Query& window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation);
+    Query& window(Windowing::WindowTypePtr& windowType, Windowing::WindowAggregationPtr& aggregation);
 
     /**
       * @brief: Creates a window aggregation.
@@ -281,9 +281,9 @@ class Query {
       * @param aggregation Window aggregation function.
       * @return query.
       */
-    Query& windowByKey(const ExpressionItem onKey,
-                       const Windowing::WindowTypePtr windowType,
-                       const Windowing::WindowAggregationPtr aggregation);
+    Query& windowByKey(ExpressionItem onKey,
+                       Windowing::WindowTypePtr& windowType,
+                       Windowing::WindowAggregationPtr& aggregation);
 };
 
 using QueryPtr = std::shared_ptr<Query>;

@@ -56,7 +56,7 @@ class ProjectBeforeUnionOperatorRule : public BaseRewriteRule {
      * @param destinationSchema : the destination schema for project.
      * @return LogicalOperatorNodePtr: the project operator based on source and destination schema
      */
-    static LogicalOperatorNodePtr constructProjectOperator(SchemaPtr sourceSchema, SchemaPtr destinationSchema);
+    static LogicalOperatorNodePtr constructProjectOperator(const SchemaPtr& sourceSchema, const SchemaPtr& destinationSchema);
 };
 
 }// namespace NES::Optimizer

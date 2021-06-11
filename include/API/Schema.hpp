@@ -32,7 +32,7 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class Schema {
   public:
     Schema();
-    explicit Schema(SchemaPtr query);
+    explicit Schema(const SchemaPtr& query);
 
     /**
      * @brief Schema qualifier separator
@@ -57,14 +57,14 @@ class Schema {
      * @param otherSchema
      * @return a copy of this schema.
      */
-    SchemaPtr copyFields(SchemaPtr otherSchema);
+    SchemaPtr copyFields(const SchemaPtr& otherSchema);
 
     /**
      * @brief appends a AttributeField to the schema and returns a copy of this schema.
      * @param attribute
      * @return a copy of this schema.
      */
-    SchemaPtr addField(AttributeFieldPtr attribute);
+    SchemaPtr addField(const AttributeFieldPtr& attribute);
 
     /**
     * @brief appends a field with a basic type to the schema and returns a copy of this schema.
@@ -84,7 +84,7 @@ class Schema {
      * @brief removes a AttributeField from the schema
      * @param field
      */
-    void removeField(AttributeFieldPtr field);
+    void removeField(const AttributeFieldPtr& field);
 
     /**
      * @brief Replaces a field, which is already part of the schema.
@@ -92,7 +92,7 @@ class Schema {
      * @param type
      * @return
      */
-    void replaceField(const std::string& name, DataTypePtr type);
+    void replaceField(const std::string& name, const DataTypePtr& type);
 
     /**
      * @brief Checks if an attribute with the input field name is defined in the schema
@@ -141,14 +141,14 @@ class Schema {
      * @param considerOrder takes into account if the order of fields in a schema matter.
      * @return boolean
      */
-    bool equals(SchemaPtr schema, bool considerOrder = true);
+    bool equals(const SchemaPtr& schema, bool considerOrder = true);
 
     /**
      * @brief Checks if two schemas have same datatypes at same index location
      * @param otherSchema: the other schema to compare agains
      * @return ture if they are equal else false
      */
-    bool hasEqualTypes(SchemaPtr otherSchema);
+    bool hasEqualTypes(const SchemaPtr& otherSchema);
 
     /**
      * @brief Checks if the field exists in the schema

@@ -28,7 +28,7 @@ GlobalQueryNode::GlobalQueryNode(uint64_t id, OperatorNodePtr operatorNode) : id
 GlobalQueryNodePtr GlobalQueryNode::createEmpty(uint64_t id) { return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id)); }
 
 GlobalQueryNodePtr GlobalQueryNode::create(uint64_t id, OperatorNodePtr operatorNode) {
-    return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id, operatorNode));
+    return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id, std::move(operatorNode)));
 }
 
 uint64_t GlobalQueryNode::getId() { return id; }

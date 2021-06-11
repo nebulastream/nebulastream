@@ -55,13 +55,13 @@ class WindowedQuery {
     * @brief: sets the Attribute for the keyBy Operation. Creates a KeyedWindowedQuery object.
     * @param onKey
     */
-    [[nodiscard]] KeyedWindowedQuery byKey(ExpressionItem onKey) const;
+    [[nodiscard]] KeyedWindowedQuery byKey(const ExpressionItem& onKey) const;
 
     /**
    * @brief: Calls internally the original window() function and returns the Query&
    * @param aggregation
    */
-    Query& apply(const Windowing::WindowAggregationPtr aggregation);
+    Query& apply(Windowing::WindowAggregationPtr& aggregation);
 
   private:
     Query& originalQuery;
@@ -75,13 +75,13 @@ class KeyedWindowedQuery {
     * @param originalQuery
     * @param windowType
     */
-    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, ExpressionItem onKey);
+    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, const ExpressionItem& onKey);
 
     /**
     * @brief: Calls internally the original windowByKey() function and returns the Query&
     * @param aggregation
     */
-    Query& apply(const Windowing::WindowAggregationPtr aggregation);
+    Query& apply(Windowing::WindowAggregationPtr aggregation);
 
   private:
     Query& originalQuery;

@@ -42,12 +42,12 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
     NES_ASSERT(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
 }
 
-LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr leftJoinKeyType,
-                                                       FieldAccessExpressionNodePtr rightJoinKeyType,
-                                                       Windowing::WindowTypePtr windowType,
-                                                       Windowing::DistributionCharacteristicPtr distributionType,
-                                                       Windowing::WindowTriggerPolicyPtr triggerPolicy,
-                                                       BaseJoinActionDescriptorPtr triggerAction,
+LogicalJoinDefinitionPtr LogicalJoinDefinition::create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
+                                                       const FieldAccessExpressionNodePtr& rightJoinKeyType,
+                                                       const Windowing::WindowTypePtr& windowType,
+                                                       const Windowing::DistributionCharacteristicPtr& distributionType,
+                                                       const Windowing::WindowTriggerPolicyPtr& triggerPolicy,
+                                                       const BaseJoinActionDescriptorPtr& triggerAction,
                                                        uint64_t numberOfInputEdgesLeft,
                                                        uint64_t numberOfInputEdgesRight) {
     return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKeyType,
@@ -81,11 +81,11 @@ uint64_t LogicalJoinDefinition::getNumberOfInputEdgesLeft() { return numberOfInp
 uint64_t LogicalJoinDefinition::getNumberOfInputEdgesRight() { return numberOfInputEdgesRight; }
 
 void LogicalJoinDefinition::updateStreamTypes(SchemaPtr leftStreamType, SchemaPtr rightStreamType) {
-    this->leftStreamType = leftStreamType;
-    this->rightStreamType = rightStreamType;
+    this->leftStreamType = std::move(leftStreamType);
+    this->rightStreamType = std::move(rightStreamType);
 }
 
-void LogicalJoinDefinition::updateOutputDefinition(SchemaPtr outputSchema) { this->outputSchema = outputSchema; }
+void LogicalJoinDefinition::updateOutputDefinition(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }
 
 SchemaPtr LogicalJoinDefinition::getOutputSchema() const { return outputSchema; }
 void LogicalJoinDefinition::setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft) {

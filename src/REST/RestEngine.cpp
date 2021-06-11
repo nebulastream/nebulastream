@@ -28,14 +28,14 @@
 
 namespace NES {
 
-RestEngine::RestEngine(StreamCatalogPtr streamCatalog,
-                       NesCoordinatorWeakPtr coordinator,
-                       QueryCatalogPtr queryCatalog,
-                       TopologyPtr topology,
-                       GlobalExecutionPlanPtr globalExecutionPlan,
-                       QueryServicePtr queryService,
-                       MonitoringServicePtr monitoringService,
-                       GlobalQueryPlanPtr globalQueryPlan) {
+RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
+                       const NesCoordinatorWeakPtr& coordinator,
+                       const QueryCatalogPtr& queryCatalog,
+                       const TopologyPtr& topology,
+                       const GlobalExecutionPlanPtr& globalExecutionPlan,
+                       const QueryServicePtr& queryService,
+                       const MonitoringServicePtr& monitoringService,
+                       const GlobalQueryPlanPtr& globalQueryPlan) {
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator, globalQueryPlan);
     queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
@@ -171,7 +171,7 @@ void RestEngine::handleTrace(http_request request) {
 //TODO (covered in issue 1919 (Add option to configure whitelisted addresses for CORS))
 // the '*' should be replaced at some point, with specifically allowed addresses, provided by a config
 // Note: it is not possible to provide several allowed addresses at once, rather, a check should be performed here
-void RestEngine::handlePreflightOptions(http_request request) {
+void RestEngine::handlePreflightOptions(const http_request& request) {
     http_response response(status_codes::OK);
     response.headers().add(("Access-Control-Allow-Origin"), ("*"));
     response.headers().add(("Access-Control-Allow-Methods"), ("DELETE"));
@@ -199,7 +199,7 @@ pplx::task<void> RestEngine::shutdown() {
     return _listener.close();
 }
 
-std::vector<utility::string_t> RestEngine::splitPath(const utility::string_t relativePath) {
+std::vector<utility::string_t> RestEngine::splitPath(const utility::string_t& relativePath) {
     return web::uri::split_path(relativePath);
 }
 

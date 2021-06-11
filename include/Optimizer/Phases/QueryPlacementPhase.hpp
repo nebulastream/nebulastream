@@ -59,7 +59,7 @@ class QueryPlacementPhase {
      * @return true is placement successful.
      * @throws QueryPlacementException
      */
-    bool execute(std::string placementStrategy, QueryPlanPtr queryPlan);
+    bool execute(const std::string& placementStrategy, QueryPlanPtr queryPlan);
     ~QueryPlacementPhase();
 
   private:

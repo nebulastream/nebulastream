@@ -42,7 +42,7 @@ class AttributeField {
      * @param dataType data type
      * @return AttributeFieldPtr
      */
-    static AttributeFieldPtr create(std::string name, DataTypePtr dataType);
+    static AttributeFieldPtr create(const std::string& name, const DataTypePtr& dataType);
 
     [[nodiscard]] DataTypePtr getDataType() const;
 
@@ -51,7 +51,7 @@ class AttributeField {
     void setName(std::string newName);
 
     [[nodiscard]] const std::string toString() const;
-    bool isEqual(AttributeFieldPtr attr);
+    bool isEqual(const AttributeFieldPtr& attr);
 
     /**
      * @brief Make copy of this attribute

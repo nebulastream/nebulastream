@@ -22,7 +22,7 @@ GreaterEqualsExpressionNode::GreaterEqualsExpressionNode() : LogicalBinaryExpres
 GreaterEqualsExpressionNode::GreaterEqualsExpressionNode(GreaterEqualsExpressionNode* other)
     : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr GreaterEqualsExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr GreaterEqualsExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto greaterThen = std::make_shared<GreaterEqualsExpressionNode>();
     greaterThen->setChildren(left, right);
     return greaterThen;

@@ -19,13 +19,13 @@
 
 namespace NES::Windowing {
 
-WindowAggregationDescriptor::WindowAggregationDescriptor(const FieldAccessExpressionNodePtr onField)
+WindowAggregationDescriptor::WindowAggregationDescriptor(const FieldAccessExpressionNodePtr& onField)
     : onField(onField), asField(onField) {}
 
-WindowAggregationDescriptor::WindowAggregationDescriptor(const ExpressionNodePtr onField, const ExpressionNodePtr asField)
+WindowAggregationDescriptor::WindowAggregationDescriptor(const ExpressionNodePtr& onField, const ExpressionNodePtr& asField)
     : onField(onField), asField(asField) {}
 
-WindowAggregationDescriptor& WindowAggregationDescriptor::as(const FieldAccessExpressionNodePtr asField) {
+WindowAggregationDescriptor& WindowAggregationDescriptor::as(const FieldAccessExpressionNodePtr& asField) {
     this->asField = asField;
     return *this;
 }

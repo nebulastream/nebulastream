@@ -32,7 +32,7 @@ std::vector<NodePtr> QueryPlanIterator::snapshot() {
     return nodes;
 }
 
-QueryPlanIterator::iterator::iterator(QueryPlanPtr current) {
+QueryPlanIterator::iterator::iterator(const QueryPlanPtr& current) {
     auto rootOperators = current->getRootOperators();
     for (int64_t i = rootOperators.size() - 1; i >= 0; i--) {
         workStack.push(rootOperators[i]);

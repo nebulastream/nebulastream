@@ -14,15 +14,16 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
+#include <utility>
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, SchemaPtr inputSchema)
+PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, const SchemaPtr& inputSchema)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
 
 PhysicalOperatorPtr PhysicalEmitOperator::create(SchemaPtr inputSchema) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema);
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema));
 }
-PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, SchemaPtr inputSchema) {
+PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, const SchemaPtr& inputSchema) {
     return std::make_shared<PhysicalEmitOperator>(id, inputSchema);
 }
 

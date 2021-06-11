@@ -40,15 +40,15 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return descriptor for MQTT sink
      */
-    static SinkDescriptorPtr create(const std::string address,
-                                    const std::string topic,
-                                    const std::string user,
+    static SinkDescriptorPtr create(std::string& address,
+                                    std::string& topic,
+                                    std::string& user,
                                     uint64_t maxBufferedMSGs,
-                                    const TimeUnits timeUnit,
+                                    TimeUnits timeUnit,
                                     uint64_t messageDelay,
                                     ServiceQualities qualityOfService,
                                     bool asynchronousClient,
-                                    const std::string clientId = "");
+                                    std::string& clientId = "");
 
     /**
      * @brief get address information from a MQTT sink client
@@ -121,14 +121,14 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return MQTT sink
      */
-    explicit MQTTSinkDescriptor(const std::string address,
-                                const std::string clientId,
-                                const std::string topic,
-                                const std::string user,
+    explicit MQTTSinkDescriptor(std::string& address,
+                                std::string& clientId,
+                                std::string& topic,
+                                std::string& user,
                                 uint64_t maxBufferedMSGs,
-                                const TimeUnits timeUnit,
+                                TimeUnits timeUnit,
                                 uint64_t messageDelay,
-                                const ServiceQualities qualityOfService,
+                                ServiceQualities qualityOfService,
                                 bool asynchronousClient);
 
     std::string address;
