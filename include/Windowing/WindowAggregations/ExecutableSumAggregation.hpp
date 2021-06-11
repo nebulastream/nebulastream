@@ -30,6 +30,7 @@ template<typename InputType, std::enable_if_t<std::is_arithmetic<InputType>::val
 class ExecutableSumAggregation : public ExecutableWindowAggregation<InputType, InputType, InputType> {
   public:
     ExecutableSumAggregation() : ExecutableWindowAggregation<InputType, InputType, InputType>(){};
+    ~ExecutableSumAggregation() override = default;
 
     static std::shared_ptr<ExecutableWindowAggregation<InputType, InputType, InputType>> create() {
         return std::make_shared<ExecutableSumAggregation<InputType>>();

@@ -37,6 +37,8 @@ class ArrayPhysicalType final : public PhysicalType {
     inline ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr component) noexcept
         : PhysicalType(std::move(type)), length(length), physicalComponentType(std::move(component)) {}
 
+    virtual ~ArrayPhysicalType() = default;
+
     /**
      * @brief Factory function to create a new ArrayType Physical Type.
      * @param type the logical data type.

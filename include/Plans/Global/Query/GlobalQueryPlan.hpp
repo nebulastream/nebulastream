@@ -112,7 +112,7 @@ class GlobalQueryPlan {
   private:
     GlobalQueryPlan();
 
-    uint64_t freeSharedQueryId{0};
+    [[maybe_unused]] uint64_t freeSharedQueryId{0};
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
     std::map<SharedQueryId, SharedQueryMetaDataPtr> sharedQueryIdToMetaDataMap;
 };

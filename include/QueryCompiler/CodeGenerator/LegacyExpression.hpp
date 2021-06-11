@@ -31,8 +31,8 @@ class LegacyExpression {
   public:
     virtual ~LegacyExpression() = default;
     ;
-    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const = 0;
-    [[nodiscard]] virtual const std::string toString() const = 0;
+    virtual ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const = 0;
+    [[nodiscard]] virtual std::string toString() const = 0;
     [[nodiscard]] virtual LegacyExpressionPtr copy() const = 0;
     [[nodiscard]] virtual bool equals(const LegacyExpression& rhs) const = 0;
 };

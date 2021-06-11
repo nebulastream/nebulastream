@@ -25,7 +25,7 @@ namespace NES {
  * @brief Arrays con be constructed of any built-in type.
  * Arrays always have a fixed sized and can not be extended.
  */
-class ArrayType : public DataType {
+class ArrayType final : public DataType {
 
   public:
     /**
@@ -35,6 +35,8 @@ class ArrayType : public DataType {
      */
     inline ArrayType(uint64_t length, DataTypePtr component) noexcept
         :  length(length), component(std::move(component)) {}
+
+    virtual ~ArrayType() = default;
 
     /**
      * @brief Checks if this data type is an ArrayType.

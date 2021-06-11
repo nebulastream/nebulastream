@@ -26,7 +26,7 @@
 namespace NES::Network {
 
 OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, std::string &&address)
-    : zmqSocket(std::move(zmqSocket)), channelId(channelId), socketAddr(std::move(address)), isClosed(false) {
+    : zmqSocket(std::move(zmqSocket)), socketAddr(std::move(address)), channelId(channelId) {
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
 }
 

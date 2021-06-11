@@ -25,6 +25,7 @@ namespace NES {
 class Numeric : public DataType {
   public:
     explicit Numeric(int8_t bits);
+    virtual ~Numeric() = default;
 
     /**
     * @brief Checks if this data type is Numeric.

@@ -27,7 +27,7 @@ namespace NES {
  * The internal Integer type is parameterised by its bit size, and its lower and upper bound
  * Integer(bitSize, lowerBound, upperBound)
  */
-class Integer : public Numeric {
+class Integer final : public Numeric {
 
   public:
     /**
@@ -38,6 +38,8 @@ class Integer : public Numeric {
      */
     inline Integer(int8_t bits, int64_t lowerBound, int64_t upperBound) noexcept
         : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
+
+    virtual ~Integer() = default;
 
     /**
     * @brief Checks if this data type is Integer.

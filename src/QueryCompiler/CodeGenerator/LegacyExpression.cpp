@@ -60,7 +60,6 @@ ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHand
     FunctionCallStatement expr = FunctionCallStatement(functionCallOverload);
     expr.addParameter(left->generateCode(code, recordHandler));
     expr.addParameter(right->generateCode(code, recordHandler));
-    auto tf = GeneratableTypesFactory();
     if (bracket) {
         return BinaryOperatorStatement(expr,
                                        op,
@@ -86,7 +85,6 @@ ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, RecordHandl
 
     } else if (value) {
         // todo remove if compiler refactored
-        auto tf = GeneratableTypesFactory();
         return ConstantExpressionStatement(NES::QueryCompilation::GeneratableTypesFactory::createValueType(value)).copy();
     }
     return nullptr;
@@ -171,7 +169,6 @@ std::string PredicateItem::toString() const {
     switch (mutation) {
         case PredicateItemMutation::ATTRIBUTE: return attribute->toString();
         case PredicateItemMutation::VALUE: {
-            auto tf = GeneratableTypesFactory();
             return NES::QueryCompilation::GeneratableTypesFactory::createValueType(value)->getCodeExpression()->code_;
         }
     }

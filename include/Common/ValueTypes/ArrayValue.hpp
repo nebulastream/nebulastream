@@ -28,6 +28,8 @@ class [[nodiscard]] ArrayValue final : public ValueType {
     inline ArrayValue(DataTypePtr&& type, std::vector<std::string>&& values) noexcept
         : ValueType(std::move(type)), values(std::move(values)) {}
 
+    virtual ~ArrayValue() = default;
+
     /// @brief Returns a string representation of this value
     [[nodiscard]] std::string toString() const noexcept final;
 

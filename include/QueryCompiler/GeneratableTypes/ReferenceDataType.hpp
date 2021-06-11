@@ -29,6 +29,8 @@ namespace QueryCompilation {
 class ReferenceDataType : public GeneratableDataType {
   public:
     explicit ReferenceDataType(GeneratableDataTypePtr baseType);
+    virtual ~ReferenceDataType() = default;
+
 
     /**
     * @brief Generated code for a type definition. This is mainly crucial for structures.

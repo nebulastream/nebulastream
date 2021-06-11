@@ -35,6 +35,8 @@ class PhysicalType {
   public:
     inline explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) {}
 
+    virtual ~PhysicalType() = default;
+
     /**
      * @brief Returns the number of bytes occupied by this data type.
      * @return u_int64_t

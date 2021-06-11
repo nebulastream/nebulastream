@@ -16,7 +16,6 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
@@ -68,9 +67,9 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
 }
 
 void CodeGenerationPhase::generate(const OperatorNodePtr& rootOperator,
-                                   const std::function<void(GeneratableOperators::GeneratableOperatorPtr operatorNode)>& applyFunction) {
+                                   const std::function<void(GeneratableOperators::GeneratableOperatorPtr )>& applyFunction) {
     auto iterator = DepthFirstNodeIterator(rootOperator);
-    for (auto node NES::DepthFirstNodeIterator::: iterator) {
+    for (auto &&node :iterator) {
         if (!node->instanceOf<GeneratableOperators::GeneratableOperator>()) {
             throw QueryCompilationException("Operator should be of type GeneratableOperator but it is a " + node->toString());
         }

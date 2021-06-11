@@ -37,6 +37,9 @@ using GlobalQueryNodePtr = std::shared_ptr<GlobalQueryNode>;
 class GlobalQueryNode : public Node {
 
   public:
+
+    virtual ~GlobalQueryNode() = default;
+
     /**
      * @brief Creates empty global query node
      * @param id: id of the global query node

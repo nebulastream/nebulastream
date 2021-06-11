@@ -38,6 +38,8 @@ class Float final : public Numeric {
     inline Float(int8_t bits, double lowerBound, double upperBound) noexcept
         : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
 
+    virtual ~Float() = default;
+
     /**
     * @brief Checks if this data type is Float.
     */
