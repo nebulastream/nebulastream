@@ -17,9 +17,9 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <algorithm>
+#include <cstdarg>
+#include <cstdio>
 #include <cstring>
-#include <stdarg.h>
-#include <stdio.h>
 #include <unistd.h>
 #ifdef _POSIX_THREADS
 #define HAS_POSIX_THREAD

@@ -29,9 +29,9 @@ class VarRefStatement : public ExpressionStatment {
 
     [[nodiscard]] const ExpressionStatmentPtr copy() const override;
 
-    VarRefStatement(const VariableDeclaration& var_decl);
+    explicit VarRefStatement(const VariableDeclaration& var_decl);
 
-    VarRefStatement(VariableDeclarationPtr varDeclaration);
+    explicit VarRefStatement(VariableDeclarationPtr varDeclaration);
 
     ~VarRefStatement() override;
 };

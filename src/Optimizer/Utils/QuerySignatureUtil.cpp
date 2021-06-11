@@ -125,7 +125,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(z3::ContextP
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, streamNameVar, streamNameVal)));
 
     //Compute signature
-    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(updatedSchemaFieldToExprMaps), {});
+    return QuerySignature::create(std::move(conditions), std::move(columns), updatedSchemaFieldToExprMaps, {});
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(ProjectionLogicalOperatorNodePtr projectOperator) {

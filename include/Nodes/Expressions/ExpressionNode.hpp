@@ -37,7 +37,7 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class ExpressionNode : public Node {
 
   public:
-    ExpressionNode(DataTypePtr stamp);
+    explicit ExpressionNode(DataTypePtr stamp);
 
     ~ExpressionNode() = default;
 
@@ -72,7 +72,7 @@ class ExpressionNode : public Node {
     virtual ExpressionNodePtr copy() = 0;
 
   protected:
-    ExpressionNode(ExpressionNode* other);
+    explicit ExpressionNode(ExpressionNode* other);
 
     /**
      * @brief declares the type of this expression.

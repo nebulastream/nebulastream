@@ -77,7 +77,7 @@ public:
      *
      * @param lf the load factor of the table when the exception was thrown
      */
-    libcuckoo_load_factor_too_low(const double lf) : load_factor_(lf) {}
+    explicit libcuckoo_load_factor_too_low(const double lf) : load_factor_(lf) {}
 
     /**
      * @return a descriptive error message
@@ -108,7 +108,7 @@ public:
      *
      * @param hp the hash power we were trying to expand to
      */
-    libcuckoo_maximum_hashpower_exceeded(const size_t hp) : hashpower_(hp) {}
+    explicit libcuckoo_maximum_hashpower_exceeded(const size_t hp) : hashpower_(hp) {}
 
     /**
      * @return a descriptive error message

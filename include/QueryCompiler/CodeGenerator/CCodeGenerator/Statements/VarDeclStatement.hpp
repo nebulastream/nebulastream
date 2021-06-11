@@ -23,7 +23,7 @@ namespace NES {
 namespace QueryCompilation {
 class VarDeclStatement : public ExpressionStatment {
   public:
-    VarDeclStatement(const VariableDeclaration& var_decl);
+    explicit VarDeclStatement(const VariableDeclaration& var_decl);
 
     [[nodiscard]] StatementType getStamentType() const override;
 

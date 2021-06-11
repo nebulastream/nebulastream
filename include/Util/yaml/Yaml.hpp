@@ -170,7 +170,7 @@ class InternalException : public Exception {
         * @param message Exception message.
         *
         */
-    InternalException(const std::string& message);
+    explicit InternalException(const std::string& message);
 };
 
 /**
@@ -188,7 +188,7 @@ class ParsingException : public Exception {
         * @param message Exception message.
         *
         */
-    ParsingException(const std::string& message);
+    explicit ParsingException(const std::string& message);
 };
 
 /**
@@ -206,7 +206,7 @@ class OperationFatalException : public Exception {
         * @param message Exception message.
         *
         */
-    OperationFatalException(const std::string& message);
+    explicit OperationFatalException(const std::string& message);
 };
 
 /**
@@ -383,8 +383,8 @@ class Node {
         *        Converts node to scalar type if needed.
         *
         */
-    Node(const std::string& value);
-    Node(const char* value);
+    explicit Node(const std::string& value);
+    explicit Node(const char* value);
 
     /**
         * @breif Destructor.
@@ -546,7 +546,7 @@ struct SerializeConfig {
         * @param mapScalarNewline       Put scalars on a new line if parent node is a map.
         *
         */
-    SerializeConfig(const size_t spaceIndentation = 2,
+    explicit SerializeConfig(const size_t spaceIndentation = 2,
                     const size_t scalarMaxLength = 64,
                     const bool sequenceMapNewline = false,
                     const bool mapScalarNewline = false);

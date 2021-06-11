@@ -21,12 +21,12 @@
 
 #include <Util/SharedLibrary.hpp>
 
+#include <cstdio>
 #include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <random>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>

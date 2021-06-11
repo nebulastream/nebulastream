@@ -27,7 +27,7 @@ NetworkManager::NetworkManager(const std::string& hostname,
                                ExchangeProtocol&& exchangeProtocol,
                                NodeEngine::BufferManagerPtr bufferManager,
                                uint16_t numServerThread)
-    : exchangeProtocol(std::move(exchangeProtocol)),
+    : exchangeProtocol(exchangeProtocol),
       server(std::make_shared<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)) {
     bool success = server->start();
     if (success) {

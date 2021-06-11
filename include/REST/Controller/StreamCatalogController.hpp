@@ -29,7 +29,7 @@ using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 class StreamCatalogController : public BaseController {
 
   public:
-    StreamCatalogController(StreamCatalogPtr streamCatalog);
+    explicit StreamCatalogController(StreamCatalogPtr streamCatalog);
 
     void handleGet(std::vector<utility::string_t> path, web::http::http_request request);
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);

@@ -30,7 +30,7 @@ class ConstructorDeclaration : public Declaration {
     Code functionCode;
 
   public:
-    ConstructorDeclaration(Code code);
+    explicit ConstructorDeclaration(Code code);
     static ConstructorDeclarationPtr create(Code code);
 
     [[nodiscard]] const GeneratableDataTypePtr getType() const override;

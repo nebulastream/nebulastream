@@ -23,7 +23,7 @@ namespace GeneratableOperators {
 
 class GeneratableSumAggregation : public GeneratableWindowAggregation {
   public:
-    GeneratableSumAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+    explicit GeneratableSumAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
 
     /**
      * @brief Factory Method to create a new GeneratableWindowAggregation

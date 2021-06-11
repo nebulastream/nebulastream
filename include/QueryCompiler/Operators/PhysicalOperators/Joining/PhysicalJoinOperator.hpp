@@ -29,7 +29,7 @@ class PhysicalJoinOperator {
     Join::JoinOperatorHandlerPtr getJoinHandler();
 
   protected:
-    PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler);
+    explicit PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler);
 
     Join::JoinOperatorHandlerPtr operatorHandler;
 };

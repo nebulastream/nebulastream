@@ -32,7 +32,7 @@ class I2CBus : public GenericBus {
      * @brief constructor only with a path as argument
      * @param filename, the path to read the file from
      */
-    I2CBus(const char* filename);
+    explicit I2CBus(const char* filename);
 
     /**
      * destructor

@@ -47,7 +47,7 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
     MaxAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 
   private:
-    MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    explicit MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
 };
 }// namespace NES::Windowing
 #endif//NES_MAX_HPP

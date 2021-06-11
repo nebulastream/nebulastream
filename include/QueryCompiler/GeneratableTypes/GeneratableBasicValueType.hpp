@@ -27,7 +27,7 @@ namespace QueryCompilation {
  */
 class GeneratableBasicValueType final : public GeneratableValueType {
   public:
-    GeneratableBasicValueType(BasicValuePtr basicValue);
+    explicit GeneratableBasicValueType(BasicValuePtr basicValue);
 
     /**
     * @brief Generate the code expression for this value type.

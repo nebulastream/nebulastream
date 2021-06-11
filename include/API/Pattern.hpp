@@ -54,7 +54,7 @@ class Pattern : public Query {
 
   public:
     Pattern(const Pattern&);
-    ~Pattern() = default;
+    ~Pattern() override = default;
 
     /**
      * @brief: Monitors a condition from a particular source stream. The source stream is identified by its name.
@@ -76,7 +76,7 @@ class Pattern : public Query {
 
   private:
     // creates a new pattern object
-    Pattern(QueryPlanPtr queryPlan);
+    explicit Pattern(QueryPlanPtr queryPlan);
 
     std::string patternName;
 };

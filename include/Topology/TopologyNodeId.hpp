@@ -17,7 +17,7 @@
 #ifndef NES_TOPOLOGYNODEID_HPP
 #define NES_TOPOLOGYNODEID_HPP
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief this alias represent a topology node

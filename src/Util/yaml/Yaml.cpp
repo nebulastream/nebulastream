@@ -24,12 +24,12 @@
 */
 
 #include "Util/yaml/Yaml.hpp"
+#include <cstdarg>
 #include <cstdio>
 #include <fstream>
 #include <list>
 #include <memory>
 #include <sstream>
-#include <stdarg.h>
 #include <utility>
 #include <vector>
 
@@ -279,7 +279,7 @@ class ScalarImp : public TypeImp {
 class NodeImp {
 
   public:
-    NodeImp() {}
+    NodeImp() = default;
 
     ~NodeImp() { Clear(); }
 
@@ -411,7 +411,7 @@ class MapConstIteratorImp : public IteratorImp {
 };
 
 // Iterator class
-Iterator::Iterator() {}
+Iterator::Iterator() = default;
 
 Iterator::~Iterator() {
     if (m_pImp) {
@@ -510,7 +510,7 @@ bool Iterator::operator==(const Iterator& it) {
 bool Iterator::operator!=(const Iterator& it) { return !(*this == it); }
 
 // Const Iterator class
-ConstIterator::ConstIterator() {}
+ConstIterator::ConstIterator() = default;
 
 ConstIterator::~ConstIterator() {
     if (m_pImp) {
@@ -828,7 +828,7 @@ class ReaderLine {
         * @breif Constructor.
         *
         */
-    ReaderLine(std::string data = "",
+    explicit ReaderLine(std::string data = "",
                const size_t no = 0,
                const size_t offset = 0,
                const Node::eType type = Node::None,
@@ -1502,7 +1502,7 @@ class ParseImp {
 
             if (pLine->Type == Node::ScalarType) {
                 std::string scalarValue = pLine->Data;
-                for (size_t i = 0; (i = scalarValue.find("\n", i)) != std::string::npos;) {
+                for (size_t i = 0; (i = scalarValue.find('\n', i)) != std::string::npos;) {
                     scalarValue.replace(i, 1, "\\n");
                     i += 2;
                 }
@@ -2018,7 +2018,7 @@ void AddEscapeTokens(std::string& input, const std::string& tokens) {
 }
 
 void RemoveAllEscapeTokens(std::string& input) {
-    size_t found = input.find_first_of("\\");
+    size_t found = input.find_first_of('\\');
     while (found != std::string::npos) {
         if (found + 1 == input.size()) {
             return;
@@ -2026,7 +2026,7 @@ void RemoveAllEscapeTokens(std::string& input) {
 
         std::string replace(1, input[found + 1]);
         input.replace(found, 2, replace);
-        found = input.find_first_of("\\", found + 1);
+        found = input.find_first_of('\\', found + 1);
     }
 }
 

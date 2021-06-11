@@ -23,7 +23,7 @@ namespace NES {
  */
 class PowExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
-    PowExpressionNode(DataTypePtr stamp);
+    explicit PowExpressionNode(DataTypePtr stamp);
     ~PowExpressionNode() = default;
     /**
      * @brief Create a new POWER expression

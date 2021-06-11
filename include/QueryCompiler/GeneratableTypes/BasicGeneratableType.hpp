@@ -27,7 +27,7 @@ namespace QueryCompilation {
  */
 class BasicGeneratableType final : public GeneratableDataType {
   public:
-    BasicGeneratableType(BasicPhysicalTypePtr type);
+    explicit BasicGeneratableType(BasicPhysicalTypePtr type);
 
     /**
       * @brief Generated code for a type definition. This is mainly crucial for structures.

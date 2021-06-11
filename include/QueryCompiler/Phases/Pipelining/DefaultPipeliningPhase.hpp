@@ -32,7 +32,7 @@ class DefaultPipeliningPhase : public PipeliningPhase {
      * @return PipeliningPhasePtr
      */
     static PipeliningPhasePtr create(OperatorFusionPolicyPtr operatorFusionPolicy);
-    DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy);
+    explicit DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy);
     PipelineQueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   protected:

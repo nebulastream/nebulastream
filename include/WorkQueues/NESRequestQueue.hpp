@@ -40,7 +40,7 @@ class NESRequestQueue {
      * @brief Constructor of Query request queue
      * @param batchSize : the batch of user requests to be processed together
      */
-    NESRequestQueue(uint64_t batchSize);
+    explicit NESRequestQueue(uint64_t batchSize);
 
     ~NESRequestQueue();
 

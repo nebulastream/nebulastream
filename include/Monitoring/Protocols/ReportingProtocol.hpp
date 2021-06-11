@@ -24,7 +24,7 @@ namespace NES {
 
 class ReportingProtocol {
   public:
-    ReportingProtocol(std::function<void(MetricGroup&)>&& reportingFunc);
+    explicit ReportingProtocol(std::function<void(MetricGroup&)>&& reportingFunc);
 
     [[nodiscard]] bool canReceive() const;
 

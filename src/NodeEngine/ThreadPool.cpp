@@ -22,8 +22,8 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <cstring>
 #include <functional>
-#include <string.h>
 #include <utility>
 namespace NES::NodeEngine {
 

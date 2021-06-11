@@ -23,7 +23,7 @@ namespace NES {
 namespace QueryCompilation {
 class IFStatement : public Statement {
   public:
-    IFStatement(const Statement& cond_expr);
+    explicit IFStatement(const Statement& cond_expr);
 
     IFStatement(const Statement& cond_expr, const Statement& cond_true_stmt);
 

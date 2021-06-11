@@ -92,7 +92,7 @@ class GlobalQueryNode : public Node {
     const std::string toString() const override;
 
   private:
-    GlobalQueryNode(uint64_t id);
+    explicit GlobalQueryNode(uint64_t id);
     GlobalQueryNode(uint64_t id, OperatorNodePtr operatorNode);
 
     uint64_t id;

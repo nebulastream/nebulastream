@@ -65,8 +65,8 @@ int main(int argc, char** argv) {
 
     for (int i = 1; i < argc; ++i) {
         commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find("=")),
-                                      string(argv[i]).substr(string(argv[i]).find("=") + 1, string(argv[i]).length() - 1)));
+            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
+                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
     }
 
     auto workerConfigPath = commandLineParams.find("--workerConfigPath");

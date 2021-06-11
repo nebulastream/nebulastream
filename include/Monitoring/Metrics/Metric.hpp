@@ -57,7 +57,7 @@ class Metric {
      * @param arbitrary parameter of any type
      */
     template<typename T>
-    Metric(T x) : self(std::make_unique<model<T>>(std::move(x))) {}
+    explicit Metric(T x) : self(std::make_unique<model<T>>(std::move(x))) {}
 
     /**
      * @brief copy ctor to properly handle the templated values

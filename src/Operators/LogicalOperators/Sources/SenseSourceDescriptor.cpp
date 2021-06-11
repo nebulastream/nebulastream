@@ -37,8 +37,9 @@ SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string 
 }
 
 bool SenseSourceDescriptor::equal(SourceDescriptorPtr other) {
-    if (!other->instanceOf<SenseSourceDescriptor>())
+    if (!other->instanceOf<SenseSourceDescriptor>()) {
         return false;
+}
     auto otherSource = other->as<SenseSourceDescriptor>();
     return udfs == otherSource->getUdfs() && getSchema()->equals(otherSource->getSchema());
 }

@@ -31,7 +31,7 @@ namespace QueryCompilation {
  */
 class UserDefinedDataType final : public GeneratableDataType {
   public:
-    UserDefinedDataType(const StructDeclaration& decl);
+    explicit UserDefinedDataType(const StructDeclaration& decl);
 
     /**
     * @brief Generated code for a type definition. This is mainly crucial for structures.

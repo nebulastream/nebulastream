@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_API_SHAREDQUERYID_HPP_
 #define NES_INCLUDE_API_SHAREDQUERYID_HPP_
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief this alias represent a running query plan that composed of 1 or more original query plans

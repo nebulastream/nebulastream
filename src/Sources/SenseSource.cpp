@@ -19,7 +19,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Util/Logger.hpp>
-#include <assert.h>
+#include <cassert>
 #include <fstream>
 #include <sstream>
 #include <string>

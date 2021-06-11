@@ -28,7 +28,7 @@ namespace QueryCompilation {
  */
 class LowerLogicalToPhysicalOperators {
   public:
-    LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider);
+    explicit LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider);
     static LowerLogicalToPhysicalOperatorsPtr create(PhysicalOperatorProviderPtr provider);
     QueryPlanPtr apply(QueryPlanPtr queryPlan);
 

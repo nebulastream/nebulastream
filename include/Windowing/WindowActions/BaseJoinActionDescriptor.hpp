@@ -31,7 +31,7 @@ class BaseJoinActionDescriptor {
     virtual JoinActionType getActionType() = 0;
 
   protected:
-    BaseJoinActionDescriptor(JoinActionType action);
+    explicit BaseJoinActionDescriptor(JoinActionType action);
     JoinActionType action;
 };
 

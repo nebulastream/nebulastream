@@ -47,7 +47,7 @@ class DumpContext {
   public:
     static DumpContextPtr create();
     static DumpContextPtr create(std::string contextIdentifier);
-    DumpContext(std::string contextIdentifier);
+    explicit DumpContext(std::string contextIdentifier);
     /**
      * @brief Registers a new dump handler to the context.
      * @param debugDumpHandler

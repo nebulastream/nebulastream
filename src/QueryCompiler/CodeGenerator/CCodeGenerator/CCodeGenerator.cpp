@@ -86,9 +86,9 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string str
 
 const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& structDeclaration,
                                                             const AttributeFieldPtr field) {
-    if (structDeclaration.getField(field->getName()))
+    if (structDeclaration.getField(field->getName())) {
         return std::make_shared<VariableDeclaration>(structDeclaration.getVariableDeclaration(field->getName()));
-    else {
+    } else {
         return VariableDeclarationPtr();
     }
 }

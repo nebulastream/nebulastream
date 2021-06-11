@@ -23,7 +23,7 @@ namespace NES {
  */
 class UnaryExpressionNode : public ExpressionNode {
   public:
-    UnaryExpressionNode(DataTypePtr stamp);
+    explicit UnaryExpressionNode(DataTypePtr stamp);
 
     /**
      * @brief set the child node of this expression.

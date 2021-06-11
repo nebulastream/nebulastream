@@ -27,7 +27,7 @@ namespace NES::Windowing {
 template<class PartialAggregateType>
 class WindowSliceStore {
   public:
-    WindowSliceStore(PartialAggregateType value)
+    explicit WindowSliceStore(PartialAggregateType value)
         : defaultValue(value), sliceMetaData(std::vector<SliceMetaData>()),
           partialAggregates(std::vector<PartialAggregateType>()) {}
 

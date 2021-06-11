@@ -24,7 +24,7 @@
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
-#include <string.h>
+#include <cstring>
 #include <utility>
 #include <z3++.h>
 

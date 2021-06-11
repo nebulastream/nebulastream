@@ -36,7 +36,7 @@ using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
 class CoordinatorRPCClient {
   public:
-    CoordinatorRPCClient(std::string address);
+    explicit CoordinatorRPCClient(std::string address);
 
     ~CoordinatorRPCClient();
     /**

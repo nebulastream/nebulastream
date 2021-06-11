@@ -239,7 +239,7 @@ class QueryPlan {
      * @brief initialize query plan with a root operator
      * @param rootOperator
      */
-    QueryPlan(OperatorNodePtr rootOperator);
+    explicit QueryPlan(OperatorNodePtr rootOperator);
 
     /**
      * @brief initialize an empty query plan

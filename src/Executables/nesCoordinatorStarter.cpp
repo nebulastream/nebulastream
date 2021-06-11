@@ -56,8 +56,8 @@ int main(int argc, const char* argv[]) {
 
     for (int i = 1; i < argc; ++i) {
         commandLineParams.insert(
-            pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find("=")),
-                                 string(argv[i]).substr(string(argv[i]).find("=") + 1, string(argv[i]).length() - 1)));
+            pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
+                                 string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
     }
 
     auto configPath = commandLineParams.find("--configPath");

@@ -24,7 +24,7 @@ namespace NES {
  */
 class MulExpressionNode : public ArithmeticalBinaryExpressionNode {
   public:
-    MulExpressionNode(DataTypePtr stamp);
+    explicit MulExpressionNode(DataTypePtr stamp);
     ~MulExpressionNode() = default;
     /**
      * @brief Create a new Mul expression

@@ -30,7 +30,7 @@ namespace NES::NodeEngine {
  */
 class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
   public:
-    PhysicalField(uint64_t bufferOffset);
+    explicit PhysicalField(uint64_t bufferOffset);
     ~PhysicalField();
     /**
      * @brief Casts the PhysicalField to a ValueField of a specific type.

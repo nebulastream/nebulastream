@@ -19,7 +19,7 @@
 namespace NES::Windowing {
 
 WindowTriggerPolicyPtr OnTimeTriggerPolicyDescription::create(uint64_t triggerTimeInMs) {
-    return std::make_shared<OnTimeTriggerPolicyDescription>(OnTimeTriggerPolicyDescription(std::move(triggerTimeInMs)));
+    return std::make_shared<OnTimeTriggerPolicyDescription>(OnTimeTriggerPolicyDescription(triggerTimeInMs));
 }
 TriggerType OnTimeTriggerPolicyDescription::getPolicyType() { return this->policy; }
 

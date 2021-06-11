@@ -55,7 +55,7 @@ public:
      */
     class bucket {
     public:
-        bucket() noexcept  {}
+        bucket() noexcept  = default;
 
         [[nodiscard]] const value_type &kvpair(size_type ind) const {
             return *static_cast<const value_type *>(
@@ -134,7 +134,7 @@ public:
               buckets_(transfer(bc.hashpower(), bc, std::false_type())) {}
 
     libcuckoo_bucket_container(libcuckoo_bucket_container &&bc)
-            : allocator_(std::move(bc.allocator_)), bucket_allocator_(allocator_),
+ noexcept             : allocator_(std::move(bc.allocator_)), bucket_allocator_(allocator_),
               hashpower_(bc.hashpower()), buckets_(std::move(bc.buckets_)) {
         // De-activate the other buckets container
         bc.buckets_ = nullptr;
@@ -156,7 +156,7 @@ public:
         return *this;
     }
 
-    libcuckoo_bucket_container &operator=(libcuckoo_bucket_container &&bc) {
+    libcuckoo_bucket_container &operator=(libcuckoo_bucket_container &&bc)  noexcept {
         destroy_buckets();
         move_assign(bc, typename traits_::propagate_on_container_move_assignment());
         return *this;

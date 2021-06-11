@@ -30,7 +30,7 @@ namespace QueryCompilation {
  */
 class AnonymousUserDefinedDataType final : public GeneratableDataType {
   public:
-    AnonymousUserDefinedDataType(const std::string name);
+    explicit AnonymousUserDefinedDataType(const std::string name);
 
     /**
      * @brief Generated code for a type definition. This is mainly crucial for structures.

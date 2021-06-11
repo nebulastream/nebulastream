@@ -32,8 +32,9 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
     : varDeclaration(std::move(varDeclaration)), condition(std::move(condition)), advance(std::move(advance)),
       body(new CompoundStatement()) {
     for (const auto& stmt : loop_body) {
-        if (stmt)
+        if (stmt) {
             body->addStatement(stmt);
+}
     }
 }
 
@@ -56,8 +57,9 @@ const CodeExpressionPtr ForLoopStatement::getCode() const {
 }
 
 void ForLoopStatement::addStatement(StatementPtr stmt) {
-    if (stmt)
+    if (stmt) {
         body->addStatement(stmt);
+}
 }
 
 ForLoopStatement::~ForLoopStatement() = default;

@@ -21,7 +21,7 @@
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <Util/Logger.hpp>
-#include <assert.h>
+#include <cassert>
 #include <utility>
 
 namespace NES::NodeEngine {

@@ -69,7 +69,7 @@ class SemanticQueryValidation {
     /**
      * @brief Constructor for the SemanticQueryValidation class
      */
-    SemanticQueryValidation(StreamCatalogPtr streamCatalog);
+    explicit SemanticQueryValidation(StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation

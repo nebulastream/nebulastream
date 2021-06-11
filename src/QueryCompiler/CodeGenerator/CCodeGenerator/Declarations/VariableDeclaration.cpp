@@ -30,10 +30,11 @@ const std::string VariableDeclaration::getIdentifierName() const { return identi
 
 const Code VariableDeclaration::getTypeDefinitionCode() const {
     CodeExpressionPtr code = type_->getTypeDefinitionCode();
-    if (code)
+    if (code) {
         return code->code_;
-    else
+    } else {
         return Code();
+}
 }
 
 const Code VariableDeclaration::getCode() const {

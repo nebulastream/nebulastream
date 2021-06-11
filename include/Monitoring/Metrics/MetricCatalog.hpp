@@ -42,7 +42,7 @@ class MetricCatalog {
     bool add(MetricValueType type, const Metric&& metric);
 
   private:
-    MetricCatalog(std::map<MetricValueType, Metric> metrics);
+    explicit MetricCatalog(std::map<MetricValueType, Metric> metrics);
 
   private:
     std::map<MetricValueType, Metric> metricValueTypeToMetricMap;

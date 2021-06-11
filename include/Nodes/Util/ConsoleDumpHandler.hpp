@@ -30,7 +30,7 @@ class ConsoleDumpHandler : public DumpHandler {
 
   public:
     static std::shared_ptr<ConsoleDumpHandler> create(std::ostream& out);
-    ConsoleDumpHandler(std::ostream& out);
+    explicit ConsoleDumpHandler(std::ostream& out);
     /**
     * Dump the specific node and its children.
     */

@@ -30,7 +30,7 @@ class PipelineContext {
     enum PipelineContextArity { Unary, BinaryLeft, BinaryRight };
 
   public:
-    PipelineContext(PipelineContextArity arity = Unary);
+    explicit PipelineContext(PipelineContextArity arity = Unary);
     ~PipelineContext();
     static PipelineContextPtr create();
     void addVariableDeclaration(const Declaration&);

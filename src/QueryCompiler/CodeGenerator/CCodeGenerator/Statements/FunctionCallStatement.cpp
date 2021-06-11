@@ -28,8 +28,9 @@ const CodeExpressionPtr FunctionCallStatement::getCode() const {
     CodeExpressionPtr code;
     code = combine(std::make_shared<CodeExpression>(functionName), std::make_shared<CodeExpression>("("));
     for (i = 0; i < expressions.size(); i++) {
-        if (i != 0)
+        if (i != 0) {
             code = combine(code, std::make_shared<CodeExpression>(", "));
+}
         code = combine(code, expressions.at(i)->getCode());
     }
     code = combine(code, std::make_shared<CodeExpression>(")"));

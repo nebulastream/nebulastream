@@ -31,7 +31,7 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class OperatorNode : public Node {
   public:
-    OperatorNode(OperatorId id);
+    explicit OperatorNode(OperatorId id);
 
     virtual ~OperatorNode() = default;
 
