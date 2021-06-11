@@ -127,7 +127,7 @@ void NodeStatsProvider::readNetworkStats() {
         return;
     }
 
-    struct ifreq ifr{};
+    struct ifreq ifr {};
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
 
     // map to keep track of interface names, to assign all properties to the correct interface.
@@ -196,7 +196,7 @@ void NodeStatsProvider::readMemStats() {
     auto memoryStats = nodeStats->mutable_memorystats();
     memoryStats->Clear();
 
-    struct sysinfo sinfo{};
+    struct sysinfo sinfo {};
 
     auto result = sysinfo(&sinfo);
     if (result == EFAULT) {
@@ -226,7 +226,7 @@ void NodeStatsProvider::readDiskStats() {
     auto diskStates = nodeStats->mutable_diskstats();
     diskStates->Clear();
 
-    struct statvfs svfs{};
+    struct statvfs svfs {};
     int ret = statvfs("/", &svfs);
     if (ret == EFAULT) {
         NES_ERROR("NodeProperties: could not read Disk statistics");
