@@ -23,7 +23,7 @@ StatementType FunctionCallStatement::getStamentType() const { return FUNC_CALL_S
 
 const CodeExpressionPtr FunctionCallStatement::getCode() const {
 
-    u_int32_t i;
+    u_int32_t i = 0;
 
     CodeExpressionPtr code;
     code = combine(std::make_shared<CodeExpression>(functionName), std::make_shared<CodeExpression>("("));

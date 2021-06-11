@@ -117,17 +117,17 @@ void NodeStatsProvider::readNetworkStats() {
     std::string s1 = hostnameChar;
     networkStats->set_hostname(hostnameChar);
     networkStats->set_port(clientPort);
-    struct ifaddrs* ifa;
+    struct ifaddrs* ifa = nullptr;
 
-    int family, s;
+    int family = 0, s = 0;
     char host[NI_MAXHOST];
-    struct ifaddrs* ifaddr;
+    struct ifaddrs* ifaddr = nullptr;
     if (getifaddrs(&ifaddr) == -1) {
         NES_ERROR("NodeProperties: could not read Network statistics: getifaddrs failed");
         return;
     }
 
-    struct ifreq ifr;
+    struct ifreq ifr{};
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
 
     // map to keep track of interface names, to assign all properties to the correct interface.
@@ -146,7 +146,7 @@ void NodeStatsProvider::readNetworkStats() {
 
         family = ifa->ifa_addr->sa_family;
 
-        NodeStats_NetworkStats_Interface* interface;
+        NodeStats_NetworkStats_Interface* interface = nullptr;
         // check if the interface was already found before
         auto found = keeper.find(ifa->ifa_name);
         if (found != keeper.cend()) {
@@ -196,7 +196,7 @@ void NodeStatsProvider::readMemStats() {
     auto memoryStats = nodeStats->mutable_memorystats();
     memoryStats->Clear();
 
-    struct sysinfo sinfo;
+    struct sysinfo sinfo{};
 
     auto result = sysinfo(&sinfo);
     if (result == EFAULT) {
@@ -226,7 +226,7 @@ void NodeStatsProvider::readDiskStats() {
     auto diskStates = nodeStats->mutable_diskstats();
     diskStates->Clear();
 
-    struct statvfs svfs;
+    struct statvfs svfs{};
     int ret = statvfs("/", &svfs);
     if (ret == EFAULT) {
         NES_ERROR("NodeProperties: could not read Disk statistics");

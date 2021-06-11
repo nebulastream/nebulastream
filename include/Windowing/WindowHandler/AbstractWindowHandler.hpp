@@ -207,8 +207,8 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
     std::atomic_bool running;
     WindowManagerPtr windowManager;
     std::map<uint64_t, uint64_t> originIdToMaxTsMap;
-    uint64_t lastWatermark;
-    uint64_t numberOfInputEdges;
+    uint64_t lastWatermark{};
+    uint64_t numberOfInputEdges{};
 };
 
 }// namespace NES::Windowing

@@ -36,7 +36,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
     NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryPlan->getQueryId()
                                                                           << " plan=" << queryPlan->toString());
-    bool success;
+    bool success = 0;
     try {
         success = nodeEngine->registerQueryInNodeEngine(queryPlan);
     } catch (std::exception& error) {

@@ -2032,7 +2032,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 NodeEngine::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(PipelineContextPtr code) {
     std::string src = generateCode(code);
     auto compiledCode = compiler->compile(src);
-    PipelineStageArity arity;
+    PipelineStageArity arity = 0;
     switch (code->arity) {
         case PipelineContext::Unary: arity = Unary; break;
         case PipelineContext::BinaryLeft: arity = BinaryLeft; break;

@@ -153,7 +153,7 @@ class WindowedJoinSliceListStore {
     }
 
   public:
-    std::atomic<uint64_t> nextEdge;
+    std::atomic<uint64_t> nextEdge{};
 
   private:
     mutable std::recursive_mutex internalMutex;

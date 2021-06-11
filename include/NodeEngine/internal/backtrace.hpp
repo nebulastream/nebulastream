@@ -836,7 +836,7 @@ class Unwinder {
 
 template<typename F>
 size_t unwind(F f, size_t depth) {
-    Unwinder<F> unwinder;
+    Unwinder<F> unwinder{};
     return unwinder(f, depth);
 }
 
@@ -1675,7 +1675,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
     struct inliners_search_cb {
         void operator()(Dwarf_Die* die) {
             switch (dwarf_tag(die)) {
-                const char* name;
+                const char* name = nullptr;
                 case DW_TAG_subprogram:
                     if ((name = dwarf_diename(die))) {
                         trace.source.function = name;
@@ -1708,7 +1708,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
     };
 
     static bool die_has_pc(Dwarf_Die* die, Dwarf_Addr pc) {
-        Dwarf_Addr low, high;
+        Dwarf_Addr low = 0, high = 0;
 
         // continuous range
         if (dwarf_hasattr(die, DW_AT_low_pc) && dwarf_hasattr(die, DW_AT_high_pc)) {
@@ -1718,7 +1718,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
             if (dwarf_highpc(die, &high) != 0) {
                 Dwarf_Attribute attr_mem;
                 Dwarf_Attribute* attr = dwarf_attr(die, DW_AT_high_pc, &attr_mem);
-                Dwarf_Word value;
+                Dwarf_Word value = 0;
                 if (dwarf_formudata(attr, &value) != 0) {
                     return false;
                 }
@@ -1728,7 +1728,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
         }
 
         // non-continuous range.
-        Dwarf_Addr base;
+        Dwarf_Addr base = 0;
         ptrdiff_t offset = 0;
         while ((offset = dwarf_ranges(die, offset, &base, &low, &high)) > 0) {
             if (pc >= low && pc < high) {
@@ -1817,7 +1817,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
         }
 
         Dwarf_Files* files = nullptr;
-        size_t nfiles;
+        size_t nfiles = 0;
         dwarf_getsrcfiles(cudie, &files, &nfiles);
         if (!files) {
             return nullptr;
@@ -3370,7 +3370,7 @@ class SourceFile {
         _file->clear();
         _file->seekg(0);
         string line;
-        unsigned line_idx;
+        unsigned line_idx = 0;
 
         for (line_idx = 1; line_idx < line_start; ++line_idx) {
             std::getline(*_file, line);
@@ -3806,7 +3806,7 @@ class SignalHandling {
         }
 
         for (int posix_signal : posix_signals) {
-            struct sigaction action;
+            struct sigaction action{};
             memset(&action, 0, sizeof action);
             action.sa_flags = static_cast<int>(SA_SIGINFO | SA_ONSTACK | SA_NODEFER | SA_RESETHAND);
             sigfillset(&action.sa_mask);

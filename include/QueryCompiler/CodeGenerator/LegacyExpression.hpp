@@ -59,7 +59,7 @@ class Predicate : public LegacyExpression {
     BinaryOperatorType op;
     LegacyExpressionPtr left;
     LegacyExpressionPtr right;
-    bool bracket;
+    bool bracket{};
     std::string functionCallOverload;
 };
 

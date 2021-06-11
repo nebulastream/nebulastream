@@ -578,7 +578,7 @@ class TestUtils {
         NES_INFO("TestUtil: Executen GET request on URI " << baseUri);
         web::json::value json_return;
         web::http::client::http_client client(baseUri);
-        size_t nodeNo;
+        size_t nodeNo = 0;
 
         for (int i = 0; i < maxTimeout; i++) {
             try {

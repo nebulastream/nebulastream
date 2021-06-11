@@ -80,7 +80,7 @@ class GenericBus {
     /**
      * @brief the file descriptor
      */
-    int file;
+    int file{};
 
     /**
      * @brief the path of the file on disk

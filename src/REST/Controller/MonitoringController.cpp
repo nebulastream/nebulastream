@@ -95,7 +95,7 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
                             if (!strNodeId.empty() && std::all_of(strNodeId.begin(), strNodeId.end(), ::isdigit)) {
                                 //if the arg is a valid number and node id
                                 uint64_t nodeId = std::stoi(strNodeId);
-                                uint16_t promPort;
+                                uint16_t promPort = 0;
 
                                 if (req.has_field("prom-port")) {
                                     promPort = req.at("prom-port").as_integer();

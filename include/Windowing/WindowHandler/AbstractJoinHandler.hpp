@@ -188,12 +188,12 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
     Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     std::atomic_bool running{false};
     Windowing::WindowManagerPtr windowManager;
-    uint64_t originId;
+    uint64_t originId{};
     std::map<uint64_t, uint64_t> originIdToMaxTsMapLeft;
     std::map<uint64_t, uint64_t> originIdToMaxTsMapRight;
-    uint64_t lastWatermark;
-    uint64_t numberOfInputEdgesLeft;
-    uint64_t numberOfInputEdgesRight;
+    uint64_t lastWatermark{};
+    uint64_t numberOfInputEdgesLeft{};
+    uint64_t numberOfInputEdgesRight{};
 };
 
 }// namespace NES::Join

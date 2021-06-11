@@ -51,12 +51,12 @@ bool I2CBus::readData(int address, int size, unsigned char* buffer) {
 
 int I2CBus::rawI2CRdrw(uint8_t address, uint8_t readWriteOperation, uint8_t size, unsigned char* buffer) {
     // envelope data for ioctl
-    struct i2c_smbus_ioctl_data ioctlData;
+    struct i2c_smbus_ioctl_data ioctlData{};
     // the actual data to send over i2c
-    union i2c_smbus_data smbusData;
+    union i2c_smbus_data smbusData{};
 
     // the return status
-    int returnStatus;
+    int returnStatus = 0;
 
     if (size > I2C_SMBUS_BLOCK_MAX) {
         // TODO: replace with NES_ERROR

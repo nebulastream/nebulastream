@@ -103,7 +103,7 @@ void BufferManager::initialize(uint32_t bufferSize, uint32_t numOfBuffers, uint3
         if (withAlignment == 0) {
             ptr = static_cast<uint8_t*>(malloc(realSize));
         } else {
-            void* tmp;
+            void* tmp = nullptr;
             NES_ASSERT(posix_memalign(&tmp, withAlignment, realSize) == 0, "memory allocation failed with alignment");
             ptr = static_cast<uint8_t*>(tmp);
         }
