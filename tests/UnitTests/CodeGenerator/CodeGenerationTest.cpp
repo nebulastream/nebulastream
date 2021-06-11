@@ -207,7 +207,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         // Negation
         auto negate =
             ((~VarRefStatement(varDeclI) >= VarRefStatement(varDeclJ)
-                  << ConstantExpressionStatement(tf.createValueType(
+                  << ConstantExpressionStatement(NES::QueryCompilation::GeneratableTypesFactory::createValueType(
                          DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))))[VarRefStatement(varDeclJ)]);
         EXPECT_EQ(negate.getCode()->code_, "~i>=j<<0[j]");
 
@@ -307,7 +307,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
             ASSIGNMENT_OP,
             BinaryOperatorStatement(VarRefStatement(varDeclJ),
                                     GREATER_THAN_OP,
-                                    ConstantExpressionStatement(tf.createValueType(
+                                    ConstantExpressionStatement(NES::QueryCompilation::GeneratableTypesFactory::createValueType(
                                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "5")))));
 
         EXPECT_EQ(compareAssignment.getCode()->code_, "k=j>5");
@@ -315,7 +315,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
     {
         /* check code generation of pointers */
-        auto val = tf.createPointer(tf.createDataType(DataTypeFactory::createInt32()));
+        auto val = NES::QueryCompilation::GeneratableTypesFactory::createPointer(tf.createDataType(DataTypeFactory::createInt32()));
         assert(val != nullptr);
         auto variableDeclarationI =
             VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
@@ -341,18 +341,18 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                 .addField(variableDeclarationP);
 
         // check code generation for different assignment type
-        auto varDeclTupleBuffer = VariableDeclaration::create(tf.createUserDefinedType(tupleBufferStructDecl), "buffer");
+        auto varDeclTupleBuffer = VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl), "buffer");
         EXPECT_EQ(varDeclTupleBuffer.getCode(), "TupleBuffer");
 
         auto varDeclTupleBufferPointer =
-            VariableDeclaration::create(tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl)), "buffer");
+            VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl)), "buffer");
         EXPECT_EQ(varDeclTupleBufferPointer.getCode(), "TupleBuffer* buffer");
 
-        auto pointerDataType = tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl));
+        auto pointerDataType = NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl));
         EXPECT_EQ(pointerDataType->getCode()->code_, "TupleBuffer*");
 
         auto typeDefinition =
-            VariableDeclaration::create(tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl)), "buffer")
+            VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl)), "buffer")
                 .getTypeDefinitionCode();
         EXPECT_EQ(typeDefinition, "struct TupleBuffer{\nuint64_t num_tuples = 0;\nint32_t* array;\n}buffer");
     }
@@ -363,9 +363,9 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto tf = GeneratableTypesFactory();
-    auto tupleBufferType = tf.createAnonymusDataType("NodeEngine::TupleBuffer");
-    auto pipelineExecutionContextType = tf.createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
-    auto workerContextType = tf.createAnonymusDataType("NodeEngine::WorkerContext");
+    auto tupleBufferType = NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::TupleBuffer");
+    auto pipelineExecutionContextType = NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
+    auto workerContextType = NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::WorkerContext");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
     auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
 
@@ -383,15 +383,15 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
             .addField(VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "sum"));
 
     /* === declarations === */
-    auto varDeclTupleBuffers = VariableDeclaration::create(tf.createReference(tupleBufferType), "input_buffer");
+    auto varDeclTupleBuffers = VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createReference(tupleBufferType), "input_buffer");
     auto varDeclPipelineExecutionContext =
-        VariableDeclaration::create(tf.createReference(pipelineExecutionContextType), "pipelineExecutionContext");
-    auto varDeclWorkerContext = VariableDeclaration::create(tf.createReference(workerContextType), "workerContext");
+        VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createReference(pipelineExecutionContextType), "pipelineExecutionContext");
+    auto varDeclWorkerContext = VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createReference(workerContextType), "workerContext");
     /* Tuple *tuples; */
-    auto varDeclTuple = VariableDeclaration::create(tf.createPointer(tf.createUserDefinedType(structDeclTuple)), "tuples");
+    auto varDeclTuple = VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclTuple)), "tuples");
 
     auto varDeclResultTuple =
-        VariableDeclaration::create(tf.createPointer(tf.createUserDefinedType(structDeclResultTuple)), "resultTuples");
+        VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclResultTuple)), "resultTuples");
 
     /* variable declarations for fields inside structs */
     auto declFieldCampaignId = structDeclTuple.getVariableDeclaration("campaign_id");
@@ -408,7 +408,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
                                                  DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0"));
     /* ExecutionResult ret = Ok; */
     auto varDeclReturn =
-        VariableDeclaration::create(tf.createAnonymusDataType("ExecutionResult"),
+        VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("ExecutionResult"),
                                     "ret",
                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"));
     /* int32_t sum = 0;*/
@@ -422,7 +422,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     BinaryOperatorStatement initTuplePtr(
         VarRef(varDeclTuple)
             .assign(TypeCast(VarRefStatement(varDeclTupleBuffers).accessRef(getBufferOfTupleBuffer),
-                             tf.createPointer(tf.createUserDefinedType(structDeclTuple)))));
+                             NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclTuple)))));
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
     auto resultTupleBufferDeclaration = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
@@ -433,7 +433,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     BinaryOperatorStatement initResultTuplePtr(
         VarRef(varDeclResultTuple)
             .assign(TypeCast(VarRef(resultTupleBufferDeclaration).accessRef(getBufferOfTupleBuffer),
-                             tf.createPointer(tf.createUserDefinedType(structDeclResultTuple)))));
+                             NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclResultTuple)))));
 
     /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
     FOR loopStmt(varDeclId.copy(),
@@ -455,7 +455,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto mainFunction =
         FunctionDefinition::create("execute")
             //                            ->returns(tf.createDataType(DataTypeFactory::createUInt32()))
-            ->returns(tf.createAnonymusDataType("ExecutionResult"))
+            ->returns(NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("ExecutionResult"))
             ->addParameter(varDeclTupleBuffers)
             ->addParameter(varDeclPipelineExecutionContext)
             ->addParameter(varDeclWorkerContext)
@@ -469,7 +469,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
             ->addStatement(StatementPtr(new ForLoopStatement(loopStmt)))
             ->addStatement(
                 /*   result_tuples[0].sum = sum; */
-                VarRef(varDeclResultTuple)[Constant(tf.createValueType(
+                VarRef(varDeclResultTuple)[Constant(NES::QueryCompilation::GeneratableTypesFactory::createValueType(
                                                DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0")))]
                     .accessRef(VarRef(varDeclFieldResultTupleSum))
                     .assign(VarRef(varDeclSum))
@@ -496,7 +496,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     createFunction->addStatement(returnStatement);
     ;
     createFunction->returns(SharedPointerGen::createSharedPtrType(
-        GeneratableTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
+        NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileB.addDeclaration(pipelineNamespace->getDeclaration()).build();
 
@@ -524,8 +524,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                   nodeEngine->getBufferManager(),
                                                                   std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
-    stage->setup(*context.get());
-    stage->start(*context.get());
+    stage->setup(*context);
+    stage->start(*context);
     ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), ExecutionResult::Ok);
     auto outputBuffer = context->buffers[0];
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));

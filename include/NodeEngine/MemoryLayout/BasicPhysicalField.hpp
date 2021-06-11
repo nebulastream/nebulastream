@@ -38,7 +38,7 @@ class BasicPhysicalField : public PhysicalField {
      * @param value the value we want to write
      */
     void write(TupleBuffer& tupleBuffer, ValueType value) {
-        auto byteBuffer = tupleBuffer.getBuffer<int8_t>();
+        auto *byteBuffer = tupleBuffer.getBuffer<int8_t>();
         // interpret the target address as value type and write value to tuple buffer(ValueType *) byteBuffer[offset]) = value;
         NES_ASSERT(bufferOffset < tupleBuffer.getBufferSize(), "write will write over the end of a buffer");
         ((ValueType*) (&byteBuffer[bufferOffset]))[0] = value;
@@ -50,7 +50,7 @@ class BasicPhysicalField : public PhysicalField {
      * @return ValueType
      */
     ValueType read(TupleBuffer& tupleBuffer) {
-        auto byteBuffer = tupleBuffer.getBuffer<int8_t>();
+        auto *byteBuffer = tupleBuffer.getBuffer<int8_t>();
         // interpret the target address as value type and read value from tuple buffer
         return ((ValueType*) (&byteBuffer[bufferOffset]))[0];
     }

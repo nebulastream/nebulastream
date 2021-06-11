@@ -144,10 +144,7 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
 }
 
 bool JoinLogicalOperatorNode::equal(NodePtr const &rhs) const {
-    if (rhs->instanceOf<JoinLogicalOperatorNode>()) {
-        return true;
-    }
-    return false;
+    return rhs->instanceOf<JoinLogicalOperatorNode>();
 }
 
 void JoinLogicalOperatorNode::inferStringSignature() {

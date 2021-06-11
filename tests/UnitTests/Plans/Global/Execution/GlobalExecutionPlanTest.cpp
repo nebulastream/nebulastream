@@ -52,7 +52,7 @@ TEST_F(GlobalExecutionPlanTest, testCreateEmptyGlobalExecutionPlan) {
     std::string actualPlan = globalExecutionPlan->getAsString();
     NES_INFO("Actual query plan \n" << actualPlan);
 
-    std::string expectedPlan = "";
+    std::string expectedPlan;
 
     ASSERT_EQ(expectedPlan, actualPlan);
 }

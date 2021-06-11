@@ -58,7 +58,7 @@ int64_t PipelineContext::registerOperatorHandler(const NodeEngine::Execution::Op
     return operatorHandlers.size() - 1;
 }
 
-const uint64_t PipelineContext::getHandlerIndex(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler) {
+uint64_t PipelineContext::getHandlerIndex(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler) {
     for (auto i = 0; i < operatorHandlers.size(); i++) {
         if (operatorHandlers[i] == operatorHandler) {
             return i;
@@ -68,7 +68,7 @@ const uint64_t PipelineContext::getHandlerIndex(const NodeEngine::Execution::Ope
     return 0;
 }
 
-const std::vector<NodeEngine::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() {
+std::vector<NodeEngine::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() {
     return this->operatorHandlers;
 }
 }// namespace NES::QueryCompilation

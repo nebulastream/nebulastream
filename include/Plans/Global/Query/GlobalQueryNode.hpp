@@ -56,7 +56,7 @@ class GlobalQueryNode : public Node {
      * @brief Get id of the node
      * @return node id
      */
-    uint64_t getId();
+    uint64_t getId() const;
 
     /**
      * @brief Check if logical operator already present in the node

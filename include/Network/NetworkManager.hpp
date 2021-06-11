@@ -61,14 +61,14 @@ class NetworkManager {
      * @param the underlying network source
      * @return true if the partition was registered for the first time, false otherwise
      */
-    bool registerSubpartitionConsumer(NesPartition nesPartition, const std::shared_ptr<DataEmitter>& emitter);
+    bool registerSubpartitionConsumer(NesPartition nesPartition, const std::shared_ptr<DataEmitter>& emitter) const;
 
     /**
      * @brief This method is called on the receiver side to remove a SubpartitionConsumer.
      * @param the nesPartition
      * @return true if the partition was registered fully, false otherwise
      */
-    bool unregisterSubpartitionConsumer(NesPartition nesPartition);
+    bool unregisterSubpartitionConsumer(NesPartition nesPartition) const;
 
     /**
      * @param nesPartition to check

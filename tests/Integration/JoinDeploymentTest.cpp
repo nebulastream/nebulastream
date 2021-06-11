@@ -128,7 +128,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "";
+    string expectedContent;
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
@@ -1380,7 +1380,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
             uint64_t timestamp;
         };
 
-        auto records = buffer.getBuffer<Record>();
+        auto *records = buffer.getBuffer<Record>();
         auto ts =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
@@ -1392,8 +1392,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
             records[u].timestamp = ts;
         }
 
-        return;
-    };
+           };
 
     wrk1->registerLogicalStream("input1", testSchemaFileName);
 
@@ -1408,7 +1407,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
             uint64_t timestamp;
         };
 
-        auto records = buffer.getBuffer<Record>();
+        auto *records = buffer.getBuffer<Record>();
         auto ts =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
@@ -1419,8 +1418,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
             records[u].timestamp = ts;
         }
 
-        return;
-    };
+           };
 
     wrk2->registerLogicalStream("input2", testSchemaFileName);
     NES::AbstractPhysicalStreamConfigPtr conf2 =

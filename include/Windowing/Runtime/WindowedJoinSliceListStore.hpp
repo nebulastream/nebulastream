@@ -152,7 +152,7 @@ class WindowedJoinSliceListStore {
         content[index].emplace_back(value);
     }
 
-  public:
+  
     std::atomic<uint64_t> nextEdge{};
 
   private:

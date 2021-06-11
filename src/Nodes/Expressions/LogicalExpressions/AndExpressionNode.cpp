@@ -18,7 +18,7 @@
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 namespace NES {
 
-AndExpressionNode::AndExpressionNode() : LogicalBinaryExpressionNode(){};
+AndExpressionNode::AndExpressionNode()  {};
 
 AndExpressionNode::AndExpressionNode(AndExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 

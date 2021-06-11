@@ -72,10 +72,7 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
 }
 
 bool UnionLogicalOperatorNode::equal(NodePtr const &rhs) const {
-    if (rhs->instanceOf<UnionLogicalOperatorNode>()) {
-        return true;
-    }
-    return false;
+    return rhs->instanceOf<UnionLogicalOperatorNode>();
 }
 void UnionLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();

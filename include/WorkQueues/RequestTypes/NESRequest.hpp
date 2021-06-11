@@ -37,7 +37,7 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
      * @brief Get the query id to stop
      * @return query id to stop
      */
-    QueryId getQueryId();
+    QueryId getQueryId() const;
 
     /**
      * @brief Checks if the current node is of type NodeType

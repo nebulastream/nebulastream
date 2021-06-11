@@ -184,7 +184,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
             zmq::message_t headerEnvelope;
             dispatcherSocket.recv(&identityEnvelope);
             dispatcherSocket.recv(&headerEnvelope);
-            auto msgHeader = headerEnvelope.data<Messages::MessageHeader>();
+            auto *msgHeader = headerEnvelope.data<Messages::MessageHeader>();
 
             if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
                 // TODO handle error -- need to discuss how we handle errors on the node engine
@@ -220,7 +220,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto optRecvStatus = dispatcherSocket.recv(bufferHeaderMsg, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
                     // parse buffer header
-                    auto bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
+                    auto *bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
                     auto nesPartition = *identityEnvelope.data<NesPartition>();
 
                     NES_TRACE("ZmqServer: DataBuffer received from origin=" << bufferHeader->originId << " and NesPartition="

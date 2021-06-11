@@ -104,7 +104,7 @@ bool MonitoringPlan::addMetric(MetricValueType metric) {
 }
 
 void MonitoringPlan::addMetrics(const std::vector<MetricValueType>& metrics) {
-    for (auto& m : metrics) {
+    for (const auto& m : metrics) {
         addMetric(m);
     }
 }
@@ -136,7 +136,7 @@ MetricGroupPtr MonitoringPlan::createMetricGroup(const MetricCatalogPtr&) const 
     return metricGroup;
 }
 
-GroupedValues MonitoringPlan::fromBuffer(const std::shared_ptr<Schema>& schema, NodeEngine::TupleBuffer& buf) {
+GroupedValues MonitoringPlan::fromBuffer(const std::shared_ptr<Schema>& schema, NodeEngine::TupleBuffer& buf) const {
     auto output = GroupedValues();
 
     if (cpuMetrics) {
@@ -181,7 +181,7 @@ bool MonitoringPlan::hasMetric(MetricValueType metric) const {
     }
 }
 
-SchemaPtr MonitoringPlan::createSchema() {
+SchemaPtr MonitoringPlan::createSchema() const {
     MetricGroupPtr metricGroup = createMetricGroup(MetricCatalog::NesMetrics());
     return metricGroup->createSchema();
 }

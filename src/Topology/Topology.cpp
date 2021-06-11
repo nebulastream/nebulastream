@@ -23,7 +23,7 @@
 
 namespace NES {
 
-Topology::Topology() : rootNode(nullptr), topologyLock() { NES_DEBUG("Topology()"); }
+Topology::Topology() : rootNode(nullptr) { NES_DEBUG("Topology()"); }
 
 Topology::~Topology() { NES_DEBUG("~Topology()"); }
 
@@ -75,12 +75,12 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<Topolog
     std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Finding path between set of start and destination nodes");
     std::vector<TopologyNodePtr> startNodesOfGraph;
-    for (auto& sourceNode : sourceNodes) {
+    for (const auto& sourceNode : sourceNodes) {
         NES_TRACE("Topology: Finding all paths between the source node " << sourceNode << " and a set of destination nodes");
         std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
         TopologyNodePtr startNodeOfGraph = find(sourceNode, destinationNodes, mapOfUniqueNodes);
         NES_TRACE("Topology: Validate if all destination nodes reachable");
-        for (auto& destinationNode : destinationNodes) {
+        for (const auto& destinationNode : destinationNodes) {
             if (mapOfUniqueNodes.find(destinationNode->getId()) == mapOfUniqueNodes.end()) {
                 NES_ERROR("Topology: Unable to find path between source node "
                           << sourceNode->toString() << " and destination node " << destinationNode->toString());
@@ -100,12 +100,12 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<Topology
 
     NES_DEBUG("Topology: Compute a map storing number of times a node occurred in different sub-graphs");
     std::map<uint64_t, uint32_t> nodeCountMap;
-    for (auto& startNode : startNodes) {
+    for (const auto& startNode : startNodes) {
         NES_TRACE("Topology: Fetch all ancestor nodes of the given start node");
         const std::vector<NodePtr> family = startNode->getAndFlattenAllAncestors();
         NES_TRACE(
             "Topology: Iterate over the family members and add the information in the node count map about the node occurrence");
-        for (auto& member : family) {
+        for (const auto& member : family) {
             uint64_t nodeId = member->as<TopologyNode>()->getId();
             if (nodeCountMap.find(nodeId) != nodeCountMap.end()) {
                 NES_TRACE("Topology: Family member already present increment the occurrence count");
@@ -121,7 +121,7 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<Topology
     NES_DEBUG("Topology: Iterate over each sub-graph and compute a single merged sub-graph");
     std::vector<TopologyNodePtr> result;
     std::map<uint64_t, TopologyNodePtr> mergedGraphNodeMap;
-    for (auto& startNode : startNodes) {
+    for (const auto& startNode : startNodes) {
         NES_DEBUG(
             "Topology: Check if the node already present in the new merged graph and add a copy of the node if not present");
         if (mergedGraphNodeMap.find(startNode->getId()) == mergedGraphNodeMap.end()) {
@@ -299,7 +299,7 @@ std::string Topology::toString() {
         }
         topologyInfo << nodeToPrint.first->toString() << std::endl;
 
-        for (auto& child : nodeToPrint.first->getChildren()) {
+        for (const auto& child : nodeToPrint.first->getChildren()) {
             parentToPrint.emplace_front(child->as<TopologyNode>(), nodeToPrint.second + 1);
         }
     }
@@ -317,7 +317,7 @@ bool Topology::nodeExistsWithIpAndPort(const std::string& ipAddress, uint32_t gr
     }
     NES_TRACE("Topology: Traversing the topology using BFS.");
     BreadthFirstNodeIterator bfsIterator(rootNode);
-    for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
+    for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
         auto physicalNode = (*itr)->as<TopologyNode>();
         if (physicalNode->getIpAddress() == ipAddress && physicalNode->getGrpcPort() == grpcPort) {
             NES_TRACE("Topology: Found a physical node " << physicalNode->toString() << " with ip " << ipAddress << " and port "
@@ -429,7 +429,7 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
         }
 
         NES_TRACE("Topology: Add parent of the the node under consideration to the deque for further processing.");
-        for (auto& parent : candidateNode->getParents()) {
+        for (const auto& parent : candidateNode->getParents()) {
             nodesToProcess.push_back(parent);
         }
     }
@@ -477,7 +477,7 @@ TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyN
         }
 
         NES_TRACE("Topology: Add children of the the node under consideration to the deque for further processing.");
-        for (auto& child : candidateNode->getChildren()) {
+        for (const auto& child : candidateNode->getChildren()) {
             nodesToProcess.push_back(child);
         }
     }
@@ -530,7 +530,7 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(const TopologyNodePtr& s
 
     std::vector<TopologyNodePtr> nodesBetween;
     NES_DEBUG("Topology: iterate over parent of the source node and find path between its parent and destination nodes.");
-    for (auto& sourceParent : sourceNode->getParents()) {
+    for (const auto& sourceParent : sourceNode->getParents()) {
         std::vector<TopologyNodePtr> foundBetweenNodes = findNodesBetween(sourceParent->as<TopologyNode>(), destinationNode);
         if (!foundBetweenNodes.empty()) {
             NES_TRACE("Topology: found a path between source nodes parent and destination nodes.");

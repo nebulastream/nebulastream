@@ -36,15 +36,15 @@ std::string MQTTSinkDescriptor::getTopic() const { return topic; }
 
 std::string MQTTSinkDescriptor::getUser() const { return user; }
 
-uint64_t MQTTSinkDescriptor::getMaxBufferedMSGs() { return maxBufferedMSGs; }
+uint64_t MQTTSinkDescriptor::getMaxBufferedMSGs() const { return maxBufferedMSGs; }
 
 MQTTSinkDescriptor::TimeUnits MQTTSinkDescriptor::getTimeUnit() const { return timeUnit; }
 
-uint64_t MQTTSinkDescriptor::getMsgDelay() { return messageDelay; }
+uint64_t MQTTSinkDescriptor::getMsgDelay() const { return messageDelay; }
 
 MQTTSinkDescriptor::ServiceQualities MQTTSinkDescriptor::getQualityOfService() const { return qualityOfService; }
 
-bool MQTTSinkDescriptor::getAsynchronousClient() { return asynchronousClient; }
+bool MQTTSinkDescriptor::getAsynchronousClient() const { return asynchronousClient; }
 
 SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                              std::string&& topic,

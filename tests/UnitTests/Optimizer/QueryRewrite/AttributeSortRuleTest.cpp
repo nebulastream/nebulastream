@@ -68,7 +68,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator1) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
     EXPECT_EQ(expectedSignature, actualSignature);
@@ -92,7 +92,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator2) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
+    const auto *expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
                              ")+FieldAccessNode(c[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
     EXPECT_EQ(expectedSignature, actualSignature);
@@ -118,7 +118,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator3) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(a[Undefined]"
         ")+FieldAccessNode(b[Undefined])+FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -144,7 +144,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator4) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
+    const auto *expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
                              ")*FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
     EXPECT_EQ(expectedSignature, actualSignature);
@@ -169,7 +169,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator5) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(d[Undefined]"
+    const auto *expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(d[Undefined]"
                              ")>FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
     EXPECT_EQ(expectedSignature, actualSignature);
@@ -194,7 +194,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator6) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined]"
+    const auto *expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined]"
                              ")<FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
     EXPECT_EQ(expectedSignature, actualSignature);
@@ -220,7 +220,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator7) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])*FieldAccessNode(c[Undefined]"
+    const auto *expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])*FieldAccessNode(c[Undefined]"
                              ")+FieldAccessNode(d[Undefined]"
                              ")>FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -246,7 +246,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator8) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -272,7 +272,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator9) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -298,7 +298,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator10) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])=="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -324,7 +324,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator11) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])<="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -350,7 +350,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator12) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])&&"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -376,7 +376,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator13) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])||"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -402,7 +402,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator14) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=!FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])&&"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -425,7 +425,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator15) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=ConstantValue(BasicValue(10))+FieldAccessNode(a[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
     EXPECT_EQ(expectedSignature, actualSignature);
@@ -449,7 +449,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator16) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=ConstantValue(BasicValue(10))+FieldAccessNode(c[Undefined]"
+    const auto *expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=ConstantValue(BasicValue(10))+FieldAccessNode(c[Undefined]"
                              ")*FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
     EXPECT_EQ(expectedSignature, actualSignature);
@@ -473,7 +473,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator17) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=ConstantValue(BasicValue(10))+ConstantValue(BasicValue(100))+FieldAccessNode(a["
         "Undefined])+FieldAccessNode(b[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -498,7 +498,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleFilterOperator1) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])<"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -523,7 +523,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator2) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -548,7 +548,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator3) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -573,7 +573,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator4) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])<="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -598,7 +598,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator5) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().FILTER(!FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])=="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();
@@ -623,7 +623,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator6) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature =
+    const auto *expectedSignature =
         "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])=="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringSignature();

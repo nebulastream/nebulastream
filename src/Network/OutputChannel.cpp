@@ -54,7 +54,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
             auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
             NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
 
-            auto recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
+            auto *recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
 
             if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
                 NES_THROW_RUNTIME_ERROR("OutputChannel: Message from server is corrupt!");
@@ -65,7 +65,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                     zmq::message_t recvMsg;
                     auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
-                    auto serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
+                    auto *serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
                     // check if server responds with a ServerReadyMessage
                     // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
                     if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
@@ -123,7 +123,7 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     auto watermark = inputBuffer.getWatermark();
     auto creationTimestamp = inputBuffer.getCreationTimestamp();
     auto payloadSize = tupleSize * numOfTuples;
-    auto ptr = inputBuffer.getBuffer<uint8_t>();
+    auto *ptr = inputBuffer.getBuffer<uint8_t>();
     if (payloadSize == 0) {
         return true;
     }

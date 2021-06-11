@@ -394,7 +394,7 @@ std::vector<NodePtr> Node::getAllRootNodes() {
             rootNodes.push_back(parent);
         } else {
             NES_DEBUG("Node: Iterating over all parents to find more root nodes");
-            for (auto& parentOfParent : parent->getParents()) {
+            for (const auto& parentOfParent : parent->getParents()) {
                 std::vector<NodePtr> parentNodes = parentOfParent->getAllRootNodes();
                 NES_DEBUG("Node: inserting parent nodes into the collection of parent nodes");
                 rootNodes.insert(rootNodes.end(), parentNodes.begin(), parentNodes.end());
@@ -420,7 +420,7 @@ std::vector<NodePtr> Node::getAllLeafNodes() {
             leafNodes.push_back(child);
         } else {
             NES_DEBUG("Node: Iterating over all children to find more leaf nodes");
-            for (auto& childOfChild : child->getChildren()) {
+            for (const auto& childOfChild : child->getChildren()) {
                 std::vector<NodePtr> childrenLeafNodes = childOfChild->getAllLeafNodes();
                 NES_DEBUG("Node: inserting leaf nodes into the collection of leaf nodes");
                 leafNodes.insert(leafNodes.end(), childrenLeafNodes.begin(), childrenLeafNodes.end());
@@ -628,7 +628,7 @@ bool Node::isCyclicHelper(Node& node) {
     node.visited = true;
     node.recStack = true;
     for (auto&& n : node.children) {
-        if (!n->visited && isCyclicHelper(*n.get())) {
+        if (!n->visited && isCyclicHelper(*n)) {
             return true;
         }
         if (n->recStack) {

@@ -78,7 +78,7 @@ class Task {
 
     std::string toString();
 
-    uint64_t getId();
+    uint64_t getId() const;
 
     /**
      * This method returns the reference to the buffer of this task

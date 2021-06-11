@@ -48,13 +48,13 @@ class Predicate : public LegacyExpression {
 
     Predicate(BinaryOperatorType const &op, LegacyExpressionPtr const &left, LegacyExpressionPtr const &right, bool bracket = true);
 
-    const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
-    [[nodiscard]] const std::string toString() const override;
+    ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    [[nodiscard]] std::string toString() const override;
     [[nodiscard]] LegacyExpressionPtr copy() const override;
     [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
     [[nodiscard]] BinaryOperatorType getOperatorType() const;
-    [[nodiscard]] const LegacyExpressionPtr getLeft() const;
-    [[nodiscard]] const LegacyExpressionPtr getRight() const;
+    [[nodiscard]] LegacyExpressionPtr getLeft() const;
+    [[nodiscard]] LegacyExpressionPtr getRight() const;
 
   private:
     Predicate() = default;
@@ -84,14 +84,14 @@ class PredicateItem : public LegacyExpression {
     PredicateItem(char val);
     PredicateItem(const char* val);
 
-    const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
-    [[nodiscard]] const std::string toString() const override;
+    ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    [[nodiscard]] std::string toString() const override;
     [[nodiscard]] LegacyExpressionPtr copy() const override;
 
     [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
 
     [[nodiscard]] bool isStringType() const;
-    [[nodiscard]] const DataTypePtr getDataTypePtr() const;
+    [[nodiscard]] DataTypePtr getDataTypePtr() const;
     AttributeFieldPtr getAttributeField() { return this->attribute; };
     [[nodiscard]] const ValueTypePtr& getValue() const;
 
@@ -114,7 +114,7 @@ class Field : public PredicateItem {
 
 using FieldPtr = std::shared_ptr<Field>;
 
-const PredicatePtr createPredicate(const LegacyExpression& expression);
+PredicatePtr createPredicate(const LegacyExpression& expression);
 
 Predicate operator==(const LegacyExpression& lhs, const LegacyExpression& rhs);
 Predicate operator!=(const LegacyExpression& lhs, const LegacyExpression& rhs);

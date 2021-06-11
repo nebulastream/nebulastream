@@ -157,13 +157,13 @@ class Schema {
     */
     bool contains(const std::string& fieldName);
 
-    [[nodiscard]] const std::string toString() const;
+    [[nodiscard]] std::string toString() const;
 
     /**
      * @brief Method to return the stream name qualifier, thus everything that is before $
      * @return string
      */
-    [[nodiscard]] const std::string getStreamNameQualifier() const;
+    [[nodiscard]] std::string getStreamNameQualifier() const;
 
     /**
      * @brief method to get the qualifier of the stream without $

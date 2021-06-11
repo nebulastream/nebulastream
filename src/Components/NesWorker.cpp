@@ -355,7 +355,7 @@ std::vector<NodeEngine::QueryStatisticsPtr> NesWorker::getQueryStatistics(QueryI
     return nodeEngine->getQueryStatistics(queryId);
 }
 
-bool NesWorker::waitForConnect() {
+bool NesWorker::waitForConnect() const {
     NES_DEBUG("NesWorker::waitForConnect()");
     auto timeoutInSec = std::chrono::seconds(3);
     auto start_timestamp = std::chrono::system_clock::now();
@@ -373,6 +373,6 @@ bool NesWorker::waitForConnect() {
     return false;
 }
 
-TopologyNodeId NesWorker::getTopologyNodeId() { return topologyNodeId; }
+TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
 }// namespace NES

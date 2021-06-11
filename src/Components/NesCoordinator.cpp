@@ -60,8 +60,7 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
       numberOfBuffersPerPipeline(coordinatorConfig->getnumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(coordinatorConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()),
-      bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()),
-      inherited0(), inherited1() {
+      bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     topology = Topology::create();
@@ -316,6 +315,6 @@ GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
-const CoordinatorEnginePtr NesCoordinator::getCoordinatorEngine() const { return coordinatorEngine; }
+CoordinatorEnginePtr NesCoordinator::getCoordinatorEngine() const { return coordinatorEngine; }
 
 }// namespace NES

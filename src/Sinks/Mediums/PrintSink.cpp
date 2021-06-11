@@ -43,7 +43,7 @@ bool PrintSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Work
         auto schemaBuffer = sinkFormat->getSchema();
         if (schemaBuffer) {
             NES_DEBUG("PrintSink::getData: write schema of size " << schemaBuffer->getNumberOfTuples());
-            std::string ret = "";
+            std::string ret;
             char* bufferAsChar = schemaBuffer->getBuffer<char>();
             for (uint64_t i = 0; i < schemaBuffer->getNumberOfTuples(); i++) {
                 ret = ret + bufferAsChar[i];
@@ -62,7 +62,7 @@ bool PrintSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Work
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {
         NES_DEBUG("PrintSink::getData: write buffer of size " << buffer.getNumberOfTuples());
-        std::string ret = "";
+        std::string ret;
         char* bufferAsChar = buffer.getBuffer<char>();
         for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
             ret = ret + bufferAsChar[i];

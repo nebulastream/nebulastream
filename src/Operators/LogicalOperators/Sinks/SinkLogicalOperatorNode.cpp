@@ -42,10 +42,7 @@ bool SinkLogicalOperatorNode::equal(NodePtr const &rhs) const {
 };
 
 bool SinkLogicalOperatorNode::inferSchema() {
-    if (!LogicalUnaryOperatorNode::inferSchema()) {
-        return false;
-    }
-    return true;
+    return LogicalUnaryOperatorNode::inferSchema();
 }
 
 std::string SinkLogicalOperatorNode::toString() const {

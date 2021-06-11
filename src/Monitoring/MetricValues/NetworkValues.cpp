@@ -99,7 +99,7 @@ NetworkValues NetworkValues::fromBuffer(const SchemaPtr& schema, NodeEngine::Tup
     return output;
 }
 
-web::json::value NetworkValues::toJson() {
+web::json::value NetworkValues::toJson() const {
     web::json::value metricsJson{};
 
     metricsJson["R_BYTES"] = web::json::value::number(rBytes);

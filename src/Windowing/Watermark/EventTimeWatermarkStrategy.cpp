@@ -26,7 +26,7 @@ EventTimeWatermarkStrategy::EventTimeWatermarkStrategy(FieldAccessExpressionNode
     : onField(std::move(onField)), allowedLateness(allowedLateness), multiplier(multiplier) {}
 
 FieldAccessExpressionNodePtr NES::Windowing::EventTimeWatermarkStrategy::getField() { return onField; }
-uint64_t EventTimeWatermarkStrategy::getAllowedLateness() { return allowedLateness; }
+uint64_t EventTimeWatermarkStrategy::getAllowedLateness() const { return allowedLateness; }
 
 WatermarkStrategy::Type EventTimeWatermarkStrategy::getType() { return WatermarkStrategy::EventTimeWatermark; }
 
@@ -34,6 +34,6 @@ EventTimeWatermarkStrategyPtr
 EventTimeWatermarkStrategy::create(const FieldAccessExpressionNodePtr& onField, uint64_t allowedLateness, uint64_t multiplier) {
     return std::make_shared<Windowing::EventTimeWatermarkStrategy>(onField, allowedLateness, multiplier);
 }
-uint64_t EventTimeWatermarkStrategy::getMultiplier() { return multiplier; }
+uint64_t EventTimeWatermarkStrategy::getMultiplier() const { return multiplier; }
 
 }// namespace NES::Windowing

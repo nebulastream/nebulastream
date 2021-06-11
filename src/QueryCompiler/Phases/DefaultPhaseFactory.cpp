@@ -34,7 +34,7 @@ namespace NES::QueryCompilation::Phases {
 
 PhaseFactoryPtr DefaultPhaseFactory::create() { return std::make_shared<DefaultPhaseFactory>(); }
 
-const PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptionsPtr options) {
+PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptionsPtr options) {
     if (options->isOperatorFusionEnabled()) {
         NES_DEBUG("Create pipelining phase with fuse policy");
         auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
@@ -45,27 +45,27 @@ const PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompile
     return DefaultPipeliningPhase::create(operatorFusionPolicy);
 }
 
-const LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr) {
+LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create default lower logical plan phase");
     auto physicalOperatorProvider = DefaultPhysicalOperatorProvider::create();
     return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 }
 
-const AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompilerOptionsPtr) {
+AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();
 }
-const LowerPhysicalToGeneratableOperatorsPtr
+LowerPhysicalToGeneratableOperatorsPtr
 DefaultPhaseFactory::createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create default lower pipeline plan phase");
     auto generatableOperatorProvider = DefaultGeneratableOperatorProvider::create();
     return LowerPhysicalToGeneratableOperators::create(generatableOperatorProvider);
 }
-const CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr) {
+CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create default code generation phase");
     return CodeGenerationPhase::create();
 }
-const LowerToExecutableQueryPlanPhasePtr
+LowerToExecutableQueryPlanPhasePtr
 DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) {
     NES_DEBUG("Create lower to executable query plan phase");
     auto sourceProvider = DataSourceProvider::create(options);

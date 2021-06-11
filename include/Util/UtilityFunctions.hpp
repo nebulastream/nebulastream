@@ -176,7 +176,7 @@ class UtilityFunctions {
      * @param schema
      * @return schema as csv string
      */
-    static const std::string toCSVString(const SchemaPtr& schema);
+    static std::string toCSVString(const SchemaPtr& schema);
 
     /**
      * @brief Returns the next free operator id
@@ -216,7 +216,7 @@ class UtilityFunctions {
      * @param replace - The string that is replacing the search term.
      * @return
      */
-    static const std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace);
+    static std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace);
 
     /**
      *

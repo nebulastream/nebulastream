@@ -28,7 +28,7 @@ template<class PartialAggregateType>
 class WindowSliceStore {
   public:
     explicit WindowSliceStore(PartialAggregateType value)
-        : defaultValue(value), sliceMetaData(std::vector<SliceMetaData>()),
+        : defaultValue(value), 
           partialAggregates(std::vector<PartialAggregateType>()) {}
 
     ~WindowSliceStore() { NES_TRACE("~WindowSliceStore()"); }

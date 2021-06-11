@@ -56,17 +56,13 @@ CSVSource::CSVSource(SchemaPtr schema,
     input.open(path);
 
     NES_DEBUG("CSVSource::CSVSource: read buffer");
-    input.seekg(0, input.end);
+    input.seekg(0, std::ifstream::end);
     fileSize = input.tellg();
     if (fileSize == -1) {
         NES_ERROR("CSVSource::CSVSource File " + filePath + " is corrupted");
     }
 
-    if (numBuffersToProcess != 0) {
-        loopOnFile = true;
-    } else {
-        loopOnFile = false;
-    }
+    loopOnFile = numBuffersToProcess != 0;
 
     NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval.count() << "ms"
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
@@ -105,7 +101,7 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
         buf.setNumberOfTuples(0);
         return;
     }
-    input.seekg(currentPosInFile, input.beg);
+    input.seekg(currentPosInFile, std::ifstream::beg);
 
     uint64_t generated_tuples_this_pass = 0;
     //fill buffer maximally
@@ -137,7 +133,7 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
         if (input.tellg() >= fileSize || input.tellg() == -1) {
             NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
             input.clear();
-            input.seekg(0, input.beg);
+            input.seekg(0, std::ifstream::beg);
             if (!loopOnFile) {
                 NES_DEBUG("CSVSource::fillBuffer: break because file ended");
                 fileEnded = true;
@@ -166,37 +162,37 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
             if (field->isBasicType()) {
                 auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
                 if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_64) {
-                    uint64_t val = std::stoull(tokens[j].c_str());
+                    uint64_t val = std::stoull(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_64) {
-                    int64_t val = std::stoll(tokens[j].c_str());
+                    int64_t val = std::stoll(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_32) {
-                    uint32_t val = std::stoul(tokens[j].c_str());
+                    uint32_t val = std::stoul(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_32) {
-                    int32_t val = std::stol(tokens[j].c_str());
+                    int32_t val = std::stol(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_16) {
-                    uint16_t val = std::stol(tokens[j].c_str());
+                    uint16_t val = std::stol(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_16) {
-                    int16_t val = std::stol(tokens[j].c_str());
+                    int16_t val = std::stol(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_16) {
-                    uint8_t val = std::stoi(tokens[j].c_str());
+                    uint8_t val = std::stoi(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_8) {
-                    int8_t val = std::stoi(tokens[j].c_str());
+                    int8_t val = std::stoi(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_8) {
-                    int8_t val = std::stoi(tokens[j].c_str());
+                    int8_t val = std::stoi(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::DOUBLE) {
-                    double val = std::stod(tokens[j].c_str());
+                    double val = std::stod(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::FLOAT) {
-                    float val = std::stof(tokens[j].c_str());
+                    float val = std::stof(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::BOOLEAN) {
                     bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 || atoi(tokens[j].c_str()) != 0);

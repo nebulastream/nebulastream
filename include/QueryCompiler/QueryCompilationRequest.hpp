@@ -38,7 +38,7 @@ class QueryCompilationRequest {
      * @brief Checks if debugging is enabled
      * @return bool
      */
-    bool isDebugEnabled();
+    bool isDebugEnabled() const;
 
     /**
     * @brief Checks if optimizations for this query
@@ -49,7 +49,7 @@ class QueryCompilationRequest {
      * @brief Checks if optimization flags is enabled
      * @return bool
      */
-    bool isOptimizeEnabled();
+    bool isOptimizeEnabled() const;
 
     /**
     * @brief Enable debugging for this query.
@@ -60,7 +60,7 @@ class QueryCompilationRequest {
      * @brief Checks if dumping to nesviz is enabled
      * @return bool
      */
-    bool isDumpEnabled();
+    bool isDumpEnabled() const;
 
     /**
      * @brief Gets the query plan of this request

@@ -90,7 +90,7 @@ class TestUtils {
         auto start_timestamp = std::chrono::system_clock::now();
         uint64_t currentResult = 0;
         web::json::value json_return;
-        std::string currentStatus = "";
+        std::string currentStatus;
 
         NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
@@ -516,9 +516,9 @@ class TestUtils {
                 NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: file " << outputFilePath << " open and good");
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
                 // check the length of the output file
-                ifs.seekg(0, ifs.end);
+                ifs.seekg(0, std::ifstream::end);
                 auto length = ifs.tellg();
-                ifs.seekg(0, ifs.beg);
+                ifs.seekg(0, std::ifstream::beg);
 
                 // read the binary output as a vector of T
                 auto* buff = reinterpret_cast<char*>(malloc(length));

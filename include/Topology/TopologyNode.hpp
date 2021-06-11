@@ -39,13 +39,13 @@ class TopologyNode : public Node {
      * @brief method to get the id of the node
      * @return id as a uint64_t
      */
-    uint64_t getId();
+    uint64_t getId() const;
 
     /**
      * @brief method to get the overall cpu capacity of the node
      * @return uint64_t cpu capacity
      */
-    uint16_t getAvailableResources();
+    uint16_t getAvailableResources() const;
 
     /**
      * @brief method to reduce the cpu capacity of the node

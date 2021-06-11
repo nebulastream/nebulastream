@@ -164,9 +164,9 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorNodePtr&
         targetHostOperatorMap[targetOperator->getId()] = hostOperator->getId();
 
         NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Check if parents of target and address operators are equal.");
-        for (auto& targetParent : targetOperator->getParents()) {
+        for (const auto& targetParent : targetOperator->getParents()) {
             areParentsEqual = false;
-            for (auto& hostParent : hostOperator->getParents()) {
+            for (const auto& hostParent : hostOperator->getParents()) {
                 if (areOperatorEqual(targetParent->as<OperatorNode>(), hostParent->as<OperatorNode>(), targetHostOperatorMap)) {
                     areParentsEqual = true;
                     break;
@@ -179,9 +179,9 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorNodePtr&
         }
 
         NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Check if children of target and address operators are equal.");
-        for (auto& targetChild : targetOperator->getChildren()) {
+        for (const auto& targetChild : targetOperator->getChildren()) {
             areChildrenEqual = false;
-            for (auto& hostChild : hostOperator->getChildren()) {
+            for (const auto& hostChild : hostOperator->getChildren()) {
                 if (areOperatorEqual(targetChild->as<OperatorNode>(), hostChild->as<OperatorNode>(), targetHostOperatorMap)) {
                     areChildrenEqual = true;
                     break;

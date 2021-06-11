@@ -42,9 +42,9 @@ SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); 
 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 
-bool SinkMedium::getAppendAsBool() { return append; }
+bool SinkMedium::getAppendAsBool() const { return append; }
 
-std::string SinkMedium::getAppendAsString() {
+std::string SinkMedium::getAppendAsString() const {
     if (append) {
         return "APPEND";
     }

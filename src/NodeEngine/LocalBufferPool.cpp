@@ -23,10 +23,10 @@ namespace NES::NodeEngine {
 LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,
                                  std::deque<detail::MemorySegment*>&& buffers,
                                  size_t numberOfReservedBuffers)
-    : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers) {
+    : bufferManager(bufferManager),  numberOfReservedBuffers(numberOfReservedBuffers) {
 
     while (!buffers.empty()) {
-        auto memSegment = buffers.front();
+        auto *memSegment = buffers.front();
         buffers.pop_front();
         NES_VERIFY(memSegment, "null memory segment");
         memSegment->controlBlock->resetBufferRecycler(this);

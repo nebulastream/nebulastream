@@ -58,7 +58,7 @@ static const std::string g_ErrorCannotOpenFile = "Cannot open file.";
 static const std::string g_ErrorIndentation = "Space indentation is less than 2.";
 static const std::string g_ErrorInvalidBlockScalar = "Invalid block scalar.";
 static const std::string g_ErrorInvalidQuote = "Invalid quote.";
-static const std::string g_EmptyString = "";
+static const std::string g_EmptyString;
 static Yaml::Node g_NoneNode;
 
 // Global function definitions. Implemented at end of this source file.
@@ -470,7 +470,7 @@ std::pair<const std::string&, Node&> Iterator::operator*() {
     return {g_EmptyString, g_NoneNode};
 }
 
-const Yaml::Iterator Iterator::operator++(int) {
+Yaml::Iterator Iterator::operator++(int) {
     switch (m_Type) {
         case SequenceType: static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator++; break;
         case MapType: static_cast<MapIteratorImp*>(m_pImp)->m_Iterator++; break;
@@ -479,7 +479,7 @@ const Yaml::Iterator Iterator::operator++(int) {
     return *this;
 }
 
-const Yaml::Iterator Iterator::operator--(int) {
+Yaml::Iterator Iterator::operator--(int) {
     switch (m_Type) {
         case SequenceType: static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator--; break;
         case MapType: static_cast<MapIteratorImp*>(m_pImp)->m_Iterator--; break;
@@ -570,7 +570,7 @@ std::pair<const std::string&, const Node&> ConstIterator::operator*() {
     return {g_EmptyString, g_NoneNode};
 }
 
-const Yaml::ConstIterator ConstIterator::operator++(int) {
+Yaml::ConstIterator ConstIterator::operator++(int) {
     switch (m_Type) {
         case SequenceType: static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator++; break;
         case MapType: static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator++; break;
@@ -579,7 +579,7 @@ const Yaml::ConstIterator ConstIterator::operator++(int) {
     return *this;
 }
 
-const Yaml::ConstIterator ConstIterator::operator--(int) {
+Yaml::ConstIterator ConstIterator::operator--(int) {
     switch (m_Type) {
         case SequenceType: static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator--; break;
         case MapType: static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator--; break;
@@ -949,7 +949,7 @@ class ParseImp {
      *
      */
     void ReadLines(std::iostream& stream) {
-        std::string line = "";
+        std::string line;
         size_t lineNo = 0;
         bool documentStartFound = false;
         bool foundFirstNotEmpty = false;
@@ -969,7 +969,7 @@ class ParseImp {
             }
 
             // Start of document.
-            if (documentStartFound == false && line == "---") {
+            if (!documentStartFound && line == "---") {
                 // Erase all lines before this line.
                 ClearLines();
                 documentStartFound = true;
@@ -1017,7 +1017,7 @@ class ParseImp {
             }
 
             // Add line.
-            if (foundFirstNotEmpty == false) {
+            if (!foundFirstNotEmpty) {
                 if (!line.empty()) {
                     foundFirstNotEmpty = true;
                 } else {
@@ -1038,12 +1038,12 @@ class ParseImp {
     void PostProcessLines() {
         for (auto it = m_Lines.begin(); it != m_Lines.end();) {
             // Sequence.
-            if (PostProcessSequenceLine(it) == true) {
+            if (PostProcessSequenceLine(it)) {
                 continue;
             }
 
             // Mapping.
-            if (PostProcessMappingLine(it) == true) {
+            if (PostProcessMappingLine(it)) {
                 continue;
             }
 
@@ -1082,7 +1082,7 @@ class ParseImp {
         ReaderLine* pLine = *it;
 
         // Sequence split
-        if (IsSequenceStart(pLine->Data) == false) {
+        if (!IsSequenceStart(pLine->Data)) {
             return false;
         }
 
@@ -1144,7 +1144,7 @@ class ParseImp {
         RemoveAllEscapeTokens(key);
 
         // Get value
-        std::string value = "";
+        std::string value;
         size_t valueStart = std::string::npos;
         if (tokenPos + 1 != pLine->Data.size()) {
             valueStart = pLine->Data.find_first_not_of(" \t", tokenPos + 1);
@@ -1154,7 +1154,7 @@ class ParseImp {
         }
 
         // Make sure the value is not a sequence start.
-        if (IsSequenceStart(value) == true) {
+        if (IsSequenceStart(value)) {
             throw ParsingException(ExceptionMessage(g_ErrorBlockSequenceNotAllowed, *pLine, valueStart));
         }
 
@@ -1177,7 +1177,7 @@ class ParseImp {
 
         // Add new line with value.
         unsigned char dummyBlockFlags = 0;
-        if (IsBlockScalar(value, pLine->No, dummyBlockFlags) == true) {
+        if (IsBlockScalar(value, pLine->No, dummyBlockFlags)) {
             newLineOffset = pLine->Offset;
         }
         auto* pNewLine = new ReaderLine(value, pLine->No, newLineOffset, Node::ScalarType);
@@ -1332,7 +1332,7 @@ class ParseImp {
         *
         */
     void ParseScalar(Node& node, std::list<ReaderLine*>::iterator& it) {
-        std::string data = "";
+        std::string data;
         ReaderLine* pFirstLine = *it;
         ReaderLine* pLine = *it;
 
@@ -1363,7 +1363,7 @@ class ParseImp {
         }
 
         // Not a block scalar, cut end spaces/tabs
-        if (isBlockScalar == false) {
+        if (!isBlockScalar) {
             while (true) {
                 pLine = *it;
 
@@ -1387,7 +1387,7 @@ class ParseImp {
                 data += " ";
             }
 
-            if (ValidateQuote(data) == false) {
+            if (!ValidateQuote(data)) {
                 throw ParsingException(ExceptionMessage(g_ErrorInvalidQuote, *pFirstLine));
             }
         }
@@ -1460,7 +1460,7 @@ class ParseImp {
         *
         */
     void Print() {
-        for (auto pLine : m_Lines) {
+        for (auto *pLine : m_Lines) {
 
             // Print type
             if (pLine->Type == Node::SequenceType) {
@@ -1590,13 +1590,13 @@ class ParseImp {
 // Parsing functions
 void Parse(Node& root, const char* filename) {
     std::ifstream f(filename, std::ifstream::binary);
-    if (f.is_open() == false) {
+    if (!f.is_open()) {
         throw OperationFatalException(g_ErrorCannotOpenFile);
     }
 
-    f.seekg(0, f.end);
+    f.seekg(0, std::ifstream::end);
     size_t fileSize = static_cast<size_t>(f.tellg());
-    f.seekg(0, f.beg);
+    f.seekg(0, std::ifstream::beg);
 
     std::unique_ptr<char[]> data(new char[fileSize]);
     f.read(data.get(), fileSize);
@@ -1642,7 +1642,7 @@ void Serialize(const Node& root, const char* filename, const SerializeConfig& co
     Serialize(root, stream, config);
 
     std::ofstream f(filename);
-    if (f.is_open() == false) {
+    if (!f.is_open()) {
         throw OperationFatalException(g_ErrorCannotOpenFile);
     }
 
@@ -1696,7 +1696,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
                 }
                 stream << std::string(level, ' ') << "- ";
                 useLevel = false;
-                if (value.IsSequence() || (value.IsMap() && config.SequenceMapNewline == true)) {
+                if (value.IsSequence() || (value.IsMap() && config.SequenceMapNewline)) {
                     useLevel = true;
                     stream << "\n";
                 }
@@ -1727,7 +1727,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
                 }
 
                 useLevel = false;
-                if (value.IsScalar() == false || (value.IsScalar() && config.MapScalarNewline)) {
+                if (!value.IsScalar() || (value.IsScalar() && config.MapScalarNewline)) {
                     useLevel = true;
                     stream << "\n";
                 }
@@ -1749,10 +1749,10 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
             }
 
             // Get lines of scalar.
-            std::string line = "";
+            std::string line;
             std::vector<std::string> lines;
             std::istringstream iss(value);
-            while (iss.eof() == false) {
+            while (!iss.eof()) {
                 std::getline(iss, line);
                 lines.push_back(line);
             }
@@ -1787,7 +1787,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
                 stream << ">";
             }
 
-            if (endNewline == false) {
+            if (!endNewline) {
                 stream << "-";
             }
             stream << "\n";
@@ -1848,7 +1848,7 @@ bool FindQuote(const std::string& input, size_t& start, size_t& end, size_t sear
         const char token = input[qPos];
         if (token == '"' && (qPos == 0 || input[qPos - 1] != '\\')) {
             // Found start quote.
-            if (foundStart == false) {
+            if (!foundStart) {
                 start = qPos;
                 foundStart = true;
             }
@@ -1967,10 +1967,7 @@ bool ValidateQuote(const std::string& input) {
                     }
                     else */
             if (foundToken == token && input[searchPos - 1] != '\\') {
-                if (searchPos == input.size() - 1) {
-                    return true;
-                }
-                return false;
+                return searchPos == input.size() - 1;
             }
             //}
         }

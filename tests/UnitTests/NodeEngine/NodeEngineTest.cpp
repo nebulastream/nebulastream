@@ -155,7 +155,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
 
     ExecutionResult
     execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& wctx) override {
-        auto tuples = inputTupleBuffer.getBuffer<uint64_t>();
+        auto *tuples = inputTupleBuffer.getBuffer<uint64_t>();
 
         NES_INFO("Test: Start execution");
 
@@ -175,7 +175,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
             TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
 
             NES_DEBUG("TEST: got buffer");
-            auto arr = outputBuffer.getBuffer<uint32_t>();
+            auto *arr = outputBuffer.getBuffer<uint32_t>();
             arr[0] = static_cast<uint32_t>(sum.load());
             outputBuffer.setNumberOfTuples(1);
             NES_DEBUG("TEST: " << this << " written " << arr[0]);
@@ -681,7 +681,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
-            auto str = exception->what();
+            const auto *str = exception->what();
             NES_ERROR(str);
             EXPECT_TRUE(strcmp(str, "Got fatal error on thread 0: Catch me if you can!") == 0);
             completedPromise.set_value(true);
@@ -751,7 +751,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
-            auto str = exception->what();
+            const auto *str = exception->what();
             NES_ERROR(str);
             EXPECT_TRUE(strcmp(str, "Unknown exception caught") == 0);
             completedPromise.set_value(true);

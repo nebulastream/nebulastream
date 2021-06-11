@@ -41,7 +41,7 @@ class ZmqSink : public SinkMedium {
     /**
      * @brief Get zmq sink port
      */
-    int getPort();
+    int getPort() const;
 
     /**
      * @brief Get Zmq address name

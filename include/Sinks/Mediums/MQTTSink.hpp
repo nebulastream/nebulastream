@@ -102,31 +102,31 @@ class MQTTSink : public SinkMedium {
      * @brief get the number of MSGs that can maximally be buffered (default is 60)
      * @return number of messages that can maximally be buffered
      */
-    uint64_t getMaxBufferedMSGs();
+    uint64_t getMaxBufferedMSGs() const;
 
     /**
      * @brief get the user chosen time unit (default is milliseconds)
      * @return time unit chosen for the message delay
      */
-    const MQTTSinkDescriptor::TimeUnits getTimeUnit() const;
+    MQTTSinkDescriptor::TimeUnits getTimeUnit() const;
 
     /**
      * @brief get the user chosen delay between two sent messages (default is 500)
      * @return length of the message delay
      */
-    uint64_t getMsgDelay();
+    uint64_t getMsgDelay() const;
 
     /**
      * @brief get the value for the current quality of service
      * @return quality of service value
      */
-    const MQTTSinkDescriptor::ServiceQualities getQualityOfService() const;
+    MQTTSinkDescriptor::ServiceQualities getQualityOfService() const;
 
     /**
      * @brief get bool that indicates whether the client is asynchronous or synchronous (default is true)
      * @return true if client is asynchronous, else false
      */
-    bool getAsynchronousClient();
+    bool getAsynchronousClient() const;
 
     /**
      * @brief Print MQTT Sink (schema, address, port, clientId, topic, user)

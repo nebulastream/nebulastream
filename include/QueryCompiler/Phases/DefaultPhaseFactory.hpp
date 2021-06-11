@@ -28,13 +28,13 @@ class DefaultPhaseFactory : public PhaseFactory {
   public:
     virtual ~DefaultPhaseFactory() = default;
     static PhaseFactoryPtr create();
-    const LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) override;
-    const PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) override;
-    const AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
-    const LowerPhysicalToGeneratableOperatorsPtr
+    LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) override;
+    PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) override;
+    AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
+    LowerPhysicalToGeneratableOperatorsPtr
     createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr options) override;
-    const CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options) override;
-    const LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) override;
+    CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options) override;
+    LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) override;
 };
 
 }// namespace Phases

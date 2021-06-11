@@ -233,7 +233,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
             }
         };
 
-        auto records = buffer.getBuffer<YsbRecord>();
+        auto *records = buffer.getBuffer<YsbRecord>();
         auto ts =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
@@ -249,8 +249,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
             records[u].ip = 0x01020304;
         }
         NES_WARNING("Lambda last entry is=" << records[numberOfTuplesToProduce - 1].toString());
-        return;
-    };
+   };
 
     std::string outputFilePath = "ysb.out";
     NES::AbstractPhysicalStreamConfigPtr conf =

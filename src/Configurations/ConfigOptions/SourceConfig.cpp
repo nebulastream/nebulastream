@@ -113,21 +113,21 @@ void SourceConfig::resetSourceOptions() {
     setSkipHeader(skipHeader->getDefaultValue());
 }
 
-const StringConfigOption SourceConfig::getSourceType() const { return sourceType; }
+StringConfigOption SourceConfig::getSourceType() const { return sourceType; }
 
-const StringConfigOption SourceConfig::getSourceConfig() const { return sourceConfig; }
+StringConfigOption SourceConfig::getSourceConfig() const { return sourceConfig; }
 
-const IntConfigOption SourceConfig::getSourceFrequency() const { return sourceFrequency; }
+IntConfigOption SourceConfig::getSourceFrequency() const { return sourceFrequency; }
 
-const IntConfigOption SourceConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
+IntConfigOption SourceConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 
-const IntConfigOption SourceConfig::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+IntConfigOption SourceConfig::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 
-const StringConfigOption SourceConfig::getPhysicalStreamName() const { return physicalStreamName; }
+StringConfigOption SourceConfig::getPhysicalStreamName() const { return physicalStreamName; }
 
-const StringConfigOption SourceConfig::getLogicalStreamName() const { return logicalStreamName; }
+StringConfigOption SourceConfig::getLogicalStreamName() const { return logicalStreamName; }
 
-const BoolConfigOption SourceConfig::getSkipHeader() const { return skipHeader; }
+BoolConfigOption SourceConfig::getSkipHeader() const { return skipHeader; }
 
 void SourceConfig::setSourceType(std::string sourceTypeValue) { sourceType->setValue(std::move(sourceTypeValue)); }
 

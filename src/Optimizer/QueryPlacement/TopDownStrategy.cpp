@@ -198,7 +198,7 @@ void TopDownStrategy::placeOperator(QueryId queryId, const OperatorNodePtr& oper
     topology->reduceResources(candidateTopologyNode->getId(), 1);
 
     NES_TRACE("TopDownStrategy: Place the children operators.");
-    for (auto& child : operatorNode->getChildren()) {
+    for (const auto& child : operatorNode->getChildren()) {
         placeOperator(queryId, child->as<OperatorNode>(), candidateTopologyNode);
     }
 }

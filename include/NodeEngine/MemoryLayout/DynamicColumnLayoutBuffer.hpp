@@ -163,7 +163,6 @@ typename std::enable_if<(I == sizeof...(Ts)), void>::type DynamicColumnLayoutBuf
     ((void) tup);
     ((void) fieldSizes);
     ((void) recordIndex);
-    return;
 }
 
 template<size_t I, typename... Ts>
@@ -172,7 +171,7 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuff
     const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes,
     uint64_t recordIndex) {
     // Get current type of tuple and cast address to this type pointer
-    auto address = basePointer + columnOffsets[I] + fieldSizes[I] * recordIndex;
+    const auto *address = basePointer + columnOffsets[I] + fieldSizes[I] * recordIndex;
     *((typename std::tuple_element<I, std::tuple<Ts...>>::type*) (address)) = std::get<I>(tup);
 
     // Go to the next field of tuple
@@ -188,7 +187,6 @@ typename std::enable_if<(I == sizeof...(Ts)), void>::type DynamicColumnLayoutBuf
     ((void) tup);
     ((void) fieldSizes);
     ((void) recordIndex);
-    return;
 }
 
 template<size_t I, typename... Ts>
@@ -197,7 +195,7 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuff
     uint64_t recordIndex,
     const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
     // Get current type of tuple and cast address to this type pointer
-    auto address = basePointer + columnOffsets[I] + fieldSizes[I] * recordIndex;
+    const auto *address = basePointer + columnOffsets[I] + fieldSizes[I] * recordIndex;
     std::get<I>(tup) = *((typename std::tuple_element<I, std::tuple<Ts...>>::type*) (address));
 
     // Go to the next field of tuple

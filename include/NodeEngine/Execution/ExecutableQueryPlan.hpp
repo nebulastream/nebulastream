@@ -147,13 +147,13 @@ class ExecutableQueryPlan : public Reconfigurable {
      * @brief Get the query id
      * @return the query id
      */
-    const QueryId getQueryId() const;
+    QueryId getQueryId() const;
 
     /**
      * @brief Get the query execution plan id
      * @return the query execution plan id
      */
-    const QuerySubPlanId getQuerySubPlanId() const;
+    QuerySubPlanId getQuerySubPlanId() const;
 
     /**
      * @brief reconfigure callback called upon a reconfiguration

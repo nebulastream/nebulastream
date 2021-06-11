@@ -106,7 +106,7 @@ bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
 
 bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const { return !(rhs == *this); }
 
-web::json::value MemoryMetrics::toJson() {
+web::json::value MemoryMetrics::toJson() const {
     web::json::value metricsJson{};
     metricsJson["TOTAL_RAM"] = web::json::value::number(TOTAL_RAM);
     metricsJson["TOTAL_SWAP"] = web::json::value::number(TOTAL_SWAP);

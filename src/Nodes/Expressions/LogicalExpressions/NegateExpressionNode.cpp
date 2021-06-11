@@ -18,7 +18,7 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 namespace NES {
 
-NegateExpressionNode::NegateExpressionNode() : LogicalUnaryExpressionNode() {}
+NegateExpressionNode::NegateExpressionNode()  {}
 
 NegateExpressionNode::NegateExpressionNode(NegateExpressionNode* other) : LogicalUnaryExpressionNode(other) {}
 

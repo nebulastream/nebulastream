@@ -29,10 +29,7 @@ bool BroadcastLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
 }
 
 bool BroadcastLogicalOperatorNode::equal(NodePtr const &rhs) const {
-    if (rhs->instanceOf<BroadcastLogicalOperatorNode>()) {
-        return true;
-    }
-    return false;
+    return rhs->instanceOf<BroadcastLogicalOperatorNode>();
 };
 
 std::string BroadcastLogicalOperatorNode::toString() const {

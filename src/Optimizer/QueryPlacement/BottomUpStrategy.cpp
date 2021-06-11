@@ -199,7 +199,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId,
     topology->reduceResources(candidateTopologyNode->getId(), 1);
 
     NES_TRACE("BottomUpStrategy: Place the parent operators.");
-    for (auto& parent : operatorNode->getParents()) {
+    for (const auto& parent : operatorNode->getParents()) {
         placeOperatorOnTopologyNode(queryId, parent->as<OperatorNode>(), candidateTopologyNode);
     }
 }

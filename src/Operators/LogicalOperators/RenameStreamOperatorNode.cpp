@@ -58,7 +58,7 @@ bool RenameStreamOperatorNode::inferSchema() {
     return true;
 }
 
-const std::string RenameStreamOperatorNode::getNewStreamName() { return newStreamName; }
+std::string RenameStreamOperatorNode::getNewStreamName() { return newStreamName; }
 
 OperatorNodePtr RenameStreamOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createRenameStreamOperator(newStreamName, id);

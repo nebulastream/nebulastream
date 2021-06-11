@@ -67,6 +67,6 @@ void PipelineExecutionContext::dispatchBuffer(TupleBuffer buffer) {
 
 std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() { return operatorHandlers; }
 
-std::string PipelineExecutionContext::toString() { return "PipelineContext(queryID:" + std::to_string(queryId); }
+std::string PipelineExecutionContext::toString() const { return "PipelineContext(queryID:" + std::to_string(queryId); }
 
 }// namespace NES::NodeEngine::Execution

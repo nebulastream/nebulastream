@@ -138,8 +138,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
 /* - ZeroMQ Data Sink ------------------------------------------------------ */
 TEST_F(ZMQTest, DISABLED_testZmqSinkSendData) {
 
-    return;
-    //FIXME: this test makes no sense, redo it
+       //FIXME: this test makes no sense, redo it
     /**
   // Create ZeroMQ Data Sink.
   auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",

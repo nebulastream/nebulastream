@@ -55,7 +55,7 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
                                                        NESRequestQueuePtr queryRequestQueue,
                                                        bool enableQueryMerging,
                                                        Optimizer::QueryMergerRule queryMergerRule)
-    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog),
+    :  queryProcessorRunning(true), queryCatalog(queryCatalog),
       queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");

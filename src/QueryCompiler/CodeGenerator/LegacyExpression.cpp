@@ -39,11 +39,11 @@ Predicate::Predicate(const BinaryOperatorType& op,
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload(std::move(functionCallOverload)) {}
 
 Predicate::Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr& left, const LegacyExpressionPtr& right, bool bracket)
-    : op(op), left(left), right(right), bracket(bracket), functionCallOverload("") {}
+    : op(op), left(left), right(right), bracket(bracket) {}
 
 LegacyExpressionPtr Predicate::copy() const { return std::make_shared<Predicate>(*this); }
 
-const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
+ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
     if (functionCallOverload.empty()) {
         if (bracket) {
             return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)),
@@ -64,19 +64,19 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, Reco
     if (bracket) {
         return BinaryOperatorStatement(expr,
                                        op,
-                                       (ConstantExpressionStatement(tf.createValueType(
+                                       (ConstantExpressionStatement(NES::QueryCompilation::GeneratableTypesFactory::createValueType(
                                            DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))),
                                        BRACKETS)
             .copy();
     }
     return BinaryOperatorStatement(expr,
                                    op,
-                                   (ConstantExpressionStatement(tf.createValueType(
+                                   (ConstantExpressionStatement(NES::QueryCompilation::GeneratableTypesFactory::createValueType(
                                        DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))))
         .copy();
 }
 
-const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, RecordHandlerPtr recordHandler) const {
+ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, RecordHandlerPtr recordHandler) const {
     if (attribute) {
         //checks if the predicate field is contained in the current stream record.
         if (recordHandler->hasAttribute(attribute->getName())) {
@@ -87,12 +87,12 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, Recor
     } else if (value) {
         // todo remove if compiler refactored
         auto tf = GeneratableTypesFactory();
-        return ConstantExpressionStatement(tf.createValueType(value)).copy();
+        return ConstantExpressionStatement(NES::QueryCompilation::GeneratableTypesFactory::createValueType(value)).copy();
     }
     return nullptr;
 }
 
-const std::string Predicate::toString() const {
+std::string Predicate::toString() const {
     std::stringstream stream;
     if (bracket) {
         stream << "(";
@@ -122,9 +122,9 @@ PredicateItem::PredicateItem(AttributeFieldPtr attribute)
     : mutation(PredicateItemMutation::ATTRIBUTE), attribute(std::move(attribute)) {}
 BinaryOperatorType Predicate::getOperatorType() const { return op; }
 
-const LegacyExpressionPtr Predicate::getLeft() const { return left; }
+LegacyExpressionPtr Predicate::getLeft() const { return left; }
 
-const LegacyExpressionPtr Predicate::getRight() const { return right; }
+LegacyExpressionPtr Predicate::getRight() const { return right; }
 
 PredicateItem::PredicateItem(ValueTypePtr value) : mutation(PredicateItemMutation::VALUE), value(std::move(value)) {}
 
@@ -167,18 +167,18 @@ PredicateItem::PredicateItem(char val)
 PredicateItem::PredicateItem(const char* val)
     : mutation(PredicateItemMutation::VALUE), value(DataTypeFactory::createFixedCharValue(val)) {}
 
-const std::string PredicateItem::toString() const {
+std::string PredicateItem::toString() const {
     switch (mutation) {
         case PredicateItemMutation::ATTRIBUTE: return attribute->toString();
         case PredicateItemMutation::VALUE: {
             auto tf = GeneratableTypesFactory();
-            return tf.createValueType(value)->getCodeExpression()->code_;
+            return NES::QueryCompilation::GeneratableTypesFactory::createValueType(value)->getCodeExpression()->code_;
         }
     }
     return "";
 }
 
-const DataTypePtr PredicateItem::getDataTypePtr() const {
+DataTypePtr PredicateItem::getDataTypePtr() const {
     if (attribute) {
         return attribute->getDataType();
     }
@@ -205,7 +205,7 @@ const ValueTypePtr& PredicateItem::getValue() const { return value; }
 
 Field::Field(const AttributeFieldPtr& field) : PredicateItem(field), _name(field->getName()) {}
 
-const PredicatePtr createPredicate(const LegacyExpression& expression) {
+PredicatePtr createPredicate(const LegacyExpression& expression) {
     PredicatePtr value = std::dynamic_pointer_cast<Predicate>(expression.copy());
     if (!value) {
         NES_ERROR("UserAPIExpression is not a predicate");

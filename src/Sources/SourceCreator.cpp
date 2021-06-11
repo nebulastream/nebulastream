@@ -42,7 +42,7 @@
 #endif
 namespace NES {
 
-const DataSourcePtr
+DataSourcePtr
 createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
                                               const NodeEngine::BufferManagerPtr& bufferManager,
                                               const NodeEngine::QueryManagerPtr& queryManager,
@@ -59,7 +59,7 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
                                            successors);
 }
 
-const DataSourcePtr
+DataSourcePtr
 createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                                const NodeEngine::BufferManagerPtr& bufferManager,
                                                const NodeEngine::QueryManagerPtr& queryManager,
@@ -78,7 +78,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                            successors);
 }
 
-const DataSourcePtr
+DataSourcePtr
 createDefaultSourceWithoutSchemaForOneBuffer(const NodeEngine::BufferManagerPtr& bufferManager,
                                              const NodeEngine::QueryManagerPtr& queryManager,
                                              OperatorId operatorId,
@@ -94,7 +94,7 @@ createDefaultSourceWithoutSchemaForOneBuffer(const NodeEngine::BufferManagerPtr&
                                            successors);
 }
 
-const DataSourcePtr createLambdaSource(
+DataSourcePtr createLambdaSource(
     const SchemaPtr& schema,
     const NodeEngine::BufferManagerPtr& bufferManager,
     const NodeEngine::QueryManagerPtr& queryManager,
@@ -117,7 +117,7 @@ const DataSourcePtr createLambdaSource(
                                           successors);
 }
 
-const DataSourcePtr createMemorySource(const SchemaPtr& schema,
+DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                        const NodeEngine::BufferManagerPtr& bufferManager,
                                        const NodeEngine::QueryManagerPtr& queryManager,
                                        const std::shared_ptr<uint8_t>& memoryArea,
@@ -141,7 +141,7 @@ const DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                           successors);
 }
 
-const DataSourcePtr createZmqSource(const SchemaPtr& schema,
+DataSourcePtr createZmqSource(const SchemaPtr& schema,
                                     const NodeEngine::BufferManagerPtr& bufferManager,
                                     const NodeEngine::QueryManagerPtr& queryManager,
                                     const std::string& host,
@@ -160,7 +160,7 @@ const DataSourcePtr createZmqSource(const SchemaPtr& schema,
                                        successors);
 }
 
-const DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
+DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                            const NodeEngine::BufferManagerPtr& bufferManager,
                                            const NodeEngine::QueryManagerPtr& queryManager,
                                            const std::string& pathToFile,
@@ -177,7 +177,7 @@ const DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                           successors);
 }
 
-const DataSourcePtr createSenseSource(const SchemaPtr& schema,
+DataSourcePtr createSenseSource(const SchemaPtr& schema,
                                       const NodeEngine::BufferManagerPtr& bufferManager,
                                       const NodeEngine::QueryManagerPtr& queryManager,
                                       const std::string& udfs,
@@ -193,7 +193,7 @@ const DataSourcePtr createSenseSource(const SchemaPtr& schema,
                                          successors);
 }
 
-const DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
+DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                         const NodeEngine::BufferManagerPtr& bufferManager,
                                         const NodeEngine::QueryManagerPtr& queryManager,
                                         const std::string& pathToFile,
@@ -220,7 +220,7 @@ const DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                        successors);
 }
 
-const DataSourcePtr createNetworkSource(const SchemaPtr& schema,
+DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                         const NodeEngine::BufferManagerPtr& bufferManager,
                                         const NodeEngine::QueryManagerPtr& queryManager,
                                         const Network::NetworkManagerPtr& networkManager,
@@ -285,7 +285,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
 }
 #endif
 #ifdef ENABLE_MQTT_BUILD
-const DataSourcePtr createMQTTSource(const SchemaPtr& schema,
+DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                      const NodeEngine::BufferManagerPtr& bufferManager,
                                      const NodeEngine::QueryManagerPtr& queryManager,
                                      const std::string& serverAddress,

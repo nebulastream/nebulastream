@@ -37,8 +37,8 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
                                              TypeInferencePhasePtr typeInferencePhase,
                                              StreamCatalogPtr streamCatalog)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topologyPtr)),
-      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)), pinnedOperatorLocationMap(),
-      operatorToExecutionNodeMap() {}
+      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog))
+      {}
 
 void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
                                                              const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators) {
@@ -49,7 +49,7 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
     TopologyNodePtr sinkNode = topology->getRoot();
     std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
     std::vector<TopologyNodePtr> allSourceNodes;
-    for (auto& sourceOperator : sourceOperators) {
+    for (const auto& sourceOperator : sourceOperators) {
         if (!sourceOperator->getSourceDescriptor()->hasStreamName()) {
             throw Exception("BasePlacementStrategy: Source Descriptor need stream name: " + std::to_string(queryId));
         }
@@ -215,7 +215,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
     ExecutionNodePtr executionNode = operatorToExecutionNodeMap[operatorNode->getId()];
     addExecutionNodeAsRoot(executionNode);
 
-    for (auto& parent : operatorNode->getParents()) {
+    for (const auto& parent : operatorNode->getParents()) {
 
         OperatorNodePtr parentOperator = parent->as<OperatorNode>();
         NES_TRACE("BasePlacementStrategy: Get execution node where parent operator is placed");
@@ -339,7 +339,7 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
     for (const auto& executionNode : executionNodes) {
         NES_TRACE("BasePlacementStrategy: Get all query sub plans on the execution node for the query with id " << queryId);
         const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId);
-        for (auto& querySubPlan : querySubPlans) {
+        for (const auto& querySubPlan : querySubPlans) {
             typeInferencePhase->execute(querySubPlan);
         }
     }

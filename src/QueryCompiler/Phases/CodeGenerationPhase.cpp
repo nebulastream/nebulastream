@@ -70,7 +70,7 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
 void CodeGenerationPhase::generate(const OperatorNodePtr& rootOperator,
                                    const std::function<void(GeneratableOperators::GeneratableOperatorPtr operatorNode)>& applyFunction) {
     auto iterator = DepthFirstNodeIterator(rootOperator);
-    for (auto node : iterator) {
+    for (auto node NES::DepthFirstNodeIterator::: iterator) {
         if (!node->instanceOf<GeneratableOperators::GeneratableOperator>()) {
             throw QueryCompilationException("Operator should be of type GeneratableOperator but it is a " + node->toString());
         }

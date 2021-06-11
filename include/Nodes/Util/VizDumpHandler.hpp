@@ -43,7 +43,7 @@ class VizEdge {
      * @brief Serialize the edge to the nezviz format.
      * @return serialized edge
      */
-    std::string serialize();
+    std::string serialize() const;
 
     std::string id;
     std::string source;

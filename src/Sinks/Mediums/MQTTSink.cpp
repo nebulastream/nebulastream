@@ -169,10 +169,10 @@ std::string MQTTSink::getAddress() const { return address; }
 std::string MQTTSink::getClientId() const { return clientId; }
 std::string MQTTSink::getTopic() const { return topic; }
 std::string MQTTSink::getUser() const { return user; }
-uint64_t MQTTSink::getMaxBufferedMSGs() { return maxBufferedMSGs; }
-const MQTTSinkDescriptor::TimeUnits MQTTSink::getTimeUnit() const { return timeUnit; }
-uint64_t MQTTSink::getMsgDelay() { return messageDelay; }
-const MQTTSinkDescriptor::ServiceQualities MQTTSink::getQualityOfService() const { return qualityOfService; }
-bool MQTTSink::getAsynchronousClient() { return asynchronousClient; }
+uint64_t MQTTSink::getMaxBufferedMSGs() const { return maxBufferedMSGs; }
+MQTTSinkDescriptor::TimeUnits MQTTSink::getTimeUnit() const { return timeUnit; }
+uint64_t MQTTSink::getMsgDelay() const { return messageDelay; }
+MQTTSinkDescriptor::ServiceQualities MQTTSink::getQualityOfService() const { return qualityOfService; }
+bool MQTTSink::getAsynchronousClient() const { return asynchronousClient; }
 #endif
 }// namespace NES

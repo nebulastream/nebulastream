@@ -20,6 +20,6 @@ namespace NES {
 QueryDeploymentException::QueryDeploymentException(SharedQueryId sharedQueryId, const std::string& message)
     : std::runtime_error(message), sharedQueryId(sharedQueryId) {}
 
-SharedQueryId QueryDeploymentException::getSharedQueryId() { return sharedQueryId; }
+SharedQueryId QueryDeploymentException::getSharedQueryId() const { return sharedQueryId; }
 
 }// namespace NES

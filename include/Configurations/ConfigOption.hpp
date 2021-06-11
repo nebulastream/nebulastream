@@ -80,7 +80,7 @@ class ConfigOption {
      * @brief get the description of this parameter
      * @return description of the config
      */
-    [[nodiscard]] const std::string getDescription() const { return description; };
+    [[nodiscard]] std::string getDescription() const { return description; };
 
     /**
      * @brief get the default value of this parameter

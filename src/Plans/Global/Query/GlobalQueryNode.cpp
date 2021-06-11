@@ -31,7 +31,7 @@ GlobalQueryNodePtr GlobalQueryNode::create(uint64_t id, OperatorNodePtr operator
     return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id, std::move(operatorNode)));
 }
 
-uint64_t GlobalQueryNode::getId() { return id; }
+uint64_t GlobalQueryNode::getId() const { return id; }
 
 OperatorNodePtr GlobalQueryNode::hasOperator(OperatorNodePtr operatorNode) {
     NES_DEBUG("GlobalQueryNode: Check if a similar logical operator present in the global query node " << id);

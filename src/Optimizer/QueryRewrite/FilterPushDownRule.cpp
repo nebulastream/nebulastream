@@ -144,7 +144,7 @@ bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodeP
     NES_TRACE("FilterPushDownRule: Create an iterator for traversing the filter predicates");
     const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();
     DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
-    for (auto itr = depthFirstNodeIterator.begin(); itr != depthFirstNodeIterator.end(); ++itr) {
+    for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
         NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
         if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
             const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();

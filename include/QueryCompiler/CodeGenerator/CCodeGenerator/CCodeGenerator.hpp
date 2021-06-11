@@ -200,7 +200,7 @@ class CCodeGenerator : public CodeGenerator {
   private:
     CompilerPtr compiler;
 
-  private:
+  
     static BinaryOperatorStatement getBuffer(const VariableDeclaration& tupleBufferVariable);
     VariableDeclaration
     getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);

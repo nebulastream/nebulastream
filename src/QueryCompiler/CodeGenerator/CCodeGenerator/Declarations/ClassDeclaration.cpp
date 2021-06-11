@@ -35,7 +35,7 @@ ClassDeclarationPtr ClassDeclaration::create(const ClassDefinitionPtr& classDefi
 }
 
 GeneratableDataTypePtr ClassDeclaration::getType() const {
-    return GeneratableTypesFactory().createAnonymusDataType(classDefinition->name);
+    return NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType(classDefinition->name);
 }
 std::string ClassDeclaration::getIdentifierName() const { return ""; }
 

@@ -111,9 +111,9 @@ public:
      * @brief catalog method for debug use only
      * @return streamCatalog
      */
-    StreamCatalogPtr getStreamCatalog() { return streamCatalog; }
+    StreamCatalogPtr getStreamCatalog() const { return streamCatalog; }
 
-    TopologyPtr getTopology() { return topology; }
+    TopologyPtr getTopology() const { return topology; }
 
     /**
      * @brief Get the instance of query service
@@ -154,7 +154,7 @@ public:
      * getter for the coordinator engine
      * @return
      */
-    const CoordinatorEnginePtr getCoordinatorEngine() const;
+    CoordinatorEnginePtr getCoordinatorEngine() const;
 
     NesWorkerPtr getNesWorker();
 
@@ -164,7 +164,7 @@ public:
      */
     void buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom);
 
-  private:
+  
     std::string restIp;
     uint16_t restPort;
     std::string rpcIp;
@@ -181,7 +181,7 @@ public:
     NesWorkerPtr worker;
     CoordinatorEnginePtr coordinatorEngine;
 
-  private:
+  
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;

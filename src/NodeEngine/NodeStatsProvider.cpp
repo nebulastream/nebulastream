@@ -51,7 +51,7 @@ void NodeStatsProvider::update() {
 
 void NodeStatsProvider::readCpuStats() {
 
-    auto cpuStats = nodeStats->mutable_cpustats();
+    auto *cpuStats = nodeStats->mutable_cpustats();
     cpuStats->Clear();
 
     std::ifstream fileStat("/proc/stat");
@@ -67,7 +67,7 @@ void NodeStatsProvider::readCpuStats() {
             if (tokens.size() != 11) {
                 NES_ERROR("NodeProperties: could not read CPU statistics: /proc/stat incorrect");
             }
-            auto cpuStat = cpuStats->Add();
+            auto *cpuStat = cpuStats->Add();
 
             char name[8];
             int len = tokens[0].copy(name, tokens[0].size());
@@ -109,7 +109,7 @@ std::string NodeStatsProvider::getClientPort() {
 
 #if defined(__linux__)
 void NodeStatsProvider::readNetworkStats() {
-    auto networkStats = nodeStats->mutable_networkstats();
+    auto *networkStats = nodeStats->mutable_networkstats();
     networkStats->Clear();
 
     char hostnameChar[1024];
@@ -119,7 +119,8 @@ void NodeStatsProvider::readNetworkStats() {
     networkStats->set_port(clientPort);
     struct ifaddrs* ifa = nullptr;
 
-    int family = 0, s = 0;
+    int family = 0;
+    int s = 0;
     char host[NI_MAXHOST];
     struct ifaddrs* ifaddr = nullptr;
     if (getifaddrs(&ifaddr) == -1) {
@@ -195,7 +196,7 @@ void NodeStatsProvider::readNetworkStats() {}
 
 #if defined(__linux__)
 void NodeStatsProvider::readMemStats() {
-    auto memoryStats = nodeStats->mutable_memorystats();
+    auto *memoryStats = nodeStats->mutable_memorystats();
     memoryStats->Clear();
 
     struct sysinfo sinfo {};
@@ -225,7 +226,7 @@ void NodeStatsProvider::readMemStats() {}
 
 #if defined(__linux__)
 void NodeStatsProvider::readDiskStats() {
-    auto diskStates = nodeStats->mutable_diskstats();
+    auto *diskStates = nodeStats->mutable_diskstats();
     diskStates->Clear();
 
     struct statvfs svfs {};
@@ -244,6 +245,6 @@ void NodeStatsProvider::readDiskStats() {
 void NodeStatsProvider::readDiskStats() {}
 #endif
 
-NodeStats NodeStatsProvider::getNodeStats() { return *nodeStats.get(); }
+NodeStats NodeStatsProvider::getNodeStats() { return *nodeStats; }
 
 }// namespace NES::NodeEngine

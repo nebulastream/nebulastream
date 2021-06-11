@@ -124,7 +124,7 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerPipeline)
-    : inherited0(), inherited1(), inherited2(), nodeEngineId(nodeEngineId),
+    :  nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {

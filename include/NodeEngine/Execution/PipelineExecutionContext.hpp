@@ -114,7 +114,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
         return nullptr;
     }
 
-    std::string toString();
+    std::string toString() const;
 
   private:
     /**

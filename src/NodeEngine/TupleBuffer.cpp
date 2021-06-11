@@ -24,7 +24,7 @@ TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler*
     auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler) {
         recycler->recyclePooledBuffer(segment);
     };
-    auto memSegment = new detail::MemorySegment(ptr, length, parent, callback, true);
+    auto *memSegment = new detail::MemorySegment(ptr, length, parent, callback, true);
     return TupleBuffer(memSegment->controlBlock, ptr, length);
 }
 

@@ -29,8 +29,8 @@
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology)
-    : streamCatalog(std::move(streamCatalog)), topology(std::move(topology)), registerDeregisterNode(), addRemoveLogicalStream(),
-      addRemovePhysicalStream() {
+    : streamCatalog(std::move(streamCatalog)), topology(std::move(topology))
+      {
     NES_DEBUG("CoordinatorEngine()");
 }
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
@@ -224,7 +224,7 @@ bool CoordinatorEngine::addParent(uint64_t childId, uint64_t parentId) {
     }
     NES_DEBUG("CoordinatorEngine::AddParent: sensorParent node " << parentId << " exists");
 
-    for (auto& child : parentPhysicalNode->getChildren()) {
+    for (const auto& child : parentPhysicalNode->getChildren()) {
         if (child->as<TopologyNode>()->getId() == childId) {
             NES_ERROR("CoordinatorEngine::AddParent: nodes " << childId << " and " << parentId << " already exists");
             return false;

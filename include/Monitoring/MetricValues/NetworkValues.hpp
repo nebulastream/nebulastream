@@ -49,12 +49,12 @@ class NetworkValues {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    web::json::value toJson();
+    web::json::value toJson() const;
 
     bool operator==(const NetworkValues& rhs) const;
     bool operator!=(const NetworkValues& rhs) const;
 
-  public:
+  
     uint64_t interfaceName;
 
     uint64_t rBytes;

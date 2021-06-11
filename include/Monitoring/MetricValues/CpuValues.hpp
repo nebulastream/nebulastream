@@ -58,7 +58,7 @@ class CpuValues {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    web::json::value toJson();
+    web::json::value toJson() const;
 
     bool operator==(const CpuValues& rhs) const;
     bool operator!=(const CpuValues& rhs) const;

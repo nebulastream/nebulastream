@@ -30,9 +30,9 @@ class EventTimeWatermarkStrategy : public WatermarkStrategy {
 
     FieldAccessExpressionNodePtr getField();
 
-    uint64_t getAllowedLateness();
+    uint64_t getAllowedLateness() const;
 
-    uint64_t getMultiplier();
+    uint64_t getMultiplier() const;
 
     Type getType() override;
 

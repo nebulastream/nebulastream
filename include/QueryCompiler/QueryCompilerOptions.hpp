@@ -44,7 +44,7 @@ class QueryCompilerOptions {
     /**
      * @brief Returns if operator fusion is enabled.
      */
-    bool isOperatorFusionEnabled();
+    bool isOperatorFusionEnabled() const;
 
     /**
      * @brief Sets the number of local buffers per source.
@@ -55,7 +55,7 @@ class QueryCompilerOptions {
      * @brief Returns the number of local source buffers.
      * @return uint64_t
      */
-    uint64_t getNumSourceLocalBuffers();
+    uint64_t getNumSourceLocalBuffers() const;
 
   protected:
     bool operatorFusion;

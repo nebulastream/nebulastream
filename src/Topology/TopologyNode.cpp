@@ -29,7 +29,7 @@ TopologyNode::create(uint64_t id, const std::string& ipAddress, uint32_t grpcPor
     return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources);
 }
 
-uint64_t TopologyNode::getId() { return id; }
+uint64_t TopologyNode::getId() const { return id; }
 
 uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 
@@ -39,7 +39,7 @@ void TopologyNode::setNodeStats(NodeStatsPtr nodeStats) { this->nodeStats = std:
 
 NodeStatsPtr TopologyNode::getNodeStats() { return nodeStats; }
 
-uint16_t TopologyNode::getAvailableResources() { return resources - usedResources; }
+uint16_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
 
 void TopologyNode::increaseResources(uint16_t freedCapacity) {
     NES_ASSERT(freedCapacity <= resources, "PhysicalNode: amount of resources to free can't be more than actual resources");

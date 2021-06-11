@@ -182,7 +182,7 @@ bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParen
     return reply.success();
 }
 
-uint64_t CoordinatorRPCClient::getId() { return workerId; }
+uint64_t CoordinatorRPCClient::getId() const { return workerId; }
 
 bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
     NES_DEBUG("CoordinatorRPCClient: removeParent parentId" << parentId << " workerId=" << workerId);

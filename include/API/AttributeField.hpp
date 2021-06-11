@@ -50,7 +50,7 @@ class AttributeField {
 
     void setName(std::string newName);
 
-    [[nodiscard]] const std::string toString() const;
+    [[nodiscard]] std::string toString() const;
     bool isEqual(const AttributeFieldPtr& attr);
 
     /**

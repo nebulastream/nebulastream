@@ -32,7 +32,7 @@ class ThreadBarrier {
      * @brief Create a Barrier for size threads
      * @param size
      */
-    explicit ThreadBarrier(uint32_t size) : size(size), count(0), mutex(), cvar() {
+    explicit ThreadBarrier(uint32_t size) : size(size), count(0) {
         NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
     }
 

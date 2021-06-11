@@ -76,9 +76,9 @@ Join::BaseJoinActionDescriptorPtr LogicalJoinDefinition::getTriggerAction() cons
 
 Windowing::DistributionCharacteristicPtr LogicalJoinDefinition::getDistributionType() const { return distributionType; }
 
-uint64_t LogicalJoinDefinition::getNumberOfInputEdgesLeft() { return numberOfInputEdgesLeft; }
+uint64_t LogicalJoinDefinition::getNumberOfInputEdgesLeft() const { return numberOfInputEdgesLeft; }
 
-uint64_t LogicalJoinDefinition::getNumberOfInputEdgesRight() { return numberOfInputEdgesRight; }
+uint64_t LogicalJoinDefinition::getNumberOfInputEdgesRight() const { return numberOfInputEdgesRight; }
 
 void LogicalJoinDefinition::updateStreamTypes(SchemaPtr leftStreamType, SchemaPtr rightStreamType) {
     this->leftStreamType = std::move(leftStreamType);

@@ -17,7 +17,7 @@
 
 namespace NES::QueryCompilation {
 
-bool QueryCompilerOptions::isOperatorFusionEnabled() { return operatorFusion; }
+bool QueryCompilerOptions::isOperatorFusionEnabled() const { return operatorFusion; }
 
 void QueryCompilerOptions::enableOperatorFusion() { this->operatorFusion = true; }
 
@@ -25,7 +25,7 @@ void QueryCompilerOptions::disableOperatorFusion() { this->operatorFusion = fals
 
 void QueryCompilerOptions::setNumSourceLocalBuffers(uint64_t num) { this->numSourceLocalBuffers = num; }
 
-uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() { return numSourceLocalBuffers; }
+uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() const { return numSourceLocalBuffers; }
 
 QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     auto options = QueryCompilerOptions();

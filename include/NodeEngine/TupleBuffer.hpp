@@ -105,7 +105,7 @@ class [[nodiscard]] TupleBuffer {
         }
 
         // Override the content of this with those of `other`
-        auto const oldControlBlock = std::exchange(controlBlock, other.controlBlock);
+        auto *const oldControlBlock = std::exchange(controlBlock, other.controlBlock);
         ptr = other.ptr;
         size = other.size;
 
@@ -140,7 +140,7 @@ class [[nodiscard]] TupleBuffer {
     TupleBuffer* operator&() = delete;
 
     /// @brief Return if this is not valid.
-    [[nodiscard]] constexpr auto operator!() noexcept -> bool { return !isValid(); }
+    [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return !isValid(); }
 
     /// @brief release the resource if necessary.
     inline ~TupleBuffer() noexcept { release(); }

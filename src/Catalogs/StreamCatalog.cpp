@@ -59,7 +59,7 @@ void StreamCatalog::addDefaultStreams() {
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 }
-StreamCatalog::StreamCatalog() : catalogMutex() {
+StreamCatalog::StreamCatalog()  {
     NES_DEBUG("StreamCatalog: construct stream catalog");
     addDefaultStreams();
     NES_DEBUG("StreamCatalog: construct stream catalog successfully");

@@ -23,7 +23,7 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 
 namespace NES::QueryCompilation {
-const std::string toString(const BinaryOperatorType& type) {
+std::string toString(const BinaryOperatorType& type) {
     const char* const names[] = {"EQUAL_OP",
                                  "UNEQUAL_OP",
                                  "LESS_THEN_OP",

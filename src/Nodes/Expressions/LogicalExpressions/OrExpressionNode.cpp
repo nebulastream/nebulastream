@@ -17,7 +17,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 namespace NES {
-OrExpressionNode::OrExpressionNode() : LogicalBinaryExpressionNode(){};
+OrExpressionNode::OrExpressionNode()  {};
 
 OrExpressionNode::OrExpressionNode(OrExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 

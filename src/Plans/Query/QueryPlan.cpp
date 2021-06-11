@@ -120,7 +120,7 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators) {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-        for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
+        for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
             auto visitingOp = (*itr)->as<OperatorNode>();
             if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
                 // skip rest of the steps as the node found in already visited node list
@@ -144,7 +144,7 @@ bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
             NES_DEBUG("QueryPlan: Found operator " << operatorId << " in the query plan");
             return true;
         }
-        for (auto& child : rootOperator->getChildren()) {
+        for (const auto& child : rootOperator->getChildren()) {
             if (child->as<OperatorNode>()->getChildWithOperatorId(operatorId)) {
                 return true;
             }
@@ -161,7 +161,7 @@ OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
             NES_DEBUG("QueryPlan: Found operator " << operatorId << " in the query plan");
             return rootOperator;
         }
-        for (auto& child : rootOperator->getChildren()) {
+        for (const auto& child : rootOperator->getChildren()) {
             NodePtr found = child->as<OperatorNode>()->getChildWithOperatorId(operatorId);
             if (found) {
                 return found->as<OperatorNode>();
@@ -178,7 +178,7 @@ void QueryPlan::setQueryId(QueryId queryId) { QueryPlan::queryId = queryId; }
 
 void QueryPlan::addRootOperator(const OperatorNodePtr& root) { rootOperators.push_back(root); }
 
-QuerySubPlanId QueryPlan::getQuerySubPlanId() { return querySubPlanId; }
+QuerySubPlanId QueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
 void QueryPlan::setQuerySubPlanId(uint64_t querySubPlanId) { this->querySubPlanId = querySubPlanId; }
 

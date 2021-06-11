@@ -20,7 +20,7 @@
 #include <iostream>
 namespace NES {
 
-ConsoleDumpHandler::ConsoleDumpHandler(std::ostream& out) : DumpHandler(), out(out) {}
+ConsoleDumpHandler::ConsoleDumpHandler(std::ostream& out) :  out(out) {}
 
 std::shared_ptr<ConsoleDumpHandler> ConsoleDumpHandler::create(std::ostream& out) {
     return std::make_shared<ConsoleDumpHandler>(out);

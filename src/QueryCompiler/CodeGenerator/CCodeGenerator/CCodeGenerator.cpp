@@ -66,7 +66,7 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 namespace NES::QueryCompilation {
-CCodeGenerator::CCodeGenerator() : CodeGenerator(), compiler(Compiler::create()) {}
+CCodeGenerator::CCodeGenerator() :  compiler(Compiler::create()) {}
 
 StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::string& structName, const SchemaPtr& schema) {
     /* struct definition for tuples */
@@ -84,7 +84,7 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
     return structDeclarationTuple;
 }
 
-const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& structDeclaration,
+VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& structDeclaration,
                                                             const AttributeFieldPtr& field) {
     if (structDeclaration.getField(field->getName())) {
         return std::make_shared<VariableDeclaration>(structDeclaration.getVariableDeclaration(field->getName()));
@@ -92,7 +92,7 @@ const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclarat
     return VariableDeclarationPtr();
 }
 
-const std::string toString(void*, const DataTypePtr&) {
+std::string toString(void*, const DataTypePtr&) {
     //     if(type->)
     return "";
 }
@@ -2021,7 +2021,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     createFunction->addStatement(returnStatement);
 
     createFunction->returns(SharedPointerGen::createSharedPtrType(
-        GeneratableTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
+        NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileBuilder.addDeclaration(pipelineNamespace->getDeclaration()).build();
 

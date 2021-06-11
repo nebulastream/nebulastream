@@ -115,11 +115,11 @@ BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that
     return *this;
 }
 
-MemorySegment* BufferControlBlock::getOwner() { return owner; }
+MemorySegment* BufferControlBlock::getOwner() const { return owner; }
 
 void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler) {
     NES_ASSERT2_FMT(recycler, "invalid recycler");
-    auto oldRecycler = owningBufferRecycler.exchange(recycler);
+    auto *oldRecycler = owningBufferRecycler.exchange(recycler);
     NES_ASSERT2_FMT(recycler != oldRecycler, "invalid recycler");
 }
 
@@ -249,7 +249,7 @@ void BufferControlBlock::setOriginId(uint64_t originId) { this->originId = origi
 
 void zmqBufferRecyclingCallback(void*, void* hint) {
     NES_VERIFY(hint != nullptr, "Hint cannot be null");
-    auto controlBlock = reinterpret_cast<BufferControlBlock*>(hint);
+    auto *controlBlock = reinterpret_cast<BufferControlBlock*>(hint);
     controlBlock->release();
 }
 
