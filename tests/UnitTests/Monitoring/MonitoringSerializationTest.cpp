@@ -135,19 +135,19 @@ TEST_F(MonitoringSerializationTest, DISABLED_testSerializationGroups) {
     Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
 
     // add with simple data types
-    metricGroup->add("simpleInt_", 1);
+    metricGroup->add("simpleInt_", Metric{1});
 
     // add cpu stats
-    metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, cpuStats);
+    metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, Metric{cpuStats});
 
     // add network stats
-    metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, networkStats);
+    metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, Metric{networkStats});
 
     // add disk stats
-    metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, diskStats);
+    metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, Metric{diskStats});
 
     // add mem stats
-    metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
+    metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, Metric{memStats});
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     metricGroup->getSample(tupleBuffer);
@@ -164,19 +164,19 @@ TEST_F(MonitoringSerializationTest, DISABLED_testDeserializationMetricValues) {
     Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
 
     // add with simple data types
-    metricGroup->add("simpleInt_", 1);
+    metricGroup->add("simpleInt_", Metric{1});
 
     // add cpu stats
-    metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, cpuStats);
+    metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, Metric{cpuStats});
 
     // add network stats
-    metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, networkStats);
+    metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, Metric{networkStats});
 
     // add disk stats
-    metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, diskStats);
+    metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, Metric{diskStats});
 
     // add mem stats
-    metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
+    metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, Metric{memStats});
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     metricGroup->getSample(tupleBuffer);
