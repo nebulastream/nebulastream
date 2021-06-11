@@ -175,7 +175,7 @@ class ReconfigurationMessage {
     ThreadBarrierPtr postSyncBarrier;
 
     /// ref counter
-    std::atomic<uint32_t> refCnt{} {} {};
+    std::atomic<uint32_t> refCnt{};
 
     /// owning plan id
     const QuerySubPlanId parentPlanId;

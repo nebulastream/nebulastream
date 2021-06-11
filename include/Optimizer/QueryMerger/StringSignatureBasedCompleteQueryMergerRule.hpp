@@ -70,7 +70,7 @@ class StringSignatureBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
 
   public:
     static StringSignatureBasedCompleteQueryMergerRulePtr create();
-    ~StringSignatureBasedCompleteQueryMergerRule();
+    virtual ~StringSignatureBasedCompleteQueryMergerRule();
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 

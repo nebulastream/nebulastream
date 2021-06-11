@@ -75,7 +75,7 @@ class Z3SignatureBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
 
   public:
     static Z3SignatureBasedCompleteQueryMergerRulePtr create(z3::ContextPtr context);
-    ~Z3SignatureBasedCompleteQueryMergerRule();
+    virtual ~Z3SignatureBasedCompleteQueryMergerRule();
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 

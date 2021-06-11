@@ -45,6 +45,7 @@ class ProjectBeforeUnionOperatorRule : public BaseRewriteRule {
   public:
     static ProjectBeforeUnionOperatorRulePtr create();
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+    virtual ~ProjectBeforeUnionOperatorRule() = default;
 
   private:
     ProjectBeforeUnionOperatorRule() = default;

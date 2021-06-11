@@ -42,6 +42,7 @@ using DistributeJoinRulePtr = std::shared_ptr<DistributeJoinRule>;
 class DistributeJoinRule : public BaseRewriteRule {
   public:
     static DistributeJoinRulePtr create();
+    virtual ~DistributeJoinRule() = default;
 
     /**
      * @brief Apply Logical source expansion rule on input query plan

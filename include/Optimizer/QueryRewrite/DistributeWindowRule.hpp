@@ -96,6 +96,7 @@ class DistributeWindowRule : public BaseRewriteRule {
     static const uint64_t CHILD_NODE_THRESHOLD_COMBINER = 4;
 
     static DistributeWindowRulePtr create();
+    virtual ~DistributeWindowRule() = default;
 
     /**
      * @brief Apply Logical source expansion rule on input query plan

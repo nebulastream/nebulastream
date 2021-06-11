@@ -86,6 +86,7 @@ class SyntaxBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
 
   public:
     static SyntaxBasedCompleteQueryMergerRulePtr create();
+    virtual ~SyntaxBasedCompleteQueryMergerRule() = default;
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 

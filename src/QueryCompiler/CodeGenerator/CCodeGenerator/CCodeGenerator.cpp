@@ -2032,12 +2032,15 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 NodeEngine::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(PipelineContextPtr code) {
     std::string src = generateCode(code);
     auto compiledCode = compiler->compile(src);
-    PipelineStageArity arity = 0;
-    switch (code->arity) {
-        case PipelineContext::Unary: arity = Unary; break;
-        case PipelineContext::BinaryLeft: arity = BinaryLeft; break;
-        case PipelineContext::BinaryRight: arity = BinaryRight; break;
+    PipelineStageArity const arity = [&ari=code->arity](){
+    switch (ari) {
+        case PipelineContext::Unary: return Unary;
+        case PipelineContext::BinaryLeft: return BinaryLeft;
+        case PipelineContext::BinaryRight: return BinaryRight;
+        default:
+            NES_FATAL_ERROR(catString("Unknown PipelineContext", ari, ". Terminate."));
     }
+    }();
     return CompiledExecutablePipelineStage::create(compiledCode, arity, src);
 }
 

@@ -1675,7 +1675,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
     struct inliners_search_cb {
         void operator()(Dwarf_Die* die) {
             switch (dwarf_tag(die)) {
-                const char* name = nullptr;
+                char const *name;
                 case DW_TAG_subprogram:
                     if ((name = dwarf_diename(die))) {
                         trace.source.function = name;
