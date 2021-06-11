@@ -30,7 +30,7 @@ class TypeInferenceException : public std::runtime_error {
     explicit TypeInferenceException(const std::string& message);
     TypeInferenceException(QueryId queryId, const std::string& message);
 
-    QueryId getQueryId();
+    QueryId getQueryId() const;
 
   private:
     QueryId queryId;

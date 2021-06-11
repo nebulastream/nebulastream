@@ -149,13 +149,13 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * @brief debug function for testing to get number of generated tuples
      * @return number of generated tuples
      */
-    uint64_t getNumberOfGeneratedTuples();
+    uint64_t getNumberOfGeneratedTuples() const;
 
     /**
      * @brief debug function for testing to get number of generated buffer
      * @return number of generated buffer
      */
-    uint64_t getNumberOfGeneratedBuffers();
+    uint64_t getNumberOfGeneratedBuffers() const;
 
     /**
      * @brief method to set the sampling interval
@@ -189,7 +189,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * @brief Gets the operator id for the data source
      * @return OperatorId
      */
-    OperatorId getOperatorId();
+    OperatorId getOperatorId() const;
 
     /**
      * @brief Set the operator id for the data source

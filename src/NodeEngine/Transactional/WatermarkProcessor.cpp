@@ -38,7 +38,7 @@ void WatermarkProcessor::updateWatermark(WatermarkBarrier watermarkBarrier) {
 
 WatermarkTs WatermarkProcessor::getCurrentWatermark() const {
     WatermarkTs maxWatermarkTs = UINT64_MAX;
-    for (auto& localWatermarkManager : localWatermarkProcessor) {
+    for (const auto& localWatermarkManager : localWatermarkProcessor) {
         maxWatermarkTs = std::min(maxWatermarkTs, localWatermarkManager->getCurrentWatermark());
     }
     return maxWatermarkTs;

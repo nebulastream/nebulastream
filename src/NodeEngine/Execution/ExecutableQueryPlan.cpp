@@ -32,7 +32,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
                                          BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
-      qepStatus(Created), numOfProducers(this->sources.size()), qepTerminationStatusPromise(),
+      qepStatus(Created), numOfProducers(this->sources.size()), 
       qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
     // nop
 }
@@ -55,11 +55,11 @@ ExecutableQueryPlanPtr ExecutableQueryPlan::create(QueryId queryId,
 
 void ExecutableQueryPlan::incrementProducerCount() { numOfProducers++; }
 
-const QueryId ExecutableQueryPlan::getQueryId() const { return queryId; }
+QueryId ExecutableQueryPlan::getQueryId() const { return queryId; }
 
 const std::vector<ExecutablePipelinePtr>& ExecutableQueryPlan::getPipelines() const { return pipelines; }
 
-const QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
+QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
 ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_DEBUG("destroy qep " << queryId << " " << querySubPlanId);

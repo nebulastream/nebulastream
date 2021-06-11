@@ -32,11 +32,11 @@ class ExpressionStatment : public Statement {
     [[nodiscard]] StatementPtr createCopy() const final;
 
     BinaryOperatorStatement assign(const ExpressionStatment& ref);
-    BinaryOperatorStatement assign(ExpressionStatmentPtr ref);
+    BinaryOperatorStatement assign(ExpressionStatmentPtr ref) const;
     BinaryOperatorStatement accessPtr(const ExpressionStatment& ref);
-    BinaryOperatorStatement accessPtr(ExpressionStatmentPtr const & ref);
+    BinaryOperatorStatement accessPtr(ExpressionStatmentPtr const & ref) const;
     BinaryOperatorStatement accessRef(const ExpressionStatment& ref);
-    BinaryOperatorStatement accessRef(ExpressionStatmentPtr ref);
+    BinaryOperatorStatement accessRef(ExpressionStatmentPtr ref) const;
     BinaryOperatorStatement operator[](const ExpressionStatment& ref);
 
     ~ExpressionStatment() override;

@@ -20,6 +20,6 @@ namespace NES {
 QueryPlacementException::QueryPlacementException(SharedQueryId sharedQueryId, const std::string& message)
     : std::runtime_error(message), sharedQueryId(sharedQueryId) {}
 
-SharedQueryId QueryPlacementException::getSharedQueryId() { return sharedQueryId; }
+SharedQueryId QueryPlacementException::getSharedQueryId() const { return sharedQueryId; }
 
 }// namespace NES

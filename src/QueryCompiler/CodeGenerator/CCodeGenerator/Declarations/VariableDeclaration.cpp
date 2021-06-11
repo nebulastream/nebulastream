@@ -40,7 +40,7 @@ Code VariableDeclaration::getCode() const {
     std::stringstream str;
     str << type_->getDeclarationCode(identifier_)->code_;
     if (init_value_) {
-        auto valueType = GeneratableTypesFactory().createValueType(init_value_);
+        auto valueType = NES::QueryCompilation::GeneratableTypesFactory::createValueType(init_value_);
         str << " = " << valueType->getCodeExpression()->code_;
     }
     return str.str();

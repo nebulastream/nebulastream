@@ -181,7 +181,7 @@ bool ZmqSink::disconnect() {
     return !connected;
 }
 
-int ZmqSink::getPort() { return this->port; }
+int ZmqSink::getPort() const { return this->port; }
 
 std::string ZmqSink::getHost() const { return host; }
 

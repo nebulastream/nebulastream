@@ -25,7 +25,7 @@ SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName) {
 }
 
 SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName, std::string sinkFormat, const std::string& append) {
-    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(std::move(fileName), std::move(sinkFormat), append == "APPEND" ? true : false));
+    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(std::move(fileName), std::move(sinkFormat), append == "APPEND"));
 }
 
 FileSinkDescriptor::FileSinkDescriptor(std::string fileName, std::string sinkFormat, bool append)
@@ -43,7 +43,7 @@ bool FileSinkDescriptor::equal(SinkDescriptorPtr const &other) {
     return fileName == otherSinkDescriptor->fileName;
 }
 
-bool FileSinkDescriptor::getAppend() { return append; }
+bool FileSinkDescriptor::getAppend() const { return append; }
 
 std::string FileSinkDescriptor::getSinkFormatAsString() { return sinkFormat; }
 

@@ -149,7 +149,7 @@ class QueryPlan {
         NES_TRACE("QueryPlan: Iterate over all root nodes to find the operator.");
         for (const auto& rootOperator : rootOperators) {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-            for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
+            for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
                 auto visitingOp = (*itr)->as<OperatorNode>();
                 if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
                     // skip rest of the steps as the node found in already visited node list
@@ -205,7 +205,7 @@ class QueryPlan {
      * @brief get query sub plan id
      * @return return query sub plan id
      */
-    QuerySubPlanId getQuerySubPlanId();
+    QuerySubPlanId getQuerySubPlanId() const;
 
     /**
      * @brief Set query sub plan id

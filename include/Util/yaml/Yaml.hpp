@@ -95,11 +95,7 @@ struct StringConverter<bool> {
     static bool Get(const std::string& data) {
         std::string tmpData = data;
         std::transform(tmpData.begin(), tmpData.end(), tmpData.begin(), ::tolower);
-        if (tmpData == "true" || tmpData == "yes" || tmpData == "1") {
-            return true;
-        }
-
-        return false;
+        return tmpData == "true" || tmpData == "yes" || tmpData == "1";
     }
 
     static bool Get(const std::string& data, const bool& defaultValue) {
@@ -253,13 +249,13 @@ class Iterator {
         * @breif Post-increment operator.
         *
         */
-    const Yaml::Iterator operator++(int);
+    Yaml::Iterator operator++(int);
 
     /**
         * @breif Post-decrement operator.
         *
         */
-    const Yaml::Iterator operator--(int);
+    Yaml::Iterator operator--(int);
 
     /**
         * @breif Check if iterator is equal to other iterator.
@@ -324,13 +320,13 @@ class ConstIterator {
         * @breif Post-increment operator.
         *
         */
-    const Yaml::ConstIterator operator++(int);
+    Yaml::ConstIterator operator++(int);
 
     /**
         * @breif Post-decrement operator.
         *
         */
-    const Yaml::ConstIterator operator--(int);
+    Yaml::ConstIterator operator--(int);
 
     /**
         * @breif Check if iterator is equal to other iterator.

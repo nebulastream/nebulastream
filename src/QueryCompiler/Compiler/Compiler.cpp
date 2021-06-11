@@ -264,7 +264,7 @@ std::string Compiler::formatAndPrintSource(const std::string& filename) {
 
     auto formatCommand = "clang-format -i " + filename;
 
-    auto res = popen(formatCommand.c_str(), "r");
+    auto *res = popen(formatCommand.c_str(), "r");
     NES_ASSERT(res != nullptr, "Compiler: popen() failed!");
     // wait till command is complete executed.
     pclose(res);

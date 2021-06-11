@@ -68,7 +68,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
 
                 NES_TRACE("LogicalSourceExpansionRule: For each original head operator find the duplicate operator and connect "
                           "it to the original graph");
-                for (auto& originalRootOperator : originalRootOperators) {
+                for (const auto& originalRootOperator : originalRootOperators) {
 
                     NES_TRACE("LogicalSourceExpansionRule: Search the duplicate operator equal to original head operator");
                     auto found = std::find_if(family.begin(), family.end(), [&](const NodePtr& member) {
@@ -79,7 +79,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                         NES_TRACE("LogicalSourceExpansionRule: Found the duplicate operator equal to the original head operator");
                         NES_TRACE(
                             "LogicalSourceExpansionRule: Add the duplicate operator to the parent of the original head operator");
-                        for (auto& parent : originalRootOperator->getParents()) {
+                        for (const auto& parent : originalRootOperator->getParents()) {
                             NES_TRACE("LogicalSourceExpansionRule: Assign the duplicate operator a new operator id.");
                             (*found)->as<OperatorNode>()->setId(UtilityFunctions::getNextOperatorId());
                             parent->addChild(*found);
@@ -113,7 +113,7 @@ LogicalSourceExpansionRule::getLogicalGraphToDuplicate(const OperatorNodePtr& op
     std::set<OperatorNodePtr> originalRootOperator;
 
     NES_TRACE("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
-    for (auto& parent : operatorNode->getParents()) {
+    for (const auto& parent : operatorNode->getParents()) {
         OperatorNodePtr duplicatedParentOperator;
         std::set<OperatorNodePtr> rootOperators;
 

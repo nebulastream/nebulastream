@@ -73,7 +73,7 @@ DiskMetrics DiskMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBu
     return output;
 }
 
-web::json::value DiskMetrics::toJson() {
+web::json::value DiskMetrics::toJson() const {
     web::json::value metricsJson{};
     metricsJson["F_BSIZE"] = web::json::value::number(fBsize);
     metricsJson["F_FRSIZE"] = web::json::value::number(fFrsize);

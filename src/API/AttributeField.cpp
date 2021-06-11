@@ -33,7 +33,7 @@ void AttributeField::setName(std::string newName) { this->name = std::move(newNa
 
 DataTypePtr AttributeField::getDataType() const { return dataType; }
 
-const std::string AttributeField::toString() const {
+std::string AttributeField::toString() const {
     std::stringstream ss;
     ss << name << ":" << dataType->toString();
     return ss.str();

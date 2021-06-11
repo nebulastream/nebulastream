@@ -81,7 +81,7 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
         for (const auto& root : roots) {
             NES_DEBUG("ExecutionNode : Iterate the root node using BFS");
             auto bfsIterator = BreadthFirstNodeIterator(root);
-            for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
+            for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
                 auto visitingOp = (*itr)->as<OperatorNode>();
                 if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
                     NES_TRACE("ExecutionNode : Found already visited operator skipping rest of the path traverse.");
@@ -155,7 +155,7 @@ ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode
     return std::make_shared<ExecutionNode>(ExecutionNode(std::move(physicalNode)));
 }
 
-uint64_t ExecutionNode::getId() { return id; }
+uint64_t ExecutionNode::getId() const { return id; }
 
 TopologyNodePtr ExecutionNode::getTopologyNode() { return topologyNode; }
 

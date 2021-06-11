@@ -147,15 +147,15 @@ bool Schema::hasEqualTypes(const SchemaPtr& otherSchema) {
     return true;
 }
 
-const std::string Schema::toString() const {
+std::string Schema::toString() const {
     std::stringstream ss;
-    for (auto& f : fields) {
+    for (const auto& f : fields) {
         ss << f->toString() << " ";
     }
     return ss.str();
 }
 
-const std::string Schema::getStreamNameQualifier() const {
+std::string Schema::getStreamNameQualifier() const {
     if (fields.empty()) {
         return "Unnamed Stream";
     }

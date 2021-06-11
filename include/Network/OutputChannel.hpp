@@ -39,7 +39,7 @@ class OutputChannel {
   public:
     explicit OutputChannel(zmq::socket_t&& zmqSocket, ChannelId channelId, std::string&& address);
 
-  public:
+  
     /**
      * @brief close the output channel and release resources
      */
@@ -49,7 +49,7 @@ class OutputChannel {
 
     OutputChannel& operator=(const OutputChannel&) = delete;
 
-  public:
+  
     /**
      * @brief Creates an output channe instance with the given parameters
      * @param zmqContext the local zmq server context

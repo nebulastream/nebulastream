@@ -83,9 +83,24 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
     auto output = NetworkMetrics();
 
     FILE* fp = fopen("/proc/net/dev", "re");
-    char buf[200], ifname[20];
-    uint64_t rBytes = 0, rPackets = 0, rErrs = 0, rDrop = 0, rFifo = 0, rFrame = 0, rCompressed = 0, rMulticast = 0;
-    uint64_t tBytes = 0, tPackets = 0, tErrs = 0, tDrop = 0, tFifo = 0, tColls = 0, tCarrier = 0, tCompressed = 0;
+    char buf[200];
+    char ifname[20];
+    uint64_t rBytes = 0;
+    uint64_t rPackets = 0;
+    uint64_t rErrs = 0;
+    uint64_t rDrop = 0;
+    uint64_t rFifo = 0;
+    uint64_t rFrame = 0;
+    uint64_t rCompressed = 0;
+    uint64_t rMulticast = 0;
+    uint64_t tBytes = 0;
+    uint64_t tPackets = 0;
+    uint64_t tErrs = 0;
+    uint64_t tDrop = 0;
+    uint64_t tFifo = 0;
+    uint64_t tColls = 0;
+    uint64_t tCarrier = 0;
+    uint64_t tCompressed = 0;
 
     // skip first two lines
     for (int i = 0; i < 2; i++) {

@@ -360,9 +360,9 @@ class TestHarness {
         }
 
         // check the length of the output file
-        ifs.seekg(0, ifs.end);
+        ifs.seekg(0, std::ifstream::end);
         auto length = ifs.tellg();
-        ifs.seekg(0, ifs.beg);
+        ifs.seekg(0, std::ifstream::beg);
 
         // read the binary output as a vector of T
         auto* buff = reinterpret_cast<char*>(malloc(length));

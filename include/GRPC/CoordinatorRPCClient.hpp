@@ -118,7 +118,7 @@ class CoordinatorRPCClient {
      * @brief method to get own id form server
      * @return own id as listed in the graph
      */
-    uint64_t getId();
+    uint64_t getId() const;
 
   private:
     uint64_t workerId;

@@ -135,7 +135,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                                                                                            << "try to parse query");
                     json::value req = json::value::parse(userRequest);
                     NES_DEBUG("QueryController: handlePost -execute-query: get user query");
-                    string userQuery = "";
+                    string userQuery;
                     if (req.has_field("userQuery")) {
                         userQuery = req.at("userQuery").as_string();
                     } else if (req.has_field("pattern")) {

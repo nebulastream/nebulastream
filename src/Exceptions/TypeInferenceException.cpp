@@ -20,5 +20,5 @@ namespace NES {
 TypeInferenceException::TypeInferenceException(const std::string& message) : std::runtime_error(message), queryId(INVALID_QUERY_ID) {}
 TypeInferenceException::TypeInferenceException(QueryId queryId, const std::string& message)
     : std::runtime_error(message), queryId(queryId) {}
-QueryId TypeInferenceException::getQueryId() { return queryId; }
+QueryId TypeInferenceException::getQueryId() const { return queryId; }
 }// namespace NES

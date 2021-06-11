@@ -1240,7 +1240,8 @@ private:
     // are released. No meaningful position is returned.
     template <typename TABLE_MODE, typename K>
     table_position cuckoo_insert(const hash_value hv, TwoBuckets &b, K &key) {
-        int res1 = 0, res2 = 0;
+        int res1 = 0;
+        int res2 = 0;
         bucket &b1 = buckets_[b.i1];
         if (!try_find_insert_bucket(b1, res1, hv.partial, key)) {
             return table_position{b.i1, static_cast<size_type>(res1),
@@ -1783,7 +1784,8 @@ private:
             const size_type old_ahash = alt_index(old_hp, hv.partial, old_ihash);
             const size_type new_ihash = index_hash(new_hp, hv.hash);
             const size_type new_ahash = alt_index(new_hp, hv.partial, new_ihash);
-            size_type dst_bucket_ind, dst_bucket_slot;
+            size_type dst_bucket_ind;
+            size_type dst_bucket_slot;
             if ((old_bucket_ind == old_ihash && new_ihash == new_bucket_ind) ||
                 (old_bucket_ind == old_ahash && new_ahash == new_bucket_ind)) {
                 // We're moving the key to the new bucket
@@ -2203,7 +2205,7 @@ public:
 
             // Advance the iterator to the next item in the table, or to the end
             // of the table. Returns the iterator at its old position.
-            const const_iterator operator++(int) {
+            const_iterator operator++(int) {
                 const_iterator old(*this);
                 ++(*this);
                 return old;
@@ -2236,7 +2238,7 @@ public:
             //! Move the iterator back to the previous item in the table.
             //! Returns the iterator at its old position. Behavior is undefined
             //! if the iterator is at the beginning.
-            const const_iterator operator--(int) {
+            const_iterator operator--(int) {
                 const_iterator old(*this);
                 --(*this);
                 return old;
@@ -2311,7 +2313,7 @@ public:
                 return *this;
             }
 
-            const iterator operator++(int) {
+            iterator operator++(int) {
                 iterator old(*this);
                 const_iterator::operator++();
                 return old;
@@ -2322,7 +2324,7 @@ public:
                 return *this;
             }
 
-            const iterator operator--(int) {
+            iterator operator--(int) {
                 iterator old(*this);
                 const_iterator::operator--();
                 return old;

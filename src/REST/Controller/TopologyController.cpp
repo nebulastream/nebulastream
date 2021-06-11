@@ -37,7 +37,6 @@ void TopologyController::handleGet(const std::vector<utility::string_t>& paths, 
         return;
     }
     resourceNotFoundImpl(message);
-    return;
 }
 
 }// namespace NES

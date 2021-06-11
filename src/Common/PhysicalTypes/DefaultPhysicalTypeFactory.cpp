@@ -27,7 +27,7 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-DefaultPhysicalTypeFactory::DefaultPhysicalTypeFactory() : PhysicalTypeFactory() {}
+DefaultPhysicalTypeFactory::DefaultPhysicalTypeFactory()  {}
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType) {
     if (dataType->isBoolean()) {

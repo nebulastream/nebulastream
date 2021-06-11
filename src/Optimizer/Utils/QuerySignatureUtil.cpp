@@ -405,7 +405,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
 
     //Merge the window definitions together
     std::map<std::string, z3::ExprPtr> windowExpressions = leftSignature->getWindowsExpressions();
-    for (auto& [windowKey, windowExpression] : rightSignature->getWindowsExpressions()) {
+    for (const auto& [windowKey, windowExpression] : rightSignature->getWindowsExpressions()) {
         if (windowExpressions.find(windowKey) != windowExpressions.end()) {
             //FIXME: when we receive more than one window expressions for same window in issue #1272
             NES_NOT_IMPLEMENTED();
@@ -541,7 +541,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
 
     std::map<std::string, z3::ExprPtr> windowExpressions = leftSignature->getWindowsExpressions();
 
-    for (auto& [rightWindowKey, rightWindowExpr] : rightSignature->getWindowsExpressions()) {
+    for (const auto& [rightWindowKey, rightWindowExpr] : rightSignature->getWindowsExpressions()) {
         if (windowExpressions.find(rightWindowKey) == windowExpressions.end()) {
             windowExpressions[rightWindowKey] = rightWindowExpr;
         } else {

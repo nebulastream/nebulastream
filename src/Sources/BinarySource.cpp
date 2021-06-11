@@ -34,12 +34,12 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema, std::move(bufferManager), std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode, std::move(successors)),
       input(std::ifstream(_file_path.c_str())), file_path(_file_path) {
-    input.seekg(0, input.end);
+    input.seekg(0, std::ifstream::end);
     file_size = input.tellg();
     if (file_size == -1) {
         NES_FATAL_ERROR("ERROR: File " << _file_path << " is corrupted");
     }
-    input.seekg(0, input.beg);
+    input.seekg(0, std::ifstream::beg);
     tuple_size = schema->getSchemaSizeInBytes();
 }
 
@@ -62,7 +62,7 @@ void BinarySource::fillBuffer(NodeEngine::TupleBuffer& buf) {
      */
 
     if (input.tellg() == file_size) {
-        input.seekg(0, input.beg);
+        input.seekg(0, std::ifstream::beg);
     }
     uint64_t uint64_to_read = buf.getBufferSize() < (uint64_t) file_size ? buf.getBufferSize() : file_size;
     input.read(buf.getBuffer<char>(), uint64_to_read);

@@ -108,7 +108,8 @@ TEST_F(BufferManagerTest, getBufferAfterRelease) {
     for (size_t i = 0; i < buffers_managed; ++i) {
         buffers.push_back(bufferManager->getBufferBlocking());
     }
-    std::promise<bool> promise0, promise1;
+    std::promise<bool> promise0;
+    std::promise<bool> promise1;
     auto f0 = promise0.get_future();
     // start a thread that is blocking waiting on the queue
     std::thread t1([&promise0, &promise1, &bufferManager]() {

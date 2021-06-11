@@ -20,13 +20,13 @@ namespace NES::Windowing {
 
 SliceMetaData::SliceMetaData(uint64_t startTs, uint64_t endTs) : startTs(startTs), endTs(endTs), recordsPerSlice(0){};
 
-uint64_t SliceMetaData::getEndTs() { return endTs; }
+uint64_t SliceMetaData::getEndTs() const { return endTs; }
 
-uint64_t SliceMetaData::getStartTs() { return startTs; }
+uint64_t SliceMetaData::getStartTs() const { return startTs; }
 
 void incrementRecordsPerSlice();
 
-uint64_t SliceMetaData::getRecordsPerSlice() { return recordsPerSlice; }
+uint64_t SliceMetaData::getRecordsPerSlice() const { return recordsPerSlice; }
 
 void SliceMetaData::incrementRecordsPerSlice() { recordsPerSlice++; }
 

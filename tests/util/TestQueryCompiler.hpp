@@ -107,7 +107,7 @@ class TestSourceProvider : public QueryCompilation::DataSourceProvider {
 
 class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
   public:
-    const QueryCompilation::LowerToExecutableQueryPlanPhasePtr
+    QueryCompilation::LowerToExecutableQueryPlanPhasePtr
     createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options) override {
         auto sinkProvider = std::make_shared<TestSinkProvider>();
         auto sourceProvider = std::make_shared<TestSourceProvider>(options);

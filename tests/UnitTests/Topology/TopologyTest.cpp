@@ -288,7 +288,7 @@ TEST_F(TopologyTest, printGraph) {
 TEST_F(TopologyTest, printGraphWithoutAnything) {
     TopologyPtr topology = Topology::create();
 
-    std::string expectedResult = "";
+    std::string expectedResult;
     EXPECT_TRUE(topology->toString() == expectedResult);
 }
 

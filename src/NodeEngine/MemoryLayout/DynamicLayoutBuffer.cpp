@@ -22,7 +22,7 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
 DynamicLayoutBuffer::DynamicLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity)
     : tupleBuffer(std::move(tupleBuffer)), capacity(capacity) {}
 
-uint64_t DynamicLayoutBuffer::getCapacity() { return capacity; }
-uint64_t DynamicLayoutBuffer::getNumberOfRecords() { return numberOfRecords; }
+uint64_t DynamicLayoutBuffer::getCapacity() const { return capacity; }
+uint64_t DynamicLayoutBuffer::getNumberOfRecords() const { return numberOfRecords; }
 TupleBuffer DynamicLayoutBuffer::getTupleBuffer() { return tupleBuffer; }
 }// namespace NES::NodeEngine::DynamicMemoryLayout

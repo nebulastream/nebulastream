@@ -78,13 +78,13 @@ class MonitoringPlan {
      * @param buf
      * @return
      */
-    GroupedValues fromBuffer(const std::shared_ptr<Schema>& schema, NodeEngine::TupleBuffer& buf);
+    GroupedValues fromBuffer(const std::shared_ptr<Schema>& schema, NodeEngine::TupleBuffer& buf) const;
 
     /**
      * @brief Returns the schema of the class.
      * @return the schema
      */
-    SchemaPtr createSchema();
+    SchemaPtr createSchema() const;
 
     /**
      * @brief Creates a serializable monitoring plan according to the Protobuf definition.
@@ -96,7 +96,7 @@ class MonitoringPlan {
 
     friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
 
-  public:
+  
     static const std::string CPU_METRICS_DESC;
     static const std::string CPU_VALUES_DESC;
     static const std::string NETWORK_METRICS_DESC;

@@ -31,11 +31,11 @@ void QueryCompilationRequest::enableDebugging() { this->debug = true; }
 
 void QueryCompilationRequest::enableOptimizations() { this->optimize = true; }
 
-bool QueryCompilationRequest::isDebugEnabled() { return debug; }
+bool QueryCompilationRequest::isDebugEnabled() const { return debug; }
 
-bool QueryCompilationRequest::isOptimizeEnabled() { return optimize; }
+bool QueryCompilationRequest::isOptimizeEnabled() const { return optimize; }
 
-bool QueryCompilationRequest::isDumpEnabled() { return dumpQueryPlans; }
+bool QueryCompilationRequest::isDumpEnabled() const { return dumpQueryPlans; }
 
 QueryPlanPtr QueryCompilationRequest::getQueryPlan() { return queryPlan; }
 

@@ -20,5 +20,5 @@ namespace NES {
 
 NESRequest::NESRequest(QueryId queryId) : queryId(queryId) {}
 
-QueryId NESRequest::getQueryId() { return queryId; }
+QueryId NESRequest::getQueryId() const { return queryId; }
 }// namespace NES

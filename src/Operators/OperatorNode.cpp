@@ -48,14 +48,14 @@ OperatorNodePtr OperatorNode::duplicate() {
     const OperatorNodePtr copyOperator = copy();
 
     NES_DEBUG("OperatorNode: copy all parents");
-    for (auto& parent : getParents()) {
+    for (const auto& parent : getParents()) {
         if (!copyOperator->addParent(getDuplicateOfParent(parent->as<OperatorNode>()))) {
             NES_THROW_RUNTIME_ERROR("OperatorNode: Unable to add parent to copy");
         }
     }
 
     NES_DEBUG("OperatorNode: copy all children");
-    for (auto& child : getChildren()) {
+    for (const auto& child : getChildren()) {
         if (!copyOperator->addChild(getDuplicateOfChild(child->as<OperatorNode>()->duplicate()))) {
             NES_THROW_RUNTIME_ERROR("OperatorNode: Unable to add child to copy");
         }
@@ -72,7 +72,7 @@ OperatorNodePtr OperatorNode::getDuplicateOfParent(const OperatorNodePtr& operat
     }
 
     NES_TRACE("OperatorNode: For all parents get copy of the ancestor and add as parent to the copy of the input operator");
-    for (auto& parent : operatorNode->getParents()) {
+    for (const auto& parent : operatorNode->getParents()) {
         copyOfOperator->addParent(getDuplicateOfParent(parent->as<OperatorNode>()));
     }
     NES_TRACE("OperatorNode: return copy of the input operator");
@@ -88,7 +88,7 @@ OperatorNodePtr OperatorNode::getDuplicateOfChild(const OperatorNodePtr& operato
     }
 
     NES_TRACE("OperatorNode: For all children get copy of their children and add as child to the copy of the input operator");
-    for (auto& child : operatorNode->getChildren()) {
+    for (const auto& child : operatorNode->getChildren()) {
         copyOfOperator->addChild(getDuplicateOfParent(child->as<OperatorNode>()));
     }
     NES_TRACE("OperatorNode: return copy of the input operator");

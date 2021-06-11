@@ -22,7 +22,7 @@
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, const SchemaPtr& schema) : DynamicMemoryLayout() {
+DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, const SchemaPtr& schema)  {
     this->checkBoundaryFieldChecks = checkBoundaries;
     this->recordSize = schema->getSchemaSizeInBytes();
     this->fieldOffSets = std::vector<FIELD_OFFSET>();

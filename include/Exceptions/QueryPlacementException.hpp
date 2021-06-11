@@ -31,7 +31,7 @@ class QueryPlacementException : public std::runtime_error {
   public:
     explicit QueryPlacementException(SharedQueryId sharedQueryId, const std::string& message);
 
-    SharedQueryId getSharedQueryId();
+    SharedQueryId getSharedQueryId() const;
 
   private:
     SharedQueryId sharedQueryId;

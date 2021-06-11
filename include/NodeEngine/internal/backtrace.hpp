@@ -709,7 +709,7 @@ struct ResolvedTrace : public Trace {
     using source_locs_t = std::vector<SourceLoc>;
     source_locs_t inliners;
 
-    ResolvedTrace() : Trace() {}
+    ResolvedTrace()  {}
     ResolvedTrace(const Trace& mini_trace) : Trace(mini_trace) {}
 };
 
@@ -1649,7 +1649,8 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
             if (srcfile) {
                 trace.source.filename = srcfile;
             }
-            int line = 0, col = 0;
+            int line = 0;
+            int col = 0;
             dwarf_lineno(srcloc, &line);
             dwarf_linecol(srcloc, &col);
             trace.source.line = line;
@@ -1694,7 +1695,8 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
                         sloc.filename = name;
                     }
 
-                    Dwarf_Word line = 0, col = 0;
+                    Dwarf_Word line = 0;
+                    Dwarf_Word col = 0;
                     dwarf_formudata(dwarf_attr(die, DW_AT_call_line, &attr_mem), &line);
                     dwarf_formudata(dwarf_attr(die, DW_AT_call_column, &attr_mem), &col);
                     sloc.line = (unsigned) line;
@@ -1709,7 +1711,8 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
     };
 
     static bool die_has_pc(Dwarf_Die* die, Dwarf_Addr pc) {
-        Dwarf_Addr low = 0, high = 0;
+        Dwarf_Addr low = 0;
+        Dwarf_Addr high = 0;
 
         // continuous range
         if (dwarf_hasattr(die, DW_AT_low_pc) && dwarf_hasattr(die, DW_AT_high_pc)) {
@@ -3546,7 +3549,7 @@ class cfile_streambuf : public std::streambuf {
     }
 
 #ifdef BACKWARD_ATLEAST_CXX11
-  public:
+  
     cfile_streambuf(const cfile_streambuf&) = delete;
     cfile_streambuf& operator=(const cfile_streambuf&) = delete;
 #else
@@ -3755,7 +3758,7 @@ class Printer {
     }
 
     void
-    print_source_loc(std::ostream& os, const char* indent, const ResolvedTrace::SourceLoc& source_loc, void* addr = nullptr) {
+    print_source_loc(std::ostream& os, const char* indent, const ResolvedTrace::SourceLoc& source_loc, void* addr = nullptr) const {
         os << indent << "Source \"" << source_loc.filename << "\", line " << source_loc.line << ", in " << source_loc.function;
 
         if (address && addr != nullptr) {

@@ -60,7 +60,7 @@ class ExecutionNode : public Node {
      * Get execution node id
      * @return id of the execution node
      */
-    uint64_t getId();
+    uint64_t getId() const;
 
     /**
      * Get the nes node for the execution node.

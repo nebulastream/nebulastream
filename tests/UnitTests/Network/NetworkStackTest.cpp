@@ -108,7 +108,7 @@ class TestSink : public SinkMedium {
     ~TestSink() override = default;
     ;
 
-  public:
+  
     std::mutex m;
     std::promise<uint64_t> completed;
 };
@@ -308,7 +308,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                 ASSERT_EQ((buffer.getBufferSize() == bufferSize) && (id.getQueryId(), 1) && (id.getOperatorId(), 22)
                               && (id.getPartitionId(), 333) && (id.getSubpartitionId(), 444),
                           true);
-                auto bufferContent = buffer.getBuffer<uint64_t>();
+                auto *bufferContent = buffer.getBuffer<uint64_t>();
                 for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                     ASSERT_EQ(bufferContent[j], j);
                 }

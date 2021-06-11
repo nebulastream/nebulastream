@@ -29,7 +29,7 @@ class PipelineContext {
   public:
     enum PipelineContextArity { Unary, BinaryLeft, BinaryRight };
 
-  public:
+  
     explicit PipelineContext(PipelineContextArity arity = Unary);
     ~PipelineContext();
     static PipelineContextPtr create();
@@ -58,9 +58,9 @@ class PipelineContext {
      */
     int64_t registerOperatorHandler(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler);
 
-    const std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
+    std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
 
-    const uint64_t getHandlerIndex(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler);
+    uint64_t getHandlerIndex(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler);
 
     std::string pipelineName;
     PipelineContextArity arity;

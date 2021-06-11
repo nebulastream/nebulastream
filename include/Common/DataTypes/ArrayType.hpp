@@ -34,7 +34,7 @@ class ArrayType : public DataType {
      * @param component component type
      */
     inline ArrayType(uint64_t length, DataTypePtr component) noexcept
-        : DataType(), length(length), component(std::move(component)) {}
+        :  length(length), component(std::move(component)) {}
 
     /**
      * @brief Checks if this data type is an ArrayType.

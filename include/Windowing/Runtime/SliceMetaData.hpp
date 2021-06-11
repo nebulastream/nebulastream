@@ -34,18 +34,18 @@ class SliceMetaData {
     /**
     * @brief The start timestamp of this slice
     */
-    uint64_t getStartTs();
+    uint64_t getStartTs() const;
 
     /**
      * @brief The end timestamp of this slice
      */
-    uint64_t getEndTs();
+    uint64_t getEndTs() const;
 
     /**
      * @brief method to get the number of tuples per slice
      * @return number of tuples per slice
      */
-    uint64_t getRecordsPerSlice();
+    uint64_t getRecordsPerSlice() const;
 
     /**
      * @brief method to increment the number of tuples per slice by one

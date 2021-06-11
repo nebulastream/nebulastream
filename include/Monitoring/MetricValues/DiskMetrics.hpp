@@ -49,7 +49,7 @@ class DiskMetrics {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    web::json::value toJson();
+    web::json::value toJson() const;
 
     uint64_t fBsize;
     uint64_t fFrsize;

@@ -72,7 +72,6 @@ void MonitoringController::handleGet(std::vector<utility::string_t> path, const 
         }
     }
     resourceNotFoundImpl(message);
-    return;
 }
 
 void MonitoringController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
@@ -140,7 +139,6 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
             .wait();
     }
     resourceNotFoundImpl(message);
-    return;
 }
 
 }// namespace NES

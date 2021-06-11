@@ -61,25 +61,25 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @brief get MQTT server address
      * @return serverAddress
      */
-    const std::string getServerAddress() const;
+    std::string getServerAddress() const;
 
     /**
      * @brief get desired mqtt server client id
      * @return clientId
      */
-    const std::string getClientId() const;
+    std::string getClientId() const;
 
     /**
      * @brief get user name
      * @return user
      */
-    const std::string getUser() const;
+    std::string getUser() const;
 
     /**
      * @brief getter for topic
      * @return topic
      */
-    const std::string getTopic() const;
+    std::string getTopic() const;
 
     /**
      * checks if two mqtt source descriptors are the same

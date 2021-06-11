@@ -63,7 +63,7 @@ class BufferControlBlock {
 
     BufferControlBlock& operator=(const BufferControlBlock&);
 
-    MemorySegment* getOwner();
+    MemorySegment* getOwner() const;
 
     void resetBufferRecycler(BufferRecycler* recycler);
 
@@ -231,7 +231,7 @@ class MemorySegment {
                            std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
                            bool);
 
-  private:
+  
     /**
      * @return true if the segment has a reference counter equals to zero
      */
@@ -243,7 +243,7 @@ class MemorySegment {
      */
     [[nodiscard]] uint32_t getSize() const { return size; }
 
-  private:
+  
     /*
 
      Layout of the mem segment (padding might be added differently depending on the compiler in-use).

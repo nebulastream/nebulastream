@@ -58,13 +58,13 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
     : SourceDescriptor(std::move(schema), std::move(logicalStreamName)), serverAddress(std::move(serverAddress)),
       clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)) {}
 
-const std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
+std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
 
-const std::string MQTTSourceDescriptor::getClientId() const { return clientId; }
+std::string MQTTSourceDescriptor::getClientId() const { return clientId; }
 
-const std::string MQTTSourceDescriptor::getUser() const { return user; }
+std::string MQTTSourceDescriptor::getUser() const { return user; }
 
-const std::string MQTTSourceDescriptor::getTopic() const { return topic; }
+std::string MQTTSourceDescriptor::getTopic() const { return topic; }
 
 bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const &other) {
 

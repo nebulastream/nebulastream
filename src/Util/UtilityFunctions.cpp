@@ -309,7 +309,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;
 
-    auto buf = buffer.getBuffer<char>();
+    auto *buf = buffer.getBuffer<char>();
     for (uint32_t i = 0; i < buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes(); i += schema->getSchemaSizeInBytes()) {
         str << "|";
         for (uint32_t s = 0; s < offsets.size(); ++s) {
@@ -332,7 +332,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
 std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
-    auto buffer = tbuffer.getBuffer<char>();
+    auto *buffer = tbuffer.getBuffer<char>();
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (uint64_t i = 0; i < numberOfTuples; i++) {
         uint64_t offset = 0;
@@ -365,14 +365,14 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, const std::string& t
     }
 }
 
-const std::string UtilityFunctions::replaceFirst(std::string origin, const std::string& search, const std::string& replace) {
+std::string UtilityFunctions::replaceFirst(std::string origin, const std::string& search, const std::string& replace) {
     if (origin.find(search) != std::string::npos) {
         return origin.replace(origin.find(search), search.size(), replace);
     }
     return origin;
 }
 
-const std::string UtilityFunctions::toCSVString(const SchemaPtr& schema) {
+std::string UtilityFunctions::toCSVString(const SchemaPtr& schema) {
     std::stringstream ss;
     for (auto& f : schema->fields) {
         ss << f->toString() << ",";
@@ -441,7 +441,7 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
         currentNodeJsonValue["available_resources"] = web::json::value::number(currentNode->getAvailableResources());
         currentNodeJsonValue["ip_address"] = web::json::value::string(currentNode->getIpAddress());
 
-        for (auto& child : currentNode->getChildren()) {
+        for (const auto& child : currentNode->getChildren()) {
             // Add edge information for current topology node
             web::json::value currentEdgeJsonValue{};
             currentEdgeJsonValue["source"] = web::json::value::number(child->as<TopologyNode>()->getId());
@@ -485,7 +485,7 @@ bool UtilityFunctions::assignPropertiesToQueryOperators(const QueryPlanPtr& quer
     auto propertyIterator = properties.begin();
 
     // iterate over all operators in the query
-    for (auto node : queryPlanIterator) {
+    for (auto &&node : queryPlanIterator) {
         for (auto const& [key, val] : *propertyIterator) {
             // add the current property to the current operator
             node->as<LogicalOperatorNode>()->addProperty(key, val);

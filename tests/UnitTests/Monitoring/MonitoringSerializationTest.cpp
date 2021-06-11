@@ -107,7 +107,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkValue) {
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, measuredVal.getSchema("")));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-    NetworkValues deserNw = NetworkValues::fromBuffer(measuredVal.getSchema(""), tupleBuffer, "");
+    NetworkValues deserNw = NetworkValues::fromBuffer(NES::NetworkValues::getSchema(""), tupleBuffer, "");
     EXPECT_EQ(measuredVal, deserNw);
 }
 

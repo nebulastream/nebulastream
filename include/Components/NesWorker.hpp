@@ -159,7 +159,7 @@ class NesWorker {
      * @brief method to get the id of the worker
      * @return id of the worker
      */
-    TopologyNodeId getTopologyNodeId();
+    TopologyNodeId getTopologyNodeId() const;
 
     /**
      * @brief Method to check if a worker is still running
@@ -208,7 +208,7 @@ class NesWorker {
      * @brief helper method to ensure client is connected before callin rpcs functions
      * @return
      */
-    bool waitForConnect();
+    bool waitForConnect() const;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

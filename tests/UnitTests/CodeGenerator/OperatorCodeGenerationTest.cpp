@@ -118,7 +118,7 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
     std::vector<TupleBuffer> buffers;
 };
 
-const DataSourcePtr createTestSourceCodeGen(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
+DataSourcePtr createTestSourceCodeGen(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()),
                                            bPtr,
                                            dPtr,
@@ -167,7 +167,7 @@ class SelectionDataGenSource : public GeneratorSource {
     };
 };
 
-const DataSourcePtr createTestSourceCodeGenFilter(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
+DataSourcePtr createTestSourceCodeGenFilter(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
     DataSourcePtr source(std::make_shared<SelectionDataGenSource>(Schema::create()
                                                                       ->addField("id", DataTypeFactory::createUInt32())
                                                                       ->addField("value", DataTypeFactory::createUInt32())
@@ -223,7 +223,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createTestSourceCodeGenPredicate(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
+DataSourcePtr createTestSourceCodeGenPredicate(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
     DataSourcePtr source(
         std::make_shared<PredicateTestingDataGeneratorSource>(Schema::create()
                                                                   ->addField("id", DataTypeFactory::createUInt32())
@@ -321,7 +321,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createWindowTestDataSource(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
+DataSourcePtr createWindowTestDataSource(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
     DataSourcePtr source(
         std::make_shared<WindowTestingDataGeneratorSource>(Schema::create()
                                                                ->addField("window$key", DataTypeFactory::createUInt64())
@@ -332,7 +332,7 @@ const DataSourcePtr createWindowTestDataSource(const NodeEngine::BufferManagerPt
     return source;
 }
 
-const DataSourcePtr
+DataSourcePtr
 createWindowTestSliceSource(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr, const SchemaPtr& schema) {
     DataSourcePtr source(std::make_shared<WindowTestingWindowGeneratorSource>(schema, bPtr, dPtr, 10));
     return source;
@@ -388,9 +388,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
                                                                        nodeEngine->getBufferManager(),
                                                                        std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
     NodeEngine::WorkerContext wctx{0};
-    stage->setup(*queryContext.get());
-    stage->start(*queryContext.get());
-    stage->execute(buffer, *queryContext.get(), wctx);
+    stage->setup(*queryContext);
+    stage->start(*queryContext);
+    stage->execute(buffer, *queryContext, wctx);
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
@@ -441,15 +441,15 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
                                                                        nodeEngine->getBufferManager(),
                                                                        std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
     NodeEngine::WorkerContext wctx{0};
-    stage->setup(*queryContext.get());
-    stage->start(*queryContext.get());
-    stage->execute(inputBuffer, *queryContext.get(), wctx);
+    stage->setup(*queryContext);
+    stage->start(*queryContext);
+    stage->execute(inputBuffer, *queryContext, wctx);
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
     NES_INFO("Number of generated output tuples: " << resultBuffer.getNumberOfTuples());
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5U);
 
-    auto resultData = (SelectionDataGenSource::InputTuple*) resultBuffer.getBuffer();
+    auto *resultData = (SelectionDataGenSource::InputTuple*) resultBuffer.getBuffer();
     for (uint64_t i = 0; i < 5; ++i) {
         EXPECT_EQ(resultData[i].id, i);
         EXPECT_EQ(resultData[i].value, i * 2);
@@ -580,12 +580,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 
     /* execute Stage */
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    stage1->setup(*executionContext.get());
-    stage1->start(*executionContext.get());
-    stage1->execute(inputBuffer, *executionContext.get(), wctx);
+    stage1->setup(*executionContext);
+    stage1->start(*executionContext);
+    stage1->execute(inputBuffer, *executionContext, wctx);
 
     //check partial aggregates in window state
-    auto stateVar = windowHandler->getTypedWindowState();
+    auto *stateVar = windowHandler->getTypedWindowState();
     EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
     windowHandler->stop();
@@ -704,12 +704,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     }
     std::cout << "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema) << std::endl;
     /* execute Stage */
-    stage1->setup(*executionContext.get());
-    stage1->start(*executionContext.get());
-    stage1->execute(buffer, *executionContext.get(), wctx);
+    stage1->setup(*executionContext);
+    stage1->start(*executionContext);
+    stage1->execute(buffer, *executionContext, wctx);
 
     //check partial aggregates in window state
-    auto stateVar = windowHandler->getTypedWindowState();
+    auto *stateVar = windowHandler->getTypedWindowState();
     std::vector<uint64_t> results;
     for (auto& [key, val] : stateVar->rangeAll()) {
         NES_DEBUG("Key: " << key << " Value: " << val);
@@ -824,9 +824,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
                                                                        std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
     cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
     NodeEngine::WorkerContext wctx{0};
-    stage->setup(*queryContext.get());
-    stage->start(*queryContext.get());
-    stage->execute(inputBuffer, *queryContext.get(), wctx);
+    stage->setup(*queryContext);
+    stage->start(*queryContext);
+    stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
 
@@ -886,9 +886,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
                                                                        nodeEngine->getBufferManager(),
                                                                        std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
 
-    stage->setup(*queryContext.get());
-    stage->start(*queryContext.get());
-    stage->execute(inputBuffer, *queryContext.get(), wctx);
+    stage->setup(*queryContext);
+    stage->start(*queryContext);
+    stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
     {
@@ -970,9 +970,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
                                                                        nodeEngine->getBufferManager(),
                                                                        std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
 
-    stage->setup(*queryContext.get());
-    stage->start(*queryContext.get());
-    stage->execute(inputBuffer, *queryContext.get(), wctx);
+    stage->setup(*queryContext);
+    stage->start(*queryContext);
+    stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
 
@@ -1062,7 +1062,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     codeGenerator->generateJoinSetup(joinDef, context3, 1);
     codeGenerator->generateCodeForJoin(joinDef, context3, 0);
     auto stage3 = codeGenerator->compile(context3);
-    stage3->setup(*executionContext.get());
+    stage3->setup(*executionContext);
 
     /* prepare input tuple buffer */
     source->open();
@@ -1071,19 +1071,19 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     cout << "buffer content=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, input_schema);
 
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    stage1->setup(*executionContext.get());
-    stage1->start(*executionContext.get());
+    stage1->setup(*executionContext);
+    stage1->start(*executionContext);
     executionContext->getOperatorHandlers()[0]->start(executionContext, nodeEngine->getStateManager());
     executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)
         ->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()
         ->start(nodeEngine->getStateManager());
-    stage1->execute(inputBuffer, *executionContext.get(), wctx);
-    stage3->execute(inputBuffer, *executionContext.get(), wctx);
+    stage1->execute(inputBuffer, *executionContext, wctx);
+    stage3->execute(inputBuffer, *executionContext, wctx);
 
-    auto stateVarLeft = executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)
+    auto *stateVarLeft = executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)
                             ->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()
                             ->getLeftJoinState();
-    auto stateVarRight = executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)
+    auto *stateVarRight = executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)
                              ->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()
                              ->getRightJoinState();
     std::vector<int64_t> results;
@@ -1172,10 +1172,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         ASSERT_TRUE(firstPipeline->start(nodeEngine->getStateManager()));
         ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
         ASSERT_TRUE(nextPipeline->start(nodeEngine->getStateManager()));
-        stage1->setup(*executionContext.get());
-        stage1->start(*executionContext.get());
-        stage2->setup(*executionContext.get());
-        stage2->start(*executionContext.get());
+        stage1->setup(*executionContext);
+        stage1->start(*executionContext);
+        stage2->setup(*executionContext);
+        stage2->start(*executionContext);
         windowHandler->start(nodeEngine->getStateManager());
         windowHandler->setup(executionContext);
         source->open();
@@ -1183,10 +1183,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         auto inputBuffer = source->receiveData().value();
 
         /* execute Stage */
-        stage1->execute(inputBuffer, *executionContext.get(), wctx);
+        stage1->execute(inputBuffer, *executionContext, wctx);
 
         //check partial aggregates in window state
-        auto stateVar = windowHandler->getTypedWindowState();
+        auto *stateVar = windowHandler->getTypedWindowState();
         auto keyZero = stateVar->get(0);
         EXPECT_EQ(keyZero.value()->getPartialAggregates()[0], 5);
         EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
@@ -1257,10 +1257,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     ASSERT_TRUE(firstPipeline->start(nodeEngine->getStateManager()));
     ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
     ASSERT_TRUE(nextPipeline->start(nodeEngine->getStateManager()));
-    stage1->setup(*executionContext.get());
-    stage1->start(*executionContext.get());
-    stage2->setup(*executionContext.get());
-    stage2->start(*executionContext.get());
+    stage1->setup(*executionContext);
+    stage1->start(*executionContext);
+    stage2->setup(*executionContext);
+    stage2->start(*executionContext);
     windowHandler->start(nodeEngine->getStateManager());
     windowHandler->setup(executionContext);
 
@@ -1268,10 +1268,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    stage1->execute(inputBuffer, *executionContext.get(), wctx);
+    stage1->execute(inputBuffer, *executionContext, wctx);
 
     //check partial aggregates in window state
-    auto stateVar = windowHandler->getTypedWindowState();
+    auto *stateVar = windowHandler->getTypedWindowState();
     EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
@@ -1338,12 +1338,12 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        nodeEngine->getBufferManager(),
                                                                        windowOperatorHandler);
-    stage1->setup(*queryContext.get());
-    stage1->start(*queryContext.get());
-    stage1->execute(inputBuffer, *queryContext.get(), wctx);
+    stage1->setup(*queryContext);
+    stage1->start(*queryContext);
+    stage1->execute(inputBuffer, *queryContext, wctx);
 
     //check partial aggregates in window state
-    auto stateVar =
+    auto *stateVar =
         windowHandler->as<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>()->getTypedWindowState();
     EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);

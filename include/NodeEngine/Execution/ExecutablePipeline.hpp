@@ -81,7 +81,7 @@ class ExecutablePipeline : public Reconfigurable {
      * @param workerContext
      * @return true if no error occurred
      */
-    const ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
+    ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
 
     /**
    * @brief Initialises a pipeline stage
@@ -106,13 +106,13 @@ class ExecutablePipeline : public Reconfigurable {
     * @brief Get id of pipeline stage
     * @return
     */
-    const uint64_t getPipelineId() const;
+    uint64_t getPipelineId() const;
 
     /**
      * @brief Get query sub plan id.
      * @return QuerySubPlanId.
      */
-    const QuerySubPlanId getQuerySubPlanId() const;
+    QuerySubPlanId getQuerySubPlanId() const;
 
     /**
      * @brief Checks if this pipeline is running

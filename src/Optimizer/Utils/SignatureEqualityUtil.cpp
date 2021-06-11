@@ -57,14 +57,14 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
 
     //Iterate over all distinct schema maps
     // and identify if there is an equivalent schema map in the other signature
-    for (auto& schemaFieldToExpMaps : signature1->getSchemaFieldToExprMaps()) {
+    for (const auto& schemaFieldToExpMaps : signature1->getSchemaFieldToExprMaps()) {
         bool schemaExists = false;
         for (auto otherSchemaMapItr = otherSchemaFieldToExprMaps.begin(); otherSchemaMapItr != otherSchemaFieldToExprMaps.end();
              otherSchemaMapItr++) {
             bool schemaMatched = false;
             //Iterate over all the field expressions from one schema and other
             // and check if they are matching
-            for (auto& [fieldName, fieldExpr] : schemaFieldToExpMaps) {
+            for (const auto& [fieldName, fieldExpr] : schemaFieldToExpMaps) {
                 bool fieldMatch = false;
                 for (auto& [otherFieldName, otherFieldExpr] : *otherSchemaMapItr) {
                     if (z3::eq(*fieldExpr, *otherFieldExpr)) {

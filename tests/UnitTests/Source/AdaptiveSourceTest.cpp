@@ -86,7 +86,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
      */
     void sampleSourceAndFillBuffer(TupleBuffer& tupleBuffer) override {
         std::ifstream input(this->filePath.c_str());
-        input.seekg(0, input.beg);
+        input.seekg(0, std::ifstream::beg);
         uint64_t generated_tuples_this_pass = tupleBuffer.getBufferSize() / 4096;
         std::string line;
         uint64_t i = 0;
@@ -96,7 +96,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
             tokens = UtilityFunctions::splitWithStringDelimiter(line, ",");
             uint64_t offset = 0;
             offset += sizeof(uint32_t);
-            uint32_t val = std::stoul(tokens[0].c_str());
+            uint32_t val = std::stoul(tokens[0]);
             memcpy(tupleBuffer.getBuffer<char>() + offset + i * 4096, &val, 4);
             ++i;
         }
@@ -116,7 +116,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     };
 };
 
-const DataSourcePtr createMockCSVAdaptiveSource(const SchemaPtr& schema,
+DataSourcePtr createMockCSVAdaptiveSource(const SchemaPtr& schema,
                                                 const NodeEngine::BufferManagerPtr& bufferManager,
                                                 const NodeEngine::QueryManagerPtr& queryManager,
                                                 uint64_t initialGatheringInterval,

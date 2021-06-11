@@ -19,7 +19,7 @@
 #include <utility>
 
 namespace NES::QueryCompilation {
-PointerDataType::PointerDataType(GeneratableDataTypePtr baseType) : GeneratableDataType(), baseType(std::move(baseType)) {}
+PointerDataType::PointerDataType(GeneratableDataTypePtr baseType) :  baseType(std::move(baseType)) {}
 
 CodeExpressionPtr PointerDataType::getCode() const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "*");

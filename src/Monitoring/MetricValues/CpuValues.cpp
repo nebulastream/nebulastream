@@ -83,7 +83,7 @@ std::ostream& operator<<(std::ostream& os, const CpuValues& values) {
     return os;
 }
 
-web::json::value CpuValues::toJson() {
+web::json::value CpuValues::toJson() const {
     web::json::value metricsJson{};
 
     metricsJson["USER"] = web::json::value::number(user);

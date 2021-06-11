@@ -41,7 +41,7 @@ namespace NES {
  * @param operatorId
  * @return a const data source pointer
  */
-const DataSourcePtr
+DataSourcePtr
 createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
                                               const NodeEngine::BufferManagerPtr& bufferManager,
                                               const NodeEngine::QueryManagerPtr& queryManager,
@@ -59,7 +59,7 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
  * @param frequency when to gather the next buffer
  * @return a const data source pointer
  */
-const DataSourcePtr
+DataSourcePtr
 createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                                const NodeEngine::BufferManagerPtr& bufferManager,
                                                const NodeEngine::QueryManagerPtr& queryManager,
@@ -76,7 +76,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
  * @param operatorId
  * @return a const data source pointer
  */
-const DataSourcePtr
+DataSourcePtr
 createDefaultSourceWithoutSchemaForOneBuffer(const NodeEngine::BufferManagerPtr& bufferManager,
                                              const NodeEngine::QueryManagerPtr& queryManager,
                                              OperatorId operatorId,
@@ -93,7 +93,7 @@ createDefaultSourceWithoutSchemaForOneBuffer(const NodeEngine::BufferManagerPtr&
  * @param generationFunction
  * @param operatorId
  * @return a const data source pointer */
-const DataSourcePtr createLambdaSource(
+DataSourcePtr createLambdaSource(
     const SchemaPtr& schema,
     const NodeEngine::BufferManagerPtr& bufferManager,
     const NodeEngine::QueryManagerPtr& queryManager,
@@ -115,7 +115,7 @@ const DataSourcePtr createLambdaSource(
  * @param operatorId
  * @return a const data source pointer
  */
-const DataSourcePtr createZmqSource(const SchemaPtr& schema,
+DataSourcePtr createZmqSource(const SchemaPtr& schema,
                                     const NodeEngine::BufferManagerPtr& bufferManager,
                                     const NodeEngine::QueryManagerPtr& queryManager,
                                     const std::string& host,
@@ -133,7 +133,7 @@ const DataSourcePtr createZmqSource(const SchemaPtr& schema,
  * @param operatorId
  * @return a const data source pointer
  */
-const DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
+DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                            const NodeEngine::BufferManagerPtr& bufferManager,
                                            const NodeEngine::QueryManagerPtr& queryManager,
                                            const std::string& pathToFile,
@@ -150,7 +150,7 @@ const DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
  * @param operatorId
  * @return a const data source pointer
  */
-const DataSourcePtr createSenseSource(const SchemaPtr& schema,
+DataSourcePtr createSenseSource(const SchemaPtr& schema,
                                       const NodeEngine::BufferManagerPtr& bufferManager,
                                       const NodeEngine::QueryManagerPtr& queryManager,
                                       const std::string& udfs,
@@ -172,7 +172,7 @@ const DataSourcePtr createSenseSource(const SchemaPtr& schema,
  * @param operatorId
  * @return a const data source pointer
  */
-const DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
+DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                         const NodeEngine::BufferManagerPtr& bufferManager,
                                         const NodeEngine::QueryManagerPtr& queryManager,
                                         const std::string& pathToFile,
@@ -197,7 +197,7 @@ const DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
  * @param operatorId
  * @return
  */
-const DataSourcePtr createMemorySource(const SchemaPtr& schema,
+DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                        const NodeEngine::BufferManagerPtr& bufferManager,
                                        const NodeEngine::QueryManagerPtr& queryManager,
                                        const std::shared_ptr<uint8_t>& memoryArea,
@@ -218,7 +218,7 @@ const DataSourcePtr createMemorySource(const SchemaPtr& schema,
  * @param nesPartition
  * @return a const data source pointer
  */
-const DataSourcePtr createNetworkSource(const SchemaPtr& schema,
+DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                         const NodeEngine::BufferManagerPtr& bufferManager,
                                         const NodeEngine::QueryManagerPtr& queryManager,
                                         const Network::NetworkManagerPtr& networkManager,
@@ -284,7 +284,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
  * @param topic the topic needed for a subscription
  * @return a const data source pointer
  */
-const DataSourcePtr createMQTTSource(const SchemaPtr& schema,
+DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                      const NodeEngine::BufferManagerPtr& bufferManager,
                                      const NodeEngine::QueryManagerPtr& queryManager,
                                      const std::string& serverAddress,

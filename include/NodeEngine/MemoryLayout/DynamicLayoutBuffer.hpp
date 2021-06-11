@@ -44,13 +44,13 @@ class DynamicLayoutBuffer {
     * @brief This method returns the maximum number of records, so the capacity.
     * @return
     */
-    uint64_t getCapacity();
+    uint64_t getCapacity() const;
 
     /**
      * @brief This method returns the current number of records that are in the associated buffer
      * @return
      */
-    uint64_t getNumberOfRecords();
+    uint64_t getNumberOfRecords() const;
 
     /**
      * @brief This methods returns a reference to the associated buffer

@@ -71,7 +71,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @brief get the number of MSGs that can maximally be buffered (default is 60)
      * @return number of messages that can maximally be buffered
      */
-    uint64_t getMaxBufferedMSGs();
+    uint64_t getMaxBufferedMSGs() const;
 
     /**
      * @brief get the user chosen time unit (default is milliseconds)
@@ -83,7 +83,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @brief get the user chosen delay between two sent messages (default is 500)
      * @return length of the message delay
      */
-    uint64_t getMsgDelay();
+    uint64_t getMsgDelay() const;
 
     /**
      * @brief get the value for the current quality of service
@@ -95,7 +95,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @brief get bool that indicates whether the client is asynchronous or synchronous (default is true)
      * @return true if client is asynchronous, else false
      */
-    bool getAsynchronousClient();
+    bool getAsynchronousClient() const;
 
     [[nodiscard]] std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const &other) override;

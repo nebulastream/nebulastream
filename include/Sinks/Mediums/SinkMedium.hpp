@@ -67,7 +67,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
      * @brief get the id of the owning plan
      * @return the id
      */
-    QuerySubPlanId getParentPlanId() { return parentPlanId; }
+    QuerySubPlanId getParentPlanId() const { return parentPlanId; }
 
     /**
      * @brief debug function for testing to get number of written buffers
@@ -104,13 +104,13 @@ class SinkMedium : public NodeEngine::Reconfigurable {
      * @brief method to return if the sink is appended
      * @return bool indicating append
      */
-    bool getAppendAsBool();
+    bool getAppendAsBool() const;
 
     /**
      * @brief method to return if the sink is append or overwrite
      * @return string of mode
      */
-    std::string getAppendAsString();
+    std::string getAppendAsString() const;
 
     /**
       * @brief method to return the type of medium

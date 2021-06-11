@@ -26,7 +26,7 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog() : catalogMutex() { NES_DEBUG("QueryCatalog()"); }
+QueryCatalog::QueryCatalog()  { NES_DEBUG("QueryCatalog()"); }
 
 QueryCatalog::~QueryCatalog() { NES_DEBUG("~QueryCatalog()"); }
 

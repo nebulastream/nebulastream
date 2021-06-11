@@ -30,7 +30,7 @@ BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatment& 
     return BinaryOperatorStatement(*this, MEMBER_SELECT_POINTER_OP, ref);
 }
 
-BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatmentPtr& ref) {
+BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatmentPtr& ref) const {
     return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_POINTER_OP, ref);
 }
 
@@ -38,7 +38,7 @@ BinaryOperatorStatement ExpressionStatment::accessRef(const ExpressionStatment& 
     return BinaryOperatorStatement(*this, MEMBER_SELECT_REFERENCE_OP, ref);
 }
 
-BinaryOperatorStatement ExpressionStatment::accessRef(ExpressionStatmentPtr ref) {
+BinaryOperatorStatement ExpressionStatment::accessRef(ExpressionStatmentPtr ref) const {
     return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_REFERENCE_OP, std::move(ref));
 }
 
@@ -46,7 +46,7 @@ BinaryOperatorStatement ExpressionStatment::assign(const ExpressionStatment& ref
     return BinaryOperatorStatement(*this, ASSIGNMENT_OP, ref);
 }
 
-BinaryOperatorStatement ExpressionStatment::assign(ExpressionStatmentPtr ref) {
+BinaryOperatorStatement ExpressionStatment::assign(ExpressionStatmentPtr ref) const {
     return BinaryOperatorStatement(this->copy(), ASSIGNMENT_OP, std::move(ref));
 }
 }// namespace NES::QueryCompilation

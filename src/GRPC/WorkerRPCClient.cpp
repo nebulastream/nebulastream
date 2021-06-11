@@ -40,7 +40,7 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     RegisterQueryRequest request;
 
     // serialize query plan.
-    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    auto *serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
     request.set_allocated_queryplan(serializedQueryPlan);
 
     NES_TRACE("WorkerRPCClient:registerQuery -> " << request.DebugString());
@@ -70,7 +70,7 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address, const Query
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
     // serialize query plan.
-    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    auto *serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
     request.set_allocated_queryplan(serializedQueryPlan);
 
     NES_TRACE("WorkerRPCClient:registerQuery -> " << request.DebugString());
@@ -103,7 +103,7 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address, const Query
 bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
     NES_DEBUG("start checkAsyncResult for mode=" << mode << " for " << queues.size() << " queues");
     bool result = true;
-    for (auto& queue : queues) {
+    for (const auto& queue : queues) {
         //wait for all deploys to come back
         void* got_tag = nullptr;
         bool ok = false;

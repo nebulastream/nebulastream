@@ -93,13 +93,13 @@ class LogicalJoinDefinition {
      * @experimental This is experimental API
      * @return
      */
-    uint64_t getNumberOfInputEdgesLeft();
+    uint64_t getNumberOfInputEdgesLeft() const;
 
     /**
      * @brief number of input edges. Need to define a clear concept for this
      * @return
      */
-    uint64_t getNumberOfInputEdgesRight();
+    uint64_t getNumberOfInputEdgesRight() const;
 
     /**
      * @brief Update the left and right stream types upon type inference

@@ -43,7 +43,7 @@ class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
      * @return bool true if node is of RuleType
      */
     template<class RefinementType>
-    const bool instanceOf() {
+    bool instanceOf() {
         if (dynamic_cast<RefinementType*>(this)) {
             return true;
         };

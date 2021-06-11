@@ -25,14 +25,14 @@ StructDeclaration StructDeclaration::create(const std::string& type_name, const 
     return StructDeclaration(type_name, variable_name);
 }
 
-GeneratableDataTypePtr StructDeclaration::getType() const { return GeneratableTypesFactory().createUserDefinedType(*this); }
+GeneratableDataTypePtr StructDeclaration::getType() const { return NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(*this); }
 
 std::string StructDeclaration::getIdentifierName() const { return variable_name_; }
 
 Code StructDeclaration::getTypeDefinitionCode() const {
     std::stringstream expr;
     expr << "struct " << type_name_ << "{" << std::endl;
-    for (auto& decl : decls_) {
+    for (const auto& decl : decls_) {
         expr << decl->getCode() << ";" << std::endl;
     }
     expr << "}";
@@ -46,7 +46,7 @@ Code StructDeclaration::getCode() const {
         expr << "__attribute__((packed)) ";
     }
     expr << type_name_ << "{" << std::endl;
-    for (auto& decl : decls_) {
+    for (const auto& decl : decls_) {
         expr << decl->getCode() << ";" << std::endl;
     }
     expr << "}";
@@ -96,7 +96,7 @@ StructDeclaration& StructDeclaration::makeStructCompact() {
 }
 
 StructDeclaration::StructDeclaration(std::string type_name, std::string variable_name)
-    : type_name_(std::move(type_name)), variable_name_(std::move(variable_name)), decls_(), packed_struct_(false) {}
+    : type_name_(std::move(type_name)), variable_name_(std::move(variable_name)),  packed_struct_(false) {}
 
 VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string& field_name) const {
     DeclarationPtr decl = getField(field_name);

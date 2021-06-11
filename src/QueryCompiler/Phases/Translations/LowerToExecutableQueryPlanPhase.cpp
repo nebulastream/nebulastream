@@ -198,11 +198,11 @@ NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPha
 
     auto emitToSuccessorFunctionHandler = [executableSuccessorPipelines](NodeEngine::TupleBuffer& buffer,
                                                                          NodeEngine::WorkerContextRef workerContext) {
-        for (auto& executableSuccessor : executableSuccessorPipelines) {
-            if (auto sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
+        for (const auto& executableSuccessor : executableSuccessorPipelines) {
+            if (const auto *sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
                 NES_DEBUG("Emit Buffer to data sink" << (*sink)->toString());
                 (*sink)->writeData(buffer, workerContext);
-            } else if (auto nextExecutablePipeline =
+            } else if (const auto *nextExecutablePipeline =
                            std::get_if<NodeEngine::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
                 NES_DEBUG("Emit Buffer to pipeline" << (*nextExecutablePipeline)->getPipelineId());
                 (*nextExecutablePipeline)->execute(buffer, workerContext);
@@ -211,7 +211,7 @@ NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPha
     };
 
     auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, nodeEngine](NodeEngine::TupleBuffer& buffer) {
-        for (auto& executableSuccessor : executableSuccessorPipelines) {
+        for (const auto& executableSuccessor : executableSuccessorPipelines) {
             NES_DEBUG("Emit buffer to query manager");
             nodeEngine->getQueryManager()->addWorkForNextPipeline(buffer, executableSuccessor);
         }

@@ -40,7 +40,7 @@ ExecutablePipeline::ExecutablePipeline(uint64_t pipelineId,
                "Wrong pipeline stage argument");
 }
 
-const ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
+ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     NES_TRACE("Execute Pipeline Stage with id=" << querySubPlanId << " originId=" << inputBuffer.getOriginId()
                                                 << " stage=" << pipelineId);
     auto pipelineStatus = this->pipelineStatus.load();
@@ -87,9 +87,9 @@ bool ExecutablePipeline::isRunning() const { return pipelineStatus.load() == Pip
 
 const std::vector<SuccessorExecutablePipeline>& ExecutablePipeline::getSuccessors() const { return successorPipelines; }
 
-const uint64_t ExecutablePipeline::getPipelineId() const { return pipelineId; }
+uint64_t ExecutablePipeline::getPipelineId() const { return pipelineId; }
 
-const QuerySubPlanId ExecutablePipeline::getQuerySubPlanId() const { return querySubPlanId; }
+QuerySubPlanId ExecutablePipeline::getQuerySubPlanId() const { return querySubPlanId; }
 
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
@@ -125,7 +125,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
         operatorHandler->reconfigure(task, context);
     }
     for (auto successorPipeline : successorPipelines) {
-        if (auto pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
+        if (auto *pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
             (*pipe)->reconfigure(task, context);
         }
     }
@@ -159,7 +159,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 bool hasNonSinkSuccessor = false;
                 if (!successorPipelines.empty()) {
                     for (auto successorPipeline : successorPipelines) {
-                        if (auto pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
+                        if (auto *pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
                             hasNonSinkSuccessor = true;
                             auto queryManager = pipelineContext->getQueryManager();
                             auto newReconf = ReconfigurationMessage(querySubPlanId,
@@ -199,7 +199,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
             NES_DEBUG("Going to reconfigure pipeline belonging to subplanId: " << querySubPlanId << " stage id: " << pipelineId
                                                                                << " got HardEndOfStream");
             for (auto successorPipeline : successorPipelines) {
-                if (auto pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
+                if (auto *pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
                     (*pipe)->postReconfigurationCallback(task);
                 }
             }
