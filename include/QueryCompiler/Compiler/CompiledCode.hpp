@@ -45,7 +45,7 @@ class CompiledCode {
             Function f_ptr;
         };
 
-        converter conv;
+        converter conv{};
         conv.v_ptr = getFunctionPointerImpl(name);
 
         return conv.f_ptr;

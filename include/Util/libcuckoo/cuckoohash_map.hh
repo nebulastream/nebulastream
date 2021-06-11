@@ -26,6 +26,7 @@
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
 #include "libcuckoo_bucket_container.hh"
+#include "math.h"
 
 /**
  * A concurrent hash table
@@ -855,7 +856,7 @@ private:
         [[nodiscard]] bool is_migrated() const noexcept { return is_migrated_; }
 
         private:
-        std::atomic_flag lock_;
+        std::atomic_flag lock_{}{};
         counter_type elem_counter_{0};
         bool is_migrated_{true};
     };
@@ -900,7 +901,7 @@ private:
             second_manager_.reset();
         }
 
-        size_type i1, i2;
+        size_type i1{}, i2{};
 
     private:
         LockManager first_manager_, second_manager_;
@@ -1194,7 +1195,7 @@ private:
      */
     template <typename TABLE_MODE, typename K>
     table_position cuckoo_insert_loop(hash_value hv, TwoBuckets &b, K &key) {
-        table_position pos;
+        table_position pos{};
         while (true) {
             const size_type hp = hashpower();
             pos = cuckoo_insert<TABLE_MODE>(hv, b, key);
@@ -1238,7 +1239,7 @@ private:
     // are released. No meaningful position is returned.
     template <typename TABLE_MODE, typename K>
     table_position cuckoo_insert(const hash_value hv, TwoBuckets &b, K &key) {
-        int res1, res2;
+        int res1 = 0, res2 = 0;
         bucket &b1 = buckets_[b.i1];
         if (!try_find_insert_bucket(b1, res1, hv.partial, key)) {
             return table_position{b.i1, static_cast<size_type>(res1),
@@ -1559,14 +1560,14 @@ private:
         // the path. pathcode is sort of like a base-slot_per_bucket number, and
         // we need to hold at most MAX_BFS_PATH_LEN slots. Thus we need the
         // maximum pathcode to be at least slot_per_bucket()^(MAX_BFS_PATH_LEN).
-        uint16_t pathcode;
+        uint16_t pathcode{};
         static_assert(const_pow(slot_per_bucket(), MAX_BFS_PATH_LEN) <
                       std::numeric_limits<decltype(pathcode)>::max(),
                       "pathcode may not be large enough to encode a cuckoo "
                       "path");
         // The 0-indexed position in the cuckoo path this slot occupies. It must
         // be less than MAX_BFS_PATH_LEN, and also able to hold negative values.
-        int8_t depth;
+        int8_t depth{};
         static_assert(MAX_BFS_PATH_LEN - 1 <=
                       std::numeric_limits<decltype(depth)>::max(),
                       "The depth type must able to hold a value of"
@@ -2110,7 +2111,7 @@ private:
     // hashing fails, for example), we check the load factor against this
     // double, and throw an exception if it's lower than this value. It can be
     // used to signal when the hash function is bad or the input adversarial.
-    std::atomic<double> minimum_load_factor_;
+    std::atomic<double> minimum_load_factor_{}{}{}{};
 
     // stores the maximum hashpower allowed for any expansions. If set to
     // NO_MAXIMUM_HASHPOWER, this limit will be disregarded.
@@ -2720,7 +2721,7 @@ public:
                 lt.get_current_locks()[0].elem_counter() = size;
             }
 
-            double mlf;
+            double mlf = NAN;
             size_type mhp;
             is.read(reinterpret_cast<char *>(&mlf), sizeof(double));
             is.read(reinterpret_cast<char *>(&mhp), sizeof(size_type));

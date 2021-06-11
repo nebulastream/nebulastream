@@ -70,7 +70,7 @@ class AdaptiveSource : public DataSource {
      */
     virtual void decideNewGatheringInterval() = 0;
 
-    std::chrono::milliseconds lastGatheringTimeStamp;
+    std::chrono::milliseconds lastGatheringTimeStamp{};
 };
 
 using AdaptiveSourcePtr = std::shared_ptr<AdaptiveSource>;

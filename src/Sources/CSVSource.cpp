@@ -107,7 +107,7 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
     }
     input.seekg(currentPosInFile, input.beg);
 
-    uint64_t generated_tuples_this_pass;
+    uint64_t generated_tuples_this_pass = 0;
     //fill buffer maximally
     if (numberOfTuplesToProducePerBuffer == 0) {
         generated_tuples_this_pass = buf.getBufferSize() / tupleSize;

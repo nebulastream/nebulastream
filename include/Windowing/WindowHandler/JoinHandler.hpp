@@ -193,8 +193,8 @@ class JoinHandler : public AbstractJoinHandler {
         std::string side = isLeftSide ? "leftSide" : "rightSide";
         NES_TRACE("JoinHandler " << id << ": updateAllMaxTs with ts=" << ts << " originId=" << originId << " side=" << side);
         if (joinDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
-            uint64_t beforeMin;
-            uint64_t afterMin;
+            uint64_t beforeMin = 0;
+            uint64_t afterMin = 0;
             if (isLeftSide) {
                 beforeMin = getMinWatermark(leftSide);
                 originIdToMaxTsMapLeft[originId] = std::max(originIdToMaxTsMapLeft[originId], ts);

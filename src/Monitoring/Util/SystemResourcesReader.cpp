@@ -84,8 +84,8 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
 
     FILE* fp = fopen("/proc/net/dev", "re");
     char buf[200], ifname[20];
-    uint64_t rBytes, rPackets, rErrs, rDrop, rFifo, rFrame, rCompressed, rMulticast;
-    uint64_t tBytes, tPackets, tErrs, tDrop, tFifo, tColls, tCarrier, tCompressed;
+    uint64_t rBytes = 0, rPackets = 0, rErrs = 0, rDrop = 0, rFifo = 0, rFrame = 0, rCompressed = 0, rMulticast = 0;
+    uint64_t tBytes = 0, tPackets = 0, tErrs = 0, tDrop = 0, tFifo = 0, tColls = 0, tCarrier = 0, tCompressed = 0;
 
     // skip first two lines
     for (int i = 0; i < 2; i++) {
@@ -173,7 +173,7 @@ MemoryMetrics SystemResourcesReader::ReadMemoryStats() {
 }
 
 DiskMetrics SystemResourcesReader::ReadDiskStats() {
-    DiskMetrics output;
+    DiskMetrics output{};
     auto* svfs = (struct statvfs*) malloc(sizeof(struct statvfs));
 
     int ret = statvfs("/", svfs);

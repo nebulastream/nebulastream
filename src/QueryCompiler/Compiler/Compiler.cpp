@@ -222,7 +222,7 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags, std::string const& fil
     }
     NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
-    FILE* fp;
+    FILE* fp = nullptr;
     char buffer[10000];
 
     // Redirecting stderr to stdout, to be able to read error messages

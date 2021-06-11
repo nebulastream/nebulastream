@@ -442,12 +442,12 @@ Iterator& Iterator::operator=(const Iterator& it) {
         case SequenceType:
             m_Type = SequenceType;
             pNewImp = new SequenceIteratorImp;
-            static_cast<SequenceIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceIteratorImp*>(it.m_pImp)->m_Iterator;
+            dynamic_cast<SequenceIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceIteratorImp*>(it.m_pImp)->m_Iterator;
             break;
         case MapType:
             m_Type = MapType;
             pNewImp = new MapIteratorImp;
-            static_cast<MapIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapIteratorImp*>(it.m_pImp)->m_Iterator;
+            dynamic_cast<MapIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapIteratorImp*>(it.m_pImp)->m_Iterator;
             break;
         default: break;
     }
@@ -541,13 +541,13 @@ ConstIterator& ConstIterator::operator=(const ConstIterator& it) {
         case SequenceType:
             m_Type = SequenceType;
             pNewImp = new SequenceConstIteratorImp;
-            static_cast<SequenceConstIteratorImp*>(pNewImp)->m_Iterator =
+            dynamic_cast<SequenceConstIteratorImp*>(pNewImp)->m_Iterator =
                 static_cast<SequenceConstIteratorImp*>(it.m_pImp)->m_Iterator;
             break;
         case MapType:
             m_Type = MapType;
             pNewImp = new MapConstIteratorImp;
-            static_cast<MapConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapConstIteratorImp*>(it.m_pImp)->m_Iterator;
+            dynamic_cast<MapConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapConstIteratorImp*>(it.m_pImp)->m_Iterator;
             break;
         default: break;
     }
@@ -714,12 +714,12 @@ Iterator Node::Begin() {
             case Node::SequenceType:
                 it.m_Type = Iterator::SequenceType;
                 pItImp = new SequenceIteratorImp;
-                pItImp->InitBegin(static_cast<SequenceImp*>(TYPE_IMP));
+                pItImp->InitBegin(dynamic_cast<SequenceImp*>(TYPE_IMP));
                 break;
             case Node::MapType:
                 it.m_Type = Iterator::MapType;
                 pItImp = new MapIteratorImp;
-                pItImp->InitBegin(static_cast<MapImp*>(TYPE_IMP));
+                pItImp->InitBegin(dynamic_cast<MapImp*>(TYPE_IMP));
                 break;
             default: break;
         }
@@ -740,12 +740,12 @@ ConstIterator Node::Begin() const {
             case Node::SequenceType:
                 it.m_Type = ConstIterator::SequenceType;
                 pItImp = new SequenceConstIteratorImp;
-                pItImp->InitBegin(static_cast<SequenceImp*>(TYPE_IMP));
+                pItImp->InitBegin(dynamic_cast<SequenceImp*>(TYPE_IMP));
                 break;
             case Node::MapType:
                 it.m_Type = ConstIterator::MapType;
                 pItImp = new MapConstIteratorImp;
-                pItImp->InitBegin(static_cast<MapImp*>(TYPE_IMP));
+                pItImp->InitBegin(dynamic_cast<MapImp*>(TYPE_IMP));
                 break;
             default: break;
         }
@@ -766,12 +766,12 @@ Iterator Node::End() {
             case Node::SequenceType:
                 it.m_Type = Iterator::SequenceType;
                 pItImp = new SequenceIteratorImp;
-                pItImp->InitEnd(static_cast<SequenceImp*>(TYPE_IMP));
+                pItImp->InitEnd(dynamic_cast<SequenceImp*>(TYPE_IMP));
                 break;
             case Node::MapType:
                 it.m_Type = Iterator::MapType;
                 pItImp = new MapIteratorImp;
-                pItImp->InitEnd(static_cast<MapImp*>(TYPE_IMP));
+                pItImp->InitEnd(dynamic_cast<MapImp*>(TYPE_IMP));
                 break;
             default: break;
         }
@@ -792,12 +792,12 @@ ConstIterator Node::End() const {
             case Node::SequenceType:
                 it.m_Type = ConstIterator::SequenceType;
                 pItImp = new SequenceConstIteratorImp;
-                pItImp->InitEnd(static_cast<SequenceImp*>(TYPE_IMP));
+                pItImp->InitEnd(dynamic_cast<SequenceImp*>(TYPE_IMP));
                 break;
             case Node::MapType:
                 it.m_Type = ConstIterator::MapType;
                 pItImp = new MapConstIteratorImp;
-                pItImp->InitEnd(static_cast<MapImp*>(TYPE_IMP));
+                pItImp->InitEnd(dynamic_cast<MapImp*>(TYPE_IMP));
                 break;
             default: break;
         }

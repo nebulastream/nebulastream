@@ -106,7 +106,7 @@ bool WorkerRPCClient::checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> qu
     bool result = true;
     for (auto& queue : queues) {
         //wait for all deploys to come back
-        void* got_tag;
+        void* got_tag = nullptr;
         bool ok = false;
         uint64_t cnt = 0;
         // Block until the next result is available in the completion queue "completionQueue".

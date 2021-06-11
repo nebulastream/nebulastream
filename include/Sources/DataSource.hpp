@@ -226,7 +226,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     uint64_t generatedBuffers;
     uint64_t numBuffersToProcess;
     uint64_t numSourceLocalBuffers;
-    uint64_t gatheringIngestionRate;
+    uint64_t gatheringIngestionRate{};
     std::chrono::milliseconds gatheringInterval;
     GatheringMode gatheringMode;
     SourceType type;

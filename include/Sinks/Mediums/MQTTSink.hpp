@@ -140,7 +140,7 @@ class MQTTSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override;
 
   private:
-    QuerySubPlanId parentPlanId;
+    QuerySubPlanId parentPlanId{};
     std::string address;
     std::string clientId;
     std::string topic;
@@ -151,7 +151,7 @@ class MQTTSink : public SinkMedium {
     MQTTSinkDescriptor::ServiceQualities qualityOfService;
     bool asynchronousClient;
     bool connected;
-    std::chrono::duration<int64_t, std::ratio<1, 1000000000>> minDelayBetweenSends;
+    std::chrono::duration<int64_t, std::ratio<1, 1000000000>> minDelayBetweenSends{};
 
     MQTTClientWrapperPtr client;
 };
