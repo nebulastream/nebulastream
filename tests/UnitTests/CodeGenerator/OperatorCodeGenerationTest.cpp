@@ -447,7 +447,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
     NES_INFO("Number of generated output tuples: " << resultBuffer.getNumberOfTuples());
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5U);
 
     auto resultData = (SelectionDataGenSource::InputTuple*) resultBuffer.getBuffer();
     for (uint64_t i = 0; i < 5; ++i) {

@@ -131,7 +131,7 @@ TEST_F(StringQueryTest, conditionOnAttribute) {
     testHarness.pushElement<Schema_t>({1, "555"}, 0);
     testHarness.pushElement<Schema_t>({1, "666"}, 0);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1u);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "112"}, {1, "222"}, {4, "333"}, {2, "112"}, {1, "555"}, {1, "666"}};
     std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
@@ -161,7 +161,7 @@ TEST_F(StringQueryTest, DISABLED_neqOnChars) {
     testHarness.pushElement<Schema_t>({1, "555"}, 0);
     testHarness.pushElement<Schema_t>({1, "666"}, 0);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1u);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "222"}, {4, "333"}, {1, "555"}, {1, "666"}};
     std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
@@ -191,7 +191,7 @@ TEST_F(StringQueryTest, eqOnCharsMultipleReturn) {
     testHarness.pushElement<Schema_t>({1, "555"}, 0);
     testHarness.pushElement<Schema_t>({1, "666"}, 0);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1u);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "112"}, {2, "112"}};
     std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
@@ -222,7 +222,7 @@ TEST_F(StringQueryTest, eqOnString) {
     testHarness.pushElement<Schema_t>({1, "555"}, 0);
     testHarness.pushElement<Schema_t>({1, "666"}, 0);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1u);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "113"}};
     std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
@@ -253,7 +253,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnIntNotComparator) {
     testHarness.pushElement<Schema_t>({1, "555"}, 0);
     testHarness.pushElement<Schema_t>({1, "666"}, 0);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1u);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "111"}, {1, "222"}, {1, "444"}, {1, "555"}, {1, "667"}};
     std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
@@ -285,7 +285,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnInt) {
     testHarness.pushElement<Schema_t>({1, "555"}, 0);
     testHarness.pushElement<Schema_t>({1, "666"}, 0);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1u);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "111"}, {1, "222"}, {1, "444"}, {1, "555"}, {1, "666"}};
     std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
@@ -317,7 +317,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnIntSame) {
     testHarness.pushElement<Schema_t>({1, "234"}, 0);
     testHarness.pushElement<Schema_t>({1, "234"}, 0);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1u);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "234"}, {1, "234"}, {1, "234"}, {1, "234"}, {1, "234"}};
     std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
@@ -331,7 +331,7 @@ TEST_F(StringQueryTest, testHarnessUtilizeOneStruct) {
     using Car = IntSchemaClass;
     auto const carSchema = intSchemaPointer();
 
-    ASSERT_EQ(8u, carSchema->getSchemaSizeInBytes());
+    ASSERT_EQ(8U, carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
@@ -347,7 +347,7 @@ TEST_F(StringQueryTest, testHarnessUtilizeOneStruct) {
     testHarness.pushElement<Car>({1, 8}, 0);
     testHarness.pushElement<Car>({1, 9}, 0);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1u);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Car> expectedOutput = {{1, 2}, {1, 4}, {1, 9}, {1, 8}, {1, 9}};
     std::vector<Car> actualOutput = testHarness.getOutput<Car>(expectedOutput.size(), "BottomUp");

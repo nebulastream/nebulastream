@@ -107,7 +107,7 @@ TEST_F(SinkTest, testCSVFileSink) {
 
     cout << "File Content=" << fileContent << endl;
     //search for each value
-    string contentWOHeader = fileContent.erase(0, fileContent.find("\n") + 1);
+    string contentWOHeader = fileContent.erase(0, fileContent.find('\n') + 1);
     UtilityFunctions::findAndReplaceAll(contentWOHeader, "\n", ",");
     cout << "File Content shrinked=" << contentWOHeader << endl;
 
@@ -172,7 +172,7 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     cout << "Buffer Content= " << bufferContent << endl;
 
     //deserialize schema
-    uint64_t idx = path_to_bin_file.rfind(".");
+    uint64_t idx = path_to_bin_file.rfind('.');
     std::string shrinkedPath = path_to_bin_file.substr(0, idx + 1);
     std::string schemaFile = shrinkedPath + "schema";
     cout << "load=" << schemaFile << endl;
@@ -235,7 +235,7 @@ TEST_F(SinkTest, testCSVPrintSink) {
 
     cout << "File Content=" << fileContent << endl;
     //search for each value
-    string contentWOHeader = fileContent.erase(0, fileContent.find("\n") + 1);
+    string contentWOHeader = fileContent.erase(0, fileContent.find('\n') + 1);
     UtilityFunctions::findAndReplaceAll(contentWOHeader, "\n", ",");
     cout << "File Content shrinked=" << contentWOHeader << endl;
 
