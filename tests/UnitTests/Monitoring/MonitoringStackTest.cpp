@@ -111,7 +111,7 @@ TEST_F(MonitoringStackTest, testMetric) {
     EXPECT_TRUE(getMetricType(m0) == MetricType::UnknownType);
     int valueInt = m0.getValue<int>();
     EXPECT_TRUE(valueInt == 1);
-    metricsMap.insert({"sdf", 1});
+    metricsMap.insert({"sdf", Metric{1}});
 
     metrics.emplace_back(std::string("test"));
     Metric m1 = metrics[1];
@@ -151,36 +151,36 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
 
     // test with simple data types
     auto intS = "simpleInt";
-    metricGroup->add(intS, 1);
+    metricGroup->add(intS, Metric{1});
     int valueInt = metricGroup->getAs<int>(intS);
     EXPECT_TRUE(valueInt == 1);
 
     auto stringS = "simpleString";
-    metricGroup->add(stringS, std::string("test"));
+    metricGroup->add(stringS, Metric{std::string("test")});
     std::string valueString = metricGroup->getAs<std::string>(stringS);
     EXPECT_TRUE(valueString == "test");
 
     // test cpu stats
     auto cpuS = "cpuStats";
-    metricGroup->add(cpuS, cpuStats);
+    metricGroup->add(cpuS, Metric{cpuStats});
     Gauge<CpuMetrics> cpuMetrics = metricGroup->getAs<Gauge<CpuMetrics>>(cpuS);
     EXPECT_TRUE(cpuStats.measure().getNumCores() == cpuMetrics.measure().getNumCores());
 
     // test network stats
     auto networkS = "networkStats";
-    metricGroup->add(networkS, networkStats);
+    metricGroup->add(networkS, Metric{networkStats});
     auto networkMetrics = metricGroup->getAs<Gauge<NetworkMetrics>>(networkS);
     EXPECT_TRUE(networkStats.measure().getInterfaceNum() == networkMetrics.measure().getInterfaceNum());
 
     // test disk stats
     auto diskS = "diskStats";
-    metricGroup->add(diskS, diskStats);
+    metricGroup->add(diskS, Metric{diskStats});
     auto diskMetrics = metricGroup->getAs<Gauge<DiskMetrics>>(diskS);
     EXPECT_TRUE(diskStats.measure().fBavail == diskMetrics.measure().fBavail);
 
     // test mem stats
     auto memS = "memStats";
-    metricGroup->add(memS, memStats);
+    metricGroup->add(memS, Metric{memStats});
     auto memMetrics = metricGroup->getAs<Gauge<MemoryMetrics>>(memS);
     EXPECT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
