@@ -90,8 +90,8 @@ class LogicalOperatorNodeTest : public testing::Test {
     void TearDown() override { NES_DEBUG("Tear down LogicalOperatorNode Test."); }
 
   protected:
-    bool removed;
-    bool replaced;
+    bool removed{};
+    bool replaced{};
     LogicalStreamPtr sPtr;
     DumpContextPtr dumpContext;
 

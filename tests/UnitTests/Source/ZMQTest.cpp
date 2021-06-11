@@ -71,12 +71,12 @@ class ZMQTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down ZMQTest test class."); }
 
-    uint64_t tupleCnt;
+    uint64_t tupleCnt{};
     std::string address;
 
     SchemaPtr test_schema;
-    uint64_t test_data_size;
-    std::array<uint32_t, 8> test_data;
+    uint64_t test_data_size{};
+    std::array<uint32_t, 8> test_data{};
 
     NodeEngine::NodeEnginePtr nodeEngine{nullptr};
 };

@@ -71,7 +71,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     ~MockCSVAdaptiveSource() override = default;
 
     std::string filePath;
-    std::chrono::milliseconds intervalIncrease;
+    std::chrono::milliseconds intervalIncrease{};
 
     const std::string toString() const override {
         std::stringstream ss;

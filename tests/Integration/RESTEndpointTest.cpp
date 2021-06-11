@@ -320,7 +320,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
 
     std::string msg = "hello";
     web::json::value postJsonReturn;
-    int statusCode;
+    int statusCode = 0;
     httpClient.request(web::http::methods::POST, "", msg)
         .then([&statusCode](const web::http::http_response& response) {
             statusCode = response.status_code();
