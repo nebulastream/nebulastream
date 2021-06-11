@@ -26,6 +26,8 @@ namespace QueryCompilation {
  */
 class DefaultPipeliningPhase : public PipeliningPhase {
   public:
+
+    ~DefaultPipeliningPhase() override = default;
     /**
      * @brief Creates a new pipelining phase with a operator fusion policy.
      * @param operatorFusionPolicy Policy to determine if an operator can be fused.

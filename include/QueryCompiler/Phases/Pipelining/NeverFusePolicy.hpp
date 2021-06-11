@@ -24,6 +24,7 @@ namespace QueryCompilation {
  */
 class NeverFusePolicy : public OperatorFusionPolicy {
   public:
+    ~NeverFusePolicy() override = default;
     static OperatorFusionPolicyPtr create();
     bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };

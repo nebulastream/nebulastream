@@ -34,6 +34,7 @@ class TopologyNode : public Node {
 
   public:
     static TopologyNodePtr create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
+    virtual ~TopologyNode() = default;
 
     /**
      * @brief method to get the id of the node

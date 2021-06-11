@@ -25,7 +25,7 @@ namespace NES {
  * @brief Arrays con be constructed of any built-in type.
  * Arrays always have a fixed sized and can not be extended.
  */
-class ArrayType final : public DataType {
+class ArrayType : public DataType {
 
   public:
     /**

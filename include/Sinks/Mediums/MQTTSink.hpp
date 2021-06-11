@@ -47,10 +47,10 @@ class MQTTSink : public SinkMedium {
     // TODO change MSGS to Messages
     MQTTSink(SinkFormatPtr sinkFormat,
              QuerySubPlanId parentPlanId,
-             std::string& address,
-             std::string& clientId,
-             std::string& topic,
-             std::string& user,
+             std::string const& address,
+             std::string const& clientId,
+             std::string const& topic,
+             std::string const& user,
              uint64_t maxBufferedMSGs,
              MQTTSinkDescriptor::TimeUnits timeUnit,
              uint64_t messageDelay,
@@ -140,7 +140,7 @@ class MQTTSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override;
 
   private:
-    QuerySubPlanId parentPlanId{};
+    [[maybe_unused]] QuerySubPlanId parentPlanId{};
     std::string address;
     std::string clientId;
     std::string topic;
