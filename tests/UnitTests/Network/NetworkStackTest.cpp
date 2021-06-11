@@ -229,7 +229,7 @@ TEST_F(NetworkStackTest, testSendData) {
             std::atomic<bool>& bufferReceived;
 
             ExchangeListener(std::atomic<bool>& bufferReceived, std::promise<bool>& completedProm)
-                : bufferReceived(bufferReceived), completedProm(completedProm) {}
+                : completedProm(completedProm), bufferReceived(bufferReceived) {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buf) override {
                 bufferReceived = (buf.getBufferSize() == bufferSize) && (id.getQueryId(), 1) && (id.getOperatorId(), 22)
@@ -302,7 +302,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             std::atomic<std::uint64_t>& bufferReceived;
 
             ExchangeListener(std::atomic<std::uint64_t>& bufferReceived, std::promise<bool>& completedProm)
-                : bufferReceived(bufferReceived), completedProm(completedProm) {}
+                : completedProm(completedProm), bufferReceived(bufferReceived) {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
                 ASSERT_EQ((buffer.getBufferSize() == bufferSize) && (id.getQueryId(), 1) && (id.getOperatorId(), 22)
