@@ -104,7 +104,7 @@ using PredicateItemPtr = std::shared_ptr<PredicateItem>;
 
 class Field : public PredicateItem {
   public:
-    Field(AttributeFieldPtr name);
+    Field(AttributeFieldPtr field);
 
   private:
     std::string _name;

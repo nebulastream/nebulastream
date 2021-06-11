@@ -56,8 +56,7 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, Reco
                                        op,
                                        *(right->generateCode(code, recordHandler)))
             .copy();
-    } else {
-        FunctionCallStatement expr = FunctionCallStatement(functionCallOverload);
+    }         FunctionCallStatement expr = FunctionCallStatement(functionCallOverload);
         expr.addParameter(left->generateCode(code, recordHandler));
         expr.addParameter(right->generateCode(code, recordHandler));
         auto tf = GeneratableTypesFactory();
@@ -74,7 +73,7 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, Reco
                                        (ConstantExpressionStatement(tf.createValueType(
                                            DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))))
             .copy();
-    }
+   
 }
 
 const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, RecordHandlerPtr recordHandler) const {
@@ -82,9 +81,8 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, Recor
         //checks if the predicate field is contained in the current stream record.
         if (recordHandler->hasAttribute(attribute->getName())) {
             return recordHandler->getAttribute(attribute->getName());
-        } else {
-            NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from record handler!");
-        }
+        }             NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from record handler!");
+       
     } else if (value) {
         // todo remove if compiler refactored
         auto tf = GeneratableTypesFactory();

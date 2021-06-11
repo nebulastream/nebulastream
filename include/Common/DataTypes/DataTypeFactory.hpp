@@ -225,7 +225,7 @@ class DataTypeFactory {
      * @param values represents the fixed char as a vecotr of strings which should contain only one char each.
      * @return ValueTypePtr
      */
-    static ValueTypePtr createFixedCharValue(std::vector<std::string>&& vals) noexcept;
+    static ValueTypePtr createFixedCharValue(std::vector<std::string>&& values) noexcept;
 
     /**
      * @brief Create a fixed char typed value from a null-terminated c-str.

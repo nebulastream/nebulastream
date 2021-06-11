@@ -35,7 +35,7 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept 
                 str << ", ";
 }
 
-            auto const v = values[i].size() > 0 ? values[i][0] : 0;
+            auto const v = !values[i].empty() ? values[i][0] : 0;
             if (std::isprint(v)) {
                 str << '\'' << values[i] << '\'';
             } else {
@@ -46,7 +46,7 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept 
 
         // if no null terminator is given, explicitly add it.
         if (!nullTerminated) {
-            if (values.size()) {
+            if (!values.empty()) {
                 str << ", \\0";
             } else {
                 str << "\\0";

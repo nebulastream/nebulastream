@@ -54,7 +54,7 @@ class BinaryOperatorSortRule : public BaseRewriteRule {
      * @brief This method takes input as a binary operator and sort the children alphabetically based on stream qualifier name
      * @param binaryOperator : the input binary operator
      */
-    void sortChildren(BinaryOperatorNodePtr binaryOperator);
+    static void sortChildren(BinaryOperatorNodePtr binaryOperator);
 
     BinaryOperatorSortRule();
 };

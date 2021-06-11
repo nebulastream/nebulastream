@@ -132,7 +132,7 @@ class SequenceImp : public TypeImp {
     Node* GetNode(const std::string&) override { return nullptr; }
 
     Node* Insert(const size_t index) override {
-        if (m_Sequence.size() == 0) {
+        if (m_Sequence.empty()) {
             Node* pNode = new Node;
             m_Sequence.insert({0, pNode});
             return pNode;
@@ -172,7 +172,7 @@ class SequenceImp : public TypeImp {
 
     Node* PushBack() override {
         size_t index = 0;
-        if (m_Sequence.size()) {
+        if (!m_Sequence.empty()) {
             auto it = m_Sequence.end();
             --it;
             index = it->first + 1;
@@ -293,9 +293,9 @@ class NodeImp {
 
     void InitSequence() {
         if (m_Type != Node::SequenceType || m_pImp == nullptr) {
-            if (m_pImp) {
+            
                 delete m_pImp;
-            }
+            
             m_pImp = new SequenceImp;
             m_Type = Node::SequenceType;
         }
@@ -303,9 +303,9 @@ class NodeImp {
 
     void InitMap() {
         if (m_Type != Node::MapType || m_pImp == nullptr) {
-            if (m_pImp) {
+            
                 delete m_pImp;
-            }
+            
             m_pImp = new MapImp;
             m_Type = Node::MapType;
         }
@@ -313,9 +313,9 @@ class NodeImp {
 
     void InitScalar() {
         if (m_Type != Node::ScalarType || m_pImp == nullptr) {
-            if (m_pImp) {
+            
                 delete m_pImp;
-            }
+            
             m_pImp = new ScalarImp;
             m_Type = Node::ScalarType;
         }
@@ -979,13 +979,13 @@ class ParseImp {
             // End of document.
             if (line == "...") {
                 break;
-            } else if (line == "---") {
+            } if (line == "---") {
                 stream.seekg(streamPos);
                 break;
             }
 
             // Remove trailing return.
-            if (line.size()) {
+            if (!line.empty()) {
                 if (line[line.size() - 1] == '\r') {
                     line.resize(line.size() - 1);
                 }
@@ -1017,7 +1017,7 @@ class ParseImp {
 
             // Add line.
             if (foundFirstNotEmpty == false) {
-                if (line.size()) {
+                if (!line.empty()) {
                     foundFirstNotEmpty = true;
                 } else {
                     continue;
@@ -1051,7 +1051,7 @@ class ParseImp {
         }
 
         // Set next line of all lines.
-        if (m_Lines.size()) {
+        if (!m_Lines.empty()) {
             if (m_Lines.back()->Type != Node::ScalarType) {
                 throw ParsingException(ExceptionMessage(g_ErrorUnexpectedDocumentEnd, *m_Lines.back()));
             }
@@ -1210,12 +1210,11 @@ class ParseImp {
         while (it != m_Lines.end()) {
             pLine = *it;
             pLine->Type = Node::ScalarType;
-            if (pLine->Data.size()) {
+            if (!pLine->Data.empty()) {
                 if (pLine->Offset <= parentOffset) {
                     break;
-                } else {
-                    lastNotEmpty = it;
-                }
+                }                     lastNotEmpty = it;
+               
             }
             ++it;
         }
@@ -1418,8 +1417,7 @@ class ParseImp {
 
                     ++it;
                     continue;
-                } else {
-                    if (blockOffset != pLine->Offset && foldedFlag) {
+                }                     if (blockOffset != pLine->Offset && foldedFlag) {
                         if (addedSpace) {
                             data[data.size() - 1] = '\n';
                             addedSpace = false;
@@ -1429,7 +1427,7 @@ class ParseImp {
                     }
                     data += std::string(pLine->Offset - blockOffset, ' ');
                     data += pLine->Data;
-                }
+               
 
                 // Move to next line
                 ++it;
@@ -1449,7 +1447,7 @@ class ParseImp {
             }
         }
 
-        if (data.size() && (data[0] == '"' || data[0] == '\'')) {
+        if (!data.empty() && (data[0] == '"' || data[0] == '\'')) {
             data = data.substr(1, data.size() - 2);
         }
 
@@ -1531,7 +1529,7 @@ class ParseImp {
     void ClearTrailingEmptyLines(std::list<ReaderLine*>::iterator& it) {
         while (it != m_Lines.end()) {
             ReaderLine* pLine = *it;
-            if (pLine->Data.size() == 0) {
+            if (pLine->Data.empty()) {
                 delete *it;
                 it = m_Lines.erase(it);
             } else {
@@ -1541,7 +1539,7 @@ class ParseImp {
     }
 
     static bool IsSequenceStart(const std::string& data) {
-        if (data.size() == 0 || data[0] != '-') {
+        if (data.empty() || data[0] != '-') {
             return false;
         }
 
@@ -1554,7 +1552,7 @@ class ParseImp {
 
     static bool IsBlockScalar(const std::string& data, const size_t line, unsigned char& flags) {
         flags = 0;
-        if (data.size() == 0) {
+        if (data.empty()) {
             return false;
         }
 
@@ -1653,7 +1651,7 @@ void Serialize(const Node& root, const char* filename, const SerializeConfig& co
 
 size_t LineFolding(const std::string& input, std::vector<std::string>& folded, const size_t maxLength) {
     folded.clear();
-    if (input.size() == 0) {
+    if (input.empty()) {
         return 0;
     }
 
@@ -1669,7 +1667,7 @@ size_t LineFolding(const std::string& input, std::vector<std::string>& folded, c
 
         if (spacePos == std::string::npos || currentPos >= input.size()) {
             const std::string endLine = input.substr(lastPos);
-            if (endLine.size()) {
+            if (!endLine.empty()) {
                 folded.push_back(endLine);
             }
 
@@ -1744,7 +1742,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
             const auto value = node.As<std::string>();
 
             // Empty scalar
-            if (value.size() == 0) {
+            if (value.empty()) {
                 stream << "\n";
                 break;
             }
@@ -1760,7 +1758,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
 
             // Block scalar
             const std::string& lastLine = lines.back();
-            const bool endNewline = lastLine.size() == 0;
+            const bool endNewline = lastLine.empty();
             if (endNewline) {
                 lines.pop_back();
             }
@@ -1784,9 +1782,8 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
                     }
                     stream << value << "\n";
                     break;
-                } else {
-                    stream << ">";
-                }
+                }                     stream << ">";
+               
             }
 
             if (endNewline == false) {
@@ -1892,7 +1889,7 @@ size_t FindNotCited(const std::string& input, char token, size_t& preQuoteCount)
         quoteEnd++;
     }
 
-    if (quotes.size() == 0) {
+    if (quotes.empty()) {
         return tokenPos;
     }
 
@@ -1929,7 +1926,7 @@ size_t FindNotCited(const std::string& input, char token) {
 }
 
 bool ValidateQuote(const std::string& input) {
-    if (input.size() == 0) {
+    if (input.empty()) {
         return true;
     }
 

@@ -367,9 +367,7 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch
 const std::string UtilityFunctions::replaceFirst(std::string origin, std::string search, std::string replace) {
     if (origin.find(search) != std::string::npos) {
         return origin.replace(origin.find(search), search.size(), replace);
-    } else {
-        return origin;
-}
+    }         return origin;
 }
 
 const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
@@ -386,10 +384,9 @@ bool UtilityFunctions::endsWith(const std::string& fullString, const std::string
     if (fullString.length() >= ending.length()) {
         // get the start of the ending index of the full string and compare with the ending string
         return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-    } else {
-        // if full string is smaller than the ending automatically return false
+    }         // if full string is smaller than the ending automatically return false
         return false;
-    }
+   
 }
 
 bool UtilityFunctions::startsWith(const std::string& fullString, const std::string& ending) {

@@ -57,7 +57,7 @@ class ExpressionItem {
     ExpressionItem(const char* value);       //NOLINT(google-explicit-constructor)
     ExpressionItem(std::string const& value);//NOLINT(google-explicit-constructor)
     ExpressionItem(ValueTypePtr value);      //NOLINT(google-explicit-constructor)
-    ExpressionItem(ExpressionNodePtr ref);
+    ExpressionItem(ExpressionNodePtr exp);
 
     FieldAssignmentExpressionNodePtr operator=(ExpressionItem);
     FieldAssignmentExpressionNodePtr operator=(ExpressionNodePtr);

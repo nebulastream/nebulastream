@@ -31,7 +31,7 @@ class GeneratableTypesFactory {
      * @param type
      * @return GeneratableDataTypePtr
      */
-    GeneratableDataTypePtr createAnonymusDataType(std::string type);
+    static GeneratableDataTypePtr createAnonymusDataType(std::string type);
 
     /**
     * @brief Create a generatable data type, which corresponds to a particular nes data type.
@@ -45,28 +45,28 @@ class GeneratableTypesFactory {
     * @param structDeclaration the struct declaration.
     * @return GeneratableDataTypePtr
     */
-    GeneratableDataTypePtr createUserDefinedType(StructDeclaration structDeclaration);
+    static GeneratableDataTypePtr createUserDefinedType(StructDeclaration structDeclaration);
 
     /**
      * @brief Create a reference from a GeneratableDataType
      * @param type GeneratableDataTypePtr
      * @return GeneratableDataTypePtr
      */
-    GeneratableDataTypePtr createReference(GeneratableDataTypePtr type);
+    static GeneratableDataTypePtr createReference(GeneratableDataTypePtr type);
 
     /**
     * @brief Create a pointer from a GeneratableDataType
     * @param type GeneratableDataTypePtr
     * @return GeneratableDataTypePtr
     */
-    GeneratableDataTypePtr createPointer(GeneratableDataTypePtr type);
+    static GeneratableDataTypePtr createPointer(GeneratableDataTypePtr type);
 
     /**
     * @brief Create a value type from a GeneratableDataType
     * @param type GeneratableDataTypePtr
     * @return GeneratableDataTypePtr
     */
-    GeneratableValueTypePtr createValueType(ValueTypePtr valueType);
+    static GeneratableValueTypePtr createValueType(ValueTypePtr valueType);
 };
 }// namespace QueryCompilation
 }// namespace NES

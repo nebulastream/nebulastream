@@ -58,9 +58,9 @@ struct StateVariableDestroyerHelper<Key, T*> {
     static void destroy(cuckoohash_map<Key, T*>& backend) {
         auto locked_table = backend.lock_table();
         for (auto& it : locked_table) {
-            if (it.second != nullptr) {
+            
                 delete it.second;
-            }
+            
         }
         locked_table.clear();
         locked_table.unlock();

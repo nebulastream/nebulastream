@@ -35,11 +35,10 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);
         reply->set_id(id);
         return Status::OK;
-    } else {
-        NES_DEBUG("CoordinatorRPCServer::RegisterNode: failed");
+    }         NES_DEBUG("CoordinatorRPCServer::RegisterNode: failed");
         reply->set_id(0);
         return Status::CANCELLED;
-    }
+   
 }
 
 Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNodeRequest* request, UnregisterNodeReply* reply) {
@@ -50,11 +49,10 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNode
         NES_DEBUG("CoordinatorRPCServer::UnregisterNode: sensor successfully removed");
         reply->set_success(true);
         return Status::OK;
-    } else {
-        NES_ERROR("CoordinatorRPCServer::UnregisterNode: sensor was not removed");
+    }         NES_ERROR("CoordinatorRPCServer::UnregisterNode: sensor was not removed");
         reply->set_success(false);
         return Status::CANCELLED;
-    }
+   
 }
 
 Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*,
@@ -71,11 +69,10 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*,
         NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream success");
         reply->set_success(true);
         return Status::OK;
-    } else {
-        NES_ERROR("CoordinatorRPCServer::RegisterPhysicalStream failed");
+    }         NES_ERROR("CoordinatorRPCServer::RegisterPhysicalStream failed");
         reply->set_success(false);
         return Status::CANCELLED;
-    }
+   
 }
 
 Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext*,
@@ -90,11 +87,10 @@ Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext*,
         NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalStream success");
         reply->set_success(true);
         return Status::OK;
-    } else {
-        NES_ERROR("CoordinatorRPCServer::UnregisterPhysicalStream failed");
+    }         NES_ERROR("CoordinatorRPCServer::UnregisterPhysicalStream failed");
         reply->set_success(false);
         return Status::CANCELLED;
-    }
+   
 }
 
 Status CoordinatorRPCServer::RegisterLogicalStream(ServerContext*,
@@ -108,11 +104,10 @@ Status CoordinatorRPCServer::RegisterLogicalStream(ServerContext*,
         NES_DEBUG("CoordinatorRPCServer::RegisterLogicalStream success");
         reply->set_success(true);
         return Status::OK;
-    } else {
-        NES_ERROR("CoordinatorRPCServer::RegisterLogicalStream failed");
+    }         NES_ERROR("CoordinatorRPCServer::RegisterLogicalStream failed");
         reply->set_success(false);
         return Status::CANCELLED;
-    }
+   
 }
 
 Status CoordinatorRPCServer::UnregisterLogicalStream(ServerContext*,
@@ -125,11 +120,10 @@ Status CoordinatorRPCServer::UnregisterLogicalStream(ServerContext*,
         NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalStream success");
         reply->set_success(true);
         return Status::OK;
-    } else {
-        NES_ERROR("CoordinatorRPCServer::UnregisterLogicalStream failed");
+    }         NES_ERROR("CoordinatorRPCServer::UnregisterLogicalStream failed");
         reply->set_success(false);
         return Status::CANCELLED;
-    }
+   
 }
 
 Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* request, AddParentReply* reply) {
@@ -140,11 +134,10 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
         NES_DEBUG("CoordinatorRPCServer::AddParent success");
         reply->set_success(true);
         return Status::OK;
-    } else {
-        NES_ERROR("CoordinatorRPCServer::AddParent failed");
+    }         NES_ERROR("CoordinatorRPCServer::AddParent failed");
         reply->set_success(false);
         return Status::CANCELLED;
-    }
+   
 }
 
 Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
@@ -158,11 +151,10 @@ Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRe
             NES_DEBUG("CoordinatorRPCServer::ReplaceParent success addParent topo=");
             reply->set_success(true);
             return Status::OK;
-        } else {
-            NES_ERROR("CoordinatorRPCServer::ReplaceParent failed in addParent");
+        }             NES_ERROR("CoordinatorRPCServer::ReplaceParent failed in addParent");
             reply->set_success(false);
             return Status::CANCELLED;
-        }
+       
     } else {
         NES_ERROR("CoordinatorRPCServer::ReplaceParent failed in remove parent");
         reply->set_success(false);
@@ -178,9 +170,8 @@ Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequ
         NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
         reply->set_success(true);
         return Status::OK;
-    } else {
-        NES_ERROR("CoordinatorRPCServer::RemoveParent failed");
+    }         NES_ERROR("CoordinatorRPCServer::RemoveParent failed");
         reply->set_success(false);
         return Status::CANCELLED;
-    }
+   
 }

@@ -37,7 +37,7 @@ class SyntacticQueryValidation {
     /**
      * @brief Throws InvalidQueryException with formatted exception message
      */
-    void handleException(const std::exception& ex);
+    static void handleException(const std::exception& ex);
 
   public:
     /**

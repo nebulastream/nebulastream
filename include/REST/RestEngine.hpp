@@ -97,14 +97,14 @@ class RestEngine : public BaseController {
     * @description A preflight request is sent as a response to a DELETE request,
     *              the response allows the DELETE fetch request of our UI(localhost:3000)
     */
-    void handlePreflightOptions(http_request request);
+    static void handlePreflightOptions(http_request request);
     void handleMerge(http_request request);
     void initRestOpHandlers();
     void setEndpoint(const std::string& value);
     [[nodiscard]] std::string endpoint() const;
     pplx::task<void> accept();
     pplx::task<void> shutdown();
-    std::vector<utility::string_t> splitPath(utility::string_t path);
+    static std::vector<utility::string_t> splitPath(utility::string_t path);
 
   protected:
     web::http::experimental::listener::http_listener _listener;// main micro service network endpoint

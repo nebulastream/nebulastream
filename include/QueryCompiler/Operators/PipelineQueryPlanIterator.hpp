@@ -77,7 +77,7 @@ class PipelineQueryPlanIterator {
     * @brief The end of this iterator has an empty work stack.
     * @return iterator
     */
-    iterator end();
+    static iterator end();
 
     /**
      * @brief Return a snapshot of the iterator.

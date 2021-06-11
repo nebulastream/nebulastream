@@ -35,7 +35,7 @@ class SemanticQueryValidationTest : public testing::Test {
     }
     void TearDown() override { NES_INFO("Tear down SemanticQueryValidationTest class."); }
 
-    void PrintQString(std::string s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
+    static void PrintQString(std::string s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
 
     void CallValidation(std::string queryString) {
         PrintQString(queryString);

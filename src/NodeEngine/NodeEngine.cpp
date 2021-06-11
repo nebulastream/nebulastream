@@ -145,9 +145,8 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config,
     if (!this->queryManager->startThreadPool()) {
         NES_ERROR("NodeEngine: error while start thread pool");
         throw Exception("Error while start thread pool");
-    } else {
-        NES_DEBUG("NodeEngine(): thread pool successfully started");
-    }
+    }         NES_DEBUG("NodeEngine(): thread pool successfully started");
+   
     isRunning.store(true);
 }
 
@@ -163,16 +162,14 @@ bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr query
     if (!successRegister) {
         NES_ERROR("NodeEngine::deployQueryInNodeEngine: failed to register query");
         return false;
-    } else {
-        NES_DEBUG("NodeEngine::deployQueryInNodeEngine: successfully register query");
-    }
+    }         NES_DEBUG("NodeEngine::deployQueryInNodeEngine: successfully register query");
+   
     bool successStart = startQuery(queryExecutionPlan->getQueryId());
     if (!successStart) {
         NES_ERROR("NodeEngine::deployQueryInNodeEngine: failed to start query");
         return false;
-    } else {
-        NES_DEBUG("NodeEngine::deployQueryInNodeEngine: successfully start query");
-    }
+    }         NES_DEBUG("NodeEngine::deployQueryInNodeEngine: successfully start query");
+   
     return true;
 }
 
@@ -215,10 +212,9 @@ bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr que
             deployedQEPs[querySubPlanId] = queryExecutionPlan;
             NES_DEBUG("NodeEngine: register of subqep " << querySubPlanId << " succeeded");
             return true;
-        } else {
-            NES_DEBUG("NodeEngine: register of subqep " << querySubPlanId << " failed");
+        }             NES_DEBUG("NodeEngine: register of subqep " << querySubPlanId << " failed");
             return false;
-        }
+       
     } else {
         NES_DEBUG("NodeEngine: qep already exists. register failed" << querySubPlanId);
         return false;
@@ -257,18 +253,16 @@ bool NodeEngine::undeployQuery(QueryId queryId) {
     if (!successStop) {
         NES_ERROR("NodeEngine::undeployQuery: failed to stop query");
         return false;
-    } else {
-        NES_DEBUG("NodeEngine::undeployQuery: successfully stop query");
-    }
+    }         NES_DEBUG("NodeEngine::undeployQuery: successfully stop query");
+   
 
     bool successUnregister = unregisterQuery(queryId);
     if (!successUnregister) {
         NES_ERROR("NodeEngine::undeployQuery: failed to unregister query");
         return false;
-    } else {
-        NES_DEBUG("NodeEngine::undeployQuery: successfully unregister query");
+    }         NES_DEBUG("NodeEngine::undeployQuery: successfully unregister query");
         return true;
-    }
+   
 }
 
 bool NodeEngine::unregisterQuery(QueryId queryId) {
@@ -478,10 +472,9 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
         auto conf = configs.back();
         configs.pop_back();
         return conf->build(sourceDescriptor->getSchema());
-    } else {
-        NES_ASSERT(configs[0], "physical source config is not specified");
+    }         NES_ASSERT(configs[0], "physical source config is not specified");
         return configs[0]->build(sourceDescriptor->getSchema());
-    }
+   
 }
 
 void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {

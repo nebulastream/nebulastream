@@ -61,7 +61,7 @@ PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operat
         for (int64_t i = children.size() - 1; i >= 0; i--) {
 
             auto child = children[i];
-            NES_ASSERT(child->getPredecessors().size() != 0, "A child node should have a parent");
+            NES_ASSERT(!child->getPredecessors().empty(), "A child node should have a parent");
 
             // check if current node is last parent of child.
             if (child->getSuccessors().back() == current) {

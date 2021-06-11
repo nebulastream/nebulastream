@@ -31,7 +31,7 @@ class [[nodiscard]] BasicValue final : public ValueType {
     [[nodiscard]] std::string toString() const noexcept final;
 
     /// @brief Checks if two values are equal.
-    [[nodiscard]] bool isEquals(ValueTypePtr valueType) const noexcept final;
+    [[nodiscard]] bool isEquals(ValueTypePtr other) const noexcept final;
 
     std::string value;
 };

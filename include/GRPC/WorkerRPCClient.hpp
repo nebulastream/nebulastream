@@ -78,7 +78,7 @@ class WorkerRPCClient {
         * @param query plan to register
         * @return true if succeeded, else false
         */
-    bool registerQuery(std::string address, QueryPlanPtr queryPlan);
+    static bool registerQuery(std::string address, QueryPlanPtr queryPlan);
 
     /**
     * @brief register a query asynchronously
@@ -86,21 +86,21 @@ class WorkerRPCClient {
     * @param query plan to register
     * @return true if succeeded, else false
     */
-    bool registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueuePtr cq);
+    static bool registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueuePtr cq);
 
     /**
      * @brief ungregisters a query
      * @param queryIdto unregister query
      * @return true if succeeded, else false
      */
-    bool unregisterQuery(std::string address, QueryId queryId);
+    static bool unregisterQuery(std::string address, QueryId queryId);
 
     /**
      * @brief ungregisters a query asynchronously
      * @param queryIdto unregister query
      * @return true if succeeded, else false
      */
-    bool unregisterQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq);
+    static bool unregisterQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq);
 
     /**
      * @brief method to start a already deployed query
@@ -108,7 +108,7 @@ class WorkerRPCClient {
      * @param queryId to start
      * @return bool indicating success
      */
-    bool startQuery(std::string address, QueryId queryId);
+    static bool startQuery(std::string address, QueryId queryId);
 
     /**
       * @brief method to start a already deployed query asynchronously
@@ -116,21 +116,21 @@ class WorkerRPCClient {
       * @param queryId to start
       * @return bool indicating success
       */
-    bool startQueryAsyn(std::string address, QueryId queryId, CompletionQueuePtr cq);
+    static bool startQueryAsyn(std::string address, QueryId queryId, CompletionQueuePtr cq);
 
     /**
      * @brief method to stop a query
      * @param queryId to stop
      * @return bool indicating success
      */
-    bool stopQuery(std::string address, QueryId queryId);
+    static bool stopQuery(std::string address, QueryId queryId);
 
     /**
      * @brief method to stop a query asynchronously
      * @param queryId to stop
      * @return bool indicating success
      */
-    bool stopQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq);
+    static bool stopQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq);
 
     /**
      * @brief Registers to a remote worker node its monitoring plan.
@@ -138,7 +138,7 @@ class WorkerRPCClient {
      * @param the monitoring plan
      * @return bool if successful
      */
-    bool registerMonitoringPlan(const std::string& address, MonitoringPlanPtr plan);
+    static bool registerMonitoringPlan(const std::string& address, MonitoringPlanPtr plan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
@@ -146,7 +146,7 @@ class WorkerRPCClient {
      * @param the buffer where the data will be written into
      * @return true if successful, else false
      */
-    bool requestMonitoringData(const std::string& address, NodeEngine::TupleBuffer& buf, uint64_t schemaSizeBytes);
+    static bool requestMonitoringData(const std::string& address, NodeEngine::TupleBuffer& buf, uint64_t schemaSizeBytes);
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return
@@ -154,7 +154,7 @@ class WorkerRPCClient {
      * @param mode
      * @return true if all calls returned
      */
-    bool checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> queues, RpcClientModes mode);
+    static bool checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> queues, RpcClientModes mode);
 
   private:
 };

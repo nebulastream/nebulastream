@@ -85,9 +85,8 @@ std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
 
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
-    } else {
-        return buffer;
-    }
+    }         return buffer;
+   
 }
 
 const std::string CSVSource::toString() const {

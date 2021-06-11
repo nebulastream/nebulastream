@@ -61,7 +61,7 @@ DISABLE_WARNING_UNREFERENCED_FUNCTION
 static DebugLevel getDebugLevelFromString(std::string level) {
     if (level == "LOG_NONE") {
         return LOG_NONE;
-    } else if (level == "LOG_WARNING") {
+    } if (level == "LOG_WARNING") {
         return LOG_WARNING;
     } else if (level == "LOG_ERROR") {
         return LOG_ERROR;

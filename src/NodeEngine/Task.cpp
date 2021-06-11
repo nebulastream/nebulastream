@@ -35,7 +35,7 @@ ExecutionResult Task::operator()(WorkerContextRef workerContext) {
     // a task could be a executable pipeline, or a data sink.
     if (auto executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
         return (*executablePipeline)->execute(buf, workerContext);
-    } else if (auto dataSink = std::get_if<DataSinkPtr>(&pipeline)) {
+    } if (auto dataSink = std::get_if<DataSinkPtr>(&pipeline)) {
         auto result = (*dataSink)->writeData(buf, workerContext);
         if (result) {
             return ExecutionResult::Ok;

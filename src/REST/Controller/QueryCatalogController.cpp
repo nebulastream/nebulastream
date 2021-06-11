@@ -60,7 +60,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 result[key] = json::value::string(value);
             }
 
-            if (queries.size() == 0) {
+            if (queries.empty()) {
                 NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query with status " + queryStatus
                           + " was found.");
                 noContentImpl(request);
@@ -96,7 +96,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 index++;
             }
 
-            if (queryCatalogEntries.size() == 0) {
+            if (queryCatalogEntries.empty()) {
                 NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query was found.");
                 noContentImpl(request);
             } else {

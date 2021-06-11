@@ -210,8 +210,8 @@ class CodeGenerator {
 
     virtual ~CodeGenerator();
 
-    CompilerTypesFactoryPtr getTypeFactory();
-    FunctionCallStatementPtr call(std::string function);
+    static CompilerTypesFactoryPtr getTypeFactory();
+    static FunctionCallStatementPtr call(std::string function);
 };
 }// namespace QueryCompilation
 }// namespace NES

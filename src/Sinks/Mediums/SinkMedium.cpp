@@ -48,9 +48,8 @@ bool SinkMedium::getAppendAsBool() { return append; }
 std::string SinkMedium::getAppendAsString() {
     if (append) {
         return "APPEND";
-    } else {
-        return "OVERWRITE";
-    }
+    }         return "OVERWRITE";
+   
 }
 void SinkMedium::reconfigure(NodeEngine::ReconfigurationMessage& message, NodeEngine::WorkerContext& context) {
     Reconfigurable::reconfigure(message, context);

@@ -73,7 +73,7 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     NES_TRACE("DataTypeSerializationUtil:: de-serialized " << serializedDataType->DebugString());
     if (serializedDataType->type() == SerializableDataType_Type_UNDEFINED) {
         return DataTypeFactory::createUndefined();
-    } else if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
+    } if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
         return DataTypeFactory::createChar();
     } else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
         auto integerDetails = SerializableDataType_IntegerDetails();
@@ -151,7 +151,7 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataVal
         auto const dataTypePtr = deserializeDataType(type);
         return DataTypeFactory::createBasicValue(dataTypePtr, serializedBasicValue.value());
 
-    } else if (dataValue.Is<SerializableDataValue_ArrayValue>()) {
+    } if (dataValue.Is<SerializableDataValue_ArrayValue>()) {
         auto serializedArrayValue = SerializableDataValue_ArrayValue();
         dataValue.UnpackTo(&serializedArrayValue);
 

@@ -356,7 +356,7 @@ public:
      * @return number of elements in the table
      */
     size_type size() const {
-        if (all_locks_.size() == 0) {
+        if (all_locks_.empty()) {
             return 0;
         }
         counter_type s = 0;
@@ -399,7 +399,7 @@ public:
             throw std::invalid_argument("load factor " + std::to_string(mlf) +
                                         " cannot be "
                                         "less than 0");
-        } else if (mlf > 1.0) {
+        } if (mlf > 1.0) {
             throw std::invalid_argument("load factor " + std::to_string(mlf) +
                                         " cannot be "
                                         "greater than 1");
@@ -493,9 +493,8 @@ public:
         if (pos.status == ok) {
             fn(buckets_[pos.index].mapped(pos.slot));
             return true;
-        } else {
-            return false;
-        }
+        }             return false;
+       
     }
 
     /**
@@ -516,9 +515,8 @@ public:
         if (pos.status == ok) {
             fn(buckets_[pos.index].mapped(pos.slot));
             return true;
-        } else {
-            return false;
-        }
+        }             return false;
+       
     }
 
     /**
@@ -542,9 +540,8 @@ public:
                 del_from_bucket(pos.index, pos.slot);
             }
             return true;
-        } else {
-            return false;
-        }
+        }             return false;
+       
     }
 
     /**
@@ -623,9 +620,8 @@ public:
         const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
         if (pos.status == ok) {
             return buckets_[pos.index].mapped(pos.slot);
-        } else {
-            throw std::out_of_range("key not found in table");
-        }
+        }             throw std::out_of_range("key not found in table");
+       
     }
 
     /**
@@ -1176,7 +1172,7 @@ private:
         for (int i = 0; i < static_cast<int>(slot_per_bucket()); ++i) {
             if (!b.occupied(i) || (!is_simple() && partial != b.partial(i))) {
                 continue;
-            } else if (key_eq()(b.key(i), key)) {
+            } if (key_eq()(b.key(i), key)) {
                 return i;
             }
         }
@@ -1271,7 +1267,7 @@ private:
             // so we have to try again. We signal to the calling insert method
             // to try again by returning failure_under_expansion.
             return table_position{0, 0, failure_under_expansion};
-        } else if (st == ok) {
+        } if (st == ok) {
             assert(TABLE_MODE() == locked_table_mode() ||
                    !get_current_locks()[lock_ind(b.i1)].try_lock());
             assert(TABLE_MODE() == locked_table_mode() ||
@@ -1498,10 +1494,9 @@ private:
             b = lock_two(hp, b.i1, b.i2, TABLE_MODE());
             if (!buckets_[bucket_i].occupied(cuckoo_path[0].slot)) {
                 return true;
-            } else {
-                b.unlock();
+            }                 b.unlock();
                 return false;
-            }
+           
         }
 
         while (depth > 0) {
@@ -2524,9 +2519,8 @@ public:
             if (pos.status == ok) {
                 map_.get().del_from_bucket(pos.index, pos.slot);
                 return 1;
-            } else {
-                return 0;
-            }
+            }                 return 0;
+           
         }
 
         /**@}*/
@@ -2542,9 +2536,8 @@ public:
                     map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2);
             if (pos.status == ok) {
                 return iterator(map_.get().buckets_, pos.index, pos.slot);
-            } else {
-                return end();
-            }
+            }                 return end();
+           
         }
 
         template <typename K> const_iterator find(const K &key) const {
@@ -2555,27 +2548,24 @@ public:
                     map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2);
             if (pos.status == ok) {
                 return const_iterator(map_.get().buckets_, pos.index, pos.slot);
-            } else {
-                return end();
-            }
+            }                 return end();
+           
         }
 
         template <typename K> mapped_type &at(const K &key) {
             auto it = find(key);
             if (it == end()) {
                 throw std::out_of_range("key not found in table");
-            } else {
-                return it->second;
-            }
+            }                 return it->second;
+           
         }
 
         template <typename K> const mapped_type &at(const K &key) const {
             auto it = find(key);
             if (it == end()) {
                 throw std::out_of_range("key not found in table");
-            } else {
-                return it->second;
-            }
+            }                 return it->second;
+           
         }
 
         /**
@@ -2602,10 +2592,9 @@ public:
             auto it = find(key);
             if (it == end()) {
                 return std::make_pair(it, it);
-            } else {
-                auto start_it = it++;
+            }                 auto start_it = it++;
                 return std::make_pair(start_it, it);
-            }
+           
         }
 
         template <typename K>
@@ -2613,10 +2602,9 @@ public:
             auto it = find(key);
             if (it == end()) {
                 return std::make_pair(it, it);
-            } else {
-                auto start_it = it++;
+            }                 auto start_it = it++;
                 return std::make_pair(start_it, it);
-            }
+           
         }
 
         /**@}*/

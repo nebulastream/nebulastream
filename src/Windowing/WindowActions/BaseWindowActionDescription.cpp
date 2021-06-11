@@ -25,7 +25,7 @@ std::string BaseWindowActionDescriptor::toString() { return getTypeAsString(); }
 std::string BaseWindowActionDescriptor::getTypeAsString() {
     if (action == WindowAggregationTriggerAction) {
         return "WindowAggregationTriggerAction";
-    } else if (action == SliceAggregationTriggerAction) {
+    } if (action == SliceAggregationTriggerAction) {
         return "SliceAggregationTriggerAction";
     } else {
         return "Unknown Action";

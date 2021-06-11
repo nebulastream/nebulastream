@@ -96,7 +96,7 @@ class ConfigOption {
     bool equals(std::any other) {
         if (this == other) {
             return true;
-        } else if (other.has_value() && other.type() == typeid(ConfigOption)) {
+        } if (other.has_value() && other.type() == typeid(ConfigOption)) {
             auto that = (ConfigOption<T>) other;
             return this->name == that.name && this->description == that.description && this->value == that.value
                 && this->defaultValue == that.defaultValue;

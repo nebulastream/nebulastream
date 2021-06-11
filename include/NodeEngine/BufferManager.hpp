@@ -166,13 +166,13 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
      * @brief Recycle a pooled buffer by making it available to others
      * @param buffer
      */
-    void recyclePooledBuffer(detail::MemorySegment* buffer) override;
+    void recyclePooledBuffer(detail::MemorySegment* segment) override;
 
     /**
     * @brief Recycle an unpooled buffer by making it available to others
     * @param buffer
     */
-    void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
+    void recycleUnpooledBuffer(detail::MemorySegment* segment) override;
 
     /**
      * @brief this method clears all local buffers pools and remove all buffers from the global buffer manager

@@ -23,7 +23,7 @@ namespace NES {
 namespace QueryCompilation {
 class ForLoopStatement : public Statement {
   public:
-    ForLoopStatement(DeclarationPtr variableDeclarationPtr,
+    ForLoopStatement(DeclarationPtr varDeclaration,
                      ExpressionStatmentPtr condition,
                      ExpressionStatmentPtr advance,
                      const std::vector<StatementPtr>& loop_body = std::vector<StatementPtr>());

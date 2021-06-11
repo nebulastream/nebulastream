@@ -54,7 +54,7 @@ const Code StructDeclaration::getCode() const {
     return expr.str();
 }
 
-uint32_t StructDeclaration::getTypeSizeInBytes() const {
+uint32_t StructDeclaration::getTypeSizeInBytes() {
     NES_ERROR("Called unimplemented function!");
     return 0;
 }

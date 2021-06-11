@@ -260,7 +260,7 @@ class TestSink : public SinkMedium {
 
     void setup() override{};
 
-    std::string toString() { return "Test_Sink"; }
+    static std::string toString() { return "Test_Sink"; }
 
     void shutdown() override {}
 

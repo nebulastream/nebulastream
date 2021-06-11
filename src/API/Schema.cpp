@@ -118,15 +118,14 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
             }
         }
         return true;
-    } else {
-        for (AttributeFieldPtr fieldAttribute : fields) {
+    }         for (AttributeFieldPtr fieldAttribute : fields) {
             auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->getName());
             if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
                 return false;
             }
         }
         return true;
-    }
+   
 }
 
 bool Schema::hasEqualTypes(SchemaPtr otherSchema) {
@@ -158,9 +157,8 @@ const std::string Schema::toString() const {
 const std::string Schema::getStreamNameQualifier() const {
     if (fields.empty()) {
         return "Unnamed Stream";
-    } else {
-        return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
-    }
+    }         return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
+   
 }
 
 AttributeFieldPtr createField(std::string name, BasicType type) {
@@ -174,11 +172,10 @@ std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() {
 std::string Schema::getQualifierNameForSystemGeneratedFields() {
     if (!fields.empty()) {
         return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
-    } else {
-        NES_ERROR("Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is "
+    }         NES_ERROR("Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is "
                   "requested");
         return "";
-    }
+   
 }
 
 bool Schema::contains(const std::string& fieldName) {
@@ -203,9 +200,8 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
     }
     if (found) {
         return i;
-    } else {
-        return -1;
-    }
+    }         return -1;
+   
 }
 
 AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
@@ -235,7 +231,7 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
     //Check how many matching fields were found and raise appropriate exception
     if (matchedFields.size() == 1) {
         return matchedFields[0];
-    } else if (matchedFields.size() > 1) {
+    } if (matchedFields.size() > 1) {
         //        NES_ERROR("Schema: Found ambiguous field with name " + fieldName);
         //        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
         //TODO: workaround we choose the first one to join we will replace this in issue #1543

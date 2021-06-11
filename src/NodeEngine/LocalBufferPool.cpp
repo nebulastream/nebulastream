@@ -81,16 +81,15 @@ TupleBuffer LocalBufferPool::getBufferBlocking() {
     {
         // try to get an exclusive buffer
         std::unique_lock lock(mutex);
-        if (exclusiveBuffers.size() > 0) {
+        if (!exclusiveBuffers.empty()) {
             detail::MemorySegment* memSegment = exclusiveBuffers.front();
             NES_VERIFY(memSegment, "null memory segment");
             exclusiveBuffers.pop_front();
             if (memSegment->controlBlock->prepare()) {
                 return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
-            } else {
-                NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
+            }                 NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
                                         << memSegment->controlBlock->getReferenceCount());
-            }
+           
         }
     }
     // fallback to global pool

@@ -89,16 +89,16 @@ class BaseController {
      * @brief set http response options
      * @param request : the message from the user
      */
-    void handleOptions(http_request request);
+    static void handleOptions(http_request request);
 
-    json::value responseNotImpl(const http::method& method, utility::string_t path);
-    void internalServerErrorImpl(web::http::http_request message) const;
-    void successMessageImpl(const web::http::http_request& message, const web::json::value& result) const;
-    void successMessageImpl(const web::http::http_request& message, const utf8string& result) const;
+    static json::value responseNotImpl(const http::method& method, utility::string_t path);
+    static void internalServerErrorImpl(web::http::http_request message) ;
+    static void successMessageImpl(const web::http::http_request& message, const web::json::value& result) ;
+    static void successMessageImpl(const web::http::http_request& message, const utf8string& result) ;
 
-    void resourceNotFoundImpl(const web::http::http_request& message) const;
-    void noContentImpl(const web::http::http_request& message) const;
-    void badRequestImpl(const web::http::http_request& message, const web::json::value& detail) const;
+    static void resourceNotFoundImpl(const web::http::http_request& message) ;
+    static void noContentImpl(const web::http::http_request& message) ;
+    static void badRequestImpl(const web::http::http_request& message, const web::json::value& detail) ;
 
     void handleException(const web::http::http_request& message, const std::exception& exc);
 
@@ -107,13 +107,13 @@ class BaseController {
      * @param request : the user request
      * @return the path from the request
      */
-    utility::string_t getPath(http_request& request);
+    static utility::string_t getPath(http_request& request);
 
     /**
      * @brief Get the parameters from the request if any
      * @param request : the user request
      * @return a map containing parameter keys and values
      */
-    std::map<utility::string_t, utility::string_t> getParameters(http_request& request);
+    static std::map<utility::string_t, utility::string_t> getParameters(http_request& request);
 };
 }// namespace NES

@@ -101,7 +101,7 @@ class TopologyNode : public Node {
 
     bool containAsParent(NodePtr node) override;
 
-    bool containAsChild(NodePtr ptr) override;
+    bool containAsChild(NodePtr node) override;
 
     /**
      * @brief Add a new property to the stored properties map

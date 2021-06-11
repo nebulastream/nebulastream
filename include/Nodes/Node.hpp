@@ -196,11 +196,10 @@ class Node : public std::enable_shared_from_this<Node> {
     std::shared_ptr<NodeType> as() {
         if (instanceOf<NodeType>()) {
             return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
-        } else {
-            throw std::logic_error("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
+        }             throw std::logic_error("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
                                    + typeid(NodeType).name());
             return nullptr;
-        }
+       
     }
 
     /**
@@ -350,7 +349,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @param nodeToFind
      * @return return node if the given node is found, otherwise nullpointer
      */
-    NodePtr find(const std::vector<NodePtr>& nodes, const NodePtr nodeToFind);
+    static NodePtr find(const std::vector<NodePtr>& nodes, const NodePtr nodeToFind);
 
     /********************************************************************************
      *                   Helper functions                                           *

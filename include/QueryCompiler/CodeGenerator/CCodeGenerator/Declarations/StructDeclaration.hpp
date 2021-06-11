@@ -33,7 +33,7 @@ class StructDeclaration : public Declaration {
 
     [[nodiscard]] const Code getCode() const override;
 
-    [[nodiscard]] uint32_t getTypeSizeInBytes() const;
+    [[nodiscard]] static uint32_t getTypeSizeInBytes() ;
 
     [[nodiscard]] const std::string getTypeName() const;
 

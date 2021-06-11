@@ -30,7 +30,7 @@ namespace QueryCompilation {
  */
 class QueryCompilationResult {
   public:
-    static QueryCompilationResultPtr create(NodeEngine::Execution::ExecutableQueryPlanPtr executableQueryPlan);
+    static QueryCompilationResultPtr create(NodeEngine::Execution::ExecutableQueryPlanPtr qep);
     static QueryCompilationResultPtr create(std::exception_ptr exception);
     /**
      * @brief Returns the query execution plan if hasError() == false.

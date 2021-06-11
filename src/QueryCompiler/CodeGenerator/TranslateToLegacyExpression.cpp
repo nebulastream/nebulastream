@@ -52,7 +52,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(ExpressionN
     if (expression->instanceOf<LogicalExpressionNode>()) {
         // Translate logical expressions to the legacy representation
         return transformLogicalExpressions(expression);
-    } else if (expression->instanceOf<ArithmeticalExpressionNode>()) {
+    } if (expression->instanceOf<ArithmeticalExpressionNode>()) {
         // Translate arithmetical expressions to the legacy representation
         return transformArithmeticalExpressions(expression);
     } else if (expression->instanceOf<ConstantValueExpressionNode>()) {
@@ -80,7 +80,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         auto legacyLeft = transformExpression(addExpressionNode->getLeft());
         auto legacyRight = transformExpression(addExpressionNode->getRight());
         return Predicate(BinaryOperatorType::PLUS_OP, legacyLeft, legacyRight).copy();
-    } else if (expression->instanceOf<SubExpressionNode>()) {
+    } if (expression->instanceOf<SubExpressionNode>()) {
         // Translate sub expression node.
         auto subExpressionNode = expression->as<SubExpressionNode>();
         auto legacyLeft = transformExpression(subExpressionNode->getLeft());
@@ -126,7 +126,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(Exp
         auto legacyLeft = transformExpression(andExpressionNode->getLeft());
         auto legacyRight = transformExpression(andExpressionNode->getRight());
         return Predicate(BinaryOperatorType::LOGICAL_AND_OP, legacyLeft, legacyRight).copy();
-    } else if (expression->instanceOf<OrExpressionNode>()) {
+    } if (expression->instanceOf<OrExpressionNode>()) {
         // Translate or expression node.
         auto orExpressionNode = expression->as<OrExpressionNode>();
         auto legacyLeft = transformExpression(orExpressionNode->getLeft());

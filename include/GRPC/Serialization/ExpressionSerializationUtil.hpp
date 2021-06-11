@@ -49,7 +49,7 @@ class ExpressionSerializationUtil {
     static ExpressionNodePtr deserializeExpression(SerializableExpression* serializedExpression);
 
   private:
-    static void serializeLogicalExpressions(ExpressionNodePtr sharedPtr, SerializableExpression* pExpression);
+    static void serializeLogicalExpressions(ExpressionNodePtr expression, SerializableExpression* serializedExpression);
     static void serializeArithmeticalExpressions(ExpressionNodePtr expression, SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeLogicalExpressions(SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeArithmeticalExpressions(SerializableExpression* serializedExpression);

@@ -54,7 +54,7 @@ json::value BaseController::responseNotImpl(const http::method& method, utility:
     return response;
 }
 
-void BaseController::successMessageImpl(const http_request& message, const json::value& result) const {
+void BaseController::successMessageImpl(const http_request& message, const json::value& result) {
     http_response response(status_codes::OK);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
     response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
@@ -62,7 +62,7 @@ void BaseController::successMessageImpl(const http_request& message, const json:
     message.reply(response);
 }
 
-void BaseController::successMessageImpl(const http_request& message, const utf8string& result) const {
+void BaseController::successMessageImpl(const http_request& message, const utf8string& result) {
     http_response response(status_codes::OK);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
     response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
@@ -70,27 +70,27 @@ void BaseController::successMessageImpl(const http_request& message, const utf8s
     message.reply(response);
 }
 
-void BaseController::internalServerErrorImpl(http_request message) const {
+void BaseController::internalServerErrorImpl(http_request message) {
     http_response response(status_codes::InternalError);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
     response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
     message.reply(response);
 }
 
-void BaseController::resourceNotFoundImpl(const http_request& message) const {
+void BaseController::resourceNotFoundImpl(const http_request& message) {
     http_response response(status_codes::NotFound);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
     message.reply(response);
 }
 
-void BaseController::noContentImpl(const http_request& message) const {
+void BaseController::noContentImpl(const http_request& message) {
     // Return response with http code 204 to indicate no content is returned
     http_response response(status_codes::NoContent);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
     message.reply(response);
 }
 
-void BaseController::badRequestImpl(const web::http::http_request& message, const web::json::value& detail) const {
+void BaseController::badRequestImpl(const web::http::http_request& message, const web::json::value& detail) {
     // Returns error with http code 400 to indicate bad user request
     http_response response(status_codes::BadRequest);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));

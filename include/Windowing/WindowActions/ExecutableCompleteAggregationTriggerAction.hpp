@@ -152,7 +152,7 @@ class ExecutableCompleteAggregationTriggerAction
         // iterate over all slices and update the partial final aggregates
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
-        if (slices.size() == 0) {
+        if (slices.empty()) {
             return;
         }
         uint64_t slideSize = windowDefinition->getWindowType()->getSize().getTime();
@@ -218,7 +218,7 @@ class ExecutableCompleteAggregationTriggerAction
         }
 
         uint64_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
-        if (windows.size() != 0) {
+        if (!windows.empty()) {
             int64_t largestClosedWindow = 0;
             for (int i = 0; i < partialFinalAggregates.size(); i++) {
                 auto& window = windows[i];

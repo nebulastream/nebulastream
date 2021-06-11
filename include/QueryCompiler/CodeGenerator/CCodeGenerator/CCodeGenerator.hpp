@@ -113,7 +113,7 @@ class CCodeGenerator : public CodeGenerator {
         Windowing::LogicalWindowDefinitionPtr window,
         QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
         PipelineContextPtr context,
-        uint64_t operatorHandlerIndex) override;
+        uint64_t windowOperatorIndex) override;
 
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -127,7 +127,7 @@ class CCodeGenerator : public CodeGenerator {
         Windowing::LogicalWindowDefinitionPtr window,
         QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
         PipelineContextPtr context,
-        uint64_t windowOperatorIndex) override;
+        uint64_t windowOperatorId) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -191,7 +191,7 @@ class CCodeGenerator : public CodeGenerator {
      * @param code generated code.
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
-    NodeEngine::Execution::ExecutablePipelineStagePtr compile(PipelineContextPtr context) override;
+    NodeEngine::Execution::ExecutablePipelineStagePtr compile(PipelineContextPtr code) override;
 
     std::string generateCode(PipelineContextPtr context) override;
 
@@ -201,27 +201,27 @@ class CCodeGenerator : public CodeGenerator {
     CompilerPtr compiler;
 
   private:
-    BinaryOperatorStatement getBuffer(VariableDeclaration tupleBufferVariable);
+    static BinaryOperatorStatement getBuffer(VariableDeclaration tupleBufferVariable);
     VariableDeclaration
     getWindowOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable, uint64_t index);
-    BinaryOperatorStatement getWatermark(VariableDeclaration tupleBufferVariable);
-    BinaryOperatorStatement getOriginId(VariableDeclaration tupleBufferVariable);
+    static BinaryOperatorStatement getWatermark(VariableDeclaration tupleBufferVariable);
+    static BinaryOperatorStatement getOriginId(VariableDeclaration tupleBufferVariable);
 
     TypeCastExprStatement getTypedBuffer(VariableDeclaration tupleBufferVariable, StructDeclaration structDeclaration);
-    BinaryOperatorStatement getBufferSize(VariableDeclaration tupleBufferVariable);
-    BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
+    static BinaryOperatorStatement getBufferSize(VariableDeclaration tupleBufferVariable);
+    static BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable, VariableDeclaration numberOfResultTuples);
     BinaryOperatorStatement setWatermark(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
     BinaryOperatorStatement setOriginId(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
 
-    BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
-    BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,
+    static BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
+    static BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,
                                             VariableDeclaration tupleBufferVariable,
                                             VariableDeclaration workerContextVariable);
     void generateTupleBufferSpaceCheck(PipelineContextPtr context,
                                        VariableDeclaration varDeclResultTuple,
                                        StructDeclaration structDeclarationResultTuple);
 
-    StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
+    static StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
 
     BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable,
                                                         DataTypePtr keyType,
@@ -232,12 +232,12 @@ class CCodeGenerator : public CodeGenerator {
                                                  std::string leftType,
                                                  std::string rightType);
 
-    BinaryOperatorStatement getStateVariable(VariableDeclaration);
+    static BinaryOperatorStatement getStateVariable(VariableDeclaration);
 
-    BinaryOperatorStatement getLeftJoinState(VariableDeclaration windowHandlerVariable);
-    BinaryOperatorStatement getRightJoinState(VariableDeclaration windowHandlerVariable);
+    static BinaryOperatorStatement getLeftJoinState(VariableDeclaration windowHandlerVariable);
+    static BinaryOperatorStatement getRightJoinState(VariableDeclaration windowHandlerVariable);
 
-    BinaryOperatorStatement getWindowManager(VariableDeclaration);
+    static BinaryOperatorStatement getWindowManager(VariableDeclaration);
 
     void generateCodeForWatermarkUpdaterWindow(PipelineContextPtr context, VariableDeclaration handler);
     void generateCodeForWatermarkUpdaterJoin(PipelineContextPtr context, VariableDeclaration handler, bool leftSide);

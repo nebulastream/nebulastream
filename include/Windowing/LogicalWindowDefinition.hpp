@@ -38,7 +38,7 @@ class LogicalWindowDefinition {
                                      DistributionCharacteristicPtr distChar,
                                      uint64_t numberOfInputEdges,
                                      WindowTriggerPolicyPtr triggerPolicy,
-                                     WindowActionDescriptorPtr windowAction,
+                                     WindowActionDescriptorPtr triggerAction,
                                      uint64_t allowedLateness);
 
     /**
@@ -58,7 +58,7 @@ class LogicalWindowDefinition {
                                      DistributionCharacteristicPtr distChar,
                                      uint64_t numberOfInputEdges,
                                      WindowTriggerPolicyPtr triggerPolicy,
-                                     WindowActionDescriptorPtr windowAction,
+                                     WindowActionDescriptorPtr triggerAction,
                                      uint64_t allowedLateness);
 
     /**
@@ -76,7 +76,7 @@ class LogicalWindowDefinition {
                                              DistributionCharacteristicPtr distChar,
                                              uint64_t numberOfInputEdges,
                                              WindowTriggerPolicyPtr triggerPolicy,
-                                             WindowActionDescriptorPtr windowAction,
+                                             WindowActionDescriptorPtr triggerAction,
                                              uint64_t allowedLateness);
 
     /**
@@ -94,7 +94,7 @@ class LogicalWindowDefinition {
                                              DistributionCharacteristicPtr distChar,
                                              uint64_t numberOfInputEdges,
                                              WindowTriggerPolicyPtr triggerPolicy,
-                                             WindowActionDescriptorPtr windowAction,
+                                             WindowActionDescriptorPtr triggerAction,
                                              uint64_t allowedLateness);
 
     /**
@@ -112,7 +112,7 @@ class LogicalWindowDefinition {
                                              DistributionCharacteristicPtr distChar,
                                              uint64_t numberOfInputEdges,
                                              WindowTriggerPolicyPtr triggerPolicy,
-                                             WindowActionDescriptorPtr windowAction,
+                                             WindowActionDescriptorPtr triggerAction,
                                              uint64_t allowedLateness);
 
     /**

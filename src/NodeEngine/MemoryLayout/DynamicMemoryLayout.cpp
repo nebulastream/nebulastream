@@ -31,8 +31,7 @@ std::optional<uint64_t> DynamicMemoryLayout::getFieldIndexFromName(std::string f
     auto nameFieldIt = nameFieldIndexMap.find(fieldName);
     if (nameFieldIt == nameFieldIndexMap.end()) {
         return std::nullopt;
-    } else {
-        return std::optional<uint64_t>(nameFieldIt->second);
-    }
+    }         return std::optional<uint64_t>(nameFieldIt->second);
+   
 }
 }// namespace NES::NodeEngine::DynamicMemoryLayout

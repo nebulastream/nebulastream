@@ -58,25 +58,25 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @brief Adds a successor pipeline to the current one.
      * @param successor
      */
-    void addSuccessor(OperatorPipelinePtr successor);
+    void addSuccessor(OperatorPipelinePtr pipeline);
 
     /**
      * @brief Adds a predecessor pipeline to the current one.
      * @param predecessor
      */
-    void addPredecessor(OperatorPipelinePtr predecessor);
+    void addPredecessor(OperatorPipelinePtr pipeline);
 
     /**
      * @brief Removes a particular predecessor pipeline.
      * @param predecessor
      */
-    void removePredecessor(OperatorPipelinePtr predecessor);
+    void removePredecessor(OperatorPipelinePtr pipeline);
 
     /**
      * @brief Removes a particular successor pipeline.
      * @param successor
      */
-    void removeSuccessor(OperatorPipelinePtr successor);
+    void removeSuccessor(OperatorPipelinePtr pipeline);
 
     /**
      * @brief Gets list of all predecessors

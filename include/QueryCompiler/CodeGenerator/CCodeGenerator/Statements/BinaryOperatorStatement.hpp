@@ -42,7 +42,7 @@ class BinaryOperatorStatement : public ExpressionStatment {
     BinaryOperatorStatement
     addRight(const BinaryOperatorType& op, const VarRefStatement& rhs, BracketMode bracket_mode = NO_BRACKETS);
 
-    StatementPtr assignToVariable(const VarRefStatement& lhs);
+    static StatementPtr assignToVariable(const VarRefStatement& lhs);
 
     [[nodiscard]] StatementType getStamentType() const override;
 

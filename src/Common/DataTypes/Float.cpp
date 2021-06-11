@@ -35,7 +35,7 @@ DataTypePtr Float::join(DataTypePtr otherDataType) {
         auto newUpperBound = fmax(upperBound, otherFloat->upperBound);
         auto newLowerBound = fmin(lowerBound, otherFloat->lowerBound);
         return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
-    } else if (otherDataType->isInteger()) {
+    } if (otherDataType->isInteger()) {
         auto otherInteger = as<Integer>(otherDataType);
         auto newBits = std::max(bits, otherInteger->getBits());
         auto newUpperBound = fmax(upperBound, static_cast<double>(otherInteger->upperBound));

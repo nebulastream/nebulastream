@@ -29,7 +29,7 @@ class AddScanAndEmitPhase {
   public:
     static AddScanAndEmitPhasePtr create();
     PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
-    OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
+    static OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
 };
 }// namespace QueryCompilation
 };// namespace NES

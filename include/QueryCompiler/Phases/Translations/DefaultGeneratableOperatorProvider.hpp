@@ -34,56 +34,56 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerSource(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    static void lowerSource(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
      * @brief Lowers a sink operator. In this case we perform no action, as physical sink operators can't be lowered.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    static void lowerSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
      * @brief Lowers a scan operator and creates a corresponding generatable buffer scan.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerScan(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    static void lowerScan(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
      * @brief Lowers a emit operator.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerEmit(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    static void lowerEmit(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
      * @brief Lowers a projection operator.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerProjection(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    static void lowerProjection(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
      * @brief Lowers a filter operator.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerFilter(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    static void lowerFilter(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
      * @brief Lowers a map operator.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerMap(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    static void lowerMap(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
      * @brief Lowers a watermark assignment operator.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerWatermarkAssignment(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    static void lowerWatermarkAssignment(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
      * @brief Lowers a window sink operator.
@@ -118,21 +118,21 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerJoinBuild(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    static void lowerJoinBuild(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
      * @brief Lowers a join sink operator.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerJoinSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    static void lowerJoinSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
      * @brief Lowers a window operator.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    GeneratableOperators::GeneratableWindowAggregationPtr
+    static GeneratableOperators::GeneratableWindowAggregationPtr
     lowerWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
 };
 

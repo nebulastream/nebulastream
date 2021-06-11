@@ -88,9 +88,8 @@ const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclarat
                                                             const AttributeFieldPtr field) {
     if (structDeclaration.getField(field->getName())) {
         return std::make_shared<VariableDeclaration>(structDeclaration.getVariableDeclaration(field->getName()));
-    } else {
-        return VariableDeclarationPtr();
-    }
+    }         return VariableDeclarationPtr();
+   
 }
 
 const std::string toString(void*, DataTypePtr) {
@@ -391,7 +390,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
                 .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 0))));
         context->code->variableInitStmts.push_back(maxWatermarkInitStatement.copy());
 
-        NES_ASSERT(context->code->structDeclarationInputTuples.size() >= 1, "invalid size of struct input tuples");
+        NES_ASSERT(!context->code->structDeclarationInputTuples.empty(), "invalid size of struct input tuples");
         // get the value for current watermark
         // uint64_t currentWatermark = record[index].ts;
         auto currentWatermarkVariableDeclaration =
@@ -686,7 +685,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
-        NES_ASSERT(context->code->structDeclarationInputTuples.size() >= 1, "invalid number of input tuples");
+        NES_ASSERT(!context->code->structDeclarationInputTuples.empty(), "invalid number of input tuples");
         auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
         auto tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);
 
@@ -752,7 +751,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 
     // update partial aggregate
     auto partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
-    NES_ASSERT(context->code->structDeclarationInputTuples.size() >= 1, "invalid number of input tuples");
+    NES_ASSERT(!context->code->structDeclarationInputTuples.empty(), "invalid number of input tuples");
     generatableWindowAggregation->compileLiftCombine(context->code->currentCodeInsertionPoint,
                                                      partialRef,
                                                      context->getRecordHandler());
