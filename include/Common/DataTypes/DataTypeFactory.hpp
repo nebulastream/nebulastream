@@ -256,8 +256,6 @@ class DataTypeFactory {
     // functions to increase lower and decrease upper bound at the same time:
     static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, int64_t maxUpperBound);
     static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, double maxUpperBound);
-    static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, double maxUpperBound);
-    static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, int64_t maxUpperBound);
 };
 
 }// namespace NES
