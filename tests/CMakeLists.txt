@@ -110,6 +110,11 @@ add_executable(array-type-tests "UnitTests/QueryCompiler/ArrayTypeTest.cpp")
 target_link_libraries(array-type-tests nes ${GTEST_LIBRARIES})
 add_test(NAME array-type-tests COMMAND array-type-tests)
 
+### DataTypeFactory Test ###
+add_executable(data-type-factory-tests "UnitTests/QueryCompiler/DataTypeFactoryTests.cpp")
+target_link_libraries(data-type-factory-tests nes ${GTEST_LIBRARIES})
+add_test(NAME data-type-factory-tests COMMAND data-type-factory-tests)
+
 ### Pipelining Tests ###
 add_executable(pipelining-phase-tests "UnitTests/QueryCompiler/PipeliningPhaseTest.cpp")
 target_link_libraries(pipelining-phase-tests nes ${GTEST_LIBRARIES})

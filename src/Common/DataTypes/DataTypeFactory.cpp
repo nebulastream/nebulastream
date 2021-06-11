@@ -232,8 +232,12 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t
     if (stamp->isInteger()) {
         auto intStamp = DataType::as<Integer>(stamp);
         if (intStamp->lowerBound < minLowerBound) {
+            // we must create a new stamp for an increased lower bound, so we calculate the upper bound by predication
             int64_t newUpperBound = std::min(intStamp->upperBound, maxUpperBound);
             return createInteger(intStamp->getBits(), minLowerBound, newUpperBound);
+        } else if (maxUpperBound < intStamp->upperBound) {
+            // we must create a new stamp but keep the old lower bound
+            return createInteger(intStamp->getBits(), intStamp->lowerBound, maxUpperBound);
         }
     } else if (stamp->isFloat()) {
         NES_INFO("DataTypeFactory: Integers are passed as new bounds of an Float data type. Progresses with standard casting to Double.");
@@ -250,8 +254,12 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double 
     if (stamp->isFloat()) {
         auto floatStamp = DataType::as<Float>(stamp);
         if (floatStamp->lowerBound < minLowerBound) {
+            // we must create a new stamp for an increased lower bound, so we calculate the upper bound by predication
             double newUpperBound = fmin(floatStamp->upperBound, maxUpperBound);
             return createFloat(floatStamp->getBits(), minLowerBound, newUpperBound);
+        } else if (maxUpperBound < floatStamp->upperBound) {
+            // we must create a new stamp but keep the old lower bound
+            return createFloat(floatStamp->getBits(), floatStamp->lowerBound, maxUpperBound);
         }
     } else if (stamp->isInteger()) {
         NES_INFO("DataTypeFactory: Floats are passed as new bounds of an Integer data type. Progresses with the floor of the lower bound and ceiling of the upper bound instead.");
@@ -262,14 +270,6 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double 
     }
     NES_INFO("DataTypeFactory: Lower and upper bound do not need to be changed. Returning original stamp.");
     return stamp; // neither bound needs to be modified -> return shared pointer given as argument
-}
-
-DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, double maxUpperBound) {
-    return DataTypeFactory::copyTypeAndTightenBounds(stamp, (double) minLowerBound, maxUpperBound);
-}
-
-DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, int64_t maxUpperBound) {
-    return DataTypeFactory::copyTypeAndTightenBounds(stamp, minLowerBound, (double) maxUpperBound);
 }
 
 }// namespace NES
