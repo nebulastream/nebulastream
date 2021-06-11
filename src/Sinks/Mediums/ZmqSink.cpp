@@ -81,8 +81,9 @@ bool ZmqSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worker
                 if (!rc_env || !rc_msg) {
                     NES_DEBUG("ZmqSink  " << this << ": schema send NOT successful");
                     return false;
-                }                     NES_DEBUG("ZmqSink  " << this << ": schema send successful");
-               
+                }
+                NES_DEBUG("ZmqSink  " << this << ": schema send successful");
+
             } catch (const zmq::error_t& ex) {
                 if (ex.num() != ETERM) {
                     NES_ERROR("ZmqSink: schema write " << ex.what());
@@ -117,9 +118,10 @@ bool ZmqSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worker
             if (!rc_env || !rc_msg) {
                 NES_DEBUG("ZmqSink  " << this << ": data send NOT successful");
                 return false;
-            }                 NES_DEBUG("ZmqSink  " << this << ": data send successful");
-                return true;
-           
+            }
+            NES_DEBUG("ZmqSink  " << this << ": data send successful");
+            return true;
+
         } catch (const zmq::error_t& ex) {
             // recv() throws ETERM when the zmq context is destroyed,
             //  as when AsyncZmqListener::Stop() is called

@@ -147,7 +147,7 @@ class BufferControlBlock {
     std::atomic<int32_t> referenceCounter = 0;
     std::atomic<uint32_t> numberOfTuples = 0;
     std::atomic<int64_t> watermark = 0;
-    std::atomic<int64_t> creationTimestamp {};
+    std::atomic<int64_t> creationTimestamp{};
     std::atomic<uint64_t> originId = 0;
 
   public:

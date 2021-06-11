@@ -76,13 +76,14 @@ web::json::value MonitoringService::requestMonitoringDataAsJson(uint64_t nodeId)
             auto jsonValues = parsedValues.asJson();
             tupleBuffer.release();
             return jsonValues;
-        }             std::stringstream stream{};
-            stream << "MonitoringService: Error retrieving monitoring data from node " << nodeId;
-            auto const str = stream.str();
-            NES_ERROR(str);
-            tupleBuffer.release();
-            throw std::runtime_error(str);
-       
+        }
+        std::stringstream stream{};
+        stream << "MonitoringService: Error retrieving monitoring data from node " << nodeId;
+        auto const str = stream.str();
+        NES_ERROR(str);
+        tupleBuffer.release();
+        throw std::runtime_error(str);
+
     } else {
         throw std::runtime_error("MonitoringService: Node with ID " + std::to_string(nodeId) + " does not exit.");
     }
@@ -128,8 +129,8 @@ utf8string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t
             })
             .wait();
         return metricsReturn;
-    }         throw std::runtime_error("MonitoringService: Node with ID " + std::to_string(nodeId) + " does not exit.");
-   
+    }
+    throw std::runtime_error("MonitoringService: Node with ID " + std::to_string(nodeId) + " does not exit.");
 }
 
 web::json::value MonitoringService::requestMonitoringDataFromAllNodesViaPrometheusAsJson() {

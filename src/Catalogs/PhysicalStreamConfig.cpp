@@ -85,7 +85,8 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     if (type == "DefaultSource") {
         NES_DEBUG("PhysicalStreamConfig: create default source for one buffer");
         return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency.count());
-    } if (type == "CSVSource") {
+    }
+    if (type == "CSVSource") {
         NES_DEBUG("PhysicalStreamConfig: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema,
                                            streamName,

@@ -262,8 +262,8 @@ bool NesCoordinator::stopCoordinator(bool force) {
         if (!successShutdownWorker) {
             NES_ERROR("NesCoordinator::stop node engine stop not successful");
             throw Exception("NesCoordinator::stop error while stopping node engine");
-        }             NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
-       
+        }
+        NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
 
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
@@ -279,9 +279,9 @@ bool NesCoordinator::stopCoordinator(bool force) {
             throw Exception("Error while stopping thread->join");
         }
         return true;
-    }         NES_DEBUG("NesCoordinator: already stopped");
-        return true;
-   
+    }
+    NES_DEBUG("NesCoordinator: already stopped");
+    return true;
 }
 
 void NesCoordinator::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom) {

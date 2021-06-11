@@ -38,11 +38,19 @@ RestServer::RestServer(std::string host,
                        QueryServicePtr queryService,
                        MonitoringServicePtr monitoringService,
                        GlobalQueryPlanPtr globalQueryPlan)
-    : restEngine(std::make_shared<RestEngine>(streamCatalog, coordinator, queryCatalog, topology, globalExecutionPlan, queryService, monitoringService, globalQueryPlan)), host(std::move(host)), port(port) {}
+    : restEngine(std::make_shared<RestEngine>(streamCatalog,
+                                              coordinator,
+                                              queryCatalog,
+                                              topology,
+                                              globalExecutionPlan,
+                                              queryService,
+                                              monitoringService,
+                                              globalQueryPlan)),
+      host(std::move(host)), port(port) {}
 
-    RestEnginePtr restEngine;
-    std::string host;
-    uint16_t port;
+RestEnginePtr restEngine;
+std::string host;
+uint16_t port;
 RestServer::~RestServer() { NES_DEBUG("~RestServer()"); }
 
 bool RestServer::start() {

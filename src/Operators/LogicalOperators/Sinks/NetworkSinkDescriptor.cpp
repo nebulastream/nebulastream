@@ -35,7 +35,7 @@ SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
 bool NetworkSinkDescriptor::equal(SinkDescriptorPtr other) {
     if (!other->instanceOf<NetworkSinkDescriptor>()) {
         return false;
-}
+    }
     auto otherSinkDescriptor = other->as<NetworkSinkDescriptor>();
     return (nesPartition == otherSinkDescriptor->nesPartition) && (nodeLocation == otherSinkDescriptor->nodeLocation)
         && (waitTime == otherSinkDescriptor->waitTime) && (retryTimes == otherSinkDescriptor->retryTimes);

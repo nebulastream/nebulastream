@@ -75,7 +75,8 @@ class MQTTTSinkTest : public testing::Test {
         NES_DEBUG("Setup MQTT test case.");
     }
 
-    static NES::NodeEngine::TupleBuffer createTupleBuffer(uint64_t bufferSize, std::shared_ptr<NodeEngine::BufferManager> buffMgr) {
+    static NES::NodeEngine::TupleBuffer createTupleBuffer(uint64_t bufferSize,
+                                                          std::shared_ptr<NodeEngine::BufferManager> buffMgr) {
         auto buffer = buffMgr->getBufferBlocking();
         std::mt19937 rnd;
         std::uniform_int_distribution gen(1, 100);
@@ -134,9 +135,9 @@ class MQTTTSinkTest : public testing::Test {
         bool connectSuccessful = mqttSink->connect();
         if (connectSuccessful) {
             return mqttSink->writeData(inputBuffer, workerContext);
-        }             NES_ERROR("MQTTSinkTest:createMQTTSinkConnectToBrokerWriteData: Could not connect to MQTT broker");
-            return false;
-       
+        }
+        NES_ERROR("MQTTSinkTest:createMQTTSinkConnectToBrokerWriteData: Could not connect to MQTT broker");
+        return false;
     }
 
     /* Will be called after all tests in this class are finished. */

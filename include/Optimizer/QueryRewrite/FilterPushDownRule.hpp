@@ -64,7 +64,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param Operator pointer
      * @return name of the field
      */
-    static std::string getFieldNameUsedByMapOperator(NodePtr node) ;
+    static std::string getFieldNameUsedByMapOperator(NodePtr node);
 
     /**
      * @brief Validate if the input field is used in the filter predicate of the operator
@@ -72,7 +72,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param fieldName :  name of the field to be checked
      * @return true if field use in the filter predicate else false
      */
-    static bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator, const std::string fieldName) ;
+    static bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator, const std::string fieldName);
 };
 
 }// namespace NES::Optimizer

@@ -258,8 +258,8 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
             newNode->addChild(currentNode);
         }
         return true;
-    }         NES_ERROR("Node: could not remove child from  old node:" << oldNode->toString());
-   
+    }
+    NES_ERROR("Node: could not remove child from  old node:" << oldNode->toString());
 
     success = removeParent(oldNode);
     NES_DEBUG("Node: remove parent old node:" << oldNode->toString());
@@ -269,8 +269,8 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
             newNode->addParent(currentNode);
         }
         return true;//TODO: I think this is wrong
-    }         NES_ERROR("Node: could not remove parent from  old node:" << oldNode->toString());
-   
+    }
+    NES_ERROR("Node: could not remove parent from  old node:" << oldNode->toString());
 
     return false;
 }
@@ -470,7 +470,7 @@ NodePtr Node::findRecursively(const NodePtr root, const NodePtr nodeToFind) {
 bool Node::equalWithAllChildrenHelper(const NodePtr node1, const NodePtr node2) {
     if (node1->children.size() != node2->children.size()) {
         return false;
-}
+    }
 
     auto x = node1->children.begin();
     while (x != node1->children.end()) {
@@ -504,7 +504,7 @@ bool Node::equalWithAllChildren(const NodePtr otherNode) {
 bool Node::equalWithAllParentsHelper(const NodePtr node1, const NodePtr node2) {
     if (node1->parents.size() != node2->parents.size()) {
         return false;
-}
+    }
 
     auto x = node1->parents.begin();
 
@@ -629,7 +629,8 @@ bool Node::isCyclicHelper(Node& node) {
     for (auto&& n : node.children) {
         if (!n->visited && isCyclicHelper(*n.get())) {
             return true;
-        } if (n->recStack) {
+        }
+        if (n->recStack) {
             return true;
         }
     }

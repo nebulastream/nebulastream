@@ -59,9 +59,9 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     std::shared_ptr<SinkType> as() {
         if (instanceOf<SinkType>()) {
             return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
-        }             NES_FATAL_ERROR("We performed an invalid cast");
-            throw std::bad_cast();
-       
+        }
+        NES_FATAL_ERROR("We performed an invalid cast");
+        throw std::bad_cast();
     }
     virtual std::string toString() = 0;
     virtual bool equal(SinkDescriptorPtr other) = 0;

@@ -41,12 +41,13 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             NES_DEBUG("No Logical Stream Found");
             resourceNotFoundImpl(request);
             return;
-        }             for (auto const& [key, val] : allLogicalStreamAsString) {
-                result[key] = json::value::string(val);
-            }
-            successMessageImpl(request, result);
-            return;
-       
+        }
+        for (auto const& [key, val] : allLogicalStreamAsString) {
+            result[key] = json::value::string(val);
+        }
+        successMessageImpl(request, result);
+        return;
+
     } else if (path[1] == "allPhysicalStream") {
         //Check if the path contains the query id
         auto param = parameters.find("logicalStreamName");
@@ -69,14 +70,15 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                 NES_DEBUG("No Physical Stream Found");
                 resourceNotFoundImpl(request);
                 return;
-            }                 std::vector<json::value> allStream = {};
-                for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
-                    allStream.push_back(json::value::string(physicalStream->toString()));
-                }
-                result["Physical Streams"] = json::value::array(allStream);
-                successMessageImpl(request, result);
-                return;
-           
+            }
+            std::vector<json::value> allStream = {};
+            for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
+                allStream.push_back(json::value::string(physicalStream->toString()));
+            }
+            result["Physical Streams"] = json::value::array(allStream);
+            successMessageImpl(request, result);
+            return;
+
         } catch (const std::exception& exc) {
             NES_ERROR("StreamCatalogController: handleGet -allPhysicalStream: Exception occurred while building the "
                       "query plan for user request:"

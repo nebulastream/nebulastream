@@ -32,7 +32,8 @@ const Code VariableDeclaration::getTypeDefinitionCode() const {
     CodeExpressionPtr code = type_->getTypeDefinitionCode();
     if (code) {
         return code->code_;
-    }         return Code();
+    }
+    return Code();
 }
 
 const Code VariableDeclaration::getCode() const {

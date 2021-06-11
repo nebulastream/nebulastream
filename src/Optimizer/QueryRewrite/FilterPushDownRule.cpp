@@ -121,13 +121,14 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                 }
                 continue;
-            }                 std::vector<NodePtr> children = node->getChildren();
-                if (isFilterAboveUnionOperator) {//To ensure duplicated filter operator with a new operator ID consistently moves to sub-query
-                    std::copy(children.begin(), children.end(), std::front_inserter(nodesToProcess));
-                } else {
-                    std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
-                }
-           
+            }
+            std::vector<NodePtr> children = node->getChildren();
+            if (isFilterAboveUnionOperator) {//To ensure duplicated filter operator with a new operator ID consistently moves to sub-query
+                std::copy(children.begin(), children.end(), std::front_inserter(nodesToProcess));
+            } else {
+                std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
+            }
+
         } else if (node->instanceOf<UnionLogicalOperatorNode>()) {
             isFilterAboveUnionOperator = true;
             std::vector<NodePtr> childrenOfMergeOP = node->getChildren();
@@ -138,8 +139,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
     }
 }
 
-bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator,
-                                                      const std::string fieldName) {
+bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator, const std::string fieldName) {
 
     NES_TRACE("FilterPushDownRule: Create an iterator for traversing the filter predicates");
     const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();

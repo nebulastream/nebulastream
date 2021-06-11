@@ -54,7 +54,7 @@ class ArrayBase : public std::array<T, s> {
         : std::array<T, size>({std::forward<J>(f)...}) {
         if constexpr (sizeof...(J) == size) {
             this->runtimeConstructionTest();
-}
+        }
     }
 
     /// @brief Construct from c-style array `val`.

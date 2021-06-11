@@ -147,10 +147,10 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
             NES_DEBUG("map=" << ss.str());
             NES_DEBUG("getMinWatermark() return min=" << min->second);
             return min->second;
-        }             NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings="
-                      << originIdToMaxTsMap.size() << " expected mappings=" << numberOfInputEdges);
-            return 0;//TODO: we have to figure out how many downstream positions are there
-       
+        }
+        NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings="
+                  << originIdToMaxTsMap.size() << " expected mappings=" << numberOfInputEdges);
+        return 0;//TODO: we have to figure out how many downstream positions are there
     };
 
     /**

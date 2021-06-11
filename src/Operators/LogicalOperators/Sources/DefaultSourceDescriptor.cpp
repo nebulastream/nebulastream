@@ -48,7 +48,7 @@ DefaultSourceDescriptor::create(SchemaPtr schema, std::string streamName, uint64
 bool DefaultSourceDescriptor::equal(SourceDescriptorPtr other) {
     if (!other->instanceOf<DefaultSourceDescriptor>()) {
         return false;
-}
+    }
     auto otherSource = other->as<DefaultSourceDescriptor>();
     return numbersOfBufferToProduce == otherSource->getNumbersOfBufferToProduce() && frequency == otherSource->getFrequency()
         && getSchema()->equals(otherSource->getSchema());

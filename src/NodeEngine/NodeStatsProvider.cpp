@@ -137,14 +137,14 @@ void NodeStatsProvider::readNetworkStats() {
     for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == nullptr) {
             continue;
-}
+        }
 
         strncpy(ifr.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
         ioctl(fd, SIOCGIFFLAGS, &ifr);
 
         if (!(ifr.ifr_flags & IFF_UP) || (ifr.ifr_flags & IFF_LOOPBACK)) {
             continue;
-}
+        }
 
         family = ifa->ifa_addr->sa_family;
 

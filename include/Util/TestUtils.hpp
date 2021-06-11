@@ -449,8 +449,8 @@ class TestUtils {
                 if (found == count) {
                     NES_DEBUG("all lines found final content=" << content);
                     return true;
-                }                     NES_DEBUG("only " << found << " lines found final content=" << content);
-               
+                }
+                NES_DEBUG("only " << found << " lines found final content=" << content);
             }
         }
         NES_ERROR("checkOutputOrTimeout: expected (" << count << ") result not reached (" << found
@@ -486,9 +486,9 @@ class TestUtils {
                     NES_DEBUG("checkIfOutputFileIsNotEmtpy: number of min lines " << minNumberOfLines << " not reached yet with "
                                                                                   << count << " lines content=" << content);
                     continue;
-                }                     NES_DEBUG("at least" << minNumberOfLines << " are found in content=" << content);
-                    return true;
-               
+                }
+                NES_DEBUG("at least" << minNumberOfLines << " are found in content=" << content);
+                return true;
             }
         }
         NES_ERROR("checkIfOutputFileIsNotEmtpy: expected (" << count << ") result not reached (" << minNumberOfLines
@@ -539,10 +539,10 @@ class TestUtils {
                               << expectedNumberOfContent << " not reached yet with " << currentContent.size()
                               << " lines content=" << content);
                     continue;
-                }                     NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
-                              "number of content");
-                    return true;
-               
+                }
+                NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
+                          "number of content");
+                return true;
             }
         }
         NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: expected result not reached within set timeout content");
@@ -598,8 +598,9 @@ class TestUtils {
                 if (nodeNo == expectedWorkers + 1U) {
                     NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
                     return true;
-                }                     sleep(1);
-               
+                }
+                sleep(1);
+
             } catch (const std::exception& e) {
                 NES_ERROR("TestUtils: WaitForWorkers error occured " << e.what());
                 sleep(1);

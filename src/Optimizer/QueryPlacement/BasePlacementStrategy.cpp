@@ -262,7 +262,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                         throw Exception("BasePlacementStrategy: unable to place network sink operator for the child operator");
                     }
                     continue;
-                } if (i == nodesBetween.size() - 1) {
+                }
+                if (i == nodesBetween.size() - 1) {
                     NES_TRACE("BasePlacementStrategy: Find the query plan with parent operator.");
                     std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
                     OperatorNodePtr sourceOperator = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId);

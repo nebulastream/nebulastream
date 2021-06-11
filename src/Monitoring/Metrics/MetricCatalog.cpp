@@ -35,9 +35,9 @@ std::shared_ptr<MetricCatalog> MetricCatalog::NesMetrics() {
 bool MetricCatalog::add(MetricValueType type, const Metric&& metric) {
     if (metricValueTypeToMetricMap.count(type) > 0) {
         return false;
-    }         metricValueTypeToMetricMap.insert(std::pair<MetricValueType, Metric>(type, metric));
-        return false;
-   
+    }
+    metricValueTypeToMetricMap.insert(std::pair<MetricValueType, Metric>(type, metric));
+    return false;
 }
 
 }// namespace NES

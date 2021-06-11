@@ -36,7 +36,7 @@ const CodeExpressionPtr CompoundStatement::getCode() const {
 void CompoundStatement::addStatement(StatementPtr stmt) {
     if (stmt) {
         statements.push_back(stmt);
-}
+    }
 }
 
 CompoundStatement::~CompoundStatement() = default;

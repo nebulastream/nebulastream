@@ -44,7 +44,7 @@ const Code StructDeclaration::getCode() const {
     expr << "struct ";
     if (packed_struct_) {
         expr << "__attribute__((packed)) ";
-}
+    }
     expr << type_name_ << "{" << std::endl;
     for (auto& decl : decls_) {
         expr << decl->getCode() << ";" << std::endl;
@@ -86,7 +86,7 @@ StructDeclaration& StructDeclaration::addField(const Declaration& decl) {
     DeclarationPtr decl_p = decl.copy();
     if (decl_p) {
         decls_.push_back(decl_p);
-}
+    }
     return *this;
 }
 

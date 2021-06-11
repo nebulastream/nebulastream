@@ -137,8 +137,8 @@ class ErrorMessage : public ExchangeMessage {
     [[nodiscard]] std::string getErrorTypeAsString() const {
         if (error == ErrorType::kPartitionNotRegisteredError) {
             return "PartitionNotRegisteredError";
-        }             return "UnknownError";
-       
+        }
+        return "UnknownError";
     }
 
   private:

@@ -227,7 +227,7 @@ std::string UtilityFunctions::generateIdString() {
     for (bool i : dash) {
         if (i) {
             res += "-";
-}
+        }
         res += v[dist(rng)];
         res += v[dist(rng)];
     }
@@ -261,7 +261,7 @@ std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string&
     }
     if (!copy.substr(0, pos).empty()) {
         elems.push_back(copy.substr(0, pos));
-}
+    }
 
     return elems;
 }
@@ -367,7 +367,8 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch
 const std::string UtilityFunctions::replaceFirst(std::string origin, std::string search, std::string replace) {
     if (origin.find(search) != std::string::npos) {
         return origin.replace(origin.find(search), search.size(), replace);
-    }         return origin;
+    }
+    return origin;
 }
 
 const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
@@ -384,9 +385,8 @@ bool UtilityFunctions::endsWith(const std::string& fullString, const std::string
     if (fullString.length() >= ending.length()) {
         // get the start of the ending index of the full string and compare with the ending string
         return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-    }         // if full string is smaller than the ending automatically return false
-        return false;
-   
+    }// if full string is smaller than the ending automatically return false
+    return false;
 }
 
 bool UtilityFunctions::startsWith(const std::string& fullString, const std::string& ending) {

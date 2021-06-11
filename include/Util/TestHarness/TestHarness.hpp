@@ -75,10 +75,10 @@ class TestHarness {
          * @param rpcPort for for the grpc
          */
     explicit TestHarness(std::string queryWithoutSink,
-                uint16_t restPort = 8081,
-                uint16_t rpcPort = 4000,
-                uint64_t memSrcFrequency = 0,
-                uint64_t memSrcNumBuffToProcess = 1)
+                         uint16_t restPort = 8081,
+                         uint16_t rpcPort = 4000,
+                         uint64_t memSrcFrequency = 0,
+                         uint64_t memSrcNumBuffToProcess = 1)
         : ipAddress("127.0.0.1"), queryWithoutSink(std::move(queryWithoutSink)), bufferSize(4096),
           memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess) {
         NES_INFO("TestHarness: Start coordinator");

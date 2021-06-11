@@ -23,7 +23,8 @@ BaseWindowTriggerPolicyDescriptor::BaseWindowTriggerPolicyDescriptor(TriggerType
 std::string BaseWindowTriggerPolicyDescriptor::getTypeAsString() {
     if (policy == triggerOnTime) {
         return "triggerOnTime";
-    } if (policy == triggerOnRecord) {
+    }
+    if (policy == triggerOnRecord) {
         return "triggerOnRecord";
     } else if (policy == triggerOnBuffer) {
         return "triggerOnBuffer";

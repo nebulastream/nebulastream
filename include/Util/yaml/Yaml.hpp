@@ -547,9 +547,9 @@ struct SerializeConfig {
         *
         */
     explicit SerializeConfig(const size_t spaceIndentation = 2,
-                    const size_t scalarMaxLength = 64,
-                    const bool sequenceMapNewline = false,
-                    const bool mapScalarNewline = false);
+                             const size_t scalarMaxLength = 64,
+                             const bool sequenceMapNewline = false,
+                             const bool mapScalarNewline = false);
 
     size_t SpaceIndentation;///< Number of spaces per indentation.
     size_t ScalarMaxLength; ///< Maximum length of scalars. Serialized as folder scalars if exceeded.
@@ -571,8 +571,8 @@ struct SerializeConfig {
     *                           If config is invalid.
     *
     */
-void Serialize(Node const & root, char const * filename, SerializeConfig const &config);
-void Serialize(Node const & root, std::iostream& stream, SerializeConfig const &config);
-void Serialize(Node const & root, std::string& string, SerializeConfig const &config);
+void Serialize(Node const& root, char const* filename, SerializeConfig const& config);
+void Serialize(Node const& root, std::iostream& stream, SerializeConfig const& config);
+void Serialize(Node const& root, std::string& string, SerializeConfig const& config);
 
 }// namespace Yaml

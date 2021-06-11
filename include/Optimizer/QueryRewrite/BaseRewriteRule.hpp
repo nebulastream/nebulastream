@@ -59,9 +59,9 @@ class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
     std::shared_ptr<RefinementType> as() {
         if (instanceOf<RefinementType>()) {
             return std::dynamic_pointer_cast<RefinementType>(this->shared_from_this());
-        }             NES_FATAL_ERROR("We performed an invalid cast");
-            throw std::bad_cast();
-       
+        }
+        NES_FATAL_ERROR("We performed an invalid cast");
+        throw std::bad_cast();
     }
 };
 }// namespace NES::Optimizer

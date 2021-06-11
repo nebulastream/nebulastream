@@ -47,10 +47,10 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
         NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " REGISTERED");
         // send response back to the client based on the identity
         return Messages::ServerReadyMessage(msg.getChannelId());
-    }         NES_WARNING("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " NOT REGISTERED");
-        protocolListener->onServerError(Messages::ErrorMessage(msg.getChannelId(), Messages::kPartitionNotRegisteredError));
-        return Messages::ServerReadyMessage(msg.getChannelId(), Messages::kPartitionNotRegisteredError);
-   
+    }
+    NES_WARNING("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " NOT REGISTERED");
+    protocolListener->onServerError(Messages::ErrorMessage(msg.getChannelId(), Messages::kPartitionNotRegisteredError));
+    return Messages::ServerReadyMessage(msg.getChannelId(), Messages::kPartitionNotRegisteredError);
 }
 
 void ExchangeProtocol::onBuffer(NesPartition nesPartition, NodeEngine::TupleBuffer& buffer) {

@@ -33,7 +33,7 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept 
         for (std::size_t i = 0; i < values.size(); ++i) {
             if (i) {
                 str << ", ";
-}
+            }
 
             auto const v = !values[i].empty() ? values[i][0] : 0;
             if (std::isprint(v)) {
@@ -57,7 +57,7 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept 
         for (std::size_t i = 0; i < values.size(); ++i) {
             if (i != 0) {
                 str << ", ";
-}
+            }
             str << values.at(i);
         }
     }

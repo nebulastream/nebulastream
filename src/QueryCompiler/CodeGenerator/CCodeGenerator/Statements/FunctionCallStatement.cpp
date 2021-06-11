@@ -30,7 +30,7 @@ const CodeExpressionPtr FunctionCallStatement::getCode() const {
     for (i = 0; i < expressions.size(); i++) {
         if (i != 0) {
             code = combine(code, std::make_shared<CodeExpression>(", "));
-}
+        }
         code = combine(code, expressions.at(i)->getCode());
     }
     code = combine(code, std::make_shared<CodeExpression>(")"));

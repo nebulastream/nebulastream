@@ -56,9 +56,9 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
     std::shared_ptr<WatermarkStrategyType> as() {
         if (instanceOf<WatermarkStrategyType>()) {
             return std::dynamic_pointer_cast<WatermarkStrategyType>(this->shared_from_this());
-        }             NES_FATAL_ERROR("We performed an invalid cast");
-            throw std::bad_cast();
-       
+        }
+        NES_FATAL_ERROR("We performed an invalid cast");
+        throw std::bad_cast();
     }
 
     virtual bool inferStamp(SchemaPtr schema) = 0;

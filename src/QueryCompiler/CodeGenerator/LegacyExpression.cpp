@@ -51,29 +51,29 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, Reco
                                            *(right->generateCode(code, recordHandler)),
                                            BRACKETS)
                 .copy();
-}
+        }
         return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)),
                                        op,
                                        *(right->generateCode(code, recordHandler)))
             .copy();
-    }         FunctionCallStatement expr = FunctionCallStatement(functionCallOverload);
-        expr.addParameter(left->generateCode(code, recordHandler));
-        expr.addParameter(right->generateCode(code, recordHandler));
-        auto tf = GeneratableTypesFactory();
-        if (bracket) {
-            return BinaryOperatorStatement(expr,
-                                           op,
-                                           (ConstantExpressionStatement(tf.createValueType(
-                                               DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))),
-                                           BRACKETS)
-                .copy();
-}
+    }
+    FunctionCallStatement expr = FunctionCallStatement(functionCallOverload);
+    expr.addParameter(left->generateCode(code, recordHandler));
+    expr.addParameter(right->generateCode(code, recordHandler));
+    auto tf = GeneratableTypesFactory();
+    if (bracket) {
         return BinaryOperatorStatement(expr,
                                        op,
                                        (ConstantExpressionStatement(tf.createValueType(
-                                           DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))))
+                                           DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))),
+                                       BRACKETS)
             .copy();
-   
+    }
+    return BinaryOperatorStatement(expr,
+                                   op,
+                                   (ConstantExpressionStatement(tf.createValueType(
+                                       DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))))
+        .copy();
 }
 
 const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, RecordHandlerPtr recordHandler) const {
@@ -81,8 +81,9 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, Recor
         //checks if the predicate field is contained in the current stream record.
         if (recordHandler->hasAttribute(attribute->getName())) {
             return recordHandler->getAttribute(attribute->getName());
-        }             NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from record handler!");
-       
+        }
+        NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from record handler!");
+
     } else if (value) {
         // todo remove if compiler refactored
         auto tf = GeneratableTypesFactory();
@@ -95,11 +96,11 @@ const std::string Predicate::toString() const {
     std::stringstream stream;
     if (bracket) {
         stream << "(";
-}
+    }
     stream << left->toString() << " " << toCodeExpression(op)->code_ << " " << right->toString() << " ";
     if (bracket) {
         stream << ")";
-}
+    }
     return stream.str();
 }
 
@@ -180,7 +181,7 @@ const std::string PredicateItem::toString() const {
 const DataTypePtr PredicateItem::getDataTypePtr() const {
     if (attribute) {
         return attribute->getDataType();
-}
+    }
     return value->dataType;
 };
 
@@ -288,31 +289,31 @@ Predicate operator<=(const LegacyExpression& lhs, const PredicateItem& rhs) {
 Predicate operator+(const LegacyExpression& lhs, const PredicateItem& rhs) {
     if (!rhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator+(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator-(const LegacyExpression& lhs, const PredicateItem& rhs) {
     if (!rhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator-(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator*(const LegacyExpression& lhs, const PredicateItem& rhs) {
     if (!rhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator*(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator/(const LegacyExpression& lhs, const PredicateItem& rhs) {
     if (!rhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator/(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator%(const LegacyExpression& lhs, const PredicateItem& rhs) {
     if (!rhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator%(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator&&(const LegacyExpression& lhs, const PredicateItem& rhs) {
@@ -355,31 +356,31 @@ Predicate operator<=(const PredicateItem& lhs, const LegacyExpression& rhs) {
 Predicate operator+(const PredicateItem& lhs, const LegacyExpression& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator+(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
 Predicate operator-(const PredicateItem& lhs, const LegacyExpression& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator-(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
 Predicate operator*(const PredicateItem& lhs, const LegacyExpression& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator*(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
 Predicate operator/(const PredicateItem& lhs, const LegacyExpression& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator/(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
 Predicate operator%(const PredicateItem& lhs, const LegacyExpression& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator%(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
 Predicate operator&&(const PredicateItem& lhs, const LegacyExpression& rhs) {
@@ -428,31 +429,31 @@ Predicate operator<=(const PredicateItem& lhs, const PredicateItem& rhs) {
 Predicate operator+(const PredicateItem& lhs, const PredicateItem& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator+(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator-(const PredicateItem& lhs, const PredicateItem& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator-(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator*(const PredicateItem& lhs, const PredicateItem& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator*(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator/(const PredicateItem& lhs, const PredicateItem& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator/(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator%(const PredicateItem& lhs, const PredicateItem& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric()) {
         NES_ERROR("NOT A NUMERICAL VALUE");
-}
+    }
     return operator%(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator&&(const PredicateItem& lhs, const PredicateItem& rhs) {

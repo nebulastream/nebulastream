@@ -32,7 +32,8 @@ DefaultPhysicalTypeFactory::DefaultPhysicalTypeFactory() : PhysicalTypeFactory()
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType) {
     if (dataType->isBoolean()) {
         return BasicPhysicalType::create(dataType, BasicPhysicalType::BOOLEAN);
-    } if (dataType->isInteger()) {
+    }
+    if (dataType->isInteger()) {
         return getPhysicalType(DataType::as<Integer>(dataType));
     } else if (dataType->isFloat()) {
         return getPhysicalType(DataType::as<Float>(dataType));
@@ -50,7 +51,8 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(IntegerPtr integer) 
     if (integer->lowerBound >= 0) {
         if (integer->getBits() <= 8) {
             return BasicPhysicalType::create(integer, BasicPhysicalType::UINT_8);
-        } if (integer->getBits() <= 16) {
+        }
+        if (integer->getBits() <= 16) {
             return BasicPhysicalType::create(integer, BasicPhysicalType::UINT_16);
         } else if (integer->getBits() <= 32) {
             return BasicPhysicalType::create(integer, BasicPhysicalType::UINT_32);
@@ -60,7 +62,8 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(IntegerPtr integer) 
     } else {
         if (integer->getBits() <= 8) {
             return BasicPhysicalType::create(integer, BasicPhysicalType::INT_8);
-        } if (integer->getBits() <= 16) {
+        }
+        if (integer->getBits() <= 16) {
             return BasicPhysicalType::create(integer, BasicPhysicalType::INT_16);
         } else if (integer->getBits() <= 32) {
             return BasicPhysicalType::create(integer, BasicPhysicalType::INT_32);
@@ -76,7 +79,8 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(IntegerPtr integer) 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FloatPtr floatType) {
     if (floatType->getBits() <= 32) {
         return BasicPhysicalType::create(floatType, BasicPhysicalType::FLOAT);
-    } if (floatType->getBits() <= 64) {
+    }
+    if (floatType->getBits() <= 64) {
         return BasicPhysicalType::create(floatType, BasicPhysicalType::DOUBLE);
     }
     NES_THROW_RUNTIME_ERROR("DefaultPhysicalTypeFactory: it was not possible to infer a physical type for: "

@@ -42,7 +42,7 @@ const std::string AttributeField::toString() const {
 bool AttributeField::isEqual(AttributeFieldPtr attr) {
     if (!attr) {
         return false;
-}
+    }
     return (attr->name == name) && (attr->dataType->isEquals(attr->getDataType()));
 }
 

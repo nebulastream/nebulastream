@@ -209,14 +209,15 @@ class CCodeGenerator : public CodeGenerator {
 
     TypeCastExprStatement getTypedBuffer(VariableDeclaration tupleBufferVariable, StructDeclaration structDeclaration);
     static BinaryOperatorStatement getBufferSize(VariableDeclaration tupleBufferVariable);
-    static BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable, VariableDeclaration numberOfResultTuples);
+    static BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable,
+                                                     VariableDeclaration numberOfResultTuples);
     BinaryOperatorStatement setWatermark(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
     BinaryOperatorStatement setOriginId(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
 
     static BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
     static BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,
-                                            VariableDeclaration tupleBufferVariable,
-                                            VariableDeclaration workerContextVariable);
+                                                   VariableDeclaration tupleBufferVariable,
+                                                   VariableDeclaration workerContextVariable);
     void generateTupleBufferSpaceCheck(PipelineContextPtr context,
                                        VariableDeclaration varDeclResultTuple,
                                        StructDeclaration structDeclarationResultTuple);

@@ -41,15 +41,15 @@ GeneratableDataTypePtr GeneratableTypesFactory::createDataType(DataTypePtr type)
         auto const componentDataType = createDataType(arrayType->component);
         auto const arrayPhysicalType = std::dynamic_pointer_cast<ArrayPhysicalType>(physicalType);
         return std::make_shared<ArrayGeneratableType>(arrayPhysicalType, componentDataType);
-    }         auto const basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-        return std::make_shared<BasicGeneratableType>(basicPhysicalType);
-   
+    }
+    auto const basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+    return std::make_shared<BasicGeneratableType>(basicPhysicalType);
 }
 
 GeneratableValueTypePtr GeneratableTypesFactory::createValueType(ValueTypePtr valueType) {
     if (valueType->dataType->isArray()) {
         return std::make_shared<GeneratableArrayValueType>(valueType, std::dynamic_pointer_cast<ArrayValue>(valueType)->values);
-}
+    }
 
     return std::make_shared<GeneratableBasicValueType>(std::dynamic_pointer_cast<BasicValue>(valueType));
 }

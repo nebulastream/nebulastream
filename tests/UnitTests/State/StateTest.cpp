@@ -196,7 +196,8 @@ struct window_metadata {
 
 TEST_F(StateTest, testStruct) {
     StateManager stateManager;
-    auto var = StateVariable<uint32_t, window_metadata*>{*stateManager.registerState<uint32_t, window_metadata*>("window-content-5")};
+    auto var =
+        StateVariable<uint32_t, window_metadata*>{*stateManager.registerState<uint32_t, window_metadata*>("window-content-5")};
 
     for (uint64_t i = 0; i < 8192; i++) {
 

@@ -170,7 +170,9 @@ GeneratableOperators::GeneratableWindowAggregationPtr DefaultGeneratableOperator
             return GeneratableOperators::GeneratableAvgAggregation::create(windowAggregationDescriptor);
         };
         default:
-            throw QueryCompilationException( catString( "TranslateToGeneratableOperatorPhase: No transformation implemented for this window aggregation type: ", windowAggregationDescriptor->getType()));
+            throw QueryCompilationException(
+                catString("TranslateToGeneratableOperatorPhase: No transformation implemented for this window aggregation type: ",
+                          windowAggregationDescriptor->getType()));
     }
 }
 

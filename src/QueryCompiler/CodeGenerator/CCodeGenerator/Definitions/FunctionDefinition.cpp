@@ -58,7 +58,7 @@ DeclarationPtr FunctionDefinition::getDeclaration() {
         function << parameters[i].getCode();
         if (i + 1 < parameters.size()) {
             function << ", ";
-}
+        }
     }
     function << "){";
 
@@ -87,7 +87,7 @@ FunctionDefinitionPtr FunctionDefinition::addParameter(VariableDeclaration varia
 FunctionDefinitionPtr FunctionDefinition::addStatement(StatementPtr statement) {
     if (statement) {
         statements.emplace_back(statement);
-}
+    }
     return shared_from_this();
 }
 

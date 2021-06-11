@@ -148,11 +148,12 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
                                      });
                 NES_TRACE("getMinWatermark() originIdToMaxTsMapLeft return min=" << min->second);
                 return min->second;
-            }                 NES_TRACE("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
-                          "originIdToMaxTsMapLeft="
-                          << originIdToMaxTsMapLeft.size() << " expected mappings=" << numberOfInputEdgesLeft);
-                return 0;//TODO: we have to figure out how many downstream positions are there
-           
+            }
+            NES_TRACE("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
+                      "originIdToMaxTsMapLeft="
+                      << originIdToMaxTsMapLeft.size() << " expected mappings=" << numberOfInputEdgesLeft);
+            return 0;//TODO: we have to figure out how many downstream positions are there
+
         } else if (side == rightSide) {
             if (originIdToMaxTsMapRight.size() == numberOfInputEdgesRight) {
                 auto min =
@@ -163,11 +164,12 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
                                      });
                 NES_TRACE("getMinWatermark() originIdToMaxTsMapRight return min=" << min->second);
                 return min->second;
-            }                 NES_TRACE("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
-                          "originIdToMaxTsMapRight="
-                          << originIdToMaxTsMapRight.size() << " expected mappings=" << numberOfInputEdgesRight);
-                return 0;//TODO: we have to figure out how many downstream positions are there
-           
+            }
+            NES_TRACE("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
+                      "originIdToMaxTsMapRight="
+                      << originIdToMaxTsMapRight.size() << " expected mappings=" << numberOfInputEdgesRight);
+            return 0;//TODO: we have to figure out how many downstream positions are there
+
         } else {
             NES_THROW_RUNTIME_ERROR("getNumberOfMappings: invalid side");
             return -1;

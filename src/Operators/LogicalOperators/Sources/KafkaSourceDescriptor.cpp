@@ -81,7 +81,7 @@ const std::string& KafkaSourceDescriptor::getGroupId() const { return groupId; }
 bool KafkaSourceDescriptor::equal(SourceDescriptorPtr other) {
     if (!other->instanceOf<KafkaSourceDescriptor>()) {
         return false;
-}
+    }
     auto otherKafkaSource = other->as<KafkaSourceDescriptor>();
     return brokers == otherKafkaSource->getBrokers() && topic == otherKafkaSource->getTopic()
         && kafkaConnectTimeout == otherKafkaSource->getKafkaConnectTimeout() && groupId == otherKafkaSource->getGroupId()

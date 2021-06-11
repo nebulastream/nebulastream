@@ -541,12 +541,12 @@ class handle {
     explicit handle(T val) : _val(val), _empty(false) {
         if (!_val) {
             _empty = true;
-}
+        }
     }
 
 #ifdef BACKWARD_ATLEAST_CXX11
-    handle(handle&& from)  noexcept : _empty(true) { swap(from); }
-    handle& operator=(handle&& from)  noexcept {
+    handle(handle&& from) noexcept : _empty(true) { swap(from); }
+    handle& operator=(handle&& from) noexcept {
         swap(from);
         return *this;
     }
@@ -811,7 +811,7 @@ class Unwinder {
     _Unwind_Reason_Code backtrace(_Unwind_Context* ctx) {
         if (_index >= 0 && static_cast<size_t>(_index) >= _depth) {
             return _URC_END_OF_STACK;
-}
+        }
 
         int ip_before_instruction = 0;
         uintptr_t ip = _Unwind_GetIPInfo(ctx, &ip_before_instruction);
@@ -1055,8 +1055,8 @@ class TraceResolverLinuxBase : public TraceResolverImplBase {
             // but display the path that /proc/self/exe links to.
             symbol_info.dli_fname = "/proc/self/exe";
             return exec_path_;
-        }             return symbol_info.dli_fname;
-       
+        }
+        return symbol_info.dli_fname;
     }
 
   private:
@@ -1676,7 +1676,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
     struct inliners_search_cb {
         void operator()(Dwarf_Die* die) {
             switch (dwarf_tag(die)) {
-                char const *name;
+                char const* name;
                 case DW_TAG_subprogram:
                     if ((name = dwarf_diename(die))) {
                         trace.source.function = name;
@@ -3349,7 +3349,7 @@ class SourceFile {
             _file.reset(new std::ifstream(new_path.c_str()));
             if (is_open()) {
                 break;
-}
+            }
         }
         // 2. If no valid file found then fallback to opening the path as-is.
         if (!_file || !is_open()) {
@@ -3397,7 +3397,7 @@ class SourceFile {
             if (!started) {
                 if (std::find_if(line.begin(), line.end(), not_isspace()) == line.end()) {
                     continue;
-}
+                }
                 started = true;
             }
             lines.push_back(make_pair(line_idx, line));
@@ -3428,8 +3428,8 @@ class SourceFile {
     void swap(SourceFile& b) { _file.swap(b._file); }
 
 #ifdef BACKWARD_ATLEAST_CXX11
-    SourceFile(SourceFile&& from)  noexcept : _file(nullptr) { swap(from); }
-    SourceFile& operator=(SourceFile&& from)  noexcept {
+    SourceFile(SourceFile&& from) noexcept : _file(nullptr) { swap(from); }
+    SourceFile& operator=(SourceFile&& from) noexcept {
         swap(from);
         return *this;
     }
@@ -3577,7 +3577,7 @@ class Colorize {
     void set_color(Color::type ccode) {
         if (!_enabled) {
             return;
-}
+        }
 
         // I assume that the terminal can handle basic colors. Seriously I
         // don't want to deal with all the termcap shit.
@@ -3628,7 +3628,7 @@ class Printer {
 
     Printer()
 
-    = default;
+        = default;
 
     template<typename ST>
     FILE* print(ST& st, FILE* fp = stderr) {
@@ -3827,7 +3827,7 @@ class SignalHandling {
             int r = sigaction(posix_signal, &action, nullptr);
             if (r < 0) {
                 success = false;
-}
+            }
         }
 
         _loaded = success;

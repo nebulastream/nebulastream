@@ -131,10 +131,11 @@ class JoinHandler : public AbstractJoinHandler {
                       << " originIdToMaxTsMapRight size=" << originIdToMaxTsMapRight.size()
                       << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
             return;
-        }             NES_DEBUG("JoinHandler " << id << ": trigger applied for size=" << originIdToMaxTsMapLeft.size()
-                                     << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft << " originIdToMaxTsMapRight size="
-                                     << originIdToMaxTsMapRight.size() << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
-       
+        }
+        NES_DEBUG("JoinHandler " << id << ": trigger applied for size=" << originIdToMaxTsMapLeft.size()
+                                 << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft << " originIdToMaxTsMapRight size="
+                                 << originIdToMaxTsMapRight.size() << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
+
         auto watermarkLeft = getMinWatermark(leftSide);
         auto watermarkRight = getMinWatermark(rightSide);
 

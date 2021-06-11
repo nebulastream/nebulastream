@@ -95,8 +95,8 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
         queryRequestQueue->add(request);
         return queryId;
-    }         throw Exception("QueryService: unable to create query catalog entry");
-   
+    }
+    throw Exception("QueryService: unable to create query catalog entry");
 }
 
 bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
@@ -120,8 +120,8 @@ uint64_t QueryService::addQueryRequest(std::string queryString, Query query, std
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
         queryRequestQueue->add(request);
         return queryPlan->getQueryId();
-    }         throw Exception("QueryService: unable to create query catalog entry");
-   
+    }
+    throw Exception("QueryService: unable to create query catalog entry");
 }
 
 uint64_t QueryService::addQueryRequest(QueryPlanPtr queryPlan, std::string placementStrategyName) {
@@ -130,8 +130,8 @@ uint64_t QueryService::addQueryRequest(QueryPlanPtr queryPlan, std::string place
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
         queryRequestQueue->add(request);
         return queryPlan->getQueryId();
-    }         throw Exception("QueryService: unable to create query catalog entry");
-   
+    }
+    throw Exception("QueryService: unable to create query catalog entry");
 }
 
 uint64_t QueryService::addQueryRequest(std::string queryString, QueryPlanPtr queryPlan, std::string placementStrategyName) {
@@ -140,8 +140,8 @@ uint64_t QueryService::addQueryRequest(std::string queryString, QueryPlanPtr que
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
         queryRequestQueue->add(request);
         return queryPlan->getQueryId();
-    }         throw Exception("QueryService: unable to create query catalog entry");
-   
+    }
+    throw Exception("QueryService: unable to create query catalog entry");
 }
 
 }// namespace NES

@@ -58,7 +58,8 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                operatorId,
                                numSourceLocalBuffers,
                                successors);
-    } if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
+    }
+    if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Default source");
         const DefaultSourceDescriptorPtr defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         return createDefaultDataSourceWithSchemaForVarBuffers(defaultSourceDescriptor->getSchema(),
