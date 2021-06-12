@@ -31,6 +31,9 @@ class GeneratableWindowOperator : public GeneratableOperator {
                               SchemaPtr inputSchema,
                               SchemaPtr outputSchema,
                               Windowing::WindowOperatorHandlerPtr operatorHandler);
+
+    virtual ~GeneratableWindowOperator() noexcept = default;
+
     Windowing::WindowOperatorHandlerPtr operatorHandler;
 };
 }// namespace GeneratableOperators

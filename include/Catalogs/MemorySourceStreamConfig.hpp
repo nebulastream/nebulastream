@@ -43,6 +43,8 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
                                       uint64_t gatheringValue,
                                       std::string gatheringMode);
 
+    ~MemorySourceStreamConfig() noexcept override = default;
+
     /**
      * @brief Creates the source descriptor for the underlying source
      * @param ptr the schama to build the source with

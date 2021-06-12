@@ -28,7 +28,7 @@
 namespace NES::NodeEngine {
 
 ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads)
-    : numThreads(numThreads), nodeId(nodeId), queryManager(std::move(queryManager)) {}
+    : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)) {}
 
 ThreadPool::~ThreadPool() {
     NES_DEBUG("Threadpool: Destroying Thread Pool");

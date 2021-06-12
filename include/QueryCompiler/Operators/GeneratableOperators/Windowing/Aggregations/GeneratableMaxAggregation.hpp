@@ -23,7 +23,9 @@ namespace GeneratableOperators {
 
 class GeneratableMaxAggregation : public GeneratableWindowAggregation {
   public:
+
     explicit GeneratableMaxAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+    ~GeneratableMaxAggregation() noexcept override = default;
     /**
      * @brief Factory Method to create a new GeneratableWindowAggregation
      * @param aggregationDescriptor Window aggregation descriptor

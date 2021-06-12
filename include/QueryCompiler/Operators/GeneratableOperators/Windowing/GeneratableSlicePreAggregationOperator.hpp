@@ -18,9 +18,7 @@
 
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators{
 
 /**
  * @brief Defines the code generation for the slice pre-aggregation values to slices.
@@ -60,6 +58,8 @@ class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator 
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
+    ~GeneratableSlicePreAggregationOperator() noexcept override = default;
+
   private:
     GeneratableSlicePreAggregationOperator(OperatorId id,
                                            SchemaPtr inputSchema,
@@ -68,8 +68,6 @@ class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator 
                                            GeneratableWindowAggregationPtr windowAggregation);
     GeneratableWindowAggregationPtr windowAggregation;
 };
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_GENERATABLESLICEPREAGGREGATIONOPERATOR_HPP_

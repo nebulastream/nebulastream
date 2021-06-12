@@ -51,6 +51,8 @@ class GeneratableMapOperator : public GeneratableOperator {
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
+    ~GeneratableMapOperator() noexcept override = default;
+
   private:
     GeneratableMapOperator(OperatorId id,
                            SchemaPtr inputSchema,

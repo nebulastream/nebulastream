@@ -20,9 +20,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief Physical operator for the join build.
  * This operator receives input records and adds them to its operator state.
@@ -41,6 +39,10 @@ class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUn
                               SchemaPtr outputSchema,
                               Join::JoinOperatorHandlerPtr operatorHandler,
                               JoinBuildSide buildSide);
+
+    ~PhysicalJoinBuildOperator() noexcept override = default;
+
+
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
@@ -49,8 +51,6 @@ class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUn
   private:
     JoinBuildSide joinBuildSide;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINBUILDOPERATOR_HPP_

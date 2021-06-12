@@ -18,9 +18,7 @@
 
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 /**
  * @brief Generates the watermark assignment operator.
@@ -52,6 +50,7 @@ class GeneratableWatermarkAssignmentOperator : public GeneratableOperator {
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
+    ~GeneratableWatermarkAssignmentOperator() noexcept override = default;
 
   private:
     GeneratableWatermarkAssignmentOperator(OperatorId id,
@@ -60,7 +59,5 @@ class GeneratableWatermarkAssignmentOperator : public GeneratableOperator {
                                            Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEWATERMARKASSIGNMENTOPERATOR_HPP_

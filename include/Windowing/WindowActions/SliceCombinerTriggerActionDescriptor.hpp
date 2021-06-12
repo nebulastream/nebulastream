@@ -22,6 +22,7 @@ namespace NES::Windowing {
 
 class SliceCombinerTriggerActionDescriptor : public BaseWindowActionDescriptor {
   public:
+    ~SliceCombinerTriggerActionDescriptor() noexcept override = default;
     static WindowActionDescriptorPtr create();
     ActionType getActionType() override;
 

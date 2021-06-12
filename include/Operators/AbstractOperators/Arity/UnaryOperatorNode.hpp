@@ -30,6 +30,7 @@ namespace NES {
 class UnaryOperatorNode : public virtual OperatorNode {
   public:
     explicit UnaryOperatorNode(OperatorId id);
+    ~UnaryOperatorNode() noexcept override = default;
 
     /**
       * @brief detect if this operator is a binary operator, i.e., it has two children

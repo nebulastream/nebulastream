@@ -30,7 +30,7 @@ using NodePtr = std::shared_ptr<Node>;
 class Node : public std::enable_shared_from_this<Node> {
   public:
     Node();
-    ~Node() = default;
+    virtual ~Node() = default;
 
     /**
      * @brief adds a newNode as a child to the current newNode.

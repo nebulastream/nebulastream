@@ -58,6 +58,8 @@ class GeneratableSliceMergingOperator : public GeneratableWindowOperator {
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
+    ~GeneratableSliceMergingOperator() noexcept override = default;
+
   private:
     GeneratableSliceMergingOperator(OperatorId id,
                                     SchemaPtr inputSchema,

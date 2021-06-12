@@ -24,6 +24,8 @@ namespace GeneratableOperators {
 class GeneratableMinAggregation : public GeneratableWindowAggregation {
   public:
     explicit GeneratableMinAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+
+    ~GeneratableMinAggregation() noexcept override = default;
     /**
      * @brief Factory Method to create a new GeneratableWindowAggregation
      * @param aggregationDescriptor Window aggregation descriptor

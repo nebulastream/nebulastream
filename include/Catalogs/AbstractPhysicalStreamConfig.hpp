@@ -26,6 +26,8 @@ namespace NES {
  */
 class AbstractPhysicalStreamConfig {
   public:
+    virtual ~AbstractPhysicalStreamConfig() noexcept = default;
+
     /**
      * @brief Build a source descriptor using a given schema
      * @return the source descriptor matched with a given schema
@@ -55,6 +57,7 @@ class AbstractPhysicalStreamConfig {
      * @return the logical stream name of the source
      */
     virtual std::string getLogicalStreamName() = 0;
+
 };
 
 using AbstractPhysicalStreamConfigPtr = std::shared_ptr<AbstractPhysicalStreamConfig>;

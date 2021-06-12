@@ -22,6 +22,7 @@ namespace NES::Join {
 
 class LazyNestLoopJoinTriggerActionDescriptor : public BaseJoinActionDescriptor {
   public:
+    ~LazyNestLoopJoinTriggerActionDescriptor() noexcept override = default;
     static BaseJoinActionDescriptorPtr create();
     JoinActionType getActionType() override;
 

@@ -33,7 +33,7 @@ class OperatorNode : public Node {
   public:
     explicit OperatorNode(OperatorId id);
 
-    virtual ~OperatorNode() = default;
+    ~OperatorNode() noexcept override = default;
 
     /**
      * @brief gets the operator id.

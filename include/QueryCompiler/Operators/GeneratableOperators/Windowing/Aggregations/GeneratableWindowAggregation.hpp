@@ -47,6 +47,8 @@ class GeneratableWindowAggregation {
                                     BinaryOperatorStatement partialValueRef,
                                     RecordHandlerPtr recordHandler) = 0;
 
+    virtual ~GeneratableWindowAggregation() noexcept = default;
+
   protected:
     explicit GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
     Windowing::WindowAggregationDescriptorPtr aggregationDescriptor;

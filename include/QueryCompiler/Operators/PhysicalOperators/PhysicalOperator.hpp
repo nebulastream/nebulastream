@@ -20,9 +20,7 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief General abstraction for all physical operators.
@@ -35,10 +33,10 @@ namespace PhysicalOperators {
 class PhysicalOperator : public virtual OperatorNode {
   protected:
     explicit PhysicalOperator(OperatorId id);
+  public:
+    ~PhysicalOperator() noexcept = default;
 };
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATOR_HPP_

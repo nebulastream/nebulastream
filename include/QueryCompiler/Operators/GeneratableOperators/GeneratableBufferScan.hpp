@@ -50,6 +50,8 @@ class GeneratableBufferScan : public GeneratableOperator {
 
     OperatorNodePtr copy() override;
 
+    ~GeneratableBufferScan() noexcept override = default;
+
   private:
     GeneratableBufferScan(OperatorId id, const SchemaPtr& inputSchema);
 };

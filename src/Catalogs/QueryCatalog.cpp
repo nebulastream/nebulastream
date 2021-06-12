@@ -28,7 +28,7 @@ namespace NES {
 
 QueryCatalog::QueryCatalog()  { NES_DEBUG("QueryCatalog()"); }
 
-QueryCatalog::~QueryCatalog() { NES_DEBUG("~QueryCatalog()"); }
+QueryCatalog::~QueryCatalog() noexcept { NES_DEBUG("~QueryCatalog()"); }
 
 std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(std::string status) {
     std::unique_lock lock(catalogMutex);

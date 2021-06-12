@@ -27,6 +27,7 @@ using EventTimeWatermarkStrategyPtr = std::shared_ptr<EventTimeWatermarkStrategy
 class EventTimeWatermarkStrategy : public WatermarkStrategy {
   public:
     EventTimeWatermarkStrategy(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness, uint64_t multiplier);
+    ~EventTimeWatermarkStrategy() noexcept override = default;
 
     FieldAccessExpressionNodePtr getField();
 

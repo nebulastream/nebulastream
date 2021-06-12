@@ -25,6 +25,8 @@ class WatermarkStrategy : public std::enable_shared_from_this<WatermarkStrategy>
   public:
     WatermarkStrategy();
 
+    virtual ~WatermarkStrategy() noexcept = default;
+
     enum Type {
         EventTimeWatermark,
         IngestionTimeWatermark,
