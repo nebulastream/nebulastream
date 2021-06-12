@@ -24,7 +24,6 @@
 */
 
 #include "Util/yaml/Yaml.hpp"
-#include <cstdarg>
 #include <cstdio>
 #include <fstream>
 #include <list>
@@ -33,6 +32,7 @@
 #include <utility>
 #include <vector>
 
+// TODO: Refactor this, move to a different library..
 // Implementation access definitions.
 #define NODE_IMP (static_cast<NodeImp*>(m_pImp))
 #define NODE_IMP_EXT(node) (static_cast<NodeImp*>((node).m_pImp))
@@ -44,7 +44,7 @@ namespace Yaml {
 class ReaderLine;
 
 // Exception message definitions.
-static const std::string g_ErrorInvalidCharacter = "Invalid character found.";
+inline constexpr auto g_ErrorInvalidCharacter = "Invalid character found.";
 static const std::string g_ErrorKeyMissing = "Missing key.";
 static const std::string g_ErrorKeyIncorrect = "Incorrect key.";
 static const std::string g_ErrorValueIncorrect = "Incorrect value.";
@@ -488,7 +488,7 @@ Yaml::Iterator Iterator::operator--(int) {
     return *this;
 }
 
-bool Iterator::operator==(const Iterator& it) {
+bool Iterator::operator==(const Iterator& it) const {
     if (m_Type != it.m_Type) {
         return false;
     }
@@ -507,7 +507,7 @@ bool Iterator::operator==(const Iterator& it) {
     return false;
 }
 
-bool Iterator::operator!=(const Iterator& it) { return !(*this == it); }
+bool Iterator::operator!=(const Iterator& it) const { return !(*this == it); }
 
 // Const Iterator class
 ConstIterator::ConstIterator() = default;
@@ -588,7 +588,7 @@ Yaml::ConstIterator ConstIterator::operator--(int) {
     return *this;
 }
 
-bool ConstIterator::operator==(const ConstIterator& it) {
+bool ConstIterator::operator==(const ConstIterator& it) const {
     if (m_Type != it.m_Type) {
         return false;
     }
@@ -608,7 +608,7 @@ bool ConstIterator::operator==(const ConstIterator& it) {
     return false;
 }
 
-bool ConstIterator::operator!=(const ConstIterator& it) { return !(*this == it); }
+bool ConstIterator::operator!=(const ConstIterator& it) const { return !(*this == it); }
 
 // Node class
 Node::Node() : m_pImp(new NodeImp) {}
@@ -1698,7 +1698,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
                 useLevel = false;
                 if (value.IsSequence() || (value.IsMap() && config.SequenceMapNewline)) {
                     useLevel = true;
-                    stream << "\n";
+                    stream << '\n';
                 }
 
                 SerializeLoop(value, stream, useLevel, level + 2, config);

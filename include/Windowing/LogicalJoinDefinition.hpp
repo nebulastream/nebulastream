@@ -126,9 +126,9 @@ class LogicalJoinDefinition {
   private:
     FieldAccessExpressionNodePtr leftJoinKeyType;
     FieldAccessExpressionNodePtr rightJoinKeyType;
-    SchemaPtr leftStreamType;
-    SchemaPtr rightStreamType;
-    SchemaPtr outputSchema;
+    SchemaPtr leftStreamType{nullptr};
+    SchemaPtr rightStreamType{nullptr};
+    SchemaPtr outputSchema{nullptr};
     Windowing::WindowTriggerPolicyPtr triggerPolicy;
     BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;
