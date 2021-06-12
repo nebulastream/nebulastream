@@ -56,7 +56,7 @@ bool NetworkSource::start() {
     return networkManager->registerSubpartitionConsumer(nesPartition, emitter);
 }
 
-bool NetworkSource::stop() {
+bool NetworkSource::stop(bool) {
     NES_DEBUG("NetworkSource: stop called on " << nesPartition);
     return true;
 }
