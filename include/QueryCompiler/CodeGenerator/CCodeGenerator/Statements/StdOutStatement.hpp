@@ -14,12 +14,11 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STDOUT__HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STDOUT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STDOUT_HPP_
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation  {
 /**
  * @brief this statements allows us to generate code printing to std::out
  */
@@ -40,7 +39,6 @@ class StdOutStatement : public Statement {
 };
 
 using StdOut = StdOutStatement;
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
-#endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR__HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_HPP_

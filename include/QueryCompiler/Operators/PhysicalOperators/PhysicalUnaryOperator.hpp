@@ -19,23 +19,19 @@
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief Physical Unary operator combines the PhysicalOperator and UnaryOperatorNode interfaces.
  * A physical unary operator has exactly one child operators.
  */
-/// XXX: @Philipp don't we need / want virtual inheritance here?
-///      There are also other cases, but I only highlight this one.
 class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperatorNode {
   protected:
     PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
+  public:
+    ~PhysicalUnaryOperator() noexcept override = default;
 };
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATOR_HPP_

@@ -34,6 +34,8 @@ class GeneratableBufferEmit : public GeneratableOperator {
      */
     static GeneratableOperatorPtr create(SchemaPtr outputSchema);
 
+    ~GeneratableBufferEmit() noexcept override = default;
+
     /**
     * @brief Creates a new generatable emit buffer, which emits record according to a specific output schema.
     * @param id operator id

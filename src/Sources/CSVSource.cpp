@@ -45,8 +45,8 @@ CSVSource::CSVSource(SchemaPtr schema,
                      GatheringMode gatheringMode,
                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema, std::move(bufferManager), std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode, std::move(successors)),
-      filePath(filePath), delimiter(delimiter), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      skipHeader(skipHeader) {
+      filePath(filePath), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
+      delimiter(delimiter), skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = std::chrono::milliseconds(frequency);
     tupleSize = schema->getSchemaSizeInBytes();

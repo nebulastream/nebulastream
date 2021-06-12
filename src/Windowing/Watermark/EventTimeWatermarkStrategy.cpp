@@ -23,7 +23,7 @@ namespace NES::Windowing {
 EventTimeWatermarkStrategy::EventTimeWatermarkStrategy(FieldAccessExpressionNodePtr onField,
                                                        uint64_t allowedLateness,
                                                        uint64_t multiplier)
-    : onField(std::move(onField)), allowedLateness(allowedLateness), multiplier(multiplier) {}
+    : onField(std::move(onField)), multiplier(multiplier), allowedLateness(allowedLateness) {}
 
 FieldAccessExpressionNodePtr NES::Windowing::EventTimeWatermarkStrategy::getField() { return onField; }
 uint64_t EventTimeWatermarkStrategy::getAllowedLateness() const { return allowedLateness; }

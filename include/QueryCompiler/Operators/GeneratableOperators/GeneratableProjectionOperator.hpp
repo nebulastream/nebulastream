@@ -51,6 +51,8 @@ class GeneratableProjectionOperator : public GeneratableOperator {
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
+    ~GeneratableProjectionOperator() noexcept override =default;
+
   private:
     GeneratableProjectionOperator(OperatorId id,
                                   SchemaPtr inputSchema,

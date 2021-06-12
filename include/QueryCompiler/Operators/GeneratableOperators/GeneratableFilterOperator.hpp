@@ -49,6 +49,8 @@ class GeneratableFilterOperator : public GeneratableOperator {
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
+    ~GeneratableFilterOperator() noexcept override = default;
+
   private:
     GeneratableFilterOperator(OperatorId id, const SchemaPtr& inputSchema, ExpressionNodePtr predicate);
     ExpressionNodePtr predicate;

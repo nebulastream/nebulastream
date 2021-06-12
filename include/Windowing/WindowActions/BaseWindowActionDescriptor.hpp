@@ -24,6 +24,8 @@ enum ActionType { WindowAggregationTriggerAction, SliceAggregationTriggerAction,
 
 class BaseWindowActionDescriptor {
   public:
+
+    virtual ~BaseWindowActionDescriptor() noexcept = default;
     /**
      * @brief this function will return the type of the action
      * @return

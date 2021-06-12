@@ -22,6 +22,7 @@ namespace NES::Windowing {
 
 class CompleteAggregationTriggerActionDescriptor : public BaseWindowActionDescriptor {
   public:
+    ~CompleteAggregationTriggerActionDescriptor() noexcept override = default;
     static WindowActionDescriptorPtr create();
     ActionType getActionType() override;
 

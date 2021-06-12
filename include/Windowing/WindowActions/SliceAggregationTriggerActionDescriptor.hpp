@@ -22,6 +22,9 @@ namespace NES::Windowing {
 
 class SliceAggregationTriggerActionDescriptor : public BaseWindowActionDescriptor {
   public:
+
+    ~SliceAggregationTriggerActionDescriptor() noexcept override = default;
+
     static WindowActionDescriptorPtr create();
     ActionType getActionType() override;
 

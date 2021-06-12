@@ -24,6 +24,7 @@ enum JoinActionType { LazyNestedLoopJoin };
 
 class BaseJoinActionDescriptor {
   public:
+    virtual ~BaseJoinActionDescriptor() noexcept = default;
     /**
      * @brief this function will return the type of the action
      * @return

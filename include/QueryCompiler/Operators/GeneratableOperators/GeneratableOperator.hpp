@@ -54,6 +54,8 @@ class GeneratableOperator : public UnaryOperatorNode {
      */
     virtual void generateClose(CodeGeneratorPtr codegen, PipelineContextPtr context);
 
+    ~GeneratableOperator() noexcept override = default;
+
   protected:
     GeneratableOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
 };

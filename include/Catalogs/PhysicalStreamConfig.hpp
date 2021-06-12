@@ -44,6 +44,8 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     static PhysicalStreamConfigPtr createEmpty();
     static PhysicalStreamConfigPtr create(SourceConfigPtr sourceConfig);
 
+    ~PhysicalStreamConfig() noexcept override = default;
+
     /**
      * @brief Get the source type
      * @return string representing source type

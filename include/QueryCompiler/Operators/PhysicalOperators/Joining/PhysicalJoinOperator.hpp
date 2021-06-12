@@ -28,6 +28,8 @@ class PhysicalJoinOperator {
   public:
     Join::JoinOperatorHandlerPtr getJoinHandler();
 
+    virtual ~PhysicalJoinOperator() noexcept = default;
+
   protected:
     explicit PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler);
 
