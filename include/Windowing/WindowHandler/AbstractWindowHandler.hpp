@@ -41,9 +41,9 @@ namespace NES::Windowing {
 /**
  * @brief The abstract window handler is the base class for all window handlers
  */
-class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<AbstractWindowHandler>,
+class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<AbstractWindowHandler, false>,
                               public NodeEngine::Reconfigurable {
-    using inherited0 = detail::virtual_enable_shared_from_this<AbstractWindowHandler>;
+    using inherited0 = detail::virtual_enable_shared_from_this<AbstractWindowHandler, false>;
     using inherited1 = NodeEngine::Reconfigurable;
 
   public:
@@ -51,6 +51,8 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
         : windowDefinition(std::move(windowDefinition)), running(false) {
         // nop
     }
+
+    ~AbstractWindowHandler() noexcept(false) override = default;
 
     template<class Type>
     auto as() {

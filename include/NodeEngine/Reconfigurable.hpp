@@ -31,9 +31,9 @@ namespace NodeEngine {
 * per thread and a postReconfigurationCallback that will be called on the last thread the executes
 * the reconfiguration.
 */
-class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Reconfigurable> {
+class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Reconfigurable, false> {
   public:
-    ~Reconfigurable() override = default;
+    ~Reconfigurable() noexcept(false) override = default;
 
     /**
      * @brief reconfigure callback that will be called per thread

@@ -25,13 +25,15 @@ class TupleBuffer;
 /**
  * @brief Interface that classes have to adhere to emit data as tasks
  */
-class DataEmitter : public detail::virtual_enable_shared_from_this<DataEmitter> {
+class DataEmitter : public detail::virtual_enable_shared_from_this<DataEmitter, false> {
   public:
     /**
      * @brief create a task using the provided buffer and submit it to a task consumer, e.g., query manager
      * @param buffer
      */
     virtual void emitWork(NodeEngine::TupleBuffer& buffer) = 0;
+
+    virtual ~DataEmitter() noexcept(false) = default;
 };
 }// namespace NES
 #endif//NES_INCLUDE_NODEENGINE_EXECUTION_DATAEMITTER_HPP_

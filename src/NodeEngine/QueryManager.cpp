@@ -106,7 +106,7 @@ QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId
     reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
 }
 
-QueryManager::~QueryManager() {
+QueryManager::~QueryManager() noexcept(false) {
     NES_DEBUG("~QueryManager()");
     destroy();
 }
