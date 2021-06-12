@@ -23,8 +23,7 @@
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 /**
  * @brief this class provide a zmq as data source
@@ -68,11 +67,11 @@ class NetworkSource : public DataSource {
     bool start() override;
 
     /**
-     * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
+     * @brief This method is overridden here to prevent the NetworkSource to start a thread.
      * It de-registers the source on the NetworkManager
      * @return true if deregistration on the network stack is successful
      */
-    bool stop();
+    bool stop(bool=false) final;
 
     /**
      * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
@@ -93,7 +92,6 @@ class NetworkSource : public DataSource {
 };
 using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
 
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 
 #endif//NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_

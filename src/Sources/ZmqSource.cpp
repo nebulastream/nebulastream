@@ -54,7 +54,7 @@ ZmqSource::~ZmqSource() noexcept(false) {
 
 std::optional<NodeEngine::TupleBuffer> ZmqSource::receiveData() {
     NES_DEBUG("ZMQSource  " << this << ": receiveData ");
-    if (connect()) {// was if (connect()) {
+    if (connect()) {
         try {
             // Receive new chunk of data
             zmq::message_t new_data;

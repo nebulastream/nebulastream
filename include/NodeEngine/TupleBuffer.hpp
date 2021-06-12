@@ -52,7 +52,7 @@ namespace NES::NodeEngine {
  * Reminder: this class should be header-only to help inlining
  */
 
-class [[nodiscard]] TupleBuffer {
+class TupleBuffer {
     /// Utilize the wrapped-memory constructor
     friend class BufferManager;
     friend class FixedSizeBufferPool;
@@ -98,7 +98,7 @@ class [[nodiscard]] TupleBuffer {
     }
 
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
-    [[nodiscard]] TupleBuffer& operator=(TupleBuffer const& other) noexcept {
+    TupleBuffer& operator=(TupleBuffer const& other) noexcept {
 
         if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
             return *this;
@@ -120,7 +120,7 @@ class [[nodiscard]] TupleBuffer {
     }
 
     /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
-    [[nodiscard]] inline TupleBuffer& operator=(TupleBuffer&& other) noexcept {
+    inline TupleBuffer& operator=(TupleBuffer&& other) noexcept {
 
         // Especially for rvalues, the following branch should most likely never be taken if the caller writes
         // reasonable code. Therefore, this branch is considered unlikely.

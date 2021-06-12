@@ -249,7 +249,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool addSoftEndOfStream(OperatorId sourceId);
     bool addHardEndOfStream(OperatorId sourceId);
 
-    ThreadPoolPtr threadPool;
+    ThreadPoolPtr threadPool{nullptr};
 
     // TODO remove these unnecessary structures
     std::map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
@@ -277,7 +277,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     uint64_t nodeEngineId;
 
-    std::atomic<QueryManagerStatus> queryManagerStatus;
+    std::atomic<QueryManagerStatus> queryManagerStatus{Created};
 };
 
 using QueryManagerPtr = std::shared_ptr<QueryManager>;
