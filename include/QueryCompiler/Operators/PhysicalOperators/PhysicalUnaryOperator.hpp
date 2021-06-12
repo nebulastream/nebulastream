@@ -27,6 +27,8 @@ namespace PhysicalOperators {
  * @brief Physical Unary operator combines the PhysicalOperator and UnaryOperatorNode interfaces.
  * A physical unary operator has exactly one child operators.
  */
+/// XXX: @Philipp don't we need / want virtual inheritance here?
+///      There are also other cases, but I only highlight this one.
 class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperatorNode {
   protected:
     PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
