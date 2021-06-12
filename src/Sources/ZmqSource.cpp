@@ -41,7 +41,7 @@ ZmqSource::ZmqSource(SchemaPtr schema,
     NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
 }
 
-ZmqSource::~ZmqSource() {
+ZmqSource::~ZmqSource() noexcept(false) {
     NES_DEBUG("ZmqSource::~ZmqSource()");
     bool success = disconnect();
     if (success) {

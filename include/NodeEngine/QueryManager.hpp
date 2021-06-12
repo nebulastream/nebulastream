@@ -65,8 +65,8 @@ using ThreadPoolPtr = std::shared_ptr<ThreadPool>;// TODO consider moving this a
  * @Limitations:
  *    - statistics do not cover intermediate buffers
  */
-class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager>, public Reconfigurable {
-    using inherited0 = NES::detail::virtual_enable_shared_from_this<QueryManager>;
+class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager, false>, public Reconfigurable {
+    using inherited0 = NES::detail::virtual_enable_shared_from_this<QueryManager, false>;
     using inherited1 = Reconfigurable;
 
     enum QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
@@ -82,7 +82,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     explicit QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads);
 
-    ~QueryManager() override;
+    ~QueryManager() noexcept(false) override;
 
     /**
      * @brief register a query by extracting sources, windows and sink and add them to

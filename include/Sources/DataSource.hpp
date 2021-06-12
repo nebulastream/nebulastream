@@ -168,7 +168,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
      * @Note must be public because of boost serialize
      */
-    ~DataSource() override;
+    ~DataSource() noexcept(false) override;
 
     /**
      * @brief Get number of buffers to be processed

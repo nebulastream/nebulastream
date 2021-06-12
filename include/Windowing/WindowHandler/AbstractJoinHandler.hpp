@@ -44,9 +44,9 @@ enum JoinSides { leftSide = 0, rightSide = 1 };
 /**
  * @brief The abstract window handler is the base class for all window handlers
  */
-class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<AbstractJoinHandler>,
+class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<AbstractJoinHandler, false>,
                             public NodeEngine::Reconfigurable {
-    using inherited0 = detail::virtual_enable_shared_from_this<AbstractJoinHandler>;
+    using inherited0 = detail::virtual_enable_shared_from_this<AbstractJoinHandler, false>;
     using inherited1 = NodeEngine::Reconfigurable;
 
   public:
@@ -56,7 +56,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
         // nop
     }
 
-    ~AbstractJoinHandler() override { NES_DEBUG("~AbstractJoinHandler()"); }
+    ~AbstractJoinHandler() noexcept(false) override { NES_DEBUG("~AbstractJoinHandler()"); }
 
     template<class Type>
     auto as() {
