@@ -32,7 +32,7 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class Schema {
   public:
     Schema();
-    explicit Schema(const SchemaPtr& query);
+    Schema(SchemaPtr const &query);
 
     /**
      * @brief Schema qualifier separator
