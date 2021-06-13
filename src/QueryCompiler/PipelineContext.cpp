@@ -21,7 +21,6 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
-#include <utility>
 
 namespace NES::QueryCompilation {
 PipelineContext::PipelineContext(PipelineContextArity arity) : arity(arity), recordHandler(RecordHandler::create()) {
@@ -59,7 +58,7 @@ int64_t PipelineContext::registerOperatorHandler(const NodeEngine::Execution::Op
 }
 
 uint64_t PipelineContext::getHandlerIndex(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler) {
-    for (auto i = 0; i < operatorHandlers.size(); i++) {
+    for (auto i{0ul}; i < operatorHandlers.size(); ++i) {
         if (operatorHandlers[i] == operatorHandler) {
             return i;
         }

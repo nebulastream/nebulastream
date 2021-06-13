@@ -113,14 +113,14 @@ bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
         return false;
     }
     if (considerOrder) {
-        for (int i = 0; i < fields.size(); i++) {
+        for (auto i = static_cast<decltype(fields)::size_type>(0); i < fields.size(); ++i) {
             if (!(fields.at(i)->isEqual((schema->fields).at(i)))) {
                 return false;
             }
         }
         return true;
     }
-    for (const AttributeFieldPtr& fieldAttribute : fields) {
+    for (auto && fieldAttribute : fields) {
         auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->getName());
         if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
             return false;

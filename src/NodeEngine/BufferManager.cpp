@@ -78,7 +78,7 @@ void BufferManager::initialize(uint32_t bufferSize, uint32_t numOfBuffers, uint3
 
     long pages = sysconf(_SC_PHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
-    auto memorySizeInBytes = pages * page_size;
+    auto memorySizeInBytes = static_cast<uint64_t>(pages * page_size);
 
     this->bufferSize = bufferSize;
     this->numOfBuffers = numOfBuffers;
@@ -267,7 +267,7 @@ LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedB
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
     NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
-    for (auto i = 0; i < numberOfReservedBuffers; ++i) {
+    for (auto i = static_cast<std::size_t>(0); i < numberOfReservedBuffers; ++i) {
         auto *memSegment = availableBuffers.front();
         availableBuffers.pop_front();
         buffers.emplace_back(memSegment);
@@ -281,7 +281,7 @@ FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfR
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
     NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
-    for (auto i = 0; i < numberOfReservedBuffers; ++i) {
+    for (auto i = static_cast<std::size_t>(0); i < numberOfReservedBuffers; ++i) {
         auto *memSegment = availableBuffers.front();
         availableBuffers.pop_front();
         buffers.emplace_back(memSegment);

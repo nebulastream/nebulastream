@@ -286,7 +286,7 @@ std::string Topology::toString() {
     while (!parentToPrint.empty()) {
         std::pair<TopologyNodePtr, uint64_t> nodeToPrint = parentToPrint.front();
         parentToPrint.pop_front();
-        for (int i = 0; i < indent * nodeToPrint.second; i++) {
+        for (std::size_t i = 0; i < indent * nodeToPrint.second; i++) {
             if (i % indent == 0) {
                 topologyInfo << '|';
             } else {
