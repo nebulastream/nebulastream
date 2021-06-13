@@ -39,7 +39,7 @@ std::optional<NodeEngine::TupleBuffer> CsvFormat::getSchema() {
     }
     ss << std::endl;
     ss.seekg(0, std::ios::end);
-    if (ss.tellg() > buf.getBufferSize()) {
+    if (std::streamoff const tg = ss.tellg(); tg > 0 && static_cast<uint64_t>(tg) > buf.getBufferSize()) {
         NES_THROW_RUNTIME_ERROR("Schema buffer is too large");
     }
     std::string schemaString = ss.str();
