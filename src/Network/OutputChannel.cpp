@@ -26,7 +26,7 @@
 namespace NES::Network {
 
 OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, std::string &&address)
-    : zmqSocket(std::move(zmqSocket)), socketAddr(std::move(address)), channelId(channelId) {
+    : socketAddr(std::move(address)), zmqSocket(std::move(zmqSocket)), channelId(channelId) {
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
 }
 
@@ -36,14 +36,15 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                                                      ExchangeProtocol& protocol,
                                                      std::chrono::seconds waitTime,
                                                      uint8_t retryTimes) {
-    int linger = -1;
     std::chrono::seconds backOffTime = waitTime;
     try {
         ChannelId channelId(nesPartition, NodeEngine::NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
+        constexpr int linger = -1;
         NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);
-        zmqSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
-        zmqSocket.setsockopt(ZMQ_IDENTITY, &channelId, sizeof(ChannelId));
+        zmqSocket.set(zmq::sockopt::linger, linger);
+        //zmqSocket.setsockopt(ZMQ_IDENTITY, &channelId, sizeof(ChannelId));
+        zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer {&channelId, sizeof(ChannelId)});
         zmqSocket.connect(socketAddr);
         int i = 0;
 
