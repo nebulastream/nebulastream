@@ -127,7 +127,7 @@ bool CpuMetrics::operator==(const CpuMetrics& rhs) const {
         return false;
     }
 
-    for (int i = 0; i < cpuValues.size(); i++) {
+    for (auto i = static_cast<decltype(cpuValues)::size_type>(0); i < cpuValues.size(); ++i) {
         if (cpuValues[i] != rhs.cpuValues[i]) {
             return false;
         }

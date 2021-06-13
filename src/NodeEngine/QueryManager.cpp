@@ -386,13 +386,13 @@ void QueryManager::poisonWorkers() {
                                                           true);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::unique_lock lock(workMutex);
-    for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+    for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
         taskQueue.emplace_back(pipeline, buffer);
     }
     NES_WARNING("QueryManager: Poisoning Task Queue " << taskQueue.size());
     cv.notify_all();
 #else
-    for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+    for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
         taskQueue.write(Task(pipeline, buffer));
     }
 #endif
@@ -509,7 +509,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     {
         std::unique_lock lock(workMutex);
-        for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+        for (auto i{0ull}; i < threadPool->getNumberOfThreads(); ++i) {
             taskQueue.emplace_back(pipeline, buffer);
         }
         cv.notify_all();
@@ -573,7 +573,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
                                                               std::vector<Execution::SuccessorExecutablePipeline>(),
                                                               true);
         // emit the end of stream for each processing task
-        for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+        for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
             taskQueue.write(Task(pipeline, buffer));
 #else
@@ -627,7 +627,7 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
             break;// reached a data task
         }
     }
-    for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+    for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
         taskQueue.emplace_front(pipeline, buffer);
     }
     while (!temp.empty()) {

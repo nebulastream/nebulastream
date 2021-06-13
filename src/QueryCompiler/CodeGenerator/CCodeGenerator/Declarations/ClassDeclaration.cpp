@@ -89,7 +89,7 @@ std::string ClassDeclaration::generateBaseClassNames() const {
     auto baseClasses = classDefinition->baseClasses;
     if (!baseClasses.empty()) {
         classCode << ":";
-        for (int i = 0; i < baseClasses.size() - 1; i++) {
+        for (auto i{0ul}; i < baseClasses.size() - 1; ++i) {
             classCode << " public " << baseClasses[i] << ",";
         }
         classCode << " public " << baseClasses[baseClasses.size() - 1];

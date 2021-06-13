@@ -234,7 +234,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                       "respective source or sink operator.");
             const SchemaPtr& inputSchema = operatorNode->getOutputSchema();
             uint64_t sourceOperatorId = UtilityFunctions::getNextOperatorId();
-            for (int i = 0; i < nodesBetween.size(); i++) {
+            for (std::size_t i = static_cast<std::size_t>(0ul); i < nodesBetween.size(); ++i) {
 
                 NES_TRACE("BasePlacementStrategy: Find the execution node for the topology node.");
                 ExecutionNodePtr candidateExecutionNode = getExecutionNode(nodesBetween[i]);

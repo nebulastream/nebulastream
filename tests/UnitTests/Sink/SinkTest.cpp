@@ -499,7 +499,7 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
 
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
-        EXPECT_EQ(bufData.getWatermark(), 1234567);
+        EXPECT_EQ(bufData.getWatermark(), 1234567ull);
     });
 
     // Wait until receiving is complete.
@@ -525,7 +525,7 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
     cout << "watermark=" << buffer.getWatermark() << endl;
     write_result = csvSink->writeData(buffer, wctx);
 
-    EXPECT_EQ(buffer.getWatermark(), 1234567);
+    EXPECT_EQ(buffer.getWatermark(), 1234567ull);
     buffer.release();
 }
 

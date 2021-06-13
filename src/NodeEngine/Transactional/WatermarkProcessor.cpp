@@ -19,7 +19,7 @@
 namespace NES::NodeEngine::Transactional {
 
 WatermarkProcessor::WatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {
-    for (auto i = 0; i < numberOfOrigins; i++) {
+    for (auto i{0ull}; i < numberOfOrigins; ++i) {
         auto localWatermarkManager = std::make_unique<LocalWatermarkProcessor>();
         localWatermarkProcessor.emplace_back(std::move(localWatermarkManager));
     }
