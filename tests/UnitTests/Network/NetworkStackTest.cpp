@@ -629,7 +629,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         struct DataEmitterImpl : public DataEmitter {
             void emitWork(TupleBuffer&) override {}
         };
-        std::thread receivingThread([this, &pManager, &netManager, &nesPartition, &completed] {
+        std::thread receivingThread([&pManager, &netManager, &nesPartition, &completed] {
             // register the incoming channel
             //add latency
             netManager->registerSubpartitionConsumer(nesPartition, std::make_shared<DataEmitterImpl>());
@@ -805,7 +805,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                          64,
                          64,
                          12),
-              completed(completed), nesPartition(nesPartition), bufferCnt(bufferCnt) {}
+              nesPartition(nesPartition), completed(completed), bufferCnt(bufferCnt) {}
         void onDataBuffer(Network::NesPartition id, TupleBuffer&) override {
             if (nesPartition == id) {
                 bufferCnt++;
