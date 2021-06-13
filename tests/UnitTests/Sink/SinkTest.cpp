@@ -24,9 +24,10 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <fstream>
 #include <gtest/gtest.h>
 #include <ostream>
+
+inline constexpr auto zmqPort = static_cast<uint16_t>(11195u); // XXX: 666555;
 
 using namespace std;
 
@@ -319,7 +320,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
 
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createCSVZmqSink(test_schema, 0, nodeEngine, "localhost", 666555);
+    const DataSinkPtr zmq_sink = createCSVZmqSink(test_schema, 0, nodeEngine, "localhost", zmqPort);
     for (uint64_t i = 1; i < 3; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
@@ -333,7 +334,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
                                       nodeEngine->getBufferManager(),
                                       nodeEngine->getQueryManager(),
                                       "localhost",
-                                      666555,
+                                      zmqPort,
                                       1,
                                       12,
                                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
@@ -375,7 +376,7 @@ TEST_F(SinkTest, testTextZMQSink) {
     auto nodeEngine = this->nodeEngine;
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createTextZmqSink(test_schema, 0, nodeEngine, "localhost", 666555);
+    const DataSinkPtr zmq_sink = createTextZmqSink(test_schema, 0, nodeEngine, "localhost", zmqPort);
     for (uint64_t i = 1; i < 3; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
@@ -389,7 +390,7 @@ TEST_F(SinkTest, testTextZMQSink) {
                                       nodeEngine->getBufferManager(),
                                       nodeEngine->getQueryManager(),
                                       "localhost",
-                                      666555,
+                                      zmqPort,
                                       1,
                                       12,
                                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
@@ -419,7 +420,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
     auto nodeEngine = this->nodeEngine;
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, nodeEngine, "localhost", 666555, false);
+    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, nodeEngine, "localhost", zmqPort, false);
     for (uint64_t i = 1; i < 3; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
@@ -433,7 +434,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
                                       nodeEngine->getBufferManager(),
                                       nodeEngine->getQueryManager(),
                                       "localhost",
-                                      666555,
+                                      zmqPort,
                                       1,
                                       12,
                                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
@@ -472,7 +473,7 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     buffer.setWatermark(1234567);
-    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, nodeEngine, "localhost", 666555, false);
+    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, nodeEngine, "localhost", zmqPort, false);
     for (uint64_t i = 1; i < 3; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
@@ -485,7 +486,7 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
                                       nodeEngine->getBufferManager(),
                                       nodeEngine->getQueryManager(),
                                       "localhost",
-                                      666555,
+                                      zmqPort,
                                       1,
                                       12,
                                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
