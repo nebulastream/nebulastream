@@ -18,13 +18,10 @@
 #include <Network/ZmqServer.hpp>
 #include <Network/ZmqUtils.hpp>
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <utility>
-
-#define TO_RAW_ZMQ_SOCKET (static_cast<void*>)
 
 namespace NES::Network {
 
@@ -98,8 +95,6 @@ bool ZmqServer::stop() {
 }
 
 void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std::promise<bool>>& startPromise) {
-    // option of linger time until port is closed
-    int linger = -1;
     zmq::socket_t frontendSocket(*zmqContext, zmq::socket_type::router);
     zmq::socket_t dispatcherSocket(*zmqContext, zmq::socket_type::dealer);
     auto barrier = std::make_shared<ThreadBarrier>(1 + numHandlerThreads);
@@ -107,7 +102,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
     try {
         NES_DEBUG("ZmqServer: Trying to bind on "
                   << "tcp://" + hostname + ":" + std::to_string(port));
-        frontendSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
+        frontendSocket.set(zmq::sockopt::linger, -1); //< option of linger time until port is closed
         frontendSocket.bind("tcp://" + hostname + ":" + std::to_string(port));
         dispatcherSocket.bind(dispatcherPipe);
         NES_DEBUG("ZmqServer: Created socket on " << hostname << ":" << port);
@@ -182,11 +177,12 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
         while (keepRunning) {
             zmq::message_t identityEnvelope;
             zmq::message_t headerEnvelope;
-            dispatcherSocket.recv(&identityEnvelope);
-            dispatcherSocket.recv(&headerEnvelope);
+            auto const identityEnvelopeReceived = dispatcherSocket.recv(identityEnvelope);
+            auto const headerEnvelopeReceived = dispatcherSocket.recv(headerEnvelope);
             auto *msgHeader = headerEnvelope.data<Messages::MessageHeader>();
 
-            if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
+            if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER
+                || !identityEnvelopeReceived.has_value() || !headerEnvelopeReceived.has_value()) {
                 // TODO handle error -- need to discuss how we handle errors on the node engine
                 NES_THROW_RUNTIME_ERROR("ZmqServer: Stream is corrupted");
             }
