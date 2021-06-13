@@ -47,7 +47,7 @@ StreamCatalogEntryPtr StreamCatalogEntry::create(AbstractPhysicalStreamConfigPtr
 
 std::string StreamCatalogEntry::getSourceType() { return sourceType; }
 
-TopologyNodePtr StreamCatalogEntry::getNode() { return node; }
+TopologyNodePtr StreamCatalogEntry::getNode() { return node;}
 
 std::string StreamCatalogEntry::getPhysicalName() { return physicalStreamName; }
 

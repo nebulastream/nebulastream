@@ -139,6 +139,7 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
         // BDAPRO discuss why streamName as such is not sufficient.
         std::vector<StreamCatalogEntryPtr> entries;
         for (std::string physicalStreamName : physicalStreams){
+            NES_INFO("PUSH BACK");
             entries.push_back(nameToPhysicalStream[physicalStreamName]);
         }
         //check if physical stream does not exist yet
@@ -161,11 +162,13 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     if (testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalStreamName)) {
         NES_DEBUG("stream already exist, just add new entry");
         logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry->getPhysicalName());
+        nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
     } else {
         NES_DEBUG("stream does not exist, create new item");
         logicalToPhysicalStreamMapping.insert(
             std::pair<std::string, std::vector<std::string>>(logicalStreamName, std::vector<std::string>()));
         logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry->getPhysicalName());
+        nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
     }
 
     NES_DEBUG("StreamCatalog: physical stream " << newEntry->getPhysicalName() << " id=" << newEntry->getNode()->getId()
@@ -174,6 +177,8 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
 }
 
 // BDAPRO consider implementing for completeness reasons.
+// DELETE mapping log to vector
+// ADD LABEL MISCONFIGURED - needs to checked because stream can be present in other log stream
 bool StreamCatalog::removeAllPhysicalStreams(std::string) {
     std::unique_lock lock(catalogMutex);
     NES_NOT_IMPLEMENTED();
@@ -224,6 +229,7 @@ bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::str
 }
 
 //BDAPRO add removeMisconfiguredLogicalStream function - allowing to delete a physicalStream with no logical stream just by its name.
+// Add check for misconfigured reason.
 // bool StreamCatalog::removeMisconfiguredLogicalStream(std::string physicalStreamName){}
 /*
  *     if(std::find(hashIdToPhysicalStream.begin(), hashIdToPhysicalStream.end(),hashId)!=hashIdToPhysicalStream.end()){
