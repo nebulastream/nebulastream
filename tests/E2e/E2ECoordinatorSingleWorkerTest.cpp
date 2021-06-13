@@ -65,27 +65,24 @@ class E2ECoordinatorSingleWorkerTest : public testing::Test {
 
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
 };
-
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutput) {
     NES_INFO(" start coordinator");
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
+    const char *cmdCoord[] = {"./nesCoordinator", ("--cordinatorPort=" + coordinatorRPCPort).c_str(), ("--restPort=" + std::to_string(restPort)).c_str() ,NULL}; // Ausdrücke klammern und C_string draus machen
     struct subprocess_s subprocess;
-    int result = subprocess_create(cmdCoord, 0, &subprocess);
-    NES_INFO("XXX check subprocess started");
-    EXPECT_TRUE(result == 0);
+    subprocess_create(cmdCoord, 0, &subprocess);
     bp::child coordinatorProc(cmdCoord.c_str());
 
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
-    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+    NES_INFO("started coordinator with pid = " << subprocess.id());
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
     string path2 =
         "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort;
     bp::child workerProc(path2.c_str());
-    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t coordinatorPid = subprocess.id();
     uint64_t workerPid = workerProc.id();
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
