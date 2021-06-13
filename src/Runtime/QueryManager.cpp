@@ -242,7 +242,6 @@ bool QueryManager::startQueryForSources(Execution::ExecutableQueryPlanPtr& qep,
             }
         }
     }
-    return true;
 
     // 4. start data sinks
     for (const auto& sink : qep->getSinks()) {
