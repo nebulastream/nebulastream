@@ -233,8 +233,16 @@ TEST_F(NetworkStackTest, testSendData) {
                 : completedProm(completedProm), bufferReceived(bufferReceived) {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buf) override {
-                bufferReceived = (buf.getBufferSize() == bufferSize) && (id.getQueryId(), 1) && (id.getOperatorId(), 22)
-                    && (id.getPartitionId(), 333) && (id.getSubpartitionId(), 444);
+
+                if (buf.getBufferSize() == bufferSize) {
+                    (volatile void) id.getQueryId();
+                    (volatile void) id.getOperatorId();
+                    (volatile void) id.getPartitionId();
+                    (volatile void) id.getSubpartitionId();
+                    bufferReceived = true;
+                } else {
+                    bufferReceived = false;
+                }
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
@@ -306,9 +314,12 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                 : completedProm(completedProm), bufferReceived(bufferReceived) {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
-                ASSERT_EQ((buffer.getBufferSize() == bufferSize) && (id.getQueryId(), 1) && (id.getOperatorId(), 22)
-                              && (id.getPartitionId(), 333) && (id.getSubpartitionId(), 444),
-                          true);
+
+                ASSERT_TRUE(buffer.getBufferSize() == bufferSize);
+                (volatile void) id.getQueryId();
+                (volatile void) id.getOperatorId();
+                (volatile void) id.getPartitionId();
+                (volatile void) id.getSubpartitionId();
                 auto *bufferContent = buffer.getBuffer<uint64_t>();
                 for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                     ASSERT_EQ(bufferContent[j], j);
