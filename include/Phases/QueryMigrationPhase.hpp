@@ -103,6 +103,10 @@ class QueryMigrationPhase{
 
   private:
 
+    bool executeMigrationWithBuffer(const std::vector<TopologyNodePtr>& path, const std::vector<ExecutionNodePtr>& execNodes, QueryId queryId, TopologyNodeId topId);
+
+    bool executeMigrationWithoutBuffer(const std::vector<TopologyNodePtr>& path, const std::vector<ExecutionNodePtr>& execNodes,QueryId queryId, TopologyNodeId topId);
+
     explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient);
 
 /**
@@ -111,6 +115,16 @@ class QueryMigrationPhase{
     * @return bool indicating success
     */
     bool deployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+
+    /**
+     * method to find Path between all child and parent execution nodes of the node marked for maintenance for a specific query Id
+     * @param queryId
+     * @param topologyNodeId
+     * @return path
+     */
+    std::vector<TopologyNodePtr> findPath(QueryId queryId, TopologyNodeId topologyNodeId);
+
+    std::vector<ExecutionNodePtr> buildExecutionNodes(const std::vector<TopologyNodePtr>& path, const std::vector<QueryPlanPtr>& subqueries);
 
 
     /**

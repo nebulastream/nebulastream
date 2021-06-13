@@ -154,7 +154,7 @@ class WorkerRPCClient {
     * @param queryId
     * @return true if succesful, esle fasle
     */
-    bool bufferData(std::string address,QueryId queryId);
+    bool bufferData(std::string address,std::map<QuerySubPlanId, std::vector<uint64_t>> querySubPlanIdToNetworkSinksMap);
 
     bool updateNetworkSinks(const std::string& address,uint64_t newNodeId,const std::string& newHostname, uint32_t newPort,std::map<QuerySubPlanId, std::vector<uint64_t>> querySubPlanIdToNetworkSinksMap);
 

@@ -361,29 +361,29 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
 
     return false;
 }
-bool WorkerRPCClient::bufferData(std::string address, QueryId queryId) {
-
-    NES_DEBUG("WorkerRPCClient::stopQuery address=" << address << " queryId=" << queryId);
-
-    BufferRequest request;
-    request.set_queryid(queryId);
-
-    BufferReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->BeginBuffer(&context, request, &reply);
-
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
-        return reply.success();
-    } else {
-        NES_ERROR(" WorkerRPCClient::BeginBuffer "
-                  "error="
-                      << status.error_code() << ": " << status.error_message());
-        throw Exception("Error while WorkerRPCClient::stopQuery");
-    }
+bool WorkerRPCClient::bufferData(std::string address, std::map<QuerySubPlanId, std::vector<uint64_t>> querySubPlanIdToNetworkSinksMap) {
+//TODO: update for map
+//    NES_DEBUG("WorkerRPCClient::stopQuery address=" << address << " queryId=" << queryId);
+//
+//    BufferRequest request;
+//    request.set_queryid(queryId);
+//
+//    BufferReply reply;
+//    ClientContext context;
+//
+//    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+//    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+//    Status status = workerStub->BeginBuffer(&context, request, &reply);
+//
+//    if (status.ok()) {
+//        NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
+//        return reply.success();
+//    } else {
+//        NES_ERROR(" WorkerRPCClient::BeginBuffer "
+//                  "error="
+//                      << status.error_code() << ": " << status.error_message());
+//        throw Exception("Error while WorkerRPCClient::stopQuery");
+//    }
 }
 bool WorkerRPCClient::updateNetworkSinks(const std::string& address,
                                          uint64_t newNodeId,const std::string& newHostname,
