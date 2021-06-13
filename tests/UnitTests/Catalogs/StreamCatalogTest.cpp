@@ -94,7 +94,6 @@ TEST_F(StreamCatalogTest, testGetNotExistingKey) {
     SchemaPtr sPtr = streamCatalog->getSchemaForLogicalStream("test_stream22");
     EXPECT_EQ(sPtr, nullptr);
 }
-// BDAPRO - Check test
 TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyPtr topology = Topology::create();
@@ -124,7 +123,34 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
 }
 
 //TODO: add test for a second physical stream add
-// BDAPRO - Check test
+// BDAPRO add second physicalNode and add it to Stream
+TEST_F(StreamCatalogTest, testAddTwoPhysicalStreamsToOneLogical) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    TopologyPtr topology = Topology::create();
+
+    streamCatalog->addLogicalStream("test_stream", Schema::create());
+
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+
+    sourceConfig->resetSourceOptions();
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(1);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("test_stream");
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
+
+    EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
+
+    std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=test_stream "
+                           "sourceType=DefaultSource on node=1\n";
+    cout << " string=" << streamCatalog->getPhysicalStreamAndSchemaAsString() << endl;
+
+    EXPECT_EQ(expected, streamCatalog->getPhysicalStreamAndSchemaAsString());
+}
 TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyPtr topology = Topology::create();
@@ -149,7 +175,6 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
         streamCatalog->removePhysicalStream(conf->getLogicalStreamName(), conf->getPhysicalStreamName(), physicalNode->getId()));
     NES_INFO(streamCatalog->getPhysicalStreamAndSchemaAsString());
 }
-// BDAPRO - Check test
 TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyPtr topology = Topology::create();
@@ -168,7 +193,6 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
     EXPECT_EQ(expected, streamCatalog->getPhysicalStreamAndSchemaAsString());
 }
 //new from service
-// BDAPRO - Check test
 TEST_F(StreamCatalogTest, testGetAllLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 
@@ -179,7 +203,6 @@ TEST_F(StreamCatalogTest, testGetAllLogicalStream) {
         EXPECT_EQ(cmp, false);
     }
 }
-// BDAPRO - Check test
 TEST_F(StreamCatalogTest, testAddLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 
@@ -187,7 +210,6 @@ TEST_F(StreamCatalogTest, testAddLogicalStream) {
     const map<std::string, std::string>& allLogicalStream = streamCatalog->getAllLogicalStreamAsString();
     EXPECT_EQ(allLogicalStream.size(), 3);
 }
-// BDAPRO - Check test
 TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyPtr topology = Topology::create();
@@ -213,14 +235,12 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     const vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(newLogicalStreamName);
     EXPECT_EQ(allPhysicalStream.size(), 1);
 }
-// BDAPRO - Check test
 TEST_F(StreamCatalogTest, testDeleteLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 
     bool success = streamCatalog->removeLogicalStream(defaultLogicalStreamName);
     EXPECT_TRUE(success);
 }
-// BDAPRO - Check test
 TEST_F(StreamCatalogTest, testUpdateLogicalStreamWithInvalidStreamName) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 
@@ -229,7 +249,6 @@ TEST_F(StreamCatalogTest, testUpdateLogicalStreamWithInvalidStreamName) {
     bool success = streamCatalog->updatedLogicalStream(logicalStreamName, newSchema);
     EXPECT_FALSE(success);
 }
-// BDAPRO - Check test
 TEST_F(StreamCatalogTest, testUpdateLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 

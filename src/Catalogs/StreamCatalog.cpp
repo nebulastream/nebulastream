@@ -179,12 +179,30 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
 // BDAPRO consider implementing for completeness reasons.
 // DELETE mapping log to vector
 // ADD LABEL MISCONFIGURED - needs to checked because stream can be present in other log stream
-bool StreamCatalog::removeAllPhysicalStreams(std::string) {
+bool StreamCatalog::removeAllPhysicalStreams(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
+    NES_DEBUG("StreamCatalog: search for logical stream in removeAllPhysicalStreams() " << logicalStreamName);
+    if (logicalStreamToSchemaMapping.find(logicalStreamName) == logicalStreamToSchemaMapping.end()) {
+        NES_DEBUG("StreamCatalog: logical stream "
+        << logicalStreamName << " does not exists when trying to remove all physicals stream)");
+        return false;
+    }
+    else{
+        logicalStreamToSchemaMapping.erase(logicalStreamName);
+        return true;
+    }
+}
+
+//BDAPRO consider implementing a function removing a physical stream from ALL logical streams.
+bool StreamCatalog::removePhysicalStreamFromAllLogicalStreams(std::string physicalStreamName) {
+    std::unique_lock lock(catalogMutex);
+    NES_DEBUG(physicalStreamName);
     NES_NOT_IMPLEMENTED();
 }
 
 // BDAPRO rename hashID - discuss meaning.
+// BDAPRO needs to be changed: Currently deleted a physicalStream from logicalStream mapping and deleting it from nameToPhysical which is wrong
+// nameToPhysical should stay as it could be important in other logical streams
 bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName);
@@ -267,11 +285,13 @@ SchemaPtr StreamCatalog::getSchemaForLogicalStream(std::string logicalStreamName
     return logicalStreamToSchemaMapping[logicalStreamName];
 }
 
+// BDAPRO change to vector function
 LogicalStreamPtr StreamCatalog::getStreamForLogicalStream(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     return std::make_shared<LogicalStream>(logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
 }
 
+// BDAPRO change to vector function
 LogicalStreamPtr StreamCatalog::getStreamForLogicalStreamOrThrowException(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     if (logicalStreamToSchemaMapping.find(logicalStreamName) != logicalStreamToSchemaMapping.end()) {

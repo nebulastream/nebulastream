@@ -80,46 +80,53 @@ class StreamCatalog {
     bool addPhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr entry);
 
     /**
-   * @brief method to remove a physical stream
-   * @caution this will not update the topology
-   * @param logical stream where this physical stream reports to
-   * @param structure describing the entry in the catalog
-   * @return bool indicating success of remove stream
-   */
-    bool removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::uint64_t hashId);
-
-    /**
    * @brief method to remove a physical stream from its logical streams
    * @param name of the logical stream
    * @param name of the physical stream
    * @param hashId of the actor
    * @return bool indicating success of remove stream
    */
-
-    bool removePhysicalStreamByHashId(uint64_t hashId);
+    bool removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::uint64_t hashId);
 
     /**
      * @brief method to remove a physical stream from its logical streams
      * @param hasId of the leaving node
      * @return bool indicating success of remove of physical stream
      */
+    bool removePhysicalStreamByHashId(uint64_t hashId);
 
-    bool removeAllPhysicalStreams(std::string physicalStreamName);
+
+    /**
+   * @brief method to remove the mapping of all physical streams from a specific logical stream.
+     * The deleted physical streams may still be used in other log - to physical mappings.
+   * @param logicalStreamName from which all mappings to physical streams are to be deleted
+   * @return bool indicating success of remove stream
+   */
+    bool removeAllPhysicalStreams(std::string logicalStreamName);
 
     /**
    * @brief method to remove a physical stream from all logical streams
    * @param param of the node to be deleted
    * @return bool indicating success of remove stream
    */
-
-    SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);
+   bool removePhysicalStreamFromAllLogicalStreams(std::string physicalStreamName);
 
     /**
-   * @brief method to return the stream for an existing logical stream
-   * @param name of logical stream
-   * @return smart pointer to a newly created stream
-   * @note the stream will also contain the schema
-   */
+    * @brief method to return the stream for an existing logical stream
+    * @param name of logical stream
+    * @return smart pointer to a newly created stream
+    * @note the stream will also contain the schema
+    */
+    SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);
+
+
+    /**
+    * @brief method to return the stream for an existing logical stream
+    * @param name of logical stream
+    * @return smart pointer to a newly created stream
+    * @note the stream will also contain the schema
+    */
+    //BDAPRO change this function to indirection function with vector
     LogicalStreamPtr getStreamForLogicalStream(std::string logicalStreamName);
 
     /**
@@ -128,6 +135,7 @@ class StreamCatalog {
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
+    //BDAPRO change this function to indirection function with vector
     LogicalStreamPtr getStreamForLogicalStreamOrThrowException(std::string logicalStreamName);
 
     /**
