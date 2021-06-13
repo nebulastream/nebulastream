@@ -362,6 +362,8 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     return false;
 }
 bool WorkerRPCClient::bufferData(std::string address, std::map<QuerySubPlanId, std::vector<uint64_t>> querySubPlanIdToNetworkSinksMap) {
+    NES_DEBUG(address);
+    NES_DEBUG(querySubPlanIdToNetworkSinksMap.size());
 //TODO: update for map
 //    NES_DEBUG("WorkerRPCClient::stopQuery address=" << address << " queryId=" << queryId);
 //
@@ -384,6 +386,7 @@ bool WorkerRPCClient::bufferData(std::string address, std::map<QuerySubPlanId, s
 //                      << status.error_code() << ": " << status.error_message());
 //        throw Exception("Error while WorkerRPCClient::stopQuery");
 //    }
+    return false;
 }
 bool WorkerRPCClient::updateNetworkSinks(const std::string& address,
                                          uint64_t newNodeId,const std::string& newHostname,
