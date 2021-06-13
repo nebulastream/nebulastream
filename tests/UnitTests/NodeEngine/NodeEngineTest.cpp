@@ -34,6 +34,7 @@
 #include <future>
 #include <iostream>
 #include <utility>
+#include <csignal>
 
 using namespace std;
 using namespace NES::Windowing;
@@ -608,8 +609,7 @@ TEST_F(EngineTest, testStartStopStartStop) {
 
 namespace detail {
 void segkiller() {
-    char** p = reinterpret_cast<char**>(42);
-    *p = "segmentation fault now";
+    raise(SIGSEGV);
 }
 
 void assertKiller() {
