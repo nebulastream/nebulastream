@@ -56,28 +56,33 @@ std::optional<NodeEngine::TupleBuffer> ZmqSource::receiveData() {
     NES_DEBUG("ZMQSource  " << this << ": receiveData ");
     if (connect()) {
         try {
-            // Receive new chunk of data
-            zmq::message_t new_data;
-            socket.recv(&new_data);// envelope - not needed at the moment
-            uint64_t tupleCnt = *((uint64_t*) new_data.data());
-            uint64_t currentTs = *(((uint64_t*) new_data.data()) + 1);
-            NES_DEBUG("ZMQSource received #tups " << tupleCnt << " watermark=" << currentTs);
 
-            zmq::message_t new_data2;
-            socket.recv(&new_data2);// actual data
+            // Receive metadata
+            auto const metadataSize = sizeof(uint64_t) * 2;
+            zmq::message_t metadata{metadataSize};
+
+            // TODO: Clarify following comment: envelope - not needed at the moment
+            if (auto const receivedSize = socket.recv(metadata).value_or(0); receivedSize != metadataSize) {
+                NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: " << metadataSize << " Received: " << receivedSize);
+                return std::nullopt;
+            }
 
             auto buffer = bufferManager->getBufferBlocking();
-            buffer.setWatermark(currentTs);
-            NES_DEBUG("ZMQSource  " << this << ": got buffer ");
+            buffer.setNumberOfTuples(static_cast<uint64_t*>(metadata.data())[0]);
+            buffer.setWatermark(static_cast<uint64_t*>(metadata.data())[1]);
+            NES_DEBUG("ZMQSource received #tups " << buffer.getNumberOfTuples() << " watermark=" << buffer.getWatermark());
 
-            // TODO: If possible only copy the content not the empty part
-            std::memcpy(buffer.getBuffer(), new_data2.data(), buffer.getBufferSize());
-            buffer.setNumberOfTuples(tupleCnt);
-
-            if (buffer.getBufferSize() == new_data2.size()) {
-                NES_WARNING("ZMQSource  " << this << ": return buffer");
+            // Receive payload
+            // XXX: I guess we don't actually know the size here, it would be nice to be able to check that here
+            zmq::mutable_buffer payload{buffer.getBuffer(), buffer.getBufferSize()};
+            if (auto const receivedSize = socket.recv(payload); !receivedSize.has_value()) {
+                NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: " << buffer.getBufferSize() << " Received: " << receivedSize.has_value());
+                return std::nullopt;
+            } else {
+                NES_DEBUG("ZMQSource  " << this << ": received buffer of size " << receivedSize.has_value());
+                return buffer;
             }
-            return buffer;
+
         } catch (const zmq::error_t& ex) {
             NES_ERROR("ZMQSOURCE error: " << ex.what());
             return std::nullopt;
@@ -100,6 +105,7 @@ std::string ZmqSource::toString() const {
     return ss.str();
 }
 
+
 bool ZmqSource::connect() {
     if (!connected) {
         NES_DEBUG("ZMQSOURCE was !conncect now connect " << this << ": connected");
@@ -109,7 +115,7 @@ bool ZmqSource::connect() {
         auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
         NES_DEBUG("ZMQSOURCE use address " << address);
         try {
-            socket.setsockopt(ZMQ_LINGER, 0);
+            socket.set(zmq::sockopt::linger, 0);
             socket.bind(address.c_str());
             NES_DEBUG("ZMQSOURCE  " << this << ": set connected true");
             connected = true;

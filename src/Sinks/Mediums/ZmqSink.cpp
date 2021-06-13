@@ -70,18 +70,21 @@ bool ZmqSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worker
         if (schemaBuffer) {
             NES_DEBUG("ZmqSink writes schema buffer");
             try {
-                //	uint64_t usedBufferSize = inputBuffer->num_tuples * inputBuffer->tuple_size_bytes;
-                zmq::message_t msg(schemaBuffer->getBufferSize());
-                // TODO: If possible only copy the content not the empty part
-                std::memcpy(msg.data(), schemaBuffer->getBuffer(), schemaBuffer->getBufferSize());
-                zmq::message_t envelope(sizeof(uint64_t));
-                uint64_t schemaSize = schemaBuffer->getNumberOfTuples();
-                memcpy(envelope.data(), &schemaSize, sizeof(schemaSize));
 
-                bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-                bool rc_msg = socket.send(msg);
-                if (!rc_env || !rc_msg) {
+                // Send Header
+                std::array<uint64_t, 2> const envelopeData{schemaBuffer->getNumberOfTuples(), schemaBuffer->getWatermark()};
+                constexpr auto envelopeSize = sizeof(uint64_t) * 2;
+                static_assert(envelopeSize == sizeof(envelopeData));
+                zmq::message_t envelope{&(envelopeData[0]), envelopeSize};
+                if (auto const sentEnvelopeSize = socket.send(envelope, zmq::send_flags::sndmore).value_or(0); sentEnvelopeSize != envelopeSize) {
                     NES_DEBUG("ZmqSink  " << this << ": schema send NOT successful");
+                    return false;
+                }
+
+                // Send payload
+                zmq::mutable_buffer payload{schemaBuffer->getBuffer(), schemaBuffer->getBufferSize()};
+                if (auto const sentPayloadSize = socket.send(payload, zmq::send_flags::none).value_or(0); sentPayloadSize != payload.size()) {
+                    NES_DEBUG("ZmqSink  " << this << ": sending payload failed.");
                     return false;
                 }
                 NES_DEBUG("ZmqSink  " << this << ": schema send successful");
@@ -102,22 +105,24 @@ bool ZmqSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worker
     NES_DEBUG("ZmqSink  " << this << ": writes buffer " << inputBuffer << " with tupleCnt =" << inputBuffer.getNumberOfTuples()
                           << " watermark=" << inputBuffer.getWatermark());
     auto dataBuffers = sinkFormat->getData(inputBuffer);
-    for (auto buffer : dataBuffers) {
+    for (auto buffer : dataBuffers) {  // XXX: Is it actually our intention to iterate over buffers until no exception is thrown?
         try {
-            uint64_t tupleCnt = buffer.getNumberOfTuples();
-            uint64_t currentTs = buffer.getWatermark();
+            ++sentBuffer;
 
-            zmq::message_t envelope(sizeof(tupleCnt) + sizeof(currentTs));
-            memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
-            memcpy((void*) ((char*) envelope.data() + sizeof(currentTs)), &currentTs, sizeof(currentTs));
+            // Create envelope
+            std::array<uint64_t, 2> const envelopeData{buffer.getNumberOfTuples(), buffer.getWatermark()};
+            static_assert(sizeof(envelopeData) == sizeof(uint64_t) * 2);
+            zmq::message_t envelope{&(envelopeData[0]), sizeof(envelopeData)};
+            if (auto const sentEnvelope = socket.send(envelope, zmq::send_flags::sndmore).value_or(0); sentEnvelope != envelope.size()) {
+                NES_DEBUG("ZmqSink  " << this << ": data payload send NOT successful");
+                return false;
+            }
 
-            zmq::message_t msg(buffer.getBufferSize());
-            std::memcpy(msg.data(), buffer.getBuffer(), buffer.getBufferSize());
 
-            bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-            bool rc_msg = socket.send(msg);
-            sentBuffer++;
-            if (!rc_env || !rc_msg) {
+            // Create message.
+            // Copying the entire payload here to avoid UB.
+            zmq::message_t payload{buffer.getBuffer(), buffer.getBufferSize()};
+            if (auto const sentPayload = socket.send(payload, zmq::send_flags::none).value_or(0); sentPayload != payload.size()) {
                 NES_DEBUG("ZmqSink  " << this << ": data send NOT successful");
                 return false;
             }
