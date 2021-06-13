@@ -430,7 +430,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     plan->stop();
 }
 
-TEST_F(QueryExecutionTest, powerOperatorQuery) {
+TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
     // creating query plan
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -448,15 +448,26 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
                                                                  std::move(successors));
         });
 
-    auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
+    auto outputSchema = Schema::create()
+            ->addField("id", BasicType::INT64)
+            ->addField("one", BasicType::INT64)
+            ->addField("value", BasicType::INT64)
+            ->addField("result_pow_int", BasicType::UINT32)
+            ->addField("result_pow_float", BasicType::FLOAT64)
+            ->addField("result_mod_int", BasicType::INT64)
+            ->addField("result_mod_float", BasicType::FLOAT64)
+            ;
+
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor)
-                     .filter(Attribute("id") < 3)
-                     .map(Attribute("value") = POWER(2, Attribute("one") + Attribute("id")))
-                     .map(Attribute("value2") = POWER(2.0, Attribute("one") + Attribute("id")))
-                     .sink(testSinkDescriptor);
+            .filter(Attribute("id") < 6)
+            .map(Attribute("result_pow_int") = POWER(2, Attribute("one") + Attribute("id"))) // int
+            .map(Attribute("result_pow_float") = POWER(2.0, Attribute("one") + Attribute("id"))) // float
+            .map(Attribute("result_mod_int") = 20 % (Attribute("id") + 1)) // int
+            .map(Attribute("result_mod_float") = MOD(-20.0, Attribute("id") + Attribute("one"))) // float
+            .sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -481,25 +492,21 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1U);
 
-    SchemaPtr resultSchema =
-        Schema::create()
-            ->addField("test$id", BasicType::INT64)
-            ->addField("test$one", BasicType::INT64)
-            ->addField("test$value", BasicType::UINT32)   // pow(some int, some int) should result in UINT32
-            ->addField("test$value2", BasicType::FLOAT64);// pow(some float, some int) should result in Double
-
     std::string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|test$id:INT64|test$one:INT64|test$value:UINT32|test$value2:FLOAT64|\n"
-        "+----------------------------------------------------+\n"
-        "|0|1|2|2.000000|\n"// shows, that both Int & Double gets returned correctly, and can be written to existing & new fields
-        "|1|1|4|4.000000|\n"
-        "|2|1|8|8.000000|\n"
-        "+----------------------------------------------------+";
+            "+----------------------------------------------------+\n"
+            "|id:INT64|one:INT64|value:INT64|result_pow_int:UINT32|result_pow_float:FLOAT64|result_mod_int:INT64|result_mod_float:FLOAT64|\n"
+            "+----------------------------------------------------+\n"
+            "|0|1|0|2|2.000000|0|-0.000000|\n"
+            "|1|1|1|4|4.000000|0|-0.000000|\n"
+            "|2|1|0|8|8.000000|2|-2.000000|\n"
+            "|3|1|1|16|16.000000|0|-0.000000|\n"
+            "|4|1|0|32|32.000000|0|-0.000000|\n"
+            "|5|1|1|64|64.000000|2|-2.000000|\n"
+            "+----------------------------------------------------+";
 
     auto resultBuffer = testSink->get(0);
 
-    EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, resultSchema));
+    EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, outputSchema));
 
     buffer.release();
     testSink->cleanupBuffers();

@@ -18,6 +18,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
@@ -100,6 +101,12 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         auto legacyLeft = transformExpression(divExpressionNode->getLeft());
         auto legacyRight = transformExpression(divExpressionNode->getRight());
         return Predicate(BinaryOperatorType::DIVISION_OP, legacyLeft, legacyRight).copy();
+    } else if (expression->instanceOf<ModExpressionNode>()) {
+        // Translate MODULO expression node.
+        auto modExpressionNode = expression->as<ModExpressionNode>();
+        auto legacyLeft = transformExpression(modExpressionNode->getLeft());
+        auto legacyRight = transformExpression(modExpressionNode->getRight());
+        return Predicate(BinaryOperatorType::MODULO_OP, legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<PowExpressionNode>()) {
         // Translate POWER expression node.
         auto powExpressionNode = expression->as<PowExpressionNode>();

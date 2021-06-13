@@ -93,6 +93,10 @@ message SerializableExpression {
     SerializableExpression left = 1;
     SerializableExpression right = 2;
   }
+  message ModExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
   message PowExpression{
     SerializableExpression left = 1;
     SerializableExpression right = 2;

@@ -19,6 +19,7 @@ add_source_nes(
         SubExpressionNode.cpp
         MulExpressionNode.cpp
         DivExpressionNode.cpp
+        ModExpressionNode.cpp
         PowExpressionNode.cpp
         AbsExpressionNode.cpp
 )

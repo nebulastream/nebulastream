@@ -19,6 +19,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
@@ -198,6 +199,15 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(const Express
         serializeExpression(divExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
         serializeExpression(divExpressionNode->getRight(), serializedExpressionNode.mutable_right());
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
+    } else if (expression->instanceOf<ModExpressionNode>()) {
+        // serialize mod expression node.
+        NES_TRACE(
+                "ExpressionSerializationUtil:: serialize MODULO arithmetical expression to SerializableExpression_PowExpression");
+        auto modExpressionNode = expression->as<ModExpressionNode>();
+        auto serializedExpressionNode = SerializableExpression_ModExpression();
+        serializeExpression(modExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
+        serializeExpression(modExpressionNode->getRight(), serializedExpressionNode.mutable_right());
+        serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else if (expression->instanceOf<PowExpressionNode>()) {
         // serialize pow expression node.
         NES_TRACE(
@@ -331,6 +341,14 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
         auto left = deserializeExpression(serializedExpressionNode.release_left());
         auto right = deserializeExpression(serializedExpressionNode.release_right());
         return DivExpressionNode::create(left, right);
+    } else if (serializedExpression->details().Is<SerializableExpression_ModExpression>()) {
+        // de-serialize MODULO expression node.
+        NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as MODULO expression node.");
+        auto serializedExpressionNode = SerializableExpression_ModExpression();
+        serializedExpression->details().UnpackTo(&serializedExpressionNode);
+        auto left = deserializeExpression(serializedExpressionNode.release_left());
+        auto right = deserializeExpression(serializedExpressionNode.release_right());
+        return ModExpressionNode::create(left, right);
     } else if (serializedExpression->details().Is<SerializableExpression_PowExpression>()) {
         // de-serialize POWER expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as POWER expression node.");

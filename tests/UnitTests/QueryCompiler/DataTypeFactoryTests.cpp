@@ -94,6 +94,20 @@ namespace NES {
             ASSERT_EQ(intStamp->lowerBound, -100);
             ASSERT_EQ(intStamp->upperBound, 100);
         }
+        {
+            // check if calls where only one of two bounds get tightened work
+            auto stamp = DataTypeFactory::createInt32();
+            ASSERT_TRUE(stamp->isInteger());
+            stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, (int64_t) -100, (int64_t) 100);
+            stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, (int64_t) -200, (int64_t) 99);
+            stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, (int64_t) -99, (int64_t) 200);
+            ASSERT_TRUE(stamp->isInteger());
+            auto intStamp = DataType::as<Integer>(stamp);
+            ASSERT_EQ(intStamp->getBits(), 32);
+            ASSERT_EQ(intStamp->lowerBound, -99);
+            ASSERT_EQ(intStamp->upperBound, 99);
+        }
+
         // test behaviour of float stamp
         {
             auto stamp = DataTypeFactory::copyTypeAndTightenBounds(DataTypeFactory::createFloat(), (double) -100.5, (double) 100.5);
@@ -118,6 +132,18 @@ namespace NES {
             auto floatStamp = DataType::as<Float>(stamp);
             ASSERT_EQ(floatStamp->getBits(), 32);
             ASSERT_EQ(floatStamp->lowerBound, -100);
+            ASSERT_EQ(floatStamp->upperBound, 99.9);
+        }
+        {
+            // check if calls where only one of two bounds get tightened works
+            auto stamp = DataTypeFactory::createFloat();
+            stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, (int64_t) -100, (int64_t) 100);
+            stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, (double) -200, (double) 99.9);
+            stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, (double) -99.9, (double) 200);
+            ASSERT_TRUE(stamp->isFloat());
+            auto floatStamp = DataType::as<Float>(stamp);
+            ASSERT_EQ(floatStamp->getBits(), 32);
+            ASSERT_EQ(floatStamp->lowerBound, -99.9);
             ASSERT_EQ(floatStamp->upperBound, 99.9);
         }
     }

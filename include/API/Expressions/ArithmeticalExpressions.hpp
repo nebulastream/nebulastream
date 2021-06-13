@@ -33,6 +33,8 @@ ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator%(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr ABS(const ExpressionNodePtr& exp);
 ExpressionNodePtr operator++(ExpressionNodePtr exp);
@@ -47,6 +49,8 @@ ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator%(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr MOD(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 
 /**
@@ -56,6 +60,8 @@ ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator%(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 
 /**
@@ -65,6 +71,8 @@ ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator%(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr MOD(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionItem rightExp);
 
 /**

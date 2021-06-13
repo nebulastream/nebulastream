@@ -20,6 +20,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
@@ -41,6 +42,14 @@ ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 
 ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
     return DivExpressionNode::create(std::move(leftExp), std::move(rightExp));
+}
+
+ExpressionNodePtr operator%(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
+    return ModExpressionNode::create(std::move(leftExp), std::move(rightExp));
+}
+
+ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
+    return std::move(leftExp) % std::move(rightExp);
 }
 
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
@@ -93,6 +102,14 @@ ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp) 
     return leftExp.getExpressionNode() / std::move(rightExp);
 }
 
+ExpressionNodePtr operator%(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
+    return leftExp.getExpressionNode() % std::move(rightExp);
+}
+
+ExpressionNodePtr MOD(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
+    return leftExp.getExpressionNode() % std::move(rightExp);
+}
+
 ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
     return POWER(leftExp.getExpressionNode(), std::move(rightExp));
 }
@@ -113,6 +130,14 @@ ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp) 
     return std::move(leftExp) / rightExp.getExpressionNode();
 }
 
+ExpressionNodePtr operator%(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
+    return std::move(leftExp) % rightExp.getExpressionNode();
+}
+
+ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
+    return std::move(leftExp) % rightExp.getExpressionNode();
+}
+
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
     return POWER(std::move(leftExp), rightExp.getExpressionNode());
 }
@@ -131,6 +156,14 @@ ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionItem rightExp) {
 
 ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionItem rightExp) {
     return leftExp.getExpressionNode() / rightExp.getExpressionNode();
+}
+
+ExpressionNodePtr operator%(ExpressionItem leftExp, ExpressionItem rightExp) {
+    return leftExp.getExpressionNode() % rightExp.getExpressionNode();
+}
+
+ExpressionNodePtr MOD(ExpressionItem leftExp, ExpressionItem rightExp) {
+    return leftExp.getExpressionNode() % rightExp.getExpressionNode();
 }
 
 ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionItem rightExp) {
