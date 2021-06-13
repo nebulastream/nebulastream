@@ -34,7 +34,7 @@ std::optional<NodeEngine::TupleBuffer> CsvFormat::getSchema() {
     for (uint64_t i = 0; i < numberOfFields; i++) {
         ss << schema->fields[i]->toString();
         if (i < numberOfFields - 1) {
-            ss << ",";
+            ss << ',';
         }
     }
     ss << std::endl;
