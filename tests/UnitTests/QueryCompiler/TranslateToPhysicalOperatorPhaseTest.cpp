@@ -784,3 +784,4 @@ ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::Physica
 }
 
 }// namespace NES
+
