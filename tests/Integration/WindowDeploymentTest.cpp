@@ -2085,9 +2085,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWitCharKey) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithFixedChar) {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
     struct Car {
-        std::array<char, 52> key;
+        NES::QueryCompilation::Array<char, 52> key;
         uint32_t value1;
         uint64_t timestamp;
     };
@@ -2107,10 +2107,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithFixedChar) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1);
 
-    std::array<char, 52> keyOne = {'K', 'e', 'y', ' ', 'O', 'n', 'e'};
-    std::array<char, 52> keyTwo = {'K', 'e', 'y', ' ', 'T', 'w', 'o'};
-    std::array<char, 52> keyThree = {'K', 'e', 'y', ' ', 'T', 'h', 'r', 'e', 'e'};
-
+    NES::QueryCompilation::Array<char, 52> keyOne = {'K', 'e', 'y', ' ', 'O', 'n', 'e'};
+    NES::QueryCompilation::Array<char, 52> keyTwo = {'K', 'e', 'y', ' ', 'T', 'w', 'o'};
+    NES::QueryCompilation::Array<char, 52> keyThree = {'K', 'e', 'y', ' ', 'T', 'h', 'r', 'e', 'e'};
 
     testHarness.pushElement<Car>({keyOne, 2, 1000}, 0);
     testHarness.pushElement<Car>({keyTwo, 4, 1500}, 0);
