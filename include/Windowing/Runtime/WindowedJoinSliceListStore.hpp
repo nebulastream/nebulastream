@@ -22,9 +22,8 @@
 #include <mutex>
 #include <vector>
 
-namespace NES {
+namespace NES::Windowing {
 
-namespace Windowing {
 // TODO this is highly inefficient by design
 // TODO to make this code perf friendly we have to throw it away xD
 template<class ValueType>
@@ -57,20 +56,24 @@ class WindowedJoinSliceListStore {
     }
 
     /**
-     * @return get slice index by timestamp or -1
+     * @return get slice index by timestamp or the first slice index if timestamp is -1
      */
     uint64_t getSliceIndexByTs(int64_t timestamp) {
-        if (timestamp < 0) {
-            NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << timestamp);
-            NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts");
+        // XXX: @Philipp: is this the correct interpretation of timestamp == -1?
+        //                In order to not copy code and enable the same logging, I return inside the loop.
+        auto const isDefault = timestamp == -1;
+        if (timestamp < 0 and !isDefault) {
+            NES_ERROR("getSliceIndexByTs for could not find a slice, because the timestamp is "
+                      "neither -1 nor positive: " << timestamp);
+            NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen.");
         }
-        auto const ts = static_cast<uint64_t>(std::min(timestamp, static_cast<int64_t>(std::numeric_limits<uint64_t>::max())));
+        auto const ts = isDefault ? 0ULL : static_cast<uint64_t>(std::min(timestamp, static_cast<int64_t>(std::numeric_limits<uint64_t>::max())));
 
         std::lock_guard lock(internalMutex);
-        for (uint64_t i = 0ull; i < sliceMetaData.size(); ++i) {
+        for (uint64_t i = 0ULL; i < sliceMetaData.size(); ++i) {
             auto slice = sliceMetaData[i];
             NES_TRACE("slice begin=" << slice.getStartTs() << " slice end =" << slice.getEndTs());
-            if (slice.getStartTs() <= ts && slice.getEndTs() > ts) {
+            if (isDefault || (slice.getStartTs() <= ts && slice.getEndTs() > ts)) {
                 NES_TRACE("return slice id=" << i);
                 return i;
             }
@@ -173,8 +176,6 @@ class WindowedJoinSliceListStore {
     std::vector<std::vector<ValueType>> content;
 };
 
-}// namespace Windowing
-
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_RUNTIME_WINDOWEDJOINSLICELISTSTORE_HPP_
