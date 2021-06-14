@@ -67,7 +67,7 @@ class WindowedJoinSliceListStore {
                       "neither -1 nor positive: " << timestamp);
             NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen.");
         }
-        auto const ts = isDefault ? 0ULL : static_cast<uint64_t>(std::min(timestamp, static_cast<int64_t>(std::numeric_limits<uint64_t>::max())));
+        auto const ts = isDefault ? 0ULL : static_cast<uint64_t>(timestamp);
 
         std::lock_guard lock(internalMutex);
         for (uint64_t i = 0ULL; i < sliceMetaData.size(); ++i) {
@@ -78,8 +78,8 @@ class WindowedJoinSliceListStore {
                 return i;
             }
         }
-        NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << timestamp);
-        NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts");
+        NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << timestamp << " " << ts);
+        NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen " << timestamp << " " << ts);
     }
 
     /**
