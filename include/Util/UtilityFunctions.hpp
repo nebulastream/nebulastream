@@ -23,6 +23,7 @@
 #include <cpprest/json.h>
 #include <map>
 #include <string>
+#include <QueryCompiler/GeneratableTypes/Array.hpp>
 
 /*
 - * The above undef ensures that NES will compile.
@@ -226,6 +227,38 @@ class UtilityFunctions {
      */
     static bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                                  std::vector<std::map<std::string, std::any>> properties);
+
+    // The following utility get a string representation of windowing keys (e.g., for debugging)
+    template<typename T>
+    struct IsStdArray : std::false_type {
+    };
+
+    template<typename T, std::size_t N>
+    struct IsStdArray<NES::QueryCompilation::Array<T, N>> : std::true_type {
+    };
+
+    /**
+     *
+     * @tparam T type of the key
+     * @param key the windowing key
+     * @return string representation of the key
+     */
+    template<typename T>
+    static auto keyAsString(const T & key)
+    -> typename std::enable_if<IsStdArray<T>::value, std::string>::type {
+        std::string keyAsString;
+        for (const auto &k: key) {
+            keyAsString += std::to_string(k) + " ";
+        }
+
+        return keyAsString;
+    }
+
+    template<typename T>
+    static auto keyAsString(const T &key)
+    -> typename std::enable_if<!IsStdArray<T>::value, std::string>::type {
+        return std::to_string(key);
+    }
 
   private:
     /**
