@@ -461,7 +461,8 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 
 void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
     std::unique_lock lock(engineMutex);
-    auto partition = queryReconfigurationMessage.getChannelId().getNesPartition();
+    auto channelId = queryReconfigurationMessage.getChannelId();
+    auto partition = channelId.getNesPartition();
     for (std::pair<QuerySubPlanId, QuerySubPlanId> element : queryReconfigurationMessage.getQuerySubPlansIdToReplace()) {
         auto foundQEPNeedingReplacement = deployedQEPs.find(element.first);
         if (foundQEPNeedingReplacement != deployedQEPs.end()) {
@@ -488,8 +489,17 @@ void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationM
         auto foundQEPToStop = deployedQEPs.find(querySubPlanId);
         if (foundQEPToStop != deployedQEPs.end()) {
             if (partitionManager->isRegistered(partition)) {
-                partitionManager->unregisterSubpartition(partition);
-                queryManager->triggerQepStopReconfiguration(deployedQEPs[querySubPlanId], queryReconfigurationMessage);
+                if (partitionManager->unregisterSubpartition(partition)) {
+                    NES_DEBUG("NodeEngine::onQueryReconfiguration: Stop Query reconfiguration received for "
+                              << querySubPlanId << " on " << channelId.toString()
+                              << " and no active subpartitions. Triggering ");
+                    queryManager->triggerQepStopReconfiguration(deployedQEPs[querySubPlanId], queryReconfigurationMessage);
+                } else {
+                    NES_DEBUG("NodeEngine::onQueryReconfiguration: Stop Query reconfiguration received for "
+                              << querySubPlanId << " on " << channelId.toString()
+                              << " but there is still some active subpartition: "
+                              << partitionManager->getSubpartitionCounter(partition));
+                }
             } else {
                 NES_DEBUG("NodeEngine::onQueryReconfiguration: unregister of source partition "
                           << partition << " failed as it's not registered.");
