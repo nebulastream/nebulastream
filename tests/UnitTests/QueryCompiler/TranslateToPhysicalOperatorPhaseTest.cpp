@@ -38,6 +38,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -92,6 +93,7 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
         filterOp6 = LogicalOperatorFactory::createFilterOperator(pred6);
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
         projectPp = LogicalOperatorFactory::createProjectionOperator({});
+        iterationCEPOp = LogicalOperatorFactory::createCEPIterationOperator(2,6);
         {
             Windowing::WindowTriggerPolicyPtr triggerPolicy = Windowing::OnTimeTriggerPolicyDescription::create(1000);
             auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
@@ -140,6 +142,7 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
     LogicalOperatorNodePtr sinkOp1, sinkOp2;
     LogicalOperatorNodePtr mapOp;
     LogicalOperatorNodePtr projectPp;
+    LogicalOperatorNodePtr iterationCEPOp;
     JoinLogicalOperatorNodePtr joinOp1;
 };
 
@@ -747,6 +750,37 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSinkSourceQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- CEPIteration -- Source 1
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical CEPIteration -- Physical Source 1
+ *
+ */
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateCEPiteration) {
+auto queryPlan = QueryPlan::create(sourceOp1);
+queryPlan->appendOperatorAsNewRoot(iterationCEPOp);
+queryPlan->appendOperatorAsNewRoot(sinkOp1);
+
+NES_DEBUG(queryPlan->toString());
+auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
+
+phase->apply(queryPlan);
+NES_DEBUG(queryPlan->toString());
+
+auto iterator = QueryPlanIterator(queryPlan).begin();
+
+ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+++iterator;
+ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalIterationCEPOperator>());
+++iterator;
+ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }
 
 }// namespace NES
