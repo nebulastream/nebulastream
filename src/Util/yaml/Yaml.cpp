@@ -588,19 +588,19 @@ Yaml::ConstIterator ConstIterator::operator--(int) {
     return *this;
 }
 
-bool ConstIterator::operator==(const ConstIterator& it) const {
-    if (m_Type != it.m_Type) {
+bool operator==(const ConstIterator& lhs, const ConstIterator& rhs) {
+    if (lhs.m_Type != rhs.m_Type) {
         return false;
     }
 
-    switch (m_Type) {
-        case SequenceType:
-            return static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator
-                == static_cast<SequenceConstIteratorImp*>(it.m_pImp)->m_Iterator;
+    switch (lhs.m_Type) {
+        case ConstIterator::SequenceType:
+            return static_cast<SequenceConstIteratorImp*>(lhs.m_pImp)->m_Iterator
+                == static_cast<SequenceConstIteratorImp*>(rhs.m_pImp)->m_Iterator;
             break;
-        case MapType:
-            return static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator
-                == static_cast<MapConstIteratorImp*>(it.m_pImp)->m_Iterator;
+        case ConstIterator::MapType:
+            return static_cast<MapConstIteratorImp*>(lhs.m_pImp)->m_Iterator
+                == static_cast<MapConstIteratorImp*>(rhs.m_pImp)->m_Iterator;
             break;
         default: break;
     }
@@ -608,7 +608,30 @@ bool ConstIterator::operator==(const ConstIterator& it) const {
     return false;
 }
 
-bool ConstIterator::operator!=(const ConstIterator& it) const { return !(*this == it); }
+bool operator!=(const ConstIterator& lhs, const ConstIterator& rhs) { return !(lhs == rhs); }
+
+// this is the original code of the library that was giving issues with C++20
+//bool ConstIterator::operator==(const ConstIterator& lhs, const ConstIterator& rhs) {
+//    if (m_Type != it.m_Type) {
+//        return false;
+//    }
+//
+//    switch (m_Type) {
+//        case SequenceType:
+//            return static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator
+//                == static_cast<SequenceConstIteratorImp*>(it.m_pImp)->m_Iterator;
+//            break;
+//        case MapType:
+//            return static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator
+//                == static_cast<MapConstIteratorImp*>(it.m_pImp)->m_Iterator;
+//            break;
+//        default: break;
+//    }
+//
+//    return false;
+//}
+//
+//bool ConstIterator::operator!=(const ConstIterator& lhs, const ConstIterator& rhs) { return !(lhs == rhs); }
 
 // Node class
 Node::Node() : m_pImp(new NodeImp) {}
