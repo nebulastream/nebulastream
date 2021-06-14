@@ -141,7 +141,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(const Operato
         auto iterationDetails = SerializableOperator_CEPIterationDetails();
         auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();
         // serialize CEP iteration iteration
-        iterationDetails.set_miniteration(iterationOperator->getMaxIterations());
+        iterationDetails.set_miniteration(iterationOperator->getMinIterations());
         iterationDetails.set_maxiteration(iterationOperator->getMaxIterations());
         serializedOperator->mutable_details()->PackFrom(iterationDetails);
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
