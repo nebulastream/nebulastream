@@ -26,10 +26,18 @@ namespace NES::Network {
 
 ExchangeProtocol::ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
                                    std::shared_ptr<ExchangeProtocolListener> protocolListener)
-    : partitionManager(std::move(partitionManager)), protocolListener(std::move(protocolListener)) {
+    : partitionManager(std::move(partitionManager)), protocolListener(std::move(protocolListener)), reconfigurationMutex() {
     NES_ASSERT(this->partitionManager, "Wrong parameter partitionManager is null");
     NES_ASSERT(this->protocolListener, "Wrong parameter ExchangeProtocolListener is null");
     NES_DEBUG("ExchangeProtocol: Initializing ExchangeProtocol()");
+}
+
+ExchangeProtocol::~ExchangeProtocol() {}
+
+ExchangeProtocol::ExchangeProtocol(ExchangeProtocol const& other) {
+    std::unique_lock lock(other.reconfigurationMutex);
+    this->partitionManager = other.partitionManager;
+    this->protocolListener = other.protocolListener;
 }
 
 Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
@@ -52,6 +60,7 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
 }
 
 void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer) {
+    std::unique_lock lock(reconfigurationMutex);
     if (partitionManager->isRegistered(nesPartition)) {
         protocolListener->onDataBuffer(nesPartition, buffer);
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);
@@ -81,7 +90,8 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
     }
 }
 
-void ExchangeProtocol::onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+void ExchangeProtocol::onQueryReconfiguration(Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+    std::unique_lock lock(reconfigurationMutex);
     protocolListener->onQueryReconfiguration(queryReconfigurationMessage);
 }
 
