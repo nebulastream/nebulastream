@@ -332,13 +332,13 @@ class ConstIterator {
         * @breif Check if iterator is equal to other iterator.
         *
         */
-    bool operator==(const ConstIterator& it) const;
+    friend bool operator==(const ConstIterator& lhs, const ConstIterator& rhs);
 
     /**
         * @breif Check if iterator is not equal to other iterator.
         *
         */
-    bool operator!=(const ConstIterator& it) const;
+    friend bool operator!=(const ConstIterator& lhs, const ConstIterator& rhs);
 
   private:
     enum eType { None, SequenceType, MapType };
