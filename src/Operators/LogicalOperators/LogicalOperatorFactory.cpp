@@ -111,8 +111,7 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOpera
     OperatorId id) {
     return std::make_shared<WatermarkAssignerLogicalOperatorNode>(watermarkStrategyDescriptor, id);
 }
-LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createCEPIterationOperator(const uint64_t minIterations, const uint64_t maxIterations, OperatorId id) {
+LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createCEPIterationOperator(const uint64_t minIterations, const uint64_t maxIterations, OperatorId id) {
     return std::make_shared<IterationLogicalOperatorNode>(minIterations, maxIterations, id);
 }
 

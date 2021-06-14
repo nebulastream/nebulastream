@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
