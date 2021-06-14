@@ -153,7 +153,7 @@ DataSinkPtr createOPCSink(SchemaPtr schema,
                           std::string password) {
     NES_DEBUG("plz fix me" << parentPlanId);
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<OPCSink>(format, url, nodeId, user, password);
+    return std::make_shared<OPCSink>(format, url, nodeId, user, password, parentPlanId);
 }
 #endif
 
