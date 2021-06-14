@@ -35,6 +35,7 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 #include <open62541/types.h>
 
 namespace NES {
@@ -50,9 +51,8 @@ OPCSource::OPCSource(SchemaPtr schema,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors),
-      url(url), nodeId(nodeId), retval(UA_STATUSCODE_GOOD), client(UA_Client_new()), connected(false), user(user),
-      password(password) {
+    : DataSource(schema, std::move(bufferManager), std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors),
+      connected(false), url(url), nodeId(nodeId), user(user), password(std::move(password)), retval(UA_STATUSCODE_GOOD), client(UA_Client_new()) {
 
     NES_DEBUG("OPCSOURCE  " << this << ": Init OPC Source to " << url << " with user and password.");
 }

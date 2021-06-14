@@ -59,7 +59,7 @@ class OPCSource : public DataSource {
      * @brief destructor of OPC source that disconnects the queue before deconstruction
      * @note if queue cannot be disconnected, an assertion is raised
      */
-    ~OPCSource();
+    ~OPCSource() override;
 
     /**
      * @brief blocking method to receive a buffer from the OPC source
@@ -103,10 +103,6 @@ class OPCSource : public DataSource {
     SourceType getType() const override;
 
   private:
-    /**
-     * @brief default constructor required for boost serialization
-     */
-    OPCSource() = default;
 
     /**
      * @brief method to connect opc using the url specified before
@@ -128,16 +124,18 @@ class OPCSource : public DataSource {
      */
     friend class DataSource;
 
+  private:
+    bool connected;
     const std::string url;
     UA_NodeId nodeId;
     const std::string user;
     const std::string password;
     UA_StatusCode retval;
     UA_Client* client;
-    bool connected;
+
 };
 
-typedef std::shared_ptr<OPCSource> OPCSourcePtr;
+using OPCSourcePtr = std::shared_ptr<OPCSource>;
 }// namespace NES
 
 #endif
