@@ -41,7 +41,7 @@ OPCSink::OPCSink(SinkFormatPtr format,
                  std::string user,
                  std::string password,
                  QuerySubPlanId parentPlanId)
-    : SinkMedium(std::move(format), parentPlanId), connected(false), url(url), nodeId(nodeId), user(user),
+    : SinkMedium(std::move(format), parentPlanId), connected(false), url(url), nodeId(nodeId), user(std::move(std::move(user))),
       password(std::move(password)), retval(UA_STATUSCODE_GOOD), client(UA_Client_new()) {
     NES_DEBUG("OPCSINK  " << this << ": Init OPC Sink to " << url << " .");
 }
@@ -65,7 +65,7 @@ bool OPCSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worker
     if (connect()) {
 
         /* Read current value of attribute, also necessary to get the type information of the node */
-        UA_Variant* val = new UA_Variant;
+        auto* val = new UA_Variant;
         retval = UA_Client_readValueAttribute(client, nodeId, val);
         if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
             NES_DEBUG("OPCSINK::writeData: Node exists, successfully obtained information about current node. ");
@@ -96,7 +96,7 @@ bool OPCSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worker
 
         UA_delete(val, val->type);
 
-        UA_Variant* var = new UA_Variant;
+        auto* var = new UA_Variant;
         UA_Client_readValueAttribute(client, nodeId, var);
         if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
             NES_DEBUG("OPCSINK::writeData: New value is: " << *(UA_Int32*) var->data);

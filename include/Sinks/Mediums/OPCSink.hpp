@@ -42,7 +42,7 @@ class OPCSink : public SinkMedium {
      * @param user name to access the server
      * @param password to access the server
      */
-    explicit OPCSink(SinkFormatPtr format, std::string url, UA_NodeId nodeId, std::string user, std::string password, QuerySubPlanId parentPlanId);
+    explicit OPCSink(SinkFormatPtr format, const std::string& url, UA_NodeId nodeId, std::string user, std::string password, QuerySubPlanId parentPlanId);
 
     /**
      * @brief dtor
@@ -54,7 +54,7 @@ class OPCSink : public SinkMedium {
      * @param input_buffer a tuple buffer's pointer
      * @return bool indicating if the write was completed
      */
-    bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;
+    bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) override;
 
     /**
      * @brief method to override virtual setup function
