@@ -248,7 +248,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
     const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
-    ASSERT_EQ(sharedQueryMetadataToDeploy.size(), 1);
+    ASSERT_EQ(sharedQueryMetadataToDeploy.size(), 1u);
 }
 
 /**

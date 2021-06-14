@@ -199,12 +199,12 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     std::vector<SharedQueryMetaDataPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
 
     //Assert
-    EXPECT_TRUE(sharedQueryMetaData.size() == 2);
+    EXPECT_TRUE(sharedQueryMetaData.size() == 2u);
     auto queryIdToSinkGQNs1 = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();
-    EXPECT_EQ(queryIdToSinkGQNs1.size(), 1);
+    EXPECT_EQ(queryIdToSinkGQNs1.size(), 1u);
     EXPECT_TRUE(queryIdToSinkGQNs1.find(queryId1) != queryIdToSinkGQNs1.end());
     auto queryIdToSinkGQNs2 = sharedQueryMetaData[1]->getQueryIdToSinkOperatorMap();
-    EXPECT_EQ(queryIdToSinkGQNs2.size(), 1);
+    EXPECT_EQ(queryIdToSinkGQNs2.size(), 1u);
     EXPECT_TRUE(queryIdToSinkGQNs2.find(queryId2) != queryIdToSinkGQNs1.end());
 }
 
@@ -293,7 +293,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     std::vector<SharedQueryMetaDataPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
 
     //Assert
-    EXPECT_TRUE(sharedQueryMetaData.size() == 2);
+    EXPECT_TRUE(sharedQueryMetaData.size() == 2u);
     auto queryIdToSinkOperatorMap1 = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();
     EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId1) != queryIdToSinkOperatorMap1.end());
     EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId2) != queryIdToSinkOperatorMap1.end());
@@ -306,6 +306,6 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId2) != queryIdToSinkOperatorMap1.end());
 
     auto queryIdToSinkOperatorMap2 = sharedQueryMetaData[1]->getQueryIdToSinkOperatorMap();
-    EXPECT_EQ(queryIdToSinkOperatorMap2.size(), 1);
+    EXPECT_EQ(queryIdToSinkOperatorMap2.size(), 1u);
     EXPECT_TRUE(queryIdToSinkOperatorMap2.find(queryId3) != queryIdToSinkOperatorMap1.end());
 }

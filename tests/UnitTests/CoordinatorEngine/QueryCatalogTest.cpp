@@ -66,9 +66,9 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
-    EXPECT_TRUE(reg.size() == 1);
+    EXPECT_TRUE(reg.size() == 1U);
     std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
-    EXPECT_TRUE(run.size() == 1);
+    EXPECT_TRUE(run.size() == 1U);
 }
 
 TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
@@ -87,9 +87,9 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
-    EXPECT_TRUE(reg.size() == 1);
+    EXPECT_TRUE(reg.size() == 1U);
     std::map<uint64_t, QueryCatalogEntryPtr> registeredQueries = queryCatalog->getQueries(QueryStatus::Registered);
-    EXPECT_TRUE(registeredQueries.size() == 1);
+    EXPECT_TRUE(registeredQueries.size() == 1U);
 
     //SendStop request
     catalogEntry = queryCatalog->stopQuery(queryId);
@@ -99,7 +99,7 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     registeredQueries = queryCatalog->getQueries(QueryStatus::Registered);
     EXPECT_TRUE(registeredQueries.empty());
     std::map<uint64_t, QueryCatalogEntryPtr> queriesMarkedForStop = queryCatalog->getQueries(QueryStatus::MarkedForStop);
-    EXPECT_TRUE(queriesMarkedForStop.size() == 1);
+    EXPECT_TRUE(queriesMarkedForStop.size() == 1U);
 }
 
 TEST_F(QueryCatalogTest, testPrintQuery) {
@@ -117,7 +117,7 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
-    EXPECT_TRUE(reg.size() == 1);
+    EXPECT_TRUE(reg.size() == 1U);
     std::string ret = queryCatalog->printQueries();
     cout << "ret=" << ret << endl;
 }
@@ -143,7 +143,7 @@ TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, std::string> allRegisteredQueries = queryCatalog->getAllQueries();
-    EXPECT_EQ(allRegisteredQueries.size(), 1);
+    EXPECT_EQ(allRegisteredQueries.size(), 1U);
     EXPECT_TRUE(allRegisteredQueries.find(queryId) != allRegisteredQueries.end());
 }
 
@@ -162,7 +162,7 @@ TEST_F(QueryCatalogTest, getAllRunningQueries) {
 
     //Assert
     std::map<uint64_t, std::string> queries = queryCatalog->getQueriesWithStatus("running");
-    EXPECT_EQ(queries.size(), 1);
+    EXPECT_EQ(queries.size(), 1U);
     EXPECT_TRUE(queries.find(queryId) != queries.end());
 }
 

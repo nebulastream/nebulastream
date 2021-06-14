@@ -44,7 +44,7 @@ class TopologyTest : public testing::Test {
 TEST_F(TopologyTest, createNode) {
     uint64_t invalidId = 0;
 
-    int node1Id = 1;
+    auto const node1Id = 1u;
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;

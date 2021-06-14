@@ -81,7 +81,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSorte
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    EXPECT_EQ(unionOperators.size(), 1);
+    EXPECT_EQ(unionOperators.size(), 1U);
     auto unionChildren = unionOperators[0]->getChildren();
 
     typeInferencePhase->execute(queryPlan);
@@ -90,7 +90,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSorte
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    EXPECT_EQ(updatedUnionOperators.size(), 1);
+    EXPECT_EQ(updatedUnionOperators.size(), 1U);
 
     auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
@@ -112,7 +112,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedC
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    EXPECT_EQ(unionOperators.size(), 1);
+    EXPECT_EQ(unionOperators.size(), 1U);
     auto unionChildren = unionOperators[0]->getChildren();
 
     typeInferencePhase->execute(queryPlan);
@@ -121,7 +121,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedC
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    EXPECT_EQ(updatedUnionOperators.size(), 1);
+    EXPECT_EQ(updatedUnionOperators.size(), 1U);
     auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
     EXPECT_EQ(unionChildren[0], updatedUnionChildren[0]);
@@ -149,7 +149,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto joinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
-    EXPECT_EQ(joinOperators.size(), 1);
+    EXPECT_EQ(joinOperators.size(), 1U);
     auto joinChildren = joinOperators[0]->getChildren();
 
     typeInferencePhase->execute(queryPlan);
@@ -158,7 +158,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedJoinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
-    EXPECT_EQ(updatedJoinOperators.size(), 1);
+    EXPECT_EQ(updatedJoinOperators.size(), 1U);
     auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
     EXPECT_EQ(joinChildren[0], updatedJoinChildren[1]);
@@ -186,7 +186,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto joinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
-    EXPECT_EQ(joinOperators.size(), 1);
+    EXPECT_EQ(joinOperators.size(), 1U);
     auto joinChildren = joinOperators[0]->getChildren();
 
     typeInferencePhase->execute(queryPlan);
@@ -195,7 +195,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedJoinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
-    EXPECT_EQ(updatedJoinOperators.size(), 1);
+    EXPECT_EQ(updatedJoinOperators.size(), 1U);
     auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
     EXPECT_EQ(joinChildren[0], updatedJoinChildren[0]);
@@ -225,11 +225,11 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    EXPECT_EQ(unionOperators.size(), 1);
+    EXPECT_EQ(unionOperators.size(), 1U);
     auto unionChildren = unionOperators[0]->getChildren();
 
     auto joinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
-    EXPECT_EQ(joinOperators.size(), 1);
+    EXPECT_EQ(joinOperators.size(), 1U);
     auto joinChildren = joinOperators[0]->getChildren();
 
     typeInferencePhase->execute(queryPlan);
@@ -238,14 +238,14 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    EXPECT_EQ(updatedUnionOperators.size(), 1);
+    EXPECT_EQ(updatedUnionOperators.size(), 1U);
     auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
     EXPECT_EQ(unionChildren[0], updatedUnionChildren[1]);
     EXPECT_EQ(unionChildren[1], updatedUnionChildren[0]);
 
     auto updatedJoinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
-    EXPECT_EQ(updatedJoinOperators.size(), 1);
+    EXPECT_EQ(updatedJoinOperators.size(), 1U);
     auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
     EXPECT_EQ(joinChildren[0], updatedJoinChildren[1]);
@@ -275,11 +275,11 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWith
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    EXPECT_EQ(unionOperators.size(), 1);
+    EXPECT_EQ(unionOperators.size(), 1U);
     auto unionChildren = unionOperators[0]->getChildren();
 
     auto joinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
-    EXPECT_EQ(joinOperators.size(), 1);
+    EXPECT_EQ(joinOperators.size(), 1U);
     auto joinChildren = joinOperators[0]->getChildren();
 
     typeInferencePhase->execute(queryPlan);
@@ -288,14 +288,14 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWith
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    EXPECT_EQ(updatedUnionOperators.size(), 1);
+    EXPECT_EQ(updatedUnionOperators.size(), 1U);
     auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
     EXPECT_EQ(unionChildren[0], updatedUnionChildren[0]);
     EXPECT_EQ(unionChildren[1], updatedUnionChildren[1]);
 
     auto updatedJoinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
-    EXPECT_EQ(updatedJoinOperators.size(), 1);
+    EXPECT_EQ(updatedJoinOperators.size(), 1U);
     auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
     EXPECT_EQ(joinChildren[0], updatedJoinChildren[0]);

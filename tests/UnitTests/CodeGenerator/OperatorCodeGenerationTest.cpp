@@ -20,7 +20,6 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
@@ -145,8 +144,8 @@ class SelectionDataGenSource : public GeneratorSource {
 
         assert(buf.getBuffer() != nullptr);
 
-        auto* tuples = (InputTuple*) buf.getBuffer();
-        for (uint32_t i = 0; i < tupleCnt; i++) {
+        auto* tuples = buf.getBuffer<InputTuple>();
+        for (uint32_t i = 0UL; i < tupleCnt; ++i) {
             tuples[i].id = i;
             tuples[i].value = i * 2;
             for (int j = 0; j < 11; ++j) {
@@ -191,9 +190,9 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 
     struct __attribute__((packed)) InputTuple {
         uint32_t id;
-        int16_t valueSmall;
-        float valueFloat;
-        double valueDouble;
+        [[maybe_unused]] int16_t valueSmall;
+        [[maybe_unused]] float valueFloat;
+        [[maybe_unused]] double valueDouble;
         char singleChar;
         char text[12];
     };
@@ -398,7 +397,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     auto bindedRowLayout = layout->bind(buffer);
     auto firstFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
     for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
-        EXPECT_EQ(firstFields[recordIndex], 1);
+        EXPECT_EQ(firstFields[recordIndex], 1UL);
     }
 }
 /**
@@ -586,8 +585,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 
     //check partial aggregates in window state
     auto *stateVar = windowHandler->getTypedWindowState();
-    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
-    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
+    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5UL);
+    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5UL);
     windowHandler->stop();
 }
 
@@ -726,20 +725,20 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
         }
     }
 
-    EXPECT_EQ(results[0], 100);
-    EXPECT_EQ(results[1], 110);
-    EXPECT_EQ(results[2], 1);
-    EXPECT_EQ(results[3], 20);
+    EXPECT_EQ(results[0], 100ULL);
+    EXPECT_EQ(results[1], 110ULL);
+    EXPECT_EQ(results[2], 1ULL);
+    EXPECT_EQ(results[3], 20ULL);
 
-    EXPECT_EQ(results[4], 200);
-    EXPECT_EQ(results[5], 210);
-    EXPECT_EQ(results[6], 3);
-    EXPECT_EQ(results[7], 2);
+    EXPECT_EQ(results[4], 200ULL);
+    EXPECT_EQ(results[5], 210ULL);
+    EXPECT_EQ(results[6], 3ULL);
+    EXPECT_EQ(results[7], 2ULL);
 
-    EXPECT_EQ(results[8], 200);
-    EXPECT_EQ(results[9], 210);
-    EXPECT_EQ(results[10], 5);
-    EXPECT_EQ(results[11], 12);
+    EXPECT_EQ(results[8], 200ULL);
+    EXPECT_EQ(results[9], 210ULL);
+    EXPECT_EQ(results[10], 5ULL);
+    EXPECT_EQ(results[11], 12ULL);
     windowHandler->stop();
 }
 
@@ -831,7 +830,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto resultBuffer = queryContext->buffers[0];
 
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3UL);
 
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, inputSchema));
 }
@@ -910,8 +909,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
             auto floatValue = secondFieldsInput[recordIndex];
             auto doubleValue = thirdFieldsInput[recordIndex];
             auto reference = (floatValue * doubleValue) + 2;
-            auto mappedValue = fourthFieldsOutput[recordIndex];
-            EXPECT_EQ(reference, mappedValue);
+            auto const mv = fourthFieldsOutput[recordIndex];
+            EXPECT_EQ(reference, mv);
         }
     }
 }
@@ -1105,7 +1104,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
             }
         }
     }
-    EXPECT_EQ(results.size(), 20);
+    EXPECT_EQ(results.size(), 20U);
 }
 
 /**
@@ -1188,8 +1187,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         //check partial aggregates in window state
         auto *stateVar = windowHandler->getTypedWindowState();
         auto keyZero = stateVar->get(0);
-        EXPECT_EQ(keyZero.value()->getPartialAggregates()[0], 5);
-        EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
+        EXPECT_EQ(keyZero.value()->getPartialAggregates()[0], 5UL);
+        EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5UL);
 
     } catch (std::exception& e) {
         NES_ERROR(e.what());
@@ -1272,8 +1271,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
 
     //check partial aggregates in window state
     auto *stateVar = windowHandler->getTypedWindowState();
-    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
-    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
+    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5UL);
+    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5UL);
 }
 
 /**
@@ -1345,7 +1344,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     //check partial aggregates in window state
     auto *stateVar =
         windowHandler->as<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>()->getTypedWindowState();
-    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
-    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
+    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5UL);
+    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5UL);
 }
+
 }// namespace NES

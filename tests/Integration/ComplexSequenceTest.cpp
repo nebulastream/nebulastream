@@ -77,23 +77,23 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestSingleNodeSingleWindowSingleJoin
     testHarness.addMemorySource("window1", window1Schema, "window1");
     testHarness.addMemorySource("window2", window2Schema, "window2");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+    ASSERT_EQ(testHarness.getWorkerCount(), 2u);
 
-    testHarness.pushElement<Window1>({1, 1000}, 0);
-    testHarness.pushElement<Window2>({12, 1001}, 0);
-    testHarness.pushElement<Window2>({4, 1002}, 0);
-    testHarness.pushElement<Window2>({1, 2000}, 0);
-    testHarness.pushElement<Window2>({11, 2001}, 0);
-    testHarness.pushElement<Window2>({16, 2002}, 0);
-    testHarness.pushElement<Window2>({1, 3000}, 0);
+    testHarness.pushElement<Window1>({1u, 1000u}, 0u);
+    testHarness.pushElement<Window2>({12u, 1001u}, 0u);
+    testHarness.pushElement<Window2>({4u, 1002u}, 0u);
+    testHarness.pushElement<Window2>({1u, 2000u}, 0u);
+    testHarness.pushElement<Window2>({11u, 2001u}, 0u);
+    testHarness.pushElement<Window2>({16u, 2002u}, 0u);
+    testHarness.pushElement<Window2>({1u, 3000u}, 0u);
 
-    testHarness.pushElement<Window2>({21, 1003}, 1);
-    testHarness.pushElement<Window2>({12, 1011}, 1);
-    testHarness.pushElement<Window2>({4, 1102}, 1);
-    testHarness.pushElement<Window2>({4, 1112}, 1);
-    testHarness.pushElement<Window2>({1, 2010}, 1);
-    testHarness.pushElement<Window2>({11, 2301}, 1);
-    testHarness.pushElement<Window2>({33, 3100}, 1);
+    testHarness.pushElement<Window2>({21u, 1003u}, 1u);
+    testHarness.pushElement<Window2>({12u, 1011u}, 1u);
+    testHarness.pushElement<Window2>({4u, 1102u}, 1u);
+    testHarness.pushElement<Window2>({4u, 1112u}, 1u);
+    testHarness.pushElement<Window2>({1u, 2010u}, 1u);
+    testHarness.pushElement<Window2>({11u, 2301u}, 1u);
+    testHarness.pushElement<Window2>({33u, 3100u}, 1u);
 
     struct Output {
         uint64_t window1window2$start;
@@ -157,28 +157,28 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
     testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(0));
     testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1));
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 4);
+    ASSERT_EQ(testHarness.getWorkerCount(), 4UL);
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 2ULL);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1ULL);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 1ULL);
 
-    testHarness.pushElement<Window1>({1, 1000}, 2);
-    testHarness.pushElement<Window2>({12, 1001}, 2);
-    testHarness.pushElement<Window2>({4, 1002}, 2);
-    testHarness.pushElement<Window2>({1, 2000}, 2);
-    testHarness.pushElement<Window2>({11, 2001}, 2);
-    testHarness.pushElement<Window2>({16, 2002}, 2);
-    testHarness.pushElement<Window2>({1, 3000}, 2);
+    testHarness.pushElement<Window1>({1UL, 1000UL}, 2UL);
+    testHarness.pushElement<Window2>({12UL, 1001UL}, 2UL);
+    testHarness.pushElement<Window2>({4UL, 1002UL}, 2UL);
+    testHarness.pushElement<Window2>({1UL, 2000UL}, 2UL);
+    testHarness.pushElement<Window2>({11UL, 2001UL}, 2UL);
+    testHarness.pushElement<Window2>({16UL, 2002UL}, 2UL);
+    testHarness.pushElement<Window2>({1UL, 3000UL}, 2UL);
 
-    testHarness.pushElement<Window2>({21, 1003}, 3);
-    testHarness.pushElement<Window2>({12, 1011}, 3);
-    testHarness.pushElement<Window2>({4, 1102}, 3);
-    testHarness.pushElement<Window2>({4, 1112}, 3);
-    testHarness.pushElement<Window2>({1, 2010}, 3);
-    testHarness.pushElement<Window2>({11, 2301}, 3);
-    testHarness.pushElement<Window2>({33, 3100}, 3);
+    testHarness.pushElement<Window2>({21UL, 1003UL}, 3UL);
+    testHarness.pushElement<Window2>({12UL, 1011UL}, 3UL);
+    testHarness.pushElement<Window2>({4UL, 1102UL}, 3UL);
+    testHarness.pushElement<Window2>({4UL, 1112UL}, 3UL);
+    testHarness.pushElement<Window2>({1UL, 2010UL}, 3UL);
+    testHarness.pushElement<Window2>({11UL, 2301UL}, 3UL);
+    testHarness.pushElement<Window2>({33UL, 3100UL}, 3UL);
 
     struct Output {
         uint64_t window1window2$start;
@@ -193,7 +193,7 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
         }
     };
 
-    std::vector<Output> expectedOutput = {{1000, 2000, 4, 8}, {1000, 2000, 12, 12}};
+    std::vector<Output> expectedOutput = {{1000UL, 2000UL, 4UL, 8UL}, {1000UL, 2000UL, 12UL, 12UL}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -279,41 +279,41 @@ TEST_F(ComplexSequenceTest, DISABLED_ComplexTestSingleNodeMultipleWindowsMultipl
     testHarness.addMemorySource("window2", window2Schema, "window2");
     testHarness.addMemorySource("window3", window3Schema, "window3");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 3);
+    ASSERT_EQ(testHarness.getWorkerCount(), 3UL);
 
-    testHarness.pushElement<Window1>({1, 1000}, 0);
-    testHarness.pushElement<Window2>({12, 1001}, 0);
-    testHarness.pushElement<Window2>({4, 1002}, 0);
-    testHarness.pushElement<Window2>({4, 1005}, 0);
-    testHarness.pushElement<Window2>({4, 1006}, 0);
-    testHarness.pushElement<Window2>({1, 2000}, 0);
-    testHarness.pushElement<Window2>({11, 2001}, 0);
-    testHarness.pushElement<Window2>({16, 2002}, 0);
-    testHarness.pushElement<Window2>({4, 2802}, 0);
-    testHarness.pushElement<Window2>({4, 3642}, 0);
-    testHarness.pushElement<Window2>({1, 3000}, 0);
+    testHarness.pushElement<Window1>({1UL, 1000UL}, 0UL);
+    testHarness.pushElement<Window2>({12UL, 1001UL}, 0UL);
+    testHarness.pushElement<Window2>({4UL, 1002UL}, 0UL);
+    testHarness.pushElement<Window2>({4UL, 1005UL}, 0UL);
+    testHarness.pushElement<Window2>({4UL, 1006UL}, 0UL);
+    testHarness.pushElement<Window2>({1UL, 2000UL}, 0UL);
+    testHarness.pushElement<Window2>({11UL, 2001UL}, 0UL);
+    testHarness.pushElement<Window2>({16UL, 2002UL}, 0UL);
+    testHarness.pushElement<Window2>({4UL, 2802UL}, 0UL);
+    testHarness.pushElement<Window2>({4UL, 3642UL}, 0UL);
+    testHarness.pushElement<Window2>({1UL, 3000UL}, 0UL);
 
-    testHarness.pushElement<Window2>({21, 1003}, 1);
-    testHarness.pushElement<Window2>({12, 1011}, 1);
-    testHarness.pushElement<Window2>({12, 1013}, 1);
-    testHarness.pushElement<Window2>({12, 1015}, 1);
-    testHarness.pushElement<Window2>({4, 1102}, 1);
-    testHarness.pushElement<Window2>({4, 1112}, 1);
-    testHarness.pushElement<Window2>({1, 2010}, 1);
-    testHarness.pushElement<Window2>({11, 2301}, 1);
-    testHarness.pushElement<Window2>({4, 2022}, 1);
-    testHarness.pushElement<Window2>({4, 3012}, 1);
-    testHarness.pushElement<Window2>({33, 3100}, 1);
+    testHarness.pushElement<Window2>({21UL, 1003UL}, 1UL);
+    testHarness.pushElement<Window2>({12UL, 1011UL}, 1UL);
+    testHarness.pushElement<Window2>({12UL, 1013UL}, 1UL);
+    testHarness.pushElement<Window2>({12UL, 1015UL}, 1UL);
+    testHarness.pushElement<Window2>({4UL, 1102UL}, 1UL);
+    testHarness.pushElement<Window2>({4UL, 1112UL}, 1UL);
+    testHarness.pushElement<Window2>({1UL, 2010UL}, 1UL);
+    testHarness.pushElement<Window2>({11UL, 2301UL}, 1UL);
+    testHarness.pushElement<Window2>({4UL, 2022UL}, 1UL);
+    testHarness.pushElement<Window2>({4UL, 3012UL}, 1UL);
+    testHarness.pushElement<Window2>({33UL, 3100UL}, 1UL);
 
-    testHarness.pushElement<Window3>({4, 1013}, 2);
-    testHarness.pushElement<Window3>({12, 1010}, 2);
-    testHarness.pushElement<Window3>({8, 1105}, 2);
-    testHarness.pushElement<Window3>({76, 1132}, 2);
-    testHarness.pushElement<Window3>({19, 2210}, 2);
-    testHarness.pushElement<Window3>({1, 2501}, 2);
-    testHarness.pushElement<Window2>({4, 2432}, 2);
-    testHarness.pushElement<Window2>({4, 3712}, 2);
-    testHarness.pushElement<Window3>({45, 3120}, 2);
+    testHarness.pushElement<Window3>({4UL, 1013UL}, 2UL);
+    testHarness.pushElement<Window3>({12UL, 1010UL}, 2UL);
+    testHarness.pushElement<Window3>({8UL, 1105UL}, 2UL);
+    testHarness.pushElement<Window3>({76UL, 1132UL}, 2UL);
+    testHarness.pushElement<Window3>({19UL, 2210UL}, 2UL);
+    testHarness.pushElement<Window3>({1UL, 2501UL}, 2UL);
+    testHarness.pushElement<Window2>({4UL, 2432UL}, 2UL);
+    testHarness.pushElement<Window2>({4UL, 3712UL}, 2UL);
+    testHarness.pushElement<Window3>({45UL, 3120UL}, 2UL);
 
     // output 2 join 1 window
     struct Output {
@@ -399,49 +399,49 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
     testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1));
     testHarness.addMemorySource("window3", window3Schema, "window3", testHarness.getWorkerId(2));
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 6);
+    ASSERT_EQ(testHarness.getWorkerCount(), 6U);
 
     testHarness.getTopology()->print();
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 3);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 1);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 1);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 3U);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 1U);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 1U);
 
-    testHarness.pushElement<Window1>({1, 1000}, 3);
-    testHarness.pushElement<Window1>({12, 1001}, 3);
-    testHarness.pushElement<Window1>({4, 1002}, 3);
-    testHarness.pushElement<Window1>({4, 1005}, 3);
-    testHarness.pushElement<Window1>({4, 1006}, 3);
-    testHarness.pushElement<Window1>({1, 2000}, 3);
-    testHarness.pushElement<Window1>({11, 2001}, 3);
-    testHarness.pushElement<Window1>({16, 2002}, 3);
-    testHarness.pushElement<Window1>({4, 2802}, 3);
-    testHarness.pushElement<Window1>({4, 3642}, 3);
-    testHarness.pushElement<Window1>({1, 3000}, 3);
+    testHarness.pushElement<Window1>({1ULL, 1000ULL}, 3ULL);
+    testHarness.pushElement<Window1>({12ULL, 1001ULL}, 3ULL);
+    testHarness.pushElement<Window1>({4ULL, 1002ULL}, 3ULL);
+    testHarness.pushElement<Window1>({4ULL, 1005ULL}, 3ULL);
+    testHarness.pushElement<Window1>({4ULL, 1006ULL}, 3ULL);
+    testHarness.pushElement<Window1>({1ULL, 2000ULL}, 3ULL);
+    testHarness.pushElement<Window1>({11ULL, 2001ULL}, 3ULL);
+    testHarness.pushElement<Window1>({16ULL, 2002ULL}, 3ULL);
+    testHarness.pushElement<Window1>({4ULL, 2802ULL}, 3ULL);
+    testHarness.pushElement<Window1>({4ULL, 3642ULL}, 3ULL);
+    testHarness.pushElement<Window1>({1ULL, 3000ULL}, 3ULL);
 
-    testHarness.pushElement<Window2>({21, 1003}, 4);
-    testHarness.pushElement<Window2>({12, 1011}, 4);
-    testHarness.pushElement<Window2>({12, 1013}, 4);
-    testHarness.pushElement<Window2>({12, 1015}, 4);
-    testHarness.pushElement<Window2>({4, 1102}, 4);
-    testHarness.pushElement<Window2>({4, 1112}, 4);
-    testHarness.pushElement<Window2>({1, 2010}, 4);
-    testHarness.pushElement<Window2>({11, 2301}, 4);
-    testHarness.pushElement<Window2>({4, 2022}, 4);
-    testHarness.pushElement<Window2>({4, 3012}, 4);
-    testHarness.pushElement<Window2>({33, 3100}, 4);
+    testHarness.pushElement<Window2>({21ULL, 1003ULL}, 4ULL);
+    testHarness.pushElement<Window2>({12ULL, 1011ULL}, 4ULL);
+    testHarness.pushElement<Window2>({12ULL, 1013ULL}, 4ULL);
+    testHarness.pushElement<Window2>({12ULL, 1015ULL}, 4ULL);
+    testHarness.pushElement<Window2>({4ULL, 1102ULL}, 4ULL);
+    testHarness.pushElement<Window2>({4ULL, 1112ULL}, 4ULL);
+    testHarness.pushElement<Window2>({1ULL, 2010ULL}, 4ULL);
+    testHarness.pushElement<Window2>({11ULL, 2301ULL}, 4ULL);
+    testHarness.pushElement<Window2>({4ULL, 2022ULL}, 4ULL);
+    testHarness.pushElement<Window2>({4ULL, 3012ULL}, 4ULL);
+    testHarness.pushElement<Window2>({33ULL, 3100ULL}, 4ULL);
 
-    testHarness.pushElement<Window3>({4, 1013}, 5);
-    testHarness.pushElement<Window3>({12, 1010}, 5);
-    testHarness.pushElement<Window3>({8, 1105}, 5);
-    testHarness.pushElement<Window3>({76, 1132}, 5);
-    testHarness.pushElement<Window3>({19, 2210}, 5);
-    testHarness.pushElement<Window3>({1, 2501}, 5);
-    testHarness.pushElement<Window3>({4, 2432}, 5);
-    testHarness.pushElement<Window3>({4, 3712}, 5);
-    testHarness.pushElement<Window3>({45, 3120}, 5);
+    testHarness.pushElement<Window3>({4ULL, 1013ULL}, 5ULL);
+    testHarness.pushElement<Window3>({12ULL, 1010ULL}, 5ULL);
+    testHarness.pushElement<Window3>({8ULL, 1105ULL}, 5ULL);
+    testHarness.pushElement<Window3>({76ULL, 1132ULL}, 5ULL);
+    testHarness.pushElement<Window3>({19ULL, 2210ULL}, 5ULL);
+    testHarness.pushElement<Window3>({1ULL, 2501ULL}, 5ULL);
+    testHarness.pushElement<Window3>({4ULL, 2432ULL}, 5ULL);
+    testHarness.pushElement<Window3>({4ULL, 3712ULL}, 5ULL);
+    testHarness.pushElement<Window3>({45ULL, 3120ULL}, 5ULL);
 
     struct Output {
         uint64_t window1window2$start;
@@ -557,49 +557,49 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
     testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(1));//wrk3
     testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1));//wrk4
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 5);
+    ASSERT_EQ(testHarness.getWorkerCount(), 5ULL);
 
     testHarness.getTopology()->print();
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 1);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 0);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 1U);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2U);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2U);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 0U);
 
-    testHarness.pushElement<Window1>({1, 1000}, 3);
-    testHarness.pushElement<Window1>({12, 1001}, 3);
-    testHarness.pushElement<Window1>({4, 1002}, 3);
-    testHarness.pushElement<Window1>({4, 1005}, 3);
-    testHarness.pushElement<Window1>({4, 1006}, 3);
-    testHarness.pushElement<Window1>({1, 2000}, 3);
-    testHarness.pushElement<Window1>({11, 2001}, 3);
-    testHarness.pushElement<Window1>({16, 2002}, 3);
-    testHarness.pushElement<Window1>({4, 2802}, 3);
-    testHarness.pushElement<Window1>({4, 3642}, 3);
-    testHarness.pushElement<Window1>({1, 3000}, 3);
+    testHarness.pushElement<Window1>({1ULL, 1000ULL}, 3ULL);
+    testHarness.pushElement<Window1>({12ULL, 1001ULL}, 3ULL);
+    testHarness.pushElement<Window1>({4ULL, 1002ULL}, 3ULL);
+    testHarness.pushElement<Window1>({4ULL, 1005ULL}, 3ULL);
+    testHarness.pushElement<Window1>({4ULL, 1006ULL}, 3ULL);
+    testHarness.pushElement<Window1>({1ULL, 2000ULL}, 3ULL);
+    testHarness.pushElement<Window1>({11ULL, 2001ULL}, 3ULL);
+    testHarness.pushElement<Window1>({16ULL, 2002ULL}, 3ULL);
+    testHarness.pushElement<Window1>({4ULL, 2802ULL}, 3ULL);
+    testHarness.pushElement<Window1>({4ULL, 3642ULL}, 3ULL);
+    testHarness.pushElement<Window1>({1ULL, 3000ULL}, 3ULL);
 
-    testHarness.pushElement<Window2>({21, 1003}, 4);
-    testHarness.pushElement<Window2>({12, 1011}, 4);
-    testHarness.pushElement<Window2>({12, 1013}, 4);
-    testHarness.pushElement<Window2>({12, 1015}, 4);
-    testHarness.pushElement<Window2>({4, 1102}, 4);
-    testHarness.pushElement<Window2>({4, 1112}, 4);
-    testHarness.pushElement<Window2>({1, 2010}, 4);
-    testHarness.pushElement<Window2>({11, 2301}, 4);
-    testHarness.pushElement<Window2>({4, 2022}, 4);
-    testHarness.pushElement<Window2>({4, 3012}, 4);
-    testHarness.pushElement<Window2>({33, 3100}, 4);
+    testHarness.pushElement<Window2>({21ULL, 1003ULL}, 4ULL);
+    testHarness.pushElement<Window2>({12ULL, 1011ULL}, 4ULL);
+    testHarness.pushElement<Window2>({12ULL, 1013ULL}, 4ULL);
+    testHarness.pushElement<Window2>({12ULL, 1015ULL}, 4ULL);
+    testHarness.pushElement<Window2>({4ULL, 1102ULL}, 4ULL);
+    testHarness.pushElement<Window2>({4ULL, 1112ULL}, 4ULL);
+    testHarness.pushElement<Window2>({1ULL, 2010ULL}, 4ULL);
+    testHarness.pushElement<Window2>({11ULL, 2301ULL}, 4ULL);
+    testHarness.pushElement<Window2>({4ULL, 2022ULL}, 4ULL);
+    testHarness.pushElement<Window2>({4ULL, 3012ULL}, 4ULL);
+    testHarness.pushElement<Window2>({33ULL, 3100ULL}, 4ULL);
 
-    testHarness.pushElement<Window3>({4, 1013}, 2);
-    testHarness.pushElement<Window3>({12, 1010}, 2);
-    testHarness.pushElement<Window3>({8, 1105}, 2);
-    testHarness.pushElement<Window3>({76, 1132}, 2);
-    testHarness.pushElement<Window3>({19, 2210}, 2);
-    testHarness.pushElement<Window3>({1, 2501}, 2);
-    testHarness.pushElement<Window3>({4, 2432}, 2);
-    testHarness.pushElement<Window3>({4, 3712}, 2);
-    testHarness.pushElement<Window3>({45, 3120}, 2);
+    testHarness.pushElement<Window3>({4ULL, 1013ULL}, 2ULL);
+    testHarness.pushElement<Window3>({12ULL, 1010ULL}, 2ULL);
+    testHarness.pushElement<Window3>({8ULL, 1105ULL}, 2ULL);
+    testHarness.pushElement<Window3>({76ULL, 1132ULL}, 2ULL);
+    testHarness.pushElement<Window3>({19ULL, 2210ULL}, 2ULL);
+    testHarness.pushElement<Window3>({1ULL, 2501ULL}, 2ULL);
+    testHarness.pushElement<Window3>({4ULL, 2432ULL}, 2ULL);
+    testHarness.pushElement<Window3>({4ULL, 3712ULL}, 2ULL);
+    testHarness.pushElement<Window3>({45ULL, 3120ULL}, 2ULL);
 
     struct Output {
         uint64_t window1window2$start;
@@ -614,7 +614,7 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
         }
     };
 
-    std::vector<Output> expectedOutput = {{1090, 1100, 4, 48}, {1000, 1010, 12, 96}, {1010, 1020, 12, 192}};
+    std::vector<Output> expectedOutput = {{1090ULL, 1100ULL, 4ULL, 48ULL}, {1000ULL, 1010ULL, 12ULL, 96ULL}, {1010ULL, 1020ULL, 12ULL, 192ULL}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

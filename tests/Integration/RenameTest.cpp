@@ -64,7 +64,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("RenameTest: Coordinator started successfully");
 
     NES_INFO("RenameTest: Start worker 1");
@@ -142,7 +142,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("RenameTest: Coordinator started successfully");
 
     NES_INFO("RenameTest: Start worker 1");
@@ -223,7 +223,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("RenameTest: Coordinator started successfully");
 
     NES_INFO("RenameTest: Start worker 1");
@@ -289,7 +289,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("RenameTest: Coordinator started successfully");
 
     NES_INFO("RenameTest: Start worker 1");
@@ -382,7 +382,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("RenameTest: Coordinator started successfully");
 
     NES_INFO("RenameTest: Start worker 1");

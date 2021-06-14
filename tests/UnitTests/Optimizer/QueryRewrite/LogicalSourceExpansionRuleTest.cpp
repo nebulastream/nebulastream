@@ -93,8 +93,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     std::vector<TopologyNodePtr> sourceTopologyNodes = streamCatalog->getSourceNodesForLogicalStream(logicalStreamName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 1);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2);
+    EXPECT_EQ(rootOperators.size(), 1u);
+    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2u);
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinksAndJustSource) {
@@ -127,8 +127,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     std::vector<TopologyNodePtr> sourceTopologyNodes = streamCatalog->getSourceNodesForLogicalStream(logicalStreamName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 2);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2);
+    EXPECT_EQ(rootOperators.size(), 2U);
+    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinks) {
@@ -164,8 +164,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     std::vector<TopologyNodePtr> sourceTopologyNodes = streamCatalog->getSourceNodesForLogicalStream(logicalStreamName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 2);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2);
+    EXPECT_EQ(rootOperators.size(), 2U);
+    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
@@ -187,8 +187,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
     std::vector<TopologyNodePtr> sourceTopologyNodes = streamCatalog->getSourceNodesForLogicalStream(logicalStreamName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 1);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2);
+    EXPECT_EQ(rootOperators.size(), 1U);
+    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMergeOperator) {
@@ -215,9 +215,9 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     std::vector<TopologyNodePtr> sourceTopologyNodes = streamCatalog->getSourceNodesForLogicalStream(logicalStreamName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size() * 2);
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 1);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 1);
+    EXPECT_EQ(rootOperators.size(), 1U);
+    EXPECT_EQ(rootOperators[0]->getChildren().size(), 1U);
     auto mergeOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    EXPECT_EQ(mergeOperators.size(), 1);
-    EXPECT_EQ(mergeOperators[0]->getChildren().size(), 4);
+    EXPECT_EQ(mergeOperators.size(), 1U);
+    EXPECT_EQ(mergeOperators[0]->getChildren().size(), 4U);
 }

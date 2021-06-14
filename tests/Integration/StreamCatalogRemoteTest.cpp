@@ -55,7 +55,7 @@ TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -101,7 +101,7 @@ TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -133,7 +133,7 @@ TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
 
     map<std::string, SchemaPtr> allLogicalStream = crd->getStreamCatalog()->getAllLogicalStream();
     string exp = "id:INTEGER value:INTEGER ";
-    EXPECT_EQ(allLogicalStream.size(), 2);
+    EXPECT_EQ(allLogicalStream.size(), 2U);
 
     SchemaPtr defaultSchema = allLogicalStream["default_logical"];
     EXPECT_EQ(exp, defaultSchema->toString());
@@ -158,7 +158,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -210,7 +210,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -248,7 +248,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -273,7 +273,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
     std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
-    EXPECT_EQ(phys.size(), 2);
+    EXPECT_EQ(phys.size(), 2U);
     EXPECT_EQ(phys[0]->getPhysicalName(), "default_physical");
     EXPECT_EQ(phys[1]->getPhysicalName(), "physical_test");
 
@@ -297,7 +297,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -333,7 +333,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
     std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("testStream");
 
-    EXPECT_EQ(phys.size(), 1);
+    EXPECT_EQ(phys.size(), 1U);
     EXPECT_EQ(phys[0]->getPhysicalName(), "physical_test");
 
     cout << "stopping worker" << endl;
@@ -356,7 +356,7 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -374,7 +374,7 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
     std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
-    EXPECT_EQ(phys.size(), 0);
+    EXPECT_EQ(phys.size(), 0U);
 
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk->stop(false);
@@ -396,7 +396,7 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -417,7 +417,7 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
     std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
-    EXPECT_EQ(phys.size(), 1);
+    EXPECT_EQ(phys.size(), 1U);
 
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk->stop(false);

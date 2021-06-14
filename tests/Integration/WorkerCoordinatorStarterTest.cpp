@@ -59,7 +59,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
 
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -97,7 +97,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
         cout << "iteration = " << i << endl;
         NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
         uint64_t port = crd->startCoordinator(/**blocking**/ false);
-        EXPECT_NE(port, 0);
+        EXPECT_NE(port, 0ULL);
         cout << "coordinator started successfully" << endl;
 
         cout << "start worker" << endl;
@@ -138,7 +138,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -174,7 +174,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -210,7 +210,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -246,7 +246,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
@@ -286,7 +286,7 @@ TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;

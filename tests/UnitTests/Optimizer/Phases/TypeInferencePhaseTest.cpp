@@ -16,7 +16,6 @@
 
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -120,7 +119,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
 
     NES_DEBUG(resultPlan->getSinkOperators()[0]->getOutputSchema()->toString());
     // we just access the old references
-    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 5);
+    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 5UL);
 }
 
 /**
@@ -271,7 +270,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
     phase->execute(plan);
     NES_DEBUG("result schema is=" << maps[0]->getOutputSchema()->toString());
     //we have to forbit the renaming of the attribute in the assignment statement of the map
-    ASSERT_NE(maps[0]->getOutputSchema()->getIndex("f4"), 2);
+    ASSERT_NE(maps[0]->getOutputSchema()->getIndex("f4"), 2UL);
 }
 
 /**
@@ -971,7 +970,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
 
     NES_DEBUG(resultPlan->getSinkOperators()[0]->getOutputSchema()->toString());
     // we just access the old references
-    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 5);
+    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 5U);
 
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();

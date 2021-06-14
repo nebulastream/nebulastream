@@ -72,7 +72,7 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
     NES_DEBUG("SimplePatternTest: start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0u);
     NES_DEBUG("SimplePatternTest: coordinator started successfully");
 
     NES_DEBUG("SimplePatternTest: start worker 1");
@@ -120,7 +120,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0U);
     NES_DEBUG("coordinator started successfully");
 
     NES_DEBUG("start worker 1");
@@ -206,7 +206,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("SimplePatternTest: Coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1");
@@ -322,7 +322,7 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1");
@@ -409,7 +409,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("coordinator started successfully");
 
     NES_DEBUG("start worker 1");
@@ -494,7 +494,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge)
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("SimplePatternTest: Coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1");

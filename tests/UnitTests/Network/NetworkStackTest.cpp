@@ -21,7 +21,6 @@
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqServer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
@@ -32,7 +31,6 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include "../../util/DummySink.hpp"
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
 #include <Catalogs/PhysicalStreamConfig.hpp>
@@ -388,9 +386,9 @@ TEST_F(NetworkStackTest, testPartitionManager) {
         void emitWork(TupleBuffer&) override {}
     };
     partitionManager->registerSubpartition(partition1, std::make_shared<DataEmitterImpl>());
-    ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0);
+    ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0UL);
     partitionManager->registerSubpartition(partition1, std::make_shared<DataEmitterImpl>());
-    ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 1);
+    ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 1UL);
 
     partitionManager->unregisterSubpartition(partition1Copy);
     ASSERT_EQ(partitionManager->isRegistered(partition1), false);
@@ -470,7 +468,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
     auto completedPromises = std::vector<std::promise<bool>>();
     std::array<std::atomic<std::uint64_t>, numSendingThreads> bufferCounter{};
 
-    for (int i = 0; i < numSendingThreads; i++) {
+    for (uint64_t i = 0ull; i < numSendingThreads; ++i) {
         nesPartitions.emplace_back(i, i + 10, i + 20, i + 30);
         completedPromises.emplace_back(std::promise<bool>());
         bufferCounter[i].store(0);
@@ -529,7 +527,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
 
-        for (int i = 0; i < numSendingThreads; i++) {
+        for (auto i = 0ULL; i < numSendingThreads; ++i) {
             std::thread sendingThread([&, i] {
                 // register the incoming channel
                 NesPartition nesPartition(i, i + 10, i + 20, i + 30);
@@ -542,7 +540,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
                 } else {
                     std::mt19937 rnd;
                     std::uniform_int_distribution gen(5'000, 75'000);
-                    for (uint64_t i = 0; i < totalNumBuffer; ++i) {
+                    for (auto i = 0ULL; i < totalNumBuffer; ++i) {
                         auto buffer = buffMgr->getBufferBlocking();
                         for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                             buffer.getBuffer<uint64_t>()[j] = j;
@@ -673,7 +671,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
     } catch (...) {
         ASSERT_EQ(true, false);
     }
-    ASSERT_EQ(bufferCnt, numSendingThreads * totalNumBuffer);
+    ASSERT_EQ(static_cast<uint32_t>(bufferCnt.load()), numSendingThreads * totalNumBuffer);
 }
 
 TEST_F(NetworkStackTest, testNetworkSource) {
@@ -692,7 +690,7 @@ TEST_F(NetworkStackTest, testNetworkSource) {
                                                          64);
     EXPECT_TRUE(networkSource->start());
 
-    ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionCounter(nesPartition), 0);
+    ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionCounter(nesPartition), 0UL);
     EXPECT_TRUE(networkSource->stop());
     netManager->unregisterSubpartitionConsumer(nesPartition);
     ASSERT_FALSE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
@@ -883,7 +881,9 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
     } catch (...) {
         FAIL();
     }
-    ASSERT_EQ(bufferCnt, numSendingThreads * totalNumBuffer);
+    auto const bf = bufferCnt.load();
+    ASSERT_TRUE(bf > 0);
+    ASSERT_EQ(static_cast<std::size_t>(bf), numSendingThreads * totalNumBuffer);
     ASSERT_FALSE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
     nodeEngine->stop();
     nodeEngine = nullptr;
@@ -971,7 +971,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     nodeEngine->startQuery(1);
     nodeEngine->startQuery(0);
 
-    ASSERT_EQ(10, testSink->completed.get_future().get());
+    ASSERT_EQ(10ULL, testSink->completed.get_future().get());
 
     nodeEngine->undeployQuery(1);
     nodeEngine->undeployQuery(0);

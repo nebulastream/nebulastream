@@ -63,15 +63,15 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
 
     auto nodeStats = std::make_shared<NodeStats>();
     uint64_t nodeId = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats, NodeType::Sensor);
-    EXPECT_NE(nodeId, 0);
+    EXPECT_NE(nodeId, 0u);
 
     uint64_t nodeId1 = coordinatorEngine->registerNode(ip, publish_port + 2, 5000, 6, nodeStats, NodeType::Sensor);
-    EXPECT_NE(nodeId1, 0);
+    EXPECT_NE(nodeId1, 0u);
 
     //test register existing node
     auto nodeStats2 = std::make_shared<NodeStats>();
     uint64_t nodeId2 = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats2, NodeType::Sensor);
-    EXPECT_EQ(nodeId2, 0);
+    EXPECT_EQ(nodeId2, 0u);
     //test unregister not existing node
     bool successUnregisterNotExistingNode = coordinatorEngine->unregisterNode(552);
     EXPECT_FALSE(successUnregisterNotExistingNode);
@@ -123,7 +123,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
 
     auto nodeStats = std::make_shared<NodeStats>();
     uint64_t nodeId = coordinatorEngine->registerNode(address, 4000, 5000, 6, nodeStats, NodeType::Sensor);
-    EXPECT_NE(nodeId, 0);
+    EXPECT_NE(nodeId, 0u);
 
     //setup test
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";

@@ -111,7 +111,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
     testHarness.addMemorySource("car", carSchema, "car1");
     testHarness.addMemorySource("car", carSchema, "car2");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     testHarness.pushElement<Car>({40, 40, 40}, 0);
     testHarness.pushElement<Car>({30, 30, 30}, 0);
@@ -177,7 +177,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
     testHarness.addMemorySource("car", carSchema, "car1");
     testHarness.addMemorySource("truck", truckSchema, "truck1");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     testHarness.pushElement<Car>({40, 40, 40}, 0);
     testHarness.pushElement<Car>({30, 30, 30}, 0);
@@ -231,7 +231,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     testHarness.addMemorySource("car", carSchema, "car1");
     testHarness.addMemorySource("car", carSchema, "car2");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     testHarness.pushElement<Car>({1, 1, 1000}, 0);
     testHarness.pushElement<Car>({12, 1, 1001}, 0);
@@ -320,7 +320,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     testHarness.addMemorySource("window1", window1Schema, "window1");
     testHarness.addMemorySource("window2", window2Schema, "window2");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     testHarness.pushElement<Window1>({1, 1000}, 0);
     testHarness.pushElement<Window2>({12, 1001}, 0);
@@ -450,9 +450,9 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
-    EXPECT_EQ(topology->getRoot()->getChildren().size(), 1);
-    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1);
-    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2);
+    EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
+    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1U);
+    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2U);
 
     testHarness.pushElement<Car>({40, 40, 40}, 2);
     testHarness.pushElement<Car>({30, 30, 30}, 2);
@@ -534,7 +534,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, carSchema);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
     struct Output {
         uint32_t key;
@@ -596,7 +596,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     testHarness.pushElement<Car>({1, 8, 8}, 1);
     testHarness.pushElement<Car>({1, 9, 9}, 1);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     struct Output {
         uint32_t key;
@@ -625,7 +625,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 0);
+    ASSERT_EQ(testHarness.getWorkerCount(), 0UL);
 
     struct Output {
         uint32_t key;
@@ -651,7 +651,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 0);
+    ASSERT_EQ(testHarness.getWorkerCount(), 0UL);
     EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), NesRuntimeException);
 }
 
@@ -689,7 +689,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToWrongSource) {
     testHarness.addMemorySource("car", carSchema, "car1");
     testHarness.addMemorySource("truck", truckSchema, "truck1");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 0), NesRuntimeException);
 }

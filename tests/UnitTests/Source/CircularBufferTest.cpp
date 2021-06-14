@@ -45,7 +45,7 @@ class CircularBufferTest : public testing::Test {
 TEST_F(CircularBufferTest, initialState) {
     CircularBuffer<int> circularBuffer(testCapacity);
     EXPECT_EQ(circularBuffer.capacity(), testCapacity);
-    EXPECT_EQ(circularBuffer.size(), 0);
+    EXPECT_EQ(circularBuffer.size(), 0u);
     EXPECT_EQ(circularBuffer.front(), 0);
     EXPECT_EQ(circularBuffer.back(), 0);
     EXPECT_FALSE(circularBuffer.full());
@@ -61,7 +61,7 @@ TEST_F(CircularBufferTest, randomAccessInitial) {
 TEST_F(CircularBufferTest, pushFrontOnce) {
     CircularBuffer<int> circularBuffer(testCapacity);
     circularBuffer.push(testValue);
-    EXPECT_EQ(circularBuffer.size(), 1);
+    EXPECT_EQ(circularBuffer.size(), 1u);
     EXPECT_FALSE(circularBuffer.full());
     EXPECT_FALSE(circularBuffer.empty());
 }
@@ -69,7 +69,7 @@ TEST_F(CircularBufferTest, pushFrontOnce) {
 TEST_F(CircularBufferTest, emplaceFrontOnce) {
     CircularBuffer<int> circularBuffer(testCapacity);
     circularBuffer.emplace(testValue);
-    EXPECT_EQ(circularBuffer.size(), 1);
+    EXPECT_EQ(circularBuffer.size(), 1u);
     EXPECT_FALSE(circularBuffer.full());
     EXPECT_FALSE(circularBuffer.empty());
 }
@@ -139,7 +139,7 @@ TEST_F(CircularBufferTest, iterateAutoNotFull) {
     for (auto c : circularBuffer) {
         EXPECT_EQ(c, testValue + i++);
     }
-    EXPECT_EQ(i, circularBuffer.size());
+    EXPECT_EQ(static_cast<std::size_t>(i), circularBuffer.size());
 }
 
 TEST_F(CircularBufferTest, popAfterPushOnce) {
@@ -156,7 +156,7 @@ TEST_F(CircularBufferTest, popAfterTwoPushes) {
     circularBuffer.push(testValue);
     circularBuffer.pop();
     EXPECT_FALSE(circularBuffer.full());
-    EXPECT_EQ(circularBuffer.size(), 1);
+    EXPECT_EQ(circularBuffer.size(), 1U);
     EXPECT_EQ(circularBuffer.capacity(), testCapacity);
 }
 

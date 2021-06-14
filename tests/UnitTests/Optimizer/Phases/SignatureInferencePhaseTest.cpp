@@ -84,8 +84,8 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     auto mapOperators1 = plan1->getOperatorByType<MapLogicalOperatorNode>();
     auto mapOperators2 = plan2->getOperatorByType<MapLogicalOperatorNode>();
 
-    ASSERT_EQ(mapOperators1.size(), 1);
-    ASSERT_EQ(mapOperators2.size(), 1);
+    ASSERT_EQ(mapOperators1.size(), 1u);
+    ASSERT_EQ(mapOperators2.size(), 1u);
 
     auto signatureEqualityChecker = SignatureEqualityUtil::create(context);
 
@@ -94,8 +94,8 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     auto srcOperators1 = plan1->getOperatorByType<SourceLogicalOperatorNode>();
     auto srcOperators2 = plan2->getOperatorByType<SourceLogicalOperatorNode>();
 
-    ASSERT_EQ(srcOperators1.size(), 1);
-    ASSERT_EQ(srcOperators2.size(), 1);
+    ASSERT_EQ(srcOperators1.size(), 1u);
+    ASSERT_EQ(srcOperators2.size(), 1u);
 
     EXPECT_TRUE(signatureEqualityChecker->checkEquality(srcOperators1[0]->getZ3Signature(), srcOperators2[0]->getZ3Signature()));
 }

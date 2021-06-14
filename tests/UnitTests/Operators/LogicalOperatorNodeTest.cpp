@@ -420,7 +420,7 @@ TEST_F(LogicalOperatorNodeTest, replaceSuccessor) {
 
 TEST_F(LogicalOperatorNodeTest, replaceWithEqualSuccessor) {
     children = filterOp1Copy->getChildren();
-    EXPECT_EQ(children.size(), 0U);
+    EXPECT_EQ(children.size(), 0u);
 
     sourceOp->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
@@ -428,10 +428,10 @@ TEST_F(LogicalOperatorNodeTest, replaceWithEqualSuccessor) {
     sourceOp->replace(filterOp1Copy, filterOp1);
 
     children = sourceOp->getChildren();
-    EXPECT_EQ(children.size(), 1);
+    EXPECT_EQ(children.size(), 1u);
 
     children = filterOp1Copy->getChildren();
-    EXPECT_EQ(children.size(), 1);
+    EXPECT_EQ(children.size(), 1u);
 }
 
 /**
@@ -455,16 +455,16 @@ TEST_F(LogicalOperatorNodeTest, replaceWithExistedSuccessor) {
     EXPECT_FALSE(replaced);
 
     children = sourceOp->getChildren();
-    EXPECT_EQ(children.size(), 2);
+    EXPECT_EQ(children.size(), 2U);
     EXPECT_TRUE(children[0]->equal(filterOp1));
     EXPECT_TRUE(children[1]->equal(filterOp3));
 
     children = filterOp1->getChildren();
-    EXPECT_EQ(children.size(), 1);
+    EXPECT_EQ(children.size(), 1U);
     EXPECT_TRUE(children[0]->equal(filterOp2));
 
     children = filterOp3->getChildren();
-    EXPECT_EQ(children.size(), 1);
+    EXPECT_EQ(children.size(), 1U);
     EXPECT_TRUE(children[0]->equal(filterOp4));
 }
 
@@ -483,10 +483,10 @@ TEST_F(LogicalOperatorNodeTest, replaceWithIdenticalSuccessor) {
     sourceOp->replace(filterOp1, filterOp1);
 
     children = sourceOp->getChildren();
-    EXPECT_EQ(children.size(), 1);
+    EXPECT_EQ(children.size(), 1U);
 
     children = filterOp1->getChildren();
-    EXPECT_EQ(children.size(), 1);
+    EXPECT_EQ(children.size(), 1U);
 }
 
 /**
@@ -504,7 +504,7 @@ TEST_F(LogicalOperatorNodeTest, replaceWithSubSuccessor) {
     sourceOp->replace(filterOp2, filterOp1);
 
     children = sourceOp->getChildren();
-    EXPECT_EQ(children.size(), 1);
+    EXPECT_EQ(children.size(), 1U);
     EXPECT_TRUE(children[0]->equal(filterOp2));
 
     children = filterOp2->getChildren();
@@ -526,7 +526,7 @@ TEST_F(LogicalOperatorNodeTest, replaceWithNoneSuccessor) {
     sourceOp->replace(filterOp3, filterOp3);
 
     children = sourceOp->getChildren();
-    EXPECT_EQ(children.size(), 1);
+    EXPECT_EQ(children.size(), 1U);
     EXPECT_TRUE(children[0]->equal(filterOp1));
 
     children = filterOp3->getChildren();
@@ -569,11 +569,11 @@ TEST_F(LogicalOperatorNodeTest, replacePredecessor) {
     filterOp2->replace(filterOp3, filterOp1);
 
     parents = filterOp2->getParents();
-    EXPECT_EQ(parents.size(), 1);
+    EXPECT_EQ(parents.size(), 1U);
     EXPECT_EQ(parents[0].get(), filterOp3.get());
 
     parents = filterOp3->getParents();
-    EXPECT_EQ(parents.size(), 1);
+    EXPECT_EQ(parents.size(), 1U);
 }
 
 /**
@@ -589,17 +589,17 @@ TEST_F(LogicalOperatorNodeTest, replaceWithEqualPredecessor) {
     filterOp1->addParent(sourceOp);
 
     parents = filterOp1->getParents();
-    EXPECT_EQ(parents.size(), 1);
+    EXPECT_EQ(parents.size(), 1U);
 
     filterOp2->replace(filterOp1Copy, filterOp1);
 
     parents = filterOp2->getParents();
-    EXPECT_EQ(parents.size(), 1);
+    EXPECT_EQ(parents.size(), 1U);
     EXPECT_NE(parents[0].get(), filterOp1.get());
     EXPECT_EQ(parents[0].get(), filterOp1Copy.get());
 
     parents = filterOp1Copy->getParents();
-    EXPECT_EQ(parents.size(), 1);
+    EXPECT_EQ(parents.size(), 1U);
     EXPECT_EQ(parents[0].get(), sourceOp.get());
 }
 /**
@@ -615,16 +615,16 @@ TEST_F(LogicalOperatorNodeTest, replaceWithIdenticalPredecessor) {
     filterOp1->addParent(sourceOp);
 
     parents = filterOp1->getParents();
-    EXPECT_EQ(parents.size(), 1);
+    EXPECT_EQ(parents.size(), 1U);
 
     filterOp2->replace(filterOp1, filterOp1);
 
     parents = filterOp2->getParents();
-    EXPECT_EQ(parents.size(), 1);
+    EXPECT_EQ(parents.size(), 1U);
     EXPECT_EQ(parents[0].get(), filterOp1.get());
 
     parents = filterOp1->getParents();
-    EXPECT_EQ(parents.size(), 1);
+    EXPECT_EQ(parents.size(), 1U);
     EXPECT_EQ(parents[0].get(), sourceOp.get());
 }
 
@@ -642,7 +642,7 @@ TEST_F(LogicalOperatorNodeTest, removeExistedAndLevelUpSuccessors) {
 
     sourceOp->removeAndLevelUpChildren(filterOp1);
     children = sourceOp->getChildren();
-    EXPECT_EQ(children.size(), 2);
+    EXPECT_EQ(children.size(), 2U);
     EXPECT_TRUE(children[0]->equal(filterOp2));
     EXPECT_TRUE(children[1]->equal(filterOp3));
 }
@@ -663,7 +663,7 @@ TEST_F(LogicalOperatorNodeTest, removeNotExistedAndLevelUpSuccessors) {
     removed = sourceOp->removeAndLevelUpChildren(filterOp4);
     EXPECT_FALSE(removed);
     children = sourceOp->getChildren();
-    EXPECT_EQ(children.size(), 1);
+    EXPECT_EQ(children.size(), 1U);
     EXPECT_TRUE(children[0]->equal(filterOp1));
 }
 
@@ -688,7 +688,7 @@ TEST_F(LogicalOperatorNodeTest, removeExistedSblingAndLevelUpSuccessors) {
     removed = sourceOp->removeAndLevelUpChildren(filterOp1);
     EXPECT_FALSE(removed);
     children = sourceOp->getChildren();
-    EXPECT_EQ(children.size(), 2);
+    EXPECT_EQ(children.size(), 2U);
     EXPECT_TRUE(children[0]->equal(filterOp1));
     EXPECT_TRUE(children[1]->equal(filterOp3));
 }
@@ -712,8 +712,8 @@ TEST_F(LogicalOperatorNodeTest, clear) {
     filterOp2->addChild(filterOp3);
     parents = filterOp2->getParents();
     children = filterOp2->getChildren();
-    EXPECT_EQ(children.size(), 1);
-    EXPECT_EQ(parents.size(), 1);
+    EXPECT_EQ(children.size(), 1U);
+    EXPECT_EQ(parents.size(), 1U);
 
     filterOp2->clear();
     parents = filterOp2->getParents();
