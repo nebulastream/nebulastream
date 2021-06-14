@@ -138,7 +138,7 @@ else (NES_LOGGING_LEVEL)
 endif (NES_LOGGING_LEVEL)
 
 # Set Optimization Flags
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Werror=extra -Werror=all -Werror=return-type -Werror=return-stack-address -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=all -Werror=return-type -Werror=return-stack-address -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3 -DNES_RELEASE_MODE=1")
 include(cmake/Sanitizers.cmake)
@@ -153,7 +153,10 @@ if (ENABLE_IWYU)
 endif()
 
 if (${ENABLE_CLANG_TIDY})
+    message(STATUS "clang tidy enabled")
     set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+else()
+    message(STATUS "clang tidy not enabled")
 endif()
 
 if (NES_BUILD_BENCHMARKS)
