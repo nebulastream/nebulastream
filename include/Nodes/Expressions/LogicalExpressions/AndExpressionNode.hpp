@@ -29,8 +29,8 @@ class AndExpressionNode : public LogicalBinaryExpressionNode {
     /**
     * @brief Create a new AND expression
     */
-    static ExpressionNodePtr create(ExpressionNodePtr const & left, ExpressionNodePtr const & right);
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     /**
      * @brief Infers the stamp of this logical AND expression node.

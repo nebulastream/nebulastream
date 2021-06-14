@@ -200,19 +200,21 @@ class CCodeGenerator : public CodeGenerator {
   private:
     CompilerPtr compiler;
 
-  
     static BinaryOperatorStatement getBuffer(const VariableDeclaration& tupleBufferVariable);
     VariableDeclaration
     getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
     static BinaryOperatorStatement getWatermark(const VariableDeclaration& tupleBufferVariable);
     static BinaryOperatorStatement getOriginId(const VariableDeclaration& tupleBufferVariable);
 
-    TypeCastExprStatement getTypedBuffer(const VariableDeclaration& tupleBufferVariable, const StructDeclaration& structDeclaration);
+    TypeCastExprStatement getTypedBuffer(const VariableDeclaration& tupleBufferVariable,
+                                         const StructDeclaration& structDeclaration);
     static BinaryOperatorStatement getBufferSize(const VariableDeclaration& tupleBufferVariable);
     static BinaryOperatorStatement setNumberOfTuples(const VariableDeclaration& tupleBufferVariable,
                                                      const VariableDeclaration& numberOfResultTuples);
-    BinaryOperatorStatement setWatermark(const VariableDeclaration& tupleBufferVariable, const VariableDeclaration& inputBufferVariable);
-    BinaryOperatorStatement setOriginId(const VariableDeclaration& tupleBufferVariable, const VariableDeclaration& inputBufferVariable);
+    BinaryOperatorStatement setWatermark(const VariableDeclaration& tupleBufferVariable,
+                                         const VariableDeclaration& inputBufferVariable);
+    BinaryOperatorStatement setOriginId(const VariableDeclaration& tupleBufferVariable,
+                                        const VariableDeclaration& inputBufferVariable);
 
     static BinaryOperatorStatement allocateTupleBuffer(const VariableDeclaration& pipelineContext);
     static BinaryOperatorStatement emitTupleBuffer(const VariableDeclaration& pipelineContext,
@@ -224,9 +226,10 @@ class CCodeGenerator : public CodeGenerator {
 
     static StructDeclaration getStructDeclarationFromSchema(const std::string& structName, const SchemaPtr& schema);
 
-    BinaryOperatorStatement getAggregationWindowHandler(const VariableDeclaration& pipelineContextVariable,
-                                                        DataTypePtr keyType,
-                                                        const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor);
+    BinaryOperatorStatement
+    getAggregationWindowHandler(const VariableDeclaration& pipelineContextVariable,
+                                DataTypePtr keyType,
+                                const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor);
 
     BinaryOperatorStatement getJoinWindowHandler(const VariableDeclaration& pipelineContextVariable,
                                                  DataTypePtr KeyType,
@@ -241,7 +244,8 @@ class CCodeGenerator : public CodeGenerator {
     static BinaryOperatorStatement getWindowManager(const VariableDeclaration&);
 
     void generateCodeForWatermarkUpdaterWindow(const PipelineContextPtr& context, const VariableDeclaration& handler);
-    void generateCodeForWatermarkUpdaterJoin(const PipelineContextPtr& context, const VariableDeclaration& handler, bool leftSide);
+    void
+    generateCodeForWatermarkUpdaterJoin(const PipelineContextPtr& context, const VariableDeclaration& handler, bool leftSide);
 
     void generateCodeForAggregationInitialization(const BlockScopeStatementPtr& setupScope,
                                                   const VariableDeclaration& executableAggregation,
@@ -251,8 +255,9 @@ class CCodeGenerator : public CodeGenerator {
 
     StructDeclaration getStructDeclarationFromWindow(std::string structName);
 
-    VariableDeclaration
-    getJoinOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t joinOperatorIndex);
+    VariableDeclaration getJoinOperatorHandler(const PipelineContextPtr& context,
+                                               const VariableDeclaration& tupleBufferVariable,
+                                               uint64_t joinOperatorIndex);
 };
 }// namespace QueryCompilation
 }// namespace NES

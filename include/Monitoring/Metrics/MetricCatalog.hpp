@@ -44,7 +44,6 @@ class MetricCatalog {
   private:
     explicit MetricCatalog(std::map<MetricValueType, Metric> metrics);
 
-  
     std::map<MetricValueType, Metric> metricValueTypeToMetricMap;
 };
 

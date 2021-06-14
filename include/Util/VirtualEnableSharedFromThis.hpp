@@ -20,13 +20,14 @@
 
 namespace NES::detail {
 /// base class for enabling enable_shared_from_this in classes with multiple super-classes that inherit enable_shared_from_this
-template <bool isNoexceptDestructible>
-struct virtual_enable_shared_from_this_base : std::enable_shared_from_this<virtual_enable_shared_from_this_base<isNoexceptDestructible>> {
-    virtual ~virtual_enable_shared_from_this_base() noexcept(isNoexceptDestructible)= default;
+template<bool isNoexceptDestructible>
+struct virtual_enable_shared_from_this_base
+    : std::enable_shared_from_this<virtual_enable_shared_from_this_base<isNoexceptDestructible>> {
+    virtual ~virtual_enable_shared_from_this_base() noexcept(isNoexceptDestructible) = default;
 };
 
 /// concrete class for enabling enable_shared_from_this in classes with multiple super-classes that inherit enable_shared_from_this
-template<typename T, bool isNoexceptDestructible=true>
+template<typename T, bool isNoexceptDestructible = true>
 struct virtual_enable_shared_from_this : virtual virtual_enable_shared_from_this_base<isNoexceptDestructible> {
 
     ~virtual_enable_shared_from_this() noexcept(isNoexceptDestructible) override = default;
@@ -36,7 +37,8 @@ struct virtual_enable_shared_from_this : virtual virtual_enable_shared_from_this
     }
 
     std::weak_ptr<T> weak_from_this() {
-        return std::dynamic_pointer_cast<T>(virtual_enable_shared_from_this_base<isNoexceptDestructible>::weak_from_this().lock());
+        return std::dynamic_pointer_cast<T>(
+            virtual_enable_shared_from_this_base<isNoexceptDestructible>::weak_from_this().lock());
     }
 
     template<class Down>

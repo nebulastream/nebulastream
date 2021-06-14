@@ -65,7 +65,10 @@ Query& JoinCondition::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery.joinWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original joinWith() function
 }
 
-JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey, const ExpressionItem& onRightKey)
+JoinCondition::JoinCondition(const Query& subQueryRhs,
+                             Query& originalQuery,
+                             const ExpressionItem& onLeftKey,
+                             const ExpressionItem& onRightKey)
     : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey), onRightKey(onRightKey) {}
 
 }// namespace JoinOperatorBuilder

@@ -65,8 +65,7 @@ CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompi
     NES_DEBUG("Create default code generation phase");
     return CodeGenerationPhase::create();
 }
-LowerToExecutableQueryPlanPhasePtr
-DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) {
+LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) {
     NES_DEBUG("Create lower to executable query plan phase");
     auto sourceProvider = DataSourceProvider::create(options);
     auto sinkProvider = DataSinkProvider::create();

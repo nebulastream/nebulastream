@@ -66,7 +66,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      * @param other the source descriptor to compare against
      * @return true if type, schema, and memory area are equal
      */
-    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
 
     /**
      * @brief returns the the generator function

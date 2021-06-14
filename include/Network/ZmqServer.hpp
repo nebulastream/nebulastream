@@ -90,7 +90,6 @@ class ZmqServer : public boost::noncopyable {
      */
     void messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& barrier, int index);
 
-  
     const std::string hostname;
     const uint16_t port;
     const uint16_t numNetworkThreads;

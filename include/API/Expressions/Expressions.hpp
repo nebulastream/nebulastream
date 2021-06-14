@@ -59,8 +59,8 @@ class ExpressionItem {
     ExpressionItem(ValueTypePtr value);      //NOLINT(google-explicit-constructor)
     ExpressionItem(ExpressionNodePtr exp);
 
-    ExpressionItem(ExpressionItem const &) = default;
-    ExpressionItem(ExpressionItem &&) = default;
+    ExpressionItem(ExpressionItem const&) = default;
+    ExpressionItem(ExpressionItem&&) = default;
 
     FieldAssignmentExpressionNodePtr operator=(ExpressionItem);
     FieldAssignmentExpressionNodePtr operator=(ExpressionNodePtr);

@@ -31,7 +31,7 @@ class PhysicalFieldUtil {
      * @param dataType
      * @param bufferOffset offset in the underling buffer
      */
-    [[nodiscard]] static PhysicalFieldPtr createPhysicalField(PhysicalTypePtr const &physicalType, uint64_t bufferOffset);
+    [[nodiscard]] static PhysicalFieldPtr createPhysicalField(PhysicalTypePtr const& physicalType, uint64_t bufferOffset);
 };
 }// namespace NES::NodeEngine
 

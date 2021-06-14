@@ -106,7 +106,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @param other source descriptor.
      * @return true if both are the same.
      */
-    [[nodiscard]] virtual bool equal(SourceDescriptorPtr const &other) = 0;
+    [[nodiscard]] virtual bool equal(SourceDescriptorPtr const& other) = 0;
 
     /**
      * @brief Destructor

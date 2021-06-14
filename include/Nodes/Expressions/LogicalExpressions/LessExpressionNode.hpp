@@ -29,9 +29,9 @@ class LessExpressionNode : public LogicalBinaryExpressionNode {
     /**
     * @brief Create a new less expression
     */
-    static ExpressionNodePtr create(ExpressionNodePtr const &left, ExpressionNodePtr const &right);
+    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
 
-    bool equal(NodePtr const &rhs) const override;
+    bool equal(NodePtr const& rhs) const override;
 
     std::string toString() const override;
 

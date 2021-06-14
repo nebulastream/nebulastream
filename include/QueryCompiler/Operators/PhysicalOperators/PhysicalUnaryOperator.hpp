@@ -28,6 +28,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperatorNode {
   protected:
     PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
+
   public:
     ~PhysicalUnaryOperator() noexcept override = default;
 };

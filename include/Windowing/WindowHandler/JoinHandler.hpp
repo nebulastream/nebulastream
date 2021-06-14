@@ -283,7 +283,7 @@ class JoinHandler : public AbstractJoinHandler {
                 windowLenghtMs = window->getSize().getTime();
 
             } else if (windowType->isSlidingWindow()) {
-                auto *window = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
+                auto* window = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
                 windowLenghtMs = window->getSlide().getTime();
             } else {
                 NES_ASSERT(false, "Invalid window");

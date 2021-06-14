@@ -38,6 +38,7 @@ class IFStatement : public Statement {
     CompoundStatementPtr getCompoundStatement();
 
     ~IFStatement() override = default;
+
   private:
     const StatementPtr conditionalExpression;
     CompoundStatementPtr trueCaseStatement;

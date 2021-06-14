@@ -20,7 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <vector>
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 /**
  * @brief Declaration for a class in the generated code.
  */

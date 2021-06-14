@@ -28,7 +28,11 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  std::string clientId,
                                                  std::string user,
                                                  std::string topic) {
-    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema), std::move(serverAddress), std::move(clientId), std::move(user), std::move(topic)));
+    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema),
+                                                                       std::move(serverAddress),
+                                                                       std::move(clientId),
+                                                                       std::move(user),
+                                                                       std::move(topic)));
 }
 
 SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
@@ -37,8 +41,12 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  std::string clientId,
                                                  std::string user,
                                                  std::string topic) {
-    return std::make_shared<MQTTSourceDescriptor>(
-        MQTTSourceDescriptor(std::move(schema), std::move(logicalStreamName), std::move(serverAddress), std::move(clientId), std::move(user), std::move(topic)));
+    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema),
+                                                                       std::move(logicalStreamName),
+                                                                       std::move(serverAddress),
+                                                                       std::move(clientId),
+                                                                       std::move(user),
+                                                                       std::move(topic)));
 }
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
@@ -66,7 +74,7 @@ std::string MQTTSourceDescriptor::getUser() const { return user; }
 
 std::string MQTTSourceDescriptor::getTopic() const { return topic; }
 
-bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const &other) {
+bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 
     if (!other->instanceOf<MQTTSourceDescriptor>()) {
         return false;

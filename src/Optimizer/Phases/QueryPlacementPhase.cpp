@@ -38,8 +38,10 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
                                                    TopologyPtr topology,
                                                    TypeInferencePhasePtr typeInferencePhase,
                                                    StreamCatalogPtr streamCatalog) {
-    return std::make_shared<QueryPlacementPhase>(
-        QueryPlacementPhase(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), std::move(streamCatalog)));
+    return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase(std::move(globalExecutionPlan),
+                                                                     std::move(topology),
+                                                                     std::move(typeInferencePhase),
+                                                                     std::move(streamCatalog)));
 }
 
 bool QueryPlacementPhase::execute(const std::string& placementStrategy, QueryPlanPtr queryPlan) {

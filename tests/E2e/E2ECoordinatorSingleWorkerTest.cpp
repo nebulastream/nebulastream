@@ -16,16 +16,16 @@
 
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>
-#include <string>
-#include <unistd.h>
 #include <Util/TestUtils.hpp>
 #include <boost/process.hpp>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
 #include <cstdio>
+#include <gtest/gtest.h>
 #include <sstream>
+#include <string>
+#include <unistd.h>
 using namespace std;
 using namespace utility;
 // Common utilities like string conversions

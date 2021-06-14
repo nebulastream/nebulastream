@@ -20,7 +20,8 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 namespace NES::QueryCompilation {
 GeneratableDataTypePtr SharedPointerGen::createSharedPtrType(const GeneratableDataTypePtr& type) {
-    return NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("std::shared_ptr<" + type->getCode()->code_ + ">");
+    return NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("std::shared_ptr<" + type->getCode()->code_
+                                                                                  + ">");
 }
 
 StatementPtr SharedPointerGen::makeShared(const GeneratableDataTypePtr& type) {

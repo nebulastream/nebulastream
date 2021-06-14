@@ -28,9 +28,9 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
                                              uint64_t numberOfInputEdgesLeft,
                                              uint64_t numberOfInputEdgesRight)
     : leftJoinKeyType(std::move(leftJoinKeyType)), rightJoinKeyType(std::move(rightJoinKeyType)),
-      triggerPolicy(std::move(triggerPolicy)), triggerAction(std::move(triggerAction)),
-      windowType(std::move(windowType)), distributionType(std::move(distributionType)),
-      numberOfInputEdgesLeft(numberOfInputEdgesLeft), numberOfInputEdgesRight(numberOfInputEdgesRight) {
+      triggerPolicy(std::move(triggerPolicy)), triggerAction(std::move(triggerAction)), windowType(std::move(windowType)),
+      distributionType(std::move(distributionType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
+      numberOfInputEdgesRight(numberOfInputEdgesRight) {
 
     NES_ASSERT(this->leftJoinKeyType, "Invalid left join key type");
     NES_ASSERT(this->rightJoinKeyType, "Invalid right join key type");

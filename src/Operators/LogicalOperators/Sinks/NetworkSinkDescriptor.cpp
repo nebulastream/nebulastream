@@ -29,10 +29,11 @@ SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::seconds waitTime,
                                                 uint32_t retryTimes) {
-    return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation), nesPartition, waitTime, retryTimes));
+    return std::make_shared<NetworkSinkDescriptor>(
+        NetworkSinkDescriptor(std::move(nodeLocation), nesPartition, waitTime, retryTimes));
 }
 
-bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const &other) {
+bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     if (!other->instanceOf<NetworkSinkDescriptor>()) {
         return false;
     }

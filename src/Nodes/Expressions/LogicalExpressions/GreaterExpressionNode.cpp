@@ -25,7 +25,7 @@ ExpressionNodePtr GreaterExpressionNode::create(const ExpressionNodePtr& left, c
     return greater;
 }
 
-bool GreaterExpressionNode::equal(NodePtr const &rhs) const {
+bool GreaterExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<GreaterExpressionNode>()) {
         auto other = rhs->as<GreaterExpressionNode>();
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());

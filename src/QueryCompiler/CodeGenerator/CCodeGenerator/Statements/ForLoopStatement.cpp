@@ -31,7 +31,7 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
                                    std::vector<StatementPtr> loop_body)
     : varDeclaration(std::move(varDeclaration)), condition(std::move(condition)), advance(std::move(advance)),
       body(new CompoundStatement()) {
-    for (auto const &stmt : loop_body) {
+    for (auto const& stmt : loop_body) {
         if (stmt) {
             body->addStatement(stmt);
         }
@@ -53,7 +53,7 @@ CodeExpressionPtr ForLoopStatement::getCode() const {
     return std::make_shared<CodeExpression>(code.str());
 }
 
-void ForLoopStatement::addStatement(StatementPtr const &stmt) {
+void ForLoopStatement::addStatement(StatementPtr const& stmt) {
     if (stmt) {
         body->addStatement(stmt);
     }

@@ -42,7 +42,6 @@ class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUn
 
     ~PhysicalJoinBuildOperator() noexcept override = default;
 
-
     std::string toString() const override;
     OperatorNodePtr copy() override;
 

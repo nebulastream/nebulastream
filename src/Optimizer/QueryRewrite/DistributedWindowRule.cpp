@@ -68,7 +68,8 @@ void DistributeWindowRule::createCentralWindowOperator(const WindowOperatorNodeP
     windowOp->replace(newWindowOp);
 }
 
-void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator, const QueryPlanPtr& queryPlan) {
+void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator,
+                                                           const QueryPlanPtr& queryPlan) {
     // To distribute the window operator we replace the current window operator with 1 WindowComputationOperator (performs the final aggregate)
     // and n SliceCreationOperators.
     // To this end, we have to a the window definitions in the following way:

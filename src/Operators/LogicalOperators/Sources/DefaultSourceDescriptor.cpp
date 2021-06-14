@@ -45,7 +45,7 @@ DefaultSourceDescriptor::create(SchemaPtr schema, std::string streamName, uint64
     return std::make_shared<DefaultSourceDescriptor>(
         DefaultSourceDescriptor(std::move(schema), std::move(streamName), numbersOfBufferToProduce, frequency));
 }
-bool DefaultSourceDescriptor::equal(SourceDescriptorPtr const &other) {
+bool DefaultSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<DefaultSourceDescriptor>()) {
         return false;
     }

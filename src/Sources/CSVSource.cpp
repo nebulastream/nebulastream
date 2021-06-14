@@ -34,8 +34,8 @@ namespace NES {
 CSVSource::CSVSource(SchemaPtr schema,
                      NodeEngine::BufferManagerPtr bufferManager,
                      NodeEngine::QueryManagerPtr queryManager,
-                     std::string const &filePath,
-                     std::string const &delimiter,
+                     std::string const& filePath,
+                     std::string const& delimiter,
                      uint64_t numberOfTuplesToProducePerBuffer,
                      uint64_t numBuffersToProcess,
                      uint64_t frequency,
@@ -44,9 +44,15 @@ CSVSource::CSVSource(SchemaPtr schema,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(schema, std::move(bufferManager), std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode, std::move(successors)),
-      filePath(filePath), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      delimiter(delimiter), skipHeader(skipHeader) {
+    : DataSource(schema,
+                 std::move(bufferManager),
+                 std::move(queryManager),
+                 operatorId,
+                 numSourceLocalBuffers,
+                 gatheringMode,
+                 std::move(successors)),
+      filePath(filePath), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), delimiter(delimiter),
+      skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = std::chrono::milliseconds(frequency);
     tupleSize = schema->getSchemaSizeInBytes();

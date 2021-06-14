@@ -18,13 +18,13 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 
 namespace NES {
-ConstantValueExpressionNode::ConstantValueExpressionNode(ValueTypePtr const &constantValue)
+ConstantValueExpressionNode::ConstantValueExpressionNode(ValueTypePtr const& constantValue)
     : ExpressionNode(constantValue->dataType), constantValue(constantValue){};
 
 ConstantValueExpressionNode::ConstantValueExpressionNode(ConstantValueExpressionNode* other)
     : ExpressionNode(other->constantValue->dataType), constantValue(other->constantValue) {}
 
-bool ConstantValueExpressionNode::equal(NodePtr const &rhs) const {
+bool ConstantValueExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<ConstantValueExpressionNode>()) {
         auto otherConstantValueNode = rhs->as<ConstantValueExpressionNode>();
         return otherConstantValueNode->constantValue->isEquals(constantValue);
@@ -34,7 +34,7 @@ bool ConstantValueExpressionNode::equal(NodePtr const &rhs) const {
 
 std::string ConstantValueExpressionNode::toString() const { return "ConstantValue(" + constantValue->toString() + ")"; }
 
-ExpressionNodePtr ConstantValueExpressionNode::create(ValueTypePtr const &constantValue) {
+ExpressionNodePtr ConstantValueExpressionNode::create(ValueTypePtr const& constantValue) {
     return std::make_shared<ConstantValueExpressionNode>(ConstantValueExpressionNode(constantValue));
 }
 

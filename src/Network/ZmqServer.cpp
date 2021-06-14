@@ -102,7 +102,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
     try {
         NES_DEBUG("ZmqServer: Trying to bind on "
                   << "tcp://" + hostname + ":" + std::to_string(port));
-        frontendSocket.set(zmq::sockopt::linger, -1); //< option of linger time until port is closed
+        frontendSocket.set(zmq::sockopt::linger, -1);//< option of linger time until port is closed
         frontendSocket.bind("tcp://" + hostname + ":" + std::to_string(port));
         dispatcherSocket.bind(dispatcherPipe);
         NES_DEBUG("ZmqServer: Created socket on " << hostname << ":" << port);
@@ -179,10 +179,10 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
             zmq::message_t headerEnvelope;
             auto const identityEnvelopeReceived = dispatcherSocket.recv(identityEnvelope);
             auto const headerEnvelopeReceived = dispatcherSocket.recv(headerEnvelope);
-            auto *msgHeader = headerEnvelope.data<Messages::MessageHeader>();
+            auto* msgHeader = headerEnvelope.data<Messages::MessageHeader>();
 
-            if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER
-                || !identityEnvelopeReceived.has_value() || !headerEnvelopeReceived.has_value()) {
+            if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER || !identityEnvelopeReceived.has_value()
+                || !headerEnvelopeReceived.has_value()) {
                 // TODO handle error -- need to discuss how we handle errors on the node engine
                 NES_THROW_RUNTIME_ERROR("ZmqServer: Stream is corrupted");
             }
@@ -216,7 +216,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto optRecvStatus = dispatcherSocket.recv(bufferHeaderMsg, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
                     // parse buffer header
-                    auto *bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
+                    auto* bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
                     auto nesPartition = *identityEnvelope.data<NesPartition>();
 
                     NES_TRACE("ZmqServer: DataBuffer received from origin=" << bufferHeader->originId << " and NesPartition="

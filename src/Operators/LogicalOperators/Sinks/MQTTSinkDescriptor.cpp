@@ -26,7 +26,9 @@ MQTTSinkDescriptor::MQTTSinkDescriptor(std::string&& address,
                                        uint64_t messageDelay,
                                        const ServiceQualities qualityOfService,
                                        bool asynchronousClient)
-    : address(std::move(address)), clientId(std::move(clientId)), topic(std::move(topic)), user(std::move(user)), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient) {}
+    : address(std::move(address)), clientId(std::move(clientId)), topic(std::move(topic)), user(std::move(user)),
+      maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService),
+      asynchronousClient(asynchronousClient) {}
 
 std::string MQTTSinkDescriptor::getAddress() const { return address; }
 
@@ -54,15 +56,21 @@ SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                              uint64_t messageDelay,
                                              ServiceQualities qualityOfService,
                                              bool asynchronousClient,
-                                             std::string &&clientId) {
-    return std::make_shared<MQTTSinkDescriptor>(std::move(address), std::move(clientId), std::move(topic),
-                                                std::move(user), maxBufferedMSGs, timeUnit, messageDelay,
-                                                qualityOfService, asynchronousClient);
+                                             std::string&& clientId) {
+    return std::make_shared<MQTTSinkDescriptor>(std::move(address),
+                                                std::move(clientId),
+                                                std::move(topic),
+                                                std::move(user),
+                                                maxBufferedMSGs,
+                                                timeUnit,
+                                                messageDelay,
+                                                qualityOfService,
+                                                asynchronousClient);
 }
 
 std::string MQTTSinkDescriptor::toString() { return "MQTTSinkDescriptor()"; }
 
-bool MQTTSinkDescriptor::equal(SinkDescriptorPtr const &other) {
+bool MQTTSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     if (!other->instanceOf<MQTTSinkDescriptor>()) {
         return false;
     }

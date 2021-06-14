@@ -150,7 +150,10 @@ class TestHarness {
          * @param physical stream name
          * @param parentId id of the parent to connect
          */
-    void addMemorySource(const std::string& logicalStreamName, const SchemaPtr& schema, std::string physicalStreamName, uint64_t parentId) {
+    void addMemorySource(const std::string& logicalStreamName,
+                         const SchemaPtr& schema,
+                         std::string physicalStreamName,
+                         uint64_t parentId) {
         // set the localWorkerRpcPort and localWorkerZmqPort based on the number of workers
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);

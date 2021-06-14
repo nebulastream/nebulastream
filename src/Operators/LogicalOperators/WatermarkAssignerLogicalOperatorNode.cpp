@@ -22,7 +22,7 @@
 namespace NES {
 
 WatermarkAssignerLogicalOperatorNode::WatermarkAssignerLogicalOperatorNode(
-    Windowing::WatermarkStrategyDescriptorPtr const &watermarkStrategyDescriptor,
+    Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor,
     OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), watermarkStrategyDescriptor(watermarkStrategyDescriptor) {}
 
@@ -36,11 +36,11 @@ std::string WatermarkAssignerLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool WatermarkAssignerLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
+bool WatermarkAssignerLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<WatermarkAssignerLogicalOperatorNode>()->getId() == id;
 }
 
-bool WatermarkAssignerLogicalOperatorNode::equal(NodePtr const &rhs) const {
+bool WatermarkAssignerLogicalOperatorNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         auto watermarkAssignerOperator = rhs->as<WatermarkAssignerLogicalOperatorNode>();
         return watermarkStrategyDescriptor->equal(watermarkAssignerOperator->getWatermarkStrategyDescriptor());

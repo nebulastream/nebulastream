@@ -204,7 +204,9 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param graceful hard or soft termination
      * @return true if it went through
      */
-    bool addEndOfStream(const DataSourcePtr& source, bool graceful = true) { return addEndOfStream(source->getOperatorId(), graceful); }
+    bool addEndOfStream(const DataSourcePtr& source, bool graceful = true) {
+        return addEndOfStream(source->getOperatorId(), graceful);
+    }
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source

@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type);
 
 class UnaryOperatorStatement : public ExpressionStatment {

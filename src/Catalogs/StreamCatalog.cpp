@@ -59,7 +59,7 @@ void StreamCatalog::addDefaultStreams() {
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 }
-StreamCatalog::StreamCatalog()  {
+StreamCatalog::StreamCatalog() {
     NES_DEBUG("StreamCatalog: construct stream catalog");
     addDefaultStreams();
     NES_DEBUG("StreamCatalog: construct stream catalog successfully");
@@ -161,7 +161,9 @@ bool StreamCatalog::removeAllPhysicalStreams(const std::string&) {
     NES_NOT_IMPLEMENTED();
 }
 
-bool StreamCatalog::removePhysicalStream(const std::string& logicalStreamName, const std::string& physicalStreamName, std::uint64_t hashId) {
+bool StreamCatalog::removePhysicalStream(const std::string& logicalStreamName,
+                                         const std::string& physicalStreamName,
+                                         std::uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName);
 

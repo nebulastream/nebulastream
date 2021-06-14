@@ -55,7 +55,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     bool isInternal() const;
     void setInternal(bool internal);
 
-    [[nodiscard]] bool equal(SinkDescriptorPtr const &other) override;
+    [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
     std::string toString() override;
 
   private:

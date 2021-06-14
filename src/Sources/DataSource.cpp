@@ -56,7 +56,7 @@ DataSource::DataSource(const SchemaPtr& pSchema,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
-    :  queryManager(std::move(queryManager)), globalBufferManager(std::move(bufferManager)),
+    : queryManager(std::move(queryManager)), globalBufferManager(std::move(bufferManager)),
       executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(pSchema),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
 
@@ -128,7 +128,7 @@ bool DataSource::stop(bool graceful) {
                 // TODO this is only a workaround and will be replaced by the network stack upate
                 if (type == 0) {
                     NES_WARNING("DataSource::stop source hard cause of zmq_source");
-                    auto *ptr = dynamic_cast<ZmqSource*>(this);
+                    auto* ptr = dynamic_cast<ZmqSource*>(this);
                     ptr->disconnect();
                 }
 

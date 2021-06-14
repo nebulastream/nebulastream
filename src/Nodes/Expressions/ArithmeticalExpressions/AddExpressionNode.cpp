@@ -23,13 +23,13 @@ AddExpressionNode::AddExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpr
 
 AddExpressionNode::AddExpressionNode(AddExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr AddExpressionNode::create(ExpressionNodePtr const & left, ExpressionNodePtr const &right) {
+ExpressionNodePtr AddExpressionNode::create(ExpressionNodePtr const& left, ExpressionNodePtr const& right) {
     auto addNode = std::make_shared<AddExpressionNode>(left->getStamp());
     addNode->setChildren(left, right);
     return addNode;
 }
 
-bool AddExpressionNode::equal(NodePtr const &rhs) const {
+bool AddExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<AddExpressionNode>()) {
         auto otherAddNode = rhs->as<AddExpressionNode>();
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());

@@ -23,10 +23,10 @@ namespace NES {
 
 class CentralWindowOperator : public WindowOperatorNode {
   public:
-    CentralWindowOperator(Windowing::LogicalWindowDefinitionPtr const &windowDefinition, OperatorId id);
+    CentralWindowOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
 
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
     bool inferSchema() override;

@@ -27,7 +27,7 @@ AbsExpressionNode::AbsExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpre
 
 AbsExpressionNode::AbsExpressionNode(AbsExpressionNode* other) : ArithmeticalUnaryExpressionNode(other) {}
 
-ExpressionNodePtr AbsExpressionNode::create(ExpressionNodePtr const &child) {
+ExpressionNodePtr AbsExpressionNode::create(ExpressionNodePtr const& child) {
     auto absNode = std::make_shared<AbsExpressionNode>(child->getStamp());
     absNode->setChild(child);
     return absNode;
@@ -51,7 +51,7 @@ void AbsExpressionNode::inferStamp(SchemaPtr schema) {
     NES_TRACE("AbsExpressionNode: increased the lower bound of stamp to 0: " << toString());
 }
 
-bool AbsExpressionNode::equal(NodePtr const &rhs) const {
+bool AbsExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<AbsExpressionNode>()) {
         auto otherAbsNode = rhs->as<AbsExpressionNode>();
         return child()->equal(otherAbsNode->child());

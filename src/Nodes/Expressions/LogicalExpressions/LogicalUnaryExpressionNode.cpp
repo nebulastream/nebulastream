@@ -24,7 +24,7 @@ LogicalUnaryExpressionNode::LogicalUnaryExpressionNode()
 
 LogicalUnaryExpressionNode::LogicalUnaryExpressionNode(LogicalUnaryExpressionNode* other) : UnaryExpressionNode(other) {}
 
-bool LogicalUnaryExpressionNode::equal(NodePtr const &rhs) const {
+bool LogicalUnaryExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<LogicalUnaryExpressionNode>()) {
         auto other = rhs->as<LogicalUnaryExpressionNode>();
         return this->getChildren()[0]->equal(other->getChildren()[0]);

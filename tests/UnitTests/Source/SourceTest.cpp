@@ -650,7 +650,7 @@ TEST_F(SourceTest, testLambdaSource) {
                     + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
             }
         };
-        auto *ysbRecords = buffer.getBuffer<Record>();
+        auto* ysbRecords = buffer.getBuffer<Record>();
         for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
             //            auto record = ysbRecords[i];
             ysbRecords[i].userId = i;
@@ -678,7 +678,7 @@ TEST_F(SourceTest, testLambdaSource) {
     lambdaSource->open();
     while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = lambdaSource->receiveData();
-        auto *ysbRecords = optBuf.value().getBuffer<Record>();
+        auto* ysbRecords = optBuf.value().getBuffer<Record>();
 
         for (uint64_t i = 0; i < numberOfTuplesToProduce; ++i) {
             std::cout << "Read rec i=" << i << " content=" << ysbRecords[i].toString() << std::endl;
@@ -798,7 +798,7 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
                     + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
             }
         };
-        auto *ysbRecords = buffer.getBuffer<Record>();
+        auto* ysbRecords = buffer.getBuffer<Record>();
         for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
             //            auto record = ysbRecords[i];
             ysbRecords[i].userId = i;
@@ -826,7 +826,7 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
     lambdaSource->open();
     while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = lambdaSource->receiveData();
-        auto *ysbRecords = optBuf.value().getBuffer<Record>();
+        auto* ysbRecords = optBuf.value().getBuffer<Record>();
 
         for (uint64_t i = 0ull; i < numberOfTuplesToProduce; ++i) {
             std::cout << "Read rec i=" << i << " content=" << ysbRecords[i].toString() << std::endl;
@@ -873,7 +873,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
             uint64_t timestamp;
         };
         static int calls = 0;
-        auto *records = buffer.getBuffer<Record>();
+        auto* records = buffer.getBuffer<Record>();
         for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
             records[u].id = 1;
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
@@ -882,7 +882,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
             //            records[u].timestamp = time(0);
         }
         calls++;
-   };
+    };
 
     wrk1->registerLogicalStream("input1", testSchemaFileName);
 
@@ -1011,7 +1011,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
             uint64_t timestamp;
         };
 
-        auto *records = buffer.getBuffer<Record>();
+        auto* records = buffer.getBuffer<Record>();
         auto ts = time(nullptr);
         for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
             records[u].id = u;
@@ -1019,7 +1019,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
             records[u].value = u % 10;
             records[u].timestamp = ts;
         }
-           };
+    };
 
     auto func2 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
@@ -1028,7 +1028,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
             uint64_t timestamp;
         };
 
-        auto *records = buffer.getBuffer<Record>();
+        auto* records = buffer.getBuffer<Record>();
         auto ts = time(nullptr);
         for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
             records[u].id = u;
@@ -1036,7 +1036,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
             records[u].value = u % 10;
             records[u].timestamp = ts;
         }
-           };
+    };
 
     wrk1->registerLogicalStream("input1", testSchemaFileName);
     wrk1->registerLogicalStream("input2", testSchemaFileName);
@@ -1108,7 +1108,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
                 uint64_t timestamp;
             };
 
-            auto *records = buffer.getBuffer<Record>();
+            auto* records = buffer.getBuffer<Record>();
             auto ts = time(nullptr);
             for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
                 records[u].id = u;
@@ -1116,7 +1116,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
                 records[u].value = u % 10;
                 records[u].timestamp = ts;
             }
-                   };
+        };
 
         NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create("LambdaSource",
                                                                                            "test_stream" + std::to_string(i),

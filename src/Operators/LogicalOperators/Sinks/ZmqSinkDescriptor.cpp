@@ -30,7 +30,7 @@ ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port, bool inter
 const std::string& ZmqSinkDescriptor::getHost() const { return host; }
 uint16_t ZmqSinkDescriptor::getPort() const { return port; }
 
-bool ZmqSinkDescriptor::equal(SinkDescriptorPtr const &other) {
+bool ZmqSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     if (!other->instanceOf<ZmqSinkDescriptor>()) {
         return false;
     }

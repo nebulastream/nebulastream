@@ -29,7 +29,7 @@ ExpressionNodePtr SubExpressionNode::create(const ExpressionNodePtr& left, const
     return subNode;
 }
 
-bool SubExpressionNode::equal(NodePtr const &rhs) const {
+bool SubExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<SubExpressionNode>()) {
         auto otherSubNode = rhs->as<SubExpressionNode>();
         return getLeft()->equal(otherSubNode->getLeft()) && getRight()->equal(otherSubNode->getRight());

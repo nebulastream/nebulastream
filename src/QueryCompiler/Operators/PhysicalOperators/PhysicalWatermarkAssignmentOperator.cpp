@@ -42,7 +42,10 @@ PhysicalOperatorPtr
 PhysicalWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
                                             SchemaPtr outputSchema,
                                             Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
+    return create(UtilityFunctions::getNextOperatorId(),
+                  std::move(inputSchema),
+                  std::move(outputSchema),
+                  std::move(watermarkStrategyDescriptor));
 }
 
 std::string PhysicalWatermarkAssignmentOperator::toString() const { return "PhysicalWatermarkAssignmentOperator"; }

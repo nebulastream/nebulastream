@@ -97,7 +97,7 @@ void OperatorPipeline::clearSuccessors() {
     successorPipelines.clear();
 }
 
-std::vector<OperatorPipelinePtr> const &OperatorPipeline::getSuccessors() const { return successorPipelines; }
+std::vector<OperatorPipelinePtr> const& OperatorPipeline::getSuccessors() const { return successorPipelines; }
 
 void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     if (!this->isOperatorPipeline() && this->hasOperators()) {

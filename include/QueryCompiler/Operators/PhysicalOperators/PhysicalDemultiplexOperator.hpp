@@ -34,8 +34,8 @@ namespace PhysicalOperators {
  */
 class PhysicalDemultiplexOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalDemultiplexOperator(OperatorId id, SchemaPtr const &inputSchema);
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr const &inputSchema);
+    PhysicalDemultiplexOperator(OperatorId id, SchemaPtr const& inputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr const& inputSchema);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema);
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;

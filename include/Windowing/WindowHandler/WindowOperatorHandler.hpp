@@ -48,8 +48,9 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
     * @param windowHandler pre initialized window handler
     * @return WindowOperatorHandlerPtr
     */
-    static WindowOperatorHandlerPtr
-    create(const LogicalWindowDefinitionPtr& windowDefinition, const SchemaPtr& resultSchema, const AbstractWindowHandlerPtr& windowHandler);
+    static WindowOperatorHandlerPtr create(const LogicalWindowDefinitionPtr& windowDefinition,
+                                           const SchemaPtr& resultSchema,
+                                           const AbstractWindowHandlerPtr& windowHandler);
 
     /**
      * @brief Sets the window handler

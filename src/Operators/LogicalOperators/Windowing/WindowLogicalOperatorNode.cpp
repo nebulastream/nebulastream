@@ -36,14 +36,14 @@ std::string WindowLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool WindowLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
+bool WindowLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     bool eq = equal(rhs);
     bool idCmp = rhs->as<WindowLogicalOperatorNode>()->getId() == id;
     bool typeInfer = rhs->instanceOf<CentralWindowOperator>();
     return eq && idCmp && !typeInfer;
 }
 
-bool WindowLogicalOperatorNode::equal(NodePtr const &rhs) const { return rhs->instanceOf<WindowLogicalOperatorNode>(); }
+bool WindowLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<WindowLogicalOperatorNode>(); }
 
 OperatorNodePtr WindowLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition, id);

@@ -113,7 +113,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(const Operato
         auto projectionDetail = SerializableOperator_ProjectionDetails();
         auto projectionOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
         for (auto& exp : projectionOperator->getExpressions()) {
-            auto *mutableExpression = projectionDetail.mutable_expression()->Add();
+            auto* mutableExpression = projectionDetail.mutable_expression()->Add();
             ExpressionSerializationUtil::serializeExpression(exp, mutableExpression);
         }
         serializedOperator->mutable_details()->PackFrom(projectionDetail);
@@ -203,7 +203,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(const Operato
 
     // serialize and append children if the node has any
     for (const auto& child : operatorNode->getChildren()) {
-        auto *serializedChild = serializedOperator->add_children();
+        auto* serializedChild = serializedOperator->add_children();
         // serialize this child
         serializeOperator(child->as<OperatorNode>(), serializedChild);
     }
@@ -337,7 +337,8 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     return operatorNode;
 }
 
-SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& windowOperator) {
+SerializableOperator_WindowDetails
+OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& windowOperator) {
     auto windowDetails = SerializableOperator_WindowDetails();
     auto windowDefinition = windowOperator->getWindowDefinition();
 
@@ -378,7 +379,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     }
 
     // serialize aggregation
-    auto *windowAggregation = windowDetails.mutable_windowaggregation();
+    auto* windowAggregation = windowDetails.mutable_windowaggregation();
     ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->as(),
                                                      windowAggregation->mutable_asfield());
     ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->on(),
@@ -403,7 +404,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
         default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
     }
 
-    auto *windowTrigger = windowDetails.mutable_triggerpolicy();
+    auto* windowTrigger = windowDetails.mutable_triggerpolicy();
 
     switch (windowDefinition->getTriggerPolicy()->getPolicyType()) {
         case Windowing::TriggerType::triggerOnTime: {
@@ -430,7 +431,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
         }
     }
 
-    auto *windowAction = windowDetails.mutable_action();
+    auto* windowAction = windowDetails.mutable_action();
     switch (windowDefinition->getTriggerAction()->getActionType()) {
         case Windowing::ActionType::WindowAggregationTriggerAction: {
             windowAction->set_type(SerializableOperator_WindowDetails_TriggerAction_Type_Complete);
@@ -463,7 +464,8 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     return windowDetails;
 }
 
-SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNodePtr& joinOperator) {
+SerializableOperator_JoinDetails
+OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNodePtr& joinOperator) {
     auto joinDetails = SerializableOperator_JoinDetails();
     auto joinDefinition = joinOperator->getJoinDefinition();
 
@@ -498,7 +500,7 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
     }
 
-    auto *windowTrigger = joinDetails.mutable_triggerpolicy();
+    auto* windowTrigger = joinDetails.mutable_triggerpolicy();
     switch (joinDefinition->getTriggerPolicy()->getPolicyType()) {
         case Windowing::TriggerType::triggerOnTime: {
             windowTrigger->set_type(SerializableOperator_JoinDetails_TriggerPolicy_Type_triggerOnTime);
@@ -524,7 +526,7 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
         }
     }
 
-    auto *windowAction = joinDetails.mutable_action();
+    auto* windowAction = joinDetails.mutable_action();
     switch (joinDefinition->getTriggerAction()->getActionType()) {
         case Join::JoinActionType::LazyNestedLoopJoin: {
             windowAction->set_type(SerializableOperator_JoinDetails_TriggerAction_Type_LazyNestedLoop);
@@ -850,7 +852,8 @@ OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNo
     return sourceDetails;
 }
 
-SerializableOperator_SinkDetails OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperatorNodePtr& sinkOperator) {
+SerializableOperator_SinkDetails
+OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperatorNodePtr& sinkOperator) {
     auto sinkDetails = SerializableOperator_SinkDetails();
     auto sinkDescriptor = sinkOperator->getSinkDescriptor();
     serializeSinkDescriptor(sinkDescriptor, &sinkDetails);
@@ -1209,14 +1212,14 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor();
         //set details of NesPartition
-        auto *serializedNesPartition = serializedSinkDescriptor.mutable_nespartition();
+        auto* serializedNesPartition = serializedSinkDescriptor.mutable_nespartition();
         auto nesPartition = networkSinkDescriptor->getNesPartition();
         serializedNesPartition->set_queryid(nesPartition.getQueryId());
         serializedNesPartition->set_operatorid(nesPartition.getOperatorId());
         serializedNesPartition->set_partitionid(nesPartition.getPartitionId());
         serializedNesPartition->set_subpartitionid(nesPartition.getSubpartitionId());
         //set details of NodeLocation
-        auto *serializedNodeLocation = serializedSinkDescriptor.mutable_nodelocation();
+        auto* serializedNodeLocation = serializedSinkDescriptor.mutable_nodelocation();
         auto nodeLocation = networkSinkDescriptor->getNodeLocation();
         serializedNodeLocation->set_nodeid(nodeLocation.getNodeId());
         serializedNodeLocation->set_hostname(nodeLocation.getHostname());
@@ -1340,8 +1343,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
     }
 }
 
-SerializableOperator_WatermarkStrategyDetails
-OperatorSerializationUtil::serializeWatermarkAssignerOperator(const WatermarkAssignerLogicalOperatorNodePtr& watermarkAssignerOperator) {
+SerializableOperator_WatermarkStrategyDetails OperatorSerializationUtil::serializeWatermarkAssignerOperator(
+    const WatermarkAssignerLogicalOperatorNodePtr& watermarkAssignerOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize watermark assigner operator ");
 
     auto watermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();

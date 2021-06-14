@@ -33,6 +33,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalOperator : public virtual OperatorNode {
   protected:
     explicit PhysicalOperator(OperatorId id);
+
   public:
     ~PhysicalOperator() noexcept = default;
 };

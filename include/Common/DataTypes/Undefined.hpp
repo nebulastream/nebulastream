@@ -25,7 +25,6 @@ namespace NES {
  */
 class Undefined final : public DataType {
   public:
-
     virtual ~Undefined() = default;
 
     /**

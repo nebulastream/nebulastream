@@ -47,7 +47,7 @@ class DefaultSourceDescriptor : public SourceDescriptor {
      */
     uint64_t getFrequencyCount() const;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
 
   private:

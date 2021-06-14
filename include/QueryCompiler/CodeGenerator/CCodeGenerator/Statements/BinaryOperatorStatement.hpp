@@ -23,7 +23,7 @@
 #include <memory>
 #include <string>
 
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type);
 
 class BinaryOperatorStatement : public ExpressionStatment {

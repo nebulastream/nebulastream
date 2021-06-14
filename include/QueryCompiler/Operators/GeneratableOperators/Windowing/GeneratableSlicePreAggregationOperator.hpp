@@ -18,7 +18,7 @@
 
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
-namespace NES::QueryCompilation::GeneratableOperators{
+namespace NES::QueryCompilation::GeneratableOperators {
 
 /**
  * @brief Defines the code generation for the slice pre-aggregation values to slices.

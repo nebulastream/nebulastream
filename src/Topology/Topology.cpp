@@ -203,7 +203,8 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<Topology
     return result;
 }
 
-std::optional<TopologyNodePtr> Topology::findAllPathBetween(const TopologyNodePtr& startNode, const TopologyNodePtr& destinationNode) {
+std::optional<TopologyNodePtr> Topology::findAllPathBetween(const TopologyNodePtr& startNode,
+                                                            const TopologyNodePtr& destinationNode) {
     std::unique_lock lock(topologyLock);
     NES_DEBUG("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
 
@@ -516,7 +517,8 @@ TopologyNodePtr Topology::findCommonNodeBetween(std::vector<TopologyNodePtr> chi
     return commonAncestorForChildren;
 }
 
-std::vector<TopologyNodePtr> Topology::findNodesBetween(const TopologyNodePtr& sourceNode, const TopologyNodePtr& destinationNode) {
+std::vector<TopologyNodePtr> Topology::findNodesBetween(const TopologyNodePtr& sourceNode,
+                                                        const TopologyNodePtr& destinationNode) {
 
     NES_DEBUG("Topology: Find topology nodes between source and destination nodes.");
     if (sourceNode->getId() == destinationNode->getId()) {

@@ -50,8 +50,10 @@ class StreamCatalogEntry {
      * @param node: the topology node
      * @return shared pointer to stream catalog
      */
-    static StreamCatalogEntryPtr
-    create(const std::string& sourceType, const std::string& physicalStreamName, const std::string& logicalStreamName, const TopologyNodePtr& node);
+    static StreamCatalogEntryPtr create(const std::string& sourceType,
+                                        const std::string& physicalStreamName,
+                                        const std::string& logicalStreamName,
+                                        const TopologyNodePtr& node);
 
     /**
      * @brief Create the shared pointer for the stream catalog entry

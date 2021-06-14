@@ -25,7 +25,7 @@ ExpressionNodePtr LessEqualsExpressionNode::create(const ExpressionNodePtr& left
     return lessThen;
 }
 
-bool LessEqualsExpressionNode::equal(NodePtr const &rhs) const {
+bool LessEqualsExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<LessEqualsExpressionNode>()) {
         auto other = rhs->as<LessEqualsExpressionNode>();
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());

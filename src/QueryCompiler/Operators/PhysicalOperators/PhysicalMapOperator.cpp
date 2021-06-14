@@ -22,7 +22,8 @@ PhysicalMapOperator::PhysicalMapOperator(OperatorId id,
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
                                          FieldAssignmentExpressionNodePtr mapExpression)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), mapExpression(std::move(mapExpression)) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      mapExpression(std::move(mapExpression)) {}
 
 FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression() { return mapExpression; }
 
@@ -35,7 +36,10 @@ PhysicalOperatorPtr PhysicalMapOperator::create(OperatorId id,
 
 PhysicalOperatorPtr
 PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(mapExpression));
+    return create(UtilityFunctions::getNextOperatorId(),
+                  std::move(inputSchema),
+                  std::move(outputSchema),
+                  std::move(mapExpression));
 }
 
 std::string PhysicalMapOperator::toString() const { return "PhysicalMapOperator"; }

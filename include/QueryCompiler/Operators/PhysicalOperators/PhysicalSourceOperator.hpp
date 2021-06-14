@@ -27,8 +27,10 @@ namespace PhysicalOperators {
 class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
     PhysicalSourceOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
-    static PhysicalOperatorPtr
-    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const SourceDescriptorPtr& sourceDescriptor);
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const SourceDescriptorPtr& sourceDescriptor);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
     SourceDescriptorPtr getSourceDescriptor();
     std::string toString() const override;

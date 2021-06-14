@@ -21,7 +21,9 @@
 namespace NES::QueryCompilation {
 ConstructorDeclaration::ConstructorDeclaration(Code code) : functionCode(std::move(code)) {}
 
-ConstructorDeclarationPtr ConstructorDeclaration::create(const Code& code) { return std::make_shared<ConstructorDeclaration>(code); }
+ConstructorDeclarationPtr ConstructorDeclaration::create(const Code& code) {
+    return std::make_shared<ConstructorDeclaration>(code);
+}
 
 GeneratableDataTypePtr ConstructorDeclaration::getType() const { return GeneratableDataTypePtr(); }
 std::string ConstructorDeclaration::getIdentifierName() const { return ""; }

@@ -37,7 +37,6 @@ using GlobalQueryNodePtr = std::shared_ptr<GlobalQueryNode>;
 class GlobalQueryNode : public Node {
 
   public:
-
     virtual ~GlobalQueryNode() = default;
 
     /**
@@ -90,7 +89,7 @@ class GlobalQueryNode : public Node {
      */
     OperatorNodePtr getOperator();
 
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
     [[nodiscard]] std::string toString() const override;
 

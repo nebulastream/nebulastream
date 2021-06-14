@@ -35,7 +35,11 @@ GeneratableOperatorPtr GeneratableJoinBuildOperator::create(SchemaPtr inputSchem
                                                             SchemaPtr outputSchema,
                                                             Join::JoinOperatorHandlerPtr operatorHandler,
                                                             JoinBuildSide buildSide) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler), buildSide);
+    return create(UtilityFunctions::getNextOperatorId(),
+                  std::move(inputSchema),
+                  std::move(outputSchema),
+                  std::move(operatorHandler),
+                  buildSide);
 }
 
 GeneratableJoinBuildOperator::GeneratableJoinBuildOperator(OperatorId id,
@@ -43,7 +47,8 @@ GeneratableJoinBuildOperator::GeneratableJoinBuildOperator(OperatorId id,
                                                            SchemaPtr outputSchema,
                                                            Join::JoinOperatorHandlerPtr operatorHandler,
                                                            JoinBuildSide buildSide)
-    : OperatorNode(id), GeneratableJoinOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler)), buildSide(buildSide) {}
+    : OperatorNode(id), GeneratableJoinOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler)),
+      buildSide(buildSide) {}
 
 void GeneratableJoinBuildOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     if (this->buildSide == Left) {

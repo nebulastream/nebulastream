@@ -30,7 +30,6 @@ using DataTypePtr = std::shared_ptr<DataType>;
  */
 class DataType {
   public:
-
     virtual ~DataType() = default;
     /**
      * @brief Checks if this data type is Undefined.

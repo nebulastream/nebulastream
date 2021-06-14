@@ -19,7 +19,8 @@
 
 namespace NES {
 
-InvalidQueryStatusException::InvalidQueryStatusException(const std::vector<QueryStatus>& expectedStatuses, QueryStatus actualStatus) {
+InvalidQueryStatusException::InvalidQueryStatusException(const std::vector<QueryStatus>& expectedStatuses,
+                                                         QueryStatus actualStatus) {
 
     std::stringstream expectedStatus;
     for (QueryStatus status : expectedStatuses) {

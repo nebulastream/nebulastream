@@ -161,7 +161,6 @@ class ReconfigurationMessage {
      */
     void destroy();
 
-  
     /// type of the reconfiguration
     ReconfigurationType type;
 

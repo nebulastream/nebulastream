@@ -36,9 +36,9 @@ class WatermarkAssignerLogicalOperatorNode : public LogicalUnaryOperatorNode {
     */
     Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
 
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
-    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
 
     [[nodiscard]] std::string toString() const override;
 

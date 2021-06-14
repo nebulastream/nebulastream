@@ -22,7 +22,8 @@ PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                SourceDescriptorPtr sourceDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), sourceDescriptor(std::move(sourceDescriptor)) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      sourceDescriptor(std::move(sourceDescriptor)) {}
 
 PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id,
                                                    const SchemaPtr& inputSchema,
@@ -33,7 +34,10 @@ PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id,
 
 PhysicalOperatorPtr
 PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
+    return create(UtilityFunctions::getNextOperatorId(),
+                  std::move(inputSchema),
+                  std::move(outputSchema),
+                  std::move(sourceDescriptor));
 }
 
 SourceDescriptorPtr PhysicalSourceOperator::getSourceDescriptor() { return sourceDescriptor; }

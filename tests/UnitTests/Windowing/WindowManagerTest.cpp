@@ -156,7 +156,7 @@ TEST_F(WindowManagerTest, testAvgAggregation) {
 }
 
 TEST_F(WindowManagerTest, testCheckSlice) {
-    auto *store = new WindowSliceStore<int64_t>(0L);
+    auto* store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = Sum(Attribute("value"));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -169,7 +169,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
                                                                 triggerAction,
                                                                 0);
 
-    auto *windowManager = new WindowManager(windowDef->getWindowType(), 0, 1);
+    auto* windowManager = new WindowManager(windowDef->getWindowType(), 0, 1);
     uint64_t ts = 10;
 
     windowManager->sliceStream(ts, store, 0);
@@ -246,11 +246,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
 
     windowHandler->setup(context);
 
-    auto *windowState = windowHandler->getTypedWindowState();
+    auto* windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
     AVGPartialType<uint64_t> defaultValue = AVGPartialType<uint64_t>();
     keyRef.valueOrDefault(defaultValue);
-    auto *store = keyRef.value();
+    auto* store = keyRef.value();
 
     uint64_t ts = 7;
     windowHandler->updateMaxTs(ts, 0);
@@ -335,10 +335,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     windowHandler->setup(context);
 
-    auto *windowState = windowHandler->getTypedWindowState();
+    auto* windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
-    auto *store = keyRef.value();
+    auto* store = keyRef.value();
 
     uint64_t ts = 7;
     windowHandler->updateMaxTs(ts, 0);
@@ -417,10 +417,10 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     windowHandler->setup(context);
 
-    auto *windowState = windowHandler->getTypedWindowState();
+    auto* windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
-    auto *store = keyRef.value();
+    auto* store = keyRef.value();
 
     uint64_t ts = 7;
     windowHandler->updateMaxTs(ts, 0);
@@ -498,12 +498,12 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     windowHandler->setup(context);
 
-    auto *windowState =
+    auto* windowState =
         std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(windowHandler)
             ->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
-    auto *store = keyRef.value();
+    auto* store = keyRef.value();
 
     uint64_t ts = 7;
     windowHandler->updateMaxTs(ts, 0);
@@ -586,10 +586,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
                                                                     windowOperatorHandler);
 
     windowHandler->setup(context);
-    auto *windowState = windowHandler->getTypedWindowState();
+    auto* windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
-    auto *store = keyRef.value();
+    auto* store = keyRef.value();
 
     uint64_t ts = 7;
     windowHandler->updateMaxTs(ts, 0);
@@ -670,10 +670,10 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
 
     windowHandler->setup(context);
 
-    auto *windowState = windowHandler->getTypedWindowState();
+    auto* windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
-    auto *store = keyRef.value();
+    auto* store = keyRef.value();
 
     uint64_t ts = 7;
     windowHandler->updateMaxTs(ts, 0);

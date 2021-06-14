@@ -22,7 +22,8 @@ PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                Windowing::WindowOperatorHandlerPtr handler)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), operatorHandler(std::move(handler)){};
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      operatorHandler(std::move(handler)){};
 
 Windowing::WindowOperatorHandlerPtr PhysicalWindowOperator::getOperatorHandler() const { return operatorHandler; }
 

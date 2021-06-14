@@ -21,7 +21,7 @@
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-DynamicColumnLayout::DynamicColumnLayout(bool checkBoundaries, const SchemaPtr& schema)  {
+DynamicColumnLayout::DynamicColumnLayout(bool checkBoundaries, const SchemaPtr& schema) {
     this->checkBoundaryFieldChecks = checkBoundaries;
     this->recordSize = schema->getSchemaSizeInBytes();
     this->fieldSizes = std::vector<FIELD_SIZE>();

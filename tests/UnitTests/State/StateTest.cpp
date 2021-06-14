@@ -205,7 +205,7 @@ TEST_F(StateTest, testStruct) {
         uint64_t start = rand();
         uint64_t end = start + rand();
         var[key].emplace(start, end);
-        auto *v = var[key].value();
+        auto* v = var[key].value();
 
         EXPECT_EQ(v->start, start);
         EXPECT_EQ(v->end, end);

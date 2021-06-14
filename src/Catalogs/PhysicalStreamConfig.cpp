@@ -111,7 +111,5 @@ void PhysicalStreamConfig::setSourceFrequency(uint32_t sf) {
 void PhysicalStreamConfig::setNumberOfTuplesToProducePerBuffer(uint32_t n) {
     PhysicalStreamConfig::numberOfTuplesToProducePerBuffer = n;
 }
-void PhysicalStreamConfig::setNumberOfBuffersToProduce(uint32_t n) {
-    PhysicalStreamConfig::numberOfBuffersToProduce = n;
-}
+void PhysicalStreamConfig::setNumberOfBuffersToProduce(uint32_t n) { PhysicalStreamConfig::numberOfBuffersToProduce = n; }
 }// namespace NES

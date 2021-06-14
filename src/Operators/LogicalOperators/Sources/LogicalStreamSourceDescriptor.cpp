@@ -26,7 +26,7 @@ SourceDescriptorPtr LogicalStreamSourceDescriptor::create(std::string streamName
     return std::make_shared<LogicalStreamSourceDescriptor>(LogicalStreamSourceDescriptor(std::move(streamName)));
 }
 
-bool LogicalStreamSourceDescriptor::equal(SourceDescriptorPtr const &other) {
+bool LogicalStreamSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<LogicalStreamSourceDescriptor>()) {
         return false;
     }

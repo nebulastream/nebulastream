@@ -288,7 +288,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     std::string handlerType;
     uint64_t id;
     mutable std::recursive_mutex windowMutex;
-    std::atomic<bool> isRunning {false};
+    std::atomic<bool> isRunning{false};
     NodeEngine::StateManagerPtr stateManager;
     PartialAggregateType partialAggregateInitialValue;
 };

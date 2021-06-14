@@ -30,7 +30,10 @@ GeneratableOperatorPtr
 GeneratableWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
+    return create(UtilityFunctions::getNextOperatorId(),
+                  std::move(inputSchema),
+                  std::move(outputSchema),
+                  std::move(watermarkStrategyDescriptor));
 }
 
 GeneratableOperatorPtr
@@ -39,7 +42,10 @@ GeneratableWatermarkAssignmentOperator::create(OperatorId id,
                                                SchemaPtr outputSchema,
                                                Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     return std::make_shared<GeneratableWatermarkAssignmentOperator>(
-        GeneratableWatermarkAssignmentOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor)));
+        GeneratableWatermarkAssignmentOperator(id,
+                                               std::move(inputSchema),
+                                               std::move(outputSchema),
+                                               std::move(watermarkStrategyDescriptor)));
 }
 
 GeneratableWatermarkAssignmentOperator::GeneratableWatermarkAssignmentOperator(

@@ -18,7 +18,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 
 class ExpressionStatment : public Statement {
   public:
@@ -34,7 +34,7 @@ class ExpressionStatment : public Statement {
     BinaryOperatorStatement assign(const ExpressionStatment& ref);
     BinaryOperatorStatement assign(ExpressionStatmentPtr ref) const;
     BinaryOperatorStatement accessPtr(const ExpressionStatment& ref);
-    BinaryOperatorStatement accessPtr(ExpressionStatmentPtr const & ref) const;
+    BinaryOperatorStatement accessPtr(ExpressionStatmentPtr const& ref) const;
     BinaryOperatorStatement accessRef(const ExpressionStatment& ref);
     BinaryOperatorStatement accessRef(ExpressionStatmentPtr ref) const;
     BinaryOperatorStatement operator[](const ExpressionStatment& ref);

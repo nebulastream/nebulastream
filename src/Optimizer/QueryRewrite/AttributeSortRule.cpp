@@ -103,7 +103,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
 
         std::vector<ExpressionNodePtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
-for (const auto& commutativeField : allCommutativeFields) {
+        for (const auto& commutativeField : allCommutativeFields) {
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
@@ -191,7 +191,7 @@ for (const auto& commutativeField : allCommutativeFields) {
 
         std::vector<ExpressionNodePtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
-for (const auto& commutativeField : allCommutativeFields) {
+        for (const auto& commutativeField : allCommutativeFields) {
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
@@ -285,7 +285,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
 
         std::vector<ExpressionNodePtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
-for (const auto& commutativeField : allCommutativeFields) {
+        for (const auto& commutativeField : allCommutativeFields) {
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
@@ -364,7 +364,7 @@ for (const auto& commutativeField : allCommutativeFields) {
 
         std::vector<ExpressionNodePtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
-for (const auto& commutativeField : allCommutativeFields) {
+        for (const auto& commutativeField : allCommutativeFields) {
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 

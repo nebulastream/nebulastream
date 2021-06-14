@@ -34,7 +34,7 @@ FieldAssignmentExpressionNodePtr FieldAssignmentExpressionNode::create(const Fie
     return fieldAssignment;
 }
 
-bool FieldAssignmentExpressionNode::equal(NodePtr const &rhs) const {
+bool FieldAssignmentExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<FieldAssignmentExpressionNode>()) {
         auto otherFieldAssignment = rhs->as<FieldAssignmentExpressionNode>();
         // a field assignment expression has always two children.

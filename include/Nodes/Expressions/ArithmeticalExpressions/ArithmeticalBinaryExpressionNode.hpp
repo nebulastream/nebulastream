@@ -24,7 +24,6 @@ namespace NES {
  */
 class ArithmeticalBinaryExpressionNode : public BinaryExpressionNode, public ArithmeticalExpressionNode {
   public:
-
     /**
      * @brief Infers the stamp of this arithmetical expression node.
      * Currently the type inference is equal for all arithmetical expression and expects numerical data types as operands.
@@ -32,7 +31,7 @@ class ArithmeticalBinaryExpressionNode : public BinaryExpressionNode, public Ari
      */
     void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
   protected:

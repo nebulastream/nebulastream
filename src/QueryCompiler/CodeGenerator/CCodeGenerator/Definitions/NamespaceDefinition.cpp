@@ -24,7 +24,9 @@
 namespace NES::QueryCompilation {
 NamespaceDefinition::NamespaceDefinition(std::string name) : name(std::move(name)) {}
 
-NamespaceDefinitionPtr NamespaceDefinition::create(const std::string& name) { return std::make_shared<NamespaceDefinition>(name); }
+NamespaceDefinitionPtr NamespaceDefinition::create(const std::string& name) {
+    return std::make_shared<NamespaceDefinition>(name);
+}
 
 void NamespaceDefinition::addDeclaration(const DeclarationPtr& declaration) { this->declarations.emplace_back(declaration); }
 

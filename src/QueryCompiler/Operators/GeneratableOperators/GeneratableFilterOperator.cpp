@@ -29,7 +29,8 @@ GeneratableOperatorPtr GeneratableFilterOperator::create(SchemaPtr inputSchema, 
     return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(predicate));
 }
 GeneratableOperatorPtr GeneratableFilterOperator::create(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate) {
-    return std::make_shared<GeneratableFilterOperator>(GeneratableFilterOperator(id, std::move(inputSchema), std::move(predicate)));
+    return std::make_shared<GeneratableFilterOperator>(
+        GeneratableFilterOperator(id, std::move(inputSchema), std::move(predicate)));
 }
 
 void GeneratableFilterOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

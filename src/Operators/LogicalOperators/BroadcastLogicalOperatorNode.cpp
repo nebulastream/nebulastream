@@ -24,13 +24,11 @@ namespace NES {
 BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id)
     : OperatorNode(id), ExchangeOperatorNode(id), LogicalOperatorNode(id) {}
 
-bool BroadcastLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
+bool BroadcastLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return rhs->as<BroadcastLogicalOperatorNode>()->getId() == id;
 }
 
-bool BroadcastLogicalOperatorNode::equal(NodePtr const &rhs) const {
-    return rhs->instanceOf<BroadcastLogicalOperatorNode>();
-};
+bool BroadcastLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<BroadcastLogicalOperatorNode>(); };
 
 std::string BroadcastLogicalOperatorNode::toString() const {
     std::stringstream ss;

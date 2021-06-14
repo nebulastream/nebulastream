@@ -61,7 +61,7 @@ class PipelineQueryPlan {
      * @brief Gets a list of all pipelines.
      * @return std::vector<OperatorPipelinePtr>
      */
-    [[nodiscard]] std::vector<OperatorPipelinePtr> const &getPipelines() const;
+    [[nodiscard]] std::vector<OperatorPipelinePtr> const& getPipelines() const;
 
     /**
      * @brief Remove a particular pipeline from the query plan

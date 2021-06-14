@@ -26,10 +26,10 @@ namespace NES {
  */
 class WindowComputationOperator : public WindowOperatorNode {
   public:
-    WindowComputationOperator(Windowing::LogicalWindowDefinitionPtr const &windowDefinition, OperatorId id);
+    WindowComputationOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
 
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     OperatorNodePtr copy() override;

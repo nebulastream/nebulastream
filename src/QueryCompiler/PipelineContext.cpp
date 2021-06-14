@@ -67,7 +67,5 @@ uint64_t PipelineContext::getHandlerIndex(const NodeEngine::Execution::OperatorH
     return 0;
 }
 
-std::vector<NodeEngine::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() {
-    return this->operatorHandlers;
-}
+std::vector<NodeEngine::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() { return this->operatorHandlers; }
 }// namespace NES::QueryCompilation

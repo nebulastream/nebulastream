@@ -93,24 +93,28 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
     }
 }
 
-void DefaultGeneratableOperatorProvider::lowerSink(const QueryPlanPtr&, const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerSink(const QueryPlanPtr&,
+                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     // a sink operator should be in a pipeline on its own.
     NES_ASSERT(operatorNode->getChildren().size(), "A sink node should have no children");
     NES_ASSERT(operatorNode->getParents().size(), "A sink node should have no parents");
 }
 
-void DefaultGeneratableOperatorProvider::lowerSource(const QueryPlanPtr&, const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerSource(const QueryPlanPtr&,
+                                                     const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     // a source operator should be in a pipeline on its own.
     NES_ASSERT(operatorNode->getChildren().size(), "A source operator should have no children");
     NES_ASSERT(operatorNode->getParents().size(), "A source operator should have no parents");
 }
 
-void DefaultGeneratableOperatorProvider::lowerScan(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerScan(const QueryPlanPtr& queryPlan,
+                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto bufferScan = GeneratableOperators::GeneratableBufferScan::create(operatorNode->getOutputSchema());
     queryPlan->replaceOperator(operatorNode, bufferScan);
 }
 
-void DefaultGeneratableOperatorProvider::lowerEmit(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerEmit(const QueryPlanPtr& queryPlan,
+                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto bufferEmit = GeneratableOperators::GeneratableBufferEmit::create(operatorNode->getOutputSchema());
     queryPlan->replaceOperator(operatorNode, bufferEmit);
 }
@@ -134,7 +138,8 @@ void DefaultGeneratableOperatorProvider::lowerFilter(const QueryPlanPtr& queryPl
     queryPlan->replaceOperator(physicalFilterOperator, generatableFilterOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerMap(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerMap(const QueryPlanPtr& queryPlan,
+                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto physicalMapOperator = operatorNode->as<PhysicalOperators::PhysicalMapOperator>();
     auto generatableMapOperator = GeneratableOperators::GeneratableMapOperator::create(physicalMapOperator->getInputSchema(),
                                                                                        physicalMapOperator->getOutputSchema(),

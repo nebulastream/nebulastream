@@ -154,7 +154,9 @@ void CoordinatorConfig::setRestIp(std::string restIpValue) { restIp->setValue(st
 
 StringConfigOption CoordinatorConfig::getCoordinatorIp() { return coordinatorIp; }
 
-void CoordinatorConfig::setCoordinatorIp(std::string coordinatorIpValue) { coordinatorIp->setValue(std::move(coordinatorIpValue)); }
+void CoordinatorConfig::setCoordinatorIp(std::string coordinatorIpValue) {
+    coordinatorIp->setValue(std::move(coordinatorIpValue));
+}
 
 IntConfigOption CoordinatorConfig::getRpcPort() { return rpcPort; }
 
@@ -208,7 +210,9 @@ void CoordinatorConfig::setQueryBatchSize(uint32_t batchSize) { queryBatchSize->
 
 StringConfigOption CoordinatorConfig::getQueryMergerRule() { return queryMergerRule; }
 
-void CoordinatorConfig::setQueryMergerRule(std::string queryMergerRuleValue) { queryMergerRule->setValue(std::move(queryMergerRuleValue)); }
+void CoordinatorConfig::setQueryMergerRule(std::string queryMergerRuleValue) {
+    queryMergerRule->setValue(std::move(queryMergerRuleValue));
+}
 
 BoolConfigOption CoordinatorConfig::getEnableSemanticQueryValidation() { return enableSemanticQueryValidation; }
 

@@ -78,7 +78,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     using inherited0 = detail::virtual_enable_shared_from_this<NesCoordinator>;
     using inherited1 = ErrorListener;
 
-public:
+  public:
     explicit NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig);
 
     /**
@@ -164,7 +164,6 @@ public:
      */
     void buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom);
 
-  
     std::string restIp;
     uint16_t restPort;
     std::string rpcIp;
@@ -181,7 +180,6 @@ public:
     NesWorkerPtr worker;
     CoordinatorEnginePtr coordinatorEngine;
 
-  
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;

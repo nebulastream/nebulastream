@@ -34,14 +34,20 @@ std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPt
                                                            TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
                                                            StreamCatalogPtr streamCatalog) {
-    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), std::move(streamCatalog)));
+    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(std::move(globalExecutionPlan),
+                                                               std::move(topology),
+                                                               std::move(typeInferencePhase),
+                                                               std::move(streamCatalog)));
 }
 
 BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                    TopologyPtr topology,
                                    TypeInferencePhasePtr typeInferencePhase,
                                    StreamCatalogPtr streamCatalog)
-    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), std::move(streamCatalog)) {}
+    : BasePlacementStrategy(std::move(globalExecutionPlan),
+                            std::move(topology),
+                            std::move(typeInferencePhase),
+                            std::move(streamCatalog)) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     const QueryId queryId = queryPlan->getQueryId();
@@ -204,8 +210,9 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId,
     }
 }
 
-QueryPlanPtr
-BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, const OperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode) {
+QueryPlanPtr BottomUpStrategy::getCandidateQueryPlan(QueryId queryId,
+                                                     const OperatorNodePtr& operatorNode,
+                                                     const ExecutionNodePtr& executionNode) {
 
     NES_DEBUG("BottomUpStrategy: Get candidate query plan for the operator " << operatorNode << " on execution node with id "
                                                                              << executionNode->getId());

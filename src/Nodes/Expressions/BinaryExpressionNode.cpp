@@ -25,7 +25,7 @@ BinaryExpressionNode::BinaryExpressionNode(BinaryExpressionNode* other) : Expres
     addChildWithEqual(getRight()->copy());
 }
 
-void BinaryExpressionNode::setChildren(ExpressionNodePtr const &left, ExpressionNodePtr const &right) {
+void BinaryExpressionNode::setChildren(ExpressionNodePtr const& left, ExpressionNodePtr const& right) {
     addChildWithEqual(left);
     addChildWithEqual(right);
 }

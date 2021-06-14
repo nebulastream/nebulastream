@@ -28,11 +28,11 @@ uint64_t IterationLogicalOperatorNode::getMinIterations() const noexcept { retur
 
 uint64_t IterationLogicalOperatorNode::getMaxIterations() const noexcept { return maxIterations; }
 
-bool IterationLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
+bool IterationLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<IterationLogicalOperatorNode>()->getId() == id;
 }
 
-bool IterationLogicalOperatorNode::equal(NodePtr const &rhs) const {
+bool IterationLogicalOperatorNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<IterationLogicalOperatorNode>()) {
         auto iteration = rhs->as<IterationLogicalOperatorNode>();
         return (minIterations == iteration->minIterations && maxIterations == iteration->maxIterations);
@@ -46,9 +46,7 @@ std::string IterationLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool IterationLogicalOperatorNode::inferSchema() {
-    return LogicalUnaryOperatorNode::inferSchema();
-}
+bool IterationLogicalOperatorNode::inferSchema() { return LogicalUnaryOperatorNode::inferSchema(); }
 
 OperatorNodePtr IterationLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createCEPIterationOperator(minIterations, maxIterations, id);

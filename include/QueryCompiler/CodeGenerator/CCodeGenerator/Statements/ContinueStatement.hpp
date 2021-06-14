@@ -35,7 +35,6 @@ class ContinueStatement : public Statement {
 
     [[nodiscard]] StatementPtr createCopy() const override;
 
-
   private:
 };
 

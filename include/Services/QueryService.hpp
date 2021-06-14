@@ -88,7 +88,8 @@ class QueryService {
      * @param placementStrategyName : Name of the placement strategy
      * @return query id
      */
-    uint64_t addQueryRequest(const std::string& queryString, const QueryPlanPtr& queryPlan, const std::string& placementStrategyName);
+    uint64_t
+    addQueryRequest(const std::string& queryString, const QueryPlanPtr& queryPlan, const std::string& placementStrategyName);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

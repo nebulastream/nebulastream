@@ -124,7 +124,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
   protected:
     SinkFormatPtr sinkFormat;
     bool append{false};
-    std::atomic_bool schemaWritten {false};
+    std::atomic_bool schemaWritten{false};
 
     QuerySubPlanId parentPlanId;
 

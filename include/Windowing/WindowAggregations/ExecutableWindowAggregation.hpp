@@ -39,7 +39,6 @@ template<class InputType, class PartialAggregateType, class FinalAggregateType>
 class ExecutableWindowAggregation {
 
   public:
-
     virtual ~ExecutableWindowAggregation() = default;
 
     /*

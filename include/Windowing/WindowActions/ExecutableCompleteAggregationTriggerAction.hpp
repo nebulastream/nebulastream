@@ -220,7 +220,8 @@ class ExecutableCompleteAggregationTriggerAction
         uint64_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
         if (!windows.empty()) {
             int64_t largestClosedWindow = 0;
-            for (auto i = static_cast<typename decltype(partialFinalAggregates)::size_type>(0); i < partialFinalAggregates.size(); ++i) {
+            for (auto i = static_cast<typename decltype(partialFinalAggregates)::size_type>(0); i < partialFinalAggregates.size();
+                 ++i) {
                 auto& window = windows[i];
                 largestClosedWindow = std::max((int64_t) window.getEndTs(), largestClosedWindow);
                 auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);

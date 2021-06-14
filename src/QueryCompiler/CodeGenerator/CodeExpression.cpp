@@ -17,7 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 
 namespace NES::QueryCompilation {
-CodeExpressionPtr combine(CodeExpressionPtr const &lhs, CodeExpressionPtr const &rhs) {
+CodeExpressionPtr combine(CodeExpressionPtr const& lhs, CodeExpressionPtr const& rhs) {
     return std::make_shared<CodeExpression>(lhs->code_ + rhs->code_);
 }
 }// namespace NES::QueryCompilation

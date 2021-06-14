@@ -25,13 +25,13 @@
 
 namespace NES::Network {
 
-OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, std::string &&address)
+OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, std::string&& address)
     : socketAddr(std::move(address)), zmqSocket(std::move(zmqSocket)), channelId(channelId) {
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
 }
 
-std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::context_t> const &zmqContext,
-                                                     std::string &&socketAddr,
+std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
+                                                     std::string&& socketAddr,
                                                      NesPartition nesPartition,
                                                      ExchangeProtocol& protocol,
                                                      std::chrono::seconds waitTime,
@@ -44,7 +44,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
         NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);
         zmqSocket.set(zmq::sockopt::linger, linger);
         //zmqSocket.setsockopt(ZMQ_IDENTITY, &channelId, sizeof(ChannelId));
-        zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer {&channelId, sizeof(ChannelId)});
+        zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
         zmqSocket.connect(socketAddr);
         int i = 0;
 
@@ -55,7 +55,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
             auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
             NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
 
-            auto *recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
+            auto* recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
 
             if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
                 NES_THROW_RUNTIME_ERROR("OutputChannel: Message from server is corrupt!");
@@ -66,7 +66,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                     zmq::message_t recvMsg;
                     auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
-                    auto *serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
+                    auto* serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
                     // check if server responds with a ServerReadyMessage
                     // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
                     if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
@@ -124,7 +124,7 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     auto watermark = inputBuffer.getWatermark();
     auto creationTimestamp = inputBuffer.getCreationTimestamp();
     auto payloadSize = tupleSize * numOfTuples;
-    auto *ptr = inputBuffer.getBuffer<uint8_t>();
+    auto* ptr = inputBuffer.getBuffer<uint8_t>();
     if (payloadSize == 0) {
         return true;
     }

@@ -26,7 +26,11 @@ DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
                                     SchemaPtr schema,
                                     NodeEngine::NodeEnginePtr nodeEngine,
                                     QuerySubPlanId querySubPlanId) {
-    return ConvertLogicalToPhysicalSink::createDataSink(sinkId, std::move(sinkDescriptor), std::move(schema), std::move(nodeEngine), querySubPlanId);
+    return ConvertLogicalToPhysicalSink::createDataSink(sinkId,
+                                                        std::move(sinkDescriptor),
+                                                        std::move(schema),
+                                                        std::move(nodeEngine),
+                                                        querySubPlanId);
 }
 
 }// namespace NES::QueryCompilation

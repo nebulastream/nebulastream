@@ -18,7 +18,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_STRUCTDECLARATION_HPP_
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <vector>
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 
 class StructDeclaration : public Declaration {
   public:
@@ -40,7 +40,7 @@ class StructDeclaration : public Declaration {
 
     [[nodiscard]] DeclarationPtr getField(const std::string& field_name) const;
 
-    [[nodiscard]] bool containsField(const std::string& field_name, DataTypePtr const &dataType) const;
+    [[nodiscard]] bool containsField(const std::string& field_name, DataTypePtr const& dataType) const;
 
     [[nodiscard]] VariableDeclaration getVariableDeclaration(const std::string& field_name) const;
 

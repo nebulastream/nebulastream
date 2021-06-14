@@ -34,7 +34,7 @@ class SenseSourceDescriptor : public SourceDescriptor {
      * @brief Get the udf for the sense node
      */
     const std::string& getUdfs() const;
-    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
 
   private:

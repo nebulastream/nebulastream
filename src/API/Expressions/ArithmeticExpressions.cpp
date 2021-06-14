@@ -77,25 +77,41 @@ ExpressionNodePtr operator--(ExpressionNodePtr leftExp, int) {
 }
 
 // calls of Binary operators with one or two ExpressionItems
-ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() + std::move(rightExp); }
+ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
+    return leftExp.getExpressionNode() + std::move(rightExp);
+}
 
-ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() - std::move(rightExp); }
+ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
+    return leftExp.getExpressionNode() - std::move(rightExp);
+}
 
-ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() * std::move(rightExp); }
+ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
+    return leftExp.getExpressionNode() * std::move(rightExp);
+}
 
-ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() / std::move(rightExp); }
+ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
+    return leftExp.getExpressionNode() / std::move(rightExp);
+}
 
 ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
     return POWER(leftExp.getExpressionNode(), std::move(rightExp));
 }
 
-ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return std::move(leftExp) + rightExp.getExpressionNode(); }
+ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
+    return std::move(leftExp) + rightExp.getExpressionNode();
+}
 
-ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return std::move(leftExp) - rightExp.getExpressionNode(); }
+ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
+    return std::move(leftExp) - rightExp.getExpressionNode();
+}
 
-ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return std::move(leftExp) * rightExp.getExpressionNode(); }
+ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
+    return std::move(leftExp) * rightExp.getExpressionNode();
+}
 
-ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return std::move(leftExp) / rightExp.getExpressionNode(); }
+ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
+    return std::move(leftExp) / rightExp.getExpressionNode();
+}
 
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
     return POWER(std::move(leftExp), rightExp.getExpressionNode());

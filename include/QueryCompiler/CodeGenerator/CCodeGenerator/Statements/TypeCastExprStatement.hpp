@@ -19,7 +19,7 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 
 class TypeCastExprStatement : public ExpressionStatment {
   public:

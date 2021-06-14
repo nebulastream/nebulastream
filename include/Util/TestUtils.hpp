@@ -285,8 +285,10 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<uint64_t>>
-    static bool
-    checkCompleteOrTimeout(const NesWorkerPtr& nesWorker, QueryId queryId, const GlobalQueryPlanPtr& globalQueryPlan, uint64_t expectedResult) {
+    static bool checkCompleteOrTimeout(const NesWorkerPtr& nesWorker,
+                                       QueryId queryId,
+                                       const GlobalQueryPlanPtr& globalQueryPlan,
+                                       uint64_t expectedResult) {
 
         SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {

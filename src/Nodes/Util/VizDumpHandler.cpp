@@ -100,7 +100,7 @@ std::string detail::VizEdge::serialize() const {
     return ss.str();
 }
 
-VizDumpHandler::VizDumpHandler(std::string rootDir) :  rootDir(std::move(rootDir)) {}
+VizDumpHandler::VizDumpHandler(std::string rootDir) : rootDir(std::move(rootDir)) {}
 
 DebugDumpHandlerPtr VizDumpHandler::create() {
     std::string path = std::filesystem::current_path();
@@ -123,7 +123,7 @@ void VizDumpHandler::dump(std::string context, std::string scope, QueryPlanPtr q
 
 void VizDumpHandler::dump(QueryPlanPtr queryPlan, const std::string& parent, detail::VizGraph& graph) {
     auto queryPlanIter = QueryPlanIterator(std::move(queryPlan));
-    for (auto &&op :queryPlanIter) {
+    for (auto&& op : queryPlanIter) {
         auto operatorNode = op->as<OperatorNode>();
         auto vizNode = detail::VizNode(std::to_string(operatorNode->getId()), op->toString(), parent);
         extractNodeProperties(vizNode, operatorNode);

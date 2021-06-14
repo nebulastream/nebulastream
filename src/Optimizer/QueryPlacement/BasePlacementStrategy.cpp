@@ -37,8 +37,7 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
                                              TypeInferencePhasePtr typeInferencePhase,
                                              StreamCatalogPtr streamCatalog)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topologyPtr)),
-      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog))
-      {}
+      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)) {}
 
 void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
                                                              const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators) {
@@ -195,8 +194,9 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId
 OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId) {
     NES_DEBUG("BasePlacementStrategy: create Network Source operator");
     const Network::NesPartition nesPartition = Network::NesPartition(queryId, operatorId, 0, 0);
-    return LogicalOperatorFactory::createSourceOperator(Network::NetworkSourceDescriptor::create(std::move(inputSchema), nesPartition),
-                                                        operatorId);
+    return LogicalOperatorFactory::createSourceOperator(
+        Network::NetworkSourceDescriptor::create(std::move(inputSchema), nesPartition),
+        operatorId);
 }
 
 void BasePlacementStrategy::addNetworkSourceAndSinkOperators(const QueryPlanPtr& queryPlan) {

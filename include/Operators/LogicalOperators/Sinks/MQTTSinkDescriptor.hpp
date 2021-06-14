@@ -40,8 +40,15 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return descriptor for MQTT sink
      */
-    static SinkDescriptorPtr create( std::string&& address, std::string&& topic, std::string&& user, uint64_t maxBufferedMSGs, TimeUnits timeUnit, uint64_t messageDelay, ServiceQualities qualityOfService, bool asynchronousClient, std::string &&clientId="");
-
+    static SinkDescriptorPtr create(std::string&& address,
+                                    std::string&& topic,
+                                    std::string&& user,
+                                    uint64_t maxBufferedMSGs,
+                                    TimeUnits timeUnit,
+                                    uint64_t messageDelay,
+                                    ServiceQualities qualityOfService,
+                                    bool asynchronousClient,
+                                    std::string&& clientId = "");
 
     /**
      * @brief get address information from a MQTT sink client
@@ -98,7 +105,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     bool getAsynchronousClient() const;
 
     [[nodiscard]] std::string toString() override;
-    [[nodiscard]] bool equal(SinkDescriptorPtr const &other) override;
+    [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
     /**
      * @brief Creates the MQTT sink
@@ -113,17 +120,17 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return MQTT sink
      */
-    explicit MQTTSinkDescriptor(std::string &&address,
-                                std::string &&clientId,
-                                std::string &&topic,
-                                std::string &&user,
+    explicit MQTTSinkDescriptor(std::string&& address,
+                                std::string&& clientId,
+                                std::string&& topic,
+                                std::string&& user,
                                 uint64_t maxBufferedMSGs,
                                 TimeUnits timeUnit,
                                 uint64_t messageDelay,
                                 ServiceQualities qualityOfService,
                                 bool asynchronousClient);
-  private:
 
+  private:
     std::string address;
     std::string clientId;
     std::string topic;

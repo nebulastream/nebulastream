@@ -315,7 +315,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
     {
         /* check code generation of pointers */
-        auto val = NES::QueryCompilation::GeneratableTypesFactory::createPointer(tf.createDataType(DataTypeFactory::createInt32()));
+        auto val =
+            NES::QueryCompilation::GeneratableTypesFactory::createPointer(tf.createDataType(DataTypeFactory::createInt32()));
         assert(val != nullptr);
         auto variableDeclarationI =
             VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
@@ -341,18 +342,26 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                 .addField(variableDeclarationP);
 
         // check code generation for different assignment type
-        auto varDeclTupleBuffer = VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl), "buffer");
+        auto varDeclTupleBuffer = VariableDeclaration::create(
+            NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl),
+            "buffer");
         EXPECT_EQ(varDeclTupleBuffer.getCode(), "TupleBuffer");
 
-        auto varDeclTupleBufferPointer =
-            VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl)), "buffer");
+        auto varDeclTupleBufferPointer = VariableDeclaration::create(
+            NES::QueryCompilation::GeneratableTypesFactory::createPointer(
+                NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl)),
+            "buffer");
         EXPECT_EQ(varDeclTupleBufferPointer.getCode(), "TupleBuffer* buffer");
 
-        auto pointerDataType = NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl));
+        auto pointerDataType = NES::QueryCompilation::GeneratableTypesFactory::createPointer(
+            NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl));
         EXPECT_EQ(pointerDataType->getCode()->code_, "TupleBuffer*");
 
         auto typeDefinition =
-            VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl)), "buffer")
+            VariableDeclaration::create(
+                NES::QueryCompilation::GeneratableTypesFactory::createPointer(
+                    NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl)),
+                "buffer")
                 .getTypeDefinitionCode();
         EXPECT_EQ(typeDefinition, "struct TupleBuffer{\nuint64_t num_tuples = 0;\nint32_t* array;\n}buffer");
     }
@@ -364,7 +373,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto tf = GeneratableTypesFactory();
     auto tupleBufferType = NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::TupleBuffer");
-    auto pipelineExecutionContextType = NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
+    auto pipelineExecutionContextType =
+        NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
     auto workerContextType = NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::WorkerContext");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
     auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
@@ -383,15 +393,25 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
             .addField(VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "sum"));
 
     /* === declarations === */
-    auto varDeclTupleBuffers = VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createReference(tupleBufferType), "input_buffer");
+    auto varDeclTupleBuffers =
+        VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createReference(tupleBufferType),
+                                    "input_buffer");
     auto varDeclPipelineExecutionContext =
-        VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createReference(pipelineExecutionContextType), "pipelineExecutionContext");
-    auto varDeclWorkerContext = VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createReference(workerContextType), "workerContext");
+        VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createReference(pipelineExecutionContextType),
+                                    "pipelineExecutionContext");
+    auto varDeclWorkerContext =
+        VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createReference(workerContextType),
+                                    "workerContext");
     /* Tuple *tuples; */
-    auto varDeclTuple = VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclTuple)), "tuples");
+    auto varDeclTuple =
+        VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createPointer(
+                                        NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclTuple)),
+                                    "tuples");
 
-    auto varDeclResultTuple =
-        VariableDeclaration::create(NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclResultTuple)), "resultTuples");
+    auto varDeclResultTuple = VariableDeclaration::create(
+        NES::QueryCompilation::GeneratableTypesFactory::createPointer(
+            NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclResultTuple)),
+        "resultTuples");
 
     /* variable declarations for fields inside structs */
     auto declFieldCampaignId = structDeclTuple.getVariableDeclaration("campaign_id");
@@ -422,7 +442,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     BinaryOperatorStatement initTuplePtr(
         VarRef(varDeclTuple)
             .assign(TypeCast(VarRefStatement(varDeclTupleBuffers).accessRef(getBufferOfTupleBuffer),
-                             NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclTuple)))));
+                             NES::QueryCompilation::GeneratableTypesFactory::createPointer(
+                                 NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclTuple)))));
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
     auto resultTupleBufferDeclaration = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
@@ -433,7 +454,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     BinaryOperatorStatement initResultTuplePtr(
         VarRef(varDeclResultTuple)
             .assign(TypeCast(VarRef(resultTupleBufferDeclaration).accessRef(getBufferOfTupleBuffer),
-                             NES::QueryCompilation::GeneratableTypesFactory::createPointer(NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclResultTuple)))));
+                             NES::QueryCompilation::GeneratableTypesFactory::createPointer(
+                                 NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(structDeclResultTuple)))));
 
     /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
     FOR loopStmt(varDeclId.copy(),
@@ -495,8 +517,9 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto returnStatement = ReturnStatement::create(SharedPointerGen::makeShared(executablePipelineDeclaration->getType()));
     createFunction->addStatement(returnStatement);
     ;
-    createFunction->returns(SharedPointerGen::createSharedPtrType(
-        NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
+    createFunction->returns(
+        SharedPointerGen::createSharedPtrType(NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType(
+            "NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileB.addDeclaration(pipelineNamespace->getDeclaration()).build();
 

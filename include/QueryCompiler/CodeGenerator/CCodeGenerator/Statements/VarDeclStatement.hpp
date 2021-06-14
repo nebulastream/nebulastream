@@ -33,7 +33,6 @@ class VarDeclStatement : public ExpressionStatment {
 
     [[nodiscard]] ExpressionStatmentPtr copy() const override;
 
-
   private:
     std::shared_ptr<VariableDeclaration> variableDeclaration;
 };

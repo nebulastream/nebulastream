@@ -224,7 +224,8 @@ class UtilityFunctions {
      * @param properties properties to assign
      * @return true if the assignment success, and false otherwise
      */
-    static bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
+    static bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
+                                                 std::vector<std::map<std::string, std::any>> properties);
 
   private:
     /**

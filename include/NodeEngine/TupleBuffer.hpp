@@ -105,7 +105,7 @@ class TupleBuffer {
         }
 
         // Override the content of this with those of `other`
-        auto *const oldControlBlock = std::exchange(controlBlock, other.controlBlock);
+        auto* const oldControlBlock = std::exchange(controlBlock, other.controlBlock);
         ptr = other.ptr;
         size = other.size;
 
