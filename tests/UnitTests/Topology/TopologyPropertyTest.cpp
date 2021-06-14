@@ -93,12 +93,12 @@ TEST_F(TopologyPropertiesTest, testAssignLinkProperty) {
 
     // we should be able to retrieve the assigned link property
     EXPECT_NO_THROW(sourceNode->getLinkProperty(destinationNode));
-    EXPECT_EQ(sourceNode->getLinkProperty(destinationNode)->bandwidth, 512);
-    EXPECT_EQ(sourceNode->getLinkProperty(destinationNode)->latency, 100);
+    EXPECT_EQ(sourceNode->getLinkProperty(destinationNode)->bandwidth, 512u);
+    EXPECT_EQ(sourceNode->getLinkProperty(destinationNode)->latency, 100u);
 
     EXPECT_NO_THROW(destinationNode->getLinkProperty(sourceNode));
-    EXPECT_EQ(destinationNode->getLinkProperty(sourceNode)->bandwidth, 512);
-    EXPECT_EQ(destinationNode->getLinkProperty(sourceNode)->latency, 100);
+    EXPECT_EQ(destinationNode->getLinkProperty(sourceNode)->bandwidth, 512u);
+    EXPECT_EQ(destinationNode->getLinkProperty(sourceNode)->latency, 100u);
 }
 
 // test removing link properties
@@ -121,12 +121,12 @@ TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
 
     // we should be able to retrieve the assigned link property
     ASSERT_NO_THROW(sourceNode->getLinkProperty(destinationNode));
-    ASSERT_EQ(sourceNode->getLinkProperty(destinationNode)->bandwidth, 512);
-    ASSERT_EQ(sourceNode->getLinkProperty(destinationNode)->latency, 100);
+    ASSERT_EQ(sourceNode->getLinkProperty(destinationNode)->bandwidth, 512ULL);
+    ASSERT_EQ(sourceNode->getLinkProperty(destinationNode)->latency, 100ULL);
 
     ASSERT_NO_THROW(destinationNode->getLinkProperty(sourceNode));
-    ASSERT_EQ(destinationNode->getLinkProperty(sourceNode)->bandwidth, 512);
-    ASSERT_EQ(destinationNode->getLinkProperty(sourceNode)->latency, 100);
+    ASSERT_EQ(destinationNode->getLinkProperty(sourceNode)->bandwidth, 512ULL);
+    ASSERT_EQ(destinationNode->getLinkProperty(sourceNode)->latency, 100ULL);
 
     sourceNode->removeLinkProperty(destinationNode);
     destinationNode->removeLinkProperty(sourceNode);

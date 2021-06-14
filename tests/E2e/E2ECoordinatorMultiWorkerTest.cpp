@@ -18,7 +18,6 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <unistd.h>
-#define GetCurrentDir getcwd
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <boost/process.hpp>
@@ -44,10 +43,10 @@ namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
-uint64_t rpcPort = 1200;
-uint64_t dataPort = 1400;
-uint64_t restPort = 8000;
-uint16_t timeout = 5;
+uint64_t rpcPort = 1200u;
+uint64_t dataPort = 1400u;
+uint64_t restPort = 8000u;
+uint16_t timeout = 5u;
 
 class E2ECoordinatorMultiWorkerTest : public testing::Test {
   public:
@@ -494,26 +493,26 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
         })
         .wait();
 
-    EXPECT_EQ(json_return.size(), 3);
+    EXPECT_EQ(json_return.size(), 3ul);
     NES_INFO("RETURN: " << json_return.size());
     NES_INFO("RETURN: " << json_return);
 
-    for (int i = 1; i <= json_return.size(); i++) {
+    for (std::size_t i {1UL}; i <= json_return.size(); ++i) {
         auto json = json_return[std::to_string(i)];
         NES_INFO("SUB RETURN: " << json);
 
         EXPECT_TRUE(json.has_field("disk"));
-        EXPECT_EQ(json["disk"].size(), 5);
+        EXPECT_EQ(json["disk"].size(), 5U);
 
         EXPECT_TRUE(json.has_field("cpu"));
         auto numCores = json["cpu"]["NUM_CORES"].as_integer();
-        EXPECT_EQ(json["cpu"].size(), numCores + 2);
+        EXPECT_EQ(json["cpu"].size(), numCores + 2U);
 
         EXPECT_TRUE(json.has_field("network"));
-        EXPECT_TRUE(json["network"].size() > 0);
+        EXPECT_TRUE(json["network"].size() > 0U);
 
         EXPECT_TRUE(json.has_field("memory"));
-        EXPECT_EQ(json["memory"].size(), 13);
+        EXPECT_EQ(json["memory"].size(), 13ul);
     }
 
     NES_INFO("Killing worker 1 process->PID: " << workerPid1);

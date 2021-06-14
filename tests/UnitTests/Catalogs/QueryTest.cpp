@@ -90,16 +90,16 @@ TEST_F(QueryTest, testQueryFilter) {
     Query query = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1);
+    EXPECT_EQ(sourceOperators.size(), 1U);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
     EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
 
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
 
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 TEST_F(QueryTest, testQueryProjection) {
@@ -119,16 +119,16 @@ TEST_F(QueryTest, testQueryProjection) {
     Query query = Query::from("default_logical").project(Attribute("id"), Attribute("value")).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1);
+    EXPECT_EQ(sourceOperators.size(), 1U);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
     EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
 
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
 
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 TEST_F(QueryTest, testQueryTumblingWindow) {
@@ -152,16 +152,16 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
                       .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1);
+    EXPECT_EQ(sourceOperators.size(), 1U);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
     EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
 
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
 
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 TEST_F(QueryTest, testQuerySlidingWindow) {
@@ -185,16 +185,16 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
                       .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1);
+    EXPECT_EQ(sourceOperators.size(), 1U);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
     EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
 
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
 
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 /**
@@ -213,13 +213,13 @@ TEST_F(QueryTest, DISABLED_testQueryMerge) {
     auto query = Query::from("default_logical").unionWith(&subQuery).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 2);
+    EXPECT_EQ(sourceOperators.size(), 2U);
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
     EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 /**
@@ -245,13 +245,13 @@ TEST_F(QueryTest, testQueryJoin) {
                      .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 2);
+    EXPECT_EQ(sourceOperators.size(), 2U);
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
     EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1);
+    EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 TEST_F(QueryTest, testQueryExpression) {

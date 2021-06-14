@@ -98,7 +98,7 @@ TEST_F(JoinHandlerTest, testJoinHandlerSlicing) {
     // check if we have two values in the state 10 and 11 for key 0
     std::unique_lock lock(store->mutex());
     ASSERT_LT(sliceIndex, store->getAppendList().size());
-    ASSERT_EQ(store->getAppendList()[sliceIndex].size(), 2);
+    ASSERT_EQ(store->getAppendList()[sliceIndex].size(), 2u);
     ASSERT_EQ(store->getAppendList()[sliceIndex][0], 10);
     ASSERT_EQ(store->getAppendList()[sliceIndex][1], 11);
 }

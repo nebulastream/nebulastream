@@ -206,9 +206,9 @@ TEST_F(SourceTest, DISABLED_testCSVSourceOnePassOverFile) {
                              || !strcmp(record.event_type, "purchase")));
             }
             if (bufferCnt == 0) {
-                EXPECT_EQ(optBuf->getNumberOfTuples(), 50);
+                EXPECT_EQ(optBuf->getNumberOfTuples(), 50u);
             } else if (bufferCnt == 1) {
-                EXPECT_EQ(optBuf->getNumberOfTuples(), 48);
+                EXPECT_EQ(optBuf->getNumberOfTuples(), 48u);
             } else {
                 FAIL();
             }
@@ -535,7 +535,7 @@ TEST_F(SourceTest, DISABLED_testSenseSource) {
     uint64_t numberOfBuffers = 1000;
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = numberOfTuplesToProcess * tuple_size / numberOfBuffers;
-    ASSERT_GT(buffer_size, 0);
+    ASSERT_GT(buffer_size, 0ULL);
 
     const DataSourcePtr source =
         (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS, 1, 12, {});
@@ -680,7 +680,7 @@ TEST_F(SourceTest, testLambdaSource) {
         auto optBuf = lambdaSource->receiveData();
         auto *ysbRecords = optBuf.value().getBuffer<Record>();
 
-        for (int i = 0; i < numberOfTuplesToProduce; i++) {
+        for (uint64_t i = 0; i < numberOfTuplesToProduce; ++i) {
             std::cout << "Read rec i=" << i << " content=" << ysbRecords[i].toString() << std::endl;
 
             EXPECT_TRUE(0 <= ysbRecords[i].campaignId && ysbRecords[i].campaignId < 10000);
@@ -828,7 +828,7 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
         auto optBuf = lambdaSource->receiveData();
         auto *ysbRecords = optBuf.value().getBuffer<Record>();
 
-        for (int i = 0; i < numberOfTuplesToProduce; i++) {
+        for (uint64_t i = 0ull; i < numberOfTuplesToProduce; ++i) {
             std::cout << "Read rec i=" << i << " content=" << ysbRecords[i].toString() << std::endl;
 
             EXPECT_TRUE(0 <= ysbRecords[i].campaignId && ysbRecords[i].campaignId < 10000);
@@ -972,7 +972,7 @@ TEST_F(SourceTest, DISABLED_testMonitoringSource) {
     }
 
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numBuffers);
-    EXPECT_EQ(source->getNumberOfGeneratedTuples(), 2);
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), 2UL);
 }
 
 TEST_F(SourceTest, testMemorySource) {

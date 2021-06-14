@@ -333,7 +333,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     auto plan = result->getExecutableQueryPlan();
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1);
+    EXPECT_EQ(plan->getPipelines().size(), 1u);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
@@ -345,16 +345,16 @@ TEST_F(QueryExecutionTest, filterQuery) {
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
 
     auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
     auto resultRecordIndexFields =
         NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
-    for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
+    for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
         // id
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
     }
@@ -398,7 +398,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1);
+    EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
@@ -410,18 +410,18 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1U);
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10UL);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields =
         NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
 
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+    for (uint32_t recordIndex = 0UL; recordIndex < 10UL; ++recordIndex) {
         // id
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
     }
@@ -468,7 +468,7 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
     auto plan = result->getExecutableQueryPlan();
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1);
+    EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
@@ -480,7 +480,7 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1U);
 
     SchemaPtr resultSchema =
         Schema::create()
@@ -513,7 +513,7 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
  *
  */
 TEST_F(QueryExecutionTest, watermarkAssignerTest) {
-    uint64_t millisecondOfallowedLateness = 2; /*milliseconds of allowedLateness*/
+    uint64_t millisecondOfallowedLateness = 2U; /*milliseconds of allowedLateness*/
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -529,7 +529,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
                                         nodeEngine->getQueryManager(),
                                         /*bufferCnt*/ 2,
                                         /*frequency*/ 1000,
-                                        std::move(successors),
+                                        successors,
                                         /*varyWatermark*/ true);
         });
     auto query = TestQuery::from(windowSourceDescriptor);
@@ -644,12 +644,12 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     testSink->completed.get_future().get();
 
     // get result buffer, which should contain two results.
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
     auto resultBuffer = testSink->get(0);
 
     NES_DEBUG("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(windowResultSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
@@ -661,13 +661,13 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
 
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
         // start
-        EXPECT_EQ(startFields[recordIndex], 0);
+        EXPECT_EQ(startFields[recordIndex], 0UL);
         // end
-        EXPECT_EQ(endFields[recordIndex], 10);
+        EXPECT_EQ(endFields[recordIndex], 10UL);
         // key
-        EXPECT_EQ(keyFields[recordIndex], 1);
+        EXPECT_EQ(keyFields[recordIndex], 1UL);
         // value
-        EXPECT_EQ(valueFields[recordIndex], 10);
+        EXPECT_EQ(valueFields[recordIndex], 10UL);
     }
     nodeEngine->stopQuery(0);
     testSink->cleanupBuffers();
@@ -694,7 +694,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
                                         nodeEngine->getQueryManager(),
                                         /*bufferCnt*/ 2,
                                         /*frequency*/ 1000,
-                                        std::move(successors),
+                                        successors,
                                         /*varyWatermark*/ true,
                                         true,
                                         30);
@@ -735,11 +735,11 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     testSink->completed.get_future().get();
 
     // get result buffer, which should contain two results.
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
     auto resultBuffer = testSink->get(0);
     NES_DEBUG("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(windowResultSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
@@ -751,13 +751,13 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
 
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
         // start
-        EXPECT_EQ(startFields[recordIndex], 30);
+        EXPECT_EQ(startFields[recordIndex], 30UL);
         // end
-        EXPECT_EQ(endFields[recordIndex], 40);
+        EXPECT_EQ(endFields[recordIndex], 40UL);
         // key
-        EXPECT_EQ(keyFields[recordIndex], 1);
+        EXPECT_EQ(keyFields[recordIndex], 1UL);
         // value
-        EXPECT_EQ(valueFields[recordIndex], 9);
+        EXPECT_EQ(valueFields[recordIndex], 9UL);
     }
 
     nodeEngine->stopQuery(0);
@@ -823,7 +823,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto resultBuffer = testSink->get(0);
 
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2UL);
     NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     std::string expectedContent = "+----------------------------------------------------+\n"
                                   "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
@@ -851,7 +851,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
                                         nodeEngine->getQueryManager(),
                                         /*bufferCnt*/ 3,
                                         /*frequency*/ 0,
-                                        std::move(successors));
+                                        successors);
         });
     auto query = TestQuery::from(windowSourceDescriptor);
 
@@ -935,7 +935,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
                                         nodeEngine->getQueryManager(),
                                         /*bufferCnt*/ 2,
                                         /*frequency*/ 0,
-                                        std::move(successors));
+                                        successors);
         });
     auto query = TestQuery::from(windowSourceDescriptor);
 
@@ -975,12 +975,12 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     testSink->completed.get_future().get();
     NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
     // get result buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
     auto resultBuffer = testSink->get(0);
 
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2UL);
     NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     std::string expectedContent = "+----------------------------------------------------+\n"
                                   "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
@@ -1060,13 +1060,13 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);// how to interpret this?
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5UL);// how to interpret this?
 
     auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
     auto recordIndexFields =
         NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
 
-    for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
+    for (auto recordIndex = 0L; recordIndex < 5L; ++recordIndex) {
         EXPECT_EQ(recordIndexFields[recordIndex], recordIndex);
     }
 

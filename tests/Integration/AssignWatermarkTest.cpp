@@ -81,7 +81,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
 
     NES_INFO("AssignWatermarkTest: Start worker 1");
@@ -178,7 +178,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
 
     NES_INFO("AssignWatermarkTest: Start worker 1");
@@ -297,7 +297,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
 
     NES_INFO("AssignWatermarkTest: Start worker 1");
@@ -396,7 +396,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
 
     NES_INFO("AssignWatermarkTest: Start worker 1");

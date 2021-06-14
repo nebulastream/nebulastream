@@ -143,7 +143,7 @@ TEST_F(WindowManagerTest, testCountAggregation) {
     auto partial2 = aggregation->lift(4L);
     auto combined = aggregation->combine(partial, partial2);
     auto result = aggregation->lower(combined);
-    ASSERT_EQ(result, 2);
+    ASSERT_EQ(result, 2u);
 }
 
 TEST_F(WindowManagerTest, testAvgAggregation) {
@@ -273,8 +273,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     std::cout << aggregates[sliceIndex].getSum() << std::endl;
     std::cout << aggregates[sliceIndex].getCount() << std::endl;
 
-    ASSERT_EQ(aggregates[sliceIndex].getSum(), 5);
-    ASSERT_EQ(aggregates[sliceIndex].getCount(), 1);
+    ASSERT_EQ(aggregates[sliceIndex].getSum(), 5UL);
+    ASSERT_EQ(aggregates[sliceIndex].getCount(), 1L);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
     auto windowAction = std::dynamic_pointer_cast<
@@ -286,14 +286,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 1);
+    ASSERT_EQ(tupleCnt, 1UL);
 
     auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
-    ASSERT_EQ(tuples[0], 0);
-    ASSERT_EQ(tuples[1], 10);
-    ASSERT_EQ(tuples[2], 10);
+    ASSERT_EQ(tuples[0], 0UL);
+    ASSERT_EQ(tuples[1], 10UL);
+    ASSERT_EQ(tuples[2], 10UL);
     //    ASSERT_EQ(tuples[3], 1);
 }
 
@@ -358,7 +358,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     aggregates[sliceIndex]++;
     std::cout << aggregates[sliceIndex] << std::endl;
 
-    ASSERT_EQ(aggregates[sliceIndex], 1);
+    ASSERT_EQ(aggregates[sliceIndex], 1UL);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
     auto windowAction =
@@ -370,15 +370,15 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 1);
+    ASSERT_EQ(tupleCnt, 1UL);
 
     auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
-    ASSERT_EQ(tuples[0], 0);
-    ASSERT_EQ(tuples[1], 10);
-    ASSERT_EQ(tuples[2], 10);
-    ASSERT_EQ(tuples[3], 1);
+    ASSERT_EQ(tuples[0], 0UL);
+    ASSERT_EQ(tuples[1], 10UL);
+    ASSERT_EQ(tuples[2], 10UL);
+    ASSERT_EQ(tuples[3], 1UL);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
@@ -451,15 +451,15 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 1);
+    ASSERT_EQ(tupleCnt, 1UL);
 
     auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
-    ASSERT_EQ(tuples[0], 0);
-    ASSERT_EQ(tuples[1], 10);
-    ASSERT_EQ(tuples[2], 10);
-    ASSERT_EQ(tuples[3], 1);
+    ASSERT_EQ(tuples[0], 0ULL);
+    ASSERT_EQ(tuples[1], 10ULL);
+    ASSERT_EQ(tuples[2], 10ULL);
+    ASSERT_EQ(tuples[3], 1ULL);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
@@ -537,15 +537,15 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 1);
+    ASSERT_EQ(tupleCnt, 1U);
 
     auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
-    ASSERT_EQ(tuples[0], 0);
-    ASSERT_EQ(tuples[1], 10);
-    ASSERT_EQ(tuples[2], 10);
-    ASSERT_EQ(tuples[3], 1);
+    ASSERT_EQ(tuples[0], 0ULL);
+    ASSERT_EQ(tuples[1], 10ULL);
+    ASSERT_EQ(tuples[2], 10ULL);
+    ASSERT_EQ(tuples[3], 1ULL);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
@@ -607,7 +607,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     aggregates[sliceIndex]++;
     std::cout << aggregates[sliceIndex] << std::endl;
 
-    ASSERT_EQ(aggregates[sliceIndex], 1);
+    ASSERT_EQ(aggregates[sliceIndex], 1U);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
     auto windowAction =
@@ -619,18 +619,18 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 1);
+    ASSERT_EQ(tupleCnt, 1UL);
 
     auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
-    ASSERT_EQ(tuples[0], 0);
-    ASSERT_EQ(tuples[1], 10);
-    ASSERT_EQ(tuples[2], 10);
-    ASSERT_EQ(tuples[3], 1);
+    ASSERT_EQ(tuples[0], 0ULL);
+    ASSERT_EQ(tuples[1], 10ULL);
+    ASSERT_EQ(tuples[2], 10ULL);
+    ASSERT_EQ(tuples[3], 1ULL);
 
-    ASSERT_EQ(store->getSliceMetadata().size(), 2);
-    ASSERT_EQ(store->getPartialAggregates().size(), 2);
+    ASSERT_EQ(store->getSliceMetadata().size(), 2U);
+    ASSERT_EQ(store->getPartialAggregates().size(), 2U);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
@@ -704,18 +704,18 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 1);
+    ASSERT_EQ(tupleCnt, 1UL);
 
     auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
-    ASSERT_EQ(tuples[0], 0);
-    ASSERT_EQ(tuples[1], 10);
-    ASSERT_EQ(tuples[2], 10);
-    ASSERT_EQ(tuples[3], 1);
+    ASSERT_EQ(tuples[0], 0ULL);
+    ASSERT_EQ(tuples[1], 10ULL);
+    ASSERT_EQ(tuples[2], 10ULL);
+    ASSERT_EQ(tuples[3], 1ULL);
 
-    ASSERT_EQ(store->getSliceMetadata().size(), 2);
-    ASSERT_EQ(store->getPartialAggregates().size(), 2);
+    ASSERT_EQ(store->getSliceMetadata().size(), 2U);
+    ASSERT_EQ(store->getPartialAggregates().size(), 2U);
 }
 
 }// namespace NES

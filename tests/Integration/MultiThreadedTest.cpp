@@ -62,7 +62,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
@@ -168,7 +168,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
@@ -276,7 +276,7 @@ TEST_F(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -370,7 +370,7 @@ TEST_F(MultiThreadedTest, DISABLED_testMultipleWindows) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
@@ -460,7 +460,7 @@ TEST_F(MultiThreadedTest, DISABLED_testMultipleWindowsCrashTest) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
@@ -549,7 +549,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     crdConf->setNumberOfSlots(16);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
@@ -658,7 +658,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
@@ -795,7 +795,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
@@ -970,7 +970,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     crdConf->setNumberOfSlots(16);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ULL);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");

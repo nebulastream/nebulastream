@@ -67,7 +67,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("UnionDeploymentTest: Coordinator started successfully");
 
     NES_INFO("UnionDeploymentTest: Start worker 1");
@@ -254,7 +254,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("UnionDeploymentTest: Coordinator started successfully");
 
     NES_INFO("UnionDeploymentTest: Start worker 1");
@@ -441,7 +441,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDif
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("UnionDeploymentTest: Coordinator started successfully");
 
     NES_INFO("UnionDeploymentTest: Start worker 1");
@@ -629,7 +629,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("UnionDeploymentTest: Coordinator started successfully");
 
     NES_INFO("UnionDeploymentTest: Start worker 1");
@@ -729,7 +729,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlre
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Coordinator started successfully");
 
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start worker 1");
@@ -897,7 +897,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferen
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Coordinator started successfully");
 
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start worker 1");
@@ -1034,7 +1034,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOf
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Coordinator started successfully");
 
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start worker 1");

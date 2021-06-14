@@ -62,7 +62,7 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0u);
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
     NES_INFO("RESTEndpointTest: Start worker 1");
@@ -146,7 +146,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0U);
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
     NES_INFO("RESTEndpointTest: Start worker 1");
@@ -216,7 +216,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0U);
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
     NES_INFO("RESTEndpointTest: Start worker 1");
@@ -300,7 +300,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0U);
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
     NES_INFO("RESTEndpointTest: Start worker 1");
@@ -359,7 +359,7 @@ TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0U);
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
     NES_INFO("RESTEndpointTest: Start worker 1");
@@ -434,7 +434,7 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0U);
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
     NES_INFO("RESTEndpointTest: Start worker 1");

@@ -334,7 +334,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1);
+    EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
@@ -346,11 +346,11 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
@@ -402,7 +402,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1);
+    EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
@@ -414,11 +414,11 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
@@ -469,7 +469,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1);
+    EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
@@ -481,11 +481,11 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
@@ -612,12 +612,12 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     testSink->completed.get_future().get();
 
     // get result buffer, which should contain two results.
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
     auto resultBuffer = testSink->get(0);
 
     NES_DEBUG("ProjectionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1ULL);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(windowResultSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
@@ -628,13 +628,13 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
 
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
         // start
-        EXPECT_EQ(startFields[recordIndex], 0);
+        EXPECT_EQ(startFields[recordIndex], 0ULL);
         // end
-        EXPECT_EQ(endFields[recordIndex], 10);
+        EXPECT_EQ(endFields[recordIndex], 10ULL);
         // key
-        EXPECT_EQ(keyFields[recordIndex], 1);
+        EXPECT_EQ(keyFields[recordIndex], 1ULL);
         // value
-        EXPECT_EQ(valueFields[recordIndex], 10);
+        EXPECT_EQ(valueFields[recordIndex], 10ULL);
     }
 }
 
@@ -795,7 +795,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);// how to interpret this?
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5ULL);// how to interpret this?
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);

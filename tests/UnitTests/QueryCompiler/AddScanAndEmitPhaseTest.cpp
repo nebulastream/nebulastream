@@ -78,7 +78,7 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
     auto pipelineRootOperator = pipelineQueryPlan->getSourcePipelines()[0]->getQueryPlan()->getRootOperators()[0];
 
     ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSourceOperator);
-    ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0);
+    ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0U);
 }
 
 /**
@@ -101,7 +101,7 @@ TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
     auto pipelineRootOperator = operatorPlan->getQueryPlan()->getRootOperators()[0];
 
     ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSinkOperator);
-    ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0);
+    ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0U);
 }
 
 /**

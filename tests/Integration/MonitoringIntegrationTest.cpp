@@ -40,7 +40,7 @@
 #include <Monitoring/MetricValues/GroupedValues.hpp>
 #include <Services/MonitoringService.hpp>
 #include <memory>
-
+// XXX: don't do that
 #define private public
 #include <Components/NesCoordinator.hpp>
 #include <cstdint>
@@ -80,7 +80,7 @@ TEST_F(MonitoringIntegrationTest, DISABLED_requestMonitoringDataFromServiceAsJso
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0ull);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
@@ -115,28 +115,29 @@ TEST_F(MonitoringIntegrationTest, DISABLED_requestMonitoringDataFromServiceAsJso
     auto schema = plan->createSchema();
     EXPECT_TRUE(schema->getSize() > 1);
 
-    auto nodeNumber = 3;
+    auto const nodeNumber = static_cast<std::size_t>(3U);
     auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson();
     NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
 
     EXPECT_EQ(jsons.size(), nodeNumber);
-    for (int i = 1; i <= nodeNumber; i++) {
+    for (auto i = static_cast<std::size_t>(1); i <= nodeNumber; ++i) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
 
         EXPECT_TRUE(json.has_field("disk"));
-        EXPECT_EQ(json["disk"].size(), 5);
+        EXPECT_EQ(json["disk"].size(), 5U);
 
         EXPECT_TRUE(json.has_field("cpu"));
         auto numCores = json["cpu"]["NUM_CORES"].as_integer();
-        EXPECT_EQ(json["cpu"].size(), numCores + 2);
+        EXPECT_TRUE(numCores > 0);
+        EXPECT_EQ(json["cpu"].size(), static_cast<std::size_t>(numCores) + 2U);
 
         EXPECT_TRUE(json.has_field("network"));
         EXPECT_TRUE(json["network"].size() > 0);
 
         EXPECT_TRUE(json.has_field("memory"));
-        EXPECT_EQ(json["memory"].size(), 13);
+        EXPECT_EQ(json["memory"].size(), 13U);
     }
 
     bool retStopWrk1 = wrk1->stop(false);

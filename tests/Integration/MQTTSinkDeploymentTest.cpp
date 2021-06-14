@@ -77,7 +77,7 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     // the new sources schema to the default_logical schema
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("MQTTSinkDeploymentTest: Coordinator started successfully");
 
     NES_INFO("MQTTSinkDeploymentTest: Start worker 1");

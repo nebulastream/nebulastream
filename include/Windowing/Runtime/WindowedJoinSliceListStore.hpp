@@ -60,11 +60,17 @@ class WindowedJoinSliceListStore {
      * @return get slice index by timestamp or -1
      */
     uint64_t getSliceIndexByTs(int64_t timestamp) {
+        if (timestamp < 0) {
+            NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << timestamp);
+            NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts");
+        }
+        auto const ts = static_cast<uint64_t>(std::min(timestamp, static_cast<int64_t>(std::numeric_limits<uint64_t>::max())));
+
         std::lock_guard lock(internalMutex);
-        for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
+        for (uint64_t i = 0ull; i < sliceMetaData.size(); ++i) {
             auto slice = sliceMetaData[i];
             NES_TRACE("slice begin=" << slice.getStartTs() << " slice end =" << slice.getEndTs());
-            if (slice.getStartTs() <= timestamp && slice.getEndTs() > timestamp) {
+            if (slice.getStartTs() <= ts && slice.getEndTs() > ts) {
                 NES_TRACE("return slice id=" << i);
                 return i;
             }

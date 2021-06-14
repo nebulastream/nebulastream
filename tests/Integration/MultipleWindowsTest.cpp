@@ -59,7 +59,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
@@ -145,7 +145,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
@@ -249,7 +249,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
@@ -341,7 +341,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
@@ -449,7 +449,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
@@ -550,7 +550,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
@@ -659,7 +659,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
@@ -803,7 +803,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
@@ -969,7 +969,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");

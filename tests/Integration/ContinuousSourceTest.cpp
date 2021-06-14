@@ -67,7 +67,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
@@ -180,7 +180,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
@@ -248,7 +248,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
@@ -316,7 +316,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
@@ -443,7 +443,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
@@ -570,7 +570,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
@@ -646,7 +646,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
@@ -1263,7 +1263,7 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
@@ -1535,7 +1535,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, carSchema);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1ULL);
 
     struct Output {
         uint32_t key;

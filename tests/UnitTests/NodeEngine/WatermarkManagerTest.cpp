@@ -129,12 +129,12 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsTest) {
 }
 
 TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsOutofOrderTest) {
-    auto updates = 10000;
+    auto updates = 10000u;
     auto origins = 10;
     auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
     // preallocate watermarks for each transaction
     std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
-    for (int i = 1; i <= updates; i++) {
+    for (auto i {1u}; i <= updates; ++i) {
         for (int o = 0; o < origins; o++) {
             auto newWatermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(/*ts*/ i,
                                                                                    /*sequence number*/ i,

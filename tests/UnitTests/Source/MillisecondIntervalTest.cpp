@@ -179,7 +179,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     NES_INFO("MillisecondIntervalTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0u);
     NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 
     NES_INFO("MillisecondIntervalTest: Start worker 1");

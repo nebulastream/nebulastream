@@ -25,7 +25,6 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 
 using namespace std;
@@ -71,7 +70,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
@@ -132,7 +131,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 4);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 4U);
 
     std::string outputFilePath = "testOutputAndAllSensors.out";
     remove(outputFilePath.c_str());
@@ -258,7 +257,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     crdConf->setNumberOfSlots(12);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
@@ -336,9 +335,9 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2U);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -476,7 +475,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
@@ -537,8 +536,8 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 4);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 4U);
 
     std::string outputFilePath = "testOutputAndAllSensors.out";
     remove(outputFilePath.c_str());
@@ -653,7 +652,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
@@ -726,9 +725,9 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2U);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -862,7 +861,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     crdConf->setNumberOfSlots(12);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
@@ -1003,13 +1002,13 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1158,7 +1157,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
@@ -1311,13 +1310,13 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1425,7 +1424,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
@@ -1578,13 +1577,13 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1686,7 +1685,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testUnionThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
@@ -1841,13 +1840,13 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testUnionThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1982,7 +1981,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
@@ -2080,9 +2079,9 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2U);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2U);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());

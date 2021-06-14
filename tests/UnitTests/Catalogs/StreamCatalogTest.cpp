@@ -63,7 +63,7 @@ TEST_F(StreamCatalogTest, testAddGetLogStream) {
 
     map<std::string, SchemaPtr> allLogicalStream = streamCatalog->getAllLogicalStream();
     string exp = "id:INTEGER value:INTEGER ";
-    EXPECT_EQ(allLogicalStream.size(), 3);
+    EXPECT_EQ(allLogicalStream.size(), 3U);
 
     SchemaPtr testSchema = allLogicalStream["test_stream"];
     EXPECT_EQ("", testSchema->toString());
@@ -87,7 +87,7 @@ TEST_F(StreamCatalogTest, testAddRemoveLogStream) {
 
     map<std::string, SchemaPtr> allLogicalStream = streamCatalog->getAllLogicalStream();
 
-    EXPECT_NE(1, allLogicalStream.size());
+    EXPECT_NE(1ul, allLogicalStream.size());
     EXPECT_FALSE(streamCatalog->removeLogicalStream("test_stream22"));
 }
 
@@ -175,7 +175,7 @@ TEST_F(StreamCatalogTest, testGetAllLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 
     const map<std::string, std::string>& allLogicalStream = streamCatalog->getAllLogicalStreamAsString();
-    EXPECT_EQ(allLogicalStream.size(), 2);
+    EXPECT_EQ(allLogicalStream.size(), 2U);
     for (auto const& [key, value] : allLogicalStream) {
         bool cmp = key != defaultLogicalStreamName && key != "exdra";
         EXPECT_EQ(cmp, false);
@@ -187,7 +187,7 @@ TEST_F(StreamCatalogTest, testAddLogicalStream) {
 
     streamCatalog->addLogicalStream("test", testSchema);
     const map<std::string, std::string>& allLogicalStream = streamCatalog->getAllLogicalStreamAsString();
-    EXPECT_EQ(allLogicalStream.size(), 3);
+    EXPECT_EQ(allLogicalStream.size(), 3U);
 }
 
 TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
@@ -213,7 +213,7 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     streamCatalog->addPhysicalStream(newLogicalStreamName, catalogEntryPtr);
     const vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(newLogicalStreamName);
-    EXPECT_EQ(allPhysicalStream.size(), 1);
+    EXPECT_EQ(allPhysicalStream.size(), 1U);
 }
 
 TEST_F(StreamCatalogTest, testDeleteLogicalStream) {

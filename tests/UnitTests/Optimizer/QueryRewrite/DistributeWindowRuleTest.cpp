@@ -143,7 +143,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
 
     std::cout << " plan after=" << queryPlan->toString() << std::endl;
     auto windowOps = queryPlan->getOperatorByType<CentralWindowOperator>();
-    ASSERT_EQ(windowOps.size(), 1);
+    ASSERT_EQ(windowOps.size(), 1u);
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
@@ -171,10 +171,10 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
 
     auto compOps = queryPlan->getOperatorByType<WindowComputationOperator>();
-    ASSERT_EQ(compOps.size(), 1);
+    ASSERT_EQ(compOps.size(), 1u);
 
     auto sliceOps = queryPlan->getOperatorByType<SliceCreationOperator>();
-    ASSERT_EQ(sliceOps.size(), 2);
+    ASSERT_EQ(sliceOps.size(), 2u);
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
@@ -203,8 +203,8 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
     std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
 
     auto compOps = queryPlan->getOperatorByType<WindowComputationOperator>();
-    ASSERT_EQ(compOps.size(), 1);
+    ASSERT_EQ(compOps.size(), 1u);
 
     auto sliceOps = queryPlan->getOperatorByType<SliceCreationOperator>();
-    ASSERT_EQ(sliceOps.size(), 5);
+    ASSERT_EQ(sliceOps.size(), 5u);
 }

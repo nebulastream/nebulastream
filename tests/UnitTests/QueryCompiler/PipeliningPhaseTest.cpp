@@ -94,7 +94,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterQuery) {
     auto pipelinePlan = phase->apply(queryPlan);
 
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
-    ASSERT_EQ(sourcePipelines.size(), 1);
+    ASSERT_EQ(sourcePipelines.size(), 1u);
     auto sourcePipeline = sourcePipelines[0];
 
     ASSERT_INSTANCE_OF(sourcePipeline->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
@@ -102,7 +102,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterQuery) {
     ASSERT_INSTANCE_OF(filterPipe->getQueryPlan()->getRootOperators()[0], PhysicalFilterOperator);
     auto sinkPipe = filterPipe->getSuccessors()[0];
     ASSERT_INSTANCE_OF(sinkPipe->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
-    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0);
+    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0u);
     NES_DEBUG(queryPlan->toString());
 }
 
@@ -130,14 +130,14 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMapQuery) {
     auto pipelinePlan = phase->apply(queryPlan);
 
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
-    ASSERT_EQ(sourcePipelines.size(), 1);
+    ASSERT_EQ(sourcePipelines.size(), 1U);
     auto sourcePipeline = sourcePipelines[0];
     ASSERT_INSTANCE_OF(sourcePipeline->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
     auto filterPipe = sourcePipeline->getSuccessors()[0];
     ASSERT_INSTANCE_OF(filterPipe->getQueryPlan()->getRootOperators()[0], PhysicalFilterOperator);
     auto sinkPipe = filterPipe->getSuccessors()[0];
     ASSERT_INSTANCE_OF(sinkPipe->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
-    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0);
+    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0U);
 }
 
 /**
@@ -169,7 +169,7 @@ TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery) {
     auto pipelinePlan = phase->apply(queryPlan);
 
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
-    ASSERT_EQ(sourcePipelines.size(), 2);
+    ASSERT_EQ(sourcePipelines.size(), 2U);
     auto sourcePipeline1 = sourcePipelines[0];
 
     ASSERT_INSTANCE_OF(sourcePipeline1->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
@@ -178,7 +178,7 @@ TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery) {
     ASSERT_EQ(sourcePipeline1->getSuccessors()[0], sourcePipeline2->getSuccessors()[0]);
     auto sinkPipe = sourcePipeline1->getSuccessors()[0];
     ASSERT_INSTANCE_OF(sinkPipe->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
-    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0);
+    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0U);
 }
 
 /**
@@ -213,7 +213,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
     auto pipelinePlan = phase->apply(queryPlan);
 
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
-    ASSERT_EQ(sourcePipelines.size(), 2);
+    ASSERT_EQ(sourcePipelines.size(), 2U);
     auto sourcePipeline1 = sourcePipelines[0];
 
     ASSERT_INSTANCE_OF(sourcePipeline1->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
@@ -224,7 +224,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
     ASSERT_INSTANCE_OF(filterPipe->getQueryPlan()->getRootOperators()[0], PhysicalFilterOperator);
     auto sinkPipe = filterPipe->getSuccessors()[0];
     ASSERT_INSTANCE_OF(sinkPipe->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
-    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0);
+    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0U);
 }
 
 /**
@@ -261,7 +261,7 @@ TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
     auto pipelinePlan = phase->apply(queryPlan);
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
-    ASSERT_EQ(sourcePipelines.size(), 2);
+    ASSERT_EQ(sourcePipelines.size(), 2U);
     auto sourcePipeline1 = sourcePipelines[0];
     auto sourcePipeline2 = sourcePipelines[1];
     ASSERT_INSTANCE_OF(sourcePipeline1->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
@@ -273,11 +273,11 @@ TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
     auto joinSinkPipeline = leftJoinBuildPipeline->getSuccessors()[0];
     ASSERT_EQ(joinSinkPipeline, rightJoinBuildPipeline->getSuccessors()[0]);
     // join build should have to predecessors
-    ASSERT_EQ(joinSinkPipeline->getPredecessors().size(), 2);
+    ASSERT_EQ(joinSinkPipeline->getPredecessors().size(), 2U);
     ASSERT_INSTANCE_OF(joinSinkPipeline->getQueryPlan()->getRootOperators()[0], PhysicalJoinSinkOperator);
     auto sinkPipe = joinSinkPipeline->getSuccessors()[0];
     ASSERT_INSTANCE_OF(sinkPipe->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
-    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0);
+    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0U);
 }
 
 /**
@@ -316,7 +316,7 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
     auto pipelinePlan = phase->apply(queryPlan);
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
 
-    ASSERT_EQ(sourcePipelines.size(), 3);
+    ASSERT_EQ(sourcePipelines.size(), 3U);
     auto sourcePipeline1 = sourcePipelines[0];
     auto sourcePipeline2 = sourcePipelines[1];
     auto sourcePipeline3 = sourcePipelines[2];
@@ -330,15 +330,15 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
     ASSERT_EQ(sourcePipeline2->getSuccessors()[0], sourcePipeline3->getSuccessors()[0]);
     auto rightJoinBuildPipeline = sourcePipeline2->getSuccessors()[0];
     // right build pipeline must have two predecessors
-    ASSERT_EQ(rightJoinBuildPipeline->getPredecessors().size(), 2);
+    ASSERT_EQ(rightJoinBuildPipeline->getPredecessors().size(), 2U);
     // check if both join pipelines have the same successor
     auto joinSinkPipeline = leftJoinBuildPipeline->getSuccessors()[0];
     ASSERT_EQ(joinSinkPipeline, rightJoinBuildPipeline->getSuccessors()[0]);
-    ASSERT_EQ(joinSinkPipeline->getPredecessors().size(), 2);
+    ASSERT_EQ(joinSinkPipeline->getPredecessors().size(), 2U);
     ASSERT_INSTANCE_OF(joinSinkPipeline->getQueryPlan()->getRootOperators()[0], PhysicalJoinSinkOperator);
     auto sinkPipe = joinSinkPipeline->getSuccessors()[0];
     ASSERT_INSTANCE_OF(sinkPipe->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
-    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0);
+    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0U);
 }
 
 /**
@@ -369,7 +369,7 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
     auto pipelinePlan = phase->apply(queryPlan);
 
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
-    ASSERT_EQ(sourcePipelines.size(), 1);
+    ASSERT_EQ(sourcePipelines.size(), 1U);
 
     auto sourcePipeline1 = sourcePipelines[0];
     ASSERT_INSTANCE_OF(sourcePipeline1->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
@@ -382,7 +382,7 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
 
     auto sinkPipe = windowSinkPipeline->getSuccessors()[0];
     ASSERT_INSTANCE_OF(sinkPipe->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
-    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0);
+    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0U);
 }
 
 /**
@@ -412,7 +412,7 @@ TEST_F(PipeliningPhaseTest, pipelineMapFilterProjectQuery) {
     auto pipelinePlan = phase->apply(queryPlan);
 
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
-    ASSERT_EQ(sourcePipelines.size(), 1);
+    ASSERT_EQ(sourcePipelines.size(), 1U);
 
     auto sourcePipeline = sourcePipelines[0];
     ASSERT_INSTANCE_OF(sourcePipeline->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
@@ -422,7 +422,7 @@ TEST_F(PipeliningPhaseTest, pipelineMapFilterProjectQuery) {
 
     auto sinkPipe = projectFilterMapPipeline->getSuccessors()[0];
     ASSERT_INSTANCE_OF(sinkPipe->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
-    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0);
+    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0U);
 }
 
 /**
@@ -460,7 +460,7 @@ TEST_F(PipeliningPhaseTest, pipelineDemultiplex) {
     auto pipelinePlan = phase->apply(queryPlan);
 
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
-    ASSERT_EQ(sourcePipelines.size(), 1);
+    ASSERT_EQ(sourcePipelines.size(), 1U);
 
     auto sourcePipeline = sourcePipelines[0];
     ASSERT_INSTANCE_OF(sourcePipeline->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
@@ -469,7 +469,7 @@ TEST_F(PipeliningPhaseTest, pipelineDemultiplex) {
     ASSERT_INSTANCE_OF(projectFilterPipeline->getQueryPlan()->getRootOperators()[0], PhysicalFilterOperator);
 
     // The filter pipeline should have two successors
-    ASSERT_EQ(projectFilterPipeline->getSuccessors().size(), 2);
+    ASSERT_EQ(projectFilterPipeline->getSuccessors().size(), 2U);
 
     auto sinkPipeline1 = projectFilterPipeline->getSuccessors()[0];
     ASSERT_INSTANCE_OF(sinkPipeline1->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
