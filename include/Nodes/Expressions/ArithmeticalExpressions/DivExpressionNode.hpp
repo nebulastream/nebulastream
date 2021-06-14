@@ -30,14 +30,14 @@ class DivExpressionNode final : public ArithmeticalBinaryExpressionNode {
      * @brief Create a new DIV expression
      */
     static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
+    [[nodiscard]] std::string toString() const final;
 
     /**
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
     */
-    ExpressionNodePtr copy() override;
+    ExpressionNodePtr copy() final;
 
   protected:
     explicit DivExpressionNode(DivExpressionNode* other);

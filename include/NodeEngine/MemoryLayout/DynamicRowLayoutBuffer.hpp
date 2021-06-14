@@ -218,9 +218,7 @@ std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
     std::tuple<Types...> retTuple;
 
     uint64_t offSet = (recordIndex * this->getRecordSize());
-    auto* address = const_cast<uint8_t*>(basePointer + offSet);
-
-    copyTupleFieldsFromBuffer(retTuple, address);
+    copyTupleFieldsFromBuffer(retTuple, basePointer + offSet);
 
     return retTuple;
 }

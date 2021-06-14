@@ -36,18 +36,14 @@
 #include <Util/UtilityFunctions.hpp>
 
 #include <Components/NesWorker.hpp>
-#include <CoordinatorRPCService.pb.h>
 #include <Monitoring/MetricValues/GroupedValues.hpp>
 #include <Services/MonitoringService.hpp>
 #include <memory>
-// XXX: don't do that
-#define private public
 #include <Components/NesCoordinator.hpp>
 #include <cstdint>
 
 using std::cout;
 using std::endl;
-#define DEBUG_OUTPUT
 namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
