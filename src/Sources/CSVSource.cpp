@@ -63,7 +63,7 @@ CSVSource::CSVSource(SchemaPtr schema,
 
     NES_DEBUG("CSVSource::CSVSource: read buffer");
     input.seekg(0, std::ifstream::end);
-    if (auto const reportedFileSize = input.tellg(); reportedFileSize != -1) {
+    if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1) {
         NES_ERROR("CSVSource::CSVSource File " + filePath + " is corrupted");
     } else {
         fileSize = static_cast<decltype(fileSize)>(reportedFileSize);
