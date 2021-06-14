@@ -15,16 +15,16 @@
 */
 
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>
-#include <string>
-#include <unistd.h>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <boost/process.hpp>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
 #include <cstdio>
+#include <gtest/gtest.h>
 #include <sstream>
+#include <string>
+#include <unistd.h>
 
 using namespace std;
 using namespace utility;
@@ -497,7 +497,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
     NES_INFO("RETURN: " << json_return.size());
     NES_INFO("RETURN: " << json_return);
 
-    for (std::size_t i {1UL}; i <= json_return.size(); ++i) {
+    for (std::size_t i{1UL}; i <= json_return.size(); ++i) {
         auto json = json_return[std::to_string(i)];
         NES_INFO("SUB RETURN: " << json);
 

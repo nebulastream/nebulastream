@@ -29,7 +29,7 @@ ExpressionNodePtr DivExpressionNode::create(const ExpressionNodePtr& left, const
     return divNode;
 }
 
-bool DivExpressionNode::equal(NodePtr const &rhs) const {
+bool DivExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<DivExpressionNode>()) {
         auto otherDivNode = rhs->as<DivExpressionNode>();
         return getLeft()->equal(otherDivNode->getLeft()) && getRight()->equal(otherDivNode->getRight());

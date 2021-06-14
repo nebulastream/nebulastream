@@ -36,8 +36,14 @@ ZmqSource::ZmqSource(SchemaPtr schema,
                      uint64_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(std::move(schema), std::move(bufferManager), std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode, std::move(successors)), host(host),
-      port(port), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
+    : DataSource(std::move(schema),
+                 std::move(bufferManager),
+                 std::move(queryManager),
+                 operatorId,
+                 numSourceLocalBuffers,
+                 gatheringMode,
+                 std::move(successors)),
+      host(host), port(port), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
     NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
 }
 
@@ -63,7 +69,8 @@ std::optional<NodeEngine::TupleBuffer> ZmqSource::receiveData() {
 
             // TODO: Clarify following comment: envelope - not needed at the moment
             if (auto const receivedSize = socket.recv(metadata).value_or(0); receivedSize != metadataSize) {
-                NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: " << metadataSize << " Received: " << receivedSize);
+                NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: " << metadataSize
+                                                                                  << " Received: " << receivedSize);
                 return std::nullopt;
             }
 
@@ -76,7 +83,8 @@ std::optional<NodeEngine::TupleBuffer> ZmqSource::receiveData() {
             // XXX: I guess we don't actually know the size here, it would be nice to be able to check that here
             zmq::mutable_buffer payload{buffer.getBuffer(), buffer.getBufferSize()};
             if (auto const receivedSize = socket.recv(payload); !receivedSize.has_value()) {
-                NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: " << buffer.getBufferSize() << " Received: " << receivedSize.has_value());
+                NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: " << buffer.getBufferSize()
+                                                                                  << " Received: " << receivedSize.has_value());
                 return std::nullopt;
             } else {
                 NES_DEBUG("ZMQSource  " << this << ": received buffer of size " << receivedSize.has_value());
@@ -104,7 +112,6 @@ std::string ZmqSource::toString() const {
     ss << "PORT=" << port << ", ";
     return ss.str();
 }
-
 
 bool ZmqSource::connect() {
     if (!connected) {

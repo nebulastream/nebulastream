@@ -25,7 +25,7 @@ class DummySink : public SinkDescriptor {
     DummySink() = default;
     ~DummySink() override = default;
     [[nodiscard]] std::string toString() override { return std::string(); }
-    [[nodiscard]] bool equal(SinkDescriptorPtr const &) override { return false; }
+    [[nodiscard]] bool equal(SinkDescriptorPtr const&) override { return false; }
 };
 }// namespace NES
 #endif//NES_TESTS_UTIL_DUMMYSINK_HPP_

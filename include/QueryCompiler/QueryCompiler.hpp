@@ -34,7 +34,7 @@ class QueryCompiler {
     virtual ~QueryCompiler() = default;
 
   protected:
-    explicit QueryCompiler(QueryCompilerOptionsPtr const &options) noexcept: queryCompilerOptions(options) {}
+    explicit QueryCompiler(QueryCompilerOptionsPtr const& options) noexcept : queryCompilerOptions(options) {}
 
     QueryCompilerOptionsPtr const queryCompilerOptions;
 };

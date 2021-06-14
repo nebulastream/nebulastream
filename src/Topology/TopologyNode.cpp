@@ -86,7 +86,9 @@ bool TopologyNode::containAsChild(NodePtr node) {
     return found != children.end();
 }
 
-void TopologyNode::addNodeProperty(const std::string& key, const std::any& value) { nodeProperties.insert(std::make_pair(key, value)); }
+void TopologyNode::addNodeProperty(const std::string& key, const std::any& value) {
+    nodeProperties.insert(std::make_pair(key, value));
+}
 
 std::any TopologyNode::getNodeProperty(const std::string& key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {

@@ -1460,7 +1460,7 @@ class ParseImp {
         *
         */
     void Print() {
-        for (auto *pLine : m_Lines) {
+        for (auto* pLine : m_Lines) {
 
             // Print type
             if (pLine->Type == Node::SequenceType) {

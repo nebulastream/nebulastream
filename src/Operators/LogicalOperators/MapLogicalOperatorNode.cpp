@@ -27,11 +27,11 @@ MapLogicalOperatorNode::MapLogicalOperatorNode(const FieldAssignmentExpressionNo
 
 FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() { return mapExpression; }
 
-bool MapLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
+bool MapLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<MapLogicalOperatorNode>()->getId() == id;
 }
 
-bool MapLogicalOperatorNode::equal(NodePtr const &rhs) const {
+bool MapLogicalOperatorNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<MapLogicalOperatorNode>()) {
         auto mapOperator = rhs->as<MapLogicalOperatorNode>();
         return mapExpression->equal(mapOperator->mapExpression);

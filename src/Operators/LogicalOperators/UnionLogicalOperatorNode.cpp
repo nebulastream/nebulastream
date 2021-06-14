@@ -24,7 +24,7 @@ namespace NES {
 
 UnionLogicalOperatorNode::UnionLogicalOperatorNode(OperatorId id) : OperatorNode(id), LogicalBinaryOperatorNode(id) {}
 
-bool UnionLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
+bool UnionLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<UnionLogicalOperatorNode>()->getId() == id;
 }
 
@@ -71,9 +71,7 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool UnionLogicalOperatorNode::equal(NodePtr const &rhs) const {
-    return rhs->instanceOf<UnionLogicalOperatorNode>();
-}
+bool UnionLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<UnionLogicalOperatorNode>(); }
 void UnionLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
     NES_TRACE("UnionLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());

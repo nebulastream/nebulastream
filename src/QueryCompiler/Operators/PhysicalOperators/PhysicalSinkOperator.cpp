@@ -22,15 +22,21 @@ PhysicalSinkOperator::PhysicalSinkOperator(OperatorId id,
                                            SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
                                            SinkDescriptorPtr sinkDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), sinkDescriptor(std::move(sinkDescriptor)) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      sinkDescriptor(std::move(sinkDescriptor)) {}
 
 PhysicalOperatorPtr
 PhysicalSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(sinkDescriptor));
+    return create(UtilityFunctions::getNextOperatorId(),
+                  std::move(inputSchema),
+                  std::move(outputSchema),
+                  std::move(sinkDescriptor));
 }
 
-PhysicalOperatorPtr
-PhysicalSinkOperator::create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const SinkDescriptorPtr& sinkDescriptor) {
+PhysicalOperatorPtr PhysicalSinkOperator::create(OperatorId id,
+                                                 const SchemaPtr& inputSchema,
+                                                 const SchemaPtr& outputSchema,
+                                                 const SinkDescriptorPtr& sinkDescriptor) {
     return std::make_shared<PhysicalSinkOperator>(id, inputSchema, outputSchema, sinkDescriptor);
 }
 

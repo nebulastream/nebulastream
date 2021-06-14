@@ -64,7 +64,8 @@ class WindowedJoinSliceListStore {
         auto const isDefault = timestamp == -1;
         if (timestamp < 0 and !isDefault) {
             NES_ERROR("getSliceIndexByTs for could not find a slice, because the timestamp is "
-                      "neither -1 nor positive: " << timestamp);
+                      "neither -1 nor positive: "
+                      << timestamp);
             NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen.");
         }
         auto const ts = isDefault ? 0ULL : static_cast<uint64_t>(timestamp);
@@ -79,7 +80,8 @@ class WindowedJoinSliceListStore {
             }
         }
         NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << timestamp << " " << ts);
-        NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen " << timestamp << " " << ts);
+        NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen " << timestamp << " "
+                                                                                                        << ts);
     }
 
     /**
@@ -161,7 +163,6 @@ class WindowedJoinSliceListStore {
         content[index].emplace_back(value);
     }
 
-  
     std::atomic<uint64_t> nextEdge{};
 
   private:

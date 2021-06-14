@@ -22,10 +22,13 @@ PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                ExpressionNodePtr predicate)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), predicate(std::move(predicate)) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      predicate(std::move(predicate)) {}
 
-PhysicalOperatorPtr
-PhysicalFilterOperator::create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const ExpressionNodePtr& expression) {
+PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id,
+                                                   const SchemaPtr& inputSchema,
+                                                   const SchemaPtr& outputSchema,
+                                                   const ExpressionNodePtr& expression) {
     return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, expression);
 }
 

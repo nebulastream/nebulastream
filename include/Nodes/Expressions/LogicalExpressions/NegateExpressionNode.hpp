@@ -30,9 +30,9 @@ class NegateExpressionNode : public LogicalUnaryExpressionNode {
     /**
      * @brief Create a new negate expression
      */
-    static ExpressionNodePtr create(ExpressionNodePtr const &child);
+    static ExpressionNodePtr create(ExpressionNodePtr const& child);
 
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     /**
      * @brief Infers the stamp of this logical negate expression node.

@@ -72,7 +72,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param fieldName :  name of the field to be checked
      * @return true if field use in the filter predicate else false
      */
-    static bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const &filterOperator, std::string const &fieldName);
+    static bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator, std::string const& fieldName);
 };
 
 }// namespace NES::Optimizer

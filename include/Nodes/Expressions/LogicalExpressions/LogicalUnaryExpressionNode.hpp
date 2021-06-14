@@ -27,7 +27,7 @@ class LogicalUnaryExpressionNode : public UnaryExpressionNode, public LogicalExp
     LogicalUnaryExpressionNode();
 
   public:
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
     /**
     * @brief Create a deep copy of this expression node.

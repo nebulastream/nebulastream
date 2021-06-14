@@ -54,7 +54,6 @@ class NetworkValues {
     bool operator==(const NetworkValues& rhs) const;
     bool operator!=(const NetworkValues& rhs) const;
 
-  
     uint64_t interfaceName;
 
     uint64_t rBytes;

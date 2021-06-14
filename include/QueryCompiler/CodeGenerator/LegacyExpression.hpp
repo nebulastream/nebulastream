@@ -39,14 +39,16 @@ class LegacyExpression {
 
 class Predicate : public LegacyExpression {
   public:
-    Predicate(BinaryOperatorType const &op,
-              LegacyExpressionPtr const &left,
-              LegacyExpressionPtr const &right,
+    Predicate(BinaryOperatorType const& op,
+              LegacyExpressionPtr const& left,
+              LegacyExpressionPtr const& right,
               std::string functionCallOverload,
               bool bracket = true);
 
-
-    Predicate(BinaryOperatorType const &op, LegacyExpressionPtr const &left, LegacyExpressionPtr const &right, bool bracket = true);
+    Predicate(BinaryOperatorType const& op,
+              LegacyExpressionPtr const& left,
+              LegacyExpressionPtr const& right,
+              bool bracket = true);
 
     ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     [[nodiscard]] std::string toString() const override;

@@ -39,7 +39,6 @@ class OutputChannel {
   public:
     explicit OutputChannel(zmq::socket_t&& zmqSocket, ChannelId channelId, std::string&& address);
 
-  
     /**
      * @brief close the output channel and release resources
      */
@@ -49,7 +48,6 @@ class OutputChannel {
 
     OutputChannel& operator=(const OutputChannel&) = delete;
 
-  
     /**
      * @brief Creates an output channe instance with the given parameters
      * @param zmqContext the local zmq server context
@@ -66,7 +64,6 @@ class OutputChannel {
                                    ExchangeProtocol& protocol,
                                    std::chrono::seconds waitTime,
                                    uint8_t retryTimes);
-
 
     /**
      * @brief Send buffer to the destination defined in the constructor. Note that this method will internally
@@ -92,7 +89,7 @@ class OutputChannel {
     const std::string socketAddr;
     zmq::socket_t zmqSocket;
     const ChannelId channelId;
-    bool isClosed {false};
+    bool isClosed{false};
 };
 
 }// namespace Network

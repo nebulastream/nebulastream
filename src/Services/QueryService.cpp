@@ -134,7 +134,9 @@ uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan, const std:
     throw Exception("QueryService: unable to create query catalog entry");
 }
 
-uint64_t QueryService::addQueryRequest(const std::string& queryString, const QueryPlanPtr& queryPlan, const std::string& placementStrategyName) {
+uint64_t QueryService::addQueryRequest(const std::string& queryString,
+                                       const QueryPlanPtr& queryPlan,
+                                       const std::string& placementStrategyName) {
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);

@@ -33,8 +33,7 @@ class ArrayType : public DataType {
      * @param length length of the array
      * @param component component type
      */
-    inline ArrayType(uint64_t length, DataTypePtr component) noexcept
-        :  length(length), component(std::move(component)) {}
+    inline ArrayType(uint64_t length, DataTypePtr component) noexcept : length(length), component(std::move(component)) {}
 
     virtual ~ArrayType() = default;
 

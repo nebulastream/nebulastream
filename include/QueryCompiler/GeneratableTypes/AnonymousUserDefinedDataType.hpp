@@ -29,7 +29,7 @@ namespace NES::QueryCompilation {
  */
 class AnonymousUserDefinedDataType final : public GeneratableDataType {
   public:
-    explicit AnonymousUserDefinedDataType(std::string const &name);
+    explicit AnonymousUserDefinedDataType(std::string const& name);
 
     /**
      * @brief Generated code for a type definition. This is mainly crucial for structures.

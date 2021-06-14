@@ -137,7 +137,9 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::copy() {
                   allowedLateness);
 }
 WindowTriggerPolicyPtr LogicalWindowDefinition::getTriggerPolicy() const { return triggerPolicy; }
-void LogicalWindowDefinition::setTriggerPolicy(WindowTriggerPolicyPtr triggerPolicy) { this->triggerPolicy = std::move(triggerPolicy); }
+void LogicalWindowDefinition::setTriggerPolicy(WindowTriggerPolicyPtr triggerPolicy) {
+    this->triggerPolicy = std::move(triggerPolicy);
+}
 
 WindowActionDescriptorPtr LogicalWindowDefinition::getTriggerAction() const { return triggerAction; }
 

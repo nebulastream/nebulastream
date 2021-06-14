@@ -19,14 +19,14 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 /**
  * @brief this statements allows us to generate code comments
  */
 class CommentStatement : public Statement {
   public:
-    explicit inline CommentStatement(const std::string& comment) noexcept: comment(comment) {}
-    explicit inline CommentStatement(std::string&& comment) noexcept: comment(std::move(comment)) {}
+    explicit inline CommentStatement(const std::string& comment) noexcept : comment(comment) {}
+    explicit inline CommentStatement(std::string&& comment) noexcept : comment(std::move(comment)) {}
 
     ~CommentStatement() noexcept = default;
 

@@ -31,8 +31,8 @@ class BroadcastLogicalOperatorNode : public ExchangeOperatorNode, public Logical
     ~BroadcastLogicalOperatorNode() override = default;
 
     bool inferSchema() override;
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
     void inferStringSignature() override;

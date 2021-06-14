@@ -28,7 +28,6 @@ namespace Network {
  */
 class ExchangeProtocolListener {
   public:
-
     virtual ~ExchangeProtocolListener() = default;
 
     /**

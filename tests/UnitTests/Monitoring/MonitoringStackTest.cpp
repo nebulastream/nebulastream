@@ -26,8 +26,8 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
-#include <Util/Logger.hpp>
 #include <Services/MonitoringService.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -138,36 +138,36 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
 
     // test with simple data types
-    const auto *intS = "simpleInt";
+    const auto* intS = "simpleInt";
     metricGroup->add(intS, Metric{1});
     int valueInt = metricGroup->getAs<int>(intS);
     EXPECT_TRUE(valueInt == 1);
 
-    const auto *stringS = "simpleString";
+    const auto* stringS = "simpleString";
     metricGroup->add(stringS, Metric{std::string("test")});
     std::string valueString = metricGroup->getAs<std::string>(stringS);
     EXPECT_TRUE(valueString == "test");
 
     // test cpu stats
-    const auto *cpuS = "cpuStats";
+    const auto* cpuS = "cpuStats";
     metricGroup->add(cpuS, Metric{cpuStats});
     Gauge<CpuMetrics> cpuMetrics = metricGroup->getAs<Gauge<CpuMetrics>>(cpuS);
     EXPECT_TRUE(cpuStats.measure().getNumCores() == cpuMetrics.measure().getNumCores());
 
     // test network stats
-    const auto *networkS = "networkStats";
+    const auto* networkS = "networkStats";
     metricGroup->add(networkS, Metric{networkStats});
     auto networkMetrics = metricGroup->getAs<Gauge<NetworkMetrics>>(networkS);
     EXPECT_TRUE(networkStats.measure().getInterfaceNum() == networkMetrics.measure().getInterfaceNum());
 
     // test disk stats
-    const auto *diskS = "diskStats";
+    const auto* diskS = "diskStats";
     metricGroup->add(diskS, Metric{diskStats});
     auto diskMetrics = metricGroup->getAs<Gauge<DiskMetrics>>(diskS);
     EXPECT_TRUE(diskStats.measure().fBavail == diskMetrics.measure().fBavail);
 
     // test mem stats
-    const auto *memS = "memStats";
+    const auto* memS = "memStats";
     metricGroup->add(memS, Metric{memStats});
     auto memMetrics = metricGroup->getAs<Gauge<MemoryMetrics>>(memS);
     EXPECT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);

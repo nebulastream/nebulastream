@@ -18,13 +18,14 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STDOUT_HPP_
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 /**
  * @brief this statements allows us to generate code printing to std::out
  */
 class StdOutStatement : public Statement {
   public:
-    template<typename T> inline StdOutStatement(T &&m) noexcept : message(std::forward<T>(m)) {}
+    template<typename T>
+    inline StdOutStatement(T&& m) noexcept : message(std::forward<T>(m)) {}
 
     ~StdOutStatement() noexcept override = default;
 

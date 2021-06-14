@@ -30,11 +30,11 @@ ProjectionLogicalOperatorNode::ProjectionLogicalOperatorNode(std::vector<Express
 
 std::vector<ExpressionNodePtr> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
 
-bool ProjectionLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
+bool ProjectionLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<ProjectionLogicalOperatorNode>()->getId() == id;
 }
 
-bool ProjectionLogicalOperatorNode::equal(NodePtr const &rhs) const {
+bool ProjectionLogicalOperatorNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<ProjectionLogicalOperatorNode>()) {
         auto projection = rhs->as<ProjectionLogicalOperatorNode>();
         return outputSchema->equals(projection->outputSchema);

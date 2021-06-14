@@ -23,7 +23,7 @@
 namespace NES {
 
 SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library, std::string baseName)
-    :  library(std::move(library)), baseFileName(std::move(baseName)){};
+    : library(std::move(library)), baseFileName(std::move(baseName)){};
 SystemCompilerCompiledCode::~SystemCompilerCompiledCode() { cleanUp(); }
 
 void* SystemCompilerCompiledCode::getFunctionPointerImpl(const std::string& name) {

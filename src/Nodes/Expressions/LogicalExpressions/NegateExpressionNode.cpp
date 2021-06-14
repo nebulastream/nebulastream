@@ -18,11 +18,11 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 namespace NES {
 
-NegateExpressionNode::NegateExpressionNode()  {}
+NegateExpressionNode::NegateExpressionNode() {}
 
 NegateExpressionNode::NegateExpressionNode(NegateExpressionNode* other) : LogicalUnaryExpressionNode(other) {}
 
-bool NegateExpressionNode::equal(NodePtr const &rhs) const {
+bool NegateExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<NegateExpressionNode>()) {
         auto other = rhs->as<NegateExpressionNode>();
         return this->getChildren()[0]->equal(other->getChildren()[0]);
@@ -36,7 +36,7 @@ std::string NegateExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr NegateExpressionNode::create(ExpressionNodePtr const &child) {
+ExpressionNodePtr NegateExpressionNode::create(ExpressionNodePtr const& child) {
     auto equals = std::make_shared<NegateExpressionNode>();
     equals->setChild(child);
     return equals;

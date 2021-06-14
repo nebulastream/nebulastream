@@ -48,7 +48,7 @@ std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(const Sch
 }
 std::string MemorySourceDescriptor::toString() { return "MemorySourceDescriptor"; }
 
-bool MemorySourceDescriptor::equal(SourceDescriptorPtr const &other) {
+bool MemorySourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<MemorySourceDescriptor>()) {
         return false;
     }

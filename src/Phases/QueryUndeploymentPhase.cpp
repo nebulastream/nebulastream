@@ -40,7 +40,8 @@ QueryUndeploymentPhase::~QueryUndeploymentPhase() { NES_DEBUG("~QueryUndeploymen
 QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology,
                                                          GlobalExecutionPlanPtr globalExecutionPlan,
                                                          WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan), std::move(workerRpcClient)));
+    return std::make_shared<QueryUndeploymentPhase>(
+        QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan), std::move(workerRpcClient)));
 }
 
 bool QueryUndeploymentPhase::execute(const QueryId queryId) {

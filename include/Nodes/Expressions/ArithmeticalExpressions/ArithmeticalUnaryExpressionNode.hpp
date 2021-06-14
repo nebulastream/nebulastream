@@ -31,7 +31,7 @@ class ArithmeticalUnaryExpressionNode : public UnaryExpressionNode, public Arith
      */
     void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
   protected:

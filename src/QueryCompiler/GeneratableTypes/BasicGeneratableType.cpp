@@ -22,7 +22,7 @@
 #include <sstream>
 #include <utility>
 namespace NES::QueryCompilation {
-BasicGeneratableType::BasicGeneratableType(BasicPhysicalTypePtr type) :  type(std::move(type)) {}
+BasicGeneratableType::BasicGeneratableType(BasicPhysicalTypePtr type) : type(std::move(type)) {}
 
 CodeExpressionPtr BasicGeneratableType::getTypeDefinitionCode() const {
     // A basic type need no type definition.

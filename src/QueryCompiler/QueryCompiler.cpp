@@ -15,6 +15,4 @@
 */
 #include <QueryCompiler/QueryCompiler.hpp>
 
-namespace NES::QueryCompilation {
-
-}// namespace NES::QueryCompilation
+namespace NES::QueryCompilation {}// namespace NES::QueryCompilation

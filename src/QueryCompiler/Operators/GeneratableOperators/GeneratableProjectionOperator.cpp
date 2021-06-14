@@ -25,7 +25,8 @@ GeneratableProjectionOperator::GeneratableProjectionOperator(OperatorId id,
                                                              SchemaPtr inputSchema,
                                                              SchemaPtr outputSchema,
                                                              std::vector<ExpressionNodePtr> expressions)
-    : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)), expressions(std::move(expressions)) {}
+    : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      expressions(std::move(expressions)) {}
 
 GeneratableOperatorPtr GeneratableProjectionOperator::create(OperatorId id,
                                                              SchemaPtr inputSchema,

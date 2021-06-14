@@ -58,7 +58,7 @@ class OPCSourceDescriptor : public SourceDescriptor {
      */
     const std::string getPassword() const;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
 
     std::string toString() override;
 

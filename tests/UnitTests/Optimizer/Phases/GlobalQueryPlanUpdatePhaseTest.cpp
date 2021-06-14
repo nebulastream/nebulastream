@@ -84,7 +84,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
-    const auto *queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
     auto queryCatalog = std::make_shared<QueryCatalog>();
@@ -116,7 +116,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForDuplicateValidQ
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new valid query.");
-    const auto *queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
     auto queryCatalog = std::make_shared<QueryCatalog>();
@@ -144,10 +144,10 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForDuplicateValidQ
 TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQueryPlan) {
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create two valid queries.");
-    const auto *queryString1 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    const auto* queryString1 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
-    const auto *queryString2 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    const auto* queryString2 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q2 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
     auto queryCatalog = std::make_shared<QueryCatalog>();
@@ -213,10 +213,10 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
 TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQueryRequestsWithAddAndRemoval) {
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create two valid queries.");
-    const auto *queryString1 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    const auto* queryString1 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
-    const auto *queryString2 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    const auto* queryString2 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q2 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
     auto queryCatalog = std::make_shared<QueryCatalog>();
@@ -258,7 +258,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
-    const auto *queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
 
     auto queryCatalog = std::make_shared<QueryCatalog>();
     for (int i = 1; i <= 10; i++) {
@@ -299,7 +299,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
-    const auto *queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
 
     auto queryCatalog = std::make_shared<QueryCatalog>();
     for (int i = 1; i <= 1; i++) {

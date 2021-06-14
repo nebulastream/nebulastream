@@ -38,7 +38,10 @@ Predicate::Predicate(const BinaryOperatorType& op,
                      bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload(std::move(functionCallOverload)) {}
 
-Predicate::Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr& left, const LegacyExpressionPtr& right, bool bracket)
+Predicate::Predicate(const BinaryOperatorType& op,
+                     const LegacyExpressionPtr& left,
+                     const LegacyExpressionPtr& right,
+                     bool bracket)
     : op(op), left(left), right(right), bracket(bracket) {}
 
 LegacyExpressionPtr Predicate::copy() const { return std::make_shared<Predicate>(*this); }
@@ -61,11 +64,12 @@ ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHand
     expr.addParameter(left->generateCode(code, recordHandler));
     expr.addParameter(right->generateCode(code, recordHandler));
     if (bracket) {
-        return BinaryOperatorStatement(expr,
-                                       op,
-                                       (ConstantExpressionStatement(NES::QueryCompilation::GeneratableTypesFactory::createValueType(
-                                           DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))),
-                                       BRACKETS)
+        return BinaryOperatorStatement(
+                   expr,
+                   op,
+                   (ConstantExpressionStatement(NES::QueryCompilation::GeneratableTypesFactory::createValueType(
+                       DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))),
+                   BRACKETS)
             .copy();
     }
     return BinaryOperatorStatement(expr,

@@ -614,7 +614,9 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
         }
     };
 
-    std::vector<Output> expectedOutput = {{1090ULL, 1100ULL, 4ULL, 48ULL}, {1000ULL, 1010ULL, 12ULL, 96ULL}, {1010ULL, 1020ULL, 12ULL, 192ULL}};
+    std::vector<Output> expectedOutput = {{1090ULL, 1100ULL, 4ULL, 48ULL},
+                                          {1000ULL, 1010ULL, 12ULL, 96ULL},
+                                          {1010ULL, 1020ULL, 12ULL, 192ULL}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

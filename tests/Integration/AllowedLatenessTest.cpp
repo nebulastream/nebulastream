@@ -113,7 +113,9 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_0ms) {
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(inOrderConf, inputSchema);
 
-    std::vector<Output> expectedOutput = {{1000ULL, 2000ULL, 1ULL, 15ULL}, {2000ULL, 3000ULL, 1ULL, 30ULL}, {3000ULL, 4000ULL, 1ULL, 21ULL}};
+    std::vector<Output> expectedOutput = {{1000ULL, 2000ULL, 1ULL, 15ULL},
+                                          {2000ULL, 3000ULL, 1ULL, 30ULL},
+                                          {3000ULL, 4000ULL, 1ULL, 21ULL}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -413,7 +415,9 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_0ms) {
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2ULL);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2ULL);
 
-    std::vector<Output> expectedOutput = {{1000ULL, 2000ULL, 1ULL, 60ULL}, {2000ULL, 3000ULL, 1ULL, 120ULL}, {3000ULL, 4000ULL, 1ULL, 84ULL}};
+    std::vector<Output> expectedOutput = {{1000ULL, 2000ULL, 1ULL, 60ULL},
+                                          {2000ULL, 3000ULL, 1ULL, 120ULL},
+                                          {3000ULL, 4000ULL, 1ULL, 84ULL}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());

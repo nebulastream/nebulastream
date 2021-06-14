@@ -17,17 +17,17 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 namespace NES {
-OrExpressionNode::OrExpressionNode()  {};
+OrExpressionNode::OrExpressionNode(){};
 
 OrExpressionNode::OrExpressionNode(OrExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr OrExpressionNode::create(ExpressionNodePtr const &left, ExpressionNodePtr const &right) {
+ExpressionNodePtr OrExpressionNode::create(ExpressionNodePtr const& left, ExpressionNodePtr const& right) {
     auto orNode = std::make_shared<OrExpressionNode>();
     orNode->setChildren(left, right);
     return orNode;
 }
 
-bool OrExpressionNode::equal(NodePtr const &rhs) const {
+bool OrExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<OrExpressionNode>()) {
         auto otherAndNode = rhs->as<OrExpressionNode>();
         return getLeft()->equal(otherAndNode->getLeft()) && getRight()->equal(otherAndNode->getRight());

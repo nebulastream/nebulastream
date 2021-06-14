@@ -117,7 +117,7 @@ class QueryCatalogEntry {
       * @brief Get name of the query placement strategy
       * @return query placement strategy
       */
-    [[nodiscard]] std::string const & getQueryPlacementStrategy() const;
+    [[nodiscard]] std::string const& getQueryPlacementStrategy() const;
 
     /**
      * @brief create a copy of query catalog entry.

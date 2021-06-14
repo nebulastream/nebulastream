@@ -29,8 +29,7 @@
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology)
-    : streamCatalog(std::move(streamCatalog)), topology(std::move(topology))
-      {
+    : streamCatalog(std::move(streamCatalog)), topology(std::move(topology)) {
     NES_DEBUG("CoordinatorEngine()");
 }
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
@@ -168,7 +167,9 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
     return success;
 }
 
-bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, const std::string& physicalStreamName, const std::string& logicalStreamName) {
+bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId,
+                                                 const std::string& physicalStreamName,
+                                                 const std::string& logicalStreamName) {
     NES_DEBUG("CoordinatorEngine::UnregisterPhysicalStream: try to remove physical stream with name "
               << physicalStreamName << " logical name " << logicalStreamName << " workerId=" << nodeId);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);

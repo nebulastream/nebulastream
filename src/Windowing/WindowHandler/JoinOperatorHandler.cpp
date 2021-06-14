@@ -19,12 +19,14 @@
 #include <utility>
 namespace NES::Join {
 
-JoinOperatorHandlerPtr
-JoinOperatorHandler::create(const LogicalJoinDefinitionPtr& joinDefinition, const SchemaPtr& resultSchema, const AbstractJoinHandlerPtr& joinHandler) {
+JoinOperatorHandlerPtr JoinOperatorHandler::create(const LogicalJoinDefinitionPtr& joinDefinition,
+                                                   const SchemaPtr& resultSchema,
+                                                   const AbstractJoinHandlerPtr& joinHandler) {
     return std::make_shared<JoinOperatorHandler>(joinDefinition, resultSchema, joinHandler);
 }
 
-JoinOperatorHandlerPtr JoinOperatorHandler::create(const LogicalJoinDefinitionPtr& joinDefinition, const SchemaPtr& resultSchema) {
+JoinOperatorHandlerPtr JoinOperatorHandler::create(const LogicalJoinDefinitionPtr& joinDefinition,
+                                                   const SchemaPtr& resultSchema) {
     return std::make_shared<JoinOperatorHandler>(joinDefinition, resultSchema);
 }
 

@@ -51,7 +51,7 @@ std::string toString(const BinaryOperatorType& type) {
 }
 
 CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type) {
-    constexpr char const * const names[] = {
+    constexpr char const* const names[] = {
         "==", "!=", "<", "<=", ">", ">=", "+",  "-", "*",  "/",  "pow(,)", "%",
         "&&", "||", "&", "|",  "^", "<<", ">>", "=", "[]", "->", ".",
     };

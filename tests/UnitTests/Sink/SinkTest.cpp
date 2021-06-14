@@ -27,7 +27,7 @@
 #include <gtest/gtest.h>
 #include <ostream>
 
-inline constexpr auto zmqPort = static_cast<uint16_t>(11195u); // XXX: 666555;
+inline constexpr auto zmqPort = static_cast<uint16_t>(11195u);// XXX: 666555;
 
 using namespace std;
 

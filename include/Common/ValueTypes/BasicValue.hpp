@@ -24,7 +24,6 @@ namespace NES {
 class [[nodiscard]] BasicValue final : public ValueType {
 
   public:
-
     [[nodiscard]] inline BasicValue(DataTypePtr&& type, std::string&& value) noexcept
         : ValueType(std::move(type)), value(std::move(value)) {}
 

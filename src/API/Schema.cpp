@@ -68,7 +68,9 @@ SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
     return addField(name, DataTypeFactory::createType(type));
 }
 
-SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) { return addField(AttributeField::create(name, std::move(data))); }
+SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
+    return addField(AttributeField::create(name, std::move(data)));
+}
 
 void Schema::removeField(const AttributeFieldPtr& field) {
     auto it = fields.begin();
@@ -120,7 +122,7 @@ bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
         }
         return true;
     }
-    for (auto && fieldAttribute : fields) {
+    for (auto&& fieldAttribute : fields) {
         auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->getName());
         if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
             return false;

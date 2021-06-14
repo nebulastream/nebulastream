@@ -29,8 +29,8 @@ class MulExpressionNode : public ArithmeticalBinaryExpressionNode {
     /**
      * @brief Create a new Mul expression
      */
-    static ExpressionNodePtr create(ExpressionNodePtr const &left, ExpressionNodePtr const &right);
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     /**

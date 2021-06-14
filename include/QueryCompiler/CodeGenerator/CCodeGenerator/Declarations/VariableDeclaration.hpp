@@ -21,17 +21,17 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 
 class VariableDeclaration : public Declaration {
   public:
-    VariableDeclaration(VariableDeclaration const &var_decl);
+    VariableDeclaration(VariableDeclaration const& var_decl);
 
     ~VariableDeclaration() override = default;
 
-
     static VariableDeclaration create(DataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
-    static VariableDeclaration create(const GeneratableDataTypePtr& type, const std::string& identifier, ValueTypePtr value = nullptr);
+    static VariableDeclaration
+    create(const GeneratableDataTypePtr& type, const std::string& identifier, ValueTypePtr value = nullptr);
 
     [[nodiscard]] GeneratableDataTypePtr getType() const override;
     [[nodiscard]] std::string getIdentifierName() const override;

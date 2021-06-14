@@ -40,11 +40,11 @@ std::string CentralWindowOperator::toString() const {
     return ss.str();
 }
 
-bool CentralWindowOperator::isIdentical(NodePtr const &rhs) const {
+bool CentralWindowOperator::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<CentralWindowOperator>()->getId() == id;
 }
 
-bool CentralWindowOperator::equal(NodePtr const &rhs) const {
+bool CentralWindowOperator::equal(NodePtr const& rhs) const {
     return rhs->instanceOf<CentralWindowOperator>()
         && rhs->as<WindowOperatorNode>()->getWindowDefinition() == this->getWindowDefinition();
 }

@@ -35,7 +35,8 @@ class TestQuery : public Query {
         return Query(queryPlan);
     }
     static Query from(SchemaPtr inputSchme) {
-        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(std::move(inputSchme))));
+        auto sourceOperator =
+            LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(std::move(inputSchme))));
         auto queryPlan = QueryPlan::create(sourceOperator);
         return Query(queryPlan);
     }

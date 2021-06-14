@@ -110,7 +110,7 @@ class ExecutionNode : public Node {
      */
     uint32_t getOccupiedResources(QueryId queryId);
 
-    bool equal(NodePtr const &rhs) const override;
+    bool equal(NodePtr const& rhs) const override;
 
     std::string toString() const override;
 

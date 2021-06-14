@@ -69,7 +69,7 @@ class ZmqSource : public DataSource {
      * @brief The address address for the ZMQ
      * @return ZMQ address
      */
-    std::string const & getHost() const;
+    std::string const& getHost() const;
 
     /**
      * @brief The port of the ZMQ

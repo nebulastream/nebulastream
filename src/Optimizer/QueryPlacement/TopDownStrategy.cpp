@@ -35,14 +35,20 @@ std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr 
                                                          TopologyPtr topology,
                                                          TypeInferencePhasePtr typeInferencePhase,
                                                          StreamCatalogPtr streamCatalog) {
-    return std::make_unique<TopDownStrategy>(TopDownStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), std::move(streamCatalog)));
+    return std::make_unique<TopDownStrategy>(TopDownStrategy(std::move(globalExecutionPlan),
+                                                             std::move(topology),
+                                                             std::move(typeInferencePhase),
+                                                             std::move(streamCatalog)));
 }
 
 TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase,
                                  StreamCatalogPtr streamCatalog)
-    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), std::move(streamCatalog)) {}
+    : BasePlacementStrategy(std::move(globalExecutionPlan),
+                            std::move(topology),
+                            std::move(typeInferencePhase),
+                            std::move(streamCatalog)) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
@@ -305,7 +311,7 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators
     }
     std::vector<TopologyNodePtr> childNodes;
     childNodes.reserve(sourceOperators.size());
-for (auto& sourceOperator : sourceOperators) {
+    for (auto& sourceOperator : sourceOperators) {
         childNodes.push_back(getTopologyNodeForPinnedOperator(sourceOperator->getId()));
     }
     return childNodes;

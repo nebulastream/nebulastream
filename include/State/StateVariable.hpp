@@ -235,7 +235,6 @@ class StateVariable : public detail::Destroyable {
         LockedStateBackend backend;
     };
 
-  
     /**
      * @brief Creates a new state variable
      * @param name of the state variable
@@ -298,7 +297,6 @@ class StateVariable : public detail::Destroyable {
         return *this;
     }
 
-  
     /**
      * Point lookup of a key-value pair
      * @param key

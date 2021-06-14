@@ -38,7 +38,10 @@ class FormatIterator {
         using iterator_category = std::forward_iterator_tag;
         using difference_type = std::ptrdiff_t;
 
-        explicit Iterator(uint64_t currentSeek, NodeEngine::TupleBuffer buffer, const SchemaPtr& schema, FormatTypes sinkFormatType)
+        explicit Iterator(uint64_t currentSeek,
+                          NodeEngine::TupleBuffer buffer,
+                          const SchemaPtr& schema,
+                          FormatTypes sinkFormatType)
             : buffer(std::move(buffer)), sinkFormatType(sinkFormatType) {
             auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 

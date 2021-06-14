@@ -31,7 +31,8 @@
 
 namespace NES::Optimizer {
 
-Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForField(const std::string& fieldName, const DataTypePtr& dataType, const z3::ContextPtr& context) {
+Z3ExprAndFieldMapPtr
+DataTypeToZ3ExprUtil::createForField(const std::string& fieldName, const DataTypePtr& dataType, const z3::ContextPtr& context) {
     NES_DEBUG("DataTypeToZ3ExprUtil: creating z3 expression for field");
     z3::ExprPtr expr;
     if (dataType->isInteger()) {

@@ -80,7 +80,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param executionNode : the execution node where operator is to be placed
      * @return the query plan to which the input operator is to be appended
      */
-    static QueryPlanPtr getCandidateQueryPlan(QueryId queryId, const OperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode);
+    static QueryPlanPtr
+    getCandidateQueryPlan(QueryId queryId, const OperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode);
 };
 }// namespace NES::Optimizer
 

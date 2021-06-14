@@ -32,7 +32,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
                                          BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
-      qepStatus(Created), numOfProducers(this->sources.size()), 
+      qepStatus(Created), numOfProducers(this->sources.size()),
       qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
     // nop
 }

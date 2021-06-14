@@ -29,7 +29,6 @@ class PipelineContext {
   public:
     enum PipelineContextArity { Unary, BinaryLeft, BinaryRight };
 
-  
     explicit PipelineContext(PipelineContextArity arity = Unary);
     ~PipelineContext();
     static PipelineContextPtr create();

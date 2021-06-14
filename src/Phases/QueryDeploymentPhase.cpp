@@ -34,7 +34,8 @@ QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutio
 QueryDeploymentPhase::~QueryDeploymentPhase() { NES_DEBUG("~QueryDeploymentPhase()"); }
 QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                      WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<QueryDeploymentPhase>(QueryDeploymentPhase(std::move(globalExecutionPlan), std::move(workerRpcClient)));
+    return std::make_shared<QueryDeploymentPhase>(
+        QueryDeploymentPhase(std::move(globalExecutionPlan), std::move(workerRpcClient)));
 }
 
 bool QueryDeploymentPhase::execute(QueryId queryId) {

@@ -40,11 +40,11 @@ std::string WindowComputationOperator::toString() const {
     return ss.str();
 }
 
-bool WindowComputationOperator::isIdentical(NodePtr const &rhs) const {
+bool WindowComputationOperator::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<WindowComputationOperator>()->getId() == id;
 }
 
-bool WindowComputationOperator::equal(NodePtr const &rhs) const { return rhs->instanceOf<WindowComputationOperator>(); }
+bool WindowComputationOperator::equal(NodePtr const& rhs) const { return rhs->instanceOf<WindowComputationOperator>(); }
 
 OperatorNodePtr WindowComputationOperator::copy() {
     auto copy = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition, id);

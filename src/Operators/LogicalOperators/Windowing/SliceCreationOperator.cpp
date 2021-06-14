@@ -43,11 +43,11 @@ std::string SliceCreationOperator::toString() const {
     return ss.str();
 }
 
-bool SliceCreationOperator::isIdentical(NodePtr const &rhs) const {
+bool SliceCreationOperator::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<SliceCreationOperator>()->getId() == id;
 }
 
-bool SliceCreationOperator::equal(NodePtr const &rhs) const { return rhs->instanceOf<SliceCreationOperator>(); }
+bool SliceCreationOperator::equal(NodePtr const& rhs) const { return rhs->instanceOf<SliceCreationOperator>(); }
 
 OperatorNodePtr SliceCreationOperator::copy() {
     auto copy = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition, id);

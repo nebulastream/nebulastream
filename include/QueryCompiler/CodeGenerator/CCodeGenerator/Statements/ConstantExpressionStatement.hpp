@@ -20,7 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 
 class ConstantExpressionStatement : public ExpressionStatment {
   public:

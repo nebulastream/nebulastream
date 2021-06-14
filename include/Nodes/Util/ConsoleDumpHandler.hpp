@@ -40,7 +40,7 @@ class ConsoleDumpHandler : public DumpHandler {
     /**
     * Dump the specific node and its children with details in multiple lines.
     */
-    void multilineDump(NodePtr const &node);
+    void multilineDump(NodePtr const& node);
 
     /**
      * @brief Dump a query plan with a specific context and scope.
@@ -60,8 +60,8 @@ class ConsoleDumpHandler : public DumpHandler {
 
   private:
     std::ostream& out;
-    void dumpHelper(NodePtr const &op, uint64_t depth, uint64_t indent, std::ostream& out) const;
-    void multilineDumpHelper(NodePtr const & op, uint64_t depth, uint64_t indent, std::ostream& out) const;
+    void dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
+    void multilineDumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
 };
 
 }// namespace NES

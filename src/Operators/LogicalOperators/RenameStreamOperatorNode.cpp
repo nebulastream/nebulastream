@@ -25,11 +25,11 @@ namespace NES {
 RenameStreamOperatorNode::RenameStreamOperatorNode(const std::string& newStreamName, uint64_t id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), newStreamName(newStreamName) {}
 
-bool RenameStreamOperatorNode::isIdentical(NodePtr const &rhs) const {
+bool RenameStreamOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<RenameStreamOperatorNode>()->getId() == id;
 }
 
-bool RenameStreamOperatorNode::equal(NodePtr const &rhs) const {
+bool RenameStreamOperatorNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<RenameStreamOperatorNode>()) {
         auto otherRename = rhs->as<RenameStreamOperatorNode>();
         return newStreamName == otherRename->newStreamName;

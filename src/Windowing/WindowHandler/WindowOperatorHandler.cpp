@@ -25,7 +25,8 @@ WindowOperatorHandlerPtr WindowOperatorHandler::create(const LogicalWindowDefini
     return std::make_shared<WindowOperatorHandler>(windowDefinition, resultSchema, windowHandler);
 }
 
-WindowOperatorHandlerPtr WindowOperatorHandler::create(const LogicalWindowDefinitionPtr& windowDefinition, const SchemaPtr& resultSchema) {
+WindowOperatorHandlerPtr WindowOperatorHandler::create(const LogicalWindowDefinitionPtr& windowDefinition,
+                                                       const SchemaPtr& resultSchema) {
     return std::make_shared<WindowOperatorHandler>(windowDefinition, resultSchema);
 }
 
@@ -40,7 +41,9 @@ WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDe
 
 LogicalWindowDefinitionPtr WindowOperatorHandler::getWindowDefinition() { return windowDefinition; }
 
-void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHandler) { this->windowHandler = std::move(windowHandler); }
+void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHandler) {
+    this->windowHandler = std::move(windowHandler);
+}
 
 SchemaPtr WindowOperatorHandler::getResultSchema() { return resultSchema; }
 

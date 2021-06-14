@@ -148,7 +148,7 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataVal
         auto serializedBasicValue = SerializableDataValue_BasicValue();
         dataValue.UnpackTo(&serializedBasicValue);
 
-        auto *const type = serializedBasicValue.release_type();
+        auto* const type = serializedBasicValue.release_type();
         auto const dataTypePtr = deserializeDataType(type);
         return DataTypeFactory::createBasicValue(dataTypePtr, serializedBasicValue.value());
     }

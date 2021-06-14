@@ -23,9 +23,7 @@ CodeExpressionPtr UserDefinedDataType::getTypeDefinitionCode() const {
     return std::make_shared<CodeExpression>(declaration.getCode());
 }
 
-CodeExpressionPtr UserDefinedDataType::getCode() const {
-    return std::make_shared<CodeExpression>(declaration.getTypeName());
-}
+CodeExpressionPtr UserDefinedDataType::getCode() const { return std::make_shared<CodeExpression>(declaration.getTypeName()); }
 
 CodeExpressionPtr UserDefinedDataType::getDeclarationCode(std::string) const { return getCode(); }
 }// namespace NES::QueryCompilation

@@ -57,7 +57,6 @@ class AbstractPhysicalStreamConfig {
      * @return the logical stream name of the source
      */
     virtual std::string getLogicalStreamName() = 0;
-
 };
 
 using AbstractPhysicalStreamConfigPtr = std::shared_ptr<AbstractPhysicalStreamConfig>;

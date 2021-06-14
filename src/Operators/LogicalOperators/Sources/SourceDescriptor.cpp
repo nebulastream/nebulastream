@@ -19,7 +19,7 @@
 #include <utility>
 namespace NES {
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema)  {
+SourceDescriptor::SourceDescriptor(SchemaPtr schema) {
     this->schema = Schema::create();
     this->schema->copyFields(std::move(schema));
 }

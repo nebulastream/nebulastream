@@ -25,8 +25,8 @@ namespace NES {
 class WindowLogicalOperatorNode : public WindowOperatorNode {
   public:
     WindowLogicalOperatorNode(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     std::string toString() const override;
     OperatorNodePtr copy() override;
     bool inferSchema() override;

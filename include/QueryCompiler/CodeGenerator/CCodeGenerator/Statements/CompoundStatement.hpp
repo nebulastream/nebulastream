@@ -19,7 +19,7 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <vector>
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 
 class CompoundStatement : public Statement {
   public:

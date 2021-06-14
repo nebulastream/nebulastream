@@ -68,8 +68,12 @@ GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr
                                                                  z3::ContextPtr z3Context,
                                                                  bool enableQueryMerging,
                                                                  Optimizer::QueryMergerRule queryMergerRule) {
-    return std::make_shared<GlobalQueryPlanUpdatePhase>(
-        GlobalQueryPlanUpdatePhase(std::move(queryCatalog), std::move(streamCatalog), std::move(globalQueryPlan), std::move(z3Context), enableQueryMerging, queryMergerRule));
+    return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(queryCatalog),
+                                                                                   std::move(streamCatalog),
+                                                                                   std::move(globalQueryPlan),
+                                                                                   std::move(z3Context),
+                                                                                   enableQueryMerging,
+                                                                                   queryMergerRule));
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequestPtr>& nesRequests) {

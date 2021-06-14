@@ -20,8 +20,7 @@
 #include <utility>
 
 namespace NES::QueryCompilation {
-GeneratableBasicValueType::GeneratableBasicValueType(BasicValuePtr basicValue)
-    :  value(std::move(basicValue)) {}
+GeneratableBasicValueType::GeneratableBasicValueType(BasicValuePtr basicValue) : value(std::move(basicValue)) {}
 
 CodeExpressionPtr GeneratableBasicValueType::getCodeExpression() const noexcept {
     return std::make_shared<CodeExpression>(value->value);

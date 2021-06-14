@@ -71,7 +71,7 @@ class NetworkSource : public DataSource {
      * It de-registers the source on the NetworkManager
      * @return true if deregistration on the network stack is successful
      */
-    bool stop(bool=false) final;
+    bool stop(bool = false) final;
 
     /**
      * @brief This method is overridden here to prevent the NetworkSoure to start a thread.

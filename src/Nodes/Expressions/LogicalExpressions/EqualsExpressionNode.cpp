@@ -26,7 +26,7 @@ ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr& left, co
     return equals;
 }
 
-bool EqualsExpressionNode::equal(NodePtr const &rhs) const {
+bool EqualsExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<EqualsExpressionNode>()) {
         auto other = rhs->as<EqualsExpressionNode>();
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());

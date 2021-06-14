@@ -27,11 +27,11 @@ namespace NES {
  */
 class SliceCreationOperator : public WindowOperatorNode {
   public:
-    SliceCreationOperator(Windowing::LogicalWindowDefinitionPtr const &windowDefinition, OperatorId id);
+    SliceCreationOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
 
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
-    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     OperatorNodePtr copy() override;
     bool inferSchema() override;
     void inferStringSignature() override;

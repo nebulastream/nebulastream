@@ -23,7 +23,7 @@
 
 namespace NES {
 
-SliceMergingOperator::SliceMergingOperator(Windowing::LogicalWindowDefinitionPtr const &windowDefinition, OperatorId id)
+SliceMergingOperator::SliceMergingOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id)
     : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
     this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
@@ -40,9 +40,11 @@ std::string SliceMergingOperator::toString() const {
     return ss.str();
 }
 
-bool SliceMergingOperator::isIdentical(NodePtr const &rhs) const { return equal(rhs) && rhs->as<SliceMergingOperator>()->getId() == id; }
+bool SliceMergingOperator::isIdentical(NodePtr const& rhs) const {
+    return equal(rhs) && rhs->as<SliceMergingOperator>()->getId() == id;
+}
 
-bool SliceMergingOperator::equal(NodePtr const &rhs) const { return rhs->instanceOf<SliceMergingOperator>(); }
+bool SliceMergingOperator::equal(NodePtr const& rhs) const { return rhs->instanceOf<SliceMergingOperator>(); }
 
 OperatorNodePtr SliceMergingOperator::copy() {
     auto copy = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition, id);

@@ -81,7 +81,7 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterTest) {
     std::atomic<uint64_t> globalUpdateCounter = 0;
     std::vector<std::thread> threads;
     threads.reserve(threadsCount);
-for (int threadId = 0; threadId < threadsCount; threadId++) {
+    for (int threadId = 0; threadId < threadsCount; threadId++) {
         threads.emplace_back(thread([&watermarkManager, &watermarkBarriers, &globalUpdateCounter]() {
             // each thread processes a particular update
             for (auto i = 0; i < updates; i++) {
@@ -134,7 +134,7 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsOutofOrd
     auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
     // preallocate watermarks for each transaction
     std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
-    for (auto i {1u}; i <= updates; ++i) {
+    for (auto i{1u}; i <= updates; ++i) {
         for (int o = 0; o < origins; o++) {
             auto newWatermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(/*ts*/ i,
                                                                                    /*sequence number*/ i,
@@ -176,7 +176,7 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTest) {
     std::atomic<uint64_t> globalUpdateCounter = 0;
     std::vector<std::thread> threads;
     threads.reserve(threadsCount);
-for (int threadId = 0; threadId < threadsCount; threadId++) {
+    for (int threadId = 0; threadId < threadsCount; threadId++) {
         threads.emplace_back(thread([&watermarkManager, &watermarkBarriers, &globalUpdateCounter]() {
             // each thread processes a particular update
             for (auto i = 0; i < updates; i++) {
@@ -206,7 +206,7 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkEmitterAndUpdaterTest) {
 
     std::vector<std::shared_ptr<NodeEngine::Transactional::WatermarkEmitter>> emitters;
     emitters.reserve(origins);
-for (int o = 0; o < origins; o++) {
+    for (int o = 0; o < origins; o++) {
         emitters.emplace_back(NodeEngine::Transactional::WatermarkEmitter::create(o));
     }
 

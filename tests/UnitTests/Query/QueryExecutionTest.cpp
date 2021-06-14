@@ -280,7 +280,6 @@ class TestSink : public SinkMedium {
     mutable std::recursive_mutex m;
     uint64_t expectedBuffer;
 
-  
     std::promise<bool> completed;
     std::vector<TupleBuffer> resultBuffers;
 };

@@ -116,7 +116,8 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @tparam Ts fields of tup
      */
     template<size_t I = 0, typename... Ts>
-    typename std::enable_if<(I == sizeof...(Ts)), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, const uint8_t* address);
+    typename std::enable_if<(I == sizeof...(Ts)), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
+                                                                                      const uint8_t* address);
 
     /**
      * @brief Copies fields of tuple sequentially from address, by iterating over tup via template recursion
@@ -136,7 +137,8 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @tparam Ts fields of tup
      */
     template<size_t I = 0, typename... Ts>
-    typename std::enable_if<(I == sizeof...(Ts)), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, const uint8_t* address);
+    typename std::enable_if<(I == sizeof...(Ts)), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup,
+                                                                                        const uint8_t* address);
 
     const DynamicRowLayoutPtr dynamicRowLayout;
     uint8_t* basePointer;
@@ -153,8 +155,8 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicRowLayoutBuffer:
 }
 
 template<size_t I, typename... Ts>
-typename std::enable_if<(I == sizeof...(Ts)), void>::type DynamicRowLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
-                                                                                                          const uint8_t* address) {
+typename std::enable_if<(I == sizeof...(Ts)), void>::type
+DynamicRowLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup, const uint8_t* address) {
     // Finished iterating through tuple via template recursion. So all that is left is to do a simple return.
     // As we are not using any variable, we need to have them set void otherwise the compiler will throw an unused variable error.
     ((void) address);

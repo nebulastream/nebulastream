@@ -18,7 +18,7 @@
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 namespace NES {
 
-AndExpressionNode::AndExpressionNode()  {};
+AndExpressionNode::AndExpressionNode(){};
 
 AndExpressionNode::AndExpressionNode(AndExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
@@ -28,7 +28,7 @@ ExpressionNodePtr AndExpressionNode::create(const ExpressionNodePtr& left, const
     return andNode;
 }
 
-bool AndExpressionNode::equal(NodePtr const &rhs) const {
+bool AndExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<AndExpressionNode>()) {
         auto otherAndNode = rhs->as<AndExpressionNode>();
         return getLeft()->equal(otherAndNode->getLeft()) && getRight()->equal(otherAndNode->getRight());

@@ -18,9 +18,7 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 namespace NES::QueryCompilation {
 
-CodeExpressionPtr VarDeclStatement::getCode() const {
-    return std::make_shared<CodeExpression>(variableDeclaration->getCode());
-}
+CodeExpressionPtr VarDeclStatement::getCode() const { return std::make_shared<CodeExpression>(variableDeclaration->getCode()); }
 
 ExpressionStatmentPtr VarDeclStatement::copy() const { return std::make_shared<VarDeclStatement>(*this); }
 

@@ -128,7 +128,7 @@ TupleBuffer BufferManager::getBufferBlocking() {
         NES_TRACE("All global Buffers are exhausted");
         availableBuffersCvar.wait(lock);
     }
-    auto *memSegment = availableBuffers.front();
+    auto* memSegment = availableBuffers.front();
     availableBuffers.pop_front();
 
     if (memSegment->controlBlock->prepare()) {
@@ -142,7 +142,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
     if (availableBuffers.empty()) {
         return std::nullopt;
     }
-    auto *memSegment = availableBuffers.front();
+    auto* memSegment = availableBuffers.front();
     availableBuffers.pop_front();
     if (memSegment->controlBlock->prepare()) {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
@@ -158,7 +158,7 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
     if (!availableBuffersCvar.wait_for(lock, timeout_ms, std::move(pred))) {
         return std::nullopt;
     }
-    auto *memSegment = availableBuffers.front();
+    auto* memSegment = availableBuffers.front();
     availableBuffers.pop_front();
     if (memSegment->controlBlock->prepare()) {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
@@ -175,7 +175,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
         for (auto it = candidate; it != unpooledBuffers.end(); ++it) {
             if (it->size == bufferSize) {
                 if (it->free) {
-                    auto *memSegment = (*it).segment.get();
+                    auto* memSegment = (*it).segment.get();
                     it->free = false;
                     if (memSegment->controlBlock->prepare()) {
                         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
@@ -188,7 +188,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
         }
     }
     // we could not find a buffer, allocate it
-    auto *ptr = static_cast<uint8_t*>(malloc(bufferSize + sizeof(detail::BufferControlBlock)));
+    auto* ptr = static_cast<uint8_t*>(malloc(bufferSize + sizeof(detail::BufferControlBlock)));
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
@@ -198,7 +198,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
                                                               [](detail::MemorySegment* segment, BufferRecycler* recycler) {
                                                                   recycler->recycleUnpooledBuffer(segment);
                                                               });
-    auto *leakedMemSegment = memSegment.get();
+    auto* leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), bufferSize);
     if (leakedMemSegment->controlBlock->prepare()) {
         return TupleBuffer(leakedMemSegment->controlBlock, leakedMemSegment->ptr, leakedMemSegment->size);
@@ -268,7 +268,7 @@ LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedB
     std::deque<detail::MemorySegment*> buffers;
     NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
     for (auto i = static_cast<std::size_t>(0); i < numberOfReservedBuffers; ++i) {
-        auto *memSegment = availableBuffers.front();
+        auto* memSegment = availableBuffers.front();
         availableBuffers.pop_front();
         buffers.emplace_back(memSegment);
     }
@@ -282,7 +282,7 @@ FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfR
     std::deque<detail::MemorySegment*> buffers;
     NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
     for (auto i = static_cast<std::size_t>(0); i < numberOfReservedBuffers; ++i) {
-        auto *memSegment = availableBuffers.front();
+        auto* memSegment = availableBuffers.front();
         availableBuffers.pop_front();
         buffers.emplace_back(memSegment);
     }

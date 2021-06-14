@@ -19,7 +19,7 @@
 #include <utility>
 
 namespace NES::QueryCompilation {
-ReferenceDataType::ReferenceDataType(GeneratableDataTypePtr baseType) :  baseType(std::move(baseType)) {}
+ReferenceDataType::ReferenceDataType(GeneratableDataTypePtr baseType) : baseType(std::move(baseType)) {}
 
 CodeExpressionPtr ReferenceDataType::getCode() const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "&");

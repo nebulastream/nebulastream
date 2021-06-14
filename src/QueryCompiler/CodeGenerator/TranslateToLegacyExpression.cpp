@@ -109,8 +109,8 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
     } else if (expression->instanceOf<AbsExpressionNode>()) {
         // Translate ABS expression node.
         auto const str = expression->as<AbsExpressionNode>()->toString();
-        NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expression" << str << "not supported in legacy expressions: "
-                        << expression->toString());
+        NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expression"
+                        << str << "not supported in legacy expressions: " << expression->toString());
         NES_NOT_IMPLEMENTED();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "

@@ -24,6 +24,7 @@ GeneratableWindowOperator::GeneratableWindowOperator(OperatorId id,
                                                      SchemaPtr inputSchema,
                                                      SchemaPtr outputSchema,
                                                      Windowing::WindowOperatorHandlerPtr operatorHandler)
-    : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)), operatorHandler(std::move(operatorHandler)) {}
+    : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      operatorHandler(std::move(operatorHandler)) {}
 
 }// namespace NES::QueryCompilation::GeneratableOperators

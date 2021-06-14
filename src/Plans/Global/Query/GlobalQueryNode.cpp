@@ -47,7 +47,7 @@ std::string GlobalQueryNode::toString() const {
 
 OperatorNodePtr GlobalQueryNode::getOperator() { return operatorNode; }
 
-bool GlobalQueryNode::equal(NodePtr const &rhs) const {
+bool GlobalQueryNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<GlobalQueryNode>()) {
         return id == rhs->as<GlobalQueryNode>()->getId();
     }

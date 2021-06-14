@@ -87,7 +87,7 @@ class ThreadPool {
   private:
     //indicating if the thread pool is running, used for multi-thread execution
     const uint64_t nodeId;
-    std::atomic<bool> running {false};
+    std::atomic<bool> running{false};
     uint32_t numThreads;
     std::vector<std::thread> threads{};
     mutable std::recursive_mutex reconfigLock;

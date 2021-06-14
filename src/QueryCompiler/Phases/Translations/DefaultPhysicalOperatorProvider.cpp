@@ -86,7 +86,8 @@ void DefaultPhysicalOperatorProvider::lower(QueryPlanPtr queryPlan, LogicalOpera
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& queryPlan,
+                                                         const LogicalOperatorNodePtr& operatorNode) {
 
     // If a unary operator has more then one parent, we introduce a implicit multiplex operator before.
     if (operatorNode->getChildren().size() > 1) {
@@ -128,7 +129,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const QueryPlanPtr& queryPlan,
+                                                          const LogicalOperatorNodePtr& operatorNode) {
 
     if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         lowerUnionOperator(queryPlan, operatorNode);
@@ -213,7 +215,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
     operatorNode->replace(joinSink);
 }
 
-void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const QueryPlanPtr&,
+                                                                       const LogicalOperatorNodePtr& operatorNode) {
     auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
     auto physicalWatermarkAssignment = PhysicalOperators::PhysicalWatermarkAssignmentOperator::create(
         logicalWatermarkAssignment->getInputSchema(),

@@ -33,7 +33,7 @@
 
 namespace NES::QueryCompilation {
 
-DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const &options, Phases::PhaseFactoryPtr const &phaseFactory)
+DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory)
     : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
       lowerPhysicalToGeneratableOperatorsPhase(phaseFactory->createLowerPhysicalToGeneratableOperatorsPhase(options)),
       lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options)),
@@ -41,7 +41,8 @@ DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const &option
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
       codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options)) {}
 
-QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const &options, Phases::PhaseFactoryPtr const &phaseFactory) {
+QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const& options,
+                                              Phases::PhaseFactoryPtr const& phaseFactory) {
     return std::make_shared<DefaultQueryCompiler>(DefaultQueryCompiler(options, phaseFactory));
 }
 

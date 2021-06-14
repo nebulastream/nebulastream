@@ -22,7 +22,11 @@ PhysicalOperatorPtr PhysicalJoinBuildOperator::create(SchemaPtr inputSchema,
                                                       SchemaPtr outputSchema,
                                                       Join::JoinOperatorHandlerPtr operatorHandler,
                                                       JoinBuildSide buildSide) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler), buildSide);
+    return create(UtilityFunctions::getNextOperatorId(),
+                  std::move(inputSchema),
+                  std::move(outputSchema),
+                  std::move(operatorHandler),
+                  buildSide);
 }
 
 PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id,
@@ -38,8 +42,8 @@ PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id,
                                                      SchemaPtr outputSchema,
                                                      Join::JoinOperatorHandlerPtr operatorHandler,
                                                      JoinBuildSide buildSide)
-    : OperatorNode(id), PhysicalJoinOperator(std::move(operatorHandler)), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
-      joinBuildSide(buildSide){};
+    : OperatorNode(id), PhysicalJoinOperator(std::move(operatorHandler)),
+      PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), joinBuildSide(buildSide){};
 
 std::string PhysicalJoinBuildOperator::toString() const { return "PhysicalJoinBuildOperator"; }
 

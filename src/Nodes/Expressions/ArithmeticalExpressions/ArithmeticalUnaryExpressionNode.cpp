@@ -47,7 +47,7 @@ void ArithmeticalUnaryExpressionNode::inferStamp(SchemaPtr schema) {
     NES_TRACE("ArithmeticalUnaryExpressionNode: we assigned the following stamp: " << toString());
 }
 
-bool ArithmeticalUnaryExpressionNode::equal(NodePtr const &rhs) const {
+bool ArithmeticalUnaryExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<ArithmeticalUnaryExpressionNode>()) {
         auto otherAddNode = rhs->as<ArithmeticalUnaryExpressionNode>();
         return child()->equal(otherAddNode->child());

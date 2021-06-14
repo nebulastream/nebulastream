@@ -49,8 +49,9 @@ LowerToExecutableQueryPlanPhasePtr LowerToExecutableQueryPlanPhase::create(const
     return std::make_shared<LowerToExecutableQueryPlanPhase>(sinkProvider, sourceProvider);
 }
 
-NodeEngine::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
-                                                                                     const NodeEngine::NodeEnginePtr& nodeEngine) {
+NodeEngine::Execution::ExecutableQueryPlanPtr
+LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
+                                       const NodeEngine::NodeEnginePtr& nodeEngine) {
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<NodeEngine::Execution::ExecutablePipelinePtr> executablePipelines;
@@ -199,10 +200,10 @@ NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPha
     auto emitToSuccessorFunctionHandler = [executableSuccessorPipelines](NodeEngine::TupleBuffer& buffer,
                                                                          NodeEngine::WorkerContextRef workerContext) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
-            if (const auto *sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
+            if (const auto* sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
                 NES_DEBUG("Emit Buffer to data sink" << (*sink)->toString());
                 (*sink)->writeData(buffer, workerContext);
-            } else if (const auto *nextExecutablePipeline =
+            } else if (const auto* nextExecutablePipeline =
                            std::get_if<NodeEngine::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
                 NES_DEBUG("Emit Buffer to pipeline" << (*nextExecutablePipeline)->getPipelineId());
                 (*nextExecutablePipeline)->execute(buffer, workerContext);

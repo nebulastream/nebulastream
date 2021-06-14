@@ -41,7 +41,8 @@
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::ContextPtr& context, const OperatorNodePtr& operatorNode) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::ContextPtr& context,
+                                                                      const OperatorNodePtr& operatorNode) {
 
     NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
 
@@ -191,7 +192,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
                                   std::move(windowExpressions));
 }
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::ContextPtr& context, const MapLogicalOperatorNodePtr& mapOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::ContextPtr& context,
+                                                                 const MapLogicalOperatorNodePtr& mapOperator) {
 
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = mapOperator->getChildren();

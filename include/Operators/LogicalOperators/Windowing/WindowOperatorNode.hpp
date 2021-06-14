@@ -30,7 +30,7 @@ using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
  */
 class WindowOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    WindowOperatorNode(Windowing::LogicalWindowDefinitionPtr const &windowDefinition, OperatorId id);
+    WindowOperatorNode(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
     /**
     * @brief Gets the window definition of the window operator.
     * @return LogicalWindowDefinitionPtr

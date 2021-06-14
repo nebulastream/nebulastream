@@ -34,7 +34,7 @@ class FileBuilder {
 
   public:
     static FileBuilder create(const std::string& file_name);
-    FileBuilder& addDeclaration(DeclarationPtr const &);
+    FileBuilder& addDeclaration(DeclarationPtr const&);
     CodeFile build();
 };
 

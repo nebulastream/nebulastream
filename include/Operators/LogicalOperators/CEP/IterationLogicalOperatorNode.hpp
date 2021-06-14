@@ -53,8 +53,8 @@ class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     std::string toString() const override;
     void inferStringSignature() override;
     bool inferSchema() override;

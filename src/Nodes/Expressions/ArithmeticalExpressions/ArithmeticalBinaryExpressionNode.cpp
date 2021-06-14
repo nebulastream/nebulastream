@@ -59,7 +59,7 @@ void ArithmeticalBinaryExpressionNode::inferStamp(SchemaPtr schema) {
     NES_TRACE("ArithmeticalBinaryExpressionNode: we assigned the following stamp: " << toString());
 }
 
-bool ArithmeticalBinaryExpressionNode::equal(NodePtr const &rhs) const {
+bool ArithmeticalBinaryExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<ArithmeticalBinaryExpressionNode>()) {
         auto otherAddNode = rhs->as<ArithmeticalBinaryExpressionNode>();
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());

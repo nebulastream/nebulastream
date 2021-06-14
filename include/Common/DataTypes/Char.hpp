@@ -25,7 +25,6 @@ namespace NES {
  */
 class Char final : public DataType {
   public:
-
     virtual ~Char() = default;
 
     /**

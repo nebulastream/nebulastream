@@ -18,21 +18,21 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_FUNCTIONCALLSTATEMENT_HPP_
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 
-#include <vector>
 #include <memory>
+#include <vector>
 
-namespace NES::QueryCompilation  {
+namespace NES::QueryCompilation {
 class FunctionCallStatement : public ExpressionStatment {
   public:
-    explicit inline FunctionCallStatement(std::string const &f) noexcept : functionName(f) {};
-    explicit inline FunctionCallStatement(std::string &&f) noexcept : functionName(std::move(f)) {};
+    explicit inline FunctionCallStatement(std::string const& f) noexcept : functionName(f){};
+    explicit inline FunctionCallStatement(std::string&& f) noexcept : functionName(std::move(f)){};
 
     [[nodiscard]] StatementType getStamentType() const override;
 
     [[nodiscard]] CodeExpressionPtr getCode() const override;
 
     template<typename T, typename = std::enable_if_t<std::is_constructible_v<std::string, T>>>
-    static inline FunctionCallStatementPtr create(T &&f) noexcept {
+    static inline FunctionCallStatementPtr create(T&& f) noexcept {
         return std::make_shared<FunctionCallStatement>(std::forward<T>(f));
     }
 

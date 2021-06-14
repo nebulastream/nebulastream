@@ -25,10 +25,10 @@ namespace NES::NodeEngine {
 FixedSizeBufferPool::FixedSizeBufferPool(const BufferManagerPtr& bufferManager,
                                          std::deque<detail::MemorySegment*>&& buffers,
                                          size_t numberOfReservedBuffers)
-    : bufferManager(bufferManager),  numberOfReservedBuffers(numberOfReservedBuffers), isDestroyed(false) {
+    : bufferManager(bufferManager), numberOfReservedBuffers(numberOfReservedBuffers), isDestroyed(false) {
 
     while (!buffers.empty()) {
-        auto *memSegment = buffers.front();
+        auto* memSegment = buffers.front();
         buffers.pop_front();
         NES_VERIFY(memSegment, "null memory segment");
         memSegment->controlBlock->resetBufferRecycler(this);
@@ -50,7 +50,7 @@ void FixedSizeBufferPool::destroy() {
     auto ownedBufferManager = bufferManager.lock();
     while (!exclusiveBuffers.empty()) {
         // return exclusive buffers to the global pool
-        auto *memSegment = exclusiveBuffers.front();
+        auto* memSegment = exclusiveBuffers.front();
         exclusiveBuffers.pop_front();
         memSegment->controlBlock->resetBufferRecycler(ownedBufferManager.get());
         ownedBufferManager->recyclePooledBuffer(memSegment);
@@ -89,7 +89,7 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
     while (exclusiveBuffers.empty()) {
         cvar.wait(lock);
     }
-    auto *memSegment = exclusiveBuffers.front();
+    auto* memSegment = exclusiveBuffers.front();
     NES_VERIFY(memSegment, "null memory segment");
     exclusiveBuffers.pop_front();
     if (memSegment->controlBlock->prepare()) {

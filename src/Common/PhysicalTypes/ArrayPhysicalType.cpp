@@ -33,13 +33,13 @@ std::string ArrayPhysicalType::convertRawToString(void const* data) const noexce
     }
     // we print a fixed char directly because the last char terminated the output.
     if (physicalComponentType->type->isChar()) {
-        const auto *charData = static_cast<char const*>(data);
+        const auto* charData = static_cast<char const*>(data);
         // This char is fixed size, so we have to convert it to a fixed size string.
         // Otherwise we would copy all data till the termination character.
         return std::string(charData, size());
     }
 
-    const auto *const pointer = static_cast<char const*>(data);
+    const auto* const pointer = static_cast<char const*>(data);
     std::stringstream str;
     str << '[';
     for (uint64_t dimension = 0; dimension < length; ++dimension) {
@@ -47,7 +47,7 @@ std::string ArrayPhysicalType::convertRawToString(void const* data) const noexce
             str << ", ";
         }
         auto const fieldOffset = physicalComponentType->size();
-        const auto *const componentValue = &pointer[fieldOffset * dimension];
+        const auto* const componentValue = &pointer[fieldOffset * dimension];
         str << physicalComponentType->convertRawToString(componentValue);
     }
     str << ']';

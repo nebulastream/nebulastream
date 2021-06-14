@@ -90,7 +90,7 @@ uint64_t CsvSourceDescriptor::getNumberOfTuplesToProducePerBuffer() const { retu
 std::chrono::milliseconds CsvSourceDescriptor::getFrequency() const { return frequency; }
 uint64_t CsvSourceDescriptor::getFrequencyCount() const { return frequency.count(); }
 
-bool CsvSourceDescriptor::equal(SourceDescriptorPtr const &other) {
+bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<CsvSourceDescriptor>()) {
         return false;
     }

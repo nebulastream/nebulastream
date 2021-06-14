@@ -25,7 +25,8 @@
 #include <utility>
 namespace NES {
 
-CsvFormat::CsvFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(std::move(schema), std::move(bufferManager)) {}
+CsvFormat::CsvFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
+    : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
 std::optional<NodeEngine::TupleBuffer> CsvFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();

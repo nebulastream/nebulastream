@@ -21,9 +21,7 @@ namespace NES::QueryCompilation {
 
 StatementType ContinueStatement::getStamentType() const { return RETURN_STMT; }
 
-CodeExpressionPtr ContinueStatement::getCode() const {
-    return std::make_shared<CodeExpression>("continue;");
-}
+CodeExpressionPtr ContinueStatement::getCode() const { return std::make_shared<CodeExpression>("continue;"); }
 
 StatementPtr ContinueStatement::createCopy() const { return std::make_shared<ContinueStatement>(*this); }
 

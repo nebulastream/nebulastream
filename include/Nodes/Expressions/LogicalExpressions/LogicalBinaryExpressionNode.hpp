@@ -24,14 +24,13 @@ namespace NES {
  */
 class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalExpressionNode {
   public:
-
     /**
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
     */
     ExpressionNodePtr copy() override = 0;
 
-    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
   protected:
     LogicalBinaryExpressionNode();

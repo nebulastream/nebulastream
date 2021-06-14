@@ -28,7 +28,8 @@ namespace QueryCompilation {
 class LowerToExecutableQueryPlanPhase {
   public:
     LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider);
-    static LowerToExecutableQueryPlanPhasePtr create(const DataSinkProviderPtr& sinkProvider, const DataSourceProviderPtr& sourceProvider);
+    static LowerToExecutableQueryPlanPhasePtr create(const DataSinkProviderPtr& sinkProvider,
+                                                     const DataSourceProviderPtr& sourceProvider);
     NodeEngine::Execution::ExecutableQueryPlanPtr apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
                                                         const NodeEngine::NodeEnginePtr& nodeEngine);
 

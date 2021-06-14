@@ -709,7 +709,7 @@ struct ResolvedTrace : public Trace {
     using source_locs_t = std::vector<SourceLoc>;
     source_locs_t inliners;
 
-    ResolvedTrace()  {}
+    ResolvedTrace() {}
     ResolvedTrace(const Trace& mini_trace) : Trace(mini_trace) {}
 };
 
@@ -3549,7 +3549,7 @@ class cfile_streambuf : public std::streambuf {
     }
 
 #ifdef BACKWARD_ATLEAST_CXX11
-  
+
     cfile_streambuf(const cfile_streambuf&) = delete;
     cfile_streambuf& operator=(const cfile_streambuf&) = delete;
 #else
@@ -3757,8 +3757,10 @@ class Printer {
         }
     }
 
-    void
-    print_source_loc(std::ostream& os, const char* indent, const ResolvedTrace::SourceLoc& source_loc, void* addr = nullptr) const {
+    void print_source_loc(std::ostream& os,
+                          const char* indent,
+                          const ResolvedTrace::SourceLoc& source_loc,
+                          void* addr = nullptr) const {
         os << indent << "Source \"" << source_loc.filename << "\", line " << source_loc.line << ", in " << source_loc.function;
 
         if (address && addr != nullptr) {

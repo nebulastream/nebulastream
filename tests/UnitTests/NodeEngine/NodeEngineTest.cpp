@@ -31,10 +31,10 @@
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <csignal>
 #include <future>
 #include <iostream>
 #include <utility>
-#include <csignal>
 
 using namespace std;
 using namespace NES::Windowing;
@@ -108,7 +108,7 @@ std::string joinedExpectedOutput10 =
 
 std::string filePath = "file.txt";
 namespace NodeEngine {
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const &listener);
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener);
 }
 template<typename MockedNodeEngine>
 std::shared_ptr<MockedNodeEngine>
@@ -156,7 +156,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
 
     ExecutionResult
     execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& wctx) override {
-        auto *tuples = inputTupleBuffer.getBuffer<uint64_t>();
+        auto* tuples = inputTupleBuffer.getBuffer<uint64_t>();
 
         NES_INFO("Test: Start execution");
 
@@ -176,7 +176,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
             TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
 
             NES_DEBUG("TEST: got buffer");
-            auto *arr = outputBuffer.getBuffer<uint32_t>();
+            auto* arr = outputBuffer.getBuffer<uint32_t>();
             arr[0] = static_cast<uint32_t>(sum.load());
             outputBuffer.setNumberOfTuples(1);
             NES_DEBUG("TEST: " << this << " written " << arr[0]);
@@ -608,9 +608,7 @@ TEST_F(EngineTest, testStartStopStartStop) {
 }
 
 namespace detail {
-void segkiller() {
-    raise(SIGSEGV);
-}
+void segkiller() { raise(SIGSEGV); }
 
 void assertKiller() {
     class MockedNodeEngine : public NodeEngine::NodeEngine {
@@ -681,7 +679,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
-            const auto *str = exception->what();
+            const auto* str = exception->what();
             NES_ERROR(str);
             EXPECT_TRUE(strcmp(str, "Got fatal error on thread 0: Catch me if you can!") == 0);
             completedPromise.set_value(true);
@@ -751,7 +749,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
-            const auto *str = exception->what();
+            const auto* str = exception->what();
             NES_ERROR(str);
             EXPECT_TRUE(strcmp(str, "Unknown exception caught") == 0);
             completedPromise.set_value(true);

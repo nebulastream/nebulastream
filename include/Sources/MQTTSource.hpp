@@ -50,10 +50,10 @@ class MQTTSource : public DataSource {
     explicit MQTTSource(SchemaPtr schema,
                         NodeEngine::BufferManagerPtr bufferManager,
                         NodeEngine::QueryManagerPtr queryManager,
-                        std::string const & serverAddress,
-                        std::string const & clientId,
-                        std::string const & user,
-                        std::string const & topic,
+                        std::string const& serverAddress,
+                        std::string const& clientId,
+                        std::string const& user,
+                        std::string const& topic,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
@@ -88,22 +88,22 @@ class MQTTSource : public DataSource {
      * @brief getter for ServerAddress
      * @return serverAddress
      */
-    std::string const & getServerAddress() const;
+    std::string const& getServerAddress() const;
     /**
      * @brief getter for clientId
      * @return clientId
      */
-    std::string const & getClientId() const;
+    std::string const& getClientId() const;
     /**
      * @brief getter for user
      * @return user
      */
-    std::string const & getUser() const;
+    std::string const& getUser() const;
     /**
      * @brief getter for topic
      * @return topic
      */
-    std::string const & getTopic() const;
+    std::string const& getTopic() const;
 
     /**
     * @brief Get source type

@@ -31,7 +31,6 @@ class ReferenceDataType : public GeneratableDataType {
     explicit ReferenceDataType(GeneratableDataTypePtr baseType);
     virtual ~ReferenceDataType() = default;
 
-
     /**
     * @brief Generated code for a type definition. This is mainly crucial for structures.
     * @return CodeExpressionPtr

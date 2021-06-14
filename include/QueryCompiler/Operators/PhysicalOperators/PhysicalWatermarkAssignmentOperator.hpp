@@ -34,7 +34,7 @@ class PhysicalWatermarkAssignmentOperator : public PhysicalUnaryOperator {
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      Windowing::WatermarkStrategyDescriptorPtr const &watermarkStrategyDescriptor);
+                                      Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
     static PhysicalOperatorPtr
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     std::string toString() const override;

@@ -66,7 +66,7 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 namespace NES::QueryCompilation {
-CCodeGenerator::CCodeGenerator() :  compiler(Compiler::create()) {}
+CCodeGenerator::CCodeGenerator() : compiler(Compiler::create()) {}
 
 StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::string& structName, const SchemaPtr& schema) {
     /* struct definition for tuples */
@@ -85,7 +85,7 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
 }
 
 VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& structDeclaration,
-                                                            const AttributeFieldPtr& field) {
+                                                      const AttributeFieldPtr& field) {
     if (structDeclaration.getField(field->getName())) {
         return std::make_shared<VariableDeclaration>(structDeclaration.getVariableDeclaration(field->getName()));
     }
@@ -454,7 +454,8 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
     return true;
 }
 
-void CCodeGenerator::generateCodeForWatermarkUpdaterWindow(const PipelineContextPtr& context, const VariableDeclaration& handler) {
+void CCodeGenerator::generateCodeForWatermarkUpdaterWindow(const PipelineContextPtr& context,
+                                                           const VariableDeclaration& handler) {
     auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateMaxTs");
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
@@ -463,7 +464,9 @@ void CCodeGenerator::generateCodeForWatermarkUpdaterWindow(const PipelineContext
     context->code->cleanupStmts.push_back(updateAllWatermarkTsFunctionCallStatement.createCopy());
 }
 
-void CCodeGenerator::generateCodeForWatermarkUpdaterJoin(const PipelineContextPtr& context, const VariableDeclaration& handler, bool leftSide) {
+void CCodeGenerator::generateCodeForWatermarkUpdaterJoin(const PipelineContextPtr& context,
+                                                         const VariableDeclaration& handler,
+                                                         bool leftSide) {
     auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateMaxTs");
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
@@ -2020,8 +2023,9 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     auto returnStatement = ReturnStatement::create(SharedPointerGen::makeShared(executablePipelineDeclaration->getType()));
     createFunction->addStatement(returnStatement);
 
-    createFunction->returns(SharedPointerGen::createSharedPtrType(
-        NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
+    createFunction->returns(
+        SharedPointerGen::createSharedPtrType(NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType(
+            "NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileBuilder.addDeclaration(pipelineNamespace->getDeclaration()).build();
 

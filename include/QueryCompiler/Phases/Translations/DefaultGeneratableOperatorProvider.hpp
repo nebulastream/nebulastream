@@ -83,7 +83,8 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    static void lowerWatermarkAssignment(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    static void lowerWatermarkAssignment(const QueryPlanPtr& queryPlan,
+                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers a window sink operator.

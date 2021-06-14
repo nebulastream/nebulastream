@@ -58,7 +58,8 @@ VariableDeclaration::VariableDeclaration(GeneratableDataTypePtr type, std::strin
 VariableDeclaration::VariableDeclaration(const VariableDeclaration& var_decl)
     : type_(var_decl.type_), identifier_(var_decl.identifier_), init_value_(var_decl.init_value_) {}
 
-VariableDeclaration VariableDeclaration::create(const GeneratableDataTypePtr& type, const std::string& identifier, ValueTypePtr value) {
+VariableDeclaration
+VariableDeclaration::create(const GeneratableDataTypePtr& type, const std::string& identifier, ValueTypePtr value) {
     if (!type) {
         NES_ERROR("DataTypePtr type is nullptr!");
     }

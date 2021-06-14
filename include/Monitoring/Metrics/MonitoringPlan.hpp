@@ -96,7 +96,6 @@ class MonitoringPlan {
 
     friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
 
-  
     static const std::string CPU_METRICS_DESC;
     static const std::string CPU_VALUES_DESC;
     static const std::string NETWORK_METRICS_DESC;

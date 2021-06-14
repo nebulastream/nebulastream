@@ -23,18 +23,16 @@
 
 namespace NES::QueryCompilation {
 std::string toString(const UnaryOperatorType& type) {
-    constexpr std::array<char const*, 10> names {
-        "ADDRESS_OF_OP",
-            "DEREFERENCE_POINTER_OP",
-            "PREFIX_INCREMENT_OP",
-            "PREFIX_DECREMENT_OP",
-            "POSTFIX_INCREMENT_OP",
-            "POSTFIX_DECREMENT_OP",
-            "BITWISE_COMPLEMENT_OP",
-            "LOGICAL_NOT_OP",
-            "SIZE_OF_TYPE_OP",
-            "ABS_VALUE_OF_OP"
-    };
+    constexpr std::array<char const*, 10> names{"ADDRESS_OF_OP",
+                                                "DEREFERENCE_POINTER_OP",
+                                                "PREFIX_INCREMENT_OP",
+                                                "PREFIX_DECREMENT_OP",
+                                                "POSTFIX_INCREMENT_OP",
+                                                "POSTFIX_DECREMENT_OP",
+                                                "BITWISE_COMPLEMENT_OP",
+                                                "LOGICAL_NOT_OP",
+                                                "SIZE_OF_TYPE_OP",
+                                                "ABS_VALUE_OF_OP"};
     return names[type];
 }
 

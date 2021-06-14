@@ -28,7 +28,9 @@ Pattern::Pattern(const Pattern& query) : Query(query.queryPlan) {
     NES_DEBUG("Pattern: copy constructor: handover Pattern to Query");
 }
 
-Pattern::Pattern(QueryPlanPtr queryPlan) : Query(std::move(queryPlan)) { NES_DEBUG("Pattern: copy constructor: handover Pattern to Query"); }
+Pattern::Pattern(QueryPlanPtr queryPlan) : Query(std::move(queryPlan)) {
+    NES_DEBUG("Pattern: copy constructor: handover Pattern to Query");
+}
 
 Pattern Pattern::from(const std::string& sourceStreamName) {
     NES_DEBUG("Pattern: create query for input stream " << sourceStreamName);
