@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWMANAGER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWMANAGER_HPP_
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
@@ -60,9 +61,8 @@ class WindowManager {
      */
     template<class PartialAggregateType, class KeyType>
     inline void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store, KeyType key) {
-        (void) key; //TODO 1922: enable logging
-//        NES_DEBUG("WindowManager store" << id << ": sliceStream for ts=" << ts << " key=" << key
-//                                        << " allowedLateness=" << allowedLateness); //TODO 1922: enable logging
+        NES_DEBUG("WindowManager store" << id << ": sliceStream for ts=" << ts << " key=" << UtilityFunctions::keyAsString(key)
+                                        << " allowedLateness=" << allowedLateness);
         // updates the maximal record ts
         // check if the slice store is empty or if the first slice has a larger ts then the current event.
         if (store->empty() || store->getSliceMetadata().front().getStartTs() > ts) {
@@ -91,20 +91,20 @@ class WindowManager {
                 NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
             }
         }
-//        NES_DEBUG("WindowManager " << id << ": sliceStream check store-nextEdge=" << store->nextEdge << " <="
-//                                   << " ts=" << ts << " key=" << key); //TODO 1922: enable logging
+        NES_DEBUG("WindowManager " << id << ": sliceStream check store-nextEdge=" << store->nextEdge << " <="
+                                   << " ts=" << ts << " key=" << UtilityFunctions::keyAsString(key));
 
         // append new slices if needed
         while (store->nextEdge <= ts) {
             auto currentSlice = store->getCurrentSliceIndex();
-//            NES_TRACE("WindowManager " << id << " sliceStream currentSlice=" << currentSlice << " key=" << key); //TODO 1922: enable logging
+            NES_TRACE("WindowManager " << id << " sliceStream currentSlice=" << currentSlice << " key=" << UtilityFunctions::keyAsString(key));
             auto& sliceMetaData = store->getSliceMetadata();
             auto newStart = sliceMetaData[currentSlice].getEndTs();
-//            NES_TRACE("WindowManager " << id << " sliceStream newStart=" << newStart << " key=" << key); //TODO 1922: enable logging
+            NES_TRACE("WindowManager " << id << " sliceStream newStart=" << newStart << " key=" << UtilityFunctions::keyAsString(key));
             auto nextEdge = windowType->calculateNextWindowEnd(store->nextEdge);
-//            NES_TRACE("WindowManager: sliceStream nextEdge=" << nextEdge << " key=" << key); //TODO 1922: enable logging
-//            NES_TRACE("WindowManager " << id << ": append new slide for start=" << newStart << " end=" << nextEdge
-//                                       << " key=" << key); //TODO 1922: enable logging
+            NES_TRACE("WindowManager: sliceStream nextEdge=" << nextEdge << " key=" << UtilityFunctions::keyAsString(key));
+            NES_TRACE("WindowManager " << id << ": append new slide for start=" << newStart << " end=" << nextEdge
+                                       << " key=" << UtilityFunctions::keyAsString(key));
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }
@@ -119,7 +119,7 @@ class WindowManager {
      */
     template<class StreamType, class KeyType>
     inline void sliceStream(const uint64_t ts, WindowedJoinSliceListStore<StreamType>* store, KeyType key) {
-        NES_TRACE("WindowManager list " << id << ": sliceStream for ts=" << ts << " key=" << key);
+        NES_TRACE("WindowManager list " << id << ": sliceStream for ts=" << ts << " key=" << UtilityFunctions::keyAsString(key));
         // updates the maximal record ts
         // store->updateMaxTs(ts);
         // check if the slice store is empty
@@ -132,32 +132,32 @@ class WindowManager {
                 NES_TRACE("WindowManager " << id
                                            << ": for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs="
                                            << store->nextEdge - window->getSize().getTime()
-                                           << " nextWindowEnd=" << store->nextEdge << " key=" << key);
+                                           << " nextWindowEnd=" << store->nextEdge << " key=" << UtilityFunctions::keyAsString(key));
             } else if (windowType->isSlidingWindow()) {
                 auto* window = dynamic_cast<SlidingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
                 NES_TRACE("WindowManager list "
                           << id << ": for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
                           << store->nextEdge - window->getSlide().getTime() << " nextWindowEnd=" << store->nextEdge
-                          << " key=" << key);
+                          << " key=" << UtilityFunctions::keyAsString(key));
             } else {
                 NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
             }
         }
         NES_TRACE("WindowManager list " << id << ": sliceStream check store-nextEdge=" << store->nextEdge << " <="
-                                        << " ts=" << ts << " key=" << key);
+                                        << " ts=" << ts << " key=" << UtilityFunctions::keyAsString(key));
 
         // append new slices if needed
         while (store->nextEdge <= ts) {
             auto currentSlice = store->getCurrentSliceIndex();
-            NES_TRACE("WindowManager: sliceStream currentSlice=" << currentSlice << " key=" << key);
+            NES_TRACE("WindowManager: sliceStream currentSlice=" << currentSlice << " key=" << UtilityFunctions::keyAsString(key));
             auto& sliceMetaData = store->getSliceMetadata();
             auto newStart = sliceMetaData[currentSlice].getEndTs();
-            NES_TRACE("WindowManager: sliceStream newStart=" << newStart << " key=" << key);
+            NES_TRACE("WindowManager: sliceStream newStart=" << newStart << " key=" << UtilityFunctions::keyAsString(key));
             auto nextEdge = windowType->calculateNextWindowEnd(store->nextEdge);
-            NES_TRACE("WindowManager: sliceStream nextEdge=" << nextEdge << " key=" << key);
+            NES_TRACE("WindowManager: sliceStream nextEdge=" << nextEdge << " key=" << UtilityFunctions::keyAsString(key));
             NES_TRACE("WindowManager list " << id << ": append new slide for start=" << newStart << " end=" << nextEdge
-                                            << " key=" << key);
+                                            << " key=" << UtilityFunctions::keyAsString(key));
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }

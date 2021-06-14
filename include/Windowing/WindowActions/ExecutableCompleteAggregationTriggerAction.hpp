@@ -99,10 +99,9 @@ class ExecutableCompleteAggregationTriggerAction
                              tupleBuffer,
                              currentWatermark,
                              lastWatermark);//put key into this
-            // TODO: 1922: std::array<char, N> does not work well with the debugging macro, we need to work on this and re-enable this logging
-            //            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
-            //                                                                     << "): " << toString() << " check key=" << it.first
-            //                                                                     << "nextEdge=" << it.second->nextEdge << " id=" << id);
+                        NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+                                                                                 << "): " << toString() << " check key=" << UtilityFunctions::keyAsString(it.first)
+                                                                                 << "nextEdge=" << it.second->nextEdge << " id=" << id);
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
