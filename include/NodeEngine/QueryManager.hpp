@@ -251,6 +251,9 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool addSoftEndOfStream(OperatorId sourceId);
     bool addHardEndOfStream(OperatorId sourceId);
 
+  private:
+    uint64_t nodeEngineId;
+
     ThreadPoolPtr threadPool{nullptr};
 
     // TODO remove these unnecessary structures
@@ -264,9 +267,13 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     mutable std::mutex statisticsMutex;
     cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
+
+    BufferManagerPtr bufferManager;
+    Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
+
     uint16_t numThreads;
 
-    std::shared_mutex queryMutex;
+    mutable std::shared_mutex queryMutex;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     folly::MPMCQueue<Task> taskQueue;
 #else
@@ -274,10 +281,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     mutable std::mutex workMutex;
     std::condition_variable cv;
 #endif
-    BufferManagerPtr bufferManager;
-    Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
-
-    uint64_t nodeEngineId;
 
     std::atomic<QueryManagerStatus> queryManagerStatus{Created};
 };
