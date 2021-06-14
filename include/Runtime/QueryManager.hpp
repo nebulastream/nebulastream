@@ -281,7 +281,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     ExecutionResult terminateLoop(WorkerContext&);
 
-    bool addSoftEndOfStream(OperatorId sourceId);
+    bool addSoftStop(OperatorId sourceId, ReconfigurationType type);
     bool addHardEndOfStream(OperatorId sourceId);
 
   private:
