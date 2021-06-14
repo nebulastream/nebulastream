@@ -28,8 +28,6 @@ SignatureInferencePhase::SignatureInferencePhase(z3::ContextPtr context, bool co
     NES_DEBUG("SignatureInferencePhase()");
 }
 
-SignatureInferencePhase::~SignatureInferencePhase() { NES_DEBUG("~SignatureInferencePhase()"); }
-
 SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr context, bool computeStringSignature) {
     return std::make_shared<SignatureInferencePhase>(SignatureInferencePhase(std::move(context), computeStringSignature));
 }

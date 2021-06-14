@@ -33,6 +33,12 @@ class BaseQueryMergerRule {
      * @param globalQueryPlan: the global query plan
      */
     virtual bool apply(GlobalQueryPlanPtr globalQueryPlan) = 0;
+
+    BaseQueryMergerRule() = default;
+
+    BaseQueryMergerRule(const BaseQueryMergerRule&) = default;
+
+    virtual ~BaseQueryMergerRule() = default;
 };
 using BaseQueryMergerRulePtr = std::shared_ptr<BaseQueryMergerRule>;
 }// namespace NES::Optimizer

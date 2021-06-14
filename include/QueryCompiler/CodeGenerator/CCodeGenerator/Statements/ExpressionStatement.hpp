@@ -32,14 +32,16 @@ class ExpressionStatment : public Statement {
     [[nodiscard]] StatementPtr createCopy() const final;
 
     BinaryOperatorStatement assign(const ExpressionStatment& ref);
-    BinaryOperatorStatement assign(ExpressionStatmentPtr ref) const;
+    [[nodiscard]] BinaryOperatorStatement assign(ExpressionStatmentPtr ref) const;
     BinaryOperatorStatement accessPtr(const ExpressionStatment& ref);
-    BinaryOperatorStatement accessPtr(ExpressionStatmentPtr const& ref) const;
+    [[nodiscard]] BinaryOperatorStatement accessPtr(ExpressionStatmentPtr const& ref) const;
     BinaryOperatorStatement accessRef(const ExpressionStatment& ref);
-    BinaryOperatorStatement accessRef(ExpressionStatmentPtr ref) const;
+    [[nodiscard]] BinaryOperatorStatement accessRef(ExpressionStatmentPtr ref) const;
     BinaryOperatorStatement operator[](const ExpressionStatment& ref);
 
-    ~ExpressionStatment() override;
+    ExpressionStatment() = default;
+    ExpressionStatment(const ExpressionStatment&) = default;
+    ~ExpressionStatment() override = default;
 };
 
 }// namespace NES::QueryCompilation

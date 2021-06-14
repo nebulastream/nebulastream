@@ -24,8 +24,6 @@
 namespace NES {
 GlobalExecutionPlan::GlobalExecutionPlan() { NES_DEBUG("GlobalExecutionPlan()"); }
 
-GlobalExecutionPlan::~GlobalExecutionPlan() { NES_DEBUG("~GlobalExecutionPlan()"); }
-
 GlobalExecutionPlanPtr GlobalExecutionPlan::create() { return std::make_shared<GlobalExecutionPlan>(GlobalExecutionPlan()); }
 
 bool GlobalExecutionPlan::checkIfExecutionNodeExists(uint64_t id) {

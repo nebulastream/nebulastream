@@ -39,8 +39,6 @@ class ExchangeProtocol {
     explicit ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
                               std::shared_ptr<ExchangeProtocolListener> listener);
 
-    ~ExchangeProtocol();
-
     /**
      * @brief Reaction of the zmqServer after a ClientAnnounceMessage is received.
      * @param clientAnnounceMessage
@@ -81,8 +79,8 @@ class ExchangeProtocol {
     [[nodiscard]] std::shared_ptr<PartitionManager> getPartitionManager() const;
 
   private:
-    std::shared_ptr<PartitionManager> partitionManager;
-    std::shared_ptr<ExchangeProtocolListener> protocolListener;
+    std::shared_ptr<PartitionManager> partitionManager{nullptr};
+    std::shared_ptr<ExchangeProtocolListener> protocolListener{nullptr};
 };
 
 }// namespace Network

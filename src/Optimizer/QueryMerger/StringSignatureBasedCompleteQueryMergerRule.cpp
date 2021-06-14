@@ -27,14 +27,8 @@
 
 namespace NES::Optimizer {
 
-StringSignatureBasedCompleteQueryMergerRule::StringSignatureBasedCompleteQueryMergerRule() = default;
-
-StringSignatureBasedCompleteQueryMergerRule::~StringSignatureBasedCompleteQueryMergerRule() {
-    NES_DEBUG("~StringSignatureBasedCompleteQueryMergerRule()");
-}
-
 StringSignatureBasedCompleteQueryMergerRulePtr StringSignatureBasedCompleteQueryMergerRule::create() {
-    return std::make_shared<StringSignatureBasedCompleteQueryMergerRule>(StringSignatureBasedCompleteQueryMergerRule());
+    return std::make_shared<StringSignatureBasedCompleteQueryMergerRule>();
 }
 
 bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {

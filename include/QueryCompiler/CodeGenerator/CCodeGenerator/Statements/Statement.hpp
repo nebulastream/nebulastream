@@ -45,6 +45,11 @@ using StatementPtr = std::shared_ptr<Statement>;
 
 class Statement {
   public:
+
+    Statement() = default;
+
+    Statement(const Statement&) = default;
+
     /**
      * @brief method to get the statement type
      * @return StatementType
@@ -64,7 +69,7 @@ class Statement {
     [[nodiscard]] virtual StatementPtr createCopy() const = 0;
 
     /** @brief virtual copy constructor */
-    virtual ~Statement();
+    virtual ~Statement() = default;
 };
 
 class AssignmentStatement {

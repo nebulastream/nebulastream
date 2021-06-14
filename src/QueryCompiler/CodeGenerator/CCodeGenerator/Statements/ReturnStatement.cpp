@@ -33,5 +33,4 @@ CodeExpressionPtr ReturnStatement::getCode() const {
 
 StatementPtr ReturnStatement::createCopy() const { return std::make_shared<ReturnStatement>(*this); }
 
-ReturnStatement::~ReturnStatement() = default;
 }// namespace NES::QueryCompilation

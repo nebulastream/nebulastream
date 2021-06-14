@@ -41,7 +41,7 @@ class FunctionCallStatement : public ExpressionStatment {
     virtual void addParameter(const ExpressionStatment& expr);
     virtual void addParameter(ExpressionStatmentPtr expr);
 
-    ~FunctionCallStatement() override;
+    ~FunctionCallStatement() override = default;
 
   private:
     std::string functionName;

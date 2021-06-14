@@ -33,7 +33,7 @@ class VarRefStatement : public ExpressionStatment {
 
     explicit VarRefStatement(VariableDeclarationPtr varDeclaration);
 
-    ~VarRefStatement() override;
+    ~VarRefStatement() override = default;
 };
 
 using VarRef = VarRefStatement;

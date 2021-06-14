@@ -17,5 +17,5 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 
 namespace NES::QueryCompilation {
-Statement::~Statement() = default;
+
 }// namespace NES::QueryCompilation

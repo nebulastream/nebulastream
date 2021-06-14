@@ -141,8 +141,6 @@ class GlobalExecutionPlan {
      */
     std::map<uint64_t, uint32_t> getMapOfTopologyNodeIdToOccupiedResource(QueryId queryId);
 
-    ~GlobalExecutionPlan();
-
   private:
     explicit GlobalExecutionPlan();
     /**

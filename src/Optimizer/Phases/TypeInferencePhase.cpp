@@ -29,8 +29,6 @@ TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamC
     NES_DEBUG("TypeInferencePhase()");
 }
 
-TypeInferencePhase::~TypeInferencePhase() { NES_DEBUG("~TypeInferencePhase()"); }
-
 TypeInferencePhasePtr TypeInferencePhase::create(StreamCatalogPtr streamCatalog) {
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(streamCatalog)));
 }

@@ -13,8 +13,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#pragma clang diagnostic pop
 
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>

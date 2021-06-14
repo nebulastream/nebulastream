@@ -34,10 +34,10 @@ class ReturnStatement : public Statement {
 
     [[nodiscard]] StatementPtr createCopy() const override;
 
-    ~ReturnStatement() override;
+    ~ReturnStatement() override = default;
 
   private:
-    StatementPtr statement;
+    StatementPtr statement{nullptr};
 };
 }// namespace QueryCompilation
 }// namespace NES

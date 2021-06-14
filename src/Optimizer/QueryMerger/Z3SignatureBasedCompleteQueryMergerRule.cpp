@@ -28,12 +28,8 @@
 
 namespace NES::Optimizer {
 
-Z3SignatureBasedCompleteQueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context) {
+Z3SignatureBasedCompleteQueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context) : BaseQueryMergerRule() {
     signatureEqualityUtil = SignatureEqualityUtil::create(std::move(context));
-}
-
-Z3SignatureBasedCompleteQueryMergerRule::~Z3SignatureBasedCompleteQueryMergerRule() {
-    NES_DEBUG("~Z3SignatureBasedCompleteQueryMergerRule()");
 }
 
 Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRule::create(z3::ContextPtr context) {

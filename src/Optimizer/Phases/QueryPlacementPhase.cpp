@@ -32,8 +32,6 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
     NES_DEBUG("QueryPlacementPhase()");
 }
 
-QueryPlacementPhase::~QueryPlacementPhase() { NES_DEBUG("~QueryPlacementPhase()"); }
-
 QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                    TopologyPtr topology,
                                                    TypeInferencePhasePtr typeInferencePhase,

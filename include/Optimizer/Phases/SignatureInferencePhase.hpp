@@ -60,8 +60,6 @@ class SignatureInferencePhase {
      */
     [[nodiscard]] z3::ContextPtr getContext() const;
 
-    ~SignatureInferencePhase();
-
   private:
     /**
      * @brief Create instance of SignatureInferencePhase class

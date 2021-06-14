@@ -47,7 +47,9 @@ class StructDeclaration : public Declaration {
     StructDeclaration& addField(const Declaration& decl);
     StructDeclaration& makeStructCompact();
 
-    ~StructDeclaration() override;
+    StructDeclaration(const StructDeclaration&) = default;
+
+    ~StructDeclaration() override = default;
 
   private:
     StructDeclaration(std::string type_name, std::string variable_name);

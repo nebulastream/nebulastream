@@ -25,10 +25,8 @@
 
 namespace NES::Optimizer {
 
-SyntaxBasedCompleteQueryMergerRule::SyntaxBasedCompleteQueryMergerRule() = default;
-
 SyntaxBasedCompleteQueryMergerRulePtr SyntaxBasedCompleteQueryMergerRule::create() {
-    return std::make_shared<SyntaxBasedCompleteQueryMergerRule>(SyntaxBasedCompleteQueryMergerRule());
+    return std::make_shared<SyntaxBasedCompleteQueryMergerRule>();
 }
 
 bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {

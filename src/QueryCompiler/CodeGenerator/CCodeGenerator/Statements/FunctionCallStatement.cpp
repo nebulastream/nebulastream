@@ -17,7 +17,6 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/FunctionCallStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 namespace NES::QueryCompilation {
-FunctionCallStatement::~FunctionCallStatement() = default;
 
 StatementType FunctionCallStatement::getStamentType() const { return FUNC_CALL_STMT; }
 
