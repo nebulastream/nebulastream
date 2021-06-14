@@ -17,32 +17,23 @@
 #include <gtest/gtest.h>
 
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Monitoring/Metrics/IntCounter.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include <Components/NesWorker.hpp>
-#include <CoordinatorRPCService.pb.h>
 #include <Monitoring/MetricValues/GroupedValues.hpp>
-#include <Services/MonitoringService.hpp>
 #include <memory>
-
-#define private public
-#include <Components/NesCoordinator.hpp>
 
 namespace NES {
 

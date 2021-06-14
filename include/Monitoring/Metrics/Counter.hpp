@@ -28,7 +28,6 @@ namespace NES {
 class Counter {
   public:
     Counter() = default;
-    ;
 
     /**
 	 * Increment the current count by 1.
