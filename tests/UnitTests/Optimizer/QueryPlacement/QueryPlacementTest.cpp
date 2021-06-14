@@ -47,8 +47,6 @@ class QueryPlacementTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::setupLogging("QueryPlacementTest.log", NES::LOG_DEBUG);
-        // XXX: Is this a bug? This shadows the member variable and is unused.
-        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
         std::cout << "Setup QueryPlacementTest test case." << std::endl;
     }
 
