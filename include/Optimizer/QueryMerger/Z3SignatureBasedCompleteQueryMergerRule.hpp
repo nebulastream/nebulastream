@@ -78,7 +78,7 @@ class Z3SignatureBasedCompleteQueryMergerRule final : public BaseQueryMergerRule
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-    ~Z3SignatureBasedCompleteQueryMergerRule() noexcept = default;
+    ~Z3SignatureBasedCompleteQueryMergerRule() noexcept final = default;
 
   private:
     explicit Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context);
