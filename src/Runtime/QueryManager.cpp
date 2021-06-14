@@ -331,6 +331,7 @@ bool QueryManager::triggerQepStartReconfiguration(Execution::ExecutableQueryPlan
 
 bool QueryManager::triggerQepStopReconfiguration(Execution::ExecutableQueryPlanPtr qepToStop,
                                                  Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+    std::unique_lock lock(queryMutex);
     auto querySubPlanId = qepToStop->getQuerySubPlanId();
     auto sourceOperatorId = queryReconfigurationMessage.getChannelId().getNesPartition().getOperatorId();
     if (sourceIdToExecutableQueryPlanMap.find(sourceOperatorId) == sourceIdToExecutableQueryPlanMap.end()) {
@@ -347,12 +348,13 @@ bool QueryManager::triggerQepStopReconfiguration(Execution::ExecutableQueryPlanP
                   << querySubPlanId << " does not have source with sourceOperatorId: " << sourceOperatorId);
         return false;
     }
-    auto weakQep = std::weak_ptr<Execution::ExecutableQueryPlan>(qepToStop);
-    StopQueryMessagePtr data = std::make_unique<StopQueryMessage>(weakQep, queryReconfigurationMessage);
-    auto userData = std::make_any<StopQueryMessagePtr>(data);
-    const ReconfigurationMessage& message =
-        ReconfigurationMessage(querySubPlanId, StopViaReconfiguration, qepToStop, std::move(userData));
-    addReconfigurationMessage(querySubPlanId, message, false);
+    addSoftStop(sourceOperatorId,
+                StopViaReconfiguration,
+                [queryReconfigurationMessage](Execution::ExecutableQueryPlanPtr qepToStop) {
+                    auto weakQep = std::weak_ptr<Execution::ExecutableQueryPlan>(qepToStop);
+                    StopQueryMessagePtr data = std::make_unique<StopQueryMessage>(weakQep, queryReconfigurationMessage);
+                    return std::make_any<StopQueryMessagePtr>(data);
+                });
     sourceIdToExecutableQueryPlanMap.erase(querySubPlanId);
     sourceIdToSuccessorMap.erase(querySubPlanId);
     return true;
@@ -636,7 +638,9 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
     return true;
 }
 
-bool QueryManager::addSoftStop(OperatorId sourceId, ReconfigurationType type) {
+bool QueryManager::addSoftStop(const OperatorId sourceId,
+                               const ReconfigurationType type,
+                               const std::function<std::any(Execution::ExecutableQueryPlanPtr)>& userdataSupplier) {
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
     QuerySubPlanId querySubPlanId = executableQueryPlan->getQuerySubPlanId();
     // todo adopt this code for multiple source pipelines
@@ -644,13 +648,13 @@ bool QueryManager::addSoftStop(OperatorId sourceId, ReconfigurationType type) {
     for (auto successor : pipelineSuccessors) {
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
-        auto weakQep = std::make_any<std::weak_ptr<Execution::ExecutableQueryPlan>>(executableQueryPlan);
+        auto userData = userdataSupplier(executableQueryPlan);
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
             addReconfigurationMessage(querySubPlanId,
-                                      ReconfigurationMessage(querySubPlanId, type, (*executablePipeline), std::move(weakQep)));
+                                      ReconfigurationMessage(querySubPlanId, type, (*executablePipeline), std::move(userData)));
         } else {
             addReconfigurationMessage(querySubPlanId,
-                                      ReconfigurationMessage(querySubPlanId, type, (executableQueryPlan), std::move(weakQep)));
+                                      ReconfigurationMessage(querySubPlanId, type, (executableQueryPlan), std::move(userData)));
         }
     }
     return true;
@@ -728,7 +732,9 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     NES_ASSERT2_FMT(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
                     "Operator id to query map for operator is empty");
     if (graceful) {
-        addSoftStop(sourceId, SoftEndOfStream);
+        addSoftStop(sourceId, SoftEndOfStream, [](Execution::ExecutableQueryPlanPtr executableQueryPlan) {
+            return std::make_any<std::weak_ptr<Execution::ExecutableQueryPlan>>(executableQueryPlan);
+        });
     } else {
         addHardEndOfStream(sourceId);
     }
