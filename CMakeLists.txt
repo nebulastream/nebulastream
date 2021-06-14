@@ -152,7 +152,7 @@ if (ENABLE_IWYU)
     endif()
 endif()
 
-if (${ENABLE_CLANG_TIDY})
+if (ENABLE_CLANG_TIDY)
     message(STATUS "clang tidy enabled")
     set(CMAKE_CXX_CLANG_TIDY clang-tidy)
 else()
