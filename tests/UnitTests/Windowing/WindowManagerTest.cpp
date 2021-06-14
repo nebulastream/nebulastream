@@ -323,7 +323,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
                                   ->addField("value", UINT32);
 
     auto windowHandler =
-        createWindowHandler<std::array<char, 32>, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
+        createWindowHandler<NES::QueryCompilation::Array<char, 32>, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDef,
             windowOutputSchema,
             0);
@@ -335,12 +335,12 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
 
     windowHandler->setup(context);
 
-    std::array<char, 32> keyOne = {'K', 'e', 'y', ' ', 'O', 'n', 'e'};
+    NES::QueryCompilation::Array<char, 32> keyOne = {'K', 'e', 'y', ' ', 'O', 'n', 'e'};
 
-    auto windowState = windowHandler->getTypedWindowState();
-    auto keyRef = windowState->get(keyOne);
-    keyRef.valueOrDefault(0);
-    auto store = keyRef.value();
+    auto windowStateVar = windowHandler->getTypedWindowState();
+    auto key_value_handle = windowStateVar->get(keyOne);
+    key_value_handle.valueOrDefault(0);
+    auto store = key_value_handle.value();
 
     uint64_t ts = 7;
     windowHandler->updateMaxTs(ts, 0);
@@ -364,7 +364,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
     auto windowAction = std::dynamic_pointer_cast<
-        Windowing::ExecutableCompleteAggregationTriggerAction<std::array<char, 32>, uint64_t, uint64_t, uint64_t>>(
+        Windowing::ExecutableCompleteAggregationTriggerAction<NES::QueryCompilation::Array<char, 32>, uint64_t, uint64_t, uint64_t>>(
         windowHandler->getWindowAction());
     windowAction->aggregateWindows(keyOne, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(keyOne, store, windowDef, buf, ts, ts);

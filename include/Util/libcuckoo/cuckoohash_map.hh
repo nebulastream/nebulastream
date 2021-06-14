@@ -22,6 +22,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <QueryCompiler/GeneratableTypes/Array.hpp>
 
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
