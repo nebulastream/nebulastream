@@ -111,6 +111,13 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     static OperatorNodePtr getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator,
                                                      SchemaPtr schema,
                                                      std::vector<OperatorNodePtr> children);
+
+    /**
+    * @brief Lowers a cep iteration operator
+    * @param queryPlan current plan
+    * @param operatorNode current operator
+    */
+    void lowerCEPIterationOperator(const QueryPlanPtr queryPlan, const LogicalOperatorNodePtr operatorNode);
 };
 
 }// namespace QueryCompilation

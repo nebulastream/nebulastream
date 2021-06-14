@@ -16,6 +16,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -124,6 +125,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         lowerMapOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         lowerProjectOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
+            lowerCEPIterationOperator(queryPlan, operatorNode);
     } else {
         NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
@@ -167,6 +170,15 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
                                                                               mapOperator->getOutputSchema(),
                                                                               mapOperator->getMapExpression());
     operatorNode->replace(physicalMapOperator);
+}
+
+void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+    auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();
+    auto physicalCEpIterationOperator = PhysicalOperators::PhysicalIterationCEPOperator::create(iterationOperator->getInputSchema(),
+                                                                              iterationOperator->getOutputSchema(),
+                                                                              iterationOperator->getMinIterations(),
+                                                                              iterationOperator->getMaxIterations());
+    operatorNode->replace(physicalCEpIterationOperator);
 }
 
 OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator,
