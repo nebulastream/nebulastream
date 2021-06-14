@@ -15,6 +15,7 @@
 */
 
 #include <Network/NetworkSink.hpp>
+#include <NodeEngine/StopQueryMessage.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <utility>
@@ -79,9 +80,22 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
             break;
         }
         case NodeEngine::Destroy: {
-            workerContext.releaseChannel(nesPartition.getOperatorId());
+            auto notifyRelease = task.getUserData<bool>();
+            workerContext.releaseChannel(nesPartition.getOperatorId(), notifyRelease);
             NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
                                                                         << NodeEngine::NesThread::getId());
+            break;
+        }
+        case NodeEngine::QueryReconfiguration: {
+            /*
+             * TODO: Sending messages on all channels is inefficient and could lead to flooding of network when number of threads is high
+             * moreover there is no need to send message via all channel, since operatorId is the only required criterion to handle message
+             * Message can be sent once using `postReconfigurationCallback` but it needs to be refactored to accept `WorkerContext` as a param
+             * Blocker: `QueryManager::addReconfigurationMessage` calls task->postReconfiguration when blocking, what will workerContext be?
+             */
+            auto queryReconfigurationMessage = task.getUserData<Messages::QueryReconfigurationMessage>();
+            auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
+            channel->sendReconfigurationMessage(queryReconfigurationMessage);
             break;
         }
         default: {
@@ -96,8 +110,30 @@ void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage
     switch (task.getType()) {
         case NodeEngine::HardEndOfStream:
         case NodeEngine::SoftEndOfStream: {
-            auto newReconf = NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Destroy, shared_from_this());
-            queryManager->addReconfigurationMessage(parentPlanId, newReconf, false);
+            auto triggerEoSMsg = std::make_any<bool>(true);
+            auto destroyMsg = NodeEngine::ReconfigurationMessage(parentPlanId,
+                                                                 NodeEngine::Destroy,
+                                                                 shared_from_this(),
+                                                                 std::move(triggerEoSMsg));
+            queryManager->addReconfigurationMessage(parentPlanId, destroyMsg, false);
+            break;
+        }
+        case NodeEngine::StopViaReconfiguration: {
+            auto stopMessage = task.getUserData<NodeEngine::StopQueryMessagePtr>();
+            auto reconfigurationMsg =
+                std::make_any<Messages::QueryReconfigurationMessage>(stopMessage->getQueryReconfigurationMessage());
+
+            auto reconfigurationMessage = NodeEngine::ReconfigurationMessage(parentPlanId,
+                                                                             NodeEngine::QueryReconfiguration,
+                                                                             shared_from_this(),
+                                                                             std::move(reconfigurationMsg));
+            queryManager->addReconfigurationMessage(parentPlanId, reconfigurationMessage, false);
+            auto triggerEoSMsg = std::make_any<bool>(false);
+            auto destroyMsg = NodeEngine::ReconfigurationMessage(parentPlanId,
+                                                                 NodeEngine::Destroy,
+                                                                 shared_from_this(),
+                                                                 std::move(triggerEoSMsg));
+            queryManager->addReconfigurationMessage(parentPlanId, destroyMsg, false);
             break;
         }
         default: {

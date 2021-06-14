@@ -57,8 +57,9 @@ class WorkerContext {
     /**
      * @brief removes a registered output channel
      * @param id of the operator that we want to store the output channel
+     * @param notifyRelease: if true, then channel sends EoS messages
      */
-    void releaseChannel(Network::OperatorId id);
+    void releaseChannel(Network::OperatorId id, bool notifyRelease);
 
     /**
      * @brief retrieve a registered output channel
