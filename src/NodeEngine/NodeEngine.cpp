@@ -473,23 +473,21 @@ Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitio
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
-    //we have to decide where many cases
-    // 1.) if we specify a build-in source like default source, then we have only one config but call this for each source
-    // 2.) if we have really two sources, then we would have two real configurations here
-    if (configs.size() > 1) {
-        NES_ASSERT(!configs.empty(), "no config for Lambda source");
-        // BDAPRO wtf is this????
-        auto conf = configs.back();
-        configs.pop_back();
-        // BDAPRO iterate through conf
-        // and select the one with the corresponding mapping of sourceDescriptor.getStreamName()
-        // throw error if multiple physical streams on the same node are mapped to one logical stream
-        // (this check should probably done before)
-        return conf->build(sourceDescriptor->getSchema());
-    } else {
-        NES_ASSERT(configs[0], "physical source config is not specified");
-        return configs[0]->build(sourceDescriptor->getSchema());
+    // name of the logical stream associated with the sourceDescriptor
+    auto sourceDescriptorName = sourceDescriptor -> getStreamName();
+
+    for(auto &conf: configs){
+        auto logicalStreamNames = conf ->getLogicalStreamName();
+        for(auto logicalStreamName : logicalStreamNames){
+            if(logicalStreamName == sourceDescriptorName){
+                return conf->build(sourceDescriptor->getSchema(), sourceDescriptorName);
+            }
+        }
     }
+
+    // in case no physical stream was associated with the logical stream name on this node
+    // shouldn't happen, just added to avoid compile error
+    return NULL;
 }
 
 void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {

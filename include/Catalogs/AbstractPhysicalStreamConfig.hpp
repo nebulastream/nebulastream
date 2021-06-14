@@ -27,10 +27,10 @@ namespace NES {
 class AbstractPhysicalStreamConfig {
   public:
     /**
-     * @brief Build a source descriptor using a given schema
+     * @brief Build a source descriptor using a given schema and the related logicalStreamName
      * @return the source descriptor matched with a given schema
      */
-    virtual SourceDescriptorPtr build(SchemaPtr) = 0;
+    virtual SourceDescriptorPtr build(SchemaPtr, std::string) = 0;
 
     /**
      * @brief The string representation of the object

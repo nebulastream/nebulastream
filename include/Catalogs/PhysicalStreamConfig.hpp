@@ -90,7 +90,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
     bool getSkipHeader() const;
 
-    SourceDescriptorPtr build(SchemaPtr) override;
+    SourceDescriptorPtr build(SchemaPtr, std::string) override;
 
     void setSourceFrequency(uint32_t sourceFrequency);
     void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);

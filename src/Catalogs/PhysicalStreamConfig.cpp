@@ -16,12 +16,9 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
-#include <Util/Logger.hpp>
-#include <sstream>
 #include <Util/UtilityFunctions.hpp>
 namespace NES {
 
@@ -69,13 +66,10 @@ const std::vector<std::string> PhysicalStreamConfig::getLogicalStreamName() { re
 
 bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
 
-SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
+SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema, std::string streamName) {
     auto* config = this;
-    // BDAPRO this needs to be resolved for multiple names
-    auto streamName = config->getLogicalStreamName();
 
-    // Pick the first element from the catalog entry and identify the type to create appropriate source type
-    // todo add handling for support of multiple physical streams.
+
     std::string type = config->getSourceType();
     std::string conf = config->getSourceConfig();
     std::chrono::milliseconds frequency = config->getSourceFrequency();
@@ -84,7 +78,6 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
 
     uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
 
-    // BDAPRO resolve for multiple logical stream names
     if (type == "DefaultSource") {
         NES_DEBUG("PhysicalStreamConfig: create default source for one buffer");
         return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency.count());

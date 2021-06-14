@@ -64,15 +64,18 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
             return 0;
         }
 
+
         //add default logical
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        //check if logical stream exists
-        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf->getLogicalStreamName())) {
-            NES_ERROR("CoordinatorEngine::registerNode: error logical stream" << streamConf->getLogicalStreamName()
+
+        auto inAndExcluded = streamCatalog->testIfLogicalStreamVecExistsInSchemaMapping(streamConf->getLogicalStreamName());
+
+        // print ERROR in case the mapping does not exist
+        for(auto excluded : get<1>(inAndExcluded)){
+            NES_ERROR("CoordinatorEngine::registerNode: error logical stream" << excluded
                                                                               << " does not exist when adding physical stream "
                                                                               << streamConf->getPhysicalStreamName());
-            throw Exception("CoordinatorEngine::registerNode logical stream does not exist "
-                            + streamConf->getLogicalStreamName());
+            throw Exception("CoordinatorEngine::registerNode logical stream does not exist " + excluded);
         }
 
         std::string sourceType = streamConf->getSourceType();
@@ -83,6 +86,8 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
 
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
+        // BDAPRO add handling of registration of physical stream if no logicalStreamName exists
+        // BDAPRO combine with #1926 first, as their the correct mapping exists
         bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
         if (!success) {
             NES_ERROR("CoordinatorEngine::registerNode: physical stream " << streamConf->getPhysicalStreamName()

@@ -123,6 +123,13 @@ class StreamCatalog {
     LogicalStreamPtr getStreamForLogicalStreamOrThrowException(std::string logicalStreamName);
 
     /**
+     * @brief method to check which logical streams with given names exist in the log to schema mapping
+     * @param logicalStreamNames names of the logical streams to test
+     * @return a tuple of vectors, the first vector contains the logical streams included in the mapping and the second one the rest
+     */
+    std::tuple<std::vector<std::string>, std::vector<std::string>> testIfLogicalStreamVecExistsInSchemaMapping(std::vector<std::string> logicalStreamNames);
+
+    /**
    * @brief test if logical stream with this name exists in the log to schema mapping
    * @param name of the logical stream to test
    * @return bool indicating if stream exists

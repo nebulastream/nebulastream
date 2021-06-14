@@ -244,6 +244,22 @@ LogicalStreamPtr StreamCatalog::getStreamForLogicalStreamOrThrowException(std::s
     }
 }
 
+std::tuple<std::vector<std::string>, std::vector<std::string>>
+StreamCatalog::testIfLogicalStreamVecExistsInSchemaMapping(std::vector<std::string> logicalStreamNames){
+    std::vector<std::string> included;
+    std::vector<std::string> excluded;
+
+    for(std::string logicalStreamName: logicalStreamNames){
+        if(StreamCatalog::testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)){
+            included.push_back(logicalStreamName);
+        }else{
+            included.push_back(logicalStreamName);
+        }
+    }
+
+    return std::make_tuple(included, excluded);
+}
+
 bool StreamCatalog::testIfLogicalStreamExistsInSchemaMapping(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     return logicalStreamToSchemaMapping.find(logicalStreamName)//if log stream does not exists
