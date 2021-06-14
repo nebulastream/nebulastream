@@ -89,7 +89,7 @@ web::json::value CpuMetrics::toJson() {
 }
 
 void writeToBuffer(const CpuMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
-    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    auto* tbuffer = buf.getBuffer<uint8_t>();
     uint64_t totalSize = byteOffset + sizeof(uint16_t) + sizeof(CpuValues) * (metrics.getNumCores() + 1);
     NES_ASSERT(totalSize < buf.getBufferSize(), "CpuMetrics: Content does not fit in TupleBuffer");
 

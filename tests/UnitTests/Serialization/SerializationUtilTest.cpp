@@ -24,6 +24,7 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
@@ -461,6 +462,20 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(map, new SerializableOperator());
         auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(map->equal(mapOperator));
+    }
+
+    {
+        /*
+        * Unary operators are available in the C++ API but not in the legacy compiler.
+        * We therefore throw a not implemented exception when ABS is used.
+        * TODO:  re-enable this test when ABS is fully implemented
+        */
+        EXPECT_ANY_THROW({
+            auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = ABS(Attribute("f3")));
+            auto serializedOperator = OperatorSerializationUtil::serializeOperator(map, new SerializableOperator());
+            auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+            EXPECT_TRUE(map->equal(mapOperator));
+        });
     }
 
     {

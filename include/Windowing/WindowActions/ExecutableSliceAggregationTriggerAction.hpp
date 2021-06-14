@@ -17,7 +17,6 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
@@ -51,7 +50,7 @@ class ExecutableSliceAggregationTriggerAction
     }
 
     virtual ~ExecutableSliceAggregationTriggerAction() {
-        // nop
+        //nop
     }
 
     ExecutableSliceAggregationTriggerAction(

@@ -19,10 +19,8 @@ if [ $# -eq 0 ]
 then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
-    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/$($ACTUAL_TRIPLE)" -DCPPRESTSDK_DIR="/usr/lib/$($ACTUAL_TRIPLE)/cmake/" -DNES_USE_OPC=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_BUILD_BENCHMARKS=1 ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
     make -j4
     cd /nebulastream/build/tests
     ln -s ../nesCoordinator .

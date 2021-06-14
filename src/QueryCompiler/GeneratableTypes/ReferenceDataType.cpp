@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/ReferenceDataType.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 ReferenceDataType::ReferenceDataType(GeneratableDataTypePtr baseType) : GeneratableDataType(), baseType(baseType) {}
 
 const CodeExpressionPtr ReferenceDataType::getCode() const {
@@ -29,5 +29,5 @@ CodeExpressionPtr ReferenceDataType::getDeclarationCode(std::string identifier) 
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "& " + identifier);
 }
 const CodeExpressionPtr ReferenceDataType::getTypeDefinitionCode() const { return baseType->getTypeDefinitionCode(); }
-
+}// namespace QueryCompilation
 }// namespace NES

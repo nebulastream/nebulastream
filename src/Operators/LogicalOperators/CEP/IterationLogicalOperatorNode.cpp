@@ -55,7 +55,7 @@ bool IterationLogicalOperatorNode::inferSchema() {
 }
 
 OperatorNodePtr IterationLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createIterationOperator(minIterations, maxIterations, id);
+    auto copy = LogicalOperatorFactory::createCEPIterationOperator(minIterations, maxIterations, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;

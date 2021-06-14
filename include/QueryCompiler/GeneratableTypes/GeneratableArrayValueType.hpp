@@ -17,12 +17,11 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEARRAYVALUETYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEARRAYVALUETYPE_HPP_
 
-#include <Common/ValueTypes/ValueType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <string>
 #include <vector>
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief Generates code for array values.
  * To this end it takes into account if the value is a string
@@ -51,7 +50,7 @@ class GeneratableArrayValueType final : public GeneratableValueType {
     ValueTypePtr const valueType;
     std::vector<std::string> const values;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEBASICVALUETYPE_HPP_

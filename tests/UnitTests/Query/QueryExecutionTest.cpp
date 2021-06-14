@@ -18,15 +18,11 @@
 
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <Operators/OperatorNode.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
-#include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
@@ -40,30 +36,22 @@
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
 #include <Catalogs/StreamCatalog.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/NewQueryCompiler.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Topology/TopologyNode.hpp>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
-
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
-#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
 using namespace NES;
-using NodeEngine::MemoryLayoutPtr;
 using NodeEngine::TupleBuffer;
 
 class QueryExecutionTest : public testing::Test {
@@ -274,10 +262,7 @@ class TestSink : public SinkMedium {
 
     std::string toString() { return "Test_Sink"; }
 
-    void shutdown() override {
-        std::unique_lock lock(m);
-        cleanupBuffers();
-    }
+    void shutdown() override {}
 
     ~TestSink() override {
         NES_DEBUG("~TestSink()");
@@ -376,7 +361,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
     }
 
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     buffer.release();
     plan->stop();
 }
@@ -443,7 +428,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
     }
 
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     buffer.release();
     plan->stop();
 }
@@ -598,7 +583,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
 
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 /**
@@ -687,7 +672,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
         EXPECT_EQ(valueFields[recordIndex], 10);
     }
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 /**
@@ -778,7 +763,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     }
 
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
@@ -824,7 +809,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    std::cout << " plan=" << queryPlan->toString() << std::endl;
+    //    std::cout << " plan=" << queryPlan->toString() << std::endl;
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
@@ -850,7 +835,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
                                   "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
@@ -931,7 +916,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     EXPECT_EQ(expectedContent2, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
 
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 /*
@@ -1007,7 +992,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
                                   "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 // P1 = Source1 -> filter1
@@ -1042,22 +1027,10 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
-    auto builder = GeneratedQueryExecutionPlanBuilder::create()
-                       .setQueryManager(nodeEngine->getQueryManager())
-                       .setBufferManager(nodeEngine->getBufferManager())
-                       //    .setCompiler(nodeEngine->getCompiler())
-                       //  .addOperatorQueryPlan(generatableOperators)
-                       .setQueryId(1)
-                       .setQuerySubPlanId(1)
-                       // .addSource(testSource1)
-                       // .addSource(testSource2)
-                       .addSink(testSink);
-
-    auto plan = builder.build();
     // nodeEngine->getQueryManager()->registerQuery(plan);
 
     // The plan should have three pipeline
-    EXPECT_EQ(plan->getNumberOfPipelines(), 3);
+    // EXPECT_EQ(plan->getNumberOfPipelines(), 3);
 
     // TODO switch to event time if that is ready to remove sleep
     auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
@@ -1065,15 +1038,15 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
     // ingest test data
-    plan->setup();
-    plan->start(nodeEngine->getStateManager());
+    //plan->setup();
+    // plan->start(nodeEngine->getStateManager());
     NodeEngine::WorkerContext workerContext{1};
-    auto stage_0 = plan->getPipeline(0);
-    auto stage_1 = plan->getPipeline(1);
+    //auto stage_0 = plan->getPipeline(0);
+    //auto stage_1 = plan->getPipeline(1);
     for (int i = 0; i < 10; i++) {
 
-        stage_0->execute(buffer, workerContext);// P1
-        stage_1->execute(buffer, workerContext);// P2
+        //  stage_0->execute(buffer, workerContext);// P1
+        //  stage_1->execute(buffer, workerContext);// P2
         // Contfext -> Context 1 and Context 2;
         //
         // P1 -> P2 -> P3
@@ -1085,7 +1058,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
         sleep(1);
     }
     testSink->completed.get_future().get();
-    plan->stop();
+    //plan->stop();
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
@@ -1099,5 +1072,5 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
         EXPECT_EQ(recordIndexFields[recordIndex], recordIndex);
     }
 
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }

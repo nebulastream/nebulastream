@@ -27,9 +27,12 @@ using grpc::Status;
 
 namespace NES {
 
+class MonitoringAgent;
+typedef std::shared_ptr<MonitoringAgent> MonitoringAgentPtr;
+
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
-    WorkerRPCServer(NodeEngine::NodeEnginePtr nodeEngine);
+    WorkerRPCServer(NodeEngine::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent);
 
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
@@ -39,10 +42,15 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status StopQuery(ServerContext* context, const StopQueryRequest* request, StopQueryReply* reply) override;
 
-    Status RequestMonitoringData(ServerContext* context, const MonitoringRequest* request, MonitoringReply* reply) override;
+    Status RegisterMonitoring(ServerContext* context,
+                              const MonitoringRegistrationRequest* request,
+                              MonitoringRegistrationReply* reply) override;
+
+    Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
 
   private:
     NodeEngine::NodeEnginePtr nodeEngine;
+    MonitoringAgentPtr monitoringAgent;
 };
 
 }// namespace NES

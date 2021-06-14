@@ -69,29 +69,34 @@ MemorySegment::MemorySegment(uint8_t* ptr,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
                              bool)
     : ptr(ptr), size(size) {
-    // TODO ensure this doesnt break zmq recycle callback (Ventura)
+    NES_ASSERT2_FMT(this->ptr, "invalid ptr");
+    NES_ASSERT2_FMT(this->size, "invalid size");
     controlBlock = new BufferControlBlock(this, recycler, std::move(recycleFunction));
-    if (!this->ptr) {
-        NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
-    }
-    if (!this->size) {
-        NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid size");
-    }
     controlBlock->prepare();
 }
 
 MemorySegment::~MemorySegment() {
     if (ptr) {
-        auto refCnt = controlBlock->getReferenceCount();
-        if (refCnt != 0) {
-            NES_ERROR("Expected 0 as ref cnt but got " << refCnt);
-            NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid reference counter on mem segment dtor");
+
+        /// XXX: If we want to make `release` noexcept as we discussed, we need to make sure that the
+        ///      MemorySegment is noexcept destructible. I therefore transformed this error into an assertion
+        ///      (I also consider this to be consistent with our handeling of the referenceCount in
+        ///      the release function in general. Do you agree?).
+        {
+            auto const refCnt = controlBlock->getReferenceCount();
+            NES_ASSERT(refCnt == 0, "[MemorySegment] invalid reference counter" << refCnt << " on mem segment dtor");
         }
+
+        // Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
+        // have to call the destructor, as the memory segemnt that contains the controlBlock is managed separately.
         if ((ptr + size) != reinterpret_cast<uint8_t*>(controlBlock)) {
             delete controlBlock;
+        } else {
+            controlBlock->~BufferControlBlock();
         }
-        free(ptr);
-        ptr = nullptr;
+
+        // Free the pointer and set it to nullptr to avoid use after deallocation.
+        free(std::exchange(ptr, nullptr));
     }
 }
 
@@ -208,8 +213,8 @@ bool BufferControlBlock::release() {
         }
 #endif
         return true;
-    } else if (prevRefCnt == 0) {
-        NES_THROW_RUNTIME_ERROR("BufferControlBlock: releasing an already released buffer");
+    } else {
+        NES_ASSERT(prevRefCnt != 0, "BufferControlBlock: releasing an already released buffer");
     }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     {
@@ -222,21 +227,6 @@ bool BufferControlBlock::release() {
 #endif
     return false;
 }
-
-uint64_t BufferControlBlock::getNumberOfTuples() const noexcept { return numberOfTuples; }
-
-void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
-
-uint64_t BufferControlBlock::getWatermark() const noexcept { return watermark; }
-
-void BufferControlBlock::setWatermark(uint64_t watermark) { this->watermark = watermark; }
-
-void BufferControlBlock::setCreationTimestamp(uint64_t ts) { this->creationTimestamp = ts; }
-
-uint64_t BufferControlBlock::getCreationTimestamp() const noexcept { return creationTimestamp; }
-
-uint64_t BufferControlBlock::getOriginId() const noexcept { return originId; }
-void BufferControlBlock::setOriginId(uint64_t originId) { this->originId = originId; }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack)
@@ -253,10 +243,25 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 // ------------------ Utility functions for TupleBuffer ------------------------
 // -----------------------------------------------------------------------------
 
-void zmqBufferRecyclingCallback(void* ptr, void* hint) {
-    auto bufferSize = reinterpret_cast<uintptr_t>(hint);
-    auto buffer = reinterpret_cast<uint8_t*>(ptr);
-    auto controlBlock = reinterpret_cast<BufferControlBlock*>(buffer + bufferSize);
+uint64_t BufferControlBlock::getNumberOfTuples() const noexcept { return numberOfTuples; }
+
+void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
+
+uint64_t BufferControlBlock::getWatermark() const noexcept { return watermark; }
+
+void BufferControlBlock::setWatermark(uint64_t watermark) { this->watermark = watermark; }
+
+void BufferControlBlock::setCreationTimestamp(uint64_t ts) { this->creationTimestamp = ts; }
+
+uint64_t BufferControlBlock::getCreationTimestamp() const noexcept { return creationTimestamp; }
+
+uint64_t BufferControlBlock::getOriginId() const noexcept { return originId; }
+
+void BufferControlBlock::setOriginId(uint64_t originId) { this->originId = originId; }
+
+void zmqBufferRecyclingCallback(void*, void* hint) {
+    NES_VERIFY(hint != nullptr, "Hint cannot be null");
+    auto controlBlock = reinterpret_cast<BufferControlBlock*>(hint);
     controlBlock->release();
 }
 

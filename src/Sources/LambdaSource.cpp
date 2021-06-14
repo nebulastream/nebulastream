@@ -19,7 +19,6 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/LambdaSource.hpp>
@@ -48,9 +47,7 @@ LambdaSource::LambdaSource(
                       gatheringMode,
                       successors),
       generationFunction(std::move(generationFunction)) {
-
     NES_DEBUG("Create LambdaSource with id=" << operatorId << "func is " << (generationFunction ? "callable" : "not callable"));
-
     if (this->gatheringMode == GatheringMode::FREQUENCY_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
     } else if (this->gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
@@ -58,7 +55,7 @@ LambdaSource::LambdaSource(
     } else {
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
     }
-
+    numberOfTuplesToProduce = this->globalBufferManager->getBufferSize() / this->schema->getSchemaSizeInBytes();
     wasGracefullyStopped = false;
 }
 
@@ -66,12 +63,14 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     NES_DEBUG("LambdaSource::receiveData called on operatorId=" << operatorId);
     using namespace std::chrono_literals;
 
-    auto buffer = this->bufferManager->getBufferTimeout(NES::NodeEngine::DEFAULT_BUFFER_TIMEOUT);
+    auto buffer = this->globalBufferManager->getBufferTimeout(NES::NodeEngine::DEFAULT_BUFFER_TIMEOUT);
     if (!buffer) {
         NES_ERROR("Buffer invalid after waiting on timeout");
         return std::nullopt;
     }
-    auto numberOfTuplesToProduce = buffer->getBufferSize() / schema->getSchemaSizeInBytes();
+
+    NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= buffer->getBufferSize(),
+                    "value to write is larger than the buffer");
 
     generationFunction(buffer.value(), numberOfTuplesToProduce);
 
@@ -81,7 +80,7 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
 
     NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer->getNumberOfTuples()
                                                                      << " outOrgID=" << buffer->getOriginId());
-    NES_DEBUG("bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer.value(), schema) << '\n');
+    //    NES_DEBUG("bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer.value(), schema) << '\n');
 
     if (buffer->getNumberOfTuples() == 0) {
         NES_ASSERT(false, "this should not happen");
@@ -91,8 +90,9 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     }
 }
 
+const std::string LambdaSource::toString() const { return "LambdaSource"; }
+
 bool LambdaSource::stop(bool) { return this->DataSource::stop(false); }
 
 SourceType LambdaSource::getType() const { return LAMBDA_SOURCE; }
-
 }// namespace NES

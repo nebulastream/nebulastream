@@ -50,6 +50,7 @@
 #include <SerializableOperator.pb.h>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
@@ -74,6 +75,7 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 
+#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -133,6 +135,15 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         // serialize map expression
         ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
         serializedOperator->mutable_details()->PackFrom(mapDetails);
+    } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
+        // serialize CEPIteration operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to CEPIterationLogicalOperatorNode");
+        auto iterationDetails = SerializableOperator_CEPIterationDetails();
+        auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();
+        // serialize CEP iteration iteration
+        iterationDetails.set_miniteration(iterationOperator->getMaxIterations());
+        iterationDetails.set_maxiteration(iterationOperator->getMaxIterations());
+        serializedOperator->mutable_details()->PackFrom(iterationDetails);
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // serialize window operator
         NES_TRACE("OperatorSerializationUtil:: serialize to CentralWindowOperator");
@@ -242,6 +253,15 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             exps.push_back(projectExpression);
         }
         operatorNode = LogicalOperatorFactory::createProjectionOperator(exps);
+    } else if (details.Is<SerializableOperator_CEPIterationDetails>()) {
+        // de-serialize CEPIteration operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to CEPIterationLogicalOperator");
+        auto serializedCEPIterationOperator = SerializableOperator_CEPIterationDetails();
+        details.UnpackTo(&serializedCEPIterationOperator);
+        // de-serialize cep iterations
+        auto maxIteration = serializedCEPIterationOperator.maxiteration();
+        auto minIteration = serializedCEPIterationOperator.miniteration();
+        operatorNode = LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration);
     } else if (details.Is<SerializableOperator_UnionDetails>()) {
         // de-serialize union operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to UnionLogicalOperator");
@@ -375,6 +395,9 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
             break;
         case Windowing::WindowAggregationDescriptor::Sum:
             windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
+            break;
+        case Windowing::WindowAggregationDescriptor::Avg:
+            windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_AVG);
             break;
         default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
     }
@@ -554,6 +577,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         aggregation = Windowing::MinAggregationDescriptor::create(onField, asField);
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_COUNT) {
         aggregation = Windowing::CountAggregationDescriptor::create(onField, asField);
+    } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_AVG) {
+        aggregation = Windowing::AvgAggregationDescriptor::create(onField, asField);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: "
                         << serializedWindowAggregation.DebugString());

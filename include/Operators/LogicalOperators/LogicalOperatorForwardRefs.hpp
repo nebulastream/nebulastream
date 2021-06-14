@@ -77,6 +77,9 @@ typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
 class FieldAssignmentExpressionNode;
 typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
 
+class ConstantValueExpressionNode;
+typedef std::shared_ptr<ConstantValueExpressionNode> ConstantValueExpressionNodePtr;
+
 class SinkDescriptor;
 typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 

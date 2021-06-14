@@ -13,56 +13,32 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-#ifndef INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
-#define INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
-#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
-#include <memory>
-#include <vector>
 namespace NES {
-
-class QueryCompiler;
-typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
-
-class CodeGenerator;
-typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
-
-class PipelineContext;
-typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
-
-class GeneratableOperator;
-typedef std::shared_ptr<GeneratableOperator> GeneratableOperatorPtr;
+namespace QueryCompilation {
 
 /**
- * @brief The query compiler compiles physical query plans to an executable query plan
+ * @brief General interface for the query compiler interface.
+ * Subclasses can provide their own implementation on how to to process a query compilation request.
  */
 class QueryCompiler {
   public:
-    QueryCompiler(uint64_t numberOfBuffersPerPipeline);
-    ~QueryCompiler() = default;
     /**
-     * Creates a new query compiler
-     * @param codeGenerator
-     * @return
+     * @brief Submits a new query compilation request for compilation.
+     * @param request The compilation request.
+     * @return QueryCompilationResultPtr result for the query compilation.
      */
-    static QueryCompilerPtr create(uint64_t numberOfBuffersPerPipeline);
-    /**
-     * @brief compiles a queryplan to a executable query plan
-     * @param queryPlan
-     * @return
-     */
-    void compile(GeneratedQueryExecutionPlanBuilder&, OperatorNodePtr queryPlan);
+    virtual QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) = 0;
+    virtual ~QueryCompiler() = default;
 
-  private:
-    void compilePipelineStages(GeneratedQueryExecutionPlanBuilder& queryExecutionPlanBuilder,
-                               CodeGeneratorPtr codeGenerator,
-                               PipelineContextPtr context);
-
-    uint64_t numberOfBuffersPerPipeline;
+  protected:
+    QueryCompiler(const QueryCompilerOptionsPtr);
+    const QueryCompilerOptionsPtr queryCompilerOptions;
 };
-
-QueryCompilerPtr createDefaultQueryCompiler(uint64_t numberOfBuffersPerPipeline);
-
+}// namespace QueryCompilation
 }// namespace NES
 
-#endif//INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_

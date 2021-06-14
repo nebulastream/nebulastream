@@ -18,10 +18,10 @@
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Sources/MonitoringSource.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <Util/Logger.hpp>
 
 #include <Util/UtilityFunctions.hpp>

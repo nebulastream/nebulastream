@@ -30,148 +30,203 @@
 template<std::size_t v>
 static constexpr bool ispow2 = (!!v) && !(v & (v - 1));
 
-namespace NES::NodeEngine {
+namespace NES::Network {
+class OutputChannel;
+}
 
+namespace NES::NodeEngine {
 /**
- * @brief The TupleBuffer is the NES API that allows runtime components to access memory to store records
- * The purpose of the TupleBuffer is to zero memory allocations and enable batching. To zero the memory allocation
- * a BufferManager keeps a fixed set of fixed-size buffers that can be handed to components.
- * When a component is done with a buffer, it can be returned to the BufferManager.
- * However, the multi-threaded nature of NES execution engine introduces the challenge of reference counting: i.e.,
- * if a tuple buffer is shared among threads, we need to safely determine when the TupleBuffer can be returned to the
- * BufferManager. Our solution is as follows. We follow the same principle behind std::shared_ptr.
- * We use the TupleBuffer as a normal lvalue. Note that TupleBuffer* is forbidden and operator& of TupleBuffer is deleted.
- * We increase the reference counter of the TupleBuffer every time it gets passed via a copy ctor or a copy assignment
- * operator. When the dtor of a TupleBuffer is called then the reference counter is decreased.
- * To pass the TupleBuffer within a thread, a TupleBuffer& must be used.
- * To pass the TupleBuffer among thread, use TupleBuffer. Ensure the copy semantics is used. The move semantics is enabled
- * but that does not increase the internal counter.
+ * @brief The TupleBuffer allows runtime components to access memory to store records in a reference-counted and
+ * thread-safe manner.
+ *
+ * The purpose of the TupleBuffer is to zero memory allocations and enable batching.
+ * In order to zero the memory allocation, a BufferManager keeps a fixed set of fixed-size buffers that it hands out to
+ * components.
+ * A TupleBuffer's content is automatically recycled or deleted once its reference count reaches zero.
+ *
+ * Prefer passing the TupleBuffer by reference whenever possible, pass the TupleBuffer to another thread by value.
+ *
  * Important note: when a component is done with a TupleBuffer, it must be released. Not returning a TupleBuffer will
  * result in a runtime error that the BufferManager will raise by the termination of the NES program.
  *
  * Reminder: this class should be header-only to help inlining
  */
 
-class TupleBuffer {
+class [[nodiscard]] TupleBuffer {
+    /// Utilize the wrapped-memory constructor
     friend class BufferManager;
-    friend class detail::MemorySegment;
-    friend class LocalBufferPool;
     friend class FixedSizeBufferPool;
+    friend class LocalBufferPool;
+    friend class detail::MemorySegment;
+
+    /// Utilize the wrapped-memory constructor and requires direct access to the control block for the ZMQ sink.
+    friend class Network::OutputChannel;
+
+    [[nodiscard]] constexpr explicit TupleBuffer(detail::BufferControlBlock * controlBlock, uint8_t * ptr, uint32_t size) noexcept
+        : controlBlock(controlBlock), ptr(ptr), size(size) {}
 
   public:
+    /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
+    [[nodiscard]] constexpr TupleBuffer() noexcept = default;
+
     /**
-     * @brief Creates a TupleBuffer of length bytes starting at ptr address. The parent will be notified of the buffer release. Only at that point, the ptr memory area can be freed, which must be done by the user.
-     * @param ptr
-     * @param length
-     * @param parent
-     * @return
+     * @brief Creates a TupleBuffer of length bytes starting at ptr address.
+     *
+     * @param ptr    resource's address.
+     * @param lenght the size of the allocated memory.
+     * @param parent will be notified of the buffer release. Only at that point, the ptr memory area can be freed,
+     *               which is the caller's responsability.
+     *
      */
-    static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
+    [[nodiscard]] static TupleBuffer wrapMemory(uint8_t * ptr, size_t length, BufferRecycler * parent);
 
-    TupleBuffer(const TupleBuffer& other) noexcept;
-
-    TupleBuffer(TupleBuffer&& other) noexcept;
-
-    TupleBuffer& operator=(const TupleBuffer& other);
-
-    TupleBuffer& operator=(TupleBuffer&& other);
-
-    TupleBuffer() noexcept;
-
-    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs);
-
-  private:
-    explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size);
-
-  public:
-    ~TupleBuffer();
-
-    /**
-    * @return the content of the buffer as pointer to unsigned char
-    */
-    template<typename T = uint8_t>
-    inline T* getBuffer() noexcept {
-        return reinterpret_cast<T*>(ptr);
+    /// @brief Copy constructor: Increase the reference count associated to the control buffer.
+    [[nodiscard]] constexpr TupleBuffer(TupleBuffer const& other) noexcept
+        : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
+        if (controlBlock) {
+            controlBlock->retain();
+        }
     }
 
-    /**
-    * @return true if the interal pointer is not null
-    */
-    bool isValid() const;
+    /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
+    /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
+    [[nodiscard]] constexpr TupleBuffer(TupleBuffer && other) noexcept
+        : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
+        other.controlBlock = nullptr;
+        other.ptr = nullptr;
+        other.size = 0;
+    }
 
+    /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
+    [[nodiscard]] TupleBuffer& operator=(TupleBuffer const& other) noexcept {
+
+        if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
+            return *this;
+        }
+
+        // Override the content of this with those of `other`
+        auto const oldControlBlock = std::exchange(controlBlock, other.controlBlock);
+        ptr = other.ptr;
+        size = other.size;
+
+        // Update reference counts: If the new and old controlBlocks differ, retain the new one and release the old one.
+        if (oldControlBlock != controlBlock) {
+            retain();
+            if (oldControlBlock) {
+                oldControlBlock->release();
+            }
+        }
+        return *this;
+    }
+
+    /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
+    [[nodiscard]] inline TupleBuffer& operator=(TupleBuffer&& other) noexcept {
+
+        // Especially for rvalues, the following branch should most likely never be taken if the caller writes
+        // reasonable code. Therefore, this branch is considered unlikely.
+        if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
+            return *this;
+        }
+
+        // Swap content of this with those of `other` to let the other's destructor take care of releasing the overwritten
+        // resource.
+        using std::swap;
+        swap(*this, other);
+
+        return *this;
+    }
+
+    /// @brief Delete address-of operator to make it harder to circumvent reference counting mechanism with an l-value.
     TupleBuffer* operator&() = delete;
 
-    /**
-    * @tparam T
-    * @return the content of the buffer as pointer to T
-    */
-    template<typename T>
-    T* getBufferAs() {
+    /// @brief Return if this is not valid.
+    [[nodiscard]] constexpr auto operator!() noexcept->bool { return !isValid(); }
+
+    /// @brief release the resource if necessary.
+    inline ~TupleBuffer() noexcept { release(); }
+
+    /// @brief Swap `lhs` and `rhs`.
+    /// @dev Accessible via ADL in an unqualified call.
+    inline friend void swap(TupleBuffer & lhs, TupleBuffer & rhs) noexcept {
+        // Enable ADL to spell out to onlookers how swap should be used.
+        using std::swap;
+
+        swap(lhs.ptr, rhs.ptr);
+        swap(lhs.size, rhs.size);
+        swap(lhs.controlBlock, rhs.controlBlock);
+    }
+
+    /// @brief Increases the internal reference counter by one and return this.
+    inline TupleBuffer& retain() noexcept {
+        if (controlBlock) {
+            controlBlock->retain();
+        }
+        return *this;
+    }
+
+    /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
+    inline void release() noexcept {
+        if (controlBlock) {
+            controlBlock->release();
+        }
+        controlBlock = nullptr;
+        ptr = nullptr;
+        size = 0;
+    }
+
+    /// @brief return the TupleBuffer's content as pointer to `T`.
+    template<typename T = uint8_t>
+    inline T* getBuffer() noexcept {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(ispow2<alignof(T)>);
         return reinterpret_cast<T*>(ptr);
     }
 
-    /**
-    * @brief Increases the internal reference counter by one
-    * @return the same TupleBuffer object
-    */
-    TupleBuffer& retain();
+    /// @brief Print the buffer's address.
+    /// @dev TODO: consider changing the reinterpret_cast to  std::bit_cast in C++2a if possible.
+    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept {
+        return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
+    }
 
-    /**
-    * @brief Decreases the internal reference counter by one. Note that if the buffer's counter reaches 0
-    * then the TupleBuffer is not usable any longer.
-    */
-    void release();
+    /// @brief true if the interal pointer is not null
+    [[nodiscard]] constexpr bool isValid() const noexcept { return ptr != nullptr; }
 
-    uint64_t getBufferSize() const;
+    /// @brief get the buffer's size.
+    inline uint64_t getBufferSize() const noexcept { return size; }
 
-    uint64_t getNumberOfTuples() const;
+    /// @brief get the number of tuples stored.
+    [[nodiscard]] constexpr uint64_t getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
 
-    void setNumberOfTuples(uint64_t numberOfTuples);
+    /// @brief set the number of tuples stored.
+    inline void setNumberOfTuples(uint64_t numberOfTuples) noexcept { controlBlock->setNumberOfTuples(numberOfTuples); }
 
-    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) { return os << buff.ptr; }
+    /// @brief get the watermark as a timestamp
+    [[nodiscard]] constexpr uint64_t getWatermark() const noexcept { return controlBlock->getWatermark(); }
 
-    /**
-     * @brief method to get the watermark as a timestamp
-     * @return watermark
-     */
-    uint64_t getWatermark() const;
+    /// @brief set the watermark from a timestamp
+    inline void setWatermark(uint64_t value) noexcept { controlBlock->setWatermark(value); }
 
-    /**
-     * @brief method to set the watermark with a timestamp
-     * @param value timestamp
-     */
-    void setWatermark(uint64_t value);
+    /// @brief get the creation timestamp as a timestamp
+    [[nodiscard]] constexpr uint64_t getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
 
-    /**
-     * @brief method to set the watermark with a timestamp
-     * @param value timestamp
-     */
-    void setCreationTimestamp(uint64_t value);
+    /// @brief set the creation timestamp with a timestamp
+    inline void setCreationTimestamp(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
 
-    /**
-     * @brief method to get the creation timestamp
-     * @return ts
-     */
-    uint64_t getCreationTimestamp() const noexcept;
+    ///@brief get the buffer's origin id (the operator id that creates this buffer).
+    [[nodiscard]] constexpr uint64_t getOriginId() const noexcept { return controlBlock->getOriginId(); }
 
-    /**
-     * @brief set the origin id for the buffer (the operator id that creates this buffer)
-     * @param origin id
-     */
-    void setOriginId(uint64_t id);
-
-    /**
-     * @brief returns the origin id of the buffer
-     * @return origin id
-     */
-    uint64_t getOriginId() const;
+    ///@brief set the buffer's origin id (the operator id that creates this buffer).
+    inline void setOriginId(uint64_t id) noexcept { controlBlock->setOriginId(id); }
 
   private:
-    detail::BufferControlBlock* controlBlock;
-    uint8_t* ptr;
-    uint32_t size;
+    /**
+     * @brief returns the control block of the buffer USE THIS WITH CAUTION!
+     */
+    detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
+
+    detail::BufferControlBlock* controlBlock = nullptr;
+    uint8_t* ptr = nullptr;
+    uint32_t size = 0;
 };
 
 }// namespace NES::NodeEngine

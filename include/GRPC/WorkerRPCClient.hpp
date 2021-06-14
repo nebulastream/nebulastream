@@ -133,13 +133,20 @@ class WorkerRPCClient {
     bool stopQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq);
 
     /**
+     * @brief Registers to a remote worker node its monitoring plan.
+     * @param ipAddress
+     * @param the monitoring plan
+     * @return bool if successful
+     */
+    bool registerMonitoringPlan(const std::string& address, MonitoringPlanPtr plan);
+
+    /**
      * @brief Requests from a remote worker node its monitoring data.
      * @param ipAddress
-     * @param the mutable schema to be extended
      * @param the buffer where the data will be written into
      * @return true if successful, else false
      */
-    SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, NodeEngine::TupleBuffer& buf);
+    bool requestMonitoringData(const std::string& address, NodeEngine::TupleBuffer& buf, uint64_t schemaSizeBytes);
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return

@@ -14,18 +14,16 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_PIPELINESTAGE_H_
-#define INCLUDE_PIPELINESTAGE_H_
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#ifndef NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_
+#define NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_
+#include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationMessage.hpp>
-#include <NodeEngine/Task.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <State/StateManager.hpp>
 #include <memory>
+#include <variant>
 #include <vector>
-
 namespace NES::NodeEngine::Execution {
 
 /**
@@ -34,35 +32,47 @@ namespace NES::NodeEngine::Execution {
  * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
  */
 class ExecutablePipeline : public Reconfigurable {
+    enum class PipelineStatus : uint8_t { PipelineCreated, PipelineRunning, PipelineStopped, PipelineFailed };
+
   public:
-    explicit ExecutablePipeline(uint32_t pipelineId,
+    /**
+     * @brief Constructor for an executable pipeline.
+     * @param pipelineId The Id of this pipeline
+     * @param querySubPlanId the id of the query sub plan
+     * @param pipelineContext the pipeline context
+     * @param executablePipelineStage the executable pipeline stage
+     * @param numOfProducingPipelines number of producing pipelines
+     * @param successorPipelines a vector of successor pipelines
+     * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
+     * @return ExecutablePipelinePtr
+     */
+    explicit ExecutablePipeline(uint64_t pipelineId,
                                 QuerySubPlanId qepId,
+                                PipelineExecutionContextPtr pipelineExecutionContext,
                                 ExecutablePipelineStagePtr executablePipelineStage,
-                                PipelineExecutionContextPtr pipelineContext,
                                 uint32_t numOfProducingPipelines,
-                                ExecutablePipelinePtr nextPipeline,
-                                SchemaPtr inputSchema,
-                                SchemaPtr outputSchema,
+                                std::vector<SuccessorExecutablePipeline> successorPipelines,
                                 bool reconfiguration);
+
+    ~ExecutablePipeline();
 
     /**
      * @brief Factory method to create a new executable pipeline.
      * @param pipelineId The Id of this pipeline
      * @param querySubPlanId the id of the query sub plan
-     * @param executablePipelineStage the executable pipeline stage
      * @param pipelineContext the pipeline context
-     * @param nextPipelineStage a pointer to the next pipeline
+     * @param executablePipelineStage the executable pipeline stage
+     * @param numOfProducingPipelines number of producing pipelines
+     * @param successorPipelines a vector of successor pipelines
      * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
      * @return ExecutablePipelinePtr
      */
-    static ExecutablePipelinePtr create(uint32_t pipelineId,
-                                        const QuerySubPlanId querySubPlanId,
+    static ExecutablePipelinePtr create(uint64_t pipelineId,
+                                        QuerySubPlanId qepId,
+                                        PipelineExecutionContextPtr pipelineExecutionContext,
                                         ExecutablePipelineStagePtr executablePipelineStage,
-                                        PipelineExecutionContextPtr pipelineContext,
                                         uint32_t numOfProducingPipelines,
-                                        const ExecutablePipelinePtr nextPipelineStage,
-                                        SchemaPtr inputSchema,
-                                        SchemaPtr outputSchema,
+                                        std::vector<SuccessorExecutablePipeline> successorPipelines,
                                         bool reconfiguration = false);
 
     /**
@@ -71,7 +81,7 @@ class ExecutablePipeline : public Reconfigurable {
      * @param workerContext
      * @return true if no error occurred
      */
-    ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
+    const ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
 
     /**
    * @brief Initialises a pipeline stage
@@ -81,7 +91,8 @@ class ExecutablePipeline : public Reconfigurable {
 
     /**
      * @brief Starts a pipeline stage and passes statemanager further to the operator handler
-     * @return boolean if successful
+     * @param stateManager pointer to the current state manager
+     * @return Success if pipeline stage started 
      */
     bool start(StateManagerPtr stateManager);
 
@@ -92,57 +103,27 @@ class ExecutablePipeline : public Reconfigurable {
     bool stop();
 
     /**
-     * @brief Get next pipeline stage
-     * @return
-     */
-    ExecutablePipelinePtr getNextPipeline();
-
-    /**
     * @brief Get id of pipeline stage
     * @return
     */
-    uint32_t getPipeStageId();
+    const uint64_t getPipelineId() const;
 
     /**
-     * @brief Get the parent query id.
-     * @return query id.
+     * @brief Get query sub plan id.
+     * @return QuerySubPlanId.
      */
-    QuerySubPlanId getQepParentId() const;
+    const QuerySubPlanId getQuerySubPlanId() const;
 
     /**
-     * @brief Destructor of an ExecutablePipeline
+     * @brief Checks if this pipeline is running
+     * @return true if pipeline is running.
      */
-    ~ExecutablePipeline();
+    bool isRunning() const;
 
     /**
     * @return returns true if the pipeline contains a function pointer for a reconfiguration task
     */
     bool isReconfiguration() const;
-
-    /**
-     * @brief Get the arity (Unary/BinaryLeft/BinaryRight) of this pipeline
-     * This is necessary to figure out to which side of a binary operator the pipeline belongs
-     * @return the arity of this pipeline
-     */
-    PipelineStageArity getArity();
-
-    /**
-     * @brief Get input schema of the pipeline
-     * @return pointer to the input schema
-     */
-    const SchemaPtr& getInputSchema() const;
-
-    /**
-     * @brief Get output schema of the pipeline
-     * @return pointer to the output schema
-     */
-    const SchemaPtr& getOutputSchema() const;
-
-    /**
-     * @brief methods to print the content of the pipeline
-     * @return string containing the generated code as string
-     */
-    std::string getCodeAsString();
 
     /**
      * @brief reconfigure callback called upon a reconfiguration
@@ -162,19 +143,29 @@ class ExecutablePipeline : public Reconfigurable {
      */
     void incrementProducerCount();
 
+    /**
+     * @brief Gets the successor pipelines
+     * @return SuccessorPipelines
+     */
+    const std::vector<SuccessorExecutablePipeline>& getSuccessors() const;
+
+    /**
+     * @brief Adds a new successor pipeline
+     * @param predecessorPipeline
+     */
+    void addSuccessor(SuccessorExecutablePipeline predecessorPipeline);
+
   private:
-    uint32_t pipelineStageId;
-    QuerySubPlanId qepId;
+    const uint64_t pipelineId;
+    const QuerySubPlanId querySubPlanId;
     ExecutablePipelineStagePtr executablePipelineStage;
-    ExecutablePipelinePtr nextPipeline;
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
-    SchemaPtr inputSchema;
-    SchemaPtr outputSchema;
-    std::atomic<bool> isRunning;
+    std::atomic<PipelineStatus> pipelineStatus;
     std::atomic<uint32_t> activeProducers;
+    std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
 
 }// namespace NES::NodeEngine::Execution
 
-#endif /* INCLUDE_PIPELINESTAGE_H_ */
+#endif /* NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_ */

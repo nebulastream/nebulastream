@@ -84,7 +84,7 @@ bool CentralWindowOperator::inferSchema() {
             AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
     }
     outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
+                                                  windowAggregation->getFinalAggregateStamp()));
     return true;
 }
 

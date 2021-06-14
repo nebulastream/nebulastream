@@ -19,6 +19,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -28,6 +29,8 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
+#include <grpcpp/grpcpp.h>
+#include <grpcpp/server_builder.h>
 #include <thread>
 
 //GRPC Includes
@@ -36,6 +39,7 @@
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Monitoring/MonitoringManager.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -186,13 +190,14 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     workerConfig->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
     workerConfig->setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline);
     workerConfig->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
-    worker = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
+    worker = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //create the monitoring service, it can only be used if a NesWorker has started
     NES_DEBUG("NesCoordinator: Initializing monitoring service");
+    auto monitoringManager = std::make_shared<MonitoringManager>(workerRpcClient, topology);
     monitoringService =
-        std::make_shared<MonitoringService>(workerRpcClient, topology, worker->getNodeEngine()->getBufferManager());
+        std::make_shared<MonitoringService>(topology, worker->getNodeEngine()->getBufferManager(), monitoringManager);
 
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
@@ -289,7 +294,7 @@ void NesCoordinator::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>>
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
-    rpcServer = std::move(builder.BuildAndStart());
+    rpcServer = builder.BuildAndStart();
     prom->set_value(true);
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServerServer listening on address=" << address);
     rpcServer->Wait();//blocking call

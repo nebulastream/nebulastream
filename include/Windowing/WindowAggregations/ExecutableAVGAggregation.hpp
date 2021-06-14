@@ -23,11 +23,19 @@
 #include <utility>
 namespace NES::Windowing {
 
-template<typename SumType>
+template<typename SumType, std::enable_if_t<std::is_arithmetic<SumType>::value, bool> = true>
 class AVGPartialType {
   public:
     explicit AVGPartialType(SumType sum) : sum(sum), count(1) {}
-    explicit AVGPartialType() : sum(0), count(1) {}
+    explicit AVGPartialType() : sum(0), count(0) {}
+
+    SumType getSum() const { return sum; }
+    int64_t getCount() const { return count; }
+
+    void addToSum(SumType value) { sum += value; }
+    void addToCount(int64_t value = 1) { count += value; }
+
+  private:
     SumType sum;
     int64_t count;
 };
@@ -61,8 +69,8 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
      * @return new partial aggregate as combination of partialValue and inputValue
      */
     AVGPartialType<InputType> combine(AVGPartialType<InputType> partialValue, AVGPartialType<InputType> inputValue) override {
-        partialValue.count += inputValue.count;
-        partialValue.sum += inputValue.sum;
+        partialValue.addToSum(inputValue.getSum());
+        partialValue.addToCount(inputValue.getCount());
         return partialValue;
     }
 
@@ -72,7 +80,7 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
      * @return element mapped to FinalAggregationType
      */
     AVGResultType lower(AVGPartialType<InputType> partialAggregateValue) override {
-        return (AVGResultType) partialAggregateValue.sum / (AVGResultType) partialAggregateValue.count;
+        return (AVGResultType) partialAggregateValue.getSum() / (AVGResultType) partialAggregateValue.getCount();
     }
 };
 

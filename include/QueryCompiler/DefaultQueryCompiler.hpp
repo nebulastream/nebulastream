@@ -15,7 +15,7 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_DEFAULTQUERYCOMPILER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DEFAULTQUERYCOMPILER_HPP_
-#include <QueryCompiler/NewQueryCompiler.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 namespace NES {
 namespace QueryCompilation {
 

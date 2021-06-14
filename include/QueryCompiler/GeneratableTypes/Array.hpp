@@ -25,7 +25,7 @@
 #include <vector>
 
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief        Container for fixed size arrays of primitive types.
  *
@@ -370,7 +370,7 @@ Array(std::array<J, size> &&) -> Array<J, size>;
 /// c-style array
 template<typename J>
 Array(J const& array) -> Array<std::decay_t<decltype(array[0])>, std::extent<J>::value>;
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_ARRAYTYPE_HPP_

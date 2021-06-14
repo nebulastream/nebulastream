@@ -14,8 +14,9 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_NODEENGINE_QUERYEXECUTIONPLAN_H_
-#define INCLUDE_NODEENGINE_QUERYEXECUTIONPLAN_H_
+#ifndef INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLAN_H_
+#define INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLAN_H_
+
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
@@ -24,7 +25,6 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwaredRefs.hpp>
-#include <State/StateManager.hpp>
 #include <atomic>
 #include <future>
 #include <map>
@@ -36,12 +36,22 @@ enum class ExecutableQueryPlanResult : uint8_t { Ok, Error };
 
 /**
  * @brief Represents an executable plan of an particular query.
- * Each executable query plan contains of at least one pipeline.
+ * Each executable query plan contains a set of sources, pipelines, and sinks.
+ * A valid query plan should contain at least one source and sink.
  * This class is thread-safe.
  */
 class ExecutableQueryPlan : public Reconfigurable {
-
   public:
+    /**
+     * @brief Constructor for an executable query plan.
+     * @param queryId id of the overall query
+     * @param querySubPlanId id of the sub query plan
+     * @param sources vector of data sources
+     * @param sinks vector of data sinks
+     * @param pipelines vector of pipelines
+     * @param queryManager shared pointer to the query manager
+     * @param bufferManager shared pointer to the buffer manager
+     */
     explicit ExecutableQueryPlan(QueryId queryId,
                                  QuerySubPlanId querySubPlanId,
                                  std::vector<DataSourcePtr>&& sources,
@@ -50,6 +60,23 @@ class ExecutableQueryPlan : public Reconfigurable {
                                  QueryManagerPtr&& queryManager,
                                  BufferManagerPtr&& bufferManager);
 
+    /**
+     * @brief Factory to create an new executable query plan.
+     * @param queryId id of the overall query
+     * @param querySubPlanId id of the sub query plan
+     * @param sources vector of data sources
+     * @param sinks vector of data sinks
+     * @param pipelines vector of pipelines
+     * @param queryManager shared pointer to the query manager
+     * @param bufferManager shared pointer to the buffer manager
+     */
+    static ExecutableQueryPlanPtr create(QueryId queryId,
+                                         QuerySubPlanId querySubPlanId,
+                                         std::vector<DataSourcePtr> sources,
+                                         std::vector<DataSinkPtr> sinks,
+                                         std::vector<ExecutablePipelinePtr> pipelines,
+                                         QueryManagerPtr queryManager,
+                                         BufferManagerPtr bufferManager);
     ~ExecutableQueryPlan();
 
     /**
@@ -64,13 +91,13 @@ class ExecutableQueryPlan : public Reconfigurable {
 
     /**
      * @brief Start the query plan, e.g., start window thread, passes stateManager further to the pipeline
-     * @return boolean if the query plan started
+     * @param stateManager pointer to the current state manager
+     * @return Success if the query plan started
      */
     bool start(StateManagerPtr stateManager);
 
     /**
      * @brief Stop the query plan and free all associated resources.
-     * @return boolean if the query plan started
      */
     bool stop();
 
@@ -80,7 +107,6 @@ class ExecutableQueryPlan : public Reconfigurable {
      */
     std::shared_future<ExecutableQueryPlanResult> getTerminationFuture();
 
-  public:
     /**
      * @brief Fail the query plan and free all associated resources.
      * @return not defined yet
@@ -92,44 +118,42 @@ class ExecutableQueryPlan : public Reconfigurable {
     /**
      * @brief Get data sources.
      */
-    std::vector<DataSourcePtr> getSources() const;
+    const std::vector<DataSourcePtr>& getSources() const;
 
     /**
      * @brief Get data sinks.
      */
-    std::vector<DataSinkPtr> getSinks() const;
-
-    /**
-     * @brief Get i-th pipeline.
-     */
-    ExecutablePipelinePtr getPipeline(uint64_t index) const;
+    const std::vector<DataSinkPtr>& getSinks() const;
 
     /**
      * @brief Get pipelines.
      * @return
      */
-    std::vector<ExecutablePipelinePtr> getPipelines();
+    const std::vector<ExecutablePipelinePtr>& getPipelines() const;
 
     /**
-     * @brief Gets number of pipeline stages.
+     * @brief Returns a reference to the query manager
+     * @return QueryManagerPtr
      */
-    uint32_t getNumberOfPipelines();
-
     QueryManagerPtr getQueryManager();
 
+    /**
+     * @brief Returns a reference to the buffer manager
+     * @return BufferManagerPtr
+     */
     BufferManagerPtr getBufferManager();
 
     /**
      * @brief Get the query id
      * @return the query id
      */
-    QueryId getQueryId();
+    const QueryId getQueryId() const;
 
     /**
      * @brief Get the query execution plan id
      * @return the query execution plan id
      */
-    QuerySubPlanId getQuerySubPlanId() const;
+    const QuerySubPlanId getQuerySubPlanId() const;
 
     /**
      * @brief reconfigure callback called upon a reconfiguration
@@ -144,7 +168,7 @@ class ExecutableQueryPlan : public Reconfigurable {
      */
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
-  protected:
+  private:
     const QueryId queryId;
     const QuerySubPlanId querySubPlanId;
     std::vector<DataSourcePtr> sources;
@@ -163,4 +187,4 @@ class ExecutableQueryPlan : public Reconfigurable {
 
 }// namespace NES::NodeEngine::Execution
 
-#endif /* INCLUDE_NODEENGINE_QUERYEXECUTIONPLAN_H_ */
+#endif /* INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLAN_H_ */

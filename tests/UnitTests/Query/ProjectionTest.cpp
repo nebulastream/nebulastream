@@ -19,16 +19,11 @@
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <Operators/OperatorNode.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
-#include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
@@ -41,28 +36,19 @@
 #include "../../util/SchemaSourceDescriptor.hpp"
 #include "../../util/TestQuery.hpp"
 #include <Catalogs/StreamCatalog.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Topology/TopologyNode.hpp>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
-
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 #include "../../util/TestQueryCompiler.hpp"
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
 using namespace NES;
-using NodeEngine::MemoryLayoutPtr;
 using NodeEngine::TupleBuffer;
 
 class ProjectionTest : public testing::Test {
@@ -601,10 +587,10 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     queryPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan=" << queryPlan->toString() << std::endl;
 
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+    //auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+    //auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
-    std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
+    /*  std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
         generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
     winOps[0]->setOutputSchema(windowResultSchema);
     std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
@@ -623,7 +609,7 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     auto plan = builder.build();
     //  nodeEngine->registerQueryInNodeEngine(plan);
     nodeEngine->startQuery(1);
-
+*/
     // wait till all buffers have been produced
     testSink->completed.get_future().get();
 
@@ -761,9 +747,9 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
-
+    //auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+    // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+    /*
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
                        .setBufferManager(nodeEngine->getBufferManager())
@@ -776,10 +762,10 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
                        .addSink(testSink);
 
     auto plan = builder.build();
-    //nodeEngine->getQueryManager()->registerQuery(plan);
+  */  //nodeEngine->getQueryManager()->registerQuery(plan);
 
     // The plan should have three pipeline
-    EXPECT_EQ(plan->getNumberOfPipelines(), 3);
+    //EXPECT_EQ(plan->getNumberOfPipelines(), 3);
 
     // TODO switch to event time if that is ready to remove sleep
     auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
@@ -787,15 +773,15 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
     // ingest test data
-    plan->setup();
-    plan->start(nodeEngine->getStateManager());
+    //plan->setup();
+    //plan->start(nodeEngine->getStateManager());
     NodeEngine::WorkerContext workerContext{1};
-    auto stage_0 = plan->getPipeline(0);
-    auto stage_1 = plan->getPipeline(1);
+    //auto stage_0 = plan->getPipeline(0);
+    //auto stage_1 = plan->getPipeline(1);
     for (int i = 0; i < 10; i++) {
 
-        stage_0->execute(buffer, workerContext);// P1
-        stage_1->execute(buffer, workerContext);// P2
+        //   stage_0->execute(buffer, workerContext);// P1
+        //   stage_1->execute(buffer, workerContext);// P2
         // Contfext -> Context 1 and Context 2;
         //
         // P1 -> P2 -> P3
@@ -807,7 +793,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
         sleep(1);
     }
     testSink->completed.get_future().get();
-    plan->stop();
+    //plan->stop();
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;

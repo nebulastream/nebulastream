@@ -16,6 +16,7 @@
 
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
@@ -206,6 +207,13 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(ExpressionNod
         serializeExpression(powExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
         serializeExpression(powExpressionNode->getRight(), serializedExpressionNode.mutable_right());
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
+    } else if (expression->instanceOf<AbsExpressionNode>()) {
+        // serialize abs expression node.
+        NES_TRACE("ExpressionSerializationUtil:: serialize ABS arithmetical expression to SerializableExpression_AbsExpression");
+        auto absExpressionNode = expression->as<AbsExpressionNode>();
+        auto serializedExpressionNode = SerializableExpression_AbsExpression();
+        serializeExpression(absExpressionNode->child(), serializedExpressionNode.mutable_child());
+        serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else {
         NES_FATAL_ERROR("TranslateToLegacyPhase: No serialization implemented for this arithmetical expression node: "
                         << expression->toString());
@@ -330,6 +338,13 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
         auto left = deserializeExpression(serializedExpressionNode.release_left());
         auto right = deserializeExpression(serializedExpressionNode.release_right());
         return PowExpressionNode::create(left, right);
+    } else if (serializedExpression->details().Is<SerializableExpression_AbsExpression>()) {
+        // de-serialize ABS expression node.
+        NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as ABS expression node.");
+        auto serializedExpressionNode = SerializableExpression_AbsExpression();
+        serializedExpression->details().UnpackTo(&serializedExpressionNode);
+        auto child = deserializeExpression(serializedExpressionNode.release_child());
+        return AbsExpressionNode::create(child);
     }
     return nullptr;
 }

@@ -42,7 +42,8 @@
 
 namespace NES {
 
-const std::string Compiler::IncludePath = PATH_TO_NES_SOURCE_CODE "/include/";
+const std::string Compiler::NESIncludePath = PATH_TO_NES_SOURCE_CODE "/include/";
+const std::string Compiler::DEBSIncludePath = PATH_TO_DEB_SOURCE_CODE "/include/";
 
 CompilerPtr Compiler::create() { return std::make_shared<Compiler>(); }
 
@@ -85,10 +86,20 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
     flags = CompilerFlags::createOptimizingCompilerFlags();
 #endif
 #endif
+    // TODO: @Steffen: I am not sure if my build configuration is weird or if
+    //                 this might be a bug that can also affect others.
+    //                 For me, neither NES_DEBUG_MODE nor NES_RELEASE_MODE
+    //                 is set in my default debug build, which leads to random
+    //                 errors.
+    //                 Please either fix or add a NES assertion here.
+    if (!flags) {
+        flags = CompilerFlags::createDebuggingCompilerFlags();
+    }
 
     flags->addFlag("--shared");
     //    flags->addFlag("-xc++ ");
-    flags->addFlag("-I" + IncludePath);
+    flags->addFlag("-I" + NESIncludePath);
+    flags->addFlag("-I" + DEBSIncludePath);
     flags->addFlag("-o" + libraryName);
 
 #ifdef NES_LOGGING_TRACE_LEVEL
@@ -205,10 +216,11 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags, std::string const& fil
     NES_INFO("Compiler output(" << totalBytes << "):\n " << output.str());
 
 #else
+
     for (const auto& arg : flags->getFlags()) {
         compilerCall << arg << " ";
     }
-
+    NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
     FILE* fp;
     char buffer[10000];

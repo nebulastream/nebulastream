@@ -20,7 +20,7 @@
 #include <variant>
 
 namespace NES {
-
+class NodeStats;
 enum PipelineStageArity : uint8_t { Unary, BinaryLeft, BinaryRight };
 
 class PhysicalType;
@@ -47,9 +47,6 @@ class ArrayPhysicalField;
 
 class PhysicalSchema;
 typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
-
-class MemoryLayout;
-typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
 
 class TupleBuffer;
 
@@ -87,20 +84,14 @@ namespace Execution {
 class OperatorHandler;
 typedef std::shared_ptr<OperatorHandler> OperatorHandlerPtr;
 
-class ExecutableQueryPlan;
-typedef std::shared_ptr<ExecutableQueryPlan> ExecutableQueryPlanPtr;
-
 class ExecutablePipeline;
 typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 
-class NewExecutablePipeline;
-typedef std::shared_ptr<NewExecutablePipeline> NewExecutablePipelinePtr;
+class ExecutableQueryPlan;
+typedef std::shared_ptr<ExecutableQueryPlan> ExecutableQueryPlanPtr;
 
-class NewExecutableQueryPlan;
-typedef std::shared_ptr<NewExecutableQueryPlan> NewExecutableQueryPlanPtr;
-
-typedef std::variant<DataSinkPtr, NewExecutablePipelinePtr> SuccessorExecutablePipeline;
-typedef std::variant<std::weak_ptr<DataSource>, std::weak_ptr<NewExecutablePipeline>> PredecessorExecutablePipeline;
+typedef std::variant<DataSinkPtr, ExecutablePipelinePtr> SuccessorExecutablePipeline;
+typedef std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>> PredecessorExecutablePipeline;
 
 class ExecutablePipelineStage;
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;

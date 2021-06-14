@@ -17,18 +17,11 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_ARRAYGENERATABLETYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DATATYPES_ARRAYGENERATABLETYPE_HPP_
 
-#include <Common/DataTypes/DataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
-
-class StructDeclaration;
-
-class ArrayType;
-typedef std::shared_ptr<ArrayType> ArrayPtr;
-
-class ArrayPhysicalType;
-typedef std::shared_ptr<ArrayPhysicalType> ArrayPhysicalTypePtr;
+namespace QueryCompilation {
 
 /**
  * @brief A generatable type that generates code for arrays.
@@ -61,6 +54,7 @@ class ArrayGeneratableType final : public GeneratableDataType {
     ArrayPhysicalTypePtr type;
     GeneratableDataTypePtr component;
 };
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_ARRAYGENERATABLETYPE_HPP_

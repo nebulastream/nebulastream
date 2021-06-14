@@ -22,9 +22,9 @@
 #include <utility>
 namespace NES {
 
-PowExpressionNode::PowExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(std::move(stamp)){};
+PowExpressionNode::PowExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
 
-PowExpressionNode::PowExpressionNode(PowExpressionNode* other) : ArithmeticalExpressionNode(other) {}
+PowExpressionNode::PowExpressionNode(PowExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
 ExpressionNodePtr PowExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto addNode = std::make_shared<PowExpressionNode>(
@@ -34,15 +34,16 @@ ExpressionNodePtr PowExpressionNode::create(const ExpressionNodePtr left, const 
 }
 
 void PowExpressionNode::inferStamp(SchemaPtr schema) {
-    ArithmeticalExpressionNode::inferStamp(schema);
+    ArithmeticalBinaryExpressionNode::inferStamp(schema);
     if (stamp->isInteger()) {
         stamp = DataTypeFactory::createUInt32();
-        NES_DEBUG("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalExpressionNode) to UINT32.");
+        NES_DEBUG("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to UINT32.");
     } else if (stamp->isFloat()) {
         stamp = DataTypeFactory::
             createDouble();// We could also create an "unsigned double" (as results of pow() is always non-negative), but this is very uncommon in programming languages.
-        NES_DEBUG("PowExpressionNode: Updated stamp from Float (assigned in ArithmeticalExpressionNode::inferStamp) to Double "
-                  "(FLOAT64).");
+        NES_DEBUG(
+            "PowExpressionNode: Updated stamp from Float (assigned in ArithmeticalBinaryExpressionNode::inferStamp) to Double "
+            "(FLOAT64).");
     }
 }
 

@@ -20,12 +20,14 @@
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include <Monitoring/MonitoringAgent.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES {
 
-WorkerRPCServer::WorkerRPCServer(NodeEngine::NodeEnginePtr nodeEngine) : nodeEngine(nodeEngine) {
+WorkerRPCServer::WorkerRPCServer(NodeEngine::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent)
+    : nodeEngine(nodeEngine), monitoringAgent(monitoringAgent) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
@@ -93,20 +95,31 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     }
 }
 
-Status WorkerRPCServer::RequestMonitoringData(ServerContext*, const MonitoringRequest* request, MonitoringReply* reply) {
+Status
+WorkerRPCServer::RegisterMonitoring(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) {
     try {
-        auto plan = MonitoringPlan::create(request->monitoringplan());
-        NES_DEBUG("WorkerRPCServer::RequestMonitoringData: Got request" << plan);
+        NES_DEBUG("WorkerRPCServer::RegisterMonitoring: Got request");
+        MonitoringPlanPtr plan = MonitoringPlan::create(request->monitoringplan());
+        auto schema = monitoringAgent->registerMonitoringPlan(plan);
+        if (schema) {
+            return Status::OK;
+        } else {
+            return Status::CANCELLED;
+        }
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: Registering monitoring plan failed: " << ex.what());
+        return Status::CANCELLED;
+    }
+}
 
-        MetricGroupPtr metricGroup = plan->createMetricGroup(MetricCatalog::NesMetrics());
+Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRequest*, MonitoringDataReply* reply) {
+    try {
+        NES_DEBUG("WorkerRPCServer::GetMonitoringData: Got request");
         auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
+        monitoringAgent->getMetrics(buf);
 
-        auto schema = metricGroup->createSchema();
-        metricGroup->getSample(buf);
-
-        // add schema and buffer to the reply object
-        SchemaSerializationUtil::serializeSchema(schema, reply->mutable_schema());
-        reply->set_buffer(buf.getBuffer(), schema->getSchemaSizeInBytes());
+        // add buffer to the reply object
+        reply->set_buffer(buf.getBuffer(), monitoringAgent->getSchema()->getSchemaSizeInBytes());
         return Status::OK;
     } catch (std::exception& ex) {
         NES_ERROR("WorkerRPCServer: Requesting monitoring data failed: " << ex.what());

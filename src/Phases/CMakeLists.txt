@@ -13,7 +13,6 @@
 # limitations under the License.
 
 add_source_nes(
-        TranslateToLegacyPlanPhase.cpp
         ConvertLogicalToPhysicalSource.cpp
         ConvertLogicalToPhysicalSink.cpp
         ConvertPhysicalToLogicalSource.cpp

@@ -111,6 +111,15 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
     }
 }
 
+// BDAPRO - discuss why bool is necessary here. i.e. what should be checked here?
+bool StreamCatalog::addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry) {
+    // BDAPRO introduce some kind of error status enum
+    misconfiguredPhysicalStreams[newEntry->getPhysicalName()] = "Missing logical stream name";
+    nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
+    return true;
+}
+
+
 bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical stream in addPhysicalStream() " << logicalStreamName);
@@ -123,12 +132,18 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     } else {
         NES_DEBUG("StreamCatalog: logical stream " << logicalStreamName << " exists try to add physical stream "
                                                    << newEntry->getPhysicalName());
+        //get current physicalStreamNames for this logicalStream
+        std::vector<std::string> physicalStreams = logicalToPhysicalStreamMapping[logicalStreamName];
+        //get corresponding StreamCatalogEntries
 
-        //get current physical stream for this logical stream
-        std::vector<StreamCatalogEntryPtr> physicalStreams = logicalToPhysicalStreamMapping[logicalStreamName];
-
+        // BDAPRO discuss why streamName as such is not sufficient.
+        std::vector<StreamCatalogEntryPtr> entries;
+        for (std::string physicalStreamName : physicalStreams){
+            NES_INFO("PUSH BACK");
+            entries.push_back(nameToPhysicalStream[physicalStreamName]);
+        }
         //check if physical stream does not exist yet
-        for (StreamCatalogEntryPtr entry : physicalStreams) {
+        for (StreamCatalogEntryPtr entry : entries) {
             NES_DEBUG("test node id=" << entry->getNode()->getId() << " phyStr=" << entry->getPhysicalName());
             NES_DEBUG("test to be inserted id=" << newEntry->getNode()->getId() << " phyStr=" << newEntry->getPhysicalName());
             if (entry->getPhysicalName() == newEntry->getPhysicalName()) {
@@ -146,12 +161,14 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     //if first one
     if (testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalStreamName)) {
         NES_DEBUG("stream already exist, just add new entry");
-        logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry);
+        logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry->getPhysicalName());
+        nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
     } else {
         NES_DEBUG("stream does not exist, create new item");
         logicalToPhysicalStreamMapping.insert(
-            std::pair<std::string, std::vector<StreamCatalogEntryPtr>>(logicalStreamName, std::vector<StreamCatalogEntryPtr>()));
-        logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry);
+            std::pair<std::string, std::vector<std::string>>(logicalStreamName, std::vector<std::string>()));
+        logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry->getPhysicalName());
+        nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
     }
 
     NES_DEBUG("StreamCatalog: physical stream " << newEntry->getPhysicalName() << " id=" << newEntry->getNode()->getId()
@@ -159,38 +176,65 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     return true;
 }
 
-bool StreamCatalog::removeAllPhysicalStreams(std::string) {
+// BDAPRO consider implementing for completeness reasons.
+// DELETE mapping log to vector
+// ADD LABEL MISCONFIGURED - needs to checked because stream can be present in other log stream
+bool StreamCatalog::removeAllPhysicalStreams(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
+    NES_DEBUG("StreamCatalog: search for logical stream in removeAllPhysicalStreams() " << logicalStreamName);
+    if (logicalStreamToSchemaMapping.find(logicalStreamName) == logicalStreamToSchemaMapping.end()) {
+        NES_DEBUG("StreamCatalog: logical stream "
+        << logicalStreamName << " does not exists when trying to remove all physicals stream)");
+        return false;
+    }
+    else{
+        logicalStreamToSchemaMapping.erase(logicalStreamName);
+        return true;
+    }
+}
+
+//BDAPRO consider implementing a function removing a physical stream from ALL logical streams.
+bool StreamCatalog::removePhysicalStreamFromAllLogicalStreams(std::string physicalStreamName) {
+    std::unique_lock lock(catalogMutex);
+    NES_DEBUG(physicalStreamName);
     NES_NOT_IMPLEMENTED();
 }
 
+// BDAPRO rename hashID - discuss meaning.
+// BDAPRO needs to be changed: Currently deleted a physicalStream from logicalStream mapping and deleting it from nameToPhysical which is wrong
+// nameToPhysical should stay as it could be important in other logical streams
 bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName);
 
     // check if logical stream exists
     if (logicalStreamToSchemaMapping.find(logicalStreamName) == logicalStreamToSchemaMapping.end()) {
-        NES_ERROR("StreamCatalog: logical stream "
+        NES_DEBUG("StreamCatalog: logical stream "
                   << logicalStreamName << " does not exists when trying to remove physical stream with hashId" << hashId);
         return false;
     } else {
         NES_DEBUG("StreamCatalog: logical stream " << logicalStreamName << " exists try to remove physical stream"
                                                    << physicalStreamName << " from node " << hashId);
-        for (std::vector<StreamCatalogEntryPtr>::const_iterator entry =
+        for (std::vector<std::string>::const_iterator streamName =
                  logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
-             entry != logicalToPhysicalStreamMapping[logicalStreamName].cend();
-             entry++) {
-            NES_DEBUG("test node id=" << entry->get()->getNode()->getId() << " phyStr=" << entry->get()->getPhysicalName());
+             streamName != logicalToPhysicalStreamMapping[logicalStreamName].cend();
+             streamName++) {
+            StreamCatalogEntryPtr entry = nameToPhysicalStream[*streamName];
+            NES_DEBUG("test node id=" << entry->getNode()->getId() << " phyStr=" << entry->getPhysicalName());
             NES_DEBUG("test to be deleted id=" << hashId << " phyStr=" << physicalStreamName);
-            if (entry->get()->getPhysicalName() == physicalStreamName) {
+            if (entry->getPhysicalName() == physicalStreamName) {
                 NES_DEBUG("StreamCatalog: node with name=" << physicalStreamName << " exists try match hashId" << hashId);
 
-                if (entry->get()->getNode()->getId() == hashId) {
+                if (entry->getNode()->getId() == hashId) {
                     NES_DEBUG("StreamCatalog: node with id=" << hashId << " name=" << physicalStreamName
                                                              << " exists try to erase");
-                    logicalToPhysicalStreamMapping[logicalStreamName].erase(entry);
+                    logicalToPhysicalStreamMapping[logicalStreamName].erase(streamName);
                     NES_DEBUG("StreamCatalog: number of entries afterwards "
                               << logicalToPhysicalStreamMapping[logicalStreamName].size());
+                    NES_DEBUG("StreamCatalog: deleting physicalStream from nameToPhysicalStream mapping");
+                    nameToPhysicalStream.erase(*streamName);
+                    NES_DEBUG("StreamCatalog: number of entries afterwards "
+                                      << nameToPhysicalStream.size());
                     return true;
                 }
             }
@@ -202,21 +246,33 @@ bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::str
     return false;
 }
 
+//BDAPRO add removeMisconfiguredLogicalStream function - allowing to delete a physicalStream with no logical stream just by its name.
+// Add check for misconfigured reason.
+// bool StreamCatalog::removeMisconfiguredLogicalStream(std::string physicalStreamName){}
+/*
+ *     if(std::find(hashIdToPhysicalStream.begin(), hashIdToPhysicalStream.end(),hashId)!=hashIdToPhysicalStream.end()){
+        hashIdToPhysicalStream.erase(hashId);
+        return true
+    }*/
+
 bool StreamCatalog::removePhysicalStreamByHashId(uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
+    //removing physical streams for which a mapping to at least one logical stream exists.
     for (auto logStream : logicalToPhysicalStreamMapping) {
         NES_DEBUG("StreamCatalog: check log stream " << logStream.first);
-        for (std::vector<StreamCatalogEntryPtr>::const_iterator entry = logicalToPhysicalStreamMapping[logStream.first].cbegin();
-             entry != logicalToPhysicalStreamMapping[logStream.first].cend();
-             entry++) {
-            if (entry->get()->getNode()->getId() == hashId) {
-                NES_DEBUG("StreamCatalog: found entry with nodeid=" << entry->get()->getNode()->getId()
-                                                                    << " physicalStream=" << entry->get()->getPhysicalName()
+        for (std::vector<std::string>::const_iterator physicalStreamName = logicalToPhysicalStreamMapping[logStream.first].cbegin();
+             physicalStreamName != logicalToPhysicalStreamMapping[logStream.first].cend();
+             physicalStreamName++) {
+            StreamCatalogEntryPtr entry = nameToPhysicalStream[*physicalStreamName];
+            if (entry->getNode()->getId() == hashId){
+                NES_DEBUG("StreamCatalog: found entry with nodeid=" << entry->getNode()->getId()
+                                                                    << " physicalStream=" << entry->getPhysicalName()
                                                                     << " logicalStream=" << logStream.first);
                 //TODO: fix this to return value of erase to update entry or if you use the foreach loop, collect the entries to remove, and remove them in a batch after
                 NES_DEBUG("StreamCatalog: deleted physical stream with hashID" << hashId << "and name"
-                                                                               << entry->get()->getPhysicalName());
-                logicalToPhysicalStreamMapping[logStream.first].erase(entry);
+                                                                               << entry->getPhysicalName());
+                logicalToPhysicalStreamMapping[logStream.first].erase(physicalStreamName);
+                nameToPhysicalStream.erase(*physicalStreamName);
                 return true;
             }
         }
@@ -229,11 +285,13 @@ SchemaPtr StreamCatalog::getSchemaForLogicalStream(std::string logicalStreamName
     return logicalStreamToSchemaMapping[logicalStreamName];
 }
 
+// BDAPRO change to vector function
 LogicalStreamPtr StreamCatalog::getStreamForLogicalStream(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     return std::make_shared<LogicalStream>(logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
 }
 
+// BDAPRO change to vector function
 LogicalStreamPtr StreamCatalog::getStreamForLogicalStreamOrThrowException(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     if (logicalStreamToSchemaMapping.find(logicalStreamName) != logicalStreamToSchemaMapping.end()) {
@@ -276,7 +334,13 @@ std::vector<TopologyNodePtr> StreamCatalog::getSourceNodesForLogicalStream(std::
     std::vector<TopologyNodePtr> listOfSourceNodes;
 
     //get current physical stream for this logical stream
-    std::vector<StreamCatalogEntryPtr> physicalStreams = logicalToPhysicalStreamMapping[logicalStreamName];
+    std::vector<std::string> physicalStreamNames = logicalToPhysicalStreamMapping[logicalStreamName];
+
+    // BDAPRO loop over vector to get StreamCatalogEntryPtrs - done
+    std::vector<StreamCatalogEntryPtr> physicalStreams;
+    for (auto name : physicalStreamNames){
+        physicalStreams.push_back(nameToPhysicalStream[name]);
+    }
 
     if (physicalStreams.empty()) {
         return listOfSourceNodes;
@@ -300,21 +364,30 @@ bool StreamCatalog::reset() {
     return true;
 }
 
+// BDAPRO test this function
 std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     std::unique_lock lock(catalogMutex);
     std::stringstream ss;
     for (auto entry : logicalToPhysicalStreamMapping) {
         ss << "stream name=" << entry.first << " with " << entry.second.size() << " elements:";
-        for (StreamCatalogEntryPtr sce : entry.second) {
-            ss << sce->toString();
+        for (std::string physicalStreamName : entry.second) {
+            ss << nameToPhysicalStream[physicalStreamName]->toString();
         }
         ss << std::endl;
     }
     return ss.str();
 }
 
+// BDAPRO test this function
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string logicalStreamName) {
-    return logicalToPhysicalStreamMapping[logicalStreamName];
+    std::vector<std::string> physicalStreamsNames = logicalToPhysicalStreamMapping[logicalStreamName];
+    std::vector<StreamCatalogEntryPtr> physicalStreams;
+
+    // Iterate over all hashIDs and retrieve respective StreamCatalogEntryPtr
+    for (auto physicalStreamName : physicalStreamsNames){
+        physicalStreams.push_back(nameToPhysicalStream[physicalStreamName]);
+    }
+    return physicalStreams;
 }
 
 std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStream() { return logicalStreamToSchemaMapping; }

@@ -14,7 +14,6 @@
 
 add_source_nes(
         Schema.cpp
-        ParameterTypes.cpp
         Query.cpp
         Pattern.cpp
         AttributeField.cpp

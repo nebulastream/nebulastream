@@ -20,7 +20,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Sources/AdaptiveSource.hpp>
 
-#include <boost/algorithm/string.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
@@ -92,11 +92,11 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
         while (i < generated_tuples_this_pass) {
             std::getline(input, line);
             std::vector<std::string> tokens;
-            boost::algorithm::split(tokens, line, boost::is_any_of(","));
+            tokens = UtilityFunctions::splitWithStringDelimiter(line, ",");
             uint64_t offset = 0;
             offset += sizeof(uint32_t);
             uint32_t val = std::stoul(tokens[0].c_str());
-            memcpy(tupleBuffer.getBufferAs<char>() + offset + i * 4096, &val, 4);
+            memcpy(tupleBuffer.getBuffer<char>() + offset + i * 4096, &val, 4);
             ++i;
         }
         generatedTuples += generated_tuples_this_pass;

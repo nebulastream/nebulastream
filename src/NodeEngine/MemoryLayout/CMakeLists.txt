@@ -16,8 +16,6 @@ add_source_nes(
         PhysicalField.cpp
         BasicPhysicalField.cpp
         ArrayPhysicalField.cpp
-        RowLayout.cpp
-        MemoryLayout.cpp
         PhysicalSchema.cpp
         PhysicalFieldUtil.cpp
         DynamicColumnLayout.cpp

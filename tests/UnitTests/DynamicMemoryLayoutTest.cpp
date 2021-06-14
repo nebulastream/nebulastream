@@ -21,9 +21,7 @@
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutField.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 #include <gtest/gtest.h>

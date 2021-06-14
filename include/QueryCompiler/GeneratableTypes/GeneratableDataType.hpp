@@ -17,19 +17,11 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEDATATYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEDATATYPE_HPP_
 
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <memory>
 
 namespace NES {
-
-class CodeExpression;
-typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
-
-class GeneratableDataType;
-typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
-
-struct AssignmentStatment;
-class Statement;
-typedef std::shared_ptr<Statement> StatementPtr;
+namespace QueryCompilation {
 
 /**
  * @brief A generatable data type,
@@ -64,8 +56,9 @@ class GeneratableDataType {
     * @deprecated this will move to an own copy statement in the future.
     * @return CodeExpressionPtr
     */
-    virtual StatementPtr getStmtCopyAssignment(const AssignmentStatment& assignmentStatement);
+    virtual StatementPtr getStmtCopyAssignment(const AssignmentStatement& assignmentStatement);
 };
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEDATATYPE_HPP_

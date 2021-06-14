@@ -15,7 +15,6 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTGENERATABLEOPERATORPROVIDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTGENERATABLEOPERATORPROVIDER_HPP_
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 namespace NES {
 namespace QueryCompilation {
@@ -132,7 +131,8 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    GeneratableWindowAggregationPtr lowerWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
+    GeneratableOperators::GeneratableWindowAggregationPtr
+    lowerWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
 };
 
 }// namespace QueryCompilation

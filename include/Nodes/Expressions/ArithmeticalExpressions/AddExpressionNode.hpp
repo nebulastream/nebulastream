@@ -16,12 +16,12 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
 namespace NES {
 /**
  * @brief This node represents an ADD expression.
  */
-class AddExpressionNode : public ArithmeticalExpressionNode {
+class AddExpressionNode : public ArithmeticalBinaryExpressionNode {
   public:
     AddExpressionNode(DataTypePtr stamp);
     ~AddExpressionNode() = default;

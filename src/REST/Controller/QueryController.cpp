@@ -20,11 +20,13 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/QueryController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
+#include <SerializableQueryPlan.pb.h>
 #include <Util/Logger.hpp>
 
 using namespace web;
@@ -163,10 +165,48 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                 }
             })
             .wait();
+    } else if (path[1] == "execute-query-ex") {
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try {
+                    NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << body);
+                    // decode string into protobuf message
+                    std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
+
+                    if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
+                        json::value errorResponse{};
+                        errorResponse["detail"] = json::value::string("Invalid Protobuf message");
+                        badRequestImpl(message, errorResponse);
+                        return;
+                    }
+                    // decode protobuf message into c++ obj repr
+                    SerializableQueryPlan* queryPlanSerialized = protobufMessage->mutable_queryplan();
+                    QueryPlanPtr queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(queryPlanSerialized));
+                    std::string* placementStrategy = protobufMessage->mutable_placement();
+                    std::string* queryString = protobufMessage->mutable_querystring();
+
+                    QueryId queryId = queryService->addQueryRequest(*queryString, queryPlan, *placementStrategy);
+
+                    json::value restResponse{};
+                    restResponse["queryId"] = json::value::number(queryId);
+                    successMessageImpl(message, restResponse);
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR("QueryController: handlePost -execute-query: Exception occurred while building the query plan for "
+                              "user request:"
+                              << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                }
+            })
+            .wait();
     } else {
         resourceNotFoundImpl(message);
     }
-}
+}// namespace NES
 
 void QueryController::handleDelete(std::vector<utility::string_t> path, http_request request) {
 

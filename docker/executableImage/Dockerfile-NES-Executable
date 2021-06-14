@@ -3,16 +3,19 @@ FROM nebulastream/nes-build-image:latest AS buildimg
 COPY ./ /nebulastream
 
 RUN mkdir -p /nebulastream/build && \
-    cd /nebulastream/build && export CC=/usr/bin/clang && export CXX=/usr/bin/clang++ && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/$($ACTUAL_TRIPLE)" -DCPPRESTSDK_DIR="/usr/lib/$($ACTUAL_TRIPLE)/cmake/" -DNES_USE_OPC=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
-    make version && make -j4 && cpack && cp *.deb /nes.deb && cd && rm -rf /nebulastream/build
+    cd /nebulastream/build && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
+    make version && make -j4 && cpack && mv *.deb /nes.deb && \
+    rm -rf /nebulastream/build/nes-dependencies-v1-x64-linux-nes.7z
 
 FROM nebulastream/nes-build-image:latest AS execimg
 
 COPY --from=buildimg /nes.deb .
+COPY --from=buildimg /nebulastream/build/nes-dependencies-v1-x64-linux-nes/installed/x64-linux-nes/ /nebulastream/build/nes-dependencies-v1-x64-linux-nes/installed/x64-linux-nes/
 
-RUN dpkg -i /nes.deb && apt install iproute2 ifupdown net-tools -y -qq && \
-    apt autoclean -y -qq && rm -rf /*.deb && cd
+RUN mv /nebulastream/build/nes-dependencies-v1-x64-linux-nes/installed/x64-linux-nes/lib/libpaho*so* /usr/local/lib/ && \
+ldconfig && dpkg -i /nes.deb && apt install iproute2 ifupdown net-tools --no-install-recommends -y -qq && \
+apt autoclean -y -qq && rm -rf /*.deb
 
 COPY ./docker/executableImage/resources/exdra.csv /opt/local/nebula-stream/exdra.csv
 COPY ./docker/executableImage/entrypoint-prepare-nes-package.sh /entrypoint-prepare-nes-package.sh

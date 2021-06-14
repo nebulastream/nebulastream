@@ -34,8 +34,8 @@ DynamicRowLayoutBuffer::DynamicRowLayoutBuffer(TupleBuffer tupleBuffer,
                                                uint64_t capacity,
                                                std::shared_ptr<DynamicRowLayout> dynamicRowLayout)
     : DynamicLayoutBuffer(tupleBuffer, capacity), dynamicRowLayout(dynamicRowLayout),
-      basePointer(tupleBuffer.getBufferAs<uint8_t>()) {
-    // this->basePointer = tupleBuffer.getBufferAs<uint8_t>();
+      basePointer(tupleBuffer.getBuffer<uint8_t>()) {
+    // this->basePointer = tupleBuffer.getBuffer<uint8_t>();
 }
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout

@@ -48,6 +48,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             return;
         }
     } else if (path[1] == "allPhysicalStream") {
+        // BDAPRO adjust to find all physical streams even when they are not mapped to a logical stream
         //Check if the path contains the query id
         auto param = parameters.find("logicalStreamName");
         if (param == parameters.end()) {
@@ -93,7 +94,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
         resourceNotFoundImpl(request);
     }
 }
-// BDAPRO handle update of mapping a physical stream to multiple logical streams
+// BDAPRO add endpoint to handle update of physical-logical stream mappings
 void StreamCatalogController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
 
     if (path[1] == "addLogicalStream") {

@@ -22,7 +22,6 @@
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <NodeEngine/ErrorListener.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
@@ -125,7 +124,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param new query plan
      * @return true if succeeded, else false
      */
-    bool deployQueryInNodeEngine(Execution::NewExecutableQueryPlanPtr queryExecutionPlan);
+    bool deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
 
     /**
      * @brief undeploy stops and undeploy a query
@@ -139,7 +138,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(Execution::NewExecutableQueryPlanPtr queryExecutionPlan);
+    bool registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
 
     /**
      * @brief registers a query
@@ -272,7 +271,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
-    std::map<QuerySubPlanId, Execution::NewExecutableQueryPlanPtr> deployedQEPs;
+    std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;

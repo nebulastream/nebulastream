@@ -27,12 +27,12 @@ class TopologyPropertiesTest : public testing::Test {
 
     void SetUp() {}
 
-    void TearDown() { NES_DEBUG("Tear down OperatorPropertiesTest Test."); }
+    void TearDown() { NES_DEBUG("Tear down TopologyPropertiesTest Test."); }
 
   protected:
     static void setupLogging() {
-        NES::setupLogging("OperatorPropertiesTest.log", NES::LOG_DEBUG);
-        NES_DEBUG("Setup OperatorPropertiesTest test class.");
+        NES::setupLogging("TopologyPropertiesTest.log", NES::LOG_DEBUG);
+        NES_DEBUG("Setup TopologyPropertiesTest test class.");
     }
 };
 

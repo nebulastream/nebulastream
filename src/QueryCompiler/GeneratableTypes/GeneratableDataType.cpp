@@ -14,12 +14,13 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 namespace NES {
-
-StatementPtr GeneratableDataType::getStmtCopyAssignment(const AssignmentStatment& assignmentStatement) {
+namespace QueryCompilation {
+StatementPtr GeneratableDataType::getStmtCopyAssignment(const AssignmentStatement& assignmentStatement) {
     // generates code for target = source
     auto target = VarRef(assignmentStatement.lhs_tuple_var)[VarRef(assignmentStatement.lhs_index_var)].accessRef(
         VarRef(assignmentStatement.lhs_field_var));
@@ -27,5 +28,5 @@ StatementPtr GeneratableDataType::getStmtCopyAssignment(const AssignmentStatment
         VarRef(assignmentStatement.rhs_field_var));
     return target.assign(source).copy();
 }
-
+}// namespace QueryCompilation
 }// namespace NES

@@ -22,7 +22,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief A generatable data type which represent a pointer to a typed value.
  */
@@ -57,5 +57,6 @@ class PointerDataType final : public GeneratableDataType {
   private:
     GeneratableDataTypePtr baseType;
 };
+}// namespace QueryCompilation
 }// namespace NES
 #endif//INCLUDE_POINTERDATATYPE_HPP_

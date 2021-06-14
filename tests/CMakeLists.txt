@@ -130,10 +130,15 @@ add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
 target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-tests COMMAND topology-tests)
 
-### NES Topology Tests ###
+### NES TopologyProperty Tests ###
 add_executable(topology-property-tests "UnitTests/Topology/TopologyPropertyTest.cpp")
 target_link_libraries(topology-property-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-property-tests COMMAND topology-property-tests)
+
+### NES TopologyIterator Test ###
+add_executable(topology-iterator-tests "UnitTests/Topology/TopologyIterationTest.cpp")
+target_link_libraries(topology-iterator-tests nes ${GTEST_LIBRARIES})
+add_test(NAME topology-iterator-tests COMMAND topology-iterator-tests)
 
 ### Buffer Manager Test ###
 add_executable(buffer-manager-tests "UnitTests/NodeEngine/BufferManagerTest.cpp" UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp)
@@ -193,11 +198,6 @@ if (NES_USE_MQTT)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif (NES_USE_MQTT)
 
-### Memory Layout Tests ###
-add_executable(memory-layout-tests "UnitTests/NodeEngine/MemoryLayoutTest.cpp")
-target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})
-add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
-
 ### Dynamic Memory Layout Tests ###
 add_executable(dynamic-memory-layout-tests "UnitTests/DynamicMemoryLayoutTest.cpp")
 target_link_libraries(dynamic-memory-layout-tests nes ${GTEST_LIBRARIES})
@@ -252,11 +252,6 @@ add_test(NAME operator-properties-tests COMMAND operator-properties-tests)
 add_executable(query-tests "UnitTests/Catalogs/QueryTest.cpp")
 target_link_libraries(query-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-tests COMMAND query-tests)
-
-# QueryTest
-add_executable(translate-to-generatable-operator-phase-tests "UnitTests/QueryCompiler/TranslateToGeneratableOperatorPhaseTest.cpp")
-target_link_libraries(translate-to-generatable-operator-phase-tests nes ${GTEST_LIBRARIES})
-add_test(NAME translate-to-generatable-operator-phase-tests COMMAND translate-to-generatable-operator-phase-tests)
 
 # QueryPlanIteratorTest
 add_executable(queryplan-util-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")
@@ -547,6 +542,11 @@ add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
 add_executable(monitoring-serialization-test "UnitTests/Monitoring/MonitoringSerializationTest.cpp")
 target_link_libraries(monitoring-serialization-test nes ${GTEST_LIBRARIES})
 add_test(NAME monitoring-serialization-test COMMAND monitoring-serialization-test)
+
+# MonitoringIntegrationTest
+add_executable(monitoring-integration-test "Integration/MonitoringIntegrationTest.cpp")
+target_link_libraries(monitoring-integration-test nes ${GTEST_LIBRARIES})
+add_test(NAME monitoring-integration-test COMMAND monitoring-integration-test)
 
 ### MemorySourceIntegrationTest ###
 add_executable(memory-source-integration-test "Integration/MemorySourceIntegrationTest.cpp")

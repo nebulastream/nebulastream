@@ -18,8 +18,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -63,7 +63,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
     auto optBuf = bufferManager->getBufferNoBlocking();
     auto buf = *optBuf;
     //    MyTuple* my_array = (MyTuple*)malloc(5 * sizeof(MyTuple));
-    auto my_array = buf.getBufferAs<MyTuple>();
+    auto my_array = buf.getBuffer<MyTuple>();
     for (unsigned int i = 0; i < 5; ++i) {
         my_array[i] = MyTuple{i, float(0.5f * i), double(i * 0.2), i * 2, "1234"};
         std::cout << my_array[i].i64 << "|" << my_array[i].f << "|" << my_array[i].d << "|" << my_array[i].i32 << "|"
@@ -101,7 +101,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
 TEST_F(TupleBufferTest, testCopyAndSwap) {
     auto buffer = bufferManager->getBufferBlocking();
     for (auto i = 0; i < 10; ++i) {
-        *buffer.getBufferAs<uint64_t>() = 0;
+        *buffer.getBuffer<uint64_t>() = 0;
         buffer = bufferManager->getBufferBlocking();
     }
 }

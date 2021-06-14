@@ -49,19 +49,19 @@ class PipelineQueryPlan {
      * @brief Gets a list of source pipelines, which only contain a single physical source operator
      * @return std::vector<OperatorPipelinePtr>
      */
-    std::vector<OperatorPipelinePtr> getSourcePipelines();
+    const std::vector<OperatorPipelinePtr> getSourcePipelines() const;
 
     /**
      * @brief Gets a list of sink pipelines, which only contain a single physical sink operator
      * @return std::vector<OperatorPipelinePtr>
      */
-    std::vector<OperatorPipelinePtr> getSinkPipelines();
+    const std::vector<OperatorPipelinePtr> getSinkPipelines() const;
 
     /**
      * @brief Gets a list of all pipelines.
      * @return std::vector<OperatorPipelinePtr>
      */
-    std::vector<OperatorPipelinePtr> getPipelines();
+    const std::vector<OperatorPipelinePtr>& getPipelines() const;
 
     /**
      * @brief Remove a particular pipeline from the query plan
@@ -73,18 +73,18 @@ class PipelineQueryPlan {
      * @brief Gets the query id
      * @return QueryId
      */
-    QueryId getQueryId() const;
+    const QueryId getQueryId() const;
 
     /**
      * @brief Gets the query sub plan id
      * @return QuerySubPlanId
      */
-    QuerySubPlanId getQuerySubPlanId() const;
+    const QuerySubPlanId getQuerySubPlanId() const;
 
   private:
-    PipelineQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId);
-    QueryId queryId;
-    QuerySubPlanId querySubPlanId;
+    PipelineQueryPlan(const QueryId queryId, const QuerySubPlanId querySubPlanId);
+    const QueryId queryId;
+    const QuerySubPlanId querySubPlanId;
     std::vector<OperatorPipelinePtr> pipelines;
 };
 }// namespace QueryCompilation

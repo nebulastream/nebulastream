@@ -39,8 +39,7 @@ void MonitoringController::handleGet(std::vector<utility::string_t> path, http_r
         NES_DEBUG("MonitoringController: GET metrics with path size " + std::to_string(path.size()));
         if (path.size() == 2) {
             NES_DEBUG("MonitoringController: GET metrics for all nodes");
-            //TODO: Add support for monitoring plan in the future
-            auto metricsJson = monitoringService->requestMonitoringDataForAllNodesAsJson(nullptr);
+            auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesAsJson();
             successMessageImpl(message, metricsJson);
             return;
         } else if (path.size() == 3) {
@@ -48,20 +47,19 @@ void MonitoringController::handleGet(std::vector<utility::string_t> path, http_r
 
             if (strNodeId == "prometheus") {
                 NES_DEBUG("MonitoringController: GET metrics for all nodes via prometheus");
-                //TODO: Add support of monitoring plan in the future
                 NES_DEBUG("MonitoringController: handlePost -metrics: Querying all nodes via prometheus node exporter");
-                auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesViaPrometheusAsJson(nullptr);
+                auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesViaPrometheusAsJson();
                 successMessageImpl(message, metricsJson);
             } else if (!strNodeId.empty() && std::all_of(strNodeId.begin(), strNodeId.end(), ::isdigit)) {
                 NES_DEBUG("MonitoringController: GET metrics for node " + strNodeId);
                 //if the arg is a valid number and node id
                 uint64_t nodeId = std::stoi(path[2]);
                 try {
-                    //TODO: Add support of monitoring plan in the future
-                    auto metricJson = monitoringService->requestMonitoringDataAsJson(nodeId, nullptr);
+                    auto metricJson = monitoringService->requestMonitoringDataAsJson(nodeId);
                     successMessageImpl(message, metricJson);
                 } catch (std::runtime_error& ex) {
-                    NES_ERROR("MonitoringController: GET metrics error: " << ex.what());
+                    std::string errorMsg = ex.what();
+                    NES_ERROR("MonitoringController: GET metrics error: " + errorMsg);
                     message.reply(status_codes::BadRequest, ex.what());
                 }
             } else {
@@ -84,7 +82,7 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
             .then([this, message](utility::string_t body) {
                 try {
                     std::string userRequest(body.begin(), body.end());
-                    NES_DEBUG("MonitoringController: handlePost -metrics: userRequest: " << userRequest);
+                    NES_DEBUG("MonitoringController: handlePost -metrics: userRequest: " + userRequest);
                     json::value req = json::value::parse(userRequest);
 
                     std::string endpoint = req.at("endpoint").as_string();
@@ -105,9 +103,8 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
                                 }
 
                                 try {
-                                    //TODO: Add support of monitoring plan in the future
                                     auto metricPlain =
-                                        monitoringService->requestMonitoringDataViaPrometheusAsString(nodeId, promPort, nullptr);
+                                        monitoringService->requestMonitoringDataViaPrometheusAsString(nodeId, promPort);
                                     successMessageImpl(message, metricPlain);
                                 } catch (std::runtime_error& ex) {
                                     NES_ERROR("MonitoringController: POST metrics error: " << ex.what());
@@ -120,10 +117,9 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
                             return;
                         } else {
                             //otherwise get metrics from all nodes via prometheus
-                            //TODO: Add support of monitoring plan in the future
                             NES_DEBUG(
                                 "MonitoringController: handlePost -metrics: Querying all nodes via prometheus node exporter");
-                            auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesViaPrometheusAsJson(nullptr);
+                            auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesViaPrometheusAsJson();
                             successMessageImpl(message, metricsJson);
                             return;
                         }

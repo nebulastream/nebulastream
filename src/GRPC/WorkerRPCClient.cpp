@@ -313,34 +313,54 @@ bool WorkerRPCClient::stopQueryAsync(std::string address, QueryId queryId, Compl
     return true;
 }
 
-SchemaPtr
-WorkerRPCClient::requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, NodeEngine::TupleBuffer& buf) {
+bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, MonitoringPlanPtr plan) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
 
-    MonitoringRequest request;
+    MonitoringRegistrationRequest request;
     request.mutable_monitoringplan()->CopyFrom(plan->serialize());
 
     ClientContext context;
-    MonitoringReply reply;
-    reply.set_buffer(buf.getBufferAs<char>());
+    MonitoringRegistrationReply reply;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->RequestMonitoringData(&context, request, &reply);
+    Status status = workerStub->RegisterMonitoring(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
-        auto parsedSchema = SchemaSerializationUtil::deserializeSchema(reply.mutable_schema());
-        memcpy(buf.getBufferAs<char>(), reply.buffer().data(), parsedSchema->getSchemaSizeInBytes());
-        buf.setNumberOfTuples(1);
-        reply.release_buffer();
-
-        return parsedSchema;
+        return true;
     } else {
         NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
                                 + status.error_message());
     }
-    return nullptr;
+    return false;
+}
+
+bool WorkerRPCClient::requestMonitoringData(const std::string& address, NodeEngine::TupleBuffer& buf, uint64_t schemaSizeBytes) {
+    NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
+    MonitoringDataRequest request;
+    ClientContext context;
+    MonitoringDataReply reply;
+    reply.set_buffer(buf.getBuffer<char>());
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->GetMonitoringData(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
+        memcpy(buf.getBuffer<char>(), reply.buffer().data(), schemaSizeBytes);
+        buf.setNumberOfTuples(1);
+        reply.release_buffer();
+        return true;
+    } else {
+
+        // We need to release reply's buffer (in case we handle the exception).
+        reply.release_buffer();
+        NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
+                                                                                 << status.error_message());
+    }
+    return false;
 }
 
 }// namespace NES

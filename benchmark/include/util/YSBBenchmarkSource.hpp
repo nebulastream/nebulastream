@@ -18,7 +18,6 @@
 #define NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCEYSB_HPP_
 
 #include "SimpleBenchmarkSource.hpp"
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <cstdint>
 #include <list>

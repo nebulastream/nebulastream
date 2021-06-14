@@ -16,18 +16,18 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/FunctionCallStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/ArrayGeneratableType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <memory>
 #include <sstream>
 namespace NES {
-
+namespace QueryCompilation {
 ArrayGeneratableType::ArrayGeneratableType(ArrayPhysicalTypePtr type, GeneratableDataTypePtr component)
     : type(type), component(component) {}
 
@@ -35,7 +35,7 @@ const CodeExpressionPtr ArrayGeneratableType::getTypeDefinitionCode() const { re
 
 const CodeExpressionPtr ArrayGeneratableType::getCode() const {
     std::stringstream str;
-    str << "NES::Array<" << component->getCode()->code_ << ", " << type->length << "> ";
+    str << "NES::QueryCompilation::Array<" << component->getCode()->code_ << ", " << type->length << "> ";
     return std::make_shared<CodeExpression>(str.str());
 }
 
@@ -48,4 +48,5 @@ CodeExpressionPtr ArrayGeneratableType::getDeclarationCode(std::string identifie
     }
     return ptr;
 }
+}// namespace QueryCompilation
 }// namespace NES

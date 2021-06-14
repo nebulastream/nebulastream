@@ -56,6 +56,13 @@ Windowing::WindowAggregationPtr Max(ExpressionItem ExpressionItem);
 Windowing::WindowAggregationPtr Count();
 
 /**
+ * @brief Defines a Agg Aggregation function on a particular field.
+ * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
+ * @return A descriptor of the aggregation function.
+ */
+Windowing::WindowAggregationPtr Avg(ExpressionItem ExpressionItem);
+
+/**
  * @brief Defines event time as a time characteristic for a window.
  * @param ExpressionItem which defines the field name.
  * @return A descriptor of the time characteristic.

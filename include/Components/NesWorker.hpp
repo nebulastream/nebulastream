@@ -19,21 +19,32 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <GRPC/CallData.hpp>
-#include <GRPC/CoordinatorRPCClient.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
 
-namespace NES {
+namespace grpc {
+class Server;
+class ServerCompletionQueue;
+};// namespace grpc
 
+class NodeEngine;
+namespace NES {
+class WorkerRPCServer;
+class CoordinatorRPCClient;
+typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
+
+class MonitoringAgent;
+typedef std::shared_ptr<MonitoringAgent> MonitoringAgentPtr;
+
+enum NesNodeType : int { Worker, Sensor };
 class NesWorker {
   public:
     /**
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(WorkerConfigPtr workerConfig, NodeType type);
+    explicit NesWorker(WorkerConfigPtr workerConfig, NesNodeType type);
 
     /**
      * @brief default dtor
@@ -163,13 +174,14 @@ class NesWorker {
    * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
    */
     void buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom);
-    void handleRpcs(WorkerRPCServer::Service& service);
+    void handleRpcs(WorkerRPCServer& service);
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
-    std::unique_ptr<grpc_impl::ServerCompletionQueue> completionQueue;
+    std::unique_ptr<grpc::ServerCompletionQueue> completionQueue;
 
     NodeEngine::NodeEnginePtr nodeEngine;
+    MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
 
     PhysicalStreamConfigPtr conf;
@@ -189,7 +201,7 @@ class NesWorker {
     uint32_t numberOfBuffersPerPipeline;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
-    NodeType type;
+    NesNodeType type;
     std::atomic<bool> isRunning;
     TopologyNodeId topologyNodeId;
     /**

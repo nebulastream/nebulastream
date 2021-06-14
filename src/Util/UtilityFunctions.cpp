@@ -277,7 +277,7 @@ std::string UtilityFunctions::combineStringsWithDelimiter(std::vector<std::strin
 std::string UtilityFunctions::printTupleBufferAsText(NodeEngine::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
-        ss << buffer.getBufferAs<char>()[i];
+        ss << buffer.getBuffer<char>()[i];
     }
     return ss.str();
 }
@@ -316,7 +316,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;
 
-    auto buf = buffer.getBufferAs<char>();
+    auto buf = buffer.getBuffer<char>();
     for (uint32_t i = 0; i < buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes(); i += schema->getSchemaSizeInBytes()) {
         str << "|";
         for (uint32_t s = 0; s < offsets.size(); ++s) {
@@ -339,7 +339,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
 std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, SchemaPtr schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
-    auto buffer = tbuffer.getBufferAs<char>();
+    auto buffer = tbuffer.getBuffer<char>();
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (uint64_t i = 0; i < numberOfTuples; i++) {
         uint64_t offset = 0;
@@ -477,12 +477,10 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
 
 bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan,
                                                         std::vector<std::map<std::string, std::any>> properties) {
-    size_t numOperators = 0;
     // count the number of operators in the query
     auto queryPlanIterator = QueryPlanIterator(queryPlan);
-    for (auto node : queryPlanIterator) {
-        numOperators++;
-    }
+    size_t numOperators = queryPlanIterator.snapshot().size();
+    ;
 
     // check if we supply operator properties for all operators
     if (numOperators != properties.size()) {

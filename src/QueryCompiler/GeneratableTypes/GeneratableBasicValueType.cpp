@@ -15,16 +15,17 @@
 */
 
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableBasicValueType.hpp>
 #include <utility>
 
 namespace NES {
-
+namespace QueryCompilation {
 GeneratableBasicValueType::GeneratableBasicValueType(BasicValuePtr basicValue)
     : GeneratableValueType(), value(std::move(basicValue)) {}
 
 CodeExpressionPtr GeneratableBasicValueType::getCodeExpression() const noexcept {
     return std::make_shared<CodeExpression>(value->value);
 }
+}// namespace QueryCompilation
 }// namespace NES

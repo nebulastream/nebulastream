@@ -25,35 +25,26 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/Definitions/NamespaceDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/ReturnStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ClassDefinition.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/FunctionDefinition.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/NamespaceDefinition.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/FileBuilder.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ReturnStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarDeclStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
+#include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
-#include <QueryCompiler/GeneratedCode.hpp>
-#include <QueryCompiler/LegacyExpression.hpp>
-#include <QueryCompiler/PipelineContext.hpp>
-#include <Sinks/SinkCreator.hpp>
-#include <Sources/DefaultSource.hpp>
-#include <Sources/GeneratorSource.hpp>
-#include <State/StateVariable.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <cassert>
 #include <cmath>
@@ -61,17 +52,15 @@
 #include <iostream>
 #include <utility>
 
-#include <QueryCompiler/CCodeGenerator/Runtime/SharedPointerGen.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/SharedPointerGen.hpp>
+#include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-
-#include <Common/ValueTypes/ArrayValue.hpp>
 
 using std::cout;
 using std::endl;
 namespace NES {
+using namespace QueryCompilation;
 
 class CodeGenerationTest : public testing::Test {
   public:
@@ -109,10 +98,10 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
             0,
             queryManager,
             std::move(bufferManager),
-            [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
+            [this](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            [this](TupleBuffer& buffer) {
+            [this](NodeEngine::TupleBuffer& buffer) {
                 this->buffers.emplace_back(std::move(buffer));
             },
             std::move(operatorHandlers),
@@ -120,14 +109,14 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
             // nop
         };
 
-    std::vector<TupleBuffer> buffers;
+    std::vector<NodeEngine::TupleBuffer> buffers;
 };
 
 /**
  * @brief This test checks the behavior of the code generation API
  */
 TEST_F(CodeGenerationTest, codeGenerationApiTest) {
-    auto tf = CompilerTypesFactory();
+    auto tf = QueryCompilation::GeneratableTypesFactory();
     auto varDeclI = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
                                                 "i",
                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
@@ -163,13 +152,15 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto varDeclN = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)),
                                                     "n",
                                                     DataTypeFactory::createFixedCharValue(vals));
-        EXPECT_EQ(varDeclN.getCode(), "NES::Array<char, 12> n = NES::Array {'a', 'b', 'c', static_cast<char>(0)}");
+        EXPECT_EQ(
+            varDeclN.getCode(),
+            "NES::QueryCompilation::Array<char, 12> n = NES::QueryCompilation::Array {'a', 'b', 'c', static_cast<char>(0)}");
 
         auto varDeclO = VariableDeclaration::create(
             tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())),
             "o",
             DataTypeFactory::createArrayValueWithContainedType(DataTypeFactory::createUInt8(), {"2", "3", "4"}));
-        EXPECT_EQ(varDeclO.getCode(), "NES::Array<uint8_t, 4> o = NES::Array {2, 3, 4}");
+        EXPECT_EQ(varDeclO.getCode(), "NES::QueryCompilation::Array<uint8_t, 4> o = NES::QueryCompilation::Array {2, 3, 4}");
 
         /**
          todo currently no support for strings
@@ -273,6 +264,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), LOGICAL_NOT_OP).getCode()->code_, "!num_tuples");
         EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), SIZE_OF_TYPE_OP).getCode()->code_,
                   "sizeof(num_tuples)");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), ABSOLUTE_VALUE_OF_OP).getCode()->code_,
+                  "abs(num_tuples)");
     }
 
     {
@@ -369,7 +362,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  * @brief Simple test that generates code to process a input buffer and calculate a running sum.
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
-    auto tf = CompilerTypesFactory();
+    auto tf = GeneratableTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NodeEngine::TupleBuffer");
     auto pipelineExecutionContextType = tf.createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
     auto workerContextType = tf.createAnonymusDataType("NodeEngine::WorkerContext");
@@ -503,7 +496,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     createFunction->addStatement(returnStatement);
     ;
     createFunction->returns(SharedPointerGen::createSharedPtrType(
-        CompilerTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
+        GeneratableTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileB.addDeclaration(pipelineNamespace->getDeclaration()).build();
 

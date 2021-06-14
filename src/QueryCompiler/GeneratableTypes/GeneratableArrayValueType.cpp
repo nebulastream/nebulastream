@@ -16,18 +16,18 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>
 #include <algorithm>
 #include <sstream>
 
 namespace NES {
-
+namespace QueryCompilation {
 CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept {
     bool const containsChars = valueType->dataType->isCharArray();
 
     std::stringstream str;
-    str << "NES::Array {";
+    str << "NES::QueryCompilation::Array {";
     if (containsChars) {
 
         bool nullTerminated = false;
@@ -65,4 +65,5 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept 
 
     return std::make_shared<CodeExpression>(str.str());
 }
+}// namespace QueryCompilation
 }// namespace NES

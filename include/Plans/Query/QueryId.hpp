@@ -19,10 +19,12 @@
 
 #include <stdint.h>
 
+namespace NES {
+
 /**
  * @brief this alias represent a locally running query execution plan
  */
 using QueryId = uint64_t;
 static constexpr uint64_t INVALID_QUERY_ID = 0;
-
+}// namespace NES
 #endif//NES_INCLUDE_API_QUERYID_HPP_

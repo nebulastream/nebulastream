@@ -13,11 +13,13 @@
 # limitations under the License.
 
 add_source_nes(
-        ArithmeticalExpressionNode.cpp
+        ArithmeticalUnaryExpressionNode.cpp
+        ArithmeticalBinaryExpressionNode.cpp
         AddExpressionNode.cpp
         SubExpressionNode.cpp
         MulExpressionNode.cpp
         DivExpressionNode.cpp
         PowExpressionNode.cpp
+        AbsExpressionNode.cpp
 )
 

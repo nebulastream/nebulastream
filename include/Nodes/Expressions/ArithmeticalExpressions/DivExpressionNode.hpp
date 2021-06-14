@@ -16,13 +16,13 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
 namespace NES {
 
 /**
  * @brief This node represents a division expression.
  */
-class DivExpressionNode : public ArithmeticalExpressionNode {
+class DivExpressionNode : public ArithmeticalBinaryExpressionNode {
   public:
     DivExpressionNode(DataTypePtr stamp);
     ~DivExpressionNode() = default;

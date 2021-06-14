@@ -14,18 +14,22 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BlockScopeStatement.hpp>
-#include <QueryCompiler/GeneratedCode.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BlockScopeStatement.hpp>
+#include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
+#include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <Util/Logger.hpp>
 #include <memory>
 #include <utility>
 
 namespace NES {
-
+namespace QueryCompilation {
 PipelineContext::PipelineContext(PipelineContextArity arity) : arity(arity), recordHandler(RecordHandler::create()) {
     this->code = std::make_shared<GeneratedCode>();
 }
+
+PipelineContext::~PipelineContext() { NES_DEBUG("~PipelineContext(" + pipelineName + ")"); }
 
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
@@ -67,5 +71,5 @@ const uint64_t PipelineContext::getHandlerIndex(NodeEngine::Execution::OperatorH
 const std::vector<NodeEngine::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() {
     return this->operatorHandlers;
 }
-
+}// namespace QueryCompilation
 }// namespace NES

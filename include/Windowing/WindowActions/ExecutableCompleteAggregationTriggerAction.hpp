@@ -47,21 +47,25 @@ class ExecutableCompleteAggregationTriggerAction
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
                executableWindowAggregation,
            SchemaPtr outputSchema,
-           uint64_t id) {
+           uint64_t id,
+           PartialAggregateType partialAggregateTypeInitialValue) {
         return std::make_shared<
             ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
             windowDefinition,
             executableWindowAggregation,
             outputSchema,
-            id);
+            id,
+            partialAggregateTypeInitialValue);
     }
     explicit ExecutableCompleteAggregationTriggerAction(
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
             executableWindowAggregation,
         SchemaPtr outputSchema,
-        uint64_t id)
-        : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation), id(id) {
+        uint64_t id,
+        PartialAggregateType partialAggregateTypeInitialValue)
+        : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation), id(id),
+          partialAggregateTypeInitialValue(partialAggregateTypeInitialValue) {
 
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString()
                                                                                        << " id=" << id);
@@ -182,25 +186,7 @@ class ExecutableCompleteAggregationTriggerAction
 
         auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size());
 
-        // if the aggregation function is Min,  we should initialize the partialFinalAggregates with the upper bound of the data type
-        if (windowDefinition->getWindowAggregation()->getType() == WindowAggregationDescriptor::Min) {
-            if (auto intType = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
-                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->upperBound);
-            } else if (auto floatType =
-                           DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
-                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->upperBound);
-            }
-        }
-
-        // if the aggregation function is Max, we should initialize the partialFinalAggregates with the lower bound of the data type
-        if (windowDefinition->getWindowAggregation()->getType() == WindowAggregationDescriptor::Max) {
-            if (auto intType = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
-                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->lowerBound);
-            } else if (auto floatType =
-                           DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
-                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->lowerBound);
-            }
-        }
+        partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), partialAggregateTypeInitialValue);
 
         //because we trigger each second, there could be multiple windows ready
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
@@ -260,20 +246,20 @@ class ExecutableCompleteAggregationTriggerAction
 
                 if (recordsPerWindow[i] != 0) {
                     if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Merging) {
-                        writeResultRecord<PartialAggregateType>(tupleBuffer,
-                                                                currentNumberOfTuples,
-                                                                window.getStartTs(),
-                                                                window.getEndTs(),
-                                                                key,
-                                                                value,
-                                                                recordsPerWindow[i]);
+                        writeResultRecord<FinalAggregateType>(tupleBuffer,
+                                                              currentNumberOfTuples,
+                                                              window.getStartTs(),
+                                                              window.getEndTs(),
+                                                              key,
+                                                              value,
+                                                              recordsPerWindow[i]);
                     } else {
-                        writeResultRecord<PartialAggregateType>(tupleBuffer,
-                                                                currentNumberOfTuples,
-                                                                window.getStartTs(),
-                                                                window.getEndTs(),
-                                                                key,
-                                                                value);
+                        writeResultRecord<FinalAggregateType>(tupleBuffer,
+                                                              currentNumberOfTuples,
+                                                              window.getStartTs(),
+                                                              window.getEndTs(),
+                                                              key,
+                                                              value);
                     }
 
                     currentNumberOfTuples++;
@@ -359,6 +345,7 @@ class ExecutableCompleteAggregationTriggerAction
     LogicalWindowDefinitionPtr windowDefinition;
     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
     uint64_t id;
+    PartialAggregateType partialAggregateTypeInitialValue;
 };
 }// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_

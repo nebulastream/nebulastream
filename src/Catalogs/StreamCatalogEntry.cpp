@@ -20,6 +20,7 @@
 
 namespace NES {
 
+// BDAPRO remove logicalStreamName from StreamCatalogEntry
 StreamCatalogEntry::StreamCatalogEntry(std::string sourceType,
                                        std::string physicalStreamName,
                                        std::string logicalStreamName,
@@ -32,6 +33,7 @@ StreamCatalogEntry::StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, T
     // nop
 }
 
+// BDAPRO remove logicalStreamName from StreamCatalogEntry
 StreamCatalogEntryPtr StreamCatalogEntry::create(std::string sourceType,
                                                  std::string physicalStreamName,
                                                  std::string logicalStreamName,
@@ -45,7 +47,7 @@ StreamCatalogEntryPtr StreamCatalogEntry::create(AbstractPhysicalStreamConfigPtr
 
 std::string StreamCatalogEntry::getSourceType() { return sourceType; }
 
-TopologyNodePtr StreamCatalogEntry::getNode() { return node; }
+TopologyNodePtr StreamCatalogEntry::getNode() { return node;}
 
 std::string StreamCatalogEntry::getPhysicalName() { return physicalStreamName; }
 

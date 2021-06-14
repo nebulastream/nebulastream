@@ -31,6 +31,7 @@
 #include <iostream>
 #include <map>
 #include <sys/stat.h>
+#include <vector>
 
 using namespace NES;
 using namespace std;

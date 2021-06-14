@@ -45,6 +45,7 @@ class MonitoringPlan {
   public:
     static MonitoringPlanPtr create(const std::vector<MetricValueType>& metrics);
     static MonitoringPlanPtr create(const SerializableMonitoringPlan& shippable);
+    static MonitoringPlanPtr DefaultPlan();
 
     /**
      * @brief Add a specific metric to the plan

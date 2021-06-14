@@ -15,6 +15,8 @@
 */
 
 #include <Topology/TopologyNode.hpp>
+//#include <NodeStats.pb.h>
+#include <algorithm>
 
 namespace NES {
 
@@ -32,9 +34,9 @@ uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 
 uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
-void TopologyNode::setNodeStats(NodeStats nodeStats) { this->nodeStats = nodeStats; }
+void TopologyNode::setNodeStats(NodeStatsPtr nodeStats) { this->nodeStats = nodeStats; }
 
-NodeStats TopologyNode::getNodeStats() { return nodeStats; }
+NodeStatsPtr TopologyNode::getNodeStats() { return nodeStats; }
 
 uint16_t TopologyNode::getAvailableResources() { return resources - usedResources; }
 

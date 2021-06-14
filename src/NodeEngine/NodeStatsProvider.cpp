@@ -15,6 +15,7 @@
 */
 
 #if defined(__linux__)
+#include <NodeStats.pb.h>
 #include <ifaddrs.h>
 #include <linux/if_link.h>
 #include <net/if.h>
@@ -23,6 +24,7 @@
 #include <sys/ioctl.h>
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>
+
 #elif defined(__APPLE__) || defined(__MACH__)
 #else
 #error "Unsupported platform"
@@ -35,12 +37,12 @@
 
 namespace NES::NodeEngine {
 
-NodeStatsProvider::NodeStatsProvider() : nbrProcessors(0), nodeStats(NodeStats()) {}
+NodeStatsProvider::NodeStatsProvider() : nbrProcessors(0), nodeStats(std::make_shared<NodeStats>()) {}
 
 NodeStatsProviderPtr NodeStatsProvider::create() { return std::make_shared<NodeStatsProvider>(); }
 
 void NodeStatsProvider::update() {
-    nodeStats.Clear();
+    nodeStats->Clear();
     readCpuStats();
     readMemStats();
     readDiskStats();
@@ -49,7 +51,7 @@ void NodeStatsProvider::update() {
 
 void NodeStatsProvider::readCpuStats() {
 
-    auto cpuStats = nodeStats.mutable_cpustats();
+    auto cpuStats = nodeStats->mutable_cpustats();
     cpuStats->Clear();
 
     std::ifstream fileStat("/proc/stat");
@@ -99,7 +101,7 @@ std::string NodeStatsProvider::getClientName() {
 }
 
 std::string NodeStatsProvider::getClientPort() {
-    std::string port = nodeStats.networkstats().port();
+    std::string port = nodeStats->networkstats().port();
     port.erase(0, 1);
     port.erase(port.length() - 1, 1);
     return port;
@@ -107,7 +109,7 @@ std::string NodeStatsProvider::getClientPort() {
 
 #if defined(__linux__)
 void NodeStatsProvider::readNetworkStats() {
-    auto networkStats = nodeStats.mutable_networkstats();
+    auto networkStats = nodeStats->mutable_networkstats();
     networkStats->Clear();
 
     char hostnameChar[1024];
@@ -191,7 +193,7 @@ void NodeStatsProvider::readNetworkStats() {}
 
 #if defined(__linux__)
 void NodeStatsProvider::readMemStats() {
-    auto memoryStats = nodeStats.mutable_memorystats();
+    auto memoryStats = nodeStats->mutable_memorystats();
     memoryStats->Clear();
 
     struct sysinfo sinfo;
@@ -221,7 +223,7 @@ void NodeStatsProvider::readMemStats() {}
 
 #if defined(__linux__)
 void NodeStatsProvider::readDiskStats() {
-    auto diskStates = nodeStats.mutable_diskstats();
+    auto diskStates = nodeStats->mutable_diskstats();
     diskStates->Clear();
 
     struct statvfs svfs;
@@ -240,6 +242,6 @@ void NodeStatsProvider::readDiskStats() {
 void NodeStatsProvider::readDiskStats() {}
 #endif
 
-NodeStats NodeStatsProvider::getNodeStats() { return nodeStats; }
+NodeStats NodeStatsProvider::getNodeStats() { return *nodeStats.get(); }
 
 }// namespace NES::NodeEngine

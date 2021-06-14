@@ -71,15 +71,24 @@ class QueryService {
      * @param placementStrategyName : Name of the placement strategy
      * @return query id
      */
-    uint64_t addQueryRequest(std::string queryString, QueryPtr queryPtr, std::string placementStrategyName);
+    uint64_t addQueryRequest(std::string queryString, Query query, std::string placementStrategyName);
 
     /**
-     * @brief This method calls addQueryRequest with an empty string.
-     * @param queryPtr : Query Object
+     * @brief This method is used for submitting the queries directly to the system.
+     * @param queryPlan : Query Plan Pointer Object
      * @param placementStrategyName : Name of the placement strategy
      * @return query id
      */
-    uint64_t addQueryRequest(QueryPtr queryPtr, std::string placementStrategyName);
+    uint64_t addQueryRequest(QueryPlanPtr queryPlan, std::string placementStrategyName);
+
+    /**
+     * @brief
+     * @param queryString
+     * @param queryPlan : Query Plan Pointer Object
+     * @param placementStrategyName : Name of the placement strategy
+     * @return query id
+     */
+    uint64_t addQueryRequest(std::string queryString, QueryPlanPtr queryPlan, std::string placementStrategyName);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

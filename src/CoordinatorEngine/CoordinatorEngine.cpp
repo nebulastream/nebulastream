@@ -18,6 +18,8 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <CoordinatorRPCService.pb.h>
+#include <NodeStats.pb.h>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -36,10 +38,10 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
                                          int64_t grpcPort,
                                          int64_t dataPort,
                                          uint16_t numberOfSlots,
-                                         NodeStats nodeStats,
+                                         NodeStatsPtr nodeStats,
                                          NodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
-                                                          << " nodeProperties=" << nodeStats.DebugString() << " type=" << type);
+                                                          << " nodeProperties=" << nodeStats->DebugString() << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
     NES_DEBUG("CoordinatorEngine::registerNode: topology before insert");
@@ -108,9 +110,10 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
         NES_THROW_RUNTIME_ERROR("CoordinatorEngine::registerNode type not supported ");
     }
 
-    if (nodeStats.IsInitialized()) {
-        physicalNode->setNodeStats(nodeStats);
-    }
+    //TODO: this has to be refactored #1971
+    //    if (nodeStats->IsInitialized()) {
+    //        physicalNode->setNodeStats(std::make_shared<NodeStats>());
+    //    }
 
     const TopologyNodePtr rootNode = topology->getRoot();
 
@@ -150,6 +153,7 @@ bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
     return successCatalog && successTopology;
 }
 
+// BDAPRO adjust to StreamCatalogEntry and allow registration without empty (or null) logicalStreamName
 bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
                                                std::string sourceType,
                                                std::string physicalStreamName,

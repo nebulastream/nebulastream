@@ -17,13 +17,13 @@
 #ifndef NES_TOPOLOGYNODE_HPP
 #define NES_TOPOLOGYNODE_HPP
 
-#include <NodeStats.pb.h>
 #include <Nodes/Node.hpp>
 #include <Topology/LinkProperty.hpp>
 #include <any>
 
 namespace NES {
-
+class NodeStats;
+typedef std::shared_ptr<NodeStats> NodeStatsPtr;
 class TopologyNode;
 typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 
@@ -63,13 +63,13 @@ class TopologyNode : public Node {
      * @brief method to set the property of the node by creating a NodeProperties object
      * @param a string of the serialized json object of the properties
      */
-    void setNodeStats(NodeStats nodeStats);
+    void setNodeStats(NodeStatsPtr nodeStats);
 
     /**
    * @brief method to get the node properties
    * @NodePropertiesPtr to the properties of this node
    */
-    NodeStats getNodeStats();
+    NodeStatsPtr getNodeStats();
 
     /**
      * @brief Get ip address of the node
@@ -152,7 +152,7 @@ class TopologyNode : public Node {
     uint32_t dataPort;
     uint16_t resources;
     uint16_t usedResources;
-    NodeStats nodeStats;
+    NodeStatsPtr nodeStats;
 
     /**
      * @brief A field to store a map of node properties

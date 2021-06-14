@@ -16,10 +16,13 @@
 
 #ifndef INCLUDE_SOURCESINK_LambdaSource_HPP_
 #define INCLUDE_SOURCESINK_LambdaSource_HPP_
-#include <NodeEngine/TupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <chrono>
+
+namespace NES::NodeEngine {
+class TupleBuffer;
+}
 
 namespace NES {
 
@@ -33,21 +36,27 @@ class LambdaSource : public GeneratorSource {
      *
    * @param operatorId the valid id of the source
    */
-    LambdaSource(SchemaPtr schema,
-                 NodeEngine::BufferManagerPtr bufferManager,
-                 NodeEngine::QueryManagerPtr queryManager,
-                 uint64_t numbersOfBufferToProduce,
-                 uint64_t gatheringValue,
-                 std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-                 OperatorId operatorId,
-                 size_t numSourceLocalBuffers,
-                 GatheringMode gatheringMode,
-                 std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
+    explicit LambdaSource(
+        SchemaPtr schema,
+        NodeEngine::BufferManagerPtr bufferManager,
+        NodeEngine::QueryManagerPtr queryManager,
+        uint64_t numbersOfBufferToProduce,
+        uint64_t gatheringValue,
+        std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+        OperatorId operatorId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
     SourceType getType() const override;
 
     std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
+    /**
+    * @brief Provides a string representation of the source
+    * @return The string representation of the source
+    */
+    const std::string toString() const override;
     /**
      * @brief method to stop the source.
      * 1.) check if bool running is false, if false return, if not stop source
@@ -56,6 +65,7 @@ class LambdaSource : public GeneratorSource {
     bool stop(bool graceful) override;
 
   private:
+    uint64_t numberOfTuplesToProduce;
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
 };
 

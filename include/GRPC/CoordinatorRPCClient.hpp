@@ -20,9 +20,9 @@
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <CoordinatorRPCService.pb.h>
 
+#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <grpcpp/grpcpp.h>
 #include <string>
-
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;

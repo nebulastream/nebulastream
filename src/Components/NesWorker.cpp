@@ -17,6 +17,15 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <CoordinatorRPCService.pb.h>
+#include <GRPC/CallData.hpp>
+#include <GRPC/CoordinatorRPCClient.hpp>
+#include <GRPC/WorkerRPCServer.hpp>
+#include <Monitoring/MetricValues/MetricValueType.hpp>
+#include <Monitoring/Metrics/MetricCatalog.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include <Monitoring/MonitoringAgent.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <Util/Logger.hpp>
 #include <future>
 #include <signal.h>
@@ -32,7 +41,7 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(WorkerConfigPtr workerConfig, NodeType type)
+NesWorker::NesWorker(WorkerConfigPtr workerConfig, NesNodeType type)
     : coordinatorIp(std::move(workerConfig->getCoordinatorIp()->getValue())),
       coordinatorPort(workerConfig->getCoordinatorPort()->getValue()),
       localWorkerIp(std::move(workerConfig->getLocalWorkerIp()->getValue())),
@@ -69,12 +78,12 @@ bool NesWorker::setWithParent(std::string parentId) {
     return true;
 }
 
-void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
+void NesWorker::handleRpcs(WorkerRPCServer& service) {
     //TODO: somehow we need this although it is not called at all
     // Spawn a new CallData instance to serve new clients.
 
-    CallDataPtr call = std::make_shared<CallData>(&service, completionQueue.get());
-    call->proceed();
+    CallData call(service, completionQueue.get());
+    call.proceed();
     void* tag;// uniquely identifies a request.
     bool ok;  //
     while (true) {
@@ -95,7 +104,7 @@ void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
 }
 
 void NesWorker::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom) {
-    WorkerRPCServer service(nodeEngine);
+    WorkerRPCServer service(nodeEngine, monitoringAgent);
     ServerBuilder builder;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
@@ -133,6 +142,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                     numberOfBuffersInSourceLocalBufferPool,
                                                     numberOfBuffersPerPipeline);
         NES_DEBUG("NesWorker: Node engine started successfully");
+        monitoringAgent = MonitoringAgent::create();
+        NES_DEBUG("NesWorker: MonitoringAgent configured with default values");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
         throw Exception("NesWorker error while starting node engine");
@@ -206,10 +217,10 @@ bool NesWorker::stop(bool) {
             NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
         }
         nodeEngine.reset();
-        //shut down the async queue
-        completionQueue->Shutdown();
         NES_DEBUG("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
+        //shut down the async queue
+        completionQueue->Shutdown();
 
         if (rpcThread->joinable()) {
             NES_DEBUG("NesWorker: join rpcThread");
@@ -236,8 +247,25 @@ bool NesWorker::connect() {
     auto nodeStatsProvider = nodeEngine->getNodeStatsProvider();
     nodeStatsProvider->update();
     auto nodeStats = nodeStatsProvider->getNodeStats();
-    bool successPRCRegister =
-        coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, type, nodeStats);
+
+    bool successPRCRegister = false;
+    if (type == NesNodeType::Sensor) {
+        successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
+                                                                localWorkerRpcPort,
+                                                                localWorkerZmqPort,
+                                                                numberOfSlots,
+                                                                NodeType::Sensor,
+                                                                nodeStats);
+    } else if (type == NesNodeType::Worker) {
+        successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
+                                                                localWorkerRpcPort,
+                                                                localWorkerZmqPort,
+                                                                numberOfSlots,
+                                                                NodeType::Worker,
+                                                                nodeStats);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {

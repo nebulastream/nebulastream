@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
 
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -175,9 +176,9 @@ class LogicalOperatorFactory {
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return LogicalOperatorNodePtr
     */
-    static LogicalUnaryOperatorNodePtr createIterationOperator(std::uint64_t minIterations,
-                                                               std::uint64_t maxIterations,
-                                                               OperatorId id = UtilityFunctions::getNextOperatorId());
+    static LogicalUnaryOperatorNodePtr createCEPIterationOperator(const uint64_t minIterations,
+                                                                  const uint64_t maxIterations,
+                                                                  OperatorId id = UtilityFunctions::getNextOperatorId());
 };
 
 }// namespace NES

@@ -61,8 +61,8 @@ class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
     OperatorNodePtr copy() override;
 
   private:
-    uint64_t minIterations;
-    uint64_t maxIterations;
+    const uint64_t minIterations;
+    const uint64_t maxIterations;
 };
 
 }// namespace NES

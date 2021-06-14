@@ -15,28 +15,24 @@
 */
 
 #include <API/Query.hpp>
+#include <Catalogs/LogicalStream.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Util/Logger.hpp>
-#include <gtest/gtest.h>
-
-#include <Catalogs/LogicalStream.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
+#include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
+#include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <gtest/gtest.h>
 #include <iostream>
 
 using namespace std;
