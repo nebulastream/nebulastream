@@ -205,7 +205,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 3);
-        senderChannel->close();
+        senderChannel->close(true);
         senderChannel.reset();
 
         t.join();
