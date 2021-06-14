@@ -34,7 +34,7 @@ class StateTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down StateTest test class." << std::endl; }
 };
 
-TEST_F(StateTest, estAddClear) {
+TEST_F(StateTest, testAddClear) {
     StateManager stateManager;
     auto var = StateVariable<uint32_t, uint32_t>{*stateManager.registerState<uint32_t, uint32_t>("window-content-0")};
     auto kv = var[23];
