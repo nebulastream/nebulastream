@@ -91,7 +91,7 @@ static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 1024;
 #endif
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
-    : numThreads(numThreads), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId)
+    : nodeEngineId(nodeEngineId), bufferManager(std::move(bufferManager)), numThreads(numThreads)
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 
 #else
