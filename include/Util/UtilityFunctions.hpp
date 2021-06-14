@@ -230,11 +230,11 @@ class UtilityFunctions {
 
     // The following utility get a string representation of windowing keys (e.g., for debugging)
     template<typename T>
-    struct IsStdArray : std::false_type {
+    struct IsNESArray : std::false_type {
     };
 
     template<typename T, std::size_t N>
-    struct IsStdArray<NES::QueryCompilation::Array<T, N>> : std::true_type {
+    struct IsNESArray<NES::QueryCompilation::Array<T, N>> : std::true_type {
     };
 
     /**
@@ -245,7 +245,7 @@ class UtilityFunctions {
      */
     template<typename T>
     static auto keyAsString(const T & key)
-    -> typename std::enable_if<IsStdArray<T>::value, std::string>::type {
+    -> typename std::enable_if<IsNESArray<T>::value, std::string>::type {
         std::string keyAsString;
         for (const auto &k: key) {
             keyAsString += std::to_string(k) + " ";
@@ -256,7 +256,7 @@ class UtilityFunctions {
 
     template<typename T>
     static auto keyAsString(const T &key)
-    -> typename std::enable_if<!IsStdArray<T>::value, std::string>::type {
+    -> typename std::enable_if<!IsNESArray<T>::value, std::string>::type {
         return std::to_string(key);
     }
 
