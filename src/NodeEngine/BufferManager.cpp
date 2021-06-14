@@ -152,7 +152,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
 
 std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::milliseconds timeout_ms) {
     std::unique_lock lock(availableBuffersMutex);
-    auto pred = [=]() {
+    auto pred = [this]() {
         return !availableBuffers.empty();
     };
     if (!availableBuffersCvar.wait_for(lock, timeout_ms, std::move(pred))) {

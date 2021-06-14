@@ -38,11 +38,6 @@ CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues
     NES_DEBUG("CpuMetrics: Allocating memory for " + std::to_string(numCores) + " metrics.");
 }
 
-CpuMetrics::~CpuMetrics() {
-    NES_DEBUG("CpuMetrics: Freeing memory for metrics.");
-    cpuValues.clear();
-}
-
 uint16_t CpuMetrics::getNumCores() const { return numCores; }
 
 CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const { return cpuValues.at(cpuCore); }

@@ -56,8 +56,6 @@ class TopologySpecificQueryRewritePhase {
      */
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
-    ~TopologySpecificQueryRewritePhase();
-
   private:
     explicit TopologySpecificQueryRewritePhase(StreamCatalogPtr streamCatalog);
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;

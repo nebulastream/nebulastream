@@ -32,7 +32,11 @@ class ConstantExpressionStatement : public ExpressionStatment {
 
     [[nodiscard]] ExpressionStatmentPtr copy() const override;
 
-    ~ConstantExpressionStatement() override;
+    ConstantExpressionStatement() = default;
+
+    ConstantExpressionStatement(const ConstantExpressionStatement&) = default;
+
+    ~ConstantExpressionStatement() override = default;
 
   private:
     GeneratableValueTypePtr constantValue;

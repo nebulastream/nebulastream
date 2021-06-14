@@ -25,7 +25,9 @@ namespace QueryCompilation {
 
 class Declaration {
   public:
-    virtual ~Declaration();
+    Declaration() = default;
+    Declaration(const Declaration&) = default;
+    virtual ~Declaration() = default;
     [[nodiscard]] virtual GeneratableDataTypePtr getType() const = 0;
     [[nodiscard]] virtual std::string getIdentifierName() const = 0;
     [[nodiscard]] virtual Code getTypeDefinitionCode() const = 0;

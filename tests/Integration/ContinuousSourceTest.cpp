@@ -14,8 +14,11 @@
     limitations under the License.
 */
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#pragma clang diagnostic pop
 
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>

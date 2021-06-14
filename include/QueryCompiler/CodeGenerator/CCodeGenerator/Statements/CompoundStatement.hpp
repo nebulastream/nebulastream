@@ -33,7 +33,7 @@ class CompoundStatement : public Statement {
 
     void addStatement(const StatementPtr& stmt);
 
-    ~CompoundStatement() override;
+    ~CompoundStatement() override = default;
 
   private:
     std::vector<StatementPtr> statements{};

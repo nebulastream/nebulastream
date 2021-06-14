@@ -35,8 +35,6 @@ QueryUndeploymentPhase::QueryUndeploymentPhase(TopologyPtr topology,
     NES_DEBUG("QueryUndeploymentPhase()");
 }
 
-QueryUndeploymentPhase::~QueryUndeploymentPhase() { NES_DEBUG("~QueryUndeploymentPhase()"); }
-
 QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology,
                                                          GlobalExecutionPlanPtr globalExecutionPlan,
                                                          WorkerRPCClientPtr workerRpcClient) {

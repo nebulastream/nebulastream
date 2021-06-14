@@ -15,8 +15,11 @@
 */
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#pragma clang diagnostic pop
 
 namespace NES {
 

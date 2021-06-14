@@ -55,7 +55,6 @@ class QueryDeploymentPhase {
      * @return true if successful else false
      */
     bool execute(QueryId queryId);
-    ~QueryDeploymentPhase();
 
   private:
     explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);

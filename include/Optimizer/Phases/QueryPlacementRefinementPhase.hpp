@@ -44,8 +44,6 @@ class QueryPlacementRefinementPhase {
      */
     static bool execute(QueryId queryId);
 
-    ~QueryPlacementRefinementPhase();
-
   private:
     explicit QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan);
 

@@ -66,17 +66,17 @@ using StringSignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<StringSig
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class StringSignatureBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
+class StringSignatureBasedCompleteQueryMergerRule final : public BaseQueryMergerRule {
 
   public:
     static StringSignatureBasedCompleteQueryMergerRulePtr create();
-    virtual ~StringSignatureBasedCompleteQueryMergerRule();
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
+    ~StringSignatureBasedCompleteQueryMergerRule() final = default;
+
   private:
-    explicit StringSignatureBasedCompleteQueryMergerRule();
-    SignatureEqualityUtilPtr signatureEqualityUtil;
+    SignatureEqualityUtilPtr signatureEqualityUtil{nullptr};
 };
 }// namespace NES::Optimizer
 

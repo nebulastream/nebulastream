@@ -61,8 +61,6 @@ class QueryUndeploymentPhase {
      */
     bool execute(QueryId queryId);
 
-    ~QueryUndeploymentPhase();
-
   private:
     explicit QueryUndeploymentPhase(TopologyPtr topology,
                                     GlobalExecutionPlanPtr globalExecutionPlan,

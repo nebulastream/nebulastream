@@ -19,7 +19,7 @@
 #include <utility>
 
 namespace NES::QueryCompilation {
-NamespaceDeclaration::NamespaceDeclaration(Code code) : namespaceCode(std::move(code)) {}
+NamespaceDeclaration::NamespaceDeclaration(Code code) : Declaration(), namespaceCode(std::move(code)) {}
 
 NamespaceDeclarationPtr NamespaceDeclaration::create(const Code& code) { return std::make_shared<NamespaceDeclaration>(code); }
 

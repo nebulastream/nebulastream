@@ -14,7 +14,11 @@
     limitations under the License.
 */
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#pragma clang diagnostic pop
 
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -28,7 +32,7 @@
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <gmock/gmock.h>
+
 #include <iostream>
 
 using namespace std;

@@ -44,11 +44,6 @@ class CpuMetrics {
     [[nodiscard]] CpuValues getTotal() const;
 
     /**
-     * @brief The destructor to deallocate space.
-     */
-    ~CpuMetrics();
-
-    /**
      * @brief Returns the number of cores of the node
      * @return core numbers
      */

@@ -20,7 +20,6 @@
 #include <utility>
 
 namespace NES::QueryCompilation {
-ConstantExpressionStatement::~ConstantExpressionStatement() = default;
 
 StatementType ConstantExpressionStatement::getStamentType() const { return CONSTANT_VALUE_EXPR_STMT; }
 

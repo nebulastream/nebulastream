@@ -15,11 +15,11 @@
 */
 
 #include <memory>
-#include <string>
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES::QueryCompilation {
 std::string toString(const UnaryOperatorType& type) {
@@ -44,7 +44,9 @@ CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type) {
 UnaryOperatorStatement::UnaryOperatorStatement(const ExpressionStatment& expr,
                                                const UnaryOperatorType& op,
                                                BracketMode bracket_mode)
-    : expr_(expr.copy()), op_(op), bracket_mode_(bracket_mode) {}
+    : expr_(expr.copy()), op_(op), bracket_mode_(bracket_mode) {
+    NES_ASSERT(op_ != INVALID_UNARY_OPERATOR_TYPE, "invalid operator");
+}
 
 StatementType UnaryOperatorStatement::getStamentType() const { return UNARY_OP_STMT; }
 CodeExpressionPtr UnaryOperatorStatement::getCode() const {
@@ -70,8 +72,6 @@ CodeExpressionPtr UnaryOperatorStatement::getCode() const {
 }
 
 ExpressionStatmentPtr UnaryOperatorStatement::copy() const { return std::make_shared<UnaryOperatorStatement>(*this); }
-
-UnaryOperatorStatement::~UnaryOperatorStatement() = default;
 
 UnaryOperatorStatement operator&(const ExpressionStatment& ref) { return UnaryOperatorStatement(ref, ADDRESS_OF_OP); }
 UnaryOperatorStatement operator*(const ExpressionStatment& ref) { return UnaryOperatorStatement(ref, DEREFERENCE_POINTER_OP); }

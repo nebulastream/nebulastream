@@ -33,8 +33,6 @@ TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(StreamCatal
     distributeJoinRule = DistributeJoinRule::create();
 }
 
-TopologySpecificQueryRewritePhase::~TopologySpecificQueryRewritePhase() { NES_DEBUG("~TopologySpecificQueryRewritePhase()"); }
-
 QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     queryPlan = logicalSourceExpansionRule->apply(queryPlan);
     queryPlan = distributeJoinRule->apply(queryPlan);

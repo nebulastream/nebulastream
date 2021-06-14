@@ -29,7 +29,8 @@ enum UnaryOperatorType {
     BITWISE_COMPLEMENT_OP,
     LOGICAL_NOT_OP,
     SIZE_OF_TYPE_OP,
-    ABSOLUTE_VALUE_OF_OP
+    ABSOLUTE_VALUE_OF_OP,
+    INVALID_UNARY_OPERATOR_TYPE
 };
 
 const std::string toString(const UnaryOperatorType& type);

@@ -60,7 +60,6 @@ class QueryPlacementPhase {
      * @throws QueryPlacementException
      */
     bool execute(const std::string& placementStrategy, QueryPlanPtr queryPlan);
-    ~QueryPlacementPhase();
 
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,

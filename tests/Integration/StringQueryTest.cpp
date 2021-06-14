@@ -19,8 +19,11 @@
 
 #include <API/Schema.hpp>
 
-#include <gmock/gmock-generated-function-mockers.h>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#pragma clang diagnostic pop
 
 #include <QueryCompiler/GeneratableTypes/Array.hpp>
 

@@ -20,8 +20,6 @@
 namespace NES::QueryCompilation {
 StatementPtr ExpressionStatment::createCopy() const { return this->copy(); }
 
-ExpressionStatment::~ExpressionStatment() = default;
-
 BinaryOperatorStatement ExpressionStatment::operator[](const ExpressionStatment& ref) {
     return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);
 }

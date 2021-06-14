@@ -60,8 +60,6 @@ class TypeInferencePhase {
      */
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
-    ~TypeInferencePhase();
-
   private:
     /**
      * @brief creates the corresponding source descriptor from a given stream name.

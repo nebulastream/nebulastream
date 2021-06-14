@@ -71,13 +71,14 @@ using Z3SignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<Z3SignatureBa
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class Z3SignatureBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
+class Z3SignatureBasedCompleteQueryMergerRule final : public BaseQueryMergerRule {
 
   public:
     static Z3SignatureBasedCompleteQueryMergerRulePtr create(z3::ContextPtr context);
-    virtual ~Z3SignatureBasedCompleteQueryMergerRule();
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
+
+    ~Z3SignatureBasedCompleteQueryMergerRule() noexcept = default;
 
   private:
     explicit Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context);

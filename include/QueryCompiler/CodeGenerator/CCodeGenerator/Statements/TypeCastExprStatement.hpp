@@ -29,6 +29,8 @@ class TypeCastExprStatement : public ExpressionStatment {
 
     [[nodiscard]] ExpressionStatmentPtr copy() const override;
 
+    TypeCastExprStatement(const TypeCastExprStatement&) = default;
+
     TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type);
 
     ~TypeCastExprStatement() override;

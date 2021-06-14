@@ -59,8 +59,6 @@ class QueryRewritePhase {
      */
     QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
 
-    ~QueryRewritePhase();
-
   private:
     explicit QueryRewritePhase(bool applyRulesImprovingSharingIdentification);
     bool applyRulesImprovingSharingIdentification;

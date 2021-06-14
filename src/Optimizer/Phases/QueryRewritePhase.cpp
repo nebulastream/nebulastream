@@ -38,8 +38,6 @@ QueryRewritePhase::QueryRewritePhase(bool applyRulesImprovingSharingIdentificati
     binaryOperatorSortRule = BinaryOperatorSortRule::create();
 }
 
-QueryRewritePhase::~QueryRewritePhase() { NES_DEBUG("~QueryRewritePhase()"); }
-
 QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
     auto duplicateQueryPlan = queryPlan->copy();
     if (applyRulesImprovingSharingIdentification) {

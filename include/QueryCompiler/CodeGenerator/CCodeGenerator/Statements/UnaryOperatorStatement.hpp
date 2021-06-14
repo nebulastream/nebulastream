@@ -34,12 +34,12 @@ class UnaryOperatorStatement : public ExpressionStatment {
 
     [[nodiscard]] ExpressionStatmentPtr copy() const override;
 
-    ~UnaryOperatorStatement() override;
+    ~UnaryOperatorStatement() override = default;
 
   private:
-    ExpressionStatmentPtr expr_;
-    UnaryOperatorType op_;
-    BracketMode bracket_mode_;
+    ExpressionStatmentPtr expr_{nullptr};
+    UnaryOperatorType op_{INVALID_UNARY_OPERATOR_TYPE};
+    BracketMode bracket_mode_{NO_BRACKETS};
 };
 
 UnaryOperatorStatement operator&(const ExpressionStatment& ref);

@@ -35,9 +35,6 @@ Z3SignatureBasedPartialQueryMergerRule::Z3SignatureBasedPartialQueryMergerRule(z
     signatureEqualityUtil = SignatureEqualityUtil::create(std::move(context));
 }
 
-Z3SignatureBasedPartialQueryMergerRule::~Z3SignatureBasedPartialQueryMergerRule() {
-    NES_DEBUG("~Z3SignatureBasedPartialQueryMergerRule()");
-}
 
 Z3SignatureBasedPartialQueryMergerRulePtr Z3SignatureBasedPartialQueryMergerRule::create(z3::ContextPtr context) {
     return std::make_shared<Z3SignatureBasedPartialQueryMergerRule>(Z3SignatureBasedPartialQueryMergerRule(std::move(context)));
