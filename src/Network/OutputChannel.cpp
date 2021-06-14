@@ -152,13 +152,23 @@ bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tuple
     return false;
 }
 
+void OutputChannel::sendReconfigurationMessage(Messages::QueryReconfigurationMessage& reconfigurationMessage) {
+    sendMessage<Messages::QueryReconfigurationMessage>(zmqSocket,
+                                                       channelId,
+                                                       reconfigurationMessage.getQuerySubPlansToStart(),
+                                                       reconfigurationMessage.getQuerySubPlansIdToReplace(),
+                                                       reconfigurationMessage.getQuerySubPlansToStop());
+}
+
 void OutputChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR(errorMsg.getErrorTypeAsString()); }
 
-void OutputChannel::close() {
+void OutputChannel::close(bool notifyRelease) {
     if (isClosed) {
         return;
     }
-    sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId);
+    if (notifyRelease) {
+        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId);
+    }
     zmqSocket.close();
     NES_DEBUG("OutputChannel: Socket closed for " << channelId);
     isClosed = true;
