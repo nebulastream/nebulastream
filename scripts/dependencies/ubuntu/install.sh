@@ -39,8 +39,11 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   git \
   wget \
   z3 \
-  tar \
-  cmake
+  tar
+
+wget https://github.com/Kitware/CMake/archive/refs/tags/v3.18.5.tar.gz
+tar -zxvf v3.18.5.tar.gz
+cd CMake-3.18.5 && ./bootstrap && make -j && sudo make -j install && cd .. && rm -rf CMake-3.18.5 && rm v3.18.5.tar.gz
 
 sudo add-apt-repository ppa:open62541-team/ppa -qq && \
   sudo apt-get update && \
@@ -56,7 +59,7 @@ cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
   sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
   git clone https://github.com/eclipse/paho.mqtt.cpp && cd paho.mqtt.cpp && \
   cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE && \
-  sudo cmake --build build/ --target install && sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
+  sudo cmake --build build/ --target install && sudo ldconfig && cd ${HOME} && sudo rm -rf paho.mqtt.cpp
 
 git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && \
