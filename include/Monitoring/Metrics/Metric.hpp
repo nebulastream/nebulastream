@@ -79,7 +79,7 @@ class Metric {
      * @return the value
      */
     template<typename T>
-    [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] T& getValue() const {
+    [[nodiscard]] T& getValue() const {
         return dynamic_cast<model<T>*>(self.get())->data;
     }
 

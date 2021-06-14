@@ -409,7 +409,7 @@ class Node {
         *
         */
     template<typename T>
-    [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] T As() const {
+    [[nodiscard]] T As() const {
         return impl::StringConverter<T>::Get(AsString());
     }
 
