@@ -39,6 +39,8 @@ class ExchangeProtocol {
     explicit ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
                               std::shared_ptr<ExchangeProtocolListener> listener);
 
+    ExchangeProtocol(ExchangeProtocol const& other);
+
     ~ExchangeProtocol();
 
     /**
@@ -89,6 +91,7 @@ class ExchangeProtocol {
   private:
     std::shared_ptr<PartitionManager> partitionManager;
     std::shared_ptr<ExchangeProtocolListener> protocolListener;
+    mutable std::mutex reconfigurationMutex;
 };
 
 }// namespace Network
