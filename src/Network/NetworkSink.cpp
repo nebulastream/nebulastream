@@ -104,6 +104,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                                         << NodeEngine::NesThread::getId());
             break;
         }
+        case NodeEngine::BufferData: {
+            NES_DEBUG("Buffering Data for every Threads OutputChannel");
+        }
         default: {
             break;
         }
