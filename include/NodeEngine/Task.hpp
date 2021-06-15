@@ -90,7 +90,7 @@ class alignas(64) Task {
     Execution::SuccessorExecutablePipeline pipeline{};
     TupleBuffer buf{};
     uint64_t id{std::numeric_limits<decltype(id)>::max()};
-    char padding[8];
+
 };
 static_assert(sizeof(Task)==64);
 }// namespace NES::NodeEngine

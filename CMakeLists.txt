@@ -13,7 +13,7 @@
 # limitations under the License.
 cmake_minimum_required(VERSION 3.18.0)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v1)
 set(VCPKG_TARGET_TRIPLET x64-linux-nes)
 function(download_file url filename hash_type hash)
@@ -76,6 +76,7 @@ else ()
     else ()
         message(STATUS "Use system compiler")
     endif ()
+    message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 endif ()
 
 project(NES CXX)
@@ -108,8 +109,6 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 # C++ Standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
 # Set NES Flags
 set(NES_SPECIFIC_FLAGS)
