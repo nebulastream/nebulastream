@@ -26,7 +26,8 @@
 
 namespace NES::NodeEngine {
 
-Task::Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer buffer) : pipeline(std::move(pipeline)), buf(std::move(buffer)) {
+Task::Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer buffer)
+    : pipeline(std::move(pipeline)), buf(std::move(buffer)) {
     id = UtilityFunctions::getNextTaskId();
 }
 

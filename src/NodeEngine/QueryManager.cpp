@@ -31,7 +31,6 @@
 #include <stack>
 #include <utility>
 
-
 namespace NES::NodeEngine {
 
 namespace detail {
