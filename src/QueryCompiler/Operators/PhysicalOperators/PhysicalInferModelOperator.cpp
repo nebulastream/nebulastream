@@ -43,7 +43,7 @@ PhysicalInferModelOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields);
 }
 
-const std::string PhysicalInferModelOperator::toString() const { return "PhysicalInferModelOperator"; }
+std::string PhysicalInferModelOperator::toString() const { return "PhysicalInferModelOperator"; }
 
 OperatorNodePtr PhysicalInferModelOperator::copy() { return create(id, inputSchema, outputSchema, model, inputFields, outputFields); }
 

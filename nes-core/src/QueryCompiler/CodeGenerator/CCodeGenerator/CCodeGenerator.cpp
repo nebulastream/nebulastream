@@ -412,7 +412,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
 
     code->currentCodeInsertionPoint->addStatement(generateTensorFlowInferCall);
 
-    for (int i = 0; i < outputFields.size(); ++i) {
+    for (unsigned long i = 0; i < outputFields.size(); ++i) {
         auto field = outputFields.at(i)->getExpressionNode()->as<FieldAccessExpressionNode>();
         auto attrField = AttributeField::create(field->getFieldName(), field->getStamp()) ;
 

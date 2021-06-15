@@ -28,13 +28,6 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <tensorflow/lite/model_builder.h>
-
-//#include "../../../../tensorflow_src/tensorflow/lite/interpreter.h"
-//#include "tensorflow/lite/kernels/register.h"
-//#include "../../../../tensorflow_src/tensorflow/lite/model.h"
-//#include "../../../../tensorflow_src/tensorflow/lite/model_builder.h"
-//#include "../../../../tensorflow_src/tensorflow/lite/optional_debug_tools.h"
 
 namespace NES {
 
@@ -240,8 +233,6 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
 
 TEST_F(SemanticQueryValidationTest, validInferModelTest) {
     NES_INFO("Valid inferModel test");
-
-    std::unique_ptr<tflite::FlatBufferModel> ml_model;
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);

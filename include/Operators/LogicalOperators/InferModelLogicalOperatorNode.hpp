@@ -15,7 +15,7 @@
 */
 
 #ifndef INFER_MODEL_LOGICAL_OPERATOR_NODE_HPP
-#define INFER_MODEL_OPERATOR_NODE_HPP
+#define INFER_MODEL_LOGICAL_OPERATOR_NODE_HPP
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -28,10 +28,10 @@ namespace NES {
 class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItem> inputFields, std::vector<ExpressionItem> outputFields, OperatorId id);
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
-    bool equal(const NodePtr rhs) const override;
-    bool isIdentical(NodePtr rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     bool inferSchema() override;
     void inferStringSignature() override;
     const std::string& getModel() const;

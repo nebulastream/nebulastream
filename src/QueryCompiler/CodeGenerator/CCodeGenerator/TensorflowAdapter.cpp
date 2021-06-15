@@ -15,10 +15,10 @@
 */
 
 #include "QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/kernels/register.h"
-#include "tensorflow/lite/model.h"
-#include "tensorflow/lite/optional_debug_tools.h"
+//#include "tensorflow/lite/interpreter.h"
+//#include "tensorflow/lite/kernels/register.h"
+//#include "tensorflow/lite/model.h"
+//#include "tensorflow/lite/optional_debug_tools.h"
 #include <iostream>
 #include <stdio.h>
 #include <stdarg.h>
@@ -34,41 +34,43 @@ NES::TensorflowAdapter::TensorflowAdapter() {}
 void NES::TensorflowAdapter::initializeModel(std::string model){
     std::cout << "INITIALIZING MODEL: " << model << std::endl;
 
-    std::unique_ptr<tflite::FlatBufferModel> ml_model =
-        tflite::FlatBufferModel::BuildFromFile(model.c_str());
-
-    tflite::ops::builtin::BuiltinOpResolver resolver;
-    tflite::InterpreterBuilder builder(*ml_model, resolver);
-
-    builder(&interpreter);
-    TFLITE_MINIMAL_CHECK(interpreter != nullptr);
-
-    // Allocate tensor buffers.
-    TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
+//    std::unique_ptr<tflite::FlatBufferModel> ml_model =
+//        tflite::FlatBufferModel::BuildFromFile(model.c_str());
+//
+//    tflite::ops::builtin::BuiltinOpResolver resolver;
+//    tflite::InterpreterBuilder builder(*ml_model, resolver);
+//
+//    builder(&interpreter);
+//    TFLITE_MINIMAL_CHECK(interpreter != nullptr);
+//
+//    // Allocate tensor buffers.
+//    TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
 }
 
-NES::SemanticQueryValidationPtr NES::TensorflowAdapter::create() {
+ NES::TensorflowAdapterPtr NES::TensorflowAdapter::create() {
     return std::make_shared<TensorflowAdapter>();
 }
 
 float NES::TensorflowAdapter::getResultAt(int i) {
+    return 42.0f;
     return output[i];
 }
 
 void NES::TensorflowAdapter::infer(int n, ...){
+    std::cout << "inference... " << std::endl;
     va_list vl;
     va_start(vl, n);
 
-    float* input = interpreter->typed_input_tensor<float>(0);
-
-    for (int i = 0; i < n; ++i) {
-        input[i] = (float) va_arg(vl, double);
-    }
-
-    va_end(vl);
-
-    // Run inference
-    TFLITE_MINIMAL_CHECK(interpreter->Invoke() == kTfLiteOk);
-
-    output = interpreter->typed_output_tensor<float>(0);
+//    float* input = interpreter->typed_input_tensor<float>(0);
+//
+//    for (int i = 0; i < n; ++i) {
+//        input[i] = (float) va_arg(vl, double);
+//    }
+//
+//    va_end(vl);
+//
+//    // Run inference
+//    TFLITE_MINIMAL_CHECK(interpreter->Invoke() == kTfLiteOk);
+//
+//    output = interpreter->typed_output_tensor<float>(0);
 }

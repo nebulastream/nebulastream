@@ -18,10 +18,6 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/kernels/register.h"
-#include "tensorflow/lite/model.h"
-#include "tensorflow/lite/optional_debug_tools.h"
 
 #define TFLITE_MINIMAL_CHECK(x)                              \
   if (!(x)) {                                                \
@@ -38,7 +34,7 @@ InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model, 
     this->outputFields = outputFields;
 }
 
-const std::string InferModelLogicalOperatorNode::toString() const {
+std::string InferModelLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "Model: " << model << std::endl;
     ss << "input fields:" << std::endl;
@@ -60,7 +56,7 @@ OperatorNodePtr InferModelLogicalOperatorNode::copy() {
     copy->setZ3Signature(z3Signature);
     return copy;
 }
-bool InferModelLogicalOperatorNode::equal(const NodePtr rhs) const {
+bool InferModelLogicalOperatorNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<InferModelLogicalOperatorNode>()) {
         auto inferModelOperator = rhs->as<InferModelLogicalOperatorNode>();
         return model == inferModelOperator->model;
@@ -68,7 +64,7 @@ bool InferModelLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-bool InferModelLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+bool InferModelLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<InferModelLogicalOperatorNode>()->getId() == id;
 }
 
