@@ -30,6 +30,8 @@ uint64_t QueryStatistics::getLatencySum() const { return latencySum.load(); }
 
 uint64_t QueryStatistics::getQueueSizeSum() const { return queueSizeSum.load(); }
 
+uint64_t QueryStatistics::getAvailableBufferSum() const { return availableBufferSum.load(); }
+
 void QueryStatistics::setProcessedTasks(uint64_t processedTasks) { this->processedTasks = processedTasks; }
 
 void QueryStatistics::setProcessedTuple(uint64_t processedTuple) { this->processedTuple = processedTuple; }
@@ -42,6 +44,7 @@ void QueryStatistics::incProcessedWatermarks() { this->processedWatermarks++; }
 void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTuple += tupleCnt; }
 void QueryStatistics::incLatencySum(uint64_t latency) { this->latencySum += latency; }
 void QueryStatistics::incQueueSizeSum(uint64_t size) { this->queueSizeSum += size; }
+void QueryStatistics::incAvailableBufferSum(uint64_t size){ this->availableBufferSum += size; }
 
 void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) { this->processedBuffers = processedBuffers; }
 
@@ -59,8 +62,24 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedWatermarks=" << processedWatermarks.load();
     ss << " latencySum=" << latencySum.load();
     ss << " queueSizeSum=" << queueSizeSum.load();
+    ss << " availableBufferSum=" << availableBufferSum.load();
     return ss.str();
 }
 uint64_t QueryStatistics::getQueryId() const { return queryId.load(); }
 uint64_t QueryStatistics::getSubQueryId() const { return subQueryId.load(); }
-}// namespace NES::Runtime
+
+QueryStatistics::QueryStatistics(const QueryStatistics& other)
+{
+    processedTasks = other.processedTasks.load();
+    processedTuple = other.processedTuple.load();
+    processedBuffers = other.processedBuffers.load();
+    processedWatermarks = other.processedWatermarks.load();
+    latencySum = other.latencySum.load();
+    queueSizeSum = other.queueSizeSum.load();
+    availableBufferSum = other.availableBufferSum.load();
+    queryId = other.queryId.load();
+    subQueryId = other.subQueryId.load();
+    tsToLatencyMap = other.tsToLatencyMap;
+}
+
+}// namespace NES::NodeEngine

@@ -23,9 +23,14 @@
 #include <vector>
 namespace NES::Runtime {
 
+class QueryStatistics;
+using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
+
 class QueryStatistics {
   public:
     QueryStatistics(uint64_t queryId, uint64_t subQueryId) : queryId(queryId), subQueryId(subQueryId){};
+
+    QueryStatistics(const QueryStatistics& other);
 
     /**
      * @brief getter for processedTasks
@@ -95,6 +100,17 @@ class QueryStatistics {
     void incQueueSizeSum(uint64_t size);
 
     /**
+     * @brief get sum of all available buffers
+     * @return value
+     */
+    [[nodiscard]] uint64_t getAvailableBufferSum() const;
+
+    /**
+    * @brief increment available buffer sum
+    */
+    void incAvailableBufferSum(uint64_t size);
+
+    /**
      * @brief get sum of all queue sizes
      * @return value
      */
@@ -149,12 +165,14 @@ class QueryStatistics {
     std::atomic<uint64_t> processedWatermarks = 0;
     std::atomic<uint64_t> latencySum = 0;
     std::atomic<uint64_t> queueSizeSum = 0;
+    std::atomic<uint64_t> availableBufferSum = 0;
+
+  private:
     std::atomic<uint64_t> queryId = 0;
     std::atomic<uint64_t> subQueryId = 0;
     std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;
 };
 
-using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 
 }// namespace NES::Runtime
 
