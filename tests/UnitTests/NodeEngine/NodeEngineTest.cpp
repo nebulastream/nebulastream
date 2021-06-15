@@ -305,7 +305,7 @@ TEST_F(EngineTest, testStartStopEngineEmpty) {
     EXPECT_TRUE(engine->stop());
 }
 
-TEST_F(EngineTest, teststartDeployStop) {
+TEST_F(EngineTest, DISABLED_teststartDeployStop) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
