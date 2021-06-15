@@ -442,11 +442,34 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
     std::cerr << "Exception: " << exception->what() << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;
 }
-bool NodeEngine::bufferData(QueryId) { return true; }
+bool NodeEngine::bufferData(const std::map<QuerySubPlanId, std::vector<uint64_t>>& queryToNetworkSinkIdsMap) {
+    //TODO: add error handling/return false in some cases
+    NES_DEBUG("NodeEngine: Received request to buffer Data on network Sinks");
+    NodeEnginePtr self = this->inherited1::shared_from_this();
+    std::unique_lock lock(engineMutex);
+    for (auto& entry : queryToNetworkSinkIdsMap) {
+        NES_DEBUG(entry.first);
+        auto qep = deployedQEPs[entry.first];
+        auto networkSinks = qep->getSinks();
+
+        for(auto sinkId: entry.second){
+            auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[sinkId](const DataSinkPtr& dataSink){
+              return dataSink->getOperatorId() == sinkId;
+            });
+            if(it != networkSinks.end()){
+                auto networkSink = *it;
+                ReconfigurationMessage message = ReconfigurationMessage(entry.first,BufferData,networkSink);
+                queryManager->addReconfigurationMessage(entry.first,message,true);
+            }
+        }
+    }
+    return true;
+}
 
 bool NodeEngine::updateNetworkSinks(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort,
                                     const std::map<QuerySubPlanId, std::vector<uint64_t>>& queryToNetworkSinkIdsMap) {
 
+    //TODO: add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Recieved request to update Network Sinks");
     NodeEnginePtr self = this->inherited1::shared_from_this();
     NodeLocationPOD pod{newNodeId, newHostname, newPort};
@@ -466,26 +489,8 @@ bool NodeEngine::updateNetworkSinks(uint64_t newNodeId, const std::string& newHo
                 queryManager->addReconfigurationMessage(entry.first,message,true);
             }
         }
-        //auto qepPendingNetworkSinkUpdate = deployedQEPs[querySubPlanId];
-        //       //TODO: for every NetworkSink that has the old node location, update it to new nodeLocation
-        //
-        //        for(auto& dataSink : qepPendingNetworkSinkUpdate->getSinks()){
-        //            NES_DEBUG(oldNodeId);
-        //            NES_DEBUG(oldHostname);
-        //            NES_DEBUG(oldPort);
-        //            //filter out NetworkSinks
-        //            //check if node location matches old data
-        //            //if yes add reconfigurationMessage
-        //            auto networkSink = dataSink.get();
-        //            NES_DEBUG(networkSink->getSinkMediumType());
-        //
-        //            NES_DEBUG(dataSink->toString());
-        //            DataSinkPtr sink;
-        //            ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,dataSink, pod);
-        //            queryManager->addReconfigurationMessage(querySubPlanId,message,true);
     }
     return true;
-    //TODO: update emitFunctionHandler of the last Pipeline of every qep with updated network Sinks
 }
 void NodeEngine::onRemoveQEP(Network::Messages::RemoveQEPMessage msg) {
     NES_DEBUG("Going to inject RemoveQEPMessage for " << msg.getChannelId().getNesPartition());

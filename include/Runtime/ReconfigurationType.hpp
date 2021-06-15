@@ -35,6 +35,8 @@ enum ReconfigurationType : uint8_t {
     RemoveQEP,
     //RemoveSink used by RemoveQEP reconfig flow to remove Sinks without propagating EoS
     RemoveSink,
+    //BufferData used to signal NetworkSinks to begin buffering data on their OutputChannels
+    BufferData,
 };
 }
 

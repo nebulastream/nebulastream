@@ -153,7 +153,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     bool stopQuery(QueryId queryId, bool graceful = false);
 
-    bool bufferData(QueryId);
+    bool bufferData(const std::map<QuerySubPlanId , std::vector<uint64_t>>& queryToNetworkSinkIdsMap);
 
     /**
      * @brief release all resource of the node engine
