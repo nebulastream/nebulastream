@@ -40,7 +40,7 @@ class CoordinatorRPCClient {
 
     ~CoordinatorRPCClient();
     /**
-     * @brief this methods registers a physical stream via the coordinator to a logical stream
+     * @brief this methods registers a physical stream via the coordinator to multiple logical streams
      * @param configuration of the stream
      * @return bool indicating success
      */

@@ -21,6 +21,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -46,7 +47,8 @@ bool CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPt
     request.set_id(workerId);
     request.set_sourcetype(conf->getSourceType());
     request.set_physicalstreamname(conf->getPhysicalStreamName());
-    request.set_logicalstreamname(conf->getLogicalStreamName());
+    auto logicalStreamNames = conf->getLogicalStreamName();
+    request.set_logicalstreamname(UtilityFunctions::combineStringsWithDelimiter(logicalStreamNames, ","));
     NES_DEBUG("RegisterPhysicalStreamRequest::RegisterLogicalStreamRequest request=" << request.DebugString());
 
     RegisterPhysicalStreamReply reply;

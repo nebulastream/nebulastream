@@ -89,7 +89,6 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
         // BDAPRO add handling of registration of physical stream if no logicalStreamName exists
-        // BDAPRO combine with #1926 first, as their the correct mapping exists
         bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
         if (!success) {
             NES_ERROR("CoordinatorEngine::registerNode: physical stream " << streamConf->getPhysicalStreamName()
@@ -169,7 +168,7 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
     }
     StreamCatalogEntryPtr sce =
         std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
-    bool success = streamCatalog->addPhysicalStream(logicalStreamName, sce);
+    bool success = streamCatalog->addPhysicalStream(UtilityFunctions::splitWithStringDelimiter(logicalStreamName, ","), sce);
     return success;
 }
 
