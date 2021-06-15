@@ -467,7 +467,7 @@ void NodeEngine::onDataBuffer(Network::NesPartition, TupleBuffer&) {
 
 bool NodeEngine::onClientAnnouncement(Network::Messages::ClientAnnounceMessage msg) {
     auto nesPartition = msg.getChannelId().getNesPartition();
-    if (partitionManager->isRegistered(nesPartition)) {
+    if (partitionManager->isRegistered(nesPartition) && !partitionsWaitingRegistration.contains(nesPartition)) {
         // increment the counter
         partitionManager->pinSubpartition(nesPartition);
         NES_DEBUG("NodeEngine::onClientAnnouncement: received for " << msg.getChannelId().toString() << " REGISTERED");
@@ -500,16 +500,14 @@ void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationM
     for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStart()) {
         auto foundQueryReconfigurationQEP = reconfigurationQEPs.find(querySubPlanId);
         if (foundQueryReconfigurationQEP != reconfigurationQEPs.end()) {
-            // start qep
-            auto qep = reconfigurationQEPs[querySubPlanId];
+            // start qepToStart
+            auto qepToStart = reconfigurationQEPs[querySubPlanId];
             if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
-                if (!registerQueryInNodeEngine(qep, true)) {
+                if (!registerQueryInNodeEngine(qepToStart, true)) {
                     NES_DEBUG("NodeEngine::onQueryReconfiguration: register of QEP " << querySubPlanId << " added");
                 }
             }
-            queryManager->triggerQepStartReconfiguration(reconfigurationQEPs[querySubPlanId],
-                                                         stateManager,
-                                                         queryReconfigurationMessage);
+            queryManager->triggerQepStartReconfiguration(qepToStart, stateManager, queryReconfigurationMessage);
         }
     }
     for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStop()) {
