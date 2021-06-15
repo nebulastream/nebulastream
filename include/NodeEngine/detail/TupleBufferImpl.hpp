@@ -122,7 +122,7 @@ class BufferControlBlock {
     * @brief method to get the sequence number
     * @return sequence number
     */
-    uint64_t getSequenceNumber() const noexcept;
+    [[nodiscard]] uint64_t getSequenceNumber() const noexcept;
 
     /**
      * @brief method to set the sequenceNumber
