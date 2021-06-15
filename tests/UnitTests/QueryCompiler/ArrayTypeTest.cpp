@@ -139,6 +139,9 @@ auto eq(QueryCompilation::Array<T, s> const& l, std::vector<T>&& r) -> bool {
     return true;
 }
 
+/// @brief Test << (insertion) operator of char array
+TEST_F(ArrayTypeTest, ArrayInsertionOperator) { NES_DEBUG("Test: " << (QueryCompilation::Array<char, 4>{"abc"})); }
+
 /// @brief Test type, size and content of QueryCompilation::Arrays.
 TEST_F(ArrayTypeTest, testInitialization) {
 

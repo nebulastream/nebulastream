@@ -100,7 +100,7 @@ class ExecutableCompleteAggregationTriggerAction
                              currentWatermark,
                              lastWatermark);//put key into this
                         NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
-                                                                                 << "): " << toString() << " check key=" << UtilityFunctions::keyAsString(it.first)
+                                                                                 << "): " << toString() << " check key=" << it.first
                                                                                  << "nextEdge=" << it.second->nextEdge << " id=" << id);
         }
 
