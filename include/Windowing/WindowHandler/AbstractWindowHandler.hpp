@@ -51,7 +51,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
     explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition)
         : windowDefinition(std::move(windowDefinition)), running(false) {
         this->watermarkProcessor =
-            MultiOriginWatermarkProcessor::create(windowDefinition->getNumberOfInputEdges());
+            MultiOriginWatermarkProcessor::create(this->windowDefinition->getNumberOfInputEdges());
     }
 
     ~AbstractWindowHandler() noexcept(false) override = default;
