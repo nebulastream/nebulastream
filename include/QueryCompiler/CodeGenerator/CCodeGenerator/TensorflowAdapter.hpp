@@ -27,18 +27,18 @@ namespace tflite {
 namespace NES {
 
 class TensorflowAdapter;
-typedef std::shared_ptr<TensorflowAdapter> SemanticQueryValidationPtr;
+typedef std::shared_ptr<TensorflowAdapter> TensorflowAdapterPtr;
 
 class TensorflowAdapter {
   public:
-    static SemanticQueryValidationPtr create();
+    static TensorflowAdapterPtr create();
     TensorflowAdapter();
     void infer(int n, ...);
     float getResultAt(int i);
     void initializeModel(std::string model);
     void pass() {}
   private:
-    std::unique_ptr<tflite::Interpreter> interpreter;
+//    std::unique_ptr<tflite::Interpreter> interpreter;
     float* output{};
 };
 

@@ -51,7 +51,7 @@ void GeneratableInferModelOperator::generateExecute(CodeGeneratorPtr codegen, Pi
     codegen->generateCodeForInferModel(context, model, inputFields, outputFields);
 }
 
-const std::string GeneratableInferModelOperator::toString() const { return "GeneratableInferModelOperator"; }
+std::string GeneratableInferModelOperator::toString() const { return "GeneratableInferModelOperator"; }
 
 OperatorNodePtr GeneratableInferModelOperator::copy() { return create(id, inputSchema, outputSchema, model, inputFields, outputFields); }
 
