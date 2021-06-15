@@ -74,6 +74,12 @@ class NetworkSource : public DataSource {
     bool stop(bool = false) final;
 
     /**
+     * Get NesPartition associated with network source
+     * @return nesPartition
+     */
+    NesPartition getNesPartition();
+
+    /**
      * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
      * @param bufferManager
      * @param queryManager

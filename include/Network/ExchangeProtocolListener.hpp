@@ -36,6 +36,12 @@ class ExchangeProtocolListener {
      */
     virtual void onDataBuffer(NesPartition, Runtime::TupleBuffer&) = 0;
     /**
+     * @brief This is called when a client announcement message is received.
+     * Should handle lazy partition registration.
+     * @param ClientAnnounceMessage: Message received from client
+     */
+    virtual bool onClientAnnouncement(Messages::ClientAnnounceMessage msg) = 0;
+    /**
      * @brief this is called once a nes partition receives an end of stream message
      */
     virtual void onEndOfStream(Messages::EndOfStreamMessage) = 0;
