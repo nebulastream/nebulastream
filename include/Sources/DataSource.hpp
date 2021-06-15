@@ -230,7 +230,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     std::chrono::milliseconds gatheringInterval{0};
     GatheringMode gatheringMode;
     SourceType type;
-    std::atomic<bool> wasGracefullyStopped{false};
+    std::atomic<bool> wasGracefullyStopped{true};
 
     /**
      * @brief Emits a tuple buffer to the successors.
