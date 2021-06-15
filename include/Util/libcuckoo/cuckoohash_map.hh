@@ -725,7 +725,7 @@ private:
     // true if the key is small and simple, which means using partial keys for
     // lookup would probably slow us down
     static constexpr bool is_simple() {
-        return std::is_pod<key_type>::value && sizeof(key_type) <= 8;
+        return std::is_trivial<key_type>::value && sizeof(key_type) <= 8;
     }
 
     // Whether or not the data is nothrow-move-constructible.
