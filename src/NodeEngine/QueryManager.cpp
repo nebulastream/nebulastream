@@ -532,7 +532,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 #else
     if (threadPool->getNumberOfThreads() > 1) {
         std::vector<Task> batch;
-        for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+        for (size_t i = 0; i < threadPool->getNumberOfThreads(); ++i) {
             //            batch.emplace_back(pipeline, buffer);
             taskQueue.write(Task(pipeline, buffer));
         }
