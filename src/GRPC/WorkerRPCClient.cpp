@@ -362,30 +362,33 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     return false;
 }
 bool WorkerRPCClient::bufferData(std::string address, std::map<QuerySubPlanId, std::vector<uint64_t>> querySubPlanIdToNetworkSinksMap) {
-    NES_DEBUG(address);
-    NES_DEBUG(querySubPlanIdToNetworkSinksMap.size());
-//TODO: update for map
-//    NES_DEBUG("WorkerRPCClient::stopQuery address=" << address << " queryId=" << queryId);
-//
-//    BufferRequest request;
-//    request.set_queryid(queryId);
-//
-//    BufferReply reply;
-//    ClientContext context;
-//
-//    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-//    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-//    Status status = workerStub->BeginBuffer(&context, request, &reply);
-//
-//    if (status.ok()) {
-//        NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
-//        return reply.success();
-//    } else {
-//        NES_ERROR(" WorkerRPCClient::BeginBuffer "
-//                  "error="
-//                      << status.error_code() << ": " << status.error_message());
-//        throw Exception("Error while WorkerRPCClient::stopQuery");
-//    }
+    NES_DEBUG("WorkerRPCClient::stopQuery address=" << address);
+
+    BufferRequest request;
+    for(auto& pair: querySubPlanIdToNetworkSinksMap){
+        request.add_querysubplanids(pair.first);
+        auto networkSinkMessage = request.add_networksinkids();
+        for(auto& id : pair.second){
+            networkSinkMessage->add_networksinkid(id);
+        }
+    }
+
+    BufferReply reply;
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->BeginBuffer(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
+        return reply.success();
+    } else {
+        NES_ERROR(" WorkerRPCClient::BeginBuffer "
+                  "error="
+                      << status.error_code() << ": " << status.error_message());
+        throw Exception("Error while WorkerRPCClient::stopQuery");
+    }
     return false;
 }
 bool WorkerRPCClient::updateNetworkSinks(const std::string& address,

@@ -126,8 +126,21 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     }
 }
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
-    NES_DEBUG("WorkerRPCServer::BeginBuffer: got request for " << request->queryid());
-    bool success = nodeEngine->bufferData(request->queryid());
+    NES_DEBUG("WorkerRPCServer::BeginBuffer");
+
+    auto querySubPlanNumber = request->querysubplanids_size();
+    auto networkSinkIdMessageNumber = request->networksinkids_size();
+    NES_ASSERT(querySubPlanNumber == networkSinkIdMessageNumber, "NodeEngine: BeginBuffer: Different amount of entries QSP and network Ids ");
+    std::map<QuerySubPlanId , std::vector<uint64_t>> queryToSinkIdsMap;
+    for(uint32_t i = 0; i<querySubPlanNumber; i++){
+        queryToSinkIdsMap.insert(std::pair<uint64_t, std::vector<uint64_t>> (request->querysubplanids(i), {}));
+        for(uint32_t j = 0; j<networkSinkIdMessageNumber; j++){
+            if(!(queryToSinkIdsMap.find(request->querysubplanids(i)) == queryToSinkIdsMap.end())){
+                queryToSinkIdsMap[request->querysubplanids(i)].push_back(request->networksinkids(i).networksinkid(j));
+            }
+        }
+    }
+    bool success = nodeEngine->bufferData(queryToSinkIdsMap);
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);

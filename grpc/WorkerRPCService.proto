@@ -115,7 +115,8 @@ message UpdateNetworkSinksReply{
   bool success = 1;
 }
 message BufferRequest {
-  uint64 queryId = 1;
+  repeated uint64 querySubPlanIds = 4;
+  repeated NetworkSinks networkSinkIds = 5;
 }
 
 message BufferReply{
