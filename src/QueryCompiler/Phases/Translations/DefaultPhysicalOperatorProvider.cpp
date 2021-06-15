@@ -13,10 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -29,6 +29,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -172,7 +173,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
     operatorNode->replace(physicalMapOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(const QueryPlanPtr, const LogicalOperatorNodePtr operatorNode) {
     auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();
     auto physicalCEpIterationOperator = PhysicalOperators::PhysicalIterationCEPOperator::create(iterationOperator->getInputSchema(),
                                                                               iterationOperator->getOutputSchema(),
