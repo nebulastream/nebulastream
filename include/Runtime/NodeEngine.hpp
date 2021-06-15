@@ -253,7 +253,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief this callback is called once a client announcement message arrives at network manager
-     * When partition is registered then increment producer. otherwise if present in partitionsWaitingRegistration then
+     * When partition is registered and not in pendingRegistration then increment producer. otherwise if present in partitionsWaitingRegistration then
      * partition will be registered lazily after channel is established. Otherwise error.
      */
     bool onClientAnnouncement(Network::Messages::ClientAnnounceMessage msg) override;
