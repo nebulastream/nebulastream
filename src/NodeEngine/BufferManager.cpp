@@ -29,7 +29,7 @@
 namespace NES::NodeEngine {
 
 BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment)
-    : bufferSize(bufferSize), numOfBuffers(numOfBuffers), availableBuffers(numOfBuffers) {
+    : availableBuffers(numOfBuffers), bufferSize(bufferSize), numOfBuffers(numOfBuffers) {
     initialize(withAlignment);
 }
 
@@ -84,8 +84,6 @@ void BufferManager::initialize(uint32_t withAlignment) {
     long page_size = sysconf(_SC_PAGE_SIZE);
     auto memorySizeInBytes = static_cast<uint64_t>(pages * page_size);
 
-    this->bufferSize = bufferSize;
-    this->numOfBuffers = numOfBuffers;
     uint64_t requiredMemorySpace = (uint64_t) this->bufferSize * (uint64_t) this->numOfBuffers;
     NES_DEBUG("NES malloc " << requiredMemorySpace << " out of " << memorySizeInBytes << " available bytes");
 
@@ -179,6 +177,13 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
     }
     auto* memSegment = availableBuffers.front();
     availableBuffers.pop_front();
+#else
+    detail::MemorySegment* memSegment;
+    auto deadline = std::chrono::steady_clock::now() + timeout_ms;
+    if (!availableBuffers.tryReadUntil(deadline, memSegment)) {
+        return std::nullopt;
+    }
+#endif
     if (memSegment->controlBlock->prepare()) {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     }
