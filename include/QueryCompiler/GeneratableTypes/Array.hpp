@@ -379,4 +379,22 @@ template<typename J>
 Array(J const& array) -> Array<std::decay_t<decltype(array[0])>, std::extent<J>::value>;
 }// namespace NES::QueryCompilation
 
+/**
+ * Specialize the std::hash for NES Array data type
+ * @tparam T data type stored in the array
+ * @tparam N size of the array
+ */
+template<class T, size_t N>
+struct std::hash<NES::QueryCompilation::Array<T, N>> {
+    auto operator() (const NES::QueryCompilation::Array<T, N>& key) const {
+        std::hash<T> hasher;
+        size_t result = 0;
+        for(size_t i = 0; i < N; ++i) {
+            result = result * 31 + hasher(key[i]); // taken from https://codereview.stackexchange.com/questions/171999/specializing-stdhash-for-stdarray
+        }
+        return result;
+    }
+};
+
+
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_ARRAYTYPE_HPP_
