@@ -23,7 +23,6 @@
 #include <cpprest/json.h>
 #include <map>
 #include <string>
-#include <QueryCompiler/GeneratableTypes/Array.hpp>
 
 /*
 - * The above undef ensures that NES will compile.
