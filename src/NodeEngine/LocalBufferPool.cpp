@@ -23,7 +23,11 @@ namespace NES::NodeEngine {
 LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,
                                  std::deque<detail::MemorySegment*>&& buffers,
                                  size_t numberOfReservedBuffers)
-    : bufferManager(bufferManager), exclusiveBuffers(numberOfReservedBuffers), numberOfReservedBuffers(numberOfReservedBuffers) {
+    : bufferManager(bufferManager),
+#ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
+      exclusiveBuffers(numberOfReservedBuffers),
+#endif
+      numberOfReservedBuffers(numberOfReservedBuffers) {
 
     while (!buffers.empty()) {
         auto* memSegment = buffers.front();
