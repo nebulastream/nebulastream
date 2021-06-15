@@ -128,7 +128,7 @@ TupleBuffer LocalBufferPool::getBufferBlocking() {
             return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
         } else {
             NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
-                                        << memSegment->controlBlock->getReferenceCount());
+                                    << memSegment->controlBlock->getReferenceCount());
         }
     }
     return bufferManager.lock()->getBufferBlocking();
