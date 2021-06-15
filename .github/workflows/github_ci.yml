@@ -23,8 +23,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          persist-credentials: 'false'
+          ssh-strict: 'false'cd ..
+            -
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
