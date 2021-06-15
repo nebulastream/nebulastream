@@ -103,7 +103,6 @@ class OPCSource : public DataSource {
     SourceType getType() const override;
 
   private:
-
     /**
      * @brief method to connect opc using the url specified before
      * check if already connected, if not connect try to connect, if already connected return
@@ -132,7 +131,6 @@ class OPCSource : public DataSource {
     const std::string password;
     UA_StatusCode retval;
     UA_Client* client;
-
 };
 
 using OPCSourcePtr = std::shared_ptr<OPCSource>;

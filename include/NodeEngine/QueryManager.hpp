@@ -267,7 +267,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     mutable std::mutex statisticsMutex;
     cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
-
     BufferManagerPtr bufferManager;
     Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
 

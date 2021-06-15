@@ -35,12 +35,12 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Monitoring/MetricValues/GroupedValues.hpp>
 #include <Services/MonitoringService.hpp>
-#include <memory>
-#include <Components/NesCoordinator.hpp>
 #include <cstdint>
+#include <memory>
 
 using std::cout;
 using std::endl;
