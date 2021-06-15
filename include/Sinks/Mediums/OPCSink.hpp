@@ -42,7 +42,12 @@ class OPCSink : public SinkMedium {
      * @param user name to access the server
      * @param password to access the server
      */
-    explicit OPCSink(SinkFormatPtr format, const std::string& url, UA_NodeId nodeId, std::string user, std::string password, QuerySubPlanId parentPlanId);
+    explicit OPCSink(SinkFormatPtr format,
+                     const std::string& url,
+                     UA_NodeId nodeId,
+                     std::string user,
+                     std::string password,
+                     QuerySubPlanId parentPlanId);
 
     /**
      * @brief dtor
@@ -109,7 +114,6 @@ class OPCSink : public SinkMedium {
     UA_StatusCode getRetval() const;
 
   private:
-
     /**
      * @brief method to connect opc using the url specified before
      * check if already connected, if not connect try to connect, if already connected return
@@ -137,7 +141,6 @@ class OPCSink : public SinkMedium {
     const std::string password;
     UA_StatusCode retval;
     UA_Client* client;
-
 };
 using OPCSinkPtr = std::shared_ptr<OPCSink>;
 }// namespace NES

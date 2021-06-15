@@ -15,5 +15,4 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
-namespace NES::QueryCompilation {
-}// namespace NES::QueryCompilation
+namespace NES::QueryCompilation {}// namespace NES::QueryCompilation

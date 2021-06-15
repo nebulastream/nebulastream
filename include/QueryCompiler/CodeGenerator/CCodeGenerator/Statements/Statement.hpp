@@ -45,7 +45,6 @@ using StatementPtr = std::shared_ptr<Statement>;
 
 class Statement {
   public:
-
     Statement() = default;
 
     Statement(const Statement&) = default;
