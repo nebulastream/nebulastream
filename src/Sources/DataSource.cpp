@@ -66,7 +66,6 @@ DataSource::DataSource(const SchemaPtr& pSchema,
 }
 
 void DataSource::emitWorkFromSource(NodeEngine::TupleBuffer& buffer) {
-
     // set the origin id for this source
     buffer.setOriginId(operatorId);
     // set the creation timestamp

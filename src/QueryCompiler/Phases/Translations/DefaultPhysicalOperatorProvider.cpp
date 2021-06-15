@@ -252,12 +252,6 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
             PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->replace(sliceSink);
     } else if (operatorNode->instanceOf<SliceMergingOperator>()) {
-        // check if the parent is a slice merging operator. In this case we just remove the current operator.
-        //  if(operatorNode->getParents()[0]->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()){
-        //      auto parent = operatorNode->getParents()[0]->as<PhysicalOperators::PhysicalSliceMergingOperator>();
-        //      operatorNode->removeAndJoinParentAndChildren();
-        //      return;
-        //  }
         // Translate a slice merging operator in -> SliceMergingOperator -> SliceSinkOperator
         auto physicalSliceMergingOperator =
             PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);

@@ -34,7 +34,6 @@ void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumb
     NES_ASSERT2_FMT(localWatermarkProcessor.size() <= numberOfOrigins,
                     "The watermark processor maintains watermarks from " << localWatermarkProcessor.size()
                                                                          << " origins but we only expected  " << numberOfOrigins);
-
     localWatermarkProcessor[origenId]->updateWatermark(ts, sequenceNumber);
 }
 
