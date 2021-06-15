@@ -1,0 +1,10 @@
+#ifndef NES_INCLUDE_COMPILER_LANGUAGE_HPP_
+#define NES_INCLUDE_COMPILER_LANGUAGE_HPP_
+
+namespace NES::Compiler {
+
+enum Language { CPP };
+
+}
+
+#endif//NES_INCLUDE_COMPILER_LANGUAGE_HPP_
