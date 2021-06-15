@@ -14,36 +14,29 @@
 # limitations under the License.
 
 #! /bin/bash
-
 sudo apt-get update -qq && sudo apt-get install -qq \
-  clang \
   libdwarf-dev \
   libdwarf1 \
-  llvm-dev \
   binutils-dev \
   libdw-dev \
-  libboost-all-dev \
-  liblog4cxx-dev \
-  libcpprest-dev \
-  libmbedtls-dev \
   libssl-dev \
-  libjemalloc-dev \
+  build-essential \
   clang-format \
-  librdkafka1 \
-  librdkafka++1 \
-  librdkafka-dev \
-  libeigen3-dev \
-  libzmqpp-dev \
-  doxygen \
-  graphviz \
+  libmbedtls-dev \
+  libjemalloc-dev \
   git \
   wget \
-  z3 \
-  tar
+  python3.8 \
+  libsodium-dev \
+  tar \
+  p7zip \
+  doxygen \
+  graphviz \
+  software-properties-common
 
-wget https://github.com/Kitware/CMake/archive/refs/tags/v3.18.5.tar.gz
-tar -zxvf v3.18.5.tar.gz
-cd CMake-3.18.5 && ./bootstrap && make -j && sudo make -j install && cd .. && rm -rf CMake-3.18.5 && rm v3.18.5.tar.gz
+cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
+    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
+    && sudo apt update && sudo apt install -y kitware-archive-keyring && rm /etc/apt/trusted.gpg.d/kitware.gpg && sudo apt update && sudo apt install -y cmake
 
 sudo add-apt-repository ppa:open62541-team/ppa -qq && \
   sudo apt-get update && \
@@ -61,15 +54,9 @@ cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
   cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE && \
   sudo cmake --build build/ --target install && sudo ldconfig && cd ${HOME} && sudo rm -rf paho.mqtt.cpp
 
-git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
-  cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && \
-  make -j3 && sudo make install && cd .. && cd .. && rm -rf grpc
-
-
 ## folly
 sudo apt-get install -qq \
     g++ \
-    cmake \
     libboost-all-dev \
     libevent-dev \
     libdouble-conversion-dev \
