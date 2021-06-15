@@ -184,6 +184,13 @@ class Array<char, size> final : public ArrayBase<char, size> {
      * @throws std::runtime_error if the string's size is too large to fit into `size`.
      */
     constexpr Array(std::string&& str) noexcept(false) : ArrayBase<char, size>(str.c_str(), str.size() + 1, std::false_type{}) {}
+
+    inline friend std::ostream& operator<<(std::ostream& os, const Array<char, size>& array) {
+        for (size_t i=0; i<size; i++) {
+            os << array[i];
+        }
+        return os;
+    };
 };
 
 // Default the operators on ArrayBase to the existing operators on std::array.
