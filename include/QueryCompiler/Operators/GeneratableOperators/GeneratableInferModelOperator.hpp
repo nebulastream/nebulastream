@@ -31,14 +31,14 @@ class GeneratableInferModelOperator : public GeneratableOperator {
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
-    const std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
     GeneratableInferModelOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
-    std::string model;
-    std::vector<ExpressionItemPtr> inputFields;
-    std::vector<ExpressionItemPtr> outputFields;
+    const std::string model;
+    const std::vector<ExpressionItemPtr> inputFields;
+    const std::vector<ExpressionItemPtr> outputFields;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
