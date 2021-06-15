@@ -33,6 +33,7 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 
+#include <QueryCompiler/GeneratableTypes/Array.hpp>
 #include <iostream>
 
 using namespace std;
@@ -1925,7 +1926,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
 
     testHarness.addMemorySource("car", carSchema, "car1");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
     testHarness.pushElement<Car>({1.2, 2, 2, 1000}, 0);
     testHarness.pushElement<Car>({1.5, 4, 4, 1500}, 0);
@@ -1970,7 +1971,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
 
     testHarness.addMemorySource("car", carSchema, "car1");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
     testHarness.pushElement<Car>({1.2, 2, 1000}, 0);
     testHarness.pushElement<Car>({1.5, 4, 1500}, 0);
@@ -2017,7 +2018,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithBoolKey) {
 
     testHarness.addMemorySource("car", carSchema, "car1");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
     std::array<char, 3> charArrayValue = {'A', 'B', 'C'};
     testHarness.pushElement<Car>({true, charArrayValue, 2, 1000}, 0);
@@ -2062,7 +2063,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWitCharKey) {
 
     testHarness.addMemorySource("car", carSchema, "car1");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
     std::array<char, 3> charArrayValue = {'A', 'B', 'C'};
     testHarness.pushElement<Car>({'A', charArrayValue, 2, 1000}, 0);
@@ -2105,7 +2106,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
 
     testHarness.addMemorySource("car", carSchema, "car1");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
     NES::QueryCompilation::Array<char, 52> keyOne = {'K', 'e', 'y', ' ', 'O', 'n', 'e'};
     NES::QueryCompilation::Array<char, 52> keyTwo = {'K', 'e', 'y', ' ', 'T', 'w', 'o'};
@@ -2118,7 +2119,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
     struct Output {
         uint64_t start;
         uint64_t end;
-        std::array<char, 52> key;;
+        std::array<char, 52> key;
         uint32_t value1;
 
         // overload the == operator to check if two instances are the same
