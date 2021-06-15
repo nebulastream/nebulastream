@@ -45,16 +45,15 @@ namespace NES::NodeEngine {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener>);
 
-NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    return NodeEngine::create(hostname, port, config, 1, 4096, 1024, 128, 12);
+NodeEnginePtr create(const std::string& hostname, uint16_t port, std::vector<PhysicalStreamConfigPtr> configs) {
+    return NodeEngine::create(hostname, port, configs, 1, 4096, 1024, 128, 12);
 }
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
-// BDAPRO adjust NodeEngine constructor to take multiple configs as input
 NodeEnginePtr NodeEngine::create(const std::string& hostname,
                                  uint16_t port,
-                                 PhysicalStreamConfigPtr config,
+                                 const std::vector<PhysicalStreamConfigPtr>& configs,
                                  uint16_t numThreads,
                                  uint64_t bufferSize,
                                  uint64_t numberOfBuffersInGlobalBufferManager,
@@ -91,7 +90,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
             throw Exception("Error while creating compiler");
         }
         auto engine = std::make_shared<NodeEngine>(
-            config,
+            configs,
             std::move(bufferManager),
             std::move(queryManager),
             [hostname, port, numThreads](std::shared_ptr<NodeEngine> engine) {
@@ -117,8 +116,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
     return nullptr;
 }
 
-// BDAPRO adjust NodeEngine constructor to take multiple configs as input
-NodeEngine::NodeEngine(PhysicalStreamConfigPtr config,
+NodeEngine::NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
                        BufferManagerPtr&& bufferManager,
                        QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
@@ -133,8 +131,10 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config,
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
+    for (auto& config : configs){
+        this->configs.push_back(config);
+    }
 
-    configs.push_back(config);
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
     this->queryCompiler = std::move(queryCompiler);

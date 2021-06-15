@@ -81,14 +81,13 @@ int main(int argc, char** argv) {
     }
     if (sourceConfigPath != commandLineParams.end()) {
         // BDAPRO check this again, this looks a bit clunky, any recommendations?
-        auto sourceConfigPaths = UtilityFunctions::splitWithStringDelimiter(sourceConfigPath->second, ":");
+        auto sourceConfigPaths = UtilityFunctions::splitWithStringDelimiter(sourceConfigPath->second, ";");
         if (sourceConfigPaths.size() == 1) {
             sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
         } else {
-            for (std::vector<std::string>::const_iterator path = sourceConfigPaths.cbegin(); path != sourceConfigPaths.cend();
-                 ++path) {
+            for (auto& path : sourceConfigPaths) {
                 SourceConfigPtr curr = SourceConfig::create();
-                curr->overwriteConfigWithYAMLFileInput(*path);
+                curr->overwriteConfigWithYAMLFileInput(path);
                 sourceConfigs.emplace_back(curr);
             }
         }
@@ -113,16 +112,15 @@ int main(int argc, char** argv) {
 
     // register phy stream if necessary
     if (sourceConfigs.size() > 0) {
-        for (std::vector<SourceConfigPtr>::const_iterator config = sourceConfigs.cbegin(); config != sourceConfigs.cend();
-             ++config) {
-
-            NES_INFO("start with dedicated source=" << (*config)->getSourceType()->getValue() << "\n");
-            PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(*config);
+        for (auto& config : sourceConfigs) {
+            NES_INFO("start with dedicated source=" << config->getSourceType()->getValue() << "\n");
+            PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(config);
 
             NES_INFO("NESWORKERSTARTER: Source Config type = "
-                     << (*config)->getSourceType()->getValue() << " Config = " << (*config)->getSourceConfig()->getValue()
-                     << " physicalStreamName = " << (*config)->getPhysicalStreamName()->getValue()
-                     << " logicalStreamName = " << (*config)->getLogicalStreamName()->getValue());
+                     << config->getSourceType()->getValue() << " Config = " << config->getSourceConfig()->getValue()
+                     << " physicalStreamName = " << config->getPhysicalStreamName()->getValue()
+                     << " logicalStreamName = " << config->getLogicalStreamName()->getValue());
+
             wrk->setWithRegister(conf);
         }
     } else if (workerConfig->getParentId()->getValue() != "-1") {

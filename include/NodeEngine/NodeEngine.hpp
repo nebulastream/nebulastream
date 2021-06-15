@@ -78,7 +78,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     static NodeEnginePtr create(const std::string& hostname,
                                 uint16_t port,
-                                PhysicalStreamConfigPtr config,
+                                const std::vector<PhysicalStreamConfigPtr>& configs,
                                 uint16_t numThreads,
                                 uint64_t bufferSize,
                                 uint64_t numberOfBuffersInGlobalBufferManager,
@@ -88,7 +88,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(PhysicalStreamConfigPtr config,
+    explicit NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
                         BufferManagerPtr&&,
                         QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
