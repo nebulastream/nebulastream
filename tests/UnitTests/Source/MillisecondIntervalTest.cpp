@@ -137,7 +137,7 @@ class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExe
         },
         [sink](TupleBuffer&) {
         },
-        std::move(std::vector<NodeEngine::Execution::OperatorHandlerPtr>()),
+        std::vector<NodeEngine::Execution::OperatorHandlerPtr>(),
         12){
         // nop
     };
@@ -153,7 +153,7 @@ class MockedExecutablePipeline : public ExecutablePipelineStage {
         count += inputTupleBuffer.getNumberOfTuples();
 
         TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
-        auto arr = outputBuffer.getBufferAs<uint32_t>();
+        auto arr = outputBuffer.getBuffer<uint32_t>();
         arr[0] = static_cast<uint32_t>(count.load());
         outputBuffer.setNumberOfTuples(count);
         pipelineExecutionContext.emitBuffer(outputBuffer, wctx);
