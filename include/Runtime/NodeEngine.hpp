@@ -252,6 +252,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void onDataBuffer(Network::NesPartition, TupleBuffer&) override;
 
     /**
+     * @brief this callback is called once a client announcement message arrives at network manager
+     * When partition is registered then increment producer. otherwise if present in partitionsWaitingRegistration then
+     * partition will be registered lazily after channel is established. Otherwise error.
+     */
+    bool onClientAnnouncement(Network::Messages::ClientAnnounceMessage msg) override;
+
+    /**
      * @brief this callback is called once an end of stream message arrives
      */
     void onEndOfStream(Network::Messages::EndOfStreamMessage) override;
@@ -302,6 +309,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> reconfigurationQEPs;
+    std::unordered_set<Network::NesPartition> partitionsWaitingRegistration;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;

@@ -44,14 +44,8 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
     // check if the partition is registered via the partition manager or wait until this is not done
     // if all good, send message back
     NES_INFO("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString());
-    auto nesPartition = msg.getChannelId().getNesPartition();
-
-    // check if identity is registered
-    if (partitionManager->isRegistered(nesPartition)) {
-        // increment the counter
-        partitionManager->pinSubpartition(nesPartition);
-        NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " REGISTERED");
-        // send response back to the client based on the identity
+    if (protocolListener->onClientAnnouncement(msg)) {
+        NES_DEBUG("ExchangeProtocol::onClientAnnouncement: Sending ServerReadyMessage on: " << msg.getChannelId());
         return Messages::ServerReadyMessage(msg.getChannelId());
     }
     NES_WARNING("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " NOT REGISTERED");

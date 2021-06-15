@@ -125,6 +125,15 @@ void fillBuffer(TupleBuffer& buf, const Runtime::DynamicMemoryLayout::DynamicRow
     buf.setNumberOfTuples(10);
 }
 
+bool defaultClientAnnouncementHandler(PartitionManagerPtr partitionManager, Messages::ClientAnnounceMessage msg) {
+    auto nesPartition = msg.getChannelId().getNesPartition();
+    if (partitionManager->isRegistered(nesPartition)) {
+        partitionManager->pinSubpartition(nesPartition);
+        return true;
+    }
+    return false;
+}
+
 class DummyExchangeProtocolListener : public ExchangeProtocolListener {
   public:
     ~DummyExchangeProtocolListener() override = default;
@@ -169,22 +178,25 @@ TEST_F(NetworkStackTest, startCloseChannel) {
 
         class InternalListener : public Network::ExchangeProtocolListener {
           public:
-            explicit InternalListener(std::promise<bool>& p) : completed(p) {}
-
+            explicit InternalListener(std::promise<bool>& p, PartitionManagerPtr partitionManager)
+                : completed(p), partitionManager(partitionManager) {}
+            bool onClientAnnouncement(Messages::ClientAnnounceMessage msg) override {
+                return defaultClientAnnouncementHandler(partitionManager, msg);
+            }
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
             void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
-
             void onChannelError(Messages::ErrorMessage) override {}
 
           private:
             std::promise<bool>& completed;
+            PartitionManagerPtr partitionManager;
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
-        auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed));
+        auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed, partMgr));
         auto netManager = NetworkManager::create("127.0.0.1", 31337, std::move(ep), buffMgr);
 
         auto nesPartition = NesPartition(0, 0, 0, 0);
@@ -227,6 +239,7 @@ TEST_F(NetworkStackTest, testSendData) {
           public:
             std::promise<bool>& completedProm;
             std::atomic<bool>& bufferReceived;
+            PartitionManagerPtr partitionManager;
 
             ExchangeListener(std::atomic<bool>& bufferReceived, std::promise<bool>& completedProm)
                 : completedProm(completedProm), bufferReceived(bufferReceived) {}
@@ -253,11 +266,11 @@ TEST_F(NetworkStackTest, testSendData) {
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
 
-        auto netManager =
-            NetworkManager::create("127.0.0.1",
-                                   31337,
-                                   ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
-                                   buffMgr);
+        auto netManager = NetworkManager::create(
+            "127.0.0.1",
+            31337,
+            ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm, partMgr)),
+            buffMgr);
 
         struct DataEmitterImpl : public DataEmitter {
             void emitWork(TupleBuffer&) override {}
@@ -309,6 +322,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
           public:
             std::promise<bool>& completedProm;
             std::atomic<std::uint64_t>& bufferReceived;
+            PartitionManagerPtr partitionManager;
 
             ExchangeListener(std::atomic<std::uint64_t>& bufferReceived, std::promise<bool>& completedProm)
                 : completedProm(completedProm), bufferReceived(bufferReceived) {}
@@ -336,11 +350,11 @@ TEST_F(NetworkStackTest, testMassiveSending) {
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
 
-        auto netManager =
-            NetworkManager::create("127.0.0.1",
-                                   31337,
-                                   ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
-                                   buffMgr);
+        auto netManager = NetworkManager::create(
+            "127.0.0.1",
+            31337,
+            ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm, partMgr)),
+            buffMgr);
 
         struct DataEmitterImpl : public DataEmitter {
             void emitWork(TupleBuffer&) override {}
@@ -436,6 +450,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
 
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override {}
+            bool onClientAnnouncement(Messages::ClientAnnounceMessage) override { return false; }
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
@@ -482,11 +497,17 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
           private:
             std::array<std::atomic<std::uint64_t>, numSendingThreads>& bufferCounter;
             std::vector<std::promise<bool>>& completedPromises;
+            PartitionManagerPtr partitionManager;
 
           public:
             ExchangeListenerImpl(std::array<std::atomic<std::uint64_t>, numSendingThreads>& bufferCounter,
-                                 std::vector<std::promise<bool>>& completedPromises)
-                : bufferCounter(bufferCounter), completedPromises(completedPromises) {}
+                                 std::vector<std::promise<bool>>& completedPromises,
+                                 PartitionManagerPtr partitionManager)
+                : bufferCounter(bufferCounter), completedPromises(completedPromises), partitionManager(partitionManager) {}
+
+            bool onClientAnnouncement(Messages::ClientAnnounceMessage msg) override {
+                return defaultClientAnnouncementHandler(partitionManager, msg);
+            }
 
             void onServerError(Messages::ErrorMessage) override {}
 
@@ -512,7 +533,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
         auto netManager = NetworkManager::create(
             "127.0.0.1",
             31337,
-            ExchangeProtocol(partMgr, std::make_shared<ExchangeListenerImpl>(bufferCounter, completedPromises)),
+            ExchangeProtocol(partMgr, std::make_shared<ExchangeListenerImpl>(bufferCounter, completedPromises, partMgr)),
             buffMgr);
 
         struct DataEmitterImpl : public DataEmitter {
@@ -595,6 +616,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             std::promise<bool>& completed;
             atomic<int> eosCnt{0};
             atomic<int>& bufferCnt;
+            PartitionManagerPtr partitionManager;
 
             ExchangeListener(std::promise<bool>& completed, NesPartition nesPartition, std::atomic<int>& bufferCnt)
                 : nesPartition(nesPartition), completed(completed), bufferCnt(bufferCnt) {}
@@ -629,7 +651,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         auto netManager = NetworkManager::create(
             "127.0.0.1",
             31337,
-            ExchangeProtocol(pManager, std::make_shared<ExchangeListener>(completed, nesPartition, bufferCnt)),
+            ExchangeProtocol(pManager, std::make_shared<ExchangeListener>(completed, nesPartition, bufferCnt, pManager)),
             bMgr);
 
         struct DataEmitterImpl : public DataEmitter {
