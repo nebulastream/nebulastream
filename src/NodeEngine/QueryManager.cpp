@@ -536,9 +536,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
             //            batch.emplace_back(pipeline, buffer);
             taskQueue.write(Task(pipeline, buffer));
         }
-        //        NES_ASSERT2_FMT(taskQueue.enqueue_bulk(batch.begin(), threadPool->getNumberOfThreads()), "cannot enqueue");
     } else {
-        //        NES_ASSERT2_FMT(taskQueue.enqueue(Task(pipeline, buffer)), "cannot enqueue");
         taskQueue.write(Task(pipeline, buffer));
     }
 #endif
