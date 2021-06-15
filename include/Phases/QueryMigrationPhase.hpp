@@ -103,9 +103,9 @@ class QueryMigrationPhase{
 
   private:
 
-    bool executeMigrationWithBuffer(const std::vector<TopologyNodePtr>& path, const std::vector<ExecutionNodePtr>& execNodes, QueryId queryId, TopologyNodeId topId);
+    bool executeMigrationWithBuffer(const std::vector<TopologyNodePtr>& path,const std::vector<ExecutionNodePtr>& execNodes, const std::map<TopologyNodeId ,std::string>& addresses,QueryId queryId, TopologyNodeId topId);
 
-    bool executeMigrationWithoutBuffer(const std::vector<TopologyNodePtr>& path, const std::vector<ExecutionNodePtr>& execNodes,QueryId queryId, TopologyNodeId topId);
+    bool executeMigrationWithoutBuffer(const std::vector<TopologyNodePtr>& path, const std::vector<ExecutionNodePtr>& execNodes,const std::map<TopologyNodeId ,std::string>& addresses, QueryId queryId, TopologyNodeId topId);
 
     explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient);
 
@@ -125,6 +125,13 @@ class QueryMigrationPhase{
     std::vector<TopologyNodePtr> findPath(QueryId queryId, TopologyNodeId topologyNodeId);
 
     std::vector<ExecutionNodePtr> buildExecutionNodes(const std::vector<TopologyNodePtr>& path, const std::vector<QueryPlanPtr>& subqueries);
+
+    /**
+     * builds addresses of all execution nodes that will be sent a GRPC message
+     * @param childExecutionNodes
+     * @return vector of addresses
+     */
+    std::map<TopologyNodeId ,std::string> getAddresses(const std::vector<TopologyNodePtr>& childExecutionNodes);
 
 
     /**
