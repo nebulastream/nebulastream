@@ -15,6 +15,7 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Network/NetworkSource.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
@@ -253,6 +254,12 @@ bool NodeEngine::registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryP
     auto qep = *maybeQep;
     NES_DEBUG("NodeEngine::registerQueryForReconfigurationInNodeEngine: adding qep with querySubPlanId: "
               << qep->getQuerySubPlanId() << " into QEP pending reconfiguration.");
+
+    for (const auto& source : qep->getSources()) {
+        if (auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
+            partitionsWaitingRegistration.insert(networkSource->getNesPartition());
+        }
+    }
     reconfigurationQEPs[qep->getQuerySubPlanId()] = qep;
     return true;
 }
@@ -452,6 +459,21 @@ void NodeEngine::onDataBuffer(Network::NesPartition, TupleBuffer&) {
     // nop :: kept as legacy
 }
 
+bool NodeEngine::onClientAnnouncement(Network::Messages::ClientAnnounceMessage msg) {
+    auto nesPartition = msg.getChannelId().getNesPartition();
+    if (partitionManager->isRegistered(nesPartition)) {
+        // increment the counter
+        partitionManager->pinSubpartition(nesPartition);
+        NES_DEBUG("NodeEngine::onClientAnnouncement: received for " << msg.getChannelId().toString() << " REGISTERED");
+        // send response back to the client based on the identity
+        return true;
+    }
+    NES_DEBUG("NodeEngine::onClientAnnouncement: received for "
+              << msg.getChannelId().toString()
+              << " but partition not registered. Attempt lazy registration if partition contained in pendingRegistration");
+    return partitionsWaitingRegistration.contains(nesPartition);
+}
+
 void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
@@ -490,8 +512,7 @@ void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationM
             if (partitionManager->isRegistered(partition)) {
                 if (partitionManager->unregisterSubpartition(partition)) {
                     NES_DEBUG("NodeEngine::onQueryReconfiguration: Stop Query reconfiguration received for "
-                              << querySubPlanId << " on " << channelId.toString()
-                              << " and no active subpartitions. Triggering ");
+                              << querySubPlanId << " on " << channelId.toString() << " and no active subpartitions. Triggering ");
                     queryManager->triggerQepStopReconfiguration(deployedQEPs[querySubPlanId], queryReconfigurationMessage);
                 } else {
                     NES_DEBUG("NodeEngine::onQueryReconfiguration: Stop Query reconfiguration received for "

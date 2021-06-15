@@ -61,6 +61,8 @@ bool NetworkSource::stop() {
     return true;
 }
 
+NesPartition NetworkSource::getNesPartition() { return nesPartition; }
+
 void NetworkSource::runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr) {
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
