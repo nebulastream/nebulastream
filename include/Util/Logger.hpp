@@ -43,6 +43,7 @@ auto catString = [os = std::ostringstream{}](auto&&... p) mutable {
 
 enum DebugLevel { LOG_NONE, LOG_ERROR, LOG_FATAL, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
 
+#ifndef NES_LOGGING_NO_LEVEL
 static std::string getDebugLevelAsString(DebugLevel level) {
     switch (level) {
         case LOG_NONE: return "LOG_NONE";
@@ -55,7 +56,7 @@ static std::string getDebugLevelAsString(DebugLevel level) {
         default: return "UNKNOWN";
     }
 }
-
+#endif
 DISABLE_WARNING_PUSH
 DISABLE_WARNING_UNREFERENCED_FUNCTION
 static DebugLevel getDebugLevelFromString(const std::string& level) {
@@ -391,6 +392,7 @@ static void setLogLevel(DebugLevel level) {
     // set log level
 #ifdef NES_LOGGING_NO_LEVEL
     NESLogger->setLevel(log4cxx::Level::getOff());
+    ((void) level);
 #else
     // set log level
     switch (level) {
