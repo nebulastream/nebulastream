@@ -34,11 +34,11 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   graphviz \
   software-properties-common
 
-cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
-    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
+cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
+    && sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
     && sudo apt update && sudo apt install -y kitware-archive-keyring && rm /etc/apt/trusted.gpg.d/kitware.gpg && sudo apt update && sudo apt install -y cmake
 
-sudo add-apt-repository ppa:open62541-team/ppa -qq && \
+sudo add-apt-repository ppa:open62541-team/ppa && \
   sudo apt-get update && \
   sudo apt-get install libopen62541-1-dev -qq
 
