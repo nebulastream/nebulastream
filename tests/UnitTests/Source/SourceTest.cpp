@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <Runtime/QueryManager.hpp>
@@ -95,11 +95,52 @@ struct __attribute__((packed)) everyBooleanTypeRecord {
     bool truthy_entry;
 };
 
+using ::testing::Return;
+using ::testing::_;
+
+class MockDataSource : public DataSource {
+  public:
+    MockDataSource(const SchemaPtr& schema,
+                   Runtime::BufferManagerPtr bufferManager,
+                   Runtime::QueryManagerPtr queryManager,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   GatheringMode gatheringMode,
+                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
+        : DataSource(schema, bufferManager, queryManager, operatorId,
+                     numSourceLocalBuffers, gatheringMode, executableSuccessors) {
+        // nop
+    };
+    MOCK_METHOD0(runningRoutineWithFrequency, bool());
+    MOCK_METHOD0(runningRoutineWithIngestionRate, bool());
+    MOCK_METHOD0(runningRoutine, void());
+    MOCK_METHOD0(receiveData, std::optional<Runtime::TupleBuffer>());
+    MOCK_CONST_METHOD0(toString, string());
+    MOCK_CONST_METHOD0(getType, SourceType());
+};
+
 class SourceTest : public testing::Test {
   public:
     void SetUp() override {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         this->nodeEngine = Runtime::create("127.0.0.1", 31337, streamConf);
+        this->path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
+        this->path_to_bin_file = "../tests/test_data/ysb-tuples-100-campaign-100.bin";
+        this->schema = Schema::create()
+            ->addField("user_id", DataTypeFactory::createFixedChar(16))
+            ->addField("page_id", DataTypeFactory::createFixedChar(16))
+            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+            ->addField("event_type", DataTypeFactory::createFixedChar(9))
+            ->addField("current_ms", UINT64)
+            ->addField("ip", INT32);
+        this->tuple_size = this->schema->getSchemaSizeInBytes();
+        this->buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
+        this->numberOfBuffers = 1;
+        this->numberOfTuplesToProcess = this->numberOfBuffers * (this->buffer_size / this->tuple_size);
+        this->operatorId = 1;
+        this->numSourceLocalBuffersDefault = 12;
+        this->frequency = 1000;
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
@@ -115,7 +156,92 @@ class SourceTest : public testing::Test {
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
+    std::string path_to_file, path_to_bin_file;
+    SchemaPtr schema;
+    uint64_t tuple_size, buffer_size, numberOfBuffers,
+        numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault, frequency;
 };
+
+TEST_F(SourceTest, testDataSourceGetOperatorId) {
+    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(
+        this->schema, this->nodeEngine->getBufferManager(),
+        this->nodeEngine->getQueryManager(),
+        this->operatorId, this->numSourceLocalBuffersDefault, {});
+    EXPECT_EQ(source->getOperatorId(), this->operatorId);
+}
+
+TEST_F(SourceTest, testDataSourceGetSchema) {
+    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(
+        this->schema, this->nodeEngine->getBufferManager(),
+        this->nodeEngine->getQueryManager(),
+        this->operatorId, this->numSourceLocalBuffersDefault, {});
+    EXPECT_EQ(source->getSchema(), this->schema);
+}
+
+TEST_F(SourceTest, testDataSourceRunningImmediately) {
+    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(), this->operatorId,
+                               this->numSourceLocalBuffersDefault,
+                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+    EXPECT_FALSE(mDataSource.isRunning());
+}
+
+TEST_F(SourceTest, testDataSourceStartSideEffectRunningTrue) {
+    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                                         this->nodeEngine->getQueryManager(), this->operatorId,
+                                         this->numSourceLocalBuffersDefault,
+                                         DataSource::GatheringMode::FREQUENCY_MODE, {});
+    ON_CALL(mDataSource, runningRoutineWithFrequency).WillByDefault(Return(true)); // irrelevant but has to return
+    ON_CALL(mDataSource, getType).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
+    EXPECT_TRUE(mDataSource.start());
+    EXPECT_TRUE(mDataSource.isRunning()); // the publicly visible side-effect
+    EXPECT_TRUE(mDataSource.stop(false));
+}
+
+TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
+    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(), this->operatorId,
+                               this->numSourceLocalBuffersDefault,
+                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+    ON_CALL(mDataSource, runningRoutineWithFrequency).WillByDefault(Return(true)); // irrelevant but has to return
+    ON_CALL(mDataSource, getType).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
+    EXPECT_TRUE(mDataSource.start());
+    EXPECT_FALSE(mDataSource.start());
+    EXPECT_TRUE(mDataSource.isRunning()); // the publicly visible side-effect
+    EXPECT_TRUE(mDataSource.stop(false));
+}
+
+TEST_F(SourceTest, testDataSourceStopImmediately) {
+    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(), this->operatorId,
+                               this->numSourceLocalBuffersDefault,
+                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+    EXPECT_FALSE(mDataSource.stop(false));
+}
+
+TEST_F(SourceTest, testDataSourceStopSideEffect) {
+    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(), this->operatorId,
+                               this->numSourceLocalBuffersDefault,
+                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+    ON_CALL(mDataSource, runningRoutineWithFrequency).WillByDefault(Return(true)); // irrelevant but has to return
+    ON_CALL(mDataSource, getType).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
+    EXPECT_TRUE(mDataSource.start());
+    EXPECT_TRUE(mDataSource.isRunning());
+    EXPECT_TRUE(mDataSource.stop(false));
+    EXPECT_FALSE(mDataSource.isRunning()); // the publicly visible side-effect
+}
+
+TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
+    // create a DefaultSource instead of raw DataSource
+    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(
+        this->schema, this->nodeEngine->getBufferManager(),
+        this->nodeEngine->getQueryManager(),
+        this->operatorId, this->numSourceLocalBuffersDefault, {});
+    EXPECT_EQ(source->getGatheringModeFromString("frequency"), source->GatheringMode::FREQUENCY_MODE);
+    EXPECT_EQ(source->getGatheringModeFromString("ingestionrate"), source->GatheringMode::INGESTION_RATE_MODE);
+    EXPECT_ANY_THROW(source->getGatheringModeFromString("clearly_an_erroneous_string"));
+}
 
 TEST_F(SourceTest, testBinarySource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
