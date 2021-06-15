@@ -42,7 +42,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
   public:
     static PhysicalStreamConfigPtr createEmpty();
-    static PhysicalStreamConfigPtr create(SourceConfigPtr sourceConfig);
+    static PhysicalStreamConfigPtr create(const SourceConfigPtr& sourceConfig);
 
     ~PhysicalStreamConfig() noexcept override = default;
 

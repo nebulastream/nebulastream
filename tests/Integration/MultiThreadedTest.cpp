@@ -261,7 +261,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
+TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -316,9 +316,10 @@ TEST_F(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query =
-        "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
-        "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+    string query = "Query::from(\"window\")."
+                   "window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))\n"
+                   "        .byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
+                   ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -353,7 +354,7 @@ TEST_F(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
 /**
  * This test only test if there is something crash but not the result
  */
-TEST_F(MultiThreadedTest, DISABLED_testMultipleWindows) {
+TEST_F(MultiThreadedTest, testMultipleWindows) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -412,9 +413,11 @@ TEST_F(MultiThreadedTest, DISABLED_testMultipleWindows) {
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(1)))
+        .byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("start")),Seconds(2)))
+        .byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
@@ -443,7 +446,7 @@ TEST_F(MultiThreadedTest, DISABLED_testMultipleWindows) {
     NES_INFO("MultipleWindowsTest: Test finished");
 }
 
-TEST_F(MultiThreadedTest, DISABLED_testMultipleWindowsCrashTest) {
+TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -503,9 +506,11 @@ TEST_F(MultiThreadedTest, DISABLED_testMultipleWindowsCrashTest) {
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(1)))
+        .byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("start")),Seconds(2)))
+        .byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
@@ -533,7 +538,7 @@ TEST_F(MultiThreadedTest, DISABLED_testMultipleWindowsCrashTest) {
 /**
  * Test deploying join with different three sources
  */
-TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
+TEST_F(MultiThreadedTest, DISABELD_testOneJoin) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -607,9 +612,10 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
 
     NES_INFO("JoinDeploymentTest: Submit query");
     string query =
-        R"(Query::from("window1").joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")),
+        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+            + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -619,13 +625,11 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
                              "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
                              "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-                             "2000,3000,1,2,1,2010,2,1,2010\n"
-                             "1000,2000,4,3,4,1102,3,4,1102\n"
-                             "1000,2000,4,3,4,1102,3,4,1112\n"
-                             "1000,2000,4,3,4,1112,3,4,1102\n"
-                             "1000,2000,4,3,4,1112,3,4,1112\n"
-                             "2000,3000,11,2,11,2301,2,11,2301\n"
-                             "1000,2000,12,5,12,1011,5,12,1011\n";
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -643,7 +647,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     NES_INFO("JoinDeploymentTest: Test finished");
 }
 
-TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
+TEST_F(MultiThreadedTest, DISABELD_test2Joins) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -729,41 +733,25 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
 
     string query =
         R"(Query::from("window1")
-        .joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
-        .joinWith(Query::from("window3"), Attribute("id1"), Attribute("id3"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+        .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
+        .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+            + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-
+ /**
+  * @brief 1000,2000,4,1000,2000,4,3,4,1102,4,4,1001,1,4,1002\n"
+        "1000,2000,4,1000,2000,4,3,4,1112,4,4,1001,1,4,1002\n"
+        "1000,2000,12,1000,2000,12,5,12,1011,1,12,1300,1,12,1001
+  */
     string expectedContent =
-        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
-        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
-        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
-        "INTEGER,window3$timestamp:INTEGER\n"
-        "1000,2000,4,1000,2000,4,4,4,1001,4,4,1001,4,4,1001\n"
-        "1000,2000,4,500,1500,4,4,4,1001,4,4,1001,4,4,1001\n"
-        "500,1500,4,1000,2000,4,4,4,1001,4,4,1001,4,4,1001\n"
-        "500,1500,4,500,1500,4,4,4,1001,4,4,1001,4,4,1001\n"
-        "1000,2000,12,1000,2000,12,1,12,1300,1,12,1300,1,12,1300\n"
-        "1000,2000,12,500,1500,12,1,12,1300,1,12,1300,1,12,1300\n"
-        "500,1500,12,1000,2000,12,1,12,1300,1,12,1300,1,12,1300\n"
-        "500,1500,12,500,1500,12,1,12,1300,1,12,1300,1,12,1300\n"
-        "12000,13000,1,12000,13000,1,12,1,12000,12,1,12000,12,1,12000\n"
-        "12000,13000,1,11500,12500,1,12,1,12000,12,1,12000,12,1,12000\n"
-        "11500,12500,1,12000,13000,1,12,1,12000,12,1,12000,12,1,12000\n"
-        "11500,12500,1,11500,12500,1,12,1,12000,12,1,12000,12,1,12000\n"
-        "13000,14000,1,13000,14000,1,13,1,13000,13,1,13000,13,1,13000\n"
-        "13000,14000,1,12500,13500,1,13,1,13000,13,1,13000,13,1,13000\n"
-        "12500,13500,1,13000,14000,1,13,1,13000,13,1,13000,13,1,13000\n"
-        "12500,13500,1,12500,13500,1,13,1,13000,13,1,13000,13,1,13000\n"
-        "3000,4000,11,3000,4000,11,9,11,3000,9,11,3000,9,11,3000\n"
-        "3000,4000,11,2500,3500,11,9,11,3000,9,11,3000,9,11,3000\n"
-        "2500,3500,11,3000,4000,11,9,11,3000,9,11,3000,9,11,3000\n"
-        "2500,3500,11,2500,3500,11,9,11,3000,9,11,3000,9,11,3000\n";
+        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER\n"
+        "1000,2000,4,1000,2000,4,4,4,1001,1,4,1002,3,4,1102\n"
+        "1000,2000,4,1000,2000,4,4,4,1001,1,4,1002,3,4,1112\n"
+        "1000,2000,12,1000,2000,12,1,12,1300,1,12,1001,5,12,1011\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
@@ -780,7 +768,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
-TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
+TEST_F(MultiThreadedTest, DISABELD_threeJoins) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -954,7 +942,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
 /**
  * Test deploying join with different three sources
  */
-TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
+TEST_F(MultiThreadedTest, DISABELD_joinCrashTest) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
