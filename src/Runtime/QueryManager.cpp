@@ -870,15 +870,16 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         auto diff = now - creation;
         statistics->incLatencySum(diff);
 
-        auto qSize = taskQueue.size();
+        long int qSize = taskQueue.size();
         statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
+
+        auto qBuffers = bufferManager->getAvailableBuffers();
+        statistics->incAvailableBufferSum(qBuffers > 0 ? qBuffers : 0);
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);
 #endif
         statistics->incProcessedTuple(task.getNumberOfTuples());
-        //        NES_ERROR("add queue size=" << taskQueue.size());
-        statistics->incQueueSizeSum(taskQueue.size());
     } else {
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
@@ -921,10 +922,12 @@ std::string QueryManager::getQueryManagerStatistics() {
     return ss.str();
 }
 
-QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
+QueryStatistics QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
     std::unique_lock lock(statisticsMutex);
     NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qepId);
-    return queryToStatisticsMap.find(qepId);
+    auto stat = queryToStatisticsMap.find(qepId);
+    QueryStatistics s(*stat);
+    return s;
 }
 
 void QueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {

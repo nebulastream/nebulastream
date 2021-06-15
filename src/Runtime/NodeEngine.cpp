@@ -460,8 +460,8 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
     std::vector<QuerySubPlanId> querySubPlanIds = (*foundQuerySubPlanIds).second;
     for (auto querySubPlanId : querySubPlanIds) {
         NES_DEBUG("querySubPlanId=" << querySubPlanId << " stat="
-                                    << queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
-        queryStatistics.emplace_back(queryManager->getQueryStatistics(querySubPlanId));
+                                    << queryManager->getQueryStatistics(querySubPlanId).getQueryStatisticsAsString());
+        queryStatistics.emplace_back(std::make_shared<QueryStatistics>(queryManager->getQueryStatistics(querySubPlanId)));
     }
     return queryStatistics;
 }
