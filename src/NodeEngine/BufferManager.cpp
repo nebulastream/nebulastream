@@ -22,14 +22,18 @@
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>
+#include <folly/MPMCQueue.h>
 #include <iostream>
 #include <thread>
 #include <unistd.h>
-#include <folly/MPMCQueue.h>
 namespace NES::NodeEngine {
 
 BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment)
-    : availableBuffers(numOfBuffers), bufferSize(bufferSize), numOfBuffers(numOfBuffers) {
+    :
+#ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
+      availableBuffers(numOfBuffers),
+#endif
+      bufferSize(bufferSize), numOfBuffers(numOfBuffers) {
     initialize(withAlignment);
 }
 
@@ -59,7 +63,7 @@ void BufferManager::destroy() {
     }
     // RAII takes care of deallocating memory here
     allBuffers.clear();
-#if 0
+#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     availableBuffers.clear();
 #else
     availableBuffers = decltype(availableBuffers)();
