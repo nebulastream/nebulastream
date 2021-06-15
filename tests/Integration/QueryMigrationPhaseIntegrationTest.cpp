@@ -18,11 +18,8 @@
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Phases/QueryMigrationPhase.hpp>
 #include <Services/MaintenanceService.hpp>
@@ -518,7 +515,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
 
     ASSERT_TRUE(wrk2->getNodeEngine()->getDeployedQEP(3));
 
-    maintenanceService->submitMaintenanceRequest(2,2);
+    maintenanceService->submitMaintenanceRequest(2,3);
     sleep(5);
 
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
