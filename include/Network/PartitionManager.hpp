@@ -115,6 +115,13 @@ class PartitionManager {
     bool isRegistered(NesPartition partition) const;
 
     /**
+     * @brief
+     * @param partition
+     * @return
+     */
+    bool removePartition(NesPartition partition);
+
+    /**
      * @brief Returns the data emitter of a partition
      * @param partition
      * @return the data emitter of a partition

@@ -81,6 +81,11 @@ bool PartitionManager::unregisterSubpartition(NesPartition partition) {
     return false;
 }
 
+bool PartitionManager::removePartition(NesPartition partition) {
+    std::unique_lock lock(mutex);
+    return partitions.erase(partition) == 1;
+}
+
 uint64_t PartitionManager::getSubpartitionCounter(NesPartition partition) {
     std::shared_lock lock(mutex);
     return partitions[partition].count();

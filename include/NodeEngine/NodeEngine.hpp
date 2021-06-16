@@ -316,6 +316,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     uint32_t numberOfBuffersInGlobalBufferManager;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint32_t numberOfBuffersPerPipeline;
+    void reconfigurationStartSequence(Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage,
+                                      Network::NesPartition& partition,
+                                      QuerySubPlanId querySubPlanId);
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
