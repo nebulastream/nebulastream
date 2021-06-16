@@ -538,7 +538,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
 /**
  * Test deploying join with different three sources
  */
-TEST_F(MultiThreadedTest, DISABELD_testOneJoin) {
+TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -647,7 +647,7 @@ TEST_F(MultiThreadedTest, DISABELD_testOneJoin) {
     NES_INFO("JoinDeploymentTest: Test finished");
 }
 
-TEST_F(MultiThreadedTest, DISABELD_test2Joins) {
+TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -768,7 +768,7 @@ TEST_F(MultiThreadedTest, DISABELD_test2Joins) {
     NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
-TEST_F(MultiThreadedTest, DISABELD_threeJoins) {
+TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -942,7 +942,7 @@ TEST_F(MultiThreadedTest, DISABELD_threeJoins) {
 /**
  * Test deploying join with different three sources
  */
-TEST_F(MultiThreadedTest, DISABELD_joinCrashTest) {
+TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
