@@ -45,11 +45,34 @@ namespace NES::NodeEngine {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener>);
 
-NodeEnginePtr create(const std::string& hostname, uint16_t port, std::vector<PhysicalStreamConfigPtr> configs) {
+NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
+    auto streamConfigs = std::vector<PhysicalStreamConfigPtr>{config};
+    return NodeEngine::create(hostname, port, streamConfigs, 1, 4096, 1024, 128, 12);
+}
+
+NodeEnginePtr create(const std::string& hostname, uint16_t port, std::vector<PhysicalStreamConfigPtr>& configs) {
     return NodeEngine::create(hostname, port, configs, 1, 4096, 1024, 128, 12);
 }
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
+
+NodeEnginePtr NodeEngine::create(const std::string& hostname,
+                                 uint16_t port,
+                                 PhysicalStreamConfigPtr config,
+                                 uint16_t numThreads,
+                                 uint64_t bufferSize,
+                                 uint64_t numberOfBuffersInGlobalBufferManager,
+                                 uint64_t numberOfBuffersInSourceLocalBufferPool,
+                                 uint64_t numberOfBuffersPerPipeline) {
+    return NodeEngine::create(hostname,
+                              port,
+                              std::vector<PhysicalStreamConfigPtr>{config},
+                              numThreads,
+                              bufferSize,
+                              numberOfBuffersInGlobalBufferManager,
+                              numberOfBuffersInSourceLocalBufferPool,
+                              numberOfBuffersPerPipeline);
+}
 
 NodeEnginePtr NodeEngine::create(const std::string& hostname,
                                  uint16_t port,
@@ -116,6 +139,29 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
     return nullptr;
 }
 
+NodeEngine::NodeEngine(PhysicalStreamConfigPtr&& config,
+                       BufferManagerPtr&& bufferManager,
+                       QueryManagerPtr&& queryManager,
+                       std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
+                       Network::PartitionManagerPtr&& partitionManager,
+                       QueryCompilation::QueryCompilerPtr&& queryCompiler,
+                       StateManagerPtr&& stateManager,
+                       uint64_t nodeEngineId,
+                       uint64_t numberOfBuffersInGlobalBufferManager,
+                       uint64_t numberOfBuffersInSourceLocalBufferPool,
+                       uint64_t numberOfBuffersPerPipeline)
+    : NodeEngine(std::vector<PhysicalStreamConfigPtr>{std::move(config)},
+                 std::move(bufferManager),
+                 std::move(queryManager),
+                 std::move(networkManagerCreator),
+                 std::move(partitionManager),
+                 std::move(queryCompiler),
+                 std::move(stateManager),
+                 nodeEngineId,
+                 numberOfBuffersInGlobalBufferManager,
+                 numberOfBuffersInSourceLocalBufferPool,
+                 numberOfBuffersPerPipeline) {}
+
 NodeEngine::NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
                        BufferManagerPtr&& bufferManager,
                        QueryManagerPtr&& queryManager,
@@ -131,8 +177,8 @@ NodeEngine::NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
-    for (auto& config : configs){
-        this->configs.push_back(config);
+    for (auto& config : configs) {
+        this->configs.emplace_back(std::move(config));
     }
 
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
