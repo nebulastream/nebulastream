@@ -94,6 +94,8 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     BufferManager& operator=(const BufferManager&) = delete;
     ~BufferManager() override;
 
+    virtual BufferManagerType getBufferManagerType() const override;
+
   private:
     /**
      * @brief Configure the BufferManager to use numOfBuffers buffers of size bufferSize bytes.
@@ -150,6 +152,11 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
      * @return Number of available buffers in the pool
      */
     size_t getAvailableBuffers() const override;
+
+    /**
+    * @return Number of available source in the pool
+    */
+    size_t getAvailableSourceBuffers() const;
 
     /**
      * @brief Create a local buffer manager that is assigned to one pipeline or thread

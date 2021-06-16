@@ -873,8 +873,9 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         long int qSize = taskQueue.size();
         statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
 
-        auto qBuffers = bufferManager->getAvailableBuffers();
-        statistics->incAvailableBufferSum(qBuffers > 0 ? qBuffers : 0);
+        statistics->incAvailableGlobalBufferSum(bufferManager->getAvailableBuffers());
+
+        statistics->incAvailableFixedBufferSum(bufferManager->getAvailableSourceBuffers());
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);

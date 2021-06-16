@@ -49,6 +49,11 @@ FixedSizeBufferPool::~FixedSizeBufferPool() {
     // nop
 }
 
+BufferManagerType FixedSizeBufferPool::getBufferManagerType() const
+{
+    return BufferManagerType::FIXED;
+}
+
 void FixedSizeBufferPool::destroy() {
     NES_DEBUG("Destroying LocalBufferPool");
     std::unique_lock lock(mutex);
