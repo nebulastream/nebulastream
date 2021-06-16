@@ -169,7 +169,7 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
  */
 DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 QuerySubPlanId parentPlanId,
-                                const Runtime:NodeEnginePtr& nodeEngine,
+                                const Runtime::NodeEnginePtr& nodeEngine,
                                 std::ostream& out);
 
 /**

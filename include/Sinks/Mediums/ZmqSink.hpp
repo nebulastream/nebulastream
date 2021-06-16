@@ -33,7 +33,7 @@ class ZmqSink : public SinkMedium {
     ZmqSink(SinkFormatPtr format, const std::string& host, uint16_t port, bool internal, QuerySubPlanId parentPlanId);
     ~ZmqSink() override;
 
-    bool writeData(Runtime::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) override;
+    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
     void setup() override { connect(); };
     void shutdown() override{};
     std::string toString() const override;
