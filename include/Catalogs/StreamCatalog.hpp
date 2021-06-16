@@ -210,6 +210,7 @@ class StreamCatalog {
     std::map<std::string, StreamCatalogEntryPtr> nameToPhysicalStream;
 
     // map physicalStreamName of misconfigured stream
+    // BDAPRO consider changing this to string to state with state being an own class
     std::map<std::string, std::string> misconfiguredPhysicalStreams;
 
     void addDefaultStreams();

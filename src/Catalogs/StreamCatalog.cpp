@@ -112,13 +112,13 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
 }
 
 // BDAPRO - discuss why bool is necessary here. i.e. what should be checked here?
+// BDAPRO use new PhysicalStreamState object - remove mapping
 bool StreamCatalog::addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry) {
     // BDAPRO introduce some kind of error status enum
     misconfiguredPhysicalStreams[newEntry->getPhysicalName()] = "Missing logical stream name";
     nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
     return true;
 }
-
 
 bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry) {
     std::unique_lock lock(catalogMutex);
@@ -176,9 +176,9 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     return true;
 }
 
-// BDAPRO consider implementing for completeness reasons.
-// DELETE mapping log to vector
-// ADD LABEL MISCONFIGURED - needs to checked because stream can be present in other log stream
+
+// BDAPRO ADD LABEL MISCONFIGURED - needs to checked because stream can be present in other log stream
+// this would be rather optional for this issue but should be done for failure handling // state object?
 bool StreamCatalog::removeAllPhysicalStreams(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical stream in removeAllPhysicalStreams() " << logicalStreamName);
@@ -189,20 +189,27 @@ bool StreamCatalog::removeAllPhysicalStreams(std::string logicalStreamName) {
     }
     else{
         logicalStreamToSchemaMapping.erase(logicalStreamName);
+        // BDAPRO call state object counter method on remove. => checks for misconfigured
         return true;
     }
 }
 
 //BDAPRO consider implementing a function removing a physical stream from ALL logical streams.
+// useful if worker fails
+// node should have a vector of all log streams in source config
+// consider rewriting this to vector
 bool StreamCatalog::removePhysicalStreamFromAllLogicalStreams(std::string physicalStreamName) {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG(physicalStreamName);
+    NES_DEBUG(physicalStreamName)
+    // get streamcatlogentryprr
+    // get vector of logicalStreamNames from streamCatalogEntryPtr
     NES_NOT_IMPLEMENTED();
 }
 
 // BDAPRO rename hashID - discuss meaning.
 // BDAPRO needs to be changed: Currently deleted a physicalStream from logicalStream mapping and deleting it from nameToPhysical which is wrong
 // nameToPhysical should stay as it could be important in other logical streams
+// BDAPRO add check for state != normal, then directly delete via deleteMisconfigured
 bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName);

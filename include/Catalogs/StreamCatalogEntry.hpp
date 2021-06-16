@@ -93,7 +93,7 @@ class StreamCatalogEntry {
     std::string getLogicalName();
 
     std::string toString();
-
+    // BDAPRO: Add state object
   private:
     std::string sourceType;
     std::string physicalStreamName;
