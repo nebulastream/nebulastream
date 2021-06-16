@@ -171,13 +171,14 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep, c
                                                                                << qep->getQueryId());
     std::scoped_lock lock(queryMutex, statisticsMutex);
     // test if elements already exist
-    NES_DEBUG("QueryManager: resolving sources for query " << qep);
+    NES_DEBUG("QueryManager: resolving sources for query " << qep->getQuerySubPlanId());
     for (const auto& source : sources) {
         // source already exists, add qep to source set if not there
         OperatorId sourceOperatorId = source->getOperatorId();
         sourceIdToSuccessorMap[sourceOperatorId] = source->getExecutableSuccessors();
 
-        NES_DEBUG("QueryManager: Source " << sourceOperatorId << " not found. Creating new element with with qep " << qep);
+        NES_DEBUG("QueryManager: Source " << sourceOperatorId << " not found. Creating new element with with qep "
+                                          << qep->getQuerySubPlanId());
         sourceIdToExecutableQueryPlanMap[sourceOperatorId] = qep;
         queryToStatisticsMap.insert(qep->getQuerySubPlanId(),
                                     std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
