@@ -113,7 +113,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
     return nullptr;
 }
 
-Runtime::NodeEngine(const PhysicalStreamConfigPtr& config,
+NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        BufferManagerPtr&& bufferManager,
                        QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,

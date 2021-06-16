@@ -95,7 +95,7 @@ class TestPipelineExecutionContext : public Runtime::Execution::PipelineExecutio
                                  Runtime::Execution::OperatorHandlerPtr operatorHandler)
         : TestPipelineExecutionContext(std::move(queryManager),
                                        std::move(bufferManager),
-                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>{std::move(operatorHandler)}) {}
+                                       std::vector<Runtime::Execution::OperatorHandlerPtr>{std::move(operatorHandler)}) {}
     TestPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
                                  Runtime::BufferManagerPtr bufferManager,
                                  std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
@@ -416,7 +416,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        nodeEngine->getBufferManager(),
-                                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
     Runtime::WorkerContext wctx{0};
     stage->setup(*queryContext);
     stage->start(*queryContext);
