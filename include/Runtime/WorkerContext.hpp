@@ -19,6 +19,7 @@
 
 #include <Network/NesPartition.hpp>
 #include <Network/OutputChannel.hpp>
+#include <Network/OutputChannelKey.hpp>
 #include <Runtime/NesThread.hpp>
 #include <cstdint>
 #include <memory>
@@ -36,7 +37,7 @@ class WorkerContext {
     /// the id of this worker context (unique per thread).
     uint32_t workerId;
 
-    std::unordered_map<Network::OperatorId, Network::OutputChannelPtr> channels;
+    std::unordered_map<Network::OutputChannelKey, Network::OutputChannelPtr> channels;
 
   public:
     explicit WorkerContext(uint32_t workerId);
@@ -49,24 +50,24 @@ class WorkerContext {
 
     /**
      * @brief This stores an output channel for an operator
-     * @param id of the operator that we want to store the output channel
+     * @param querySubPlanId and id of the operator
      * @param channel the output channel
      */
-    void storeChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel);
+    void storeChannel(Network::OutputChannelKey id, Network::OutputChannelPtr&& channel);
 
     /**
      * @brief removes a registered output channel
-     * @param id of the operator that we want to store the output channel
+     * @param querySubPlanId and id of the operator
      * @param notifyRelease: if true, then channel sends EoS messages
      */
-    void releaseChannel(Network::OperatorId id, bool notifyRelease);
+    void releaseChannel(Network::OutputChannelKey id, bool notifyRelease);
 
     /**
      * @brief retrieve a registered output channel
      * @param ownerId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::OutputChannel* getChannel(Network::OperatorId ownerId);
+    Network::OutputChannel* getChannel(Network::OutputChannelKey ownerId);
 };
 }// namespace NES::Runtime
 #endif//NES_WORKERCONTEXT_HPP_

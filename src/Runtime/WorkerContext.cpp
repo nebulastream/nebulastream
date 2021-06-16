@@ -18,16 +18,18 @@
 
 namespace NES::Runtime {
 
-WorkerContext::WorkerContext(uint32_t workerId) : workerId(workerId) {}
+WorkerContext::WorkerContext(uint32_t workerId) : workerId(workerId) {
+    channels = std::unordered_map<Network::OutputChannelKey, Network::OutputChannelPtr>();
+}
 
 uint32_t WorkerContext::getId() const { return workerId; }
 
-void WorkerContext::storeChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel) {
+void WorkerContext::storeChannel(Network::OutputChannelKey id, Network::OutputChannelPtr&& channel) {
     NES_TRACE("WorkerContext: storing channel for operator " << id << " for context " << workerId);
     channels[id] = std::move(channel);
 }
 
-void WorkerContext::releaseChannel(Network::OperatorId id, bool notifyRelease) {
+void WorkerContext::releaseChannel(Network::OutputChannelKey id, bool notifyRelease) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     auto it = channels.find(id);
     if (it != channels.end()) {
@@ -38,9 +40,8 @@ void WorkerContext::releaseChannel(Network::OperatorId id, bool notifyRelease) {
     }
 }
 
-Network::OutputChannel* WorkerContext::getChannel(Network::OperatorId ownerId) {
+Network::OutputChannel* WorkerContext::getChannel(Network::OutputChannelKey ownerId) {
     NES_TRACE("WorkerContext: retrieving channel for operator " << ownerId << " for context " << workerId);
     return channels[ownerId].get();
 }
-
 }// namespace NES::Runtime
