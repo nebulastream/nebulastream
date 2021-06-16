@@ -22,6 +22,7 @@
 #include <Network/OutputChannel.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
+#include <Network/OutputChannelKey.hpp>
 #include <string>
 
 namespace NES {
@@ -92,6 +93,7 @@ class NetworkSink : public SinkMedium {
     NodeEngine::QueryManagerPtr queryManager;
     const NodeLocation nodeLocation;
     NesPartition nesPartition;
+    OutputChannelKey outputChannelKey;
 
     const std::chrono::seconds waitTime;
     const uint8_t retryTimes;

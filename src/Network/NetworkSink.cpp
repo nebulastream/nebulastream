@@ -15,6 +15,7 @@
 */
 
 #include <Network/NetworkSink.hpp>
+#include <Network/OutputChannelKey.hpp>
 #include <NodeEngine/StopQueryMessage.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
@@ -35,7 +36,7 @@ NetworkSink::NetworkSink(SchemaPtr schema,
                          uint8_t retryTimes)
     : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),
       nodeLocation(nodeLocation), nesPartition(nesPartition), queryManager(queryManager), waitTime(waitTime),
-      retryTimes(retryTimes) {
+      retryTimes(retryTimes), outputChannelKey(OutputChannelKey(parentPlanId, nesPartition.getOperatorId())) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << nodeLocation.createZmqURI());
 }
@@ -45,7 +46,7 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 NetworkSink::~NetworkSink() { NES_INFO("NetworkSink: Destructor called " << nesPartition); }
 
 bool NetworkSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) {
-    auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
+    auto* channel = workerContext.getChannel(outputChannelKey);
     if (channel) {
         return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
     }
@@ -74,14 +75,14 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
         case NodeEngine::Initialize: {
             auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes);
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
-            workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
+            workerContext.storeChannel(outputChannelKey, std::move(channel));
             NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread "
                                                                       << NodeEngine::NesThread::getId());
             break;
         }
         case NodeEngine::Destroy: {
             auto notifyRelease = task.getUserData<bool>();
-            workerContext.releaseChannel(nesPartition.getOperatorId(), notifyRelease);
+            workerContext.releaseChannel(outputChannelKey, notifyRelease);
             NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
                                                                         << NodeEngine::NesThread::getId());
             break;
@@ -94,7 +95,7 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
              * Blocker: `QueryManager::addReconfigurationMessage` calls task->postReconfiguration when blocking, what will workerContext be?
              */
             auto queryReconfigurationMessage = task.getUserData<Messages::QueryReconfigurationMessage>();
-            auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
+            auto* channel = workerContext.getChannel(outputChannelKey);
             channel->sendReconfigurationMessage(queryReconfigurationMessage);
             break;
         }
