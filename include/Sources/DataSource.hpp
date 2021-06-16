@@ -222,8 +222,8 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
     SchemaPtr schema;
-    uint64_t generatedTuples;
-    uint64_t generatedBuffers;
+    uint64_t generatedTuples{0};
+    uint64_t generatedBuffers{0};
     uint64_t numBuffersToProcess= std::numeric_limits<decltype(numBuffersToProcess)>::max();
     uint64_t numSourceLocalBuffers;
     uint64_t gatheringIngestionRate{};
