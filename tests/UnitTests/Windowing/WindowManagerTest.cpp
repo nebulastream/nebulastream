@@ -50,6 +50,7 @@
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
+#include <QueryCompiler/GeneratableTypes/Array.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
 using namespace NES::Windowing;
@@ -360,7 +361,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     aggregates[sliceIndex]++;
     std::cout << aggregates[sliceIndex] << std::endl;
 
-    ASSERT_EQ(aggregates[sliceIndex], 1);
+    ASSERT_EQ(aggregates[sliceIndex], 1UL);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
     auto windowAction = std::dynamic_pointer_cast<
@@ -372,7 +373,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 1);
+    ASSERT_EQ(tupleCnt, 1UL);
 
     struct OutputType {
         int64_t start;
