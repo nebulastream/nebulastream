@@ -22,7 +22,6 @@
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>
-#include <folly/MPMCQueue.h>
 #include <iostream>
 #include <thread>
 #include <unistd.h>

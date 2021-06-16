@@ -64,20 +64,48 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
         Yaml::Node config = *(new Yaml::Node());
         Yaml::Parse(config, filePath.c_str());
         try {
-            setRestPort(config["restPort"].As<uint16_t>());
-            setRpcPort(config["rpcPort"].As<uint16_t>());
-            setDataPort(config["dataPort"].As<uint16_t>());
-            setRestIp(config["restIp"].As<std::string>());
-            setCoordinatorIp(config["coordinatorIp"].As<std::string>());
-            setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
-            setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
-            setLogLevel(config["logLevel"].As<std::string>());
-            setQueryBatchSize(config["queryBatchSize"].As<uint32_t>());
-            setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
-            setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
-            setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
-            setQueryMergerRule(config["queryMergerRule"].As<std::string>());
-            setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
+            if (!config["restPort"].As<std::string>().empty()) {
+                setRestPort(config["restPort"].As<uint16_t>());
+            }
+            if (!config["rpcPort"].As<std::string>().empty()) {
+                setRpcPort(config["rpcPort"].As<uint16_t>());
+            }
+            if (!config["dataPort"].As<std::string>().empty()) {
+                setDataPort(config["dataPort"].As<uint16_t>());
+            }
+            if (!config["restIp"].As<std::string>().empty()) {
+                setRestIp(config["restIp"].As<std::string>());
+            }
+            if (!config["coordinatorIp"].As<std::string>().empty()) {
+                setCoordinatorIp(config["coordinatorIp"].As<std::string>());
+            }
+            if (!config["numberOfSlots"].As<std::string>().empty()) {
+                setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
+            }
+            if (!config["enableQueryMerging"].As<std::string>().empty()) {
+                setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
+            }
+            if (!config["logLevel"].As<std::string>().empty()) {
+                setLogLevel(config["logLevel"].As<std::string>());
+            }
+            if (!config["queryBatchSize"].As<std::string>().empty()) {
+                setQueryBatchSize(config["queryBatchSize"].As<uint32_t>());
+            }
+            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty()) {
+                setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
+            }
+            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty()) {
+                setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
+            }
+            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()) {
+                setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
+            }
+            if (!config["queryMergerRule"].As<std::string>().empty()) {
+                setQueryMergerRule(config["queryMergerRule"].As<std::string>());
+            }
+            if (!config["enableSemanticQueryValidation"].As<std::string>().empty()) {
+                setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
+            }
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
             NES_WARNING("CoordinatorConfig: Keeping default values.");
@@ -92,33 +120,33 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
 void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
     try {
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
-            if (it->first == "--restIp") {
+            if (it->first == "--restIp" && !it->second.empty()) {
                 setRestIp(it->second);
-            } else if (it->first == "--coordinatorIp") {
+            } else if (it->first == "--coordinatorIp" && !it->second.empty()) {
                 setCoordinatorIp(it->second);
-            } else if (it->first == "--coordinatorPort") {
+            } else if (it->first == "--coordinatorPort" && !it->second.empty()) {
                 setRpcPort(stoi(it->second));
-            } else if (it->first == "--restPort") {
+            } else if (it->first == "--restPort" && !it->second.empty()) {
                 setRestPort(stoi(it->second));
-            } else if (it->first == "--dataPort") {
+            } else if (it->first == "--dataPort" && !it->second.empty()) {
                 setDataPort(stoi(it->second));
-            } else if (it->first == "--numberOfSlots") {
+            } else if (it->first == "--numberOfSlots" && !it->second.empty()) {
                 setNumberOfSlots(stoi(it->second));
-            } else if (it->first == "--enableQueryMerging") {
+            } else if (it->first == "--enableQueryMerging" && !it->second.empty()) {
                 setEnableQueryMerging((it->second == "true"));
-            } else if (it->first == "--logLevel") {
+            } else if (it->first == "--logLevel" && !it->second.empty()) {
                 setLogLevel(it->second);
-            } else if (it->first == "--queryBatchSize") {
+            } else if (it->first == "--queryBatchSize" && !it->second.empty()) {
                 setQueryBatchSize(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersInGlobalBufferManager") {
+            } else if (it->first == "--numberOfBuffersInGlobalBufferManager" && !it->second.empty()) {
                 setNumberOfBuffersInGlobalBufferManager(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersPerPipeline") {
+            } else if (it->first == "--numberOfBuffersPerPipeline" && !it->second.empty()) {
                 setnumberOfBuffersPerPipeline(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool") {
+            } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool" && !it->second.empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
-            } else if (it->first == "--queryMergerRule") {
+            } else if (it->first == "--queryMergerRule" && !it->second.empty()) {
                 setQueryMergerRule(it->second);
-            } else if (it->first == "--enableSemanticQueryValidation") {
+            } else if (it->first == "--enableSemanticQueryValidation" && !it->second.empty()) {
                 setEnableSemanticQueryValidation((it->second == "true"));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);

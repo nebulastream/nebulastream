@@ -66,18 +66,42 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
         Yaml::Node config = *(new Yaml::Node());
         Yaml::Parse(config, filePath.c_str());
         try {
-            setCoordinatorPort(config["coordinatorPort"].As<uint16_t>());
-            setRpcPort(config["rpcPort"].As<uint16_t>());
-            setDataPort(config["dataPort"].As<uint16_t>());
-            setLocalWorkerIp(config["localWorkerIp"].As<std::string>());
-            setCoordinatorIp(config["coordinatorIp"].As<std::string>());
-            setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
-            setNumWorkerThreads(config["numWorkerThreads"].As<bool>());
-            setParentId(config["parentId"].As<std::string>());
-            setLogLevel(config["logLevel"].As<std::string>());
-            setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
-            setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
-            setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
+            if (!config["coordinatorPort"].As<std::string>().empty()) {
+                setCoordinatorPort(config["coordinatorPort"].As<uint16_t>());
+            }
+            if (!config["rpcPort"].As<std::string>().empty()) {
+                setRpcPort(config["rpcPort"].As<uint16_t>());
+            }
+            if (!config["dataPort"].As<std::string>().empty()) {
+                setDataPort(config["dataPort"].As<uint16_t>());
+            }
+            if (!config["localWorkerIp"].As<std::string>().empty()) {
+                setLocalWorkerIp(config["localWorkerIp"].As<std::string>());
+            }
+            if (!config["coordinatorIp"].As<std::string>().empty()) {
+                setCoordinatorIp(config["coordinatorIp"].As<std::string>());
+            }
+            if (!config["numberOfSlots"].As<std::string>().empty()) {
+                setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
+            }
+            if (!config["numWorkerThreads"].As<std::string>().empty()) {
+                setNumWorkerThreads(config["numWorkerThreads"].As<bool>());
+            }
+            if (!config["parentId"].As<std::string>().empty()) {
+                setParentId(config["parentId"].As<std::string>());
+            }
+            if (!config["logLevel"].As<std::string>().empty()) {
+                setLogLevel(config["logLevel"].As<std::string>());
+            }
+            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty()) {
+                setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
+            }
+            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty()) {
+                setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
+            }
+            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()) {
+                setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
+            }
         } catch (std::exception& e) {
             NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
                       "values. "
@@ -94,29 +118,29 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
     try {
 
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
-            if (it->first == "--localWorkerIp") {
+            if (it->first == "--localWorkerIp" && !it->second.empty()) {
                 setLocalWorkerIp(it->second);
-            } else if (it->first == "--coordinatorIp") {
+            } else if (it->first == "--coordinatorIp" && !it->second.empty()) {
                 setCoordinatorIp(it->second);
-            } else if (it->first == "--rpcPort") {
+            } else if (it->first == "--rpcPort" && !it->second.empty()) {
                 setRpcPort(stoi(it->second));
-            } else if (it->first == "--coordinatorPort") {
+            } else if (it->first == "--coordinatorPort" && !it->second.empty()) {
                 setCoordinatorPort(stoi(it->second));
-            } else if (it->first == "--dataPort") {
+            } else if (it->first == "--dataPort" && !it->second.empty()) {
                 setDataPort(stoi(it->second));
-            } else if (it->first == "--numberOfSlots") {
+            } else if (it->first == "--numberOfSlots" && !it->second.empty()) {
                 setNumberOfSlots(stoi(it->second));
-            } else if (it->first == "--numWorkerThreads") {
+            } else if (it->first == "--numWorkerThreads" && !it->second.empty()) {
                 setNumWorkerThreads(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersInGlobalBufferManager") {
+            } else if (it->first == "--numberOfBuffersInGlobalBufferManager" && !it->second.empty()) {
                 setNumberOfBuffersInGlobalBufferManager(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersPerPipeline") {
+            } else if (it->first == "--numberOfBuffersPerPipeline" && !it->second.empty()) {
                 setnumberOfBuffersPerPipeline(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool") {
+            } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool" && !it->second.empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
-            } else if (it->first == "--parentId") {
+            } else if (it->first == "--parentId" && !it->second.empty()) {
                 setParentId(it->second);
-            } else if (it->first == "--logLevel") {
+            } else if (it->first == "--logLevel" && !it->second.empty()) {
                 setLogLevel(it->second);
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
