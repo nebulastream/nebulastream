@@ -17,17 +17,21 @@
 #ifndef NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 #define NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 
+#include <NodeEngine/BufferRecycler.hpp>
 #include <Sources/GeneratorSource.hpp>
-
 namespace NES {
-
+namespace NodeEngine {
+namespace detail {
+class MemorySegment;
+}
+}// namespace NodeEngine
 /**
  * @brief Memory Source that reads from main memory and produces buffers.
  * The memory area out of which buffers will be produced must be initialized beforehand and allocated as a shared_ptr
  * that must have ownership of the area, i.e., it must control when to free it.
  * Do not use in distributed settings but only for single node dev and testing.
  */
-class MemorySource : public GeneratorSource {
+class MemorySource : public GeneratorSource, public NodeEngine::BufferRecycler {
   public:
     /**
      * @brief The constructor of a MemorySource
@@ -67,6 +71,14 @@ class MemorySource : public GeneratorSource {
      * @return the type of the source
      */
     SourceType getType() const override;
+
+    virtual void recyclePooledBuffer(NodeEngine::detail::MemorySegment*){};
+
+    /**
+     * @brief Interface method for unpooled buffer recycling
+     * @param buffer the buffer to recycle
+     */
+    virtual void recycleUnpooledBuffer(NodeEngine::detail::MemorySegment*){};
 
   private:
     uint64_t numberOfTuplesToProduce;
