@@ -96,6 +96,8 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
      */
     void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
 
+    virtual BufferManagerType getBufferManagerType() const override;
+
   private:
     std::weak_ptr<BufferManager> bufferManager;
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER

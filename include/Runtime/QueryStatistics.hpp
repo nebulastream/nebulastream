@@ -103,12 +103,23 @@ class QueryStatistics {
      * @brief get sum of all available buffers
      * @return value
      */
-    [[nodiscard]] uint64_t getAvailableBufferSum() const;
+    [[nodiscard]] uint64_t getAvailableGlobalBufferSum() const;
 
     /**
     * @brief increment available buffer sum
     */
-    void incAvailableBufferSum(uint64_t size);
+    void incAvailableGlobalBufferSum(uint64_t size);
+
+    /**
+     * @brief get sum of all fixed buffer buffers
+     * @return value
+     */
+    [[nodiscard]] uint64_t getAvailableFixedBufferSum() const;
+
+    /**
+    * @brief increment available fixed buffer sum
+    */
+    void incAvailableFixedBufferSum(uint64_t size);
 
     /**
      * @brief get sum of all queue sizes
@@ -165,14 +176,14 @@ class QueryStatistics {
     std::atomic<uint64_t> processedWatermarks = 0;
     std::atomic<uint64_t> latencySum = 0;
     std::atomic<uint64_t> queueSizeSum = 0;
-    std::atomic<uint64_t> availableBufferSum = 0;
+    std::atomic<uint64_t> availableGlobalBufferSum = 0;
+    std::atomic<uint64_t> availableFixedBufferSum = 0;
 
   private:
     std::atomic<uint64_t> queryId = 0;
     std::atomic<uint64_t> subQueryId = 0;
     std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;
 };
-
 
 }// namespace NES::Runtime
 

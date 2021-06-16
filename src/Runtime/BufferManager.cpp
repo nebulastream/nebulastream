@@ -294,6 +294,25 @@ size_t BufferManager::getAvailableBuffers() const {
 #endif
 }
 
+size_t BufferManager::getAvailableSourceBuffers() const
+{
+    size_t sum = 0;
+    for(auto& pool : localBufferPools)
+    {
+        auto type = pool->getBufferManagerType();
+        if(type == BufferManagerType::FIXED)
+        {
+            sum += pool->getAvailableBuffers();
+        }
+    }
+    return sum;
+}
+
+BufferManagerType BufferManager::getBufferManagerType() const
+{
+    return BufferManagerType::GLOBAL;
+}
+
 BufferManager::UnpooledBufferHolder::UnpooledBufferHolder() { segment.reset(); }
 
 BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(uint32_t bufferSize) : size(bufferSize), free(false) {

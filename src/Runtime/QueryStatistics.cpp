@@ -30,7 +30,8 @@ uint64_t QueryStatistics::getLatencySum() const { return latencySum.load(); }
 
 uint64_t QueryStatistics::getQueueSizeSum() const { return queueSizeSum.load(); }
 
-uint64_t QueryStatistics::getAvailableBufferSum() const { return availableBufferSum.load(); }
+uint64_t QueryStatistics::getAvailableGlobalBufferSum() const { return availableGlobalBufferSum.load(); }
+uint64_t QueryStatistics::getAvailableFixedBufferSum() const { return availableFixedBufferSum.load(); }
 
 void QueryStatistics::setProcessedTasks(uint64_t processedTasks) { this->processedTasks = processedTasks; }
 
@@ -44,7 +45,8 @@ void QueryStatistics::incProcessedWatermarks() { this->processedWatermarks++; }
 void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTuple += tupleCnt; }
 void QueryStatistics::incLatencySum(uint64_t latency) { this->latencySum += latency; }
 void QueryStatistics::incQueueSizeSum(uint64_t size) { this->queueSizeSum += size; }
-void QueryStatistics::incAvailableBufferSum(uint64_t size){ this->availableBufferSum += size; }
+void QueryStatistics::incAvailableGlobalBufferSum(uint64_t size){ this->availableGlobalBufferSum += size; }
+void QueryStatistics::incAvailableFixedBufferSum(uint64_t size){ this->availableFixedBufferSum += size; }
 
 void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) { this->processedBuffers = processedBuffers; }
 
@@ -62,7 +64,8 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedWatermarks=" << processedWatermarks.load();
     ss << " latencySum=" << latencySum.load();
     ss << " queueSizeSum=" << queueSizeSum.load();
-    ss << " availableBufferSum=" << availableBufferSum.load();
+    ss << " availableGlobalBufferSum=" << availableGlobalBufferSum.load();
+    ss << " availableFixedBufferSum=" << availableFixedBufferSum.load();
     return ss.str();
 }
 uint64_t QueryStatistics::getQueryId() const { return queryId.load(); }
@@ -76,7 +79,8 @@ QueryStatistics::QueryStatistics(const QueryStatistics& other)
     processedWatermarks = other.processedWatermarks.load();
     latencySum = other.latencySum.load();
     queueSizeSum = other.queueSizeSum.load();
-    availableBufferSum = other.availableBufferSum.load();
+    availableGlobalBufferSum = other.availableGlobalBufferSum.load();
+    availableFixedBufferSum = other.availableFixedBufferSum.load();
     queryId = other.queryId.load();
     subQueryId = other.subQueryId.load();
     tsToLatencyMap = other.tsToLatencyMap;
