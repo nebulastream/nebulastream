@@ -1,0 +1,8 @@
+//
+// Created by Vincent Szlang on 16.06.21.
+//
+
+#ifndef NES_PHYSICALSTREAMSTATE_HPP
+#define NES_PHYSICALSTREAMSTATE_HPP
+
+#endif //NES_PHYSICALSTREAMSTATE_HPP
