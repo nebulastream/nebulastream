@@ -1,12 +1,13 @@
 #ifndef NES_INCLUDE_COMPILER_SOURCECODE_HPP_
 #define NES_INCLUDE_COMPILER_SOURCECODE_HPP_
 #include <Compiler/Language.hpp>
+#include <string>
 namespace NES::Compiler {
 
 class SourceCode {
   public:
     SourceCode(Language language, const std::string& code);
-    const Language getLanguage() const;
+    Language getLanguage() const;
     const std::string& getCode() const;
 
   private:

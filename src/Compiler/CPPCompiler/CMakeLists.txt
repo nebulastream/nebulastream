@@ -13,11 +13,6 @@
 # limitations under the License.
 
 add_source_nes(
-        JITCompiler.cpp
-        JITCompilerBuilder.cpp
-        CompilationRequest.cpp
-        CompilationResult.cpp
-        SourceCode.cpp
+        CPPCompiler.cpp
+        CPPCompilerFlags.cpp
 )
-
-add_subdirectory(CPPCompiler)

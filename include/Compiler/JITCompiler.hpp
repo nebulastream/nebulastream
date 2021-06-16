@@ -16,23 +16,19 @@
 #ifndef NES_INCLUDE_COMPILER_JITCOMPILER_HPP_
 #define NES_INCLUDE_COMPILER_JITCOMPILER_HPP_
 #include <Compiler/Language.hpp>
-#include <memory>
+#include <Compiler/CompilerForwardDeclarations.hpp>
 #include <map>
 #include <future>
 #include <vector>
 
 namespace NES::Compiler {
 
-class LanguageCompiler;
-class CompilationResult;
-class CompilationRequest;
-
 class JITCompiler {
   public:
-    JITCompiler(const std::vector<std::unique_ptr<LanguageCompiler>> languageCompilers);
-    const std::future<CompilationResult> compile(const std::unique_ptr<CompilationRequest> request) const;
+    JITCompiler(std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers);
+    [[nodiscard]] std::future<const CompilationResult> compile(std::unique_ptr<const CompilationRequest> request) const;
   private:
-    const std::map<const Language, std::unique_ptr<LanguageCompiler>> languageCompilerMap;
+    const std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers;
 };
 
 }// namespace NES::Compiler

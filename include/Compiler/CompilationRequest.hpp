@@ -15,10 +15,11 @@
 */
 #ifndef NES_INCLUDE_COMPILER_COMPILATIONREQUEST_HPP_
 #define NES_INCLUDE_COMPILER_COMPILATIONREQUEST_HPP_
-#include <memory>
-namespace NES::Compiler{
-class SourceCode;
-class CompilationRequest{
+
+#include <Compiler/CompilerForwardDeclarations.hpp>
+
+namespace NES::Compiler {
+class CompilationRequest {
   public:
     CompilationRequest(std::unique_ptr<SourceCode> sourceCode,
                        bool profileCompilation,
@@ -31,7 +32,12 @@ class CompilationRequest{
                                                bool optimizeCompilation,
                                                bool debug);
 
-    const std::shared_ptr<SourceCode> getSourceCode() const;
+    [[nodiscard]] const std::shared_ptr<SourceCode> getSourceCode() const;
+    [[nodiscard]] bool enableDebugging() const;
+    [[nodiscard]] bool enableOptimizations() const;
+    [[nodiscard]] bool enableCompilationProfiling() const;
+    [[nodiscard]] bool enableExecutionProfiling() const;
+
   private:
     const std::shared_ptr<SourceCode> sourceCode;
     const bool profileCompilation;
@@ -40,6 +46,6 @@ class CompilationRequest{
     const bool debug;
 };
 
-}
+}// namespace NES::Compiler
 
 #endif//NES_INCLUDE_COMPILER_COMPILATIONREQUEST_HPP_
