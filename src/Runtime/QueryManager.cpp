@@ -273,11 +273,37 @@ bool QueryManager::startQueryForSources(Execution::ExecutableQueryPlanPtr& qep,
     return true;
 }
 
+bool QueryManager::isSourceAssociatedWithQep(OperatorId sourceOperatorId, QuerySubPlanId querySubPlanId) {
+    if (sourceIdToExecutableQueryPlanMap.find(sourceOperatorId) == sourceIdToExecutableQueryPlanMap.end()) {
+        return false;
+    }
+    return sourceIdToExecutableQueryPlanMap[sourceOperatorId]->getQuerySubPlanId() == querySubPlanId;
+}
+
+bool QueryManager::allSourcesMappedToQep(Execution::ExecutableQueryPlanPtr qep) {
+    for (auto source : qep->getSources()) {
+        OperatorId sourceOperatorId = source->getOperatorId();
+        if (sourceIdToExecutableQueryPlanMap.find(sourceOperatorId) == sourceIdToExecutableQueryPlanMap.end()) {
+            return false;
+        }
+        if (sourceIdToExecutableQueryPlanMap[sourceOperatorId]->getQuerySubPlanId() != qep->getQuerySubPlanId()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool QueryManager::triggerQepStartReconfiguration(Execution::ExecutableQueryPlanPtr newQep,
                                                   StateManagerPtr stateManager,
                                                   Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
     auto newQuerySubPlanId = newQep->getQuerySubPlanId();
     auto sourceOperatorId = queryReconfigurationMessage.getChannelId().getNesPartition().getOperatorId();
+    if (sourceIdToExecutableQueryPlanMap.find(sourceOperatorId) != sourceIdToExecutableQueryPlanMap.end()) {
+        // Source already associated with appropriate QEP, nothing else to do
+        if (sourceIdToExecutableQueryPlanMap[sourceOperatorId]->getQuerySubPlanId() == newQuerySubPlanId) {
+            return true;
+        }
+    }
     auto allSources = newQep->getSources();
     auto matchingSourcesItr = std::find_if(allSources.begin(), allSources.end(), [sourceOperatorId](DataSourcePtr src) {
         return src->getOperatorId() == sourceOperatorId;
@@ -337,6 +363,12 @@ bool QueryManager::triggerQepStopReconfiguration(Execution::ExecutableQueryPlanP
     if (sourceIdToExecutableQueryPlanMap.find(sourceOperatorId) == sourceIdToExecutableQueryPlanMap.end()) {
         NES_DEBUG("QueryManager::triggerQepStopReconfiguration: No QEP exists for source: " << sourceOperatorId);
         return true;
+    }
+    if (sourceIdToExecutableQueryPlanMap[querySubPlanId]->getQuerySubPlanId() != querySubPlanId) {
+        NES_ERROR("QueryManager::triggerQepStopReconfiguration: Received stop request from: "
+                  << sourceOperatorId << " for QEP " << querySubPlanId << " but only QEP with ID: "
+                  << sourceIdToExecutableQueryPlanMap[querySubPlanId]->getQuerySubPlanId() << " to source");
+        return false;
     }
     auto allSources = qepToStop->getSources();
     auto matchingSourcesItr = std::find_if(allSources.begin(), allSources.end(), [sourceOperatorId](DataSourcePtr src) {

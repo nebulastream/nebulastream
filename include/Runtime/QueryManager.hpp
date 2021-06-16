@@ -317,6 +317,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 #endif
 
     std::atomic<QueryManagerStatus> queryManagerStatus{Created};
+    bool isSourceAssociatedWithQep(OperatorId sourceOperatorId, QuerySubPlanId querySubPlanId);
+    bool allSourcesMappedToQep(Execution::ExecutableQueryPlanPtr qep);
 };
 
 using QueryManagerPtr = std::shared_ptr<QueryManager>;
