@@ -16,6 +16,7 @@ add_source_nes(
         ZmqServer.cpp
         NetworkManager.cpp
         OutputChannel.cpp
+        OutputChannelKey.cpp
         PartitionManager.cpp
         NetworkSink.cpp
         NetworkSource.cpp
