@@ -29,6 +29,7 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   python3.8 \
   libsodium-dev \
   tar \
+  libbsd-dev \
   p7zip \
   doxygen \
   graphviz \
