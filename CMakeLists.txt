@@ -384,7 +384,7 @@ endforeach ()
 message(STATUS " Libraries: ${LIBRARIES}")
 message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
-# Definition of Runtime variables ######################################################################################
+# Definition of runtime variables ######################################################################################
 # LLVM
 find_package(LLVM 11.1.0 CONFIG REQUIRED)
 if (LLVM_FOUND)
