@@ -18,6 +18,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   p7zip \
   doxygen \
   graphviz \
+  libbsd-dev \
   software-properties-common \
   && apt-get clean -qq
 
