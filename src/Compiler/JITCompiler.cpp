@@ -1,25 +1,23 @@
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/JITCompiler.hpp>
+#include <Compiler/Language.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::Compiler {
 
-JITCompiler::JITCompiler(const std::vector<std::unique_ptr<LanguageCompiler>> languageCompilers) {
-    for (auto& languageCompiler : languageCompilers) {
-        NES_DEBUG("Register compiler for language: " << languageCompiler->getLanguage());
-        languageCompilerMap[languageCompiler->getLanguage()] = languageCompiler;
-    }
-}
+JITCompiler::JITCompiler(std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers)
+    : languageCompilers(std::move(languageCompilers)) {}
 
-const std::future<CompilationResult> JITCompiler::compile(std::unique_ptr<CompilationRequest> request) const {
-    std::promise<CompilationResult> result;
+std::future<const CompilationResult> JITCompiler::compile(std::unique_ptr<const CompilationRequest> request) const {
+    std::promise<const CompilationResult> result;
     auto language = request->getSourceCode()->getLanguage();
-    auto languageCompiler = languageCompilerMap.find(language);
+    auto languageCompiler = languageCompilers.find(language);
 
-    if (languageCompiler == languageCompilerMap.end()) {
+    if (languageCompiler == languageCompilers.end()) {
         NES_FATAL_ERROR("No language compiler found for language: " << language);
     }
 

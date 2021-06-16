@@ -1,6 +1,8 @@
 #ifndef NES_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_
 #define NES_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_
 
+#include <Compiler/CompilerForwardDeclarations.hpp>
+
 namespace NES::Compiler {
 
 class CompilationResult {
