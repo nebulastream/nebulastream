@@ -53,14 +53,30 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
         Yaml::Node config;
         Yaml::Parse(config, filePath.c_str());
         try {
-            setSourceConfig(config["sourceConfig"].As<std::string>());
-            setSourceType(config["sourceType"].As<std::string>());
-            setSourceFrequency(config["sourceFrequency"].As<uint16_t>());
-            setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint64_t>());
-            setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].As<uint16_t>());
-            setPhysicalStreamName(config["physicalStreamName"].As<std::string>());
-            setLogicalStreamName(config["logicalStreamName"].As<std::string>());
-            setSkipHeader(config["skipHeader"].As<bool>());
+            if (!config["sourceConfig"].As<std::string>().empty()) {
+                setSourceConfig(config["sourceConfig"].As<std::string>());
+            }
+            if (!config["sourceType"].As<std::string>().empty()) {
+                setSourceType(config["sourceType"].As<std::string>());
+            }
+            if (!config["sourceFrequency"].As<std::string>().empty()) {
+                setSourceFrequency(config["sourceFrequency"].As<uint16_t>());
+            }
+            if (!config["numberOfBuffersToProduce"].As<std::string>().empty()) {
+                setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint64_t>());
+            }
+            if (!config["numberOfTuplesToProducePerBuffer"].As<std::string>().empty()) {
+                setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].As<uint16_t>());
+            }
+            if (!config["physicalStreamName"].As<std::string>().empty()) {
+                setPhysicalStreamName(config["physicalStreamName"].As<std::string>());
+            }
+            if (!config["logicalStreamName"].As<std::string>().empty()) {
+                setLogicalStreamName(config["logicalStreamName"].As<std::string>());
+            }
+            if (!config["skipHeader"].As<std::string>().empty()) {
+                setSkipHeader(config["skipHeader"].As<bool>());
+            }
         } catch (std::exception& e) {
             NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from XAML file.");
             NES_WARNING("NesWorkerConfig: Keeping default values.");
@@ -75,21 +91,21 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
 void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
     try {
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
-            if (it->first == "--sourceType") {
+            if (it->first == "--sourceType" && !it->second.empty()) {
                 setSourceType(it->second);
-            } else if (it->first == "--sourceConfig") {
+            } else if (it->first == "--sourceConfig" && !it->second.empty()) {
                 setSourceConfig(it->second);
-            } else if (it->first == "--sourceFrequency") {
+            } else if (it->first == "--sourceFrequency" && !it->second.empty()) {
                 setSourceFrequency(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersToProduce") {
+            } else if (it->first == "--numberOfBuffersToProduce" && !it->second.empty()) {
                 setNumberOfBuffersToProduce(stoi(it->second));
-            } else if (it->first == "--numberOfTuplesToProducePerBuffer") {
+            } else if (it->first == "--numberOfTuplesToProducePerBuffer" && !it->second.empty()) {
                 setNumberOfTuplesToProducePerBuffer(stoi(it->second));
-            } else if (it->first == "--physicalStreamName") {
+            } else if (it->first == "--physicalStreamName" && !it->second.empty()) {
                 setPhysicalStreamName(it->second);
-            } else if (it->first == "--logicalStreamName") {
+            } else if (it->first == "--logicalStreamName" && !it->second.empty()) {
                 setLogicalStreamName(it->second);
-            } else if (it->first == "--skipHeader") {
+            } else if (it->first == "--skipHeader" && !it->second.empty()) {
                 setSkipHeader((it->second == "true"));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
