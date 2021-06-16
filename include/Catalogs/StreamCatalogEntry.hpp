@@ -18,6 +18,7 @@
 #define INCLUDE_CATALOGS_STREAMCATALOGENTRY_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/PhysicalStreamState.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -92,13 +93,21 @@ class StreamCatalogEntry {
      */
     std::string getLogicalName();
 
+    /**
+     * @brief get PhysicalStreamState which contains count (#logicalstreams for that physicalStream) and state (e.g. misconfigured, regular)
+     * @return PhysicalStreamState object
+     */
+    PhysicalStreamState getPhysicalStreamState();
+
+
     std::string toString();
-    // BDAPRO: Add state object
+
   private:
     std::string sourceType;
     std::string physicalStreamName;
     std::string logicalStreamName;
     TopologyNodePtr node;
+    PhysicalStreamState physicalStreamState;
 };
 
 }// namespace NES

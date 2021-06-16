@@ -200,7 +200,7 @@ bool StreamCatalog::removeAllPhysicalStreams(std::string logicalStreamName) {
 // consider rewriting this to vector
 bool StreamCatalog::removePhysicalStreamFromAllLogicalStreams(std::string physicalStreamName) {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG(physicalStreamName)
+    NES_DEBUG(physicalStreamName);
     // get streamcatlogentryprr
     // get vector of logicalStreamNames from streamCatalogEntryPtr
     NES_NOT_IMPLEMENTED();
