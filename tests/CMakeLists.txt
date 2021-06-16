@@ -135,8 +135,8 @@ add_test(NAME operator-code-generation-tests COMMAND operator-code-generation-te
 
 ### Query Compiler Tests ###
 add_executable(query-compiler-tests "UnitTests/QueryCompiler/QueryCompilerTest.cpp")
-target_link_libraries(query-compiler-tests  nes ${GTEST_LIBRARIES})
-add_test(NAME query-compiler-tests  COMMAND query-compiler-tests )
+target_link_libraries(query-compiler-tests nes ${GTEST_LIBRARIES})
+add_test(NAME query-compiler-tests COMMAND query-compiler-tests)
 
 ### NES Topology Tests ###
 add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
@@ -461,6 +461,11 @@ add_test(NAME config-test COMMAND config-test)
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
 target_link_libraries(multi-worker-test nes ${GTEST_LIBRARIES})
 add_test(NAME multi-worker-test COMMAND multi-worker-test)
+
+### QueryReconfigurationTest ###
+add_executable(query-reconfiguration-test "Integration/QueryReconfigurationTest.cpp")
+target_link_libraries(query-reconfiguration-test nes ${GTEST_LIBRARIES})
+add_test(NAME query-reconfiguration-test COMMAND query-reconfiguration-test)
 
 ### QueryDeploymentTest ###
 add_executable(query-deployment-test "Integration/QueryDeploymentTest.cpp")
