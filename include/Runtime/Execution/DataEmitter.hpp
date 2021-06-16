@@ -25,7 +25,7 @@ class TupleBuffer;
 /**
  * @brief Interface that classes have to adhere to emit data as tasks
  */
-class DataEmitter : public ::NES::detail::virtual_enable_shared_from_this<DataEmitter, false> {
+class DataEmitter : public detail::virtual_enable_shared_from_this<DataEmitter, false> {
   public:
     /**
      * @brief create a task using the provided buffer and submit it to a task consumer, e.g., query manager
