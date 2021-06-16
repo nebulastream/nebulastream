@@ -546,7 +546,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto wctx = Runtime::WorkerContext{0};
     auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                   nodeEngine->getBufferManager(),
-                                                                  std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+                                                                  std::vector<Runtime::Execution::OperatorHandlerPtr>());
     stage->setup(*context);
     stage->start(*context);
     ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), ExecutionResult::Ok);
