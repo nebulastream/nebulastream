@@ -20,6 +20,7 @@
 #include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Plans/Query/QueryReconfigurationId.hpp>
 
 namespace NES {
 
@@ -46,7 +47,12 @@ class PlanIdGenerator {
      * @return query id
      */
     static QueryId getNextQueryId();
-    uint64_t getNextQueryReconfigurationPlanId();
+
+    /**
+     * @brief Returns the next free QueryReconfiguration id
+     * @return queryReconfigurationId
+     */
+    static QueryReconfigurationId getNextQueryReconfigurationPlanId();
 };
 }// namespace NES
 #endif//NES_PLANIDGENERATOR_HPP
