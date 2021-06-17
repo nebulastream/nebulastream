@@ -249,12 +249,12 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     /**
     * @brief running routine with a fix frequency
     */
-    void runningRoutineWithFrequency();
+    virtual void runningRoutineWithFrequency();
 
     /**
     * @brief running routine with a fix ingestion rate
     */
-    void runningRoutineWithIngestionRate();
+    virtual void runningRoutineWithIngestionRate();
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

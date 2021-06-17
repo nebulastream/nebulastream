@@ -148,7 +148,7 @@ bool DataSource::stop(bool graceful) {
                 }
 
                 thread->join();
-                NES_DEBUG("DataSource: Thread joinded");
+                NES_DEBUG("DataSource: Thread joined");
                 ret = true;
                 thread.reset();
             } else {
