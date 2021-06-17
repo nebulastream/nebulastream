@@ -46,6 +46,7 @@ class PlanIdGenerator {
      * @return query id
      */
     static QueryId getNextQueryId();
+    uint64_t getNextQueryReconfigurationPlanId();
 };
 }// namespace NES
 #endif//NES_PLANIDGENERATOR_HPP

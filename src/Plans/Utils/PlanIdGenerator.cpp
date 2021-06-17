@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Plans/Query/QueryReconfigurationId.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <atomic>
 
@@ -33,5 +34,10 @@ uint64_t PlanIdGenerator::getNextQuerySubPlanId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
+
+QueryReconfigurationId PlanIdGenerator::getNextQueryReconfigurationPlanId() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+};
 
 }// namespace NES
