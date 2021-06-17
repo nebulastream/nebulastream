@@ -38,8 +38,6 @@ QueryMigrationPhase::QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionP
                                                                                    NES_DEBUG("QueryMigrationPhase()");
 }
 
-QueryMigrationPhase::~QueryMigrationPhase() { NES_DEBUG("~QueryDeploymentPhase()"); }
-
 QueryMigrationPhasePtr QueryMigrationPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,TopologyPtr topology,
                                                      WorkerRPCClientPtr workerRpcClient) {
     return std::make_shared<QueryMigrationPhase>(QueryMigrationPhase(globalExecutionPlan, topology, workerRpcClient));

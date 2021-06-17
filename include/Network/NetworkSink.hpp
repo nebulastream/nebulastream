@@ -98,6 +98,7 @@ class NetworkSink : public SinkMedium {
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferStoragePtr bufferStorage;
     const NodeLocation nodeLocation;
+    NodeLocation nodeLocation;
     NesPartition nesPartition;
     const std::chrono::seconds waitTime;
     const uint8_t retryTimes;

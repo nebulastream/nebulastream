@@ -73,7 +73,6 @@ class QueryMigrationPhase{
      * @return true if successful else false
      */
     bool execute(MigrateQueryRequestPtr migrateQueryRequest);
-    ~QueryMigrationPhase();
 
     /**
  * finds all child execution nodes of the execution node corresponding to the topology node and query

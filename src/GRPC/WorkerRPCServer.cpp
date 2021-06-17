@@ -128,8 +128,8 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
     NES_DEBUG("WorkerRPCServer::BeginBuffer");
 
-    auto querySubPlanNumber = request->querysubplanids_size();
-    auto networkSinkIdMessageNumber = request->networksinkids_size();
+    uint32_t querySubPlanNumber = request->querysubplanids_size();
+    uint32_t networkSinkIdMessageNumber = request->networksinkids_size();
     NES_ASSERT(querySubPlanNumber == networkSinkIdMessageNumber, "NodeEngine: BeginBuffer: Different amount of entries QSP and network Ids ");
     std::map<QuerySubPlanId , std::vector<uint64_t>> queryToSinkIdsMap;
     for(uint32_t i = 0; i<querySubPlanNumber; i++){
@@ -153,8 +153,8 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
 }
 Status WorkerRPCServer::UpdateNetworkSinks(ServerContext*, const UpdateNetworkSinksRequest* request,
                                            UpdateNetworkSinksReply* reply) {
-    auto querySubPlanNumber = request->querysubplanids_size();
-    auto networkSinkIdMessageNumber = request->networksinkids_size();
+    uint32_t querySubPlanNumber = request->querysubplanids_size();
+    uint32_t networkSinkIdMessageNumber = request->networksinkids_size();
     NES_ASSERT(querySubPlanNumber == networkSinkIdMessageNumber, "NodeEngine: UpdateNetworkSinks: Different amount of entries QSP and network Ids ");
     std::map<QuerySubPlanId , std::vector<uint64_t>> queryToSinkIdsMap;
     for(uint32_t i = 0; i<querySubPlanNumber; i++){

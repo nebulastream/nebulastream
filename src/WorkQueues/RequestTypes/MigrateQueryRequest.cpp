@@ -28,7 +28,7 @@ MigrateQueryRequestPtr MigrateQueryRequest::create(QueryId queryId, TopologyNode
 }
 
 MigrateQueryRequest::MigrateQueryRequest(QueryId queryId, TopologyNodeId nodeId, bool withBuffer) :
-                              NESRequest(queryId), nodeId(nodeId), withBuffer(withBuffer){};
+                              NESRequest(queryId),withBuffer(withBuffer),nodeId(nodeId){};
 
 
 bool MigrateQueryRequest::isWithBuffer() { return withBuffer; }

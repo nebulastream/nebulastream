@@ -90,7 +90,7 @@ class TopologyNode : public Node {
     void setMaintenanceFlag(bool flag);
 
 
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief Create a shallow copy of the physical node i.e. without copying the parent and child nodes

@@ -113,10 +113,10 @@ TEST_F(QueryMigrationPhaseTest, testFindNetworkSinks) {
 
     QueryMigrationPhasePtr mPhase = QueryMigrationPhase::create(globalExecutionPlanPtr,topology,workerRpcClientPtr);
     auto map = mPhase->querySubPlansAndNetworkSinksToReconfigure(queryPlan->getQueryId(),executionNode,nodeLocation);
-    ASSERT_TRUE(map.size() == 1);
+    ASSERT_TRUE(map.size() == 1UL);
     std::vector<OperatorId> sinks = map[queryPlan->getQuerySubPlanId()];
-    ASSERT_TRUE(sinks.size() == 4);
-    for(int i = 0; i<sinks.size(); i++){
+    ASSERT_TRUE(sinks.size() == 4UL);
+    for(auto i{0ul}; i<sinks.size(); i++){
         ASSERT_TRUE(sinks.at(i) == i+1);
     }
 }
@@ -181,12 +181,12 @@ TEST_F(QueryMigrationPhaseTest, testFindNetworkSinksSeveralQueryPlans) {
     std::vector<OperatorId> sinks1 = map[queryPlan1->getQuerySubPlanId()];
     std::vector<OperatorId> sinks2 = map[queryPlan2->getQuerySubPlanId()];
 
-    ASSERT_TRUE(sinks1.size() == 4);
-    for (int i = 0; i < sinks1.size(); i++) {
+    ASSERT_TRUE(sinks1.size() == 4UL);
+    for (auto i{0ul}; i < sinks1.size(); i++) {
         EXPECT_TRUE(sinks1.at(i) == i + 1);
     }
-    ASSERT_TRUE(sinks2.size() == 1);
-    EXPECT_TRUE(sinks2.at(0) == 3);
+    ASSERT_TRUE(sinks2.size() == 1UL);
+    EXPECT_TRUE(sinks2.at(0) == 3UL);
 }
 
 TEST_F(QueryMigrationPhaseTest, testFindParentAndChildExecutionNodes) {
@@ -265,8 +265,8 @@ TEST_F(QueryMigrationPhaseTest, testFindParentAndChildExecutionNodes) {
     childExecutionNodes = migrationPhase->findChildExecutionNodesAsTopologyNodes(1,1);
     ASSERT_TRUE(parentExecutionNodes.size() == 3);
     ASSERT_TRUE(childExecutionNodes.size() == 3);
-
-    for (auto id : {2,4,6}) {
+    std::vector<uint64_t> nodeIds = {2,4,6};
+    for (auto id : nodeIds) {
         auto foundParent = std::find_if(parentExecutionNodes.begin(),parentExecutionNodes.end(),[id](TopologyNodePtr& node){
             return node->getId() == id;
         });

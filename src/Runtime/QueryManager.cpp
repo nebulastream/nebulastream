@@ -1179,7 +1179,7 @@ bool QueryManager::addRemoveQEPReconfiguration(OperatorId sourceId) {
             break;// reached a data task
         }
     }
-    for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+    for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
         taskQueue.emplace_front(pipeline, buffer);
     }
     while (!temp.empty()) {

@@ -72,7 +72,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, testPathIgnoresNodesMarkedForMaintena
      */
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
@@ -177,28 +177,28 @@ TEST_F(QueryMigrationPhaseIntegrationTest, testPathIgnoresNodesMarkedForMaintena
         }
     }
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 4);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[3]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 4UL);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1UL);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2UL);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 2UL);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[3]->getChildren().size(), 1UL);
     //mid level
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1UL);
 
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 2UL);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1UL);
 
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[0]->getChildren().size(), 1UL);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[1]->getChildren().size(), 2UL);
 
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[3]->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[3]->getChildren()[0]->getChildren().size(), 2UL);
     //bottom level
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1UL);
 
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren()[1]->getChildren().size(), 2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren()[1]->getChildren().size(), 2UL);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren()[0]->getChildren().size(), 2UL);
 
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[1]->getChildren()[1]->getChildren().size(), 1UL);
 
     TopologyPtr topology = crd->getTopology();
     std::vector<TopologyNodePtr> sourceNodes{topology->findNodeWithId(13), topology->findNodeWithId(14),
@@ -206,7 +206,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, testPathIgnoresNodesMarkedForMaintena
     std::vector<TopologyNodePtr> destinationNodes{topology->findNodeWithId(1)};
     const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
 
-    EXPECT_TRUE(startNodes.size() == 3);
+    EXPECT_TRUE(startNodes.size() == 3UL);
     EXPECT_TRUE(startNodes.size() == sourceNodes.size());
     const std::vector<TopologyNodePtr> StartNodes = crd->getTopology()->findPathBetween(sourceNodes, destinationNodes);
 
@@ -283,7 +283,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologyWithOneQueryFirstStrat
     wrkConf->setCoordinatorPort(rpcPort);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
     //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
     wrkConf->setCoordinatorPort(port);
@@ -308,10 +308,10 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologyWithOneQueryFirstStrat
     wrk3->addParent(3);
 
     TopologyPtr topo = crd->getTopology();
-    ASSERT_EQ(topo->getRoot()->getId(), 1);
-    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(topo->getRoot()->getId(), 1UL);
+    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2UL);
+    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1UL);
+    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1UL);
     NES_DEBUG(crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString());
 
     srcConf->setSourceType("CSVSource");
@@ -359,7 +359,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_DiamondTopologyWithTwoQuerie
     wrkConf->setCoordinatorPort(rpcPort);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
@@ -448,7 +448,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
     wrkConf->setCoordinatorPort(rpcPort);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
     //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
     wrkConf->setCoordinatorPort(port);
@@ -473,10 +473,10 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
     wrk4->addParent(3);
 
     TopologyPtr topo = crd->getTopology();
-    ASSERT_EQ(topo->getRoot()->getId(), 1);
-    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(topo->getRoot()->getId(), 1UL);
+    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2UL);
+    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1UL);
+    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1UL);
 
     srcConf->setSourceType("CSVSource");
     srcConf->setSourceConfig("../tests/test_data/exdra.csv");
@@ -554,7 +554,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, test) {
     wrkConf->setCoordinatorPort(rpcPort);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
     //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
     wrkConf->setCoordinatorPort(port);
@@ -579,10 +579,10 @@ TEST_F(QueryMigrationPhaseIntegrationTest, test) {
     wrk3->addParent(3);
 
     TopologyPtr topo = crd->getTopology();
-    ASSERT_EQ(topo->getRoot()->getId(), 1);
-    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2);
-    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(topo->getRoot()->getId(), 1UL);
+    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2UL);
+    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1UL);
+    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1UL);
     NES_DEBUG(crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString());
 
     srcConf->setSourceType("CSVSource");
@@ -636,7 +636,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, WorkerRPCBufferDataTest) {
     wrkConf->setCoordinatorPort(rpcPort);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
     //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
     wrkConf->setCoordinatorPort(port);

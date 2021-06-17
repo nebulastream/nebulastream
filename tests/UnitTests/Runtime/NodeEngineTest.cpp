@@ -605,7 +605,7 @@ TEST_F(EngineTest, testPassingLogicalOpreratorIdToPhysicalSink) {
 
     auto qep =  engine->getDeployedQEP(1);
     ASSERT_TRUE(qep);
-    ASSERT_TRUE(qep->get()->getStatus() == Running);
+    ASSERT_TRUE(qep->get()->getStatus() == ExecutableQueryPlanStatus::Running);
     EXPECT_TRUE(qep->get()->getSinks()[0]->getOperatorId() == 47);
     ReconfigurationMessage message = ReconfigurationMessage(queryPlan->getQuerySubPlanId(),NES::NodeEngine::RemoveQEP,*qep);
     engine->getQueryManager()->addReconfigurationMessage(queryPlan->getQuerySubPlanId(),message,false);
