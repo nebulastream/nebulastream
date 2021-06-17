@@ -42,7 +42,7 @@ NesWorker::NesWorker(WorkerConfigPtr workerConfig, NodeType type)
       numberOfBuffersPerPipeline(workerConfig->getnumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
-      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), configs{},
+      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), configs{PhysicalStreamConfig::createEmpty()},
       topologyNodeId(INVALID_TOPOLOGY_NODE_ID), isRunning(false) {
     connected = false;
     withRegisterStream = false;
