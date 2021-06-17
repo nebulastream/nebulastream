@@ -163,10 +163,10 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp2->getQuerySubPlanId() << ".\n" << tqsp2->toString());
 
     wrk1->getNodeEngine()->registerQueryInNodeEngine(tqsp1);
-    wrk1->getNodeEngine()->startQuery(tqsp1->getQueryId());
+    //    wrk1->getNodeEngine()->startQuery(tqsp1->getQueryId());
 
     wrk2->getNodeEngine()->registerQueryInNodeEngine(tqsp2);
-    wrk2->getNodeEngine()->startQuery(tqsp2->getQueryId());
+    //    wrk2->getNodeEngine()->startQuery(tqsp2->getQueryId());
 
     auto wrk13Schema = tqsp1->getRootOperators()[0]->getOutputSchema();
     auto wrk23Schema = tqsp2->getRootOperators()[0]->getOutputSchema();
@@ -199,7 +199,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp3->getQuerySubPlanId() << ".\n" << tqsp3->toString());
 
     wrk3->getNodeEngine()->registerQueryInNodeEngine(tqsp3);
-    wrk3->getNodeEngine()->startQuery(tqsp3->getQueryId());
+    //    wrk3->getNodeEngine()->startQuery(tqsp3->getQueryId());
 
     auto wrk34Schema = qsp34NSink->getOutputSchema();
     auto wrk34Src =
@@ -259,15 +259,10 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp6->getQuerySubPlanId() << ".\n" << tqsp6->toString());
     wrk4->getNodeEngine()->registerQueryForReconfigurationInNodeEngine(tqsp6);
 
-    QueryReconfigurationPlan queryReconfigurationPlan;
-    queryReconfigurationPlan.add_querysubplanstostart(1);
-    queryReconfigurationPlan.add_querysubplanstostart(2);
-    queryReconfigurationPlan.add_querysubplanstostop(5);
-    queryReconfigurationPlan.add_querysubplanstostop(6);
-
-    auto qs34 = queryReconfigurationPlan.add_querysubplansidtoreplace();
-    qs34->set_oldquerysubplanid(3);
-    qs34->set_newquerysubplanid(4);
+    std::vector<QuerySubPlanId> qepStarts{6};
+    std::unordered_map<QuerySubPlanId, QuerySubPlanId> qepReplace{{3, 5}};
+    std::vector<QuerySubPlanId> qepStops{6};
+    auto queryReconfigurationPlan = QueryReconfigurationPlan::create(qepStarts, qepStops, qepReplace);
 
     wrk1->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);
 

@@ -163,7 +163,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param queryReconfigurationPlan to reconfigure
      * @return true if succeeded, else false
      */
-    bool startQueryReconfiguration(QueryId queryId, QueryReconfigurationPlan queryReconfigurationPlan);
+    bool startQueryReconfiguration(QueryId queryId, QueryReconfigurationPlanPtr queryReconfigurationPlan);
 
     /**
      * @brief ungregisters a query
@@ -283,7 +283,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
     * @brief this callback is called once an reconfiguration is triggered
     */
-    void onQueryReconfiguration(Network::ChannelId channelId, QueryReconfigurationPlan queryReconfigurationPlan) override;
+    void onQueryReconfiguration(Network::ChannelId channelId, QueryReconfigurationPlanPtr queryReconfigurationPlan) override;
 
     // TODO we should get rid of the following method
     /**
@@ -329,7 +329,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerPipeline;
-    void reconfigurationStartSequence(QueryReconfigurationPlan queryReconfigurationPlan,
+    void reconfigurationStartSequence(QueryReconfigurationPlanPtr queryReconfigurationPlan,
                                       Network::NesPartition& partition,
                                       QuerySubPlanId querySubPlanId);
 };

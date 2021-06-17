@@ -19,7 +19,7 @@
 
 #include <Network/NetworkMessage.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <QueryReconfigurationPlan.pb.h>
+#include <Plans/Query/QueryReconfigurationPlan.hpp>
 #include <iostream>
 #include <memory>
 #include <zmq.hpp>
@@ -79,7 +79,7 @@ class OutputChannel {
      * @brief Send reconfiguration message
      * @param queryReconfigurationPlan
      */
-    void sendReconfigurationMessage(QueryReconfigurationPlan queryReconfigurationPlan);
+    void sendReconfigurationMessage(QueryReconfigurationPlanPtr queryReconfigurationPlan);
 
     /**
      * @brief Method to handle the error

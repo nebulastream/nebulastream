@@ -24,7 +24,6 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <QueryReconfigurationPlan.pb.h>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -298,7 +297,7 @@ bool QueryManager::allSourcesMappedToQep(Execution::ExecutableQueryPlanPtr qep) 
 bool QueryManager::triggerQepStartReconfiguration(OperatorId sourceOperatorId,
                                                   Execution::ExecutableQueryPlanPtr newQep,
                                                   StateManagerPtr stateManager,
-                                                  QueryReconfigurationPlan queryReconfigurationPlan) {
+                                                  QueryReconfigurationPlanPtr queryReconfigurationPlan) {
     auto newQuerySubPlanId = newQep->getQuerySubPlanId();
     if (sourceIdToExecutableQueryPlanMap.find(sourceOperatorId) != sourceIdToExecutableQueryPlanMap.end()) {
         // Source already associated with appropriate QEP, nothing else to do
@@ -350,10 +349,10 @@ bool QueryManager::triggerQepStartReconfiguration(OperatorId sourceOperatorId,
 }
 
 void QueryManager::propagateQueryReconfigurationPlan(const Execution::ExecutableQueryPlanPtr qep,
-                                                     const QueryReconfigurationPlan queryReconfigurationPlan) {
+                                                     const QueryReconfigurationPlanPtr queryReconfigurationPlan) {
     QuerySubPlanId querySubPlanId = qep->getQuerySubPlanId();
     for (auto sink : qep->getSinks()) {
-        auto reconfigurationUserData = std::make_any<QueryReconfigurationPlan>(queryReconfigurationPlan);
+        auto reconfigurationUserData = std::make_any<QueryReconfigurationPlanPtr>(queryReconfigurationPlan);
         NES_DEBUG("QueryManager::propagateReconfigurationViaQepSinks: Propagate QueryReconfigurationMessage: "
                   << " to sink: " << sink->toString() << " in QuerySubPlanId: " << querySubPlanId);
         auto reconfigurationMessage =
@@ -364,7 +363,7 @@ void QueryManager::propagateQueryReconfigurationPlan(const Execution::Executable
 
 bool QueryManager::triggerQepStopReconfiguration(OperatorId sourceOperatorId,
                                                  Execution::ExecutableQueryPlanPtr qepToStop,
-                                                 QueryReconfigurationPlan queryReconfigurationMessage) {
+                                                 QueryReconfigurationPlanPtr queryReconfigurationPlan) {
     std::unique_lock lock(queryMutex);
     auto querySubPlanId = qepToStop->getQuerySubPlanId();
     if (sourceIdToExecutableQueryPlanMap.find(sourceOperatorId) == sourceIdToExecutableQueryPlanMap.end()) {
@@ -389,9 +388,9 @@ bool QueryManager::triggerQepStopReconfiguration(OperatorId sourceOperatorId,
     }
     addSoftStop(sourceOperatorId,
                 StopViaReconfiguration,
-                [queryReconfigurationMessage](Execution::ExecutableQueryPlanPtr qepToStop) {
+                [queryReconfigurationPlan](Execution::ExecutableQueryPlanPtr qepToStop) {
                     auto weakQep = std::weak_ptr<Execution::ExecutableQueryPlan>(qepToStop);
-                    StopQueryMessagePtr data = std::make_unique<StopQueryMessage>(weakQep, queryReconfigurationMessage);
+                    StopQueryMessagePtr data = std::make_unique<StopQueryMessage>(weakQep, queryReconfigurationPlan);
                     return std::make_any<StopQueryMessagePtr>(data);
                 });
     sourceIdToExecutableQueryPlanMap.erase(querySubPlanId);

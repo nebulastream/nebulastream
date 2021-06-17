@@ -268,9 +268,8 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     NES_ASSERT2_FMT(optRetSize.value() == payloadHeader.sizeOfReconfigurationPlan,
                                     "ZmqServer::QueryReconfigurationMessage: Recv not matching sizes "
                                         << optRetSize.value() << "!=" << payloadHeader.sizeOfReconfigurationPlan);
-                    QueryReconfigurationPlan queryReconfigurationPlan;
                     std::string msg_str(static_cast<char*>(xc.data()), xc.size());
-                    queryReconfigurationPlan.ParseFromString(msg_str);
+                    auto queryReconfigurationPlan = QueryReconfigurationPlan::deserializeFromString(msg_str);
                     exchangeProtocol.onQueryReconfiguration(payloadHeader.getChannelId(), queryReconfigurationPlan);
                     break;
                 }

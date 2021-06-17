@@ -80,7 +80,7 @@ class ExchangeProtocol {
     * @brief Reaction of the zmqServer after an QueryReconfiguration message is received.
     * @param the queryReconfigurationMessage
     */
-    void onQueryReconfiguration(ChannelId channelId, QueryReconfigurationPlan queryReconfigurationPlan);
+    void onQueryReconfiguration(ChannelId channelId, QueryReconfigurationPlanPtr queryReconfigurationPlan);
 
     /**
      * @brief getter for the PartitionManager
