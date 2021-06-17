@@ -233,6 +233,10 @@ TEST_F(NetworkStackTest, reconfigurationMessageTest) {
         std::promise<bool> completed;
         std::promise<bool> reconfigured;
 
+        std::vector<QuerySubPlanId> qepToStart{1, 2};
+        std::vector<QuerySubPlanId> qepToStop{3, 4};
+        std::unordered_map<QuerySubPlanId, QuerySubPlanId> replacements{{5, 6}, {7, 8}};
+
         class InternalListener : public Network::ExchangeProtocolListener {
           public:
             InternalListener(std::promise<bool>& p, std::promise<bool>& reconfigured, PartitionManagerPtr partitionManager)
@@ -244,9 +248,12 @@ TEST_F(NetworkStackTest, reconfigurationMessageTest) {
             void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
             void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr queryReconfigurationPlan) override {
-                ASSERT_EQ(queryReconfigurationPlan->getQuerySubPlanIdsToStart().size(), 1);
-                ASSERT_EQ(queryReconfigurationPlan->getQuerySubPlanIdsToStop().size(), 1);
-                ASSERT_EQ(queryReconfigurationPlan->getQuerySubPlanIdsToReplace().size(), 1);
+                std::vector<QuerySubPlanId> expectedStart{1, 2};
+                std::vector<QuerySubPlanId> expectedStop{3, 4};
+                std::unordered_map<QuerySubPlanId, QuerySubPlanId> expectedReplacements{{5, 6}, {7, 8}};
+                ASSERT_EQ(queryReconfigurationPlan->getQuerySubPlanIdsToStart(), expectedStart);
+                ASSERT_EQ(queryReconfigurationPlan->getQuerySubPlanIdsToStop(), expectedStop);
+                ASSERT_EQ(queryReconfigurationPlan->getQuerySubPlanIdsToReplace(), expectedReplacements);
                 reconfigured.set_value(true);
             }
             void onChannelError(Messages::ErrorMessage) override {}
@@ -280,9 +287,7 @@ TEST_F(NetworkStackTest, reconfigurationMessageTest) {
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 3);
 
-        std::vector<QuerySubPlanId> vecs{1};
-        std::unordered_map<QuerySubPlanId, QuerySubPlanId> replacements{{2, 3}};
-        auto queryReconfigurationPlan = QueryReconfigurationPlan::create(vecs, vecs, replacements);
+        auto queryReconfigurationPlan = QueryReconfigurationPlan::create(qepToStart, qepToStop, replacements);
         senderChannel->sendReconfigurationMessage(queryReconfigurationPlan);
         senderChannel->close(true);
         senderChannel.reset();

@@ -52,6 +52,11 @@
 #endif
 
 namespace NES {
+class QueryReconfigurationPlan;
+typedef std::shared_ptr<QueryReconfigurationPlan> QueryReconfigurationPlanPtr;
+}// namespace NES
+
+namespace NES {
 namespace Runtime {
 
 class ThreadPool;
