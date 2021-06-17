@@ -26,7 +26,7 @@ class CPPFormat{
         file.clear();
         std::string sourceCode((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         NES_DEBUG("Compiler: generate code: \n" << sourceCode);
-        return sourceCode;
+        return sourceCode;..
     }
 
 };
