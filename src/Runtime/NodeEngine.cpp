@@ -270,6 +270,24 @@ bool NodeEngine::registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryP
     return true;
 }
 
+bool NodeEngine::startQueryReconfiguration(QueryId queryId, QueryReconfigurationPlanPtr queryReconfigurationPlan) {
+    // TODO: Handle Reconfiguration at the Data source
+    if (queryIdToQuerySubPlanIds.find(queryId) == queryIdToQuerySubPlanIds.end()) {
+        NES_ERROR("NodeEngine::startQueryReconfiguration: Query ID does not exists. Reconfiguration failed" << queryId);
+        return false;
+    }
+    std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+    if (querySubPlanIds.empty()) {
+        NES_ERROR("NodeEngine::startQueryReconfiguration: Unable to find SubQueryPlans for the query "
+                  << queryId << ". Reconfiguration failed.");
+        return false;
+    }
+    for (auto querySubPlanId : querySubPlanIds) {
+        queryManager->propagateQueryReconfigurationMessage(deployedQEPs[querySubPlanId], queryReconfigurationPlan);
+    }
+    return true;
+}
+
 bool NodeEngine::startQuery(QueryId queryId) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("Runtime: startQuery=" << queryId);

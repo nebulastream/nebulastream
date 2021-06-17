@@ -76,9 +76,9 @@ class OutputChannel {
 
     /**
      * @brief Send reconfiguration message
-     * @param reconfigurationMessage
+     * @param queryReconfigurationPlan
      */
-    void sendReconfigurationMessage(Messages::QueryReconfigurationMessage& reconfigurationMessage);
+    void sendReconfigurationMessage(QueryReconfigurationPlanPtr queryReconfigurationPlan);
 
     /**
      * @brief Method to handle the error

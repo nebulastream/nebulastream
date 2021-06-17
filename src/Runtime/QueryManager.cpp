@@ -343,17 +343,22 @@ bool QueryManager::triggerQepStartReconfiguration(Execution::ExecutableQueryPlan
                       << sourceOperatorId << " QEP for querySubPlanId " << newQuerySubPlanId);
             return false;
         }
-        for (auto sink : newQep->getSinks()) {
-            auto reconfigurationUserData =
-                std::make_any<Network::Messages::QueryReconfigurationMessage>(queryReconfigurationMessage);
-            NES_DEBUG("QueryManager::propagateReconfigurationViaQepSinks: Propagate QueryReconfigurationMessage: "
-                      << " to sink: " << sink->toString() << " in QuerySubPlanId: " << newQuerySubPlanId);
-            auto reconfigurationMessage =
-                ReconfigurationMessage(newQuerySubPlanId, QueryReconfiguration, sink, std::move(reconfigurationUserData));
-            addReconfigurationMessage(newQuerySubPlanId, reconfigurationMessage, false);
-        }
+        propagateQueryReconfigurationMessage(newQep, QueryReconfigurationPlan::create(queryReconfigurationMessage));
     }
     return true;
+}
+
+void QueryManager::propagateQueryReconfigurationMessage(const Execution::ExecutableQueryPlanPtr qep,
+                                                        const NES::QueryReconfigurationPlanPtr queryReconfigurationPlan) {
+    QuerySubPlanId querySubPlanId = qep->getQuerySubPlanId();
+    for (auto sink : qep->getSinks()) {
+        auto reconfigurationUserData = std::make_any<QueryReconfigurationPlanPtr>(queryReconfigurationPlan);
+        NES_DEBUG("QueryManager::propagateReconfigurationViaQepSinks: Propagate QueryReconfigurationMessage: "
+                  << " to sink: " << sink->toString() << " in QuerySubPlanId: " << querySubPlanId);
+        auto reconfigurationMessage =
+            ReconfigurationMessage(querySubPlanId, QueryReconfiguration, sink, std::move(reconfigurationUserData));
+        addReconfigurationMessage(querySubPlanId, reconfigurationMessage, false);
+    }
 }
 
 bool QueryManager::triggerQepStopReconfiguration(Execution::ExecutableQueryPlanPtr qepToStop,

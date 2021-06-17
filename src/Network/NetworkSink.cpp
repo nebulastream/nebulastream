@@ -86,15 +86,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case NodeEngine::QueryReconfiguration: {
-            /*
-             * TODO: Sending messages on all channels is inefficient and could lead to flooding of network when number of threads is high
-             * moreover there is no need to send message via all channel, since operatorId is the only required criterion to handle message
-             * Message can be sent once using `postReconfigurationCallback` but it needs to be refactored to accept `WorkerContext` as a param
-             * Blocker: `QueryManager::addReconfigurationMessage` calls task->postReconfiguration when blocking, what will workerContext be?
-             */
-            auto queryReconfigurationMessage = task.getUserData<Messages::QueryReconfigurationMessage>();
+            auto queryReconfigurationPlan = task.getUserData<QueryReconfigurationPlanPtr>();
             auto* channel = workerContext.getChannel(outputChannelKey);
-            channel->sendReconfigurationMessage(queryReconfigurationMessage);
+            channel->sendReconfigurationMessage(queryReconfigurationPlan);
             break;
         }
         default: {
@@ -119,8 +113,7 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
         }
         case NodeEngine::StopViaReconfiguration: {
             auto stopMessage = task.getUserData<NodeEngine::StopQueryMessagePtr>();
-            auto reconfigurationMsg =
-                std::make_any<Messages::QueryReconfigurationMessage>(stopMessage->getQueryReconfigurationMessage());
+            auto reconfigurationMsg = std::make_any<QueryReconfigurationPlanPtr>(stopMessage->getQueryReconfigurationPlan());
 
             auto reconfigurationMessage = NodeEngine::ReconfigurationMessage(parentPlanId,
                                                                              NodeEngine::QueryReconfiguration,
