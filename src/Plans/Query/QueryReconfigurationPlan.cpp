@@ -25,7 +25,7 @@ QueryReconfigurationPlan::QueryReconfigurationPlan(
     const std::vector<QuerySubPlanId> querySubPlanIdsToStart,
     const std::vector<QuerySubPlanId> querySubPlanIdsToStop,
     const std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace)
-    : id(INVALID_QUERY_RECONFIGURATION_ID), querySubPlanIdsToStop(querySubPlanIdsToStop),
+    : id(PlanIdGenerator::getNextQueryReconfigurationPlanId()), querySubPlanIdsToStop(querySubPlanIdsToStop),
       querySubPlanIdsToStart(querySubPlanIdsToStart), querySubPlanIdsToReplace(querySubPlanIdsToReplace) {}
 
 const std::vector<QuerySubPlanId> QueryReconfigurationPlan::getQuerySubPlanIdsToStop() const { return querySubPlanIdsToStop; }
