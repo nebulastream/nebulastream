@@ -86,7 +86,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
     }
 }
 
-void ExchangeProtocol::onQueryReconfiguration(ChannelId channelId, QueryReconfigurationPlan queryReconfigurationPlan) {
+void ExchangeProtocol::onQueryReconfiguration(ChannelId channelId, QueryReconfigurationPlanPtr queryReconfigurationPlan) {
     std::unique_lock lock(reconfigurationMutex);
     protocolListener->onQueryReconfiguration(channelId, queryReconfigurationPlan);
 }

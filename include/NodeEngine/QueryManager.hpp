@@ -27,8 +27,8 @@
 #include <NodeEngine/ReconfigurationMessage.hpp>
 #include <NodeEngine/Task.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
+#include <Plans/Query/QueryReconfigurationPlan.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <QueryReconfigurationPlan.pb.h>
 #include <Sources/DataSource.hpp>
 #include <State/StateManager.hpp>
 #include <Util/ThreadBarrier.hpp>
@@ -164,7 +164,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool triggerQepStartReconfiguration(OperatorId sourceOperatorId,
                                         Execution::ExecutableQueryPlanPtr newQep,
                                         StateManagerPtr stateManager,
-                                        QueryReconfigurationPlan queryReconfigurationPlan);
+                                        QueryReconfigurationPlanPtr queryReconfigurationPlan);
 
     /**
      * Trigger stop of QEP via reconfiguration process
@@ -174,7 +174,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     bool triggerQepStopReconfiguration(OperatorId sourceOperatorId,
                                        Execution::ExecutableQueryPlanPtr qepToStop,
-                                       QueryReconfigurationPlan queryReconfigurationPlan);
+                                       QueryReconfigurationPlanPtr queryReconfigurationPlan);
 
     /**
      * @brief method to start a query
@@ -311,7 +311,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool isSourceAssociatedWithQep(OperatorId sourceOperatorId, QuerySubPlanId querySubPlanId);
     bool allSourcesMappedToQep(Execution::ExecutableQueryPlanPtr qep);
     void propagateQueryReconfigurationPlan(const Execution::ExecutableQueryPlanPtr qep,
-                                           const QueryReconfigurationPlan queryReconfigurationPlan);
+                                           const QueryReconfigurationPlanPtr queryReconfigurationPlan);
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

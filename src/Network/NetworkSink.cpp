@@ -88,7 +88,7 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
             break;
         }
         case NodeEngine::QueryReconfiguration: {
-            auto queryReconfigurationPlan = task.getUserData<QueryReconfigurationPlan>();
+            auto queryReconfigurationPlan = task.getUserData<QueryReconfigurationPlanPtr>();
             auto* channel = workerContext.getChannel(outputChannelKey);
             channel->sendReconfigurationMessage(queryReconfigurationPlan);
             break;
@@ -115,12 +115,12 @@ void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage
         }
         case NodeEngine::StopViaReconfiguration: {
             auto stopMessage = task.getUserData<NodeEngine::StopQueryMessagePtr>();
-            auto reconfigurationMsg = std::make_any<QueryReconfigurationPlan>(stopMessage->getQueryReconfigurationPlan());
+            auto reconfigurationPlan = std::make_any<QueryReconfigurationPlanPtr>(stopMessage->getQueryReconfigurationPlan());
 
             auto reconfigurationMessage = NodeEngine::ReconfigurationMessage(parentPlanId,
                                                                              NodeEngine::QueryReconfiguration,
                                                                              shared_from_this(),
-                                                                             std::move(reconfigurationMsg));
+                                                                             std::move(reconfigurationPlan));
             queryManager->addReconfigurationMessage(parentPlanId, reconfigurationMessage, false);
             auto triggerEoSMsg = std::make_any<bool>(false);
             auto destroyMsg = NodeEngine::ReconfigurationMessage(parentPlanId,

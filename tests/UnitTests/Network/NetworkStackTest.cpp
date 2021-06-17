@@ -141,7 +141,7 @@ class DummyExchangeProtocolListener : public ExchangeProtocolListener {
     void onDataBuffer(NesPartition, TupleBuffer&) override {}
     void onEndOfStream(Messages::EndOfStreamMessage) override {}
     void onServerError(Messages::ErrorMessage) override {}
-    void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
+    void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) override {}
 
     void onChannelError(Messages::ErrorMessage) override {}
 };
@@ -187,7 +187,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) override {}
             void onChannelError(Messages::ErrorMessage) override {}
 
           private:
@@ -242,10 +242,10 @@ TEST_F(NetworkStackTest, reconfigurationMessageTest) {
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan queryReconfigurationPlan) override {
-                ASSERT_EQ(queryReconfigurationPlan.querysubplansidtoreplace().size(), 1);
-                ASSERT_EQ(queryReconfigurationPlan.querysubplanstostart().size(), 1);
-                ASSERT_EQ(queryReconfigurationPlan.querysubplanstostop().size(), 1);
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr queryReconfigurationPlan) override {
+                ASSERT_EQ(queryReconfigurationPlan->getQuerySubPlanIdsToStart().size(), 1);
+                ASSERT_EQ(queryReconfigurationPlan->getQuerySubPlanIdsToStop().size(), 1);
+                ASSERT_EQ(queryReconfigurationPlan->getQuerySubPlanIdsToReplace().size(), 1);
                 reconfigured.set_value(true);
             }
             void onChannelError(Messages::ErrorMessage) override {}
@@ -278,13 +278,10 @@ TEST_F(NetworkStackTest, reconfigurationMessageTest) {
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 3);
-        QueryReconfigurationPlan queryReconfigurationPlan;
-        queryReconfigurationPlan.add_querysubplanstostart(1);
-        queryReconfigurationPlan.add_querysubplanstostop(4);
-        auto replacement = queryReconfigurationPlan.add_querysubplansidtoreplace();
-        replacement->set_oldquerysubplanid(2);
-        replacement->set_newquerysubplanid(3);
 
+        std::vector<QuerySubPlanId> vecs{1};
+        std::unordered_map<QuerySubPlanId, QuerySubPlanId> replacements{{2, 3}};
+        auto queryReconfigurationPlan = QueryReconfigurationPlan::create(vecs, vecs, replacements);
         senderChannel->sendReconfigurationMessage(queryReconfigurationPlan);
         senderChannel->close(true);
         senderChannel.reset();
@@ -325,7 +322,7 @@ TEST_F(NetworkStackTest, testSendData) {
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) override {}
 
             void onChannelError(Messages::ErrorMessage) override {}
         };
@@ -410,7 +407,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                 }
                 bufferReceived++;
             }
-            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
 
@@ -516,7 +513,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
                 NES_INFO("NetworkStackTest: Channel error called!");
                 ASSERT_EQ(errorMsg.getErrorType(), Messages::kPartitionNotRegisteredError);
             }
-            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) override {}
 
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override {}
@@ -583,7 +580,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
 
             void onChannelError(Messages::ErrorMessage) override {}
 
-            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) override {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
                 for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
@@ -707,7 +704,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
             void onChannelError(Messages::ErrorMessage) override {}
 
-            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) override {}
 
             void onDataBuffer(NesPartition id, TupleBuffer&) override {
                 if (nesPartition == id) {
@@ -932,7 +929,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             }
         }
 
-        void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
+        void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) override {}
 
         void onChannelError(Network::Messages::ErrorMessage message) override { NodeEngine::onChannelError(message); }
     };

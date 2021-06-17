@@ -14,17 +14,17 @@
     limitations under the License.
 */
 
-syntax = "proto3";
-package NES;
+#ifndef NES_INCLUDE_API_QUERYRECONFIGURATIONID_HPP_
+#define NES_INCLUDE_API_QUERYRECONFIGURATIONID_HPP_
 
-message QueryReconfigurationPlan {
-  message QuerySubPlanMapping {
-    uint64 oldQuerySubPlanId = 1;
-    uint64 newQuerySubPlanId = 2;
-  }
+#include <stdint.h>
 
-  uint64 reconfigurationId = 1;
-  repeated uint64 querySubPlansToStart = 2;
-  repeated uint64 querySubPlansToStop = 3;
-  repeated QuerySubPlanMapping querySubPlansIdToReplace = 4;
-}
+namespace NES {
+
+/**
+ * @brief this alias represent a query reconfiguration
+ */
+using QueryReconfigurationId = uint64_t;
+static constexpr uint64_t INVALID_QUERY_RECONFIGURATION_ID = 0;
+}// namespace NES
+#endif//NES_INCLUDE_API_QUERYRECONFIGURATIONID_HPP_

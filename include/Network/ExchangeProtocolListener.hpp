@@ -20,7 +20,7 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <QueryReconfigurationPlan.pb.h>
+#include <Plans/Query/QueryReconfigurationPlan.hpp>
 
 namespace NES {
 namespace Network {
@@ -56,7 +56,7 @@ class ExchangeProtocolListener {
     /**
     * @brief This is called on the channel side as soon as an query reconfiguration message is received
     */
-    virtual void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) = 0;
+    virtual void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) = 0;
 };
 }// namespace Network
 }// namespace NES
