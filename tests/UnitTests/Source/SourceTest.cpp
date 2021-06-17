@@ -98,6 +98,7 @@ struct __attribute__((packed)) everyBooleanTypeRecord {
 using ::testing::Return;
 using ::testing::_;
 
+// testing w/ original running routine
 class MockDataSource : public DataSource {
   public:
     MockDataSource(const SchemaPtr& schema,
@@ -111,8 +112,27 @@ class MockDataSource : public DataSource {
                      numSourceLocalBuffers, gatheringMode, executableSuccessors) {
         // nop
     };
-    MOCK_METHOD(bool, runningRoutineWithFrequency, ());
-    MOCK_METHOD(bool, runningRoutineWithIngestionRate, ());
+    MOCK_METHOD(void, runningRoutineWithFrequency, ());
+    MOCK_METHOD(void, runningRoutineWithIngestionRate, ());
+    MOCK_METHOD(std::optional<NodeEngine::TupleBuffer>, receiveData, ());
+    MOCK_METHOD(std::string, toString, (), (const));
+    MOCK_METHOD(SourceType, getType, (), (const));
+};
+
+// testing w/ mocked running routine (no need for actual routines)
+class MockDataSourceWithRunningRoutine : public DataSource {
+  public:
+    MockDataSourceWithRunningRoutine(const SchemaPtr& schema,
+                   NodeEngine::BufferManagerPtr bufferManager,
+                   NodeEngine::QueryManagerPtr queryManager,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   GatheringMode gatheringMode,
+                   std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
+        : DataSource(schema, bufferManager, queryManager, operatorId,
+                     numSourceLocalBuffers, gatheringMode, executableSuccessors) {
+        // nop
+    };
     MOCK_METHOD(void, runningRoutine, ());
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
     MOCK_METHOD(std::string, toString, (), (const));
@@ -179,7 +199,7 @@ TEST_F(SourceTest, testDataSourceGetSchema) {
 }
 
 TEST_F(SourceTest, testDataSourceRunningImmediately) {
-    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
                                this->nodeEngine->getQueryManager(), this->operatorId,
                                this->numSourceLocalBuffersDefault,
                                DataSource::GatheringMode::FREQUENCY_MODE, {});
@@ -187,24 +207,22 @@ TEST_F(SourceTest, testDataSourceRunningImmediately) {
 }
 
 TEST_F(SourceTest, testDataSourceStartSideEffectRunningTrue) {
-    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
                                          this->nodeEngine->getQueryManager(), this->operatorId,
                                          this->numSourceLocalBuffersDefault,
                                          DataSource::GatheringMode::FREQUENCY_MODE, {});
-    ON_CALL(mDataSource, runningRoutineWithFrequency).WillByDefault(Return(true)); // irrelevant but has to return
-    ON_CALL(mDataSource, getType).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
+    ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning()); // the publicly visible side-effect
     EXPECT_TRUE(mDataSource.stop(false));
 }
 
 TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
-    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
                                this->nodeEngine->getQueryManager(), this->operatorId,
                                this->numSourceLocalBuffersDefault,
                                DataSource::GatheringMode::FREQUENCY_MODE, {});
-    ON_CALL(mDataSource, runningRoutineWithFrequency).WillByDefault(Return(true)); // irrelevant but has to return
-    ON_CALL(mDataSource, getType).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
+    ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_FALSE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning()); // the publicly visible side-effect
@@ -212,7 +230,7 @@ TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
 }
 
 TEST_F(SourceTest, testDataSourceStopImmediately) {
-    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
                                this->nodeEngine->getQueryManager(), this->operatorId,
                                this->numSourceLocalBuffersDefault,
                                DataSource::GatheringMode::FREQUENCY_MODE, {});
@@ -220,12 +238,11 @@ TEST_F(SourceTest, testDataSourceStopImmediately) {
 }
 
 TEST_F(SourceTest, testDataSourceStopSideEffect) {
-    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
                                this->nodeEngine->getQueryManager(), this->operatorId,
                                this->numSourceLocalBuffersDefault,
                                DataSource::GatheringMode::FREQUENCY_MODE, {});
-    ON_CALL(mDataSource, runningRoutineWithFrequency).WillByDefault(Return(true)); // irrelevant but has to return
-    ON_CALL(mDataSource, getType).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
+    ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());
     EXPECT_TRUE(mDataSource.stop(false));
@@ -241,6 +258,26 @@ TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
     EXPECT_EQ(source->getGatheringModeFromString("frequency"), source->GatheringMode::FREQUENCY_MODE);
     EXPECT_EQ(source->getGatheringModeFromString("ingestionrate"), source->GatheringMode::INGESTION_RATE_MODE);
     EXPECT_ANY_THROW(source->getGatheringModeFromString("clearly_an_erroneous_string"));
+}
+
+TEST_F(SourceTest, testDataSourceRunningRoutineFrequency) {
+    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(), this->operatorId,
+                               this->numSourceLocalBuffersDefault,
+                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+    ON_CALL(mDataSource, runningRoutineWithFrequency()).WillByDefault(Return());
+    EXPECT_CALL(mDataSource, runningRoutineWithFrequency()).Times(1);
+    mDataSource.runningRoutine();
+}
+
+TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
+    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(), this->operatorId,
+                               this->numSourceLocalBuffersDefault,
+                               DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+    ON_CALL(mDataSource, runningRoutineWithIngestionRate()).WillByDefault(Return());
+    EXPECT_CALL(mDataSource, runningRoutineWithIngestionRate()).Times(1);
+    mDataSource.runningRoutine();
 }
 
 TEST_F(SourceTest, testBinarySource) {
