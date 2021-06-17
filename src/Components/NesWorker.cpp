@@ -48,7 +48,7 @@ NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
       localWorkerZmqPort(workerConfig->getDataPort()->getValue()), numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
       numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()),
       numberOfBuffersInGlobalBufferManager(workerConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
-      numberOfBuffersPerPipeline(workerConfig->getnumberOfBuffersPerPipeline()->getValue()),
+      numberOfBuffersPerPipeline(workerConfig->getNumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()), type(type) {
     MDC::put("threadName", "NesWorker");

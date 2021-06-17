@@ -28,19 +28,13 @@ sourceType: NoSource
 sourceConfig: NoConfig
 
 # Set sampling frequency of source
-sourceFrequency: 1
+sourceFrequency:
 
 # Skip first line of the file
 skipHeader: false
 
-# Set number of buffers to produce
-numberOfBuffersToProduce: 1
-
-# Set number of tuples to produce per buffer
-numberOfTuplesToProducePerBuffer: 0
-
 # Set physical stream name
-physicalStreamName: default_stream_phy
+physicalStreamName:
 
 # Set logical stream name where this stream is added to
 logicalStreamName: default_stream_log

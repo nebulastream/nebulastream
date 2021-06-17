@@ -20,14 +20,35 @@ dataPort: 3001
 # ~~ Processing Configurations ~~
 # Set the number of computing slots in NES Coordinator
 # 0 is a place holder, default is number of processors installed in host machine
-numberOfSlots: 0
+numberOfSlots: UINT16_MAX
 
 # Enable Query Merging Feature
 enableQueryMerging: false
 
-# Semantic Query Validation Feature
-enableSemanticQueryValidation: false
-
 # The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
 logLevel: LOG_DEBUG
+
+# Number buffers in global buffer pool
+numberOfBuffersInGlobalBufferManager: 1024
+
+# Number buffers in task local buffer pool
+numberOfBuffersPerPipeline: 128
+
+# Number buffers in source local buffer pool
+numberOfBuffersInSourceLocalBufferPool: 64
+
+# Size of buffer to pass data through the system
+bufferSizeInBytes: 4096
+
+# Number of threads available for the worker node. Defines how many queries can run in parallel.
+numWorkerThreads: 1
+
+# The number of queries to be processed together
+queryBatchSize: 1
+
+# The rule to be used for performing query merging
+queryMergerRule: SyntaxBasedCompleteQueryMergerRule
+
+# Semantic Query Validation Feature
+enableSemanticQueryValidation: false
 

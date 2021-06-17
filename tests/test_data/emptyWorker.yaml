@@ -5,21 +5,15 @@
 localWorkerIp: 127.0.0.1
 
 # Set IP address of NES Coordinator to which the NES Worker should connect
-coordinatorIp: 127.0.0.1
+coordinatorIp:
 
 # Set RPC Server port of NES Coordinator to which the NES Worker should connect
 # Needs to be the same as rpcPort in Coordinator
 coordinatorPort: 4000
 
-# Set RPC server port of NES Worker
-rpcPort: 3000
-
-# Set the data port of the NES Worker
-dataPort: 3001
-
 # Set number of computing slots in NES Worker
 # 0 is a place holder, default is number of processors installed in host machine
-numberOfSlots: 0
+numberOfSlots:
 
 # Set the number of worker threads
 numWorkerThreads: 1
@@ -28,16 +22,7 @@ numWorkerThreads: 1
 numberOfBuffersInGlobalBufferManager: 1024
 
 # Number buffers in task local buffer pool
-numberOfBuffersPerPipeline: 128
+numberOfBuffersPerPipeline:
 
 # Number buffers in source local buffer pool
 numberOfBuffersInSourceLocalBufferPool: 64
-
-# Size of buffer to pass data through the system
-bufferSizeInBytes: 4096
-
-# Set parentId of NES Worker node
-parentId: -1
-
-# The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
-logLevel: LOG_DEBUG
