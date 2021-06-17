@@ -84,9 +84,9 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
     }
 }
 
-void ExchangeProtocol::onQueryReconfiguration(Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+void ExchangeProtocol::onQueryReconfiguration(ChannelId channelId, QueryReconfigurationPlan queryReconfigurationPlan) {
     std::unique_lock lock(reconfigurationMutex);
-    protocolListener->onQueryReconfiguration(queryReconfigurationMessage);
+    protocolListener->onQueryReconfiguration(channelId, queryReconfigurationPlan);
 }
 
 std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const { return partitionManager; }

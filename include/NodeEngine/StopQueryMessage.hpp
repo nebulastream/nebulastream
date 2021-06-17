@@ -19,6 +19,7 @@
 
 #include <Network/NetworkMessage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <QueryReconfigurationPlan.pb.h>
 #include <memory>
 namespace NES::NodeEngine {
 /**
@@ -30,8 +31,7 @@ class StopQueryMessage {
      * @param qep : Target QEP for reconfiguration
      * @param queryReconfigurationMessage :
      */
-    StopQueryMessage(std::weak_ptr<Execution::ExecutableQueryPlan> qep,
-                     Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
+    StopQueryMessage(std::weak_ptr<Execution::ExecutableQueryPlan> qep, QueryReconfigurationPlan queryReconfigurationPlan);
     /**
      * @brief Returns QEP intended for reconfiguration
      * @return QEP intended for reconfiguration
@@ -41,11 +41,11 @@ class StopQueryMessage {
      * Get reconfiguration message that resulted in invoking stopping of query
      * @return QueryReconfigurationMessage
      */
-    QueryReconfigurationPlanPtr getQueryReconfigurationPlan();
+    QueryReconfigurationPlan getQueryReconfigurationPlan();
 
   private:
     std::weak_ptr<Execution::ExecutableQueryPlan> qep;
-    QueryReconfigurationPlanPtr queryReconfigurationPlan;
+    QueryReconfigurationPlan queryReconfigurationPlan;
 };
 typedef std::shared_ptr<StopQueryMessage> StopQueryMessagePtr;
 }// namespace NES::NodeEngine

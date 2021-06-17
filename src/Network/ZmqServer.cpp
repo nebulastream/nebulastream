@@ -256,12 +256,22 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                 }
                 case Messages::kQueryReconfiguration: {
                     // if server receives a message that a query reconfiguration is in progress
-                    zmq::message_t queryReconfigurationEnvelope;
-                    auto optRetSize = dispatcherSocket.recv(queryReconfigurationEnvelope, kZmqRecvDefault);
-                    NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
-                    auto queryReconfigurationMsg = *queryReconfigurationEnvelope.data<Messages::QueryReconfigurationMessage>();
-                    NES_DEBUG("ZmqServer: EndOfStream received for channel " << queryReconfigurationMsg.getChannelId());
-                    exchangeProtocol.onQueryReconfiguration(queryReconfigurationMsg);
+                    zmq::message_t channelEnvelope;
+                    auto optRecvStatus = dispatcherSocket.recv(channelEnvelope, kZmqRecvDefault);
+                    NES_ASSERT2_FMT(optRecvStatus.has_value(), "Invalid recv size");
+                    auto payloadHeader = *channelEnvelope.data<Messages::QueryReconfigurationMessage>();
+                    NES_DEBUG("ZmqServer::QueryReconfigurationMessage: received for channel " << payloadHeader.getChannelId());
+
+                    zmq::message_t xc(payloadHeader.sizeOfReconfigurationPlan);
+                    auto optRetSize = dispatcherSocket.recv(xc, kZmqRecvDefault);
+                    NES_ASSERT2_FMT(optRetSize.has_value(), "ZmqServer::QueryReconfigurationMessage: Invalid recv size");
+                    NES_ASSERT2_FMT(optRetSize.value() == payloadHeader.sizeOfReconfigurationPlan,
+                                    "ZmqServer::QueryReconfigurationMessage: Recv not matching sizes "
+                                        << optRetSize.value() << "!=" << payloadHeader.sizeOfReconfigurationPlan);
+                    QueryReconfigurationPlan queryReconfigurationPlan;
+                    std::string msg_str(static_cast<char*>(xc.data()), xc.size());
+                    queryReconfigurationPlan.ParseFromString(msg_str);
+                    exchangeProtocol.onQueryReconfiguration(payloadHeader.getChannelId(), queryReconfigurationPlan);
                     break;
                 }
                 default: {

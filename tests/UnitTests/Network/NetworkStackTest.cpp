@@ -140,7 +140,7 @@ class DummyExchangeProtocolListener : public ExchangeProtocolListener {
     void onDataBuffer(NesPartition, TupleBuffer&) override {}
     void onEndOfStream(Messages::EndOfStreamMessage) override {}
     void onServerError(Messages::ErrorMessage) override {}
-    void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
+    void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
 
     void onChannelError(Messages::ErrorMessage) override {}
 };
@@ -186,7 +186,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
             void onChannelError(Messages::ErrorMessage) override {}
 
           private:
@@ -215,6 +215,76 @@ TEST_F(NetworkStackTest, startCloseChannel) {
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 3);
+        senderChannel->close(true);
+        senderChannel.reset();
+
+        t.join();
+    } catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(true, true);
+}
+
+TEST_F(NetworkStackTest, reconfigurationMessageTest) {
+    try {
+        // start zmqServer
+        std::promise<bool> completed;
+        std::promise<bool> reconfigured;
+
+        class InternalListener : public Network::ExchangeProtocolListener {
+          public:
+            InternalListener(std::promise<bool>& p, std::promise<bool>& reconfigured, PartitionManagerPtr partitionManager)
+                : completed(p), reconfigured(reconfigured), partitionManager(partitionManager) {}
+            bool onClientAnnouncement(Messages::ClientAnnounceMessage msg) override {
+                return defaultClientAnnouncementHandler(partitionManager, msg);
+            }
+            void onDataBuffer(NesPartition, TupleBuffer&) override {}
+            void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
+            void onServerError(Messages::ErrorMessage) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan queryReconfigurationPlan) override {
+                ASSERT_EQ(queryReconfigurationPlan.querysubplansidtoreplace().size(), 1);
+                ASSERT_EQ(queryReconfigurationPlan.querysubplanstostart().size(), 1);
+                ASSERT_EQ(queryReconfigurationPlan.querysubplanstostop().size(), 1);
+                reconfigured.set_value(true);
+            }
+            void onChannelError(Messages::ErrorMessage) override {}
+
+          private:
+            std::promise<bool>& completed;
+            std::promise<bool>& reconfigured;
+            PartitionManagerPtr partitionManager;
+        };
+
+        auto partMgr = std::make_shared<PartitionManager>();
+        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed, reconfigured, partMgr));
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, std::move(ep), buffMgr);
+
+        auto nesPartition = NesPartition(0, 0, 0, 0);
+
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+
+        std::thread t([&netManager, &completed, &reconfigured, &nesPartition] {
+            // register the incoming channel
+            auto cnt = netManager->registerSubpartitionConsumer(nesPartition, std::make_shared<DataEmitterImpl>());
+            NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt" << cnt);
+            ASSERT_EQ(reconfigured.get_future().get(), true);
+            auto v = completed.get_future().get();
+            ASSERT_EQ(v, true);
+        });
+
+        NodeLocation nodeLocation(0, "127.0.0.1", 31337);
+        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 3);
+        QueryReconfigurationPlan queryReconfigurationPlan;
+        queryReconfigurationPlan.add_querysubplanstostart(1);
+        queryReconfigurationPlan.add_querysubplanstostop(4);
+        auto replacement = queryReconfigurationPlan.add_querysubplansidtoreplace();
+        replacement->set_oldquerysubplanid(2);
+        replacement->set_newquerysubplanid(3);
+
+        senderChannel->sendReconfigurationMessage(queryReconfigurationPlan);
         senderChannel->close(true);
         senderChannel.reset();
 
@@ -258,7 +328,7 @@ TEST_F(NetworkStackTest, testSendData) {
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
 
             void onChannelError(Messages::ErrorMessage) override {}
         };
@@ -340,7 +410,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                 }
                 bufferReceived++;
             }
-            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
 
@@ -446,7 +516,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
                 NES_INFO("NetworkStackTest: Channel error called!");
                 ASSERT_EQ(errorMsg.getErrorType(), Messages::kPartitionNotRegisteredError);
             }
-            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
 
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override {}
@@ -513,7 +583,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
 
             void onChannelError(Messages::ErrorMessage) override {}
 
-            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
                 for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
@@ -629,7 +699,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
             void onChannelError(Messages::ErrorMessage) override {}
 
-            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
 
             void onDataBuffer(NesPartition id, TupleBuffer&) override {
                 if (nesPartition == id) {
@@ -853,7 +923,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             }
         }
 
-        void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
+        void onQueryReconfiguration(ChannelId, QueryReconfigurationPlan) override {}
 
         void onChannelError(Network::Messages::ErrorMessage message) override { NodeEngine::onChannelError(message); }
     };
