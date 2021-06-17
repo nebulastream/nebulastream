@@ -19,6 +19,7 @@
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES {
 
@@ -46,6 +47,7 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
     std::vector<ExpressionItem> outputFields;
     std::vector<ExpressionItemPtr> inputFieldsPtr;
     std::vector<ExpressionItemPtr> outputFieldsPtr;
+    void updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field);
 };
 
 }// namespace NES
