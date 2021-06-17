@@ -41,11 +41,11 @@ class StopQueryMessage {
      * Get reconfiguration message that resulted in invoking stopping of query
      * @return QueryReconfigurationMessage
      */
-    Network::Messages::QueryReconfigurationMessage getQueryReconfigurationMessage();
+    QueryReconfigurationPlanPtr getQueryReconfigurationPlan();
 
   private:
     std::weak_ptr<Execution::ExecutableQueryPlan> qep;
-    Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage;
+    QueryReconfigurationPlanPtr queryReconfigurationPlan;
 };
 typedef std::shared_ptr<StopQueryMessage> StopQueryMessagePtr;
 }// namespace NES::NodeEngine

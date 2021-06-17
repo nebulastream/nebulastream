@@ -39,6 +39,9 @@ namespace NES {
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
+class QueryReconfigurationPlan;
+typedef std::shared_ptr<QueryReconfigurationPlan> QueryReconfigurationPlanPtr;
+
 class PhysicalStreamConfig;
 typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 
@@ -157,6 +160,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return true if succeeded, else false
      */
     bool registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryPlan);
+
+    /**
+     * Method to start reconfiguration Process
+     * @param queryReconfigurationPlan to reconfigure
+     * @return true if succeeded, else false
+     */
+    bool startQueryReconfiguration(QueryId queryId, QueryReconfigurationPlanPtr queryReconfigurationPlan);
 
     /**
      * @brief ungregisters a query

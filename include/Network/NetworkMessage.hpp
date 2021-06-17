@@ -18,12 +18,19 @@
 #define NES_NETWORKMESSAGE_HPP
 
 #include <Network/ChannelId.hpp>
+#include <Plans/Query/QueryReconfigurationPlan.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
 
 namespace NES {
+class QueryReconfigurationPlan;
+typedef std::shared_ptr<QueryReconfigurationPlan> QueryReconfigurationPlanPtr;
+}// namespace NES
+
+namespace NES {
+
 namespace Network {
 namespace Messages {
 
@@ -133,7 +140,8 @@ class QueryReconfigurationMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kQueryReconfiguration;
 
-    explicit QueryReconfigurationMessage(ChannelId channelId, std::vector<QuerySubPlanId> querySubPlansToStart,
+    explicit QueryReconfigurationMessage(ChannelId channelId,
+                                         std::vector<QuerySubPlanId> querySubPlansToStart,
                                          std::map<QuerySubPlanId, QuerySubPlanId> querySubPlansIdToReplace,
                                          std::vector<QuerySubPlanId> querySubPlansToStop)
         : ExchangeMessage(channelId), querySubPlansToStart(querySubPlansToStart),

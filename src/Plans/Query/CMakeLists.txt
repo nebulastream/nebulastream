@@ -14,4 +14,5 @@
 
 add_source_nes(
         QueryPlan.cpp
+        QueryReconfigurationPlan.cpp
 )

@@ -20,9 +20,7 @@ namespace NES::NodeEngine {
 
 StopQueryMessage::StopQueryMessage(std::weak_ptr<Execution::ExecutableQueryPlan> qep,
                                    Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage)
-    : qep(qep), queryReconfigurationMessage(queryReconfigurationMessage) {}
+    : qep(qep), queryReconfigurationPlan(QueryReconfigurationPlan::create(queryReconfigurationMessage)) {}
 std::weak_ptr<Execution::ExecutableQueryPlan> StopQueryMessage::getTargetQep() { return qep; }
-Network::Messages::QueryReconfigurationMessage StopQueryMessage::getQueryReconfigurationMessage() {
-    return queryReconfigurationMessage;
-}
+QueryReconfigurationPlanPtr StopQueryMessage::getQueryReconfigurationPlan() { return queryReconfigurationPlan; }
 }// namespace NES::NodeEngine

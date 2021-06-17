@@ -56,6 +56,13 @@ class QueryReconfigurationMessage;
 }// namespace NES::Network::Messages
 
 namespace NES {
+
+class QueryReconfigurationPlan;
+typedef std::shared_ptr<QueryReconfigurationPlan> QueryReconfigurationPlanPtr;
+
+}// namespace NES
+
+namespace NES {
 namespace NodeEngine {
 
 class ThreadPool;
@@ -313,6 +320,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::atomic<QueryManagerStatus> queryManagerStatus;
     bool isSourceAssociatedWithQep(OperatorId sourceOperatorId, QuerySubPlanId querySubPlanId);
     bool allSourcesMappedToQep(Execution::ExecutableQueryPlanPtr qep);
+    void propagateQueryReconfigurationMessage(const Execution::ExecutableQueryPlanPtr qep,
+                                              const NES::QueryReconfigurationPlanPtr queryReconfigurationPlan);
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
