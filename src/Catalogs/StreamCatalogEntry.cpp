@@ -17,13 +17,13 @@
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
-// BDAPRO remove logicalStreamName from StreamCatalogEntry
 StreamCatalogEntry::StreamCatalogEntry(std::string sourceType,
                                        std::string physicalStreamName,
-                                       std::string logicalStreamName,
+                                       std::vector<std::string> logicalStreamName,
                                        TopologyNodePtr node)
     : sourceType(sourceType), physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), node(node) {}
 
@@ -33,10 +33,9 @@ StreamCatalogEntry::StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, T
     // nop
 }
 
-// BDAPRO remove logicalStreamName from StreamCatalogEntry
 StreamCatalogEntryPtr StreamCatalogEntry::create(std::string sourceType,
                                                  std::string physicalStreamName,
-                                                 std::string logicalStreamName,
+                                                 std::vector<std::string> logicalStreamName,
                                                  TopologyNodePtr node) {
     return std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, node);
 }
@@ -51,11 +50,11 @@ TopologyNodePtr StreamCatalogEntry::getNode() { return node;}
 
 std::string StreamCatalogEntry::getPhysicalName() { return physicalStreamName; }
 
-std::string StreamCatalogEntry::getLogicalName() { return logicalStreamName; }
+std::vector<std::string> StreamCatalogEntry::getLogicalName() { return logicalStreamName; }
 
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
-    ss << "physicalName=" << physicalStreamName << " logicalStreamName=" << logicalStreamName << " sourceType=" << sourceType
+    ss << "physicalName=" << physicalStreamName << " logicalStreamName= (" << UtilityFunctions::combineStringsWithDelimiter(logicalStreamName,",") << ") sourceType=" << sourceType
        << " on node=" + std::to_string(node->getId());
     return ss.str();
 }

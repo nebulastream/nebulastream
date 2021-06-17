@@ -46,12 +46,12 @@ class StreamCatalogEntry {
      * @brief Create the shared pointer for the stream catalog entry
      * @param sourceType: the source type
      * @param physicalStreamName: physical stream name
-     * @param logicalStreamName: the logical stream name
+     * @param logicalStreamName: a vector of logical stream names
      * @param node: the topology node
      * @return shared pointer to stream catalog
      */
     static StreamCatalogEntryPtr
-    create(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName, TopologyNodePtr node);
+    create(std::string sourceType, std::string physicalStreamName, std::vector<std::string> logicalStreamName, TopologyNodePtr node);
 
     /**
      * @brief Create the shared pointer for the stream catalog entry
@@ -63,7 +63,7 @@ class StreamCatalogEntry {
 
     explicit StreamCatalogEntry(std::string sourceType,
                                 std::string physicalStreamName,
-                                std::string logicalStreamName,
+                                std::vector<std::string> logicalStreamName,
                                 TopologyNodePtr node);
 
     explicit StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node);
@@ -87,17 +87,17 @@ class StreamCatalogEntry {
     std::string getPhysicalName();
 
     /**
-     * @brief get logical stream name
-     * @return name as string
+     * @brief get a vector of logical stream names
+     * @return vector of names as strings
      */
-    std::string getLogicalName();
+    std::vector<std::string> getLogicalName();
 
     std::string toString();
 
   private:
     std::string sourceType;
     std::string physicalStreamName;
-    std::string logicalStreamName;
+    std::vector<std::string> logicalStreamName;
     TopologyNodePtr node;
 };
 

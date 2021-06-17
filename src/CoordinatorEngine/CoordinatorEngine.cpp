@@ -24,6 +24,8 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include<tuple>
+#include <string>
 
 namespace NES {
 
@@ -32,7 +34,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr
       addRemovePhysicalStream() {
     NES_DEBUG("CoordinatorEngine()");
 }
-CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
+CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); }
 
 uint64_t CoordinatorEngine::registerNode(std::string address,
                                          int64_t grpcPort,
@@ -70,10 +72,11 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
         //add default logical
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
-        auto inAndExcluded = streamCatalog->testIfLogicalStreamVecExistsInSchemaMapping(streamConf->getLogicalStreamName());
+        std::vector<std::string> logicalStreamNames = streamConf->getLogicalStreamName();
+        auto inAndExcluded = streamCatalog->testIfLogicalStreamVecExistsInSchemaMapping(logicalStreamNames);
 
         // print ERROR in case the mapping does not exist
-        for(auto excluded : get<1>(inAndExcluded)){
+        for(auto excluded : std::get<1>(inAndExcluded)){
             NES_ERROR("CoordinatorEngine::registerNode: error logical stream" << excluded
                                                                               << " does not exist when adding physical stream "
                                                                               << streamConf->getPhysicalStreamName());
@@ -89,7 +92,7 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
         // BDAPRO add handling of registration of physical stream if no logicalStreamName exists
-        bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
+        bool success = streamCatalog->addPhysicalStream(logicalStreamNames, sce);
         if (!success) {
             NES_ERROR("CoordinatorEngine::registerNode: physical stream " << streamConf->getPhysicalStreamName()
                                                                           << " could not be added to catalog");
@@ -166,9 +169,10 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
         NES_ERROR("CoordinatorEngine::RegisterPhysicalStream node not found");
         return false;
     }
+    auto logicalStreamNameVec = UtilityFunctions::splitWithStringDelimiter(logicalStreamName, ",");
     StreamCatalogEntryPtr sce =
-        std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
-    bool success = streamCatalog->addPhysicalStream(UtilityFunctions::splitWithStringDelimiter(logicalStreamName, ","), sce);
+        std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamNameVec, physicalNode);
+    bool success = streamCatalog->addPhysicalStream(logicalStreamNameVec, sce);
     return success;
 }
 

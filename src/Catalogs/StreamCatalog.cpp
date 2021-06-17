@@ -21,6 +21,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <assert.h>
+#include <tuple>
 
 namespace NES {
 
@@ -172,15 +173,17 @@ bool StreamCatalog::addPhysicalStream(std::vector<std::string> logicalStreamName
     auto inAndExclude = testIfLogicalStreamVecExistsInSchemaMapping(logicalStreamNames);
 
     // flag showing whether the physical was added without any problems
-    bool succ = !get<1>(inAndExclude).empty();
+    bool succ = !std::get<1>(inAndExclude).empty();
 
     // Handle logicalStream names which were not found in schema mapping
-    for(std::string notFound : get<1>(inAndExclude)){
+    for(std::string notFound : std::get<1>(inAndExclude)){
+        // BDAPRO: empty logicalStreamN without logical stream name
         NES_ERROR("StreamCatalog: logical stream " << notFound << " does not exists when inserting physical stream "
                                                    << newEntry->getPhysicalName());
+        addPhysicalStreamWithoutLogicalStreams(newEntry); // BDAPRO add input state
     }
     // Handle logicalStream names which were found in schema mapping
-    for(std::string found : get<0>(inAndExclude)){
+    for(std::string found : std::get<0>(inAndExclude)){
         if(!addPhysicalToLogicalStream(found, newEntry)){
             succ = false;
         }
