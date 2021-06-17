@@ -2088,13 +2088,13 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWitCharKey) {
 
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
     struct Car {
-        NES::QueryCompilation::Array<char, 52> key;
+        NES::QueryCompilation::Array<char, 4> key;
         uint32_t value1;
         uint64_t timestamp;
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createFixedChar(52))
+        ->addField("key", DataTypeFactory::createFixedChar(4))
         ->addField("value", DataTypeFactory::createUInt32())
         ->addField("timestamp", DataTypeFactory::createUInt64());
 
@@ -2106,11 +2106,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
 
     testHarness.addMemorySource("car", carSchema, "car1");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-
-    NES::QueryCompilation::Array<char, 52> keyOne = {'K', 'e', 'y', ' ', 'O', 'n', 'e'};
-    NES::QueryCompilation::Array<char, 52> keyTwo = {'K', 'e', 'y', ' ', 'T', 'w', 'o'};
-    NES::QueryCompilation::Array<char, 52> keyThree = {'K', 'e', 'y', ' ', 'T', 'h', 'r', 'e', 'e'};
+    NES::QueryCompilation::Array<char, 4> keyOne = "aaa";
+    NES::QueryCompilation::Array<char, 4> keyTwo = "bbb";
+    NES::QueryCompilation::Array<char, 4> keyThree = "ccc";
 
     testHarness.pushElement<Car>({keyOne, 2, 1000}, 0);
     testHarness.pushElement<Car>({keyTwo, 4, 1500}, 0);
@@ -2119,7 +2117,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
     struct Output {
         uint64_t start;
         uint64_t end;
-        std::array<char, 52> key;
+        std::array<char, 4> key;
         uint32_t value1;
 
         // overload the == operator to check if two instances are the same
