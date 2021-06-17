@@ -60,7 +60,7 @@ NesWorker::~NesWorker() {
 bool NesWorker::setWithRegister(PhysicalStreamConfigPtr conf) {
     withRegisterStream = true;
     // BDAPRO check if this is correct using shared_ptr
-    this->configs.emplace_back(conf); // was this->configs = configs
+    this->configs.push_back(conf);// was this->configs = configs
     return true;
 }
 
@@ -161,6 +161,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("NesWorker: start with register stream");
         // BDAPRO do bulk registration instead of multiple calls
         for (auto& config : configs) {
+            if (config->getSourceType() == "DefaultSource") {
+                continue;
+            }
             bool success = registerPhysicalStream(config);
 
             NES_DEBUG("registered " << config->getPhysicalStreamName() << "= " << success);

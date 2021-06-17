@@ -46,7 +46,7 @@ extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener>);
 
 NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    auto streamConfigs = std::vector<PhysicalStreamConfigPtr>{config};
+    std::vector<PhysicalStreamConfigPtr> streamConfigs{config};
     return NodeEngine::create(hostname, port, streamConfigs, 1, 4096, 1024, 128, 12);
 }
 
@@ -64,9 +64,10 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
                                  uint64_t numberOfBuffersInGlobalBufferManager,
                                  uint64_t numberOfBuffersInSourceLocalBufferPool,
                                  uint64_t numberOfBuffersPerPipeline) {
+    std::vector<PhysicalStreamConfigPtr> streamConfigs{config};
     return NodeEngine::create(hostname,
                               port,
-                              std::vector<PhysicalStreamConfigPtr>{config},
+                              streamConfigs,
                               numThreads,
                               bufferSize,
                               numberOfBuffersInGlobalBufferManager,
@@ -150,7 +151,7 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr&& config,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerPipeline)
-    : NodeEngine(std::vector<PhysicalStreamConfigPtr>{std::move(config)},
+    : NodeEngine(std::vector<PhysicalStreamConfigPtr>{config},
                  std::move(bufferManager),
                  std::move(queryManager),
                  std::move(networkManagerCreator),
@@ -178,7 +179,7 @@ NodeEngine::NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
     for (auto& config : configs) {
-        this->configs.emplace_back(std::move(config));
+        this->configs.push_back(std::move(config));
     }
 
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
@@ -538,7 +539,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 
 void NodeEngine::addConfig(AbstractPhysicalStreamConfigPtr config) {
     NES_ASSERT(config, "physical source config is not specified");
-    this->configs.emplace_back(config);
+    this->configs.push_back(config);
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
