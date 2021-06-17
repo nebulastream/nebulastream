@@ -40,7 +40,11 @@ bool NetworkSinkDescriptor::equal(SinkDescriptorPtr other) {
         && (waitTime == otherSinkDescriptor->waitTime) && (retryTimes == otherSinkDescriptor->retryTimes);
 }
 
-std::string NetworkSinkDescriptor::toString() { return "NetworkSinkDescriptor()"; }
+std::string NetworkSinkDescriptor::toString() {
+    std::stringstream ss;
+    ss << "NetworkSinkDescriptor(" << nodeLocation << ", " << nesPartition << ")";
+    return ss.str();
+}
 
 NodeLocation NetworkSinkDescriptor::getNodeLocation() const { return nodeLocation; }
 

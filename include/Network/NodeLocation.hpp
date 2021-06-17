@@ -18,6 +18,7 @@
 #define NES_INCLUDE_NETWORK_NODELOCATION_HPP_
 
 #include <Network/NesPartition.hpp>
+#include <ostream>
 
 namespace NES {
 namespace Network {
@@ -34,6 +35,12 @@ class NodeLocation {
     const std::string& getHostname() const { return hostname; }
 
     uint32_t getPort() const { return port; }
+
+    friend std::ostream& operator<<(std::ostream& os, const NodeLocation& location) {
+        os << "NodeLocation("
+           << "nodeId: " << location.nodeId << " hostname: " << location.hostname << " port: " << location.port << ")";
+        return os;
+    }
 
     /**
      * @brief The equals operator for the NodeLocation.

@@ -51,7 +51,7 @@ bool SinkLogicalOperatorNode::inferSchema() {
 
 const std::string SinkLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "SINK(" << id << ")";
+    ss << "SINK(" << id << ", " << sinkDescriptor->toString() << ")";
     return ss.str();
 }
 
