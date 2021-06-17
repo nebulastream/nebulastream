@@ -39,6 +39,9 @@ namespace NES {
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
+class QueryReconfigurationPlan;
+typedef std::shared_ptr<QueryReconfigurationPlan> QueryReconfigurationPlanPtr;
+
 class PhysicalStreamConfig;
 typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 

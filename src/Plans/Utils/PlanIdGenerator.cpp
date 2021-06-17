@@ -38,6 +38,6 @@ uint64_t PlanIdGenerator::getNextQuerySubPlanId() {
 QueryReconfigurationId PlanIdGenerator::getNextQueryReconfigurationPlanId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
-};
+}
 
 }// namespace NES

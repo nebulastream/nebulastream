@@ -16,6 +16,8 @@
 
 #include <Plans/Query/QueryReconfigurationPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Util/Logger.hpp>
+#include <sstream>
 
 namespace NES {
 
@@ -127,5 +129,7 @@ void QueryReconfigurationPlan::setQuerySubPlanIdsToReplace(
     const std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace) {
     QueryReconfigurationPlan::querySubPlanIdsToReplace = querySubPlanIdsToReplace;
 }
+
+QueryReconfigurationPlan::QueryReconfigurationPlan() {}
 
 }// namespace NES

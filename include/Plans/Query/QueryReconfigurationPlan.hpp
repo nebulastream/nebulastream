@@ -16,10 +16,7 @@
 
 #ifndef NES_INCLUDE_PLANS_QUERYRECONFIGURATIONPLAN_HPP_
 #define NES_INCLUDE_PLANS_QUERYRECONFIGURATIONPLAN_HPP_
-#include "QueryReconfigurationId.hpp"
-#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Operators/OperatorNode.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QueryReconfigurationId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>
 #include <set>
