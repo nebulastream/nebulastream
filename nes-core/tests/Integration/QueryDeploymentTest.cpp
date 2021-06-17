@@ -847,6 +847,77 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerFileOutputWithInferModel) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    remove("test.out");
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    std::string outputFilePath = "test.out";
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query = R"(Query::from("default_logical").inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite",
+                        {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
+                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                        .sink(FileSinkDescriptor::create(")"
+                   + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+    int response = remove("test.out");
+    EXPECT_TRUE(response == 0);
+}
+
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     struct Test {
         uint32_t id;
