@@ -64,7 +64,7 @@ NesWorkerPtr startWorker(WorkerConfigPtr wrkConf, uint16_t coordinatorPort, uint
     wrkConf->setCoordinatorPort(coordinatorPort);
     wrkConf->setRpcPort(coordinatorPort + 10 * workerId);
     wrkConf->setDataPort(coordinatorPort + (10 * workerId) + 1);
-    wrkConf->setNumWorkerThreads(4);
+    wrkConf->setNumWorkerThreads(2);
     NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf, nesNodeType);
     EXPECT_TRUE(wrk->start(/**blocking**/ false, /**withConnect**/ true));
     NES_INFO("QueryReconfigurationTest: Worker: " << workerId << " started successfully");
@@ -117,8 +117,8 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     wrk2->registerLogicalStream("car", testSchemaFileName);
 
     srcConf->setSourceConfig("");
-    srcConf->setSourceFrequency(3000);
-    srcConf->setNumberOfTuplesToProducePerBuffer(10);
+    srcConf->setSourceFrequency(30000);
+    srcConf->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->setNumberOfBuffersToProduce(3000);
     srcConf->setLogicalStreamName("car");
 
@@ -163,10 +163,10 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp2->getQuerySubPlanId() << ".\n" << tqsp2->toString());
 
     wrk1->getNodeEngine()->registerQueryInNodeEngine(tqsp1);
-    //    wrk1->getNodeEngine()->startQuery(tqsp1->getQueryId());
+    wrk1->getNodeEngine()->startQuery(tqsp1->getQueryId());
 
     wrk2->getNodeEngine()->registerQueryInNodeEngine(tqsp2);
-    //    wrk2->getNodeEngine()->startQuery(tqsp2->getQueryId());
+    wrk2->getNodeEngine()->startQuery(tqsp2->getQueryId());
 
     auto wrk13Schema = tqsp1->getRootOperators()[0]->getOutputSchema();
     auto wrk23Schema = tqsp2->getRootOperators()[0]->getOutputSchema();
@@ -199,7 +199,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp3->getQuerySubPlanId() << ".\n" << tqsp3->toString());
 
     wrk3->getNodeEngine()->registerQueryInNodeEngine(tqsp3);
-    //    wrk3->getNodeEngine()->startQuery(tqsp3->getQueryId());
+    wrk3->getNodeEngine()->startQuery(tqsp3->getQueryId());
 
     auto wrk34Schema = qsp34NSink->getOutputSchema();
     auto wrk34Src =
@@ -261,7 +261,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
 
     std::vector<QuerySubPlanId> qepStarts{6};
     std::unordered_map<QuerySubPlanId, QuerySubPlanId> qepReplace{{3, 5}};
-    std::vector<QuerySubPlanId> qepStops{6};
+    std::vector<QuerySubPlanId> qepStops{};
     auto queryReconfigurationPlan = QueryReconfigurationPlan::create(qepStarts, qepStops, qepReplace);
 
     wrk1->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);

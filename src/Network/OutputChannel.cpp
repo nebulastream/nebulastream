@@ -153,7 +153,6 @@ bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tuple
 }
 
 void OutputChannel::sendReconfigurationMessage(QueryReconfigurationPlanPtr queryReconfigurationPlan) {
-    NES_DEBUG("OutputChannel::sendReconfigurationMessage: Sending Reconfiguration Message on: " << channelId);
     std::string serializedReconfigurationPlan = queryReconfigurationPlan->serializeToString();
     auto sz = serializedReconfigurationPlan.size();
     sendMessage<Messages::QueryReconfigurationMessage, kZmqSendMore>(zmqSocket, channelId, sz);

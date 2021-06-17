@@ -370,7 +370,7 @@ bool QueryManager::triggerQepStopReconfiguration(OperatorId sourceOperatorId,
         NES_DEBUG("QueryManager::triggerQepStopReconfiguration: No QEP exists for source: " << sourceOperatorId);
         return true;
     }
-    if (sourceIdToExecutableQueryPlanMap[querySubPlanId]->getQuerySubPlanId() != querySubPlanId) {
+    if (sourceIdToExecutableQueryPlanMap[sourceOperatorId]->getQuerySubPlanId() != querySubPlanId) {
         NES_ERROR("QueryManager::triggerQepStopReconfiguration: Received stop request from: "
                   << sourceOperatorId << " for QEP " << querySubPlanId << " but only QEP with ID: "
                   << sourceIdToExecutableQueryPlanMap[querySubPlanId]->getQuerySubPlanId() << " to source");
