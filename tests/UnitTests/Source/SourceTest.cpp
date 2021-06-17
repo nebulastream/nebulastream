@@ -111,12 +111,12 @@ class MockDataSource : public DataSource {
                      numSourceLocalBuffers, gatheringMode, executableSuccessors) {
         // nop
     };
-    MOCK_METHOD0(runningRoutineWithFrequency, bool());
-    MOCK_METHOD0(runningRoutineWithIngestionRate, bool());
-    MOCK_METHOD0(runningRoutine, void());
-    MOCK_METHOD0(receiveData, std::optional<Runtime::TupleBuffer>());
-    MOCK_CONST_METHOD0(toString, string());
-    MOCK_CONST_METHOD0(getType, SourceType());
+    MOCK_METHOD(bool, runningRoutineWithFrequency, ());
+    MOCK_METHOD(bool, runningRoutineWithIngestionRate, ());
+    MOCK_METHOD(void, runningRoutine, ());
+    MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
+    MOCK_METHOD(std::string, toString, (), (const));
+    MOCK_METHOD(SourceType, getType, (), (const));
 };
 
 class SourceTest : public testing::Test {
