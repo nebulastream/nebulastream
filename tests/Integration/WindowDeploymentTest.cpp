@@ -297,7 +297,6 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     coordinatorConfig->setRestPort(restPort);
     workerConfig->setCoordinatorPort(rpcPort);
 
-
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -376,7 +375,6 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("WindowDeploymentTest: Test finished");
 }
-
 
 TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();

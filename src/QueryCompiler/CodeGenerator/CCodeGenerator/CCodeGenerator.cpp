@@ -2086,13 +2086,12 @@ BinaryOperatorStatement CCodeGenerator::setOriginId(const VariableDeclaration& t
 }
 
 BinaryOperatorStatement CCodeGenerator::setSequenceNumber(VariableDeclaration tupleBufferVariable,
-                                                    VariableDeclaration inputBufferVariable) {
+                                                          VariableDeclaration inputBufferVariable) {
     auto setOriginIdFunctionCall = FunctionCallStatement("setSequenceNumber");
     setOriginIdFunctionCall.addParameter(getSequenceNumber(inputBufferVariable));
     /* copy watermark */
     return VarRef(tupleBufferVariable).accessRef(setOriginIdFunctionCall);
 }
-
 
 CCodeGenerator::~CCodeGenerator() = default;
 ;

@@ -63,9 +63,12 @@ class WatermarkProcessor {
     WatermarkTs currentWatermark{0};
     SequenceNumber currentSequenceNumber{0};
     // Use a priority queue to keep track of all in flight transactions.
-    std::priority_queue<std::tuple<WatermarkTs, SequenceNumber>, std::vector<std::tuple<WatermarkTs, SequenceNumber>>, WatermarkBarrierComparator> transactionLog;
+    std::priority_queue<std::tuple<WatermarkTs, SequenceNumber>,
+                        std::vector<std::tuple<WatermarkTs, SequenceNumber>>,
+                        WatermarkBarrierComparator>
+        transactionLog;
 };
 
-}// namespace NES::NodeEngine::Transactional
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WATERMARK_WATERMARKPROCESSOR_HPP_

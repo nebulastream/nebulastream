@@ -40,7 +40,6 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 }// namespace NES
 
-
 namespace NES::Windowing {
 
 class WindowOperatorHandler;
