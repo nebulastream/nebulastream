@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
+#include <Util/Logger.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Watermark/WatermarkProcessor.hpp>
-#include <Util/Logger.hpp>
 namespace NES::Windowing {
 
 MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {}
@@ -50,4 +50,4 @@ WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const {
     return maxWatermarkTs;
 }
 
-}// namespace NES::NodeEngine::Transactional
+}// namespace NES::Windowing

@@ -46,4 +46,4 @@ WatermarkTs WatermarkProcessor::getCurrentWatermark() const {
     return currentWatermark;
 }
 
-}// namespace NES::NodeEngine::Transactional
+}// namespace NES::Windowing

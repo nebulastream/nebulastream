@@ -130,7 +130,6 @@ TEST_F(QueryCompilerTest, windowQuery) {
     ASSERT_FALSE(result->hasError());
 }
 
-
 /**
  * @brief Input Query Plan:
  *
@@ -151,10 +150,10 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
 
     auto query = Query::from("streamName")
-        .window(SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(10), Seconds(2)))
-        .byKey(Attribute("key"))
-        .apply(Sum(Attribute("value")))
-        .sink(NullOutputSinkDescriptor::create());
+                     .window(SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(10), Seconds(2)))
+                     .byKey(Attribute("key"))
+                     .apply(Sum(Attribute("value")))
+                     .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);

@@ -71,8 +71,8 @@ class WindowSliceStore {
     */
     inline void prependSlice(SliceMetaData slice) {
         NES_DEBUG("prependSlice "
-                      << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
-        sliceMetaData.emplace(sliceMetaData.begin(),slice);
+                  << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
+        sliceMetaData.emplace(sliceMetaData.begin(), slice);
         partialAggregates.emplace(partialAggregates.begin(), defaultValue);
     }
 

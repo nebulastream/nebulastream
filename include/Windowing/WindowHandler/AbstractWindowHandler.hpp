@@ -19,11 +19,11 @@
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
-#include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
+#include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
@@ -50,8 +50,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
   public:
     explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition)
         : windowDefinition(std::move(windowDefinition)), running(false) {
-        this->watermarkProcessor =
-            MultiOriginWatermarkProcessor::create(this->windowDefinition->getNumberOfInputEdges());
+        this->watermarkProcessor = MultiOriginWatermarkProcessor::create(this->windowDefinition->getNumberOfInputEdges());
     }
 
     ~AbstractWindowHandler() noexcept(false) override = default;

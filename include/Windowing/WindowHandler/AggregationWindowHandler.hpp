@@ -260,7 +260,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     auto getWindowAction() { return executableWindowAction; }
 
-
   private:
     NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable{nullptr};
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;

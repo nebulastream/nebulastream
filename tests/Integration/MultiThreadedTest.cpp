@@ -614,8 +614,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-            + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -736,19 +735,22 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
         .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .sink(FileSinkDescriptor::create(")"
-            + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
- /**
+    /**
   * @brief 1000,2000,4,1000,2000,4,3,4,1102,4,4,1001,1,4,1002\n"
         "1000,2000,4,1000,2000,4,3,4,1112,4,4,1001,1,4,1002\n"
         "1000,2000,12,1000,2000,12,5,12,1011,1,12,1300,1,12,1001
   */
     string expectedContent =
-        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER\n"
+        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
+        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
+        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
+        "INTEGER,window3$timestamp:INTEGER\n"
         "1000,2000,4,1000,2000,4,4,4,1001,1,4,1002,3,4,1102\n"
         "1000,2000,4,1000,2000,4,4,4,1001,1,4,1002,3,4,1112\n"
         "1000,2000,12,1000,2000,12,1,12,1300,1,12,1001,5,12,1011\n";

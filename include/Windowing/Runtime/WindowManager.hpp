@@ -19,8 +19,8 @@
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
