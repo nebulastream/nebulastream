@@ -39,9 +39,6 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class QueryReconfigurationPlan;
-typedef std::shared_ptr<QueryReconfigurationPlan> QueryReconfigurationPlanPtr;
-
 class PhysicalStreamConfig;
 using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
@@ -166,7 +163,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param queryReconfigurationPlan to reconfigure
      * @return true if succeeded, else false
      */
-    bool startQueryReconfiguration(QueryId queryId, QueryReconfigurationPlanPtr queryReconfigurationPlan);
+    bool startQueryReconfiguration(QueryId queryId, QueryReconfigurationPlan queryReconfigurationPlan);
 
     /**
      * @brief ungregisters a query
@@ -286,7 +283,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
     * @brief this callback is called once an reconfiguration is triggered
     */
-    void onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) override;
+    void onQueryReconfiguration(Network::ChannelId channelId, QueryReconfigurationPlan queryReconfigurationPlan) override;
 
     // TODO we should get rid of the following method
     /**
@@ -332,7 +329,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerPipeline;
-    void reconfigurationStartSequence(Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage,
+    void reconfigurationStartSequence(QueryReconfigurationPlan queryReconfigurationPlan,
                                       Network::NesPartition& partition,
                                       QuerySubPlanId querySubPlanId);
 };

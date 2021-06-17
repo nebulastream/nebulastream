@@ -152,12 +152,14 @@ bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tuple
     return false;
 }
 
-void OutputChannel::sendReconfigurationMessage(QueryReconfigurationPlanPtr queryReconfigurationPlan) {
-    sendMessage<Messages::QueryReconfigurationMessage>(zmqSocket,
-                                                       channelId,
-                                                       queryReconfigurationPlan->getQuerySubPlansToStart(),
-                                                       queryReconfigurationPlan->getQuerySubPlansIdToReplace(),
-                                                       queryReconfigurationPlan->getQuerySubPlansToStop());
+void OutputChannel::sendReconfigurationMessage(QueryReconfigurationPlan queryReconfigurationPlan) {
+    NES_DEBUG("OutputChannel::sendReconfigurationMessage: Sending Reconfiguration Message on: " << channelId);
+    std::string serializedReconfigurationPlan;
+    queryReconfigurationPlan.SerializeToString(&serializedReconfigurationPlan);
+    auto sz = serializedReconfigurationPlan.size();
+    sendMessage<Messages::QueryReconfigurationMessage, kZmqSendMore>(zmqSocket, channelId, sz);
+    zmq::message_t query = zmq::message_t(serializedReconfigurationPlan.c_str(), sz);
+    zmqSocket.send(query, kZmqSendDefault);
 }
 
 void OutputChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR(errorMsg.getErrorTypeAsString()); }
