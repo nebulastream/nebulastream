@@ -181,7 +181,7 @@ class CoordinatorConfig {
     /**
     * @brief gets a ConfigOption object with number of numberOfBuffersPerPipeline
     */
-    IntConfigOption getnumberOfBuffersPerPipeline();
+    IntConfigOption getNumberOfBuffersPerPipeline();
 
     /**
     * @brief gets a ConfigOption object with number of numberOfBuffersInSourceLocalBufferPool
@@ -196,7 +196,7 @@ class CoordinatorConfig {
     /**
      * @brief set the value for number of numberOfBuffersPerPipeline
      */
-    void setnumberOfBuffersPerPipeline(uint64_t count);
+    void setNumberOfBuffersPerPipeline(uint64_t count);
 
     /**
      * @brief set the value for number of numberOfBuffersInSourceLocalBufferPool

@@ -95,16 +95,25 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
                 setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             }
             if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty()) {
-                setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
+                setNumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             }
             if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
+            }
+            if (!config["bufferSizeInBytes"].As<std::string>().empty()) {
+                setBufferSizeInBytes(config["bufferSizeInBytes"].As<uint32_t>());
+            }
+            if (!config["queryBatchSize"].As<std::string>().empty()) {
+                setBufferSizeInBytes(config["queryBatchSize"].As<uint32_t>());
             }
             if (!config["queryMergerRule"].As<std::string>().empty()) {
                 setQueryMergerRule(config["queryMergerRule"].As<std::string>());
             }
             if (!config["enableSemanticQueryValidation"].As<std::string>().empty()) {
                 setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
+            }
+            if(!config["numWorkerThreads"].As<std::string>().empty()){
+                setNumWorkerThreads(config["numWorkerThreads"].As<uint32_t>());
             }
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
@@ -136,14 +145,18 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setEnableQueryMerging((it->second == "true"));
             } else if (it->first == "--logLevel" && !it->second.empty()) {
                 setLogLevel(it->second);
-            } else if (it->first == "--queryBatchSize" && !it->second.empty()) {
-                setQueryBatchSize(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInGlobalBufferManager" && !it->second.empty()) {
                 setNumberOfBuffersInGlobalBufferManager(stoi(it->second));
             } else if (it->first == "--numberOfBuffersPerPipeline" && !it->second.empty()) {
-                setnumberOfBuffersPerPipeline(stoi(it->second));
+                setNumberOfBuffersPerPipeline(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool" && !it->second.empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
+            } else if (it->first == "--bufferSizeInBytes" && !it->second.empty()){
+                setBufferSizeInBytes(stoi(it->second));
+            } else if (it->first == "--numWorkerThreads" && !it->second.empty()){
+                setNumWorkerThreads(stoi(it->second));
+            } else if (it->first == "--queryBatchSize" && !it->second.empty()) {
+                setQueryBatchSize(stoi(it->second));
             } else if (it->first == "--queryMergerRule" && !it->second.empty()) {
                 setQueryMergerRule(it->second);
             } else if (it->first == "--enableSemanticQueryValidation" && !it->second.empty()) {
@@ -168,10 +181,12 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setNumberOfSlots(numberOfSlots->getDefaultValue());
     setEnableQueryMerging(enableQueryMerging->getDefaultValue());
     setLogLevel(logLevel->getDefaultValue());
-    setQueryBatchSize(queryBatchSize->getDefaultValue());
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
-    setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
+    setNumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+    setBufferSizeInBytes(bufferSizeInBytes->getDefaultValue());
+    setNumWorkerThreads(numWorkerThreads->getDefaultValue());
+    setQueryBatchSize(queryBatchSize->getDefaultValue());
     setQueryMergerRule(queryMergerRule->getDefaultValue());
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
 }
@@ -217,13 +232,13 @@ StringConfigOption CoordinatorConfig::getLogLevel() { return logLevel; }
 void CoordinatorConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(std::move(logLevelValue)); }
 
 IntConfigOption CoordinatorConfig::getNumberOfBuffersInGlobalBufferManager() { return numberOfBuffersInGlobalBufferManager; }
-IntConfigOption CoordinatorConfig::getnumberOfBuffersPerPipeline() { return numberOfBuffersPerPipeline; }
+IntConfigOption CoordinatorConfig::getNumberOfBuffersPerPipeline() { return numberOfBuffersPerPipeline; }
 IntConfigOption CoordinatorConfig::getNumberOfBuffersInSourceLocalBufferPool() { return numberOfBuffersInSourceLocalBufferPool; }
 
 void CoordinatorConfig::setNumberOfBuffersInGlobalBufferManager(uint64_t count) {
     numberOfBuffersInGlobalBufferManager->setValue(count);
 }
-void CoordinatorConfig::setnumberOfBuffersPerPipeline(uint64_t count) { numberOfBuffersPerPipeline->setValue(count); }
+void CoordinatorConfig::setNumberOfBuffersPerPipeline(uint64_t count) { numberOfBuffersPerPipeline->setValue(count); }
 void CoordinatorConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) {
     numberOfBuffersInSourceLocalBufferPool->setValue(count);
 }

@@ -438,6 +438,11 @@ add_executable(binary-operator-sort-rule-tests "UnitTests/Optimizer/QueryRewrite
 target_link_libraries(binary-operator-sort-rule-tests nes ${GTEST_LIBRARIES})
 add_test(NAME binary-operator-sort-rule-tests COMMAND binary-operator-sort-rule-tests)
 
+### Config Tests ###
+add_executable(config-tests "UnitTests/Configurations/ConfigTest.cpp")
+target_link_libraries(config-tests nes ${GTEST_LIBRARIES})
+add_test(config-tests COMMAND config-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

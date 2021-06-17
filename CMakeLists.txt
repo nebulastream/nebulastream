@@ -49,6 +49,8 @@ else ()
 endif ()
 ]]
 
+set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+
 # check if prebuild dependencies are already downloaded
 if (CMAKE_TOOLCHAIN_FILE)
     message("Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")

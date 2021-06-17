@@ -97,7 +97,7 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
                 setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             }
             if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty()) {
-                setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
+                setNumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             }
             if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
@@ -135,7 +135,7 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
             } else if (it->first == "--numberOfBuffersInGlobalBufferManager" && !it->second.empty()) {
                 setNumberOfBuffersInGlobalBufferManager(stoi(it->second));
             } else if (it->first == "--numberOfBuffersPerPipeline" && !it->second.empty()) {
-                setnumberOfBuffersPerPipeline(stoi(it->second));
+                setNumberOfBuffersPerPipeline(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool" && !it->second.empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
             } else if (it->first == "--parentId" && !it->second.empty()) {
@@ -165,7 +165,7 @@ void WorkerConfig::resetWorkerOptions() {
     setParentId(parentId->getDefaultValue());
     setLogLevel(logLevel->getDefaultValue());
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
-    setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
+    setNumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
 }
 
@@ -206,13 +206,13 @@ StringConfigOption WorkerConfig::getLogLevel() { return logLevel; }
 void WorkerConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(std::move(logLevelValue)); }
 
 IntConfigOption WorkerConfig::getNumberOfBuffersInGlobalBufferManager() { return numberOfBuffersInGlobalBufferManager; }
-IntConfigOption WorkerConfig::getnumberOfBuffersPerPipeline() { return numberOfBuffersPerPipeline; }
+IntConfigOption WorkerConfig::getNumberOfBuffersPerPipeline() { return numberOfBuffersPerPipeline; }
 IntConfigOption WorkerConfig::getNumberOfBuffersInSourceLocalBufferPool() { return numberOfBuffersInSourceLocalBufferPool; }
 
 void WorkerConfig::setNumberOfBuffersInGlobalBufferManager(uint64_t count) {
     numberOfBuffersInGlobalBufferManager->setValue(count);
 }
-void WorkerConfig::setnumberOfBuffersPerPipeline(uint64_t count) { numberOfBuffersPerPipeline->setValue(count); }
+void WorkerConfig::setNumberOfBuffersPerPipeline(uint64_t count) { numberOfBuffersPerPipeline->setValue(count); }
 void WorkerConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) {
     numberOfBuffersInSourceLocalBufferPool->setValue(count);
 }
