@@ -18,16 +18,10 @@
 #define NES_NETWORKMESSAGE_HPP
 
 #include <Network/ChannelId.hpp>
-#include <Plans/Query/QueryReconfigurationPlan.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
-
-namespace NES {
-class QueryReconfigurationPlan;
-typedef std::shared_ptr<QueryReconfigurationPlan> QueryReconfigurationPlanPtr;
-}// namespace NES
 
 namespace NES {
 
@@ -140,21 +134,10 @@ class QueryReconfigurationMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kQueryReconfiguration;
 
-    explicit QueryReconfigurationMessage(ChannelId channelId,
-                                         std::vector<QuerySubPlanId> querySubPlansToStart,
-                                         std::map<QuerySubPlanId, QuerySubPlanId> querySubPlansIdToReplace,
-                                         std::vector<QuerySubPlanId> querySubPlansToStop)
-        : ExchangeMessage(channelId), querySubPlansToStart(querySubPlansToStart),
-          querySubPlansIdToReplace(querySubPlansIdToReplace), querySubPlansToStop(querySubPlansToStop) {}
+    explicit QueryReconfigurationMessage(ChannelId channelId, uint64_t sizeOfReconfigurationPlan)
+        : ExchangeMessage(channelId), sizeOfReconfigurationPlan(sizeOfReconfigurationPlan) {}
 
-    std::vector<QuerySubPlanId> getQuerySubPlansToStart() const { return querySubPlansToStart; }
-    std::map<QuerySubPlanId, QuerySubPlanId> getQuerySubPlansIdToReplace() const { return querySubPlansIdToReplace; }
-    std::vector<QuerySubPlanId> getQuerySubPlansToStop() const { return querySubPlansToStop; }
-
-  private:
-    std::vector<QuerySubPlanId> querySubPlansToStart;
-    std::map<QuerySubPlanId, QuerySubPlanId> querySubPlansIdToReplace;
-    std::vector<QuerySubPlanId> querySubPlansToStop;
+    uint64_t const sizeOfReconfigurationPlan;
 };
 
 class ErrorMessage : public ExchangeMessage {

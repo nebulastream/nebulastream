@@ -14,13 +14,17 @@
     limitations under the License.
 */
 
-#include <NodeEngine/StopQueryMessage.hpp>
+syntax = "proto3";
+package NES;
 
-namespace NES::NodeEngine {
+message QueryReconfigurationPlan {
+  message QuerySubPlanMapping {
+    uint64 oldQuerySubPlanId = 1;
+    uint64 newQuerySubPlanId = 2;
+  }
 
-StopQueryMessage::StopQueryMessage(std::weak_ptr<Execution::ExecutableQueryPlan> qep,
-                                   QueryReconfigurationPlan queryReconfigurationPlan)
-    : qep(qep), queryReconfigurationPlan(queryReconfigurationPlan) {}
-std::weak_ptr<Execution::ExecutableQueryPlan> StopQueryMessage::getTargetQep() { return qep; }
-QueryReconfigurationPlan StopQueryMessage::getQueryReconfigurationPlan() { return queryReconfigurationPlan; }
-}// namespace NES::NodeEngine
+  uint64 reconfigurationId = 1;
+  repeated uint64 querySubPlansToStart = 2;
+  repeated uint64 querySubPlansToStop = 3;
+  repeated QuerySubPlanMapping querySubPlansIdToReplace = 4;
+}

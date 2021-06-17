@@ -259,9 +259,16 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp6->getQuerySubPlanId() << ".\n" << tqsp6->toString());
     wrk4->getNodeEngine()->registerQueryForReconfigurationInNodeEngine(tqsp6);
 
-    auto queryReconfigurationPlan = QueryReconfigurationPlan::create(std::vector<QuerySubPlanId>{6},
-                                                                     std::map<QuerySubPlanId, QuerySubPlanId>{{3, 5}},
-                                                                     std::vector<QuerySubPlanId>{});
+    QueryReconfigurationPlan queryReconfigurationPlan;
+    queryReconfigurationPlan.add_querysubplanstostart(1);
+    queryReconfigurationPlan.add_querysubplanstostart(2);
+    queryReconfigurationPlan.add_querysubplanstostop(5);
+    queryReconfigurationPlan.add_querysubplanstostop(6);
+
+    auto qs34 = queryReconfigurationPlan.add_querysubplansidtoreplace();
+    qs34->set_oldquerysubplanid(3);
+    qs34->set_newquerysubplanid(4);
+
     wrk1->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);
 
     sleep(1000);

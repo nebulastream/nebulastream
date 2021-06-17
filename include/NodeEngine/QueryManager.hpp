@@ -28,6 +28,7 @@
 #include <NodeEngine/Task.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <QueryReconfigurationPlan.pb.h>
 #include <Sources/DataSource.hpp>
 #include <State/StateManager.hpp>
 #include <Util/ThreadBarrier.hpp>
@@ -48,19 +49,6 @@
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 #include <folly/MPMCQueue.h>
 #endif
-
-namespace NES::Network::Messages {
-
-class QueryReconfigurationMessage;
-
-}// namespace NES::Network::Messages
-
-namespace NES {
-
-class QueryReconfigurationPlan;
-typedef std::shared_ptr<QueryReconfigurationPlan> QueryReconfigurationPlanPtr;
-
-}// namespace NES
 
 namespace NES {
 namespace NodeEngine {
@@ -170,21 +158,23 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * Start query via reconfiguration process for particular source
      * @param newQep: QEP to start
      * @param stateManager
-     * @param queryReconfigurationMessage: Messages received from network
+     * @param queryReconfigurationPlan: Messages received from network
      * @return if true start of query for source via reconfiguration is successful
      */
-    bool triggerQepStartReconfiguration(Execution::ExecutableQueryPlanPtr newQep,
+    bool triggerQepStartReconfiguration(OperatorId sourceOperatorId,
+                                        Execution::ExecutableQueryPlanPtr newQep,
                                         StateManagerPtr stateManager,
-                                        Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
+                                        QueryReconfigurationPlan queryReconfigurationPlan);
 
     /**
      * Trigger stop of QEP via reconfiguration process
      * @param qepToStop: QEP to stop
-     * @param queryReconfigurationMessage: Messages received from network
+     * @param queryReconfigurationPlan: Messages received from network
      * @return if true stop of query for source via reconfiguration is successful
      */
-    bool triggerQepStopReconfiguration(Execution::ExecutableQueryPlanPtr qepToStop,
-                                       Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
+    bool triggerQepStopReconfiguration(OperatorId sourceOperatorId,
+                                       Execution::ExecutableQueryPlanPtr qepToStop,
+                                       QueryReconfigurationPlan queryReconfigurationPlan);
 
     /**
      * @brief method to start a query
@@ -320,8 +310,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::atomic<QueryManagerStatus> queryManagerStatus;
     bool isSourceAssociatedWithQep(OperatorId sourceOperatorId, QuerySubPlanId querySubPlanId);
     bool allSourcesMappedToQep(Execution::ExecutableQueryPlanPtr qep);
-    void propagateQueryReconfigurationMessage(const Execution::ExecutableQueryPlanPtr qep,
-                                              const NES::QueryReconfigurationPlanPtr queryReconfigurationPlan);
+    void propagateQueryReconfigurationPlan(const Execution::ExecutableQueryPlanPtr qep,
+                                           const QueryReconfigurationPlan queryReconfigurationPlan);
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
