@@ -132,4 +132,9 @@ void QueryReconfigurationPlan::setQuerySubPlanIdsToReplace(
 
 QueryReconfigurationPlan::QueryReconfigurationPlan() {}
 
+std::ostream& operator<<(std::ostream& os, QueryReconfigurationPlan plan) {
+    os << plan.serializeToString();
+    return os;
+}
+
 }// namespace NES

@@ -274,6 +274,8 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                                         << optRetSize.value() << "!=" << payloadHeader.sizeOfReconfigurationPlan);
                     std::string msg_str(static_cast<char*>(xc.data()), xc.size());
                     auto queryReconfigurationPlan = QueryReconfigurationPlan::deserializeFromString(msg_str);
+                    NES_DEBUG("ZmqServer::messageHandlerEventLoop: kQueryReconfiguration received message ("
+                              << queryReconfigurationPlan << ") on channel (" << payloadHeader.getChannelId() << ").");
                     exchangeProtocol.onQueryReconfiguration(payloadHeader.getChannelId(), queryReconfigurationPlan);
                     break;
                 }

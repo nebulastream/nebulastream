@@ -140,12 +140,12 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
 
     //register physical stream - wrk1
     NES::AbstractPhysicalStreamConfigPtr confCar1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 1), 3000, 500, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 100), 3000, 5, "frequency");
     wrk1->registerPhysicalStream(confCar1);
 
     //register physical stream - wrk2
     NES::AbstractPhysicalStreamConfigPtr confCar2 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "car2", "car", generatorLambda(2, 2), 3000, 500, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car2", "car", generatorLambda(2, 20), 3000, 5, "frequency");
     wrk2->registerPhysicalStream(confCar2);
 
     auto wrk1Src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"), 1001);
@@ -308,7 +308,8 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
 
     NES_DEBUG("QueryReconfigurationTest: QEP 6 is running.");
 
-    sleep(100);
+    sleep(50);
+    wrk2->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);
 
     stopWorker(wrk1, 1);
     stopWorker(wrk2, 2);
