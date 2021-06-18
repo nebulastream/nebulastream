@@ -139,6 +139,30 @@ class MockDataSourceWithRunningRoutine : public DataSource {
     MOCK_METHOD(SourceType, getType, (), (const));
 };
 
+// proxy friendly to test class, exposing protected members
+class DataSourceProxy : public DataSource {
+  public:
+    DataSourceProxy(const SchemaPtr& schema,
+                   NodeEngine::BufferManagerPtr bufferManager,
+                   NodeEngine::QueryManagerPtr queryManager,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   GatheringMode gatheringMode,
+                   std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
+        : DataSource(schema, bufferManager, queryManager, operatorId,
+                     numSourceLocalBuffers, gatheringMode, executableSuccessors) {
+        // nop
+    };
+
+    MOCK_METHOD(std::optional<NodeEngine::TupleBuffer>, receiveData, ());
+    MOCK_METHOD(std::string, toString, (), (const));
+    MOCK_METHOD(SourceType, getType, (), (const));
+
+  private:
+    FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
+    FRIEND_TEST(SourceTest, testDataSourceIngestionRoutine);
+};
+
 class SourceTest : public testing::Test {
   public:
     void SetUp() override {
@@ -175,7 +199,19 @@ class SourceTest : public testing::Test {
         nodeEngine = nullptr;
     }
 
-    Runtime::NodeEnginePtr nodeEngine{nullptr};
+    // mock results of receiveData, don't mock buffer (yet)
+    std::optional<NodeEngine::TupleBuffer> GetBufferWithValue() {
+        auto buf = this->nodeEngine->getBufferManager()->getBufferBlocking();
+        std::ifstream is ("test", std::ifstream::binary);
+        is.seekg (0, is.end);
+        int length = is.tellg();
+        is.seekg (0, is.beg);
+        is.read(buf.getBuffer<char>(), length);
+        buf.setNumberOfTuples(1);
+        return buf;
+    }
+
+    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
     std::string path_to_file, path_to_bin_file;
     SchemaPtr schema;
     uint64_t tuple_size, buffer_size, numberOfBuffers,
@@ -278,6 +314,24 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
     ON_CALL(mDataSource, runningRoutineWithIngestionRate()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineWithIngestionRate()).Times(1);
     mDataSource.runningRoutine();
+}
+
+TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
+    DataSourceProxy mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(), this->operatorId,
+                               this->numSourceLocalBuffersDefault,
+                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+    mDataSource.numBuffersToProcess = 1;
+    mDataSource.running = true;
+    mDataSource.wasGracefullyStopped = false;
+    auto buf = this->GetBufferWithValue();
+    ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
+    ON_CALL(mDataSource, receiveData()).WillByDefault(Return(buf));
+    mDataSource.runningRoutine();
+    // branch 0: if (cnt < numBuffersToProcess || numBuffersToProcess == 0) {
+    // mock emitWork, expect call
+    // branch 1: not 0
+    // expect running = false, wasGracefullyStopped = true
 }
 
 TEST_F(SourceTest, testBinarySource) {

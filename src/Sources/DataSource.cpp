@@ -293,7 +293,7 @@ void DataSource::runningRoutineWithFrequency() {
 
         //this check checks if the gathering interval is zero or a ZMQ_Source, where we do not create a watermark-only buffer
         NES_DEBUG("DataSource::runningRoutine will now check src type with gatheringInterval=" << gatheringInterval.count());
-        if (gatheringInterval.count() == 0 || type == ZMQ_SOURCE) {// 0 means never sleep
+        if (gatheringInterval.count() == 0 || getType() == SourceType::ZMQ_SOURCE) {// 0 means never sleep
             NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type="
                       << getType() << " and gatheringInterval=" << gatheringInterval.count()
                       << "ms, tsNow=" << lastTimeStampMillis.count() << "ms, now=" << nowInMillis.count() << "ms");
