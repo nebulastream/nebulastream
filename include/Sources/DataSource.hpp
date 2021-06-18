@@ -230,7 +230,8 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::chrono::milliseconds gatheringInterval{0};
     GatheringMode gatheringMode;
     SourceType type;
-    std::atomic<bool> wasGracefullyStopped{true};
+    std::atomic<bool> wasGracefullyStopped{false};
+    std::atomic_bool running{false};
 
     /**
      * @brief Emits a tuple buffer to the successors.
@@ -242,7 +243,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
   private:
     mutable std::mutex startStopMutex;
-    std::atomic_bool running{false};
     std::shared_ptr<std::thread> thread{nullptr};
     uint64_t maxSequenceNumber = 0;
 
