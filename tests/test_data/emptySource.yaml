@@ -2,7 +2,7 @@
 
 # ~~ Source Handling ~~
 # Set the source type (available options: No_Source, DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
-sourceType: NoSource
+sourceType: YSBSource
 
 # Set source configuration. Options depend on source type.
 # DefaultSource: NoConfig (not needed)
@@ -25,16 +25,13 @@ sourceType: NoSource
 # BinarySource: String with path to binary file.
 # SenseSource (ToDo: Make source available): String with udsf inside
 # YSBSource: NoConfig (not needed)
-sourceConfig: NoConfig
-
-# Set sampling frequency of source
-sourceFrequency:
+sourceConfig:
 
 # Skip first line of the file
-skipHeader: false
+skipHeader: true
 
 # Set physical stream name
 physicalStreamName:
 
 # Set logical stream name where this stream is added to
-logicalStreamName: default_stream_log
+logicalStreamName: default

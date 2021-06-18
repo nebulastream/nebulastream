@@ -64,55 +64,55 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
         Yaml::Node config = *(new Yaml::Node());
         Yaml::Parse(config, filePath.c_str());
         try {
-            if (!config["restPort"].As<std::string>().empty()) {
+            if (!config["restPort"].As<std::string>().empty() && config["restPort"].As<uint16_t>() != 0) {
                 setRestPort(config["restPort"].As<uint16_t>());
             }
-            if (!config["rpcPort"].As<std::string>().empty()) {
+            if (!config["rpcPort"].As<std::string>().empty() && config["rpcPort"].As<uint16_t>() != 0) {
                 setRpcPort(config["rpcPort"].As<uint16_t>());
             }
-            if (!config["dataPort"].As<std::string>().empty()) {
+            if (!config["dataPort"].As<std::string>().empty() && config["dataPort"].As<uint16_t>() != 0) {
                 setDataPort(config["dataPort"].As<uint16_t>());
             }
-            if (!config["restIp"].As<std::string>().empty()) {
+            if (!config["restIp"].As<std::string>().empty() && config["restIp"].As<std::string>() != "\n") {
                 setRestIp(config["restIp"].As<std::string>());
             }
-            if (!config["coordinatorIp"].As<std::string>().empty()) {
+            if (!config["coordinatorIp"].As<std::string>().empty() && config["coordinatorIp"].As<std::string>() != "\n") {
                 setCoordinatorIp(config["coordinatorIp"].As<std::string>());
             }
-            if (!config["numberOfSlots"].As<std::string>().empty()) {
+            if (!config["numberOfSlots"].As<std::string>().empty() && config["numberOfSlots"].As<uint16_t>() != 0) {
                 setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
             }
-            if (!config["enableQueryMerging"].As<std::string>().empty()) {
+            if (!config["enableQueryMerging"].As<std::string>().empty() && config["enableQueryMerging"].As<std::string>() != "\n") {
                 setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
             }
-            if (!config["logLevel"].As<std::string>().empty()) {
+            if (!config["logLevel"].As<std::string>().empty() && config["logLevel"].As<std::string>() != "\n") {
                 setLogLevel(config["logLevel"].As<std::string>());
             }
-            if (!config["queryBatchSize"].As<std::string>().empty()) {
+            if (!config["queryBatchSize"].As<std::string>().empty() && config["queryBatchSize"].As<uint32_t>() != 0) {
                 setQueryBatchSize(config["queryBatchSize"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty()) {
+            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty() && config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>() != 0) {
                 setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty()) {
+            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty() && config["numberOfBuffersPerPipeline"].As<uint32_t>() != 0) {
                 setNumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()) {
+            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty() && config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>() != 0) {
                 setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             }
-            if (!config["bufferSizeInBytes"].As<std::string>().empty()) {
+            if (!config["bufferSizeInBytes"].As<std::string>().empty() && config["bufferSizeInBytes"].As<uint32_t>() != 0) {
                 setBufferSizeInBytes(config["bufferSizeInBytes"].As<uint32_t>());
             }
-            if (!config["queryBatchSize"].As<std::string>().empty()) {
+            if (!config["queryBatchSize"].As<std::string>().empty() && config["queryBatchSize"].As<uint32_t>() != 0) {
                 setBufferSizeInBytes(config["queryBatchSize"].As<uint32_t>());
             }
-            if (!config["queryMergerRule"].As<std::string>().empty()) {
+            if (!config["queryMergerRule"].As<std::string>().empty() && config["queryMergerRule"].As<std::string>() != "\n") {
                 setQueryMergerRule(config["queryMergerRule"].As<std::string>());
             }
-            if (!config["enableSemanticQueryValidation"].As<std::string>().empty()) {
+            if (!config["enableSemanticQueryValidation"].As<std::string>().empty() && config["enableSemanticQueryValidation"].As<std::string>() != "\n") {
                 setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
             }
-            if(!config["numWorkerThreads"].As<std::string>().empty()){
+            if(!config["numWorkerThreads"].As<std::string>().empty() && config["numWorkerThreads"].As<uint32_t>() != 0){
                 setNumWorkerThreads(config["numWorkerThreads"].As<uint32_t>());
             }
         } catch (std::exception& e) {
