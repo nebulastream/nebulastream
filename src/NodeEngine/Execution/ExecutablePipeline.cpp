@@ -61,9 +61,11 @@ bool ExecutablePipeline::setup(const QueryManagerPtr&, const BufferManagerPtr&) 
 
 bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
     auto expected = PipelineStatus::PipelineCreated;
+    uint32_t localStateVariableId = 0;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineRunning)) {
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-            operatorHandler->start(pipelineContext, stateManager);
+            operatorHandler->start(pipelineContext, stateManager, localStateVariableId);
+            localStateVariableId++;
         }
         executablePipelineStage->start(*pipelineContext.get());
         return true;
