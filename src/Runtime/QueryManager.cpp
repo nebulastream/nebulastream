@@ -165,7 +165,7 @@ void QueryManager::destroy() {
 }
 
 bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep, const std::vector<DataSourcePtr>& sources) {
-    NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep->getQueryId() << " subquery=" << qep->getQuerySubPlanId());
+    NES_DEBUG("QueryManager::registerQuery: query" << qep->getQueryId() << " subquery=" << qep->getQuerySubPlanId());
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "QueryManager::registerQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
                                                                                << qep->getQueryId());
@@ -365,6 +365,8 @@ bool QueryManager::triggerQepStopReconfiguration(OperatorId sourceOperatorId,
                                                  Execution::ExecutableQueryPlanPtr qepToStop,
                                                  QueryReconfigurationPlanPtr queryReconfigurationPlan) {
     std::unique_lock lock(queryMutex);
+    NES_DEBUG("QueryManager::triggerQepStopReconfiguration: Requested stop of QEP: " << qepToStop->getQuerySubPlanId()
+                                                                                     << " for operator: " << sourceOperatorId);
     auto querySubPlanId = qepToStop->getQuerySubPlanId();
     if (sourceIdToExecutableQueryPlanMap.find(sourceOperatorId) == sourceIdToExecutableQueryPlanMap.end()) {
         NES_DEBUG("QueryManager::triggerQepStopReconfiguration: No QEP exists for source: " << sourceOperatorId);

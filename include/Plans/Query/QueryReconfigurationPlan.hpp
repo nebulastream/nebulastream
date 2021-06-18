@@ -19,6 +19,7 @@
 #include <Plans/Query/QueryReconfigurationId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <unordered_map>
 #include <vector>
@@ -49,6 +50,7 @@ class QueryReconfigurationPlan {
      * @return: String representation of QueryReconfigurationPlan
      */
     const std::string serializeToString();
+    friend std::ostream& operator<<(std::ostream& os, QueryReconfigurationPlan& plan);
     void setQuerySubPlanIdsToStop(const std::vector<QuerySubPlanId> querySubPlanIdsToStop);
     void setQuerySubPlanIdsToStart(const std::vector<QuerySubPlanId> querySubPlanIdsToStart);
     void setQuerySubPlanIdsToReplace(const std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace);
@@ -57,7 +59,7 @@ class QueryReconfigurationPlan {
     QueryReconfigurationPlan();
 
   private:
-    QueryReconfigurationId id;
+    QueryReconfigurationId id{};
     std::vector<QuerySubPlanId> querySubPlanIdsToStop;
     std::vector<QuerySubPlanId> querySubPlanIdsToStart;
     std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace;
