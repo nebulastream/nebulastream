@@ -99,9 +99,9 @@ class ExecutableCompleteAggregationTriggerAction
                              tupleBuffer,
                              currentWatermark,
                              lastWatermark);//put key into this
-                        NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
-                                                                                 << "): " << toString() << " check key=" << it.first
-                                                                                 << "nextEdge=" << it.second->nextEdge << " id=" << id);
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+                                                                     << "): " << toString() << " check key=" << it.first
+                                                                     << "nextEdge=" << it.second->nextEdge << " id=" << id);
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
@@ -194,7 +194,6 @@ class ExecutableCompleteAggregationTriggerAction
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
-                // TODO: 1922: std::array<char, N> does not work well with the debugging macro, we need to work on this and re-enable this logging
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
                 NES_DEBUG("ExecutableCompleteAggregationTriggerAction "
                           << id << ": (" << this->windowDefinition->getDistributionType()->toString() << "): key=" << key
