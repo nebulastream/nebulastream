@@ -210,21 +210,22 @@ bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr que
     NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << queryExecutionPlan << " queryId=" << queryId
                                                              << " querySubPlanId =" << querySubPlanId);
     NES_ASSERT(queryManager->isThreadPoolRunning(), "Registering query but thread pool not running");
-    if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
-        auto found = queryIdToQuerySubPlanIds.find(queryId);
-        if (found == queryIdToQuerySubPlanIds.end()) {
-            queryIdToQuerySubPlanIds[queryId] = {querySubPlanId};
-            NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " as a singleton");
-        } else {
-            (*found).second.push_back(querySubPlanId);
-            NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " added");
-        }
-        if (!lazyQueryManagerRegistration) {
-            return registerQueryExecutionPlanInQueryManagerForSources(queryExecutionPlan, queryExecutionPlan->getSources());
-        }
+    if (deployedQEPs.find(querySubPlanId) != deployedQEPs.end()) {
+        NES_DEBUG("NodeEngine: qep already exists. register failed" << querySubPlanId);
+        return false;
     }
-    NES_DEBUG("NodeEngine: qep already exists. register failed" << querySubPlanId);
-    return false;
+    auto found = queryIdToQuerySubPlanIds.find(queryId);
+    if (found == queryIdToQuerySubPlanIds.end()) {
+        queryIdToQuerySubPlanIds[queryId] = {querySubPlanId};
+        NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " as a singleton");
+    } else {
+        (*found).second.push_back(querySubPlanId);
+        NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " added");
+    }
+    if (!lazyQueryManagerRegistration) {
+        return registerQueryExecutionPlanInQueryManagerForSources(queryExecutionPlan, queryExecutionPlan->getSources());
+    }
+    return true;
 }
 
 bool NodeEngine::registerQueryExecutionPlanInQueryManagerForSources(Execution::ExecutableQueryPlanPtr& queryExecutionPlan,
@@ -268,6 +269,8 @@ bool NodeEngine::registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryP
 
 bool NodeEngine::startQueryReconfiguration(QueryId queryId, QueryReconfigurationPlanPtr queryReconfigurationPlan) {
     // TODO: Handle Reconfiguration at the Data source
+    NES_DEBUG("NodeEngine::startQueryReconfiguration: Received Reconfiguration Plan: " << queryReconfigurationPlan->getId()
+                                                                                       << " to apply on QueryId: " << queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) == queryIdToQuerySubPlanIds.end()) {
         NES_ERROR("NodeEngine::startQueryReconfiguration: Query ID does not exists. Reconfiguration failed" << queryId);
         return false;
@@ -501,6 +504,7 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 }
 
 void NodeEngine::onQueryReconfiguration(Network::ChannelId channelId, QueryReconfigurationPlanPtr queryReconfigurationPlan) {
+    NES_DEBUG("NodeEngine::onQueryReconfiguration: Going to handle reconfiguration trigger for " << channelId);
     std::unique_lock lock(engineMutex);
     auto partition = channelId.getNesPartition();
 
@@ -510,11 +514,13 @@ void NodeEngine::onQueryReconfiguration(Network::ChannelId channelId, QueryRecon
                 auto oldQep = deployedQEPs[replacementMapping.first];
                 auto newQep = reconfigurationQEPs[replacementMapping.second];
                 if (queryManager->isSourceAssociatedWithQep(partition.getOperatorId(), oldQep->getQuerySubPlanId())) {
+                    partitionManager->removePartition(partition);
                     queryManager->triggerQepStopReconfiguration(partition.getOperatorId(), oldQep, queryReconfigurationPlan);
                 }
                 reconfigurationStartSequence(queryReconfigurationPlan, partition, newQep->getQuerySubPlanId());
             }
         }
+        reconfigurationStartSequence(queryReconfigurationPlan, partition, replacementMapping.second);
     }
 
     for (auto querySubPlanId : queryReconfigurationPlan->getQuerySubPlanIdsToStart()) {
@@ -545,6 +551,7 @@ void NodeEngine::onQueryReconfiguration(Network::ChannelId channelId, QueryRecon
         }
     }
 }
+
 void NodeEngine::reconfigurationStartSequence(QueryReconfigurationPlanPtr queryReconfigurationPlan,
                                               Network::NesPartition& partition,
                                               QuerySubPlanId querySubPlanId) {
@@ -567,8 +574,11 @@ void NodeEngine::reconfigurationStartSequence(QueryReconfigurationPlanPtr queryR
             reconfigurationQEPs.erase(qepToStart->getQuerySubPlanId());
         }
     }
+
     // Lazy subpartition pinning
-    partitionManager->pinSubpartition(partition);
+    if (partitionManager->isRegistered(partition)) {
+        partitionManager->pinSubpartition(partition);
+    }
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {

@@ -221,7 +221,8 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
                     // parse buffer header
                     auto bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
-                    auto nesPartition = *identityEnvelope.data<NesPartition>();
+                    auto channelId = *identityEnvelope.data<ChannelId>();
+                    auto nesPartition = channelId.getNesPartition();
 
                     NES_TRACE("ZmqServer: DataBuffer received from origin=" << bufferHeader->originId << " and NesPartition="
                                                                             << nesPartition.toString() << " with payload size "

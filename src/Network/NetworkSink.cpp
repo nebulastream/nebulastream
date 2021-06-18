@@ -73,7 +73,8 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
     NES::SinkMedium::reconfigure(task, workerContext);
     switch (task.getType()) {
         case NodeEngine::Initialize: {
-            auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes);
+            auto channel =
+                networkManager->registerSubpartitionProducer(nodeLocation, parentPlanId, nesPartition, waitTime, retryTimes);
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeChannel(outputChannelKey, std::move(channel));
             NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread "
@@ -89,8 +90,12 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
         }
         case NodeEngine::QueryReconfiguration: {
             auto queryReconfigurationPlan = task.getUserData<QueryReconfigurationPlanPtr>();
+            NES_DEBUG("NetworkSink: reconfigure() query reconfiguration " << nesPartition.toString()
+                                                                          << ". Plan:  " << queryReconfigurationPlan);
             auto* channel = workerContext.getChannel(outputChannelKey);
             channel->sendReconfigurationMessage(queryReconfigurationPlan);
+            NES_DEBUG("NetworkSink: reconfigure() sent query reconfiguration  " << nesPartition.toString() << " Thread "
+                                                                                << NodeEngine::NesThread::getId());
             break;
         }
         default: {
