@@ -69,22 +69,29 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     NES_INFO(" start coordinator");
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    const char *cmdCoord[] = {"./nesCoordinator", ("--cordinatorPort=" + coordinatorRPCPort).c_str(), ("--restPort=" + std::to_string(restPort)).c_str() ,NULL}; // Ausdrücke klammern und C_string draus machen
-    string cmdCoord2 = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
-    struct subprocess_s subprocess;
-    subprocess_create(cmdCoord, 0, &subprocess);
-    bp::child coordinatorProc(cmdCoord2.c_str());
+    // Combination ins cmdCoord caused issues therefore I am combining it before.
+    string coordinatorRPCPortCombined = "--coordinatorPort=" + coordinatorRPCPort;
+
+    const char *cmdCoord[] = {"./nesCoordinator", coordinatorRPCPortCombined.c_str(), ("--restPort=" + std::to_string(restPort)).c_str(), NULL};
+    struct subprocess_s coordinatorProc;
+
+    int result = subprocess_create(cmdCoord, 0, &coordinatorProc);
+    NES_INFO("id of coordinator: " + coordinatorProc.child);
+    EXPECT_TRUE(result == 0);
+    NES_INFO("result : " + result);
+
 
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
-    NES_INFO("started coordinator with pid = " << subprocess);
+   // NES_INFO("started coordinator with pid = " << subprocess);
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
     string path2 =
         "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort;
     bp::child workerProc(path2.c_str());
-    //uint64_t coordinatorPid = subprocess.id();
-    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t coordinatorPid = coordinatorProc.child;
+    NES_INFO("id of coordinator: " + coordinatorPid);
+    //uint64_t coordinatorPid = coordinatorProc.id();
     uint64_t workerPid = workerProc.id();
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
@@ -107,7 +114,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
     NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
-    coordinatorProc.terminate();
+    subprocess_terminate(&coordinatorProc);
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput) {
