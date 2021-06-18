@@ -87,6 +87,7 @@ class NetworkManager {
      * @return
      */
     OutputChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation,
+                                                  QuerySubPlanId querySubPlanId,
                                                   NesPartition nesPartition,
                                                   std::chrono::seconds waitTime,
                                                   uint8_t retryTimes);
