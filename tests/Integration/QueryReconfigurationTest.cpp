@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 
+#include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
@@ -77,6 +78,27 @@ void stopWorker(NesWorkerPtr wrk, uint16_t workerId) {
     NES_INFO("QueryReconfigurationTest: Stopped worker " << workerId);
 }
 
+std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generatorLambda(uint64_t origin,
+                                                                                                            uint64_t sleepTime) {
+    return [origin, sleepTime](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t id;
+            uint64_t value;
+            uint64_t timestamp;
+            uint64_t originId;
+        };
+        std::this_thread::sleep_for(std::chrono::seconds{sleepTime});
+        auto records = buffer.getBuffer<Record>();
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].id = u;
+            records[u].value = u % 10;
+            records[u].timestamp = time(nullptr);
+            records[u].originId = origin;
+        }
+        return;
+    };
+}
+
 /**
  * Test adding a new branch for a QEP in Level 3
  */
@@ -105,9 +127,9 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     std::string outputFilePath = "testReconfigurationNewBranchOnLevel3.out";
     remove(outputFilePath.c_str());
 
-    //register logical stream
-    SchemaPtr schema = Schema::create()->addField("car$id", BasicType::UINT32)->addField("car$value", BasicType::UINT64);
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
+    std::string testSchema =
+        "Schema::create()->addField(\"id\", BasicType::UINT64)->addField(\"value\", "
+        "BasicType::UINT64)->addField(\"timestamp\", BasicType::UINT64)->addField(\"originId\", BasicType::UINT64);";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -116,20 +138,14 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     wrk1->registerLogicalStream("car", testSchemaFileName);
     wrk2->registerLogicalStream("car", testSchemaFileName);
 
-    srcConf->setSourceConfig("");
-    srcConf->setSourceFrequency(30000);
-    srcConf->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->setNumberOfBuffersToProduce(3000);
-    srcConf->setLogicalStreamName("car");
-
     //register physical stream - wrk1
-    srcConf->setPhysicalStreamName("car1");
-    PhysicalStreamConfigPtr confCar1 = PhysicalStreamConfig::create(srcConf);
+    NES::AbstractPhysicalStreamConfigPtr confCar1 =
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 1), 3000, 500, "frequency");
     wrk1->registerPhysicalStream(confCar1);
 
     //register physical stream - wrk2
-    srcConf->setPhysicalStreamName("car2");
-    PhysicalStreamConfigPtr confCar2 = PhysicalStreamConfig::create(srcConf);
+    NES::AbstractPhysicalStreamConfigPtr confCar2 =
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car2", "car", generatorLambda(2, 2), 3000, 500, "frequency");
     wrk2->registerPhysicalStream(confCar2);
 
     auto wrk1Src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"), 1001);
@@ -140,10 +156,16 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
 
     Network::NodeLocation wrk3NSrcLocation{3, "localhost", static_cast<uint32_t>(port + 31)};
 
-    SinkDescriptorPtr wrk13NSinkDescPtr =
-        Network::NetworkSinkDescriptor::create(wrk3NSrcLocation, wrk13NSrcNesPartition, std::chrono::seconds(60), 5);
-    SinkDescriptorPtr wrk23NSinkDescPtr =
-        Network::NetworkSinkDescriptor::create(wrk3NSrcLocation, wrk23NSrcNesPartition, std::chrono::seconds(60), 5);
+    const chrono::duration<int64_t>& sinkConnnectionWaitTime = std::chrono::seconds(60);
+    int connectionRetries = 2;
+    SinkDescriptorPtr wrk13NSinkDescPtr = Network::NetworkSinkDescriptor::create(wrk3NSrcLocation,
+                                                                                 wrk13NSrcNesPartition,
+                                                                                 sinkConnnectionWaitTime,
+                                                                                 connectionRetries);
+    SinkDescriptorPtr wrk23NSinkDescPtr = Network::NetworkSinkDescriptor::create(wrk3NSrcLocation,
+                                                                                 wrk23NSrcNesPartition,
+                                                                                 sinkConnnectionWaitTime,
+                                                                                 connectionRetries);
 
     OperatorNodePtr wrk1NSink = LogicalOperatorFactory::createSinkOperator(wrk13NSinkDescPtr, 1002);
     OperatorNodePtr wrk2NSink = LogicalOperatorFactory::createSinkOperator(wrk23NSinkDescPtr, 2002);
@@ -181,8 +203,10 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     Network::NodeLocation wrk4NSrcLocation{4, "localhost", static_cast<uint32_t>(port + 41)};
     Network::NesPartition qsp34NSrcNesPartition{1, 4001, 1, 1};
 
-    SinkDescriptorPtr wrk34NSinkDescPtr =
-        Network::NetworkSinkDescriptor::create(wrk4NSrcLocation, qsp34NSrcNesPartition, std::chrono::seconds(60), 5);
+    SinkDescriptorPtr wrk34NSinkDescPtr = Network::NetworkSinkDescriptor::create(wrk4NSrcLocation,
+                                                                                 qsp34NSrcNesPartition,
+                                                                                 sinkConnnectionWaitTime,
+                                                                                 connectionRetries);
 
     OperatorNodePtr qsp34NSink = LogicalOperatorFactory::createSinkOperator(wrk34NSinkDescPtr, 3004);
 
@@ -225,8 +249,10 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
 
     Network::NesPartition qsp56NSrcNesPartition{1, 4101, 1, 1};
 
-    SinkDescriptorPtr wrk56NSinkDescPtr =
-        Network::NetworkSinkDescriptor::create(wrk4NSrcLocation, qsp56NSrcNesPartition, std::chrono::seconds(60), 5);
+    SinkDescriptorPtr wrk56NSinkDescPtr = Network::NetworkSinkDescriptor::create(wrk4NSrcLocation,
+                                                                                 qsp56NSrcNesPartition,
+                                                                                 sinkConnnectionWaitTime,
+                                                                                 connectionRetries);
 
     OperatorNodePtr qsp56NSink = LogicalOperatorFactory::createSinkOperator(wrk56NSinkDescPtr, 3104);
 
@@ -266,7 +292,23 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
 
     wrk1->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);
 
-    sleep(1000);
+    while (wrk3->getNodeEngine()->getQueryManager()->getQepStatus(5)
+           != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
+        NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 5 to be in running mode.");
+        sleep(10);
+    }
+
+    NES_DEBUG("QueryReconfigurationTest: QEP 5 is running.");
+
+    while (wrk4->getNodeEngine()->getQueryManager()->getQepStatus(6)
+           != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
+        NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 6 to be in running mode.");
+        sleep(10);
+    }
+
+    NES_DEBUG("QueryReconfigurationTest: QEP 6 is running.");
+
+    sleep(100);
 
     stopWorker(wrk1, 1);
     stopWorker(wrk2, 2);

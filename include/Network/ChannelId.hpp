@@ -19,13 +19,15 @@
 
 #include <Network/NesPartition.hpp>
 #include <Runtime/NesThread.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 
 namespace NES {
 namespace Network {
 
 class ChannelId {
   public:
-    explicit ChannelId(NesPartition nesPartition, uint32_t threadId) : nesPartition(nesPartition), threadId(threadId) {
+    explicit ChannelId(QuerySubPlanId querySubPlanId, NesPartition nesPartition, uint32_t threadId)
+        : nesPartition(nesPartition), threadId(threadId), querySubPlanId(querySubPlanId) {
         // nop
     }
 
@@ -33,11 +35,17 @@ class ChannelId {
 
     [[nodiscard]] uint64_t getThreadId() const { return threadId; }
 
-    [[nodiscard]] std::string toString() const { return nesPartition.toString() + "(threadId=" + std::to_string(threadId) + ")"; }
+    [[nodiscard]] std::string toString() const {
+        std::stringstream ss;
+        ss << "(querySubPlanId=" << querySubPlanId << ")" << nesPartition.toString() << "(threadId=" << std::to_string(threadId)
+           << ")";
+        return ss.str();
+    }
 
     friend std::ostream& operator<<(std::ostream& os, const ChannelId& channelId) { return os << channelId.toString(); }
 
   private:
+    const QuerySubPlanId querySubPlanId;
     const NesPartition nesPartition;
     const uint32_t threadId;
 };

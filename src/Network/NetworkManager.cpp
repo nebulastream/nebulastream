@@ -65,13 +65,16 @@ bool NetworkManager::unregisterSubpartitionConsumer(NesPartition nesPartition) c
 }
 
 OutputChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation,
+                                                              QuerySubPlanId querySubPlanId,
                                                               NesPartition nesPartition,
                                                               std::chrono::seconds waitTime,
                                                               uint8_t retryTimes) {
-    NES_INFO("NetworkManager: Registering SubpartitionProducer: " << nesPartition.toString());
+    NES_INFO("NetworkManager: Registering SubpartitionProducer for Query SubPlan: " << querySubPlanId
+                                                                                    << " partition: " << nesPartition.toString());
     // method needs to return a pointer so that it can be passed to boost::thread_specific_ptr
     return OutputChannel::create(server->getContext(),
                                  nodeLocation.createZmqURI(),
+                                 querySubPlanId,
                                  nesPartition,
                                  exchangeProtocol,
                                  waitTime,

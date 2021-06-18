@@ -216,7 +216,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 3);
+        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, 1, nesPartition, std::chrono::seconds(1), 3);
         senderChannel->close(true);
         senderChannel.reset();
 
@@ -285,12 +285,74 @@ TEST_F(NetworkStackTest, reconfigurationMessageTest) {
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 3);
+        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, 1, nesPartition, std::chrono::seconds(1), 3);
 
         auto queryReconfigurationPlan = QueryReconfigurationPlan::create(qepToStart, qepToStop, replacements);
         senderChannel->sendReconfigurationMessage(queryReconfigurationPlan);
         senderChannel->close(true);
         senderChannel.reset();
+
+        t.join();
+    } catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(true, true);
+}
+
+TEST_F(NetworkStackTest, multipleChannelWithSamePartitionAndThreadId) {
+    try {
+        // start zmqServer
+        std::promise<bool> completed;
+
+        class InternalListener : public Network::ExchangeProtocolListener {
+          public:
+            InternalListener(std::promise<bool>& p, PartitionManagerPtr partitionManager)
+                : completed(p), partitionManager(partitionManager) {}
+            bool onClientAnnouncement(Messages::ClientAnnounceMessage msg) override {
+                return defaultClientAnnouncementHandler(partitionManager, msg);
+            }
+            void onDataBuffer(NesPartition, TupleBuffer&) override {}
+            void onEndOfStream(Messages::EndOfStreamMessage msg) override {
+                if (!partitionManager->isRegistered(msg.getChannelId().getNesPartition())) {
+                    completed.set_value(true);
+                }
+            }
+            void onServerError(Messages::ErrorMessage) override {}
+            void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) override {}
+            void onChannelError(Messages::ErrorMessage) override {}
+
+          private:
+            std::promise<bool>& completed;
+            PartitionManagerPtr partitionManager;
+        };
+
+        auto partMgr = std::make_shared<PartitionManager>();
+        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed, partMgr));
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, std::move(ep), buffMgr);
+
+        auto nesPartition = NesPartition(0, 0, 0, 0);
+
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+
+        std::thread t([&netManager, &completed, &nesPartition] {
+            // register the incoming channel
+            auto cnt = netManager->registerSubpartitionConsumer(nesPartition, std::make_shared<DataEmitterImpl>());
+            NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt" << cnt);
+            auto v = completed.get_future().get();
+            ASSERT_EQ(v, true);
+        });
+
+        NodeLocation nodeLocation(0, "127.0.0.1", 31337);
+        auto senderChannelOne =
+            netManager->registerSubpartitionProducer(nodeLocation, 1, nesPartition, std::chrono::seconds(1), 3);
+        auto senderChannelTwo =
+            netManager->registerSubpartitionProducer(nodeLocation, 2, nesPartition, std::chrono::seconds(1), 3);
+
+        senderChannelOne->close(true);
+        senderChannelTwo->close(true);
 
         t.join();
     } catch (...) {
@@ -362,7 +424,7 @@ TEST_F(NetworkStackTest, testSendData) {
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
+        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, 1, nesPartition, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
             NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
@@ -446,7 +508,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
+        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, 1, nesPartition, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
             NES_DEBUG("NetworkStackTest: Error in registering OutputChannel!");
@@ -538,6 +600,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         auto channel = netManager->registerSubpartitionProducer(nodeLocation,
+                                                                1,
                                                                 NesPartition(1, 22, 333, 4445),
                                                                 std::chrono::seconds(1),
                                                                 retryTimes);
@@ -633,7 +696,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
                 // register the incoming channel
                 NesPartition nesPartition(i, i + 10, i + 20, i + 30);
                 auto senderChannel =
-                    netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(2), 10);
+                    netManager->registerSubpartitionProducer(nodeLocation, 1, nesPartition, std::chrono::seconds(2), 10);
 
                 if (senderChannel == nullptr) {
                     NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
@@ -1009,7 +1072,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 12);
     auto netManager = nodeEngine->getNetworkManager();
-    // create NetworkSink
+    // create NetworkSink->addField("test$id", DataTypeFactory::createInt64())
 
     auto networkSourceDescriptor1 = std::make_shared<TestUtils::TestSourceDescriptor>(
         schema,

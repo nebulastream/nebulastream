@@ -393,8 +393,8 @@ bool QueryManager::triggerQepStopReconfiguration(OperatorId sourceOperatorId,
                     StopQueryMessagePtr data = std::make_unique<StopQueryMessage>(weakQep, queryReconfigurationPlan);
                     return std::make_any<StopQueryMessagePtr>(data);
                 });
-    sourceIdToExecutableQueryPlanMap.erase(querySubPlanId);
-    sourceIdToSuccessorMap.erase(querySubPlanId);
+    sourceIdToExecutableQueryPlanMap.erase(sourceOperatorId);
+    sourceIdToSuccessorMap.erase(sourceOperatorId);
     return true;
 }
 
