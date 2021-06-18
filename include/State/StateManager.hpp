@@ -118,7 +118,7 @@ class StateManager {
         }
     }
 
-    const uint64_t getNodeId() {
+    uint64_t getNodeId() {
         return this->nodeId;
     }
 

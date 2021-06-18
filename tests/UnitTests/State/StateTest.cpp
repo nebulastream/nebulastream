@@ -42,15 +42,15 @@ TEST_F(StateTest, testAddClear) {
 
     EXPECT_EQ(!!kv, false);
 
-    kv.put(43);
+    kv.put(43ul);
 
-    EXPECT_EQ(kv.value(), 43);
+    EXPECT_EQ(kv.value(), 43ul);
 
     kv.clear();// unexpected bahavior afterwards
 
     bool catched = false;
     try {
-        EXPECT_NE(kv.value(), 43);
+        EXPECT_NE(kv.value(), 43ul);
     } catch (std::out_of_range& e) {
         catched = true;
     }
@@ -65,15 +65,15 @@ TEST_F(StateTest, testEmplaceClear) {
 
     EXPECT_EQ(!!kv, false);
 
-    kv.emplace(43);
+    kv.emplace(43ul);
 
-    EXPECT_EQ(kv.value(), 43);
+    EXPECT_EQ(kv.value(), 43ul);
 
     kv.clear();// unexpected bahavior afterwards
 
     bool catched = false;
     try {
-        EXPECT_NE(kv.value(), 43);
+        EXPECT_NE(kv.value(), 43ul);
     } catch (std::out_of_range& e) {
         catched = true;
     }

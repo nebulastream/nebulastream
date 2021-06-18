@@ -48,9 +48,9 @@ LogicalJoinDefinitionPtr JoinOperatorHandler::getJoinDefinition() { return joinD
 void JoinOperatorHandler::setJoinHandler(AbstractJoinHandlerPtr joinHandler) { this->joinHandler = std::move(joinHandler); }
 
 SchemaPtr JoinOperatorHandler::getResultSchema() { return resultSchema; }
-void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, NodeEngine::StateManagerPtr stateManager) {
+void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, NodeEngine::StateManagerPtr stateManager, uint32_t localStateVariableId) {
     if (joinHandler) {
-        joinHandler->start(stateManager);
+        joinHandler->start(stateManager, localStateVariableId);
     }
 }
 
