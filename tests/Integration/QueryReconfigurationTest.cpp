@@ -117,7 +117,7 @@ std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr> getDummyNetworkSrcSchema(
     return std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr>(sink->getOutputSchema(), typeInferencePhase);
 }
 
-TEST_F(QueryReconfigurationTest, testPartitionPinning) {
+TEST_F(QueryReconfigurationTest, testPartitionPinningQepStarts) {
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     auto port = 11000;
 
@@ -146,7 +146,7 @@ TEST_F(QueryReconfigurationTest, testPartitionPinning) {
 
     nodeEngine->registerQueryForReconfigurationInNodeEngine(tqsp1);
 
-    ASSERT_EQ(queryManager->getQepStatus(5) == NodeEngine::Execution::ExecutableQueryPlanStatus::Invalid, true);
+    ASSERT_EQ(queryManager->getQepStatus(1) == NodeEngine::Execution::ExecutableQueryPlanStatus::Invalid, true);
 
     // Mimic announcement message from producers
     auto numberOfProducers = 100;
@@ -166,6 +166,95 @@ TEST_F(QueryReconfigurationTest, testPartitionPinning) {
     }
 
     for (std::thread& t : announcementThreads) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+
+    ASSERT_EQ(partitionManager->getSubpartitionCounter(nesPartition), numberOfProducers);
+
+    nodeEngine->onEndOfStream(Network::Messages::EndOfStreamMessage{Network::ChannelId{0, nesPartition, 1}, true});
+    stopWorker(wrk1, 1);
+}
+
+TEST_F(QueryReconfigurationTest, testPartitionPinningQepReplacements) {
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    auto port = 11000;
+
+    auto schema = Schema::create()->addField("id", UINT64);
+
+    Network::NesPartition nesPartition{1, 2001, 1, 1};
+
+    NesWorkerPtr wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Worker, false);
+    auto nodeEngine = wrk1->getNodeEngine();
+    auto queryManager = nodeEngine->getQueryManager();
+    auto partitionManager = nodeEngine->getPartitionManager();
+    auto defaultOutputSchema = getDummyNetworkSrcSchema(schema, nesPartition);
+    auto numberOfProducers = 100;
+
+    auto networkSrc = LogicalOperatorFactory::createSourceOperator(
+        Network::NetworkSourceDescriptor::create(defaultOutputSchema.first, nesPartition),
+        nesPartition.getOperatorId());
+
+    auto dataSink1 =
+        LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testPartitionPinningQepReplacements_1.out"), 4);
+
+    auto qsp1 = QueryPlan::create(networkSrc);
+    qsp1->appendOperatorAsNewRoot(dataSink1);
+    qsp1->setQueryId(1);
+    qsp1->setQuerySubPlanId(1);
+    auto tqsp1 = defaultOutputSchema.second->execute(qsp1);
+    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp1->getQuerySubPlanId() << ".\n" << tqsp1->toString());
+
+    nodeEngine->registerQueryInNodeEngine(tqsp1);
+    nodeEngine->startQuery(1);
+    ASSERT_EQ(queryManager->getQepStatus(1) == NodeEngine::Execution::ExecutableQueryPlanStatus::Running, true);
+
+    auto announcementThreads = std::vector<std::thread>();
+    for (uint32_t i = 0; i < numberOfProducers; i++) {
+        std::thread producerThread([&, i] {
+            const Network::ChannelId& id = Network::ChannelId{0, nesPartition, i};
+            Network::Messages::ClientAnnounceMessage msg{id};
+            nodeEngine->onClientAnnouncement(msg);
+        });
+        announcementThreads.emplace_back(std::move(producerThread));
+    }
+
+    for (std::thread& t : announcementThreads) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+
+    ASSERT_EQ(partitionManager->getSubpartitionCounter(nesPartition), numberOfProducers);
+
+    auto dataSink2 =
+        LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testPartitionPinningQepReplacements_2.out"), 5);
+    auto qsp2 = QueryPlan::create(networkSrc);
+    qsp2->appendOperatorAsNewRoot(dataSink2);
+    qsp2->setQueryId(1);
+    qsp2->setQuerySubPlanId(2);
+    auto tqsp2 = defaultOutputSchema.second->execute(qsp2);
+    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp2->getQuerySubPlanId() << ".\n" << tqsp2->toString());
+
+    nodeEngine->registerQueryForReconfigurationInNodeEngine(tqsp2);
+
+    ASSERT_EQ(queryManager->getQepStatus(2) == NodeEngine::Execution::ExecutableQueryPlanStatus::Invalid, true);
+
+    auto reconfigurationPlan = QueryReconfigurationPlan::create(std::vector<QuerySubPlanId>{222},
+                                                                std::vector<QuerySubPlanId>{333},
+                                                                std::unordered_map<QuerySubPlanId, QuerySubPlanId>{{1, 2}});
+
+    auto reconfigurationThreads = std::vector<std::thread>();
+    for (uint32_t i = 0; i < numberOfProducers; i++) {
+        std::thread reconfigurationThread([&, i] {
+            const Network::ChannelId& id = Network::ChannelId{0, nesPartition, i};
+            nodeEngine->onQueryReconfiguration(id, reconfigurationPlan);
+        });
+        reconfigurationThreads.emplace_back(std::move(reconfigurationThread));
+    }
+
+    for (std::thread& t : reconfigurationThreads) {
         if (t.joinable()) {
             t.join();
         }
