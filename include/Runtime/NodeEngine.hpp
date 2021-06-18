@@ -263,7 +263,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief this callback is called once a client announcement message arrives at network manager
-     * When partition is registered and not in pendingRegistration then increment producer. otherwise if present in partitionsWaitingRegistration then
+     * When partition is registered and not in pendingRegistration then increment producer. otherwise if present in pendingPartitionPinning then
      * partition will be registered lazily after channel is established. Otherwise error.
      */
     bool onClientAnnouncement(Network::Messages::ClientAnnounceMessage msg) override;
@@ -319,7 +319,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> reconfigurationQEPs;
-    std::unordered_set<Network::NesPartition> partitionsWaitingRegistration;
+    std::unordered_map<Network::NesPartition, std::atomic<uint64_t>> pendingPartitionPinning;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;
