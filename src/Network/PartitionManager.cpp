@@ -38,6 +38,7 @@ void PartitionManager::pinSubpartition(NesPartition partition) {
     auto it = partitions.find(partition);
     if (it != partitions.end()) {
         it->second.pin();
+        NES_DEBUG("PartitionManager::pinSubpartition: Count for partition (" << partition << ") is: " << it->second.count());
         return;
     }
     NES_ASSERT2_FMT(false, "Cannot increment partition counter as partition does not exists " << partition);
