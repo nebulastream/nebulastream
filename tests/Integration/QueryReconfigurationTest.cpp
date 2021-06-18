@@ -307,7 +307,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
 
     //register physical stream - wrk1
     NES::AbstractPhysicalStreamConfigPtr confCar1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 100), 3000, 5, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 10), 3000, 5, "frequency");
     wrk1->registerPhysicalStream(confCar1);
 
     //register physical stream - wrk2
@@ -410,6 +410,8 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     wrk4->getNodeEngine()->registerQueryInNodeEngine(tqsp4);
     wrk4->getNodeEngine()->startQuery(tqsp4->getQueryId());
 
+    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, "testReconfigurationNewBranchOnLevel3_1.out"));
+
     auto wrk3Qsp5Map = wrk3Map->duplicate();
     const LogicalUnaryOperatorNodePtr wrk3NewBranchMap =
         LogicalOperatorFactory::createMapOperator(Attribute("newBranch") = Attribute("id") + 2000, 3103);
@@ -464,7 +466,6 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
         NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 5 to be in running mode.");
         sleep(10);
     }
-
     NES_DEBUG("QueryReconfigurationTest: QEP 5 is running.");
 
     while (wrk4->getNodeEngine()->getQueryManager()->getQepStatus(6)
@@ -472,10 +473,10 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
         NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 6 to be in running mode.");
         sleep(10);
     }
-
     NES_DEBUG("QueryReconfigurationTest: QEP 6 is running.");
 
-    sleep(50);
+    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, "testReconfigurationNewBranchOnLevel3_2.out"));
+
     wrk2->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);
 
     stopWorker(wrk1, 1);

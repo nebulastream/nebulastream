@@ -127,7 +127,7 @@ void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage
                                                                              shared_from_this(),
                                                                              std::move(reconfigurationPlan));
             queryManager->addReconfigurationMessage(parentPlanId, reconfigurationMessage, false);
-            auto triggerEoSMsg = std::make_any<bool>(false);
+            auto triggerEoSMsg = std::make_any<bool>(true);
             auto destroyMsg = NodeEngine::ReconfigurationMessage(parentPlanId,
                                                                  NodeEngine::Destroy,
                                                                  shared_from_this(),
