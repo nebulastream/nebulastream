@@ -389,8 +389,9 @@ struct std::hash<NES::QueryCompilation::Array<T, N>> {
     auto operator() (const NES::QueryCompilation::Array<T, N>& key) const {
         std::hash<T> hasher;
         size_t result = 0;
-        for(size_t i = 0; i < N; ++i) {
-            result = result * 31 + hasher(key[i]); // taken from https://codereview.stackexchange.com/questions/171999/specializing-stdhash-for-stdarray
+        for (size_t i = 0; i < N; ++i) {// FIXME: Potential bottleneck (#2014)
+            // taken from https://codereview.stackexchange.com/questions/171999/specializing-stdhash-for-stdarray
+            result = result * 31 + hasher(key[i]);
         }
         return result;
     }
