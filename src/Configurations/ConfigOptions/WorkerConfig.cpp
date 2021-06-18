@@ -66,40 +66,40 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
         Yaml::Node config = *(new Yaml::Node());
         Yaml::Parse(config, filePath.c_str());
         try {
-            if (!config["coordinatorPort"].As<std::string>().empty()) {
+            if (!config["coordinatorPort"].As<std::string>().empty() && config["coordinatorPort"].As<uint16_t>() != 0) {
                 setCoordinatorPort(config["coordinatorPort"].As<uint16_t>());
             }
-            if (!config["rpcPort"].As<std::string>().empty()) {
+            if (!config["rpcPort"].As<std::string>().empty() && config["rpcPort"].As<uint16_t>() != 0) {
                 setRpcPort(config["rpcPort"].As<uint16_t>());
             }
-            if (!config["dataPort"].As<std::string>().empty()) {
+            if (!config["dataPort"].As<std::string>().empty() && config["dataPort"].As<uint16_t>() != 0) {
                 setDataPort(config["dataPort"].As<uint16_t>());
             }
-            if (!config["localWorkerIp"].As<std::string>().empty()) {
+            if (!config["localWorkerIp"].As<std::string>().empty() && config["localWorkerIp"].As<std::string>() != "\n") {
                 setLocalWorkerIp(config["localWorkerIp"].As<std::string>());
             }
-            if (!config["coordinatorIp"].As<std::string>().empty()) {
+            if (!config["coordinatorIp"].As<std::string>().empty() && config["coordinatorIp"].As<std::string>() != "\n") {
                 setCoordinatorIp(config["coordinatorIp"].As<std::string>());
             }
-            if (!config["numberOfSlots"].As<std::string>().empty()) {
+            if (!config["numberOfSlots"].As<std::string>().empty() && config["numberOfSlots"].As<uint16_t>() != 0) {
                 setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
             }
-            if (!config["numWorkerThreads"].As<std::string>().empty()) {
-                setNumWorkerThreads(config["numWorkerThreads"].As<bool>());
+            if (!config["numWorkerThreads"].As<std::string>().empty() && config["numWorkerThreads"].As<uint32_t>() != 0) {
+                setNumWorkerThreads(config["numWorkerThreads"].As<uint32_t>());
             }
-            if (!config["parentId"].As<std::string>().empty()) {
+            if (!config["parentId"].As<std::string>().empty() && config["parentId"].As<std::string>() != "\n") {
                 setParentId(config["parentId"].As<std::string>());
             }
-            if (!config["logLevel"].As<std::string>().empty()) {
+            if (!config["logLevel"].As<std::string>().empty() && config["logLevel"].As<std::string>() != "\n") {
                 setLogLevel(config["logLevel"].As<std::string>());
             }
-            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty()) {
+            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty() && config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>() != 0) {
                 setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty()) {
+            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty() && config["numberOfBuffersPerPipeline"].As<uint32_t>() != 0) {
                 setNumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()) {
+            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty() && config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>() != 0) {
                 setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             }
         } catch (std::exception& e) {

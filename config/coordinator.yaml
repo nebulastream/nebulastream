@@ -19,7 +19,6 @@ dataPort: 3001
 
 # ~~ Processing Configurations ~~
 # Set the number of computing slots in NES Coordinator
-# 0 is a place holder, default is number of processors installed in host machine
 numberOfSlots: UINT16_MAX
 
 # Enable Query Merging Feature

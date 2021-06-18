@@ -53,28 +53,28 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
         Yaml::Node config;
         Yaml::Parse(config, filePath.c_str());
         try {
-            if (!config["sourceConfig"].As<std::string>().empty()) {
+            if (!config["sourceConfig"].As<std::string>().empty() && config["sourceConfig"].As<std::string>() != "\n") {
                 setSourceConfig(config["sourceConfig"].As<std::string>());
             }
-            if (!config["sourceType"].As<std::string>().empty()) {
+            if (!config["sourceType"].As<std::string>().empty() && config["sourceType"].As<std::string>() != "\n") {
                 setSourceType(config["sourceType"].As<std::string>());
             }
-            if (!config["sourceFrequency"].As<std::string>().empty()) {
+            if (!config["sourceFrequency"].As<std::string>().empty() && config["sourceFrequency"].As<uint16_t>() != 0) {
                 setSourceFrequency(config["sourceFrequency"].As<uint16_t>());
             }
-            if (!config["numberOfBuffersToProduce"].As<std::string>().empty()) {
+            if (!config["numberOfBuffersToProduce"].As<std::string>().empty() && config["numberOfBuffersToProduce"].As<uint64_t>() != 0) {
                 setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint64_t>());
             }
-            if (!config["numberOfTuplesToProducePerBuffer"].As<std::string>().empty()) {
+            if (!config["numberOfTuplesToProducePerBuffer"].As<std::string>().empty() && config["numberOfTuplesToProducePerBuffer"].As<uint16_t>() != 0) {
                 setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].As<uint16_t>());
             }
-            if (!config["physicalStreamName"].As<std::string>().empty()) {
+            if (!config["physicalStreamName"].As<std::string>().empty() && config["physicalStreamName"].As<std::string>() != "\n") {
                 setPhysicalStreamName(config["physicalStreamName"].As<std::string>());
             }
-            if (!config["logicalStreamName"].As<std::string>().empty()) {
+            if (!config["logicalStreamName"].As<std::string>().empty() && config["logicalStreamName"].As<std::string>() != "\n") {
                 setLogicalStreamName(config["logicalStreamName"].As<std::string>());
             }
-            if (!config["skipHeader"].As<std::string>().empty()) {
+            if (!config["skipHeader"].As<std::string>().empty() && config["skipHeader"].As<std::string>() != "\n") {
                 setSkipHeader(config["skipHeader"].As<bool>());
             }
         } catch (std::exception& e) {
