@@ -60,14 +60,15 @@ class QueryReconfigurationTest : public testing::Test {
     void TearDown() { NES_INFO("Tear down QueryReconfigurationTest class."); }
 };
 
-NesWorkerPtr startWorker(WorkerConfigPtr wrkConf, uint16_t coordinatorPort, uint16_t workerId, NesNodeType nesNodeType) {
+NesWorkerPtr
+startWorker(WorkerConfigPtr wrkConf, uint16_t coordinatorPort, uint16_t workerId, NesNodeType nesNodeType, bool connect) {
     NES_INFO("QueryReconfigurationTest: Start worker: " << workerId);
     wrkConf->setCoordinatorPort(coordinatorPort);
     wrkConf->setRpcPort(coordinatorPort + 10 * workerId);
     wrkConf->setDataPort(coordinatorPort + (10 * workerId) + 1);
     wrkConf->setNumWorkerThreads(2);
     NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf, nesNodeType);
-    EXPECT_TRUE(wrk->start(/**blocking**/ false, /**withConnect**/ true));
+    EXPECT_TRUE(wrk->start(/**blocking**/ false, /**withConnect**/ connect));
     NES_INFO("QueryReconfigurationTest: Worker: " << workerId << " started successfully");
     return wrk;
 }
@@ -99,6 +100,83 @@ std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuples
     };
 }
 
+std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr> getDummyNetworkSrcSchema(SchemaPtr schema,
+                                                                                Network::NesPartition nesPartition) {
+    auto streamCatalog = std::make_shared<StreamCatalog>();
+    const char* logicalStreamName = "default";
+    streamCatalog->addLogicalStream(logicalStreamName, schema);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName), 25000);
+    Network::NodeLocation location{1, "localhost", static_cast<uint32_t>(11001)};
+    SinkDescriptorPtr baseSinkDescPtr =
+        Network::NetworkSinkDescriptor::create(location, nesPartition, std::chrono::seconds(60), 2);
+    OperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(baseSinkDescPtr, 25001);
+    auto queryPlan = QueryPlan::create(src);
+    queryPlan->appendOperatorAsNewRoot(sink);
+    auto tQueryPlan = typeInferencePhase->execute(queryPlan);
+    return std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr>(sink->getOutputSchema(), typeInferencePhase);
+}
+
+TEST_F(QueryReconfigurationTest, testPartitionPinning) {
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    auto port = 11000;
+
+    auto schema = Schema::create()->addField("id", UINT64);
+
+    Network::NesPartition nesPartition{1, 2001, 1, 1};
+
+    NesWorkerPtr wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Worker, false);
+    auto nodeEngine = wrk1->getNodeEngine();
+    auto queryManager = nodeEngine->getQueryManager();
+    auto partitionManager = nodeEngine->getPartitionManager();
+    auto defaultOutputSchema = getDummyNetworkSrcSchema(schema, nesPartition);
+
+    auto networkSrc = LogicalOperatorFactory::createSourceOperator(
+        Network::NetworkSourceDescriptor::create(defaultOutputSchema.first, nesPartition),
+        nesPartition.getOperatorId());
+
+    auto dataSink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testPartitionPinning_1.out"), 4);
+
+    auto qsp1 = QueryPlan::create(networkSrc);
+    qsp1->appendOperatorAsNewRoot(dataSink);
+    qsp1->setQueryId(1);
+    qsp1->setQuerySubPlanId(1);
+    auto tqsp1 = defaultOutputSchema.second->execute(qsp1);
+    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp1->getQuerySubPlanId() << ".\n" << tqsp1->toString());
+
+    nodeEngine->registerQueryForReconfigurationInNodeEngine(tqsp1);
+
+    ASSERT_EQ(queryManager->getQepStatus(5) == NodeEngine::Execution::ExecutableQueryPlanStatus::Invalid, true);
+
+    // Mimic announcement message from producers
+    auto numberOfProducers = 100;
+    auto reconfigurationPlan = QueryReconfigurationPlan::create(std::vector<QuerySubPlanId>{1, 222},
+                                                                std::vector<QuerySubPlanId>{333},
+                                                                std::unordered_map<QuerySubPlanId, QuerySubPlanId>{{444, 555}});
+    auto announcementThreads = std::vector<std::thread>();
+    for (uint32_t i = 0; i < numberOfProducers; i++) {
+        std::thread producerThread([&, i] {
+            const Network::ChannelId& id = Network::ChannelId{0, nesPartition, i};
+            Network::Messages::ClientAnnounceMessage msg{id};
+            usleep((rand() % numberOfProducers) * 1000);
+            nodeEngine->onClientAnnouncement(msg);
+            nodeEngine->onQueryReconfiguration(id, reconfigurationPlan);
+        });
+        announcementThreads.emplace_back(std::move(producerThread));
+    }
+
+    for (std::thread& t : announcementThreads) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+
+    ASSERT_EQ(partitionManager->getSubpartitionCounter(nesPartition), numberOfProducers);
+
+    nodeEngine->onEndOfStream(Network::Messages::EndOfStreamMessage{Network::ChannelId{0, nesPartition, 1}, true});
+    stopWorker(wrk1, 1);
+}
+
 /**
  * Test adding a new branch for a QEP in Level 3
  */
@@ -119,10 +197,10 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     EXPECT_NE(port, 0);
     NES_INFO("QueryReconfigurationTest: Coordinator started successfully");
 
-    NesWorkerPtr wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Sensor);
-    NesWorkerPtr wrk2 = startWorker(wrkConf, port, 2, NesNodeType::Sensor);
-    NesWorkerPtr wrk3 = startWorker(wrkConf, port, 3, NesNodeType::Worker);
-    NesWorkerPtr wrk4 = startWorker(wrkConf, port, 4, NesNodeType::Worker);
+    NesWorkerPtr wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Sensor, true);
+    NesWorkerPtr wrk2 = startWorker(wrkConf, port, 2, NesNodeType::Sensor, true);
+    NesWorkerPtr wrk3 = startWorker(wrkConf, port, 3, NesNodeType::Worker, true);
+    NesWorkerPtr wrk4 = startWorker(wrkConf, port, 4, NesNodeType::Worker, true);
 
     std::string outputFilePath = "testReconfigurationNewBranchOnLevel3.out";
     remove(outputFilePath.c_str());

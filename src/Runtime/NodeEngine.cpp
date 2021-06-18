@@ -271,7 +271,7 @@ bool NodeEngine::registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryP
     for (const auto& source : qep->getSources()) {
         if (auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
             if (!partitionManager->isRegistered(networkSource->getNesPartition())) {
-                partitionsWaitingRegistration.insert(networkSource->getNesPartition());
+                pendingPartitionPinning[networkSource->getNesPartition()] = std::atomic<uint32_t>(std::uint64_t(0));
             }
         }
     }
@@ -497,17 +497,21 @@ void NodeEngine::onDataBuffer(Network::NesPartition, TupleBuffer&) {
 bool NodeEngine::onClientAnnouncement(Network::Messages::ClientAnnounceMessage msg) {
     std::unique_lock lock(engineMutex);
     auto nesPartition = msg.getChannelId().getNesPartition();
-    if (partitionManager->isRegistered(nesPartition) && !partitionsWaitingRegistration.contains(nesPartition)) {
+    if (partitionManager->isRegistered(nesPartition)) {
         // increment the counter
         partitionManager->pinSubpartition(nesPartition);
         NES_DEBUG("NodeEngine::onClientAnnouncement: received for " << msg.getChannelId().toString() << " REGISTERED");
         // send response back to the client based on the identity
         return true;
+    } else if (pendingPartitionPinning.find(nesPartition) != pendingPartitionPinning.end()) {
+        NES_DEBUG("NodeEngine::onClientAnnouncement: received for " << msg.getChannelId().toString()
+                                                                    << " REGISTERED in PendingPartitionForPinning.");
+        pendingPartitionPinning[nesPartition].fetch_add(1);
+        return true;
     }
-    NES_DEBUG("NodeEngine::onClientAnnouncement: received for "
-              << msg.getChannelId().toString()
-              << " but partition not registered. Attempt lazy registration if partition contained in pendingRegistration");
-    return partitionsWaitingRegistration.contains(nesPartition);
+    NES_DEBUG("NodeEngine::onClientAnnouncement: received for " << msg.getChannelId().toString()
+                                                                << " but partition not registered.");
+    return false;
 }
 
 void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
@@ -517,7 +521,7 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 }
 
 void NodeEngine::onQueryReconfiguration(Network::ChannelId channelId, QueryReconfigurationPlanPtr queryReconfigurationPlan) {
-    NES_DEBUG("NodeEngine::onQueryReconfiguration: Going to handle reconfiguration trigger for " << channelId);
+    NES_DEBUG("NodeEngine::onQueryReconfiguration: Handling reconfiguration trigger from " << channelId);
     std::unique_lock lock(engineMutex);
     auto partition = channelId.getNesPartition();
 
@@ -528,11 +532,16 @@ void NodeEngine::onQueryReconfiguration(Network::ChannelId channelId, QueryRecon
                 auto newQep = reconfigurationQEPs[replacementMapping.second];
                 NES_DEBUG("NodeEngine::onQueryReconfiguration: Trigger replacement of QuerySubPlan "
                           << oldQep->getQuerySubPlanId() << " with " << newQep->getQuerySubPlanId());
+                uint64_t announcedProducers = 0;
                 if (queryManager->isSourceAssociatedWithQep(partition.getOperatorId(), oldQep->getQuerySubPlanId())) {
+                    announcedProducers = partitionManager->getSubpartitionCounter(partition);
                     partitionManager->removePartition(partition);
                     queryManager->triggerQepStopReconfiguration(partition.getOperatorId(), oldQep, queryReconfigurationPlan);
                 }
                 reconfigurationStartSequence(queryReconfigurationPlan, partition, newQep->getQuerySubPlanId());
+                for (uint64_t i = 0; i < announcedProducers; i++) {
+                    partitionManager->pinSubpartition(partition);
+                }
             }
         }
         reconfigurationStartSequence(queryReconfigurationPlan, partition, replacementMapping.second);
@@ -570,6 +579,7 @@ void NodeEngine::onQueryReconfiguration(Network::ChannelId channelId, QueryRecon
 void NodeEngine::reconfigurationStartSequence(QueryReconfigurationPlanPtr queryReconfigurationPlan,
                                               Network::NesPartition& partition,
                                               QuerySubPlanId querySubPlanId) {
+    std::unique_lock lock(engineMutex);
     if (reconfigurationQEPs.find(querySubPlanId) != reconfigurationQEPs.end()) {
         // start qepToStart
         auto qepToStart = reconfigurationQEPs[querySubPlanId];
@@ -584,19 +594,15 @@ void NodeEngine::reconfigurationStartSequence(QueryReconfigurationPlanPtr queryR
                                                          qepToStart,
                                                          stateManager,
                                                          queryReconfigurationPlan);
-            partitionsWaitingRegistration.erase(partition);
+            if (pendingPartitionPinning.find(partition) != pendingPartitionPinning.end()) {
+                auto announcedProducers = pendingPartitionPinning[partition].fetch_add(1);
+                for (uint64_t i = 0; i < announcedProducers; i++) {
+                    partitionManager->pinSubpartition(partition);
+                }
+            }
         }
         if (queryManager->allSourcesMappedToQep(qepToStart)) {
             reconfigurationQEPs.erase(qepToStart->getQuerySubPlanId());
-        }
-    }
-    if (queryManager->isSourceAssociatedWithQep(partition.getOperatorId(), querySubPlanId)) {
-        // Lazy subpartition pinning
-        if (partitionManager->isRegistered(partition)) {
-            partitionManager->pinSubpartition(partition);
-        } else {
-            NES_ERROR("NodeEngine::reconfigurationStartSequence: QuerySubPlanId "
-                      << querySubPlanId << " deployed but partition not registered for source " << partition.getOperatorId());
         }
     }
 }
