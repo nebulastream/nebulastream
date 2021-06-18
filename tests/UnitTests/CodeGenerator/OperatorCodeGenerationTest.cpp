@@ -595,7 +595,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDefinition,
             windowOutputSchema);
-    windowHandler->start(nodeEngine->getStateManager());
+    windowHandler->start(nodeEngine->getStateManager(), 0);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
@@ -677,7 +677,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDefinition,
             windowOutputSchema);
-    windowHandler->start(nodeEngine->getStateManager());
+    windowHandler->start(nodeEngine->getStateManager(), 0);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                            nodeEngine->getBufferManager(),
@@ -1103,10 +1103,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     stage1->setup(*executionContext);
     stage1->start(*executionContext);
-    executionContext->getOperatorHandlers()[0]->start(executionContext, nodeEngine->getStateManager());
+    executionContext->getOperatorHandlers()[0]->start(executionContext, nodeEngine->getStateManager(), 0);
     executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)
         ->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()
-        ->start(nodeEngine->getStateManager());
+        ->start(nodeEngine->getStateManager(), 0);
     stage1->execute(inputBuffer, *executionContext, wctx);
     stage3->execute(inputBuffer, *executionContext, wctx);
 
@@ -1206,7 +1206,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         stage1->start(*executionContext);
         stage2->setup(*executionContext);
         stage2->start(*executionContext);
-        windowHandler->start(nodeEngine->getStateManager());
+        windowHandler->start(nodeEngine->getStateManager(), 0);
         windowHandler->setup(executionContext);
         source->open();
         /* prepare input tuple buffer */
@@ -1291,7 +1291,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     stage1->start(*executionContext);
     stage2->setup(*executionContext);
     stage2->start(*executionContext);
-    windowHandler->start(nodeEngine->getStateManager());
+    windowHandler->start(nodeEngine->getStateManager(), 0);
     windowHandler->setup(executionContext);
 
     /* prepare input tuple buffer */
@@ -1355,7 +1355,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDefinition,
             windowOutputSchema);
-    windowHandler->start(nodeEngine->getStateManager());
+    windowHandler->start(nodeEngine->getStateManager(), 0);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                            nodeEngine->getBufferManager(),
