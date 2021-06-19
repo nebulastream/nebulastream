@@ -307,7 +307,7 @@ void DataSource::runningRoutineWithFrequency() {
                 NES_DEBUG("lastTimeStampMillis=" << lastTimeStampMillis.count() << "nowInMillis=" << nowInMillis.count());
             }
         } else {
-            NES_DEBUG("DataSource::runningRoutine check for interval");
+            NES_TRACE("DataSource::runningRoutine check for interval");
             // check each interval
             if (nowInMillis != lastTimeStampMillis) {//we are in another interval
                 if ((nowInMillis - lastTimeStampMillis) <= gatheringInterval
