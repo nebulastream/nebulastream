@@ -501,6 +501,56 @@ class TestUtils {
     }
 
     /**
+     * Reads delimited file contents and validates
+     * @param validator function used for validation
+     * @param outputFilePath path of file to process
+     * @param skipHeader if true first line is removed
+     * @param delimiter delimiter for output
+     * @param customTimeout timeout value for failing
+     * @return true if validation succeeded before timeout
+     */
+    static bool checkIfCSVHasContent(std::function<bool(std::vector<std::vector<std::string>>)> validator,
+                                     string outputFilePath,
+                                     bool skipHeader,
+                                     std::string delimiter = ",",
+                                     uint64_t customTimeout = 0) {
+        std::chrono::seconds timeoutInSec;
+        if (customTimeout == 0) {
+            timeoutInSec = std::chrono::seconds(timeout);
+        } else {
+            timeoutInSec = std::chrono::seconds(customTimeout);
+        }
+
+        NES_DEBUG("using timeout=" << timeoutInSec.count());
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            sleep(1);
+            NES_DEBUG("checkIfCSVHasContent: check content for file " << outputFilePath);
+            std::ifstream ifs(outputFilePath);
+            if (ifs.good() && ifs.is_open()) {
+                std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+                std::vector<std::string> lines = UtilityFunctions::splitWithStringDelimiter(content, "\n");
+                if (skipHeader) {
+                    lines.erase(lines.begin());
+                }
+
+                std::vector<std::vector<std::string>> rowValues;
+
+                for (auto line : lines) {
+                    const std::vector<std::string> rowValue = UtilityFunctions::splitWithStringDelimiter(line, delimiter);
+                    rowValues.emplace_back(rowValue);
+                }
+
+                if (validator(rowValues)) {
+                    return true;
+                }
+            }
+        }
+        NES_ERROR("checkIfCSVHasContent: failed timeout.");
+        return false;
+    }
+
+    /**
   * @brief Check if the query result was produced
   * @param expectedContent
   * @param outputFilePath
