@@ -233,6 +233,11 @@ add_executable(query-execution-test "UnitTests/Query/QueryExecutionTest.cpp")
 target_link_libraries(query-execution-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-execution-test COMMAND query-execution-test)
 
+### QueryReconfigurationPlanTest ###
+add_executable(query-reconfiguration-plan-test "UnitTests/Query/QueryReconfigurationPlanTest.cpp")
+target_link_libraries(query-reconfiguration-plan-test nes ${GTEST_LIBRARIES})
+add_test(NAME query-reconfiguration-plan-test COMMAND query-reconfiguration-plan-test)
+
 ### ProjectionTest ###
 add_executable(projection-test "UnitTests/Query/ProjectionTest.cpp")
 target_link_libraries(projection-test nes ${GTEST_LIBRARIES})
