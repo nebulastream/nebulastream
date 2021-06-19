@@ -29,6 +29,8 @@
 #include <Util/TestUtils.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <iostream>
+#include <fstream>
 #include <gtest/gtest.h>
 
 //
@@ -54,6 +56,55 @@ class QueryMigrationPhaseIntegrationTest : public testing::Test {
     }
 
     void TearDown() { NES_DEBUG("TearDown QueryMigrationPhaseIntegrationTest class."); }
+
+    bool compareDataToBaseline(std::string pathToFile, std::vector<uint64_t>& ids){
+        //only applicable for data of the form in testDataBalint.csv
+        //uses unique int identifier for each row. Uses to check if data was lost or duplicated
+        std::vector<uint64_t> idsAfterMaintenance {};
+        std::ifstream file;
+        file.open(pathToFile);
+        if(!file.good()){
+            NES_DEBUG("QueryMigrationIntegrationtest: Error opening file fo reading");
+            return false;
+        }
+        std::string headers;
+        std::getline(file, headers);
+        while(!file.eof()){
+            std::string temp;
+            std::getline(file,temp, '\n');
+            if(temp.empty()){
+                break;
+            }
+            auto pos = temp.find(',');
+            if(pos == std::string::npos){
+                auto data = idsAfterMaintenance.size();
+                NES_DEBUG(data);
+                NES_DEBUG("QueryMigrationIntegrationtest: Error while parsing row. No comma found");
+                file.close();
+                return false;
+            }
+            auto token = temp.substr(0,pos);
+            uint64_t id = std::stoul(token);
+            idsAfterMaintenance.push_back(id);
+        }
+        if(ids.size() != idsAfterMaintenance.size()){
+            NES_DEBUG("QueryMigrationPhaseIntegrationTest: Data has been lost!");
+            NES_DEBUG(ids.size());
+            NES_DEBUG(idsAfterMaintenance.size());
+            file.close();
+            return false;
+        }
+        std::sort(idsAfterMaintenance.begin(), idsAfterMaintenance.end());
+        if(idsAfterMaintenance == ids){
+            NES_DEBUG("QueryMigrationPhaseIntegrationTest: Vectors are equal. No data has been lost or added");
+            file.close();
+            return true;
+        }
+        NES_DEBUG("QueryMigrationPhaseIntegrationTest: Vectors are NOT equal.");
+        file.close();
+        return false;
+
+    }
 };
 /**
  * tests findChild/ParentExecutionNodesAsTopologyNodes in QueryMigrationPhase
@@ -438,7 +489,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_DiamondTopologyWithTwoQuerie
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
 }
-TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrategyTest) {
+TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferTest) {
 
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
@@ -446,6 +497,129 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
     coConf->setRpcPort(rpcPort);
     coConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
+    wrkConf->setNumWorkerThreads(3);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
+    //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
+    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart4);
+    wrk4->replaceParent(1, 2);
+    wrk4->addParent(3);
+
+    TopologyPtr topo = crd->getTopology();
+    ASSERT_EQ(topo->getRoot()->getId(), 1UL);
+    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2UL);
+    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1UL);
+    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1UL);
+
+    //register logical stream
+    std::string testSchema = "Schema::create()->addField(createField(\"id\", UINT64));";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+    wrk4->registerLogicalStream("testStream", testSchemaFileName);
+
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/testDataBalint.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("exdra");
+    //srcConf->setSkipHeader(true);
+    srcConf->setNumberOfBuffersToProduce(1000);
+    //register physical stream
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    wrk4->registerPhysicalStream(conf);
+    std::string filePath = "withBuffer.csv";
+    remove(filePath.c_str());
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
+
+    NES_DEBUG("MaintenanceServiceTest: Submit query");
+    //register query
+    std::string queryString =
+        R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+
+    ASSERT_TRUE(wrk2->getTopologyNodeId() == 2);
+    ASSERT_TRUE(wrk3->getTopologyNodeId() == 3);
+    ASSERT_TRUE(wrk4->getTopologyNodeId() == 4);
+
+    auto globalExecutionPlan = crd->getGlobalExecutionPlan();
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
+    ASSERT_TRUE(!(globalExecutionPlan->checkIfExecutionNodeExists(3)));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
+
+    ASSERT_TRUE(wrk2->getNodeEngine()->getDeployedQEP(3));
+
+    maintenanceService->submitMaintenanceRequest(2,2);
+    sleep(5);
+
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
+    ASSERT_TRUE(wrk3->getNodeEngine()->getDeployedQEP(3));
+//    queryService->validateAndQueueStopRequest(queryId);
+//    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+    NES_DEBUG("Worker2 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 3");
+    bool retStopWrk3 = wrk3->stop(true);
+    EXPECT_TRUE(retStopWrk3);
+    NES_DEBUG("Worker3 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 4");
+    bool retStopWrk4 = wrk4->stop(true);
+    EXPECT_TRUE(retStopWrk4);
+    NES_DEBUG("Worker4 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+
+//    std::vector<uint64_t> ids (11000);
+//    std::iota(ids.begin(), ids.end(),1);
+//
+//    bool success = compareDataToBaseline(filePath,ids);
+//    EXPECT_EQ(success , true);
+
+}
+TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTest) {
+
+    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+    coConf->setRpcPort(rpcPort);
+    coConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    wrkConf->setNumWorkerThreads(3);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -479,15 +653,15 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
     ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1UL);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/exdra.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0); // when set to 0 it breaks
+    srcConf->setSourceConfig("../tests/test_data/testDataBalint.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("exdra");
-    srcConf->setNumberOfBuffersToProduce(1000);
+    srcConf->setNumberOfBuffersToProduce(0);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk4->registerPhysicalStream(conf);
-    std::string filePath = "withMigration.csv";
+    std::string filePath = "withoutBuffer.csv";
     remove(filePath.c_str());
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -542,6 +716,8 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
+
+
 
 }
 TEST_F(QueryMigrationPhaseIntegrationTest, test) {

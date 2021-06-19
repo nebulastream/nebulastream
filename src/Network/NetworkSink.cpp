@@ -93,8 +93,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 Network::NodeLocation updatedNodeLocation(pod.nodeId, pod.hostname, pod.port);
 
                 auto updatedChannel =
-                        networkManager->registerSubpartitionProducer(updatedNodeLocation, nesPartition, waitTime, retryTimes);
+                        networkManager->registerSubpartitionProducer(updatedNodeLocation, nesPartition, waitTime, retryTimes,workerContext.getChannel(nesPartition.getOperatorId())->moveBuffer());
                 workerContext.updateChannel(nesPartition.getOperatorId(), std::move(updatedChannel));
+
+                workerContext.getChannel(nesPartition.getOperatorId())->emptyBuffer();
+
                 break;
         }
         case NodeEngine::RemoveSink: {
@@ -106,6 +109,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case NodeEngine::BufferData: {
             NES_DEBUG("Buffering Data for every Threads OutputChannel");
+            workerContext.getChannel(nesPartition.getOperatorId())->setBuffer(true);
+            break;
         }
         default: {
             break;

@@ -21,6 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <iostream>
 #include <memory>
+#include <queue>
 #include <zmq.hpp>
 
 namespace NES {
@@ -37,7 +38,7 @@ using OutputChannelPtr = std::unique_ptr<OutputChannel>;
 
 class OutputChannel {
   public:
-    explicit OutputChannel(zmq::socket_t&& zmqSocket, ChannelId channelId, std::string&& address);
+    explicit OutputChannel(zmq::socket_t&& zmqSocket, ChannelId channelId, std::string&& address,std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& buffer);
 
     /**
      * @brief close the output channel and release resources
@@ -63,7 +64,8 @@ class OutputChannel {
                                    NesPartition nesPartition,
                                    ExchangeProtocol& protocol,
                                    std::chrono::seconds waitTime,
-                                   uint8_t retryTimes);
+                                   uint8_t retryTimes,
+                                   std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& buffer = {});
 
     /**
      * @brief Send buffer to the destination defined in the constructor. Note that this method will internally
@@ -88,14 +90,28 @@ class OutputChannel {
     /**
      * shut down ZMQ sockt without sending EoS message. Used for updating networkSinkOut
      */
-
     void shutdownZMQSocket(bool withMessagePropagation);
+
+    /**
+     * Sends all TupleBuffers stored in buffer.
+     * Sets buffering flag to false
+     * @param b
+     */
+    bool emptyBuffer();
+
+    void setBuffer(bool b);
+
+    bool isBuffering();
+
+    std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& moveBuffer();
 
   private:
     const std::string socketAddr;
     zmq::socket_t zmqSocket;
     const ChannelId channelId;
     bool isClosed{false};
+    std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>> buffer;
+    bool buffering;
 };
 
 }// namespace Network

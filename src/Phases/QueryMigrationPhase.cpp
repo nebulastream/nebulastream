@@ -155,6 +155,11 @@ bool QueryMigrationPhase::executeMigrationWithBuffer(const std::vector<TopologyN
 
         Network::NodeLocation markedNodeLocation(markedTopNodeId, topology->findNodeWithId(markedTopNodeId)->getIpAddress(),
                                                  topology->findNodeWithId(markedTopNodeId)->getDataPort());
+        auto candidateTopologyNode = path.at(0)->getParents().at(0)->as<TopologyNode>();
+        uint64_t newNodeId = candidateTopologyNode->getId();
+        std::string newHostname = candidateTopologyNode->getIpAddress();
+        uint32_t newPort = candidateTopologyNode->getDataPort();
+
         for(auto pair : addresses){
             auto map = querySubPlansAndNetworkSinksToReconfigure(queryId,globalExecutionPlan->getExecutionNodeByNodeId(pair.first),markedNodeLocation);
             if(workerRPCClient->bufferData(pair.second, map)){
@@ -164,7 +169,7 @@ bool QueryMigrationPhase::executeMigrationWithBuffer(const std::vector<TopologyN
                     return false;
                 }
                 else{
-                    //workerRPCClient->unbufferData();
+                    workerRPCClient->updateNetworkSinks(pair.second, newNodeId, newHostname, newPort, map);
                     NES_DEBUG("QueryMigrationPhase: executeMigrationWithBuffer: successfully unbuffered Data");
                     continue;
                 }

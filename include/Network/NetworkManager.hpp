@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <queue>
 #include <string>
 
 namespace NES {
@@ -89,7 +90,8 @@ class NetworkManager {
     OutputChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation,
                                                   NesPartition nesPartition,
                                                   std::chrono::seconds waitTime,
-                                                  uint8_t retryTimes);
+                                                  uint8_t retryTimes,
+                                                  std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& buffer = {});
 
     /**
      * @brief Creates a new network manager object, which comprises of a zmq server and an exchange protocol
