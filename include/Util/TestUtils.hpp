@@ -528,7 +528,7 @@ class TestUtils {
             if (ifs.good() && ifs.is_open()) {
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
                 std::vector<std::string> lines = UtilityFunctions::splitWithStringDelimiter(content, "\n");
-                if (skipHeader) {
+                if (skipHeader && !lines.empty()) {
                     lines.erase(lines.begin());
                 }
 

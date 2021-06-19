@@ -271,17 +271,18 @@ TEST_F(QueryReconfigurationTest, testPartitionPinningQepReplacements) {
     stopWorker(wrk1, 1);
 }
 
-std::function<bool(std::vector<std::vector<std::string>>)> distinctColumnValuesValidator(uint8_t colId,
-                                                                                         std::set<std::string> requiredValues) {
-    return [colId, &requiredValues](std::vector<std::vector<std::string>> rows) {
+std::function<bool(std::vector<std::vector<std::string>>)>
+distinctColumnValuesValidator(uint8_t colId, std::unordered_set<std::string> requiredValues) {
+    return [colId, requiredValues](std::vector<std::vector<std::string>> rows) {
+        auto colPos = colId - 1;
+        std::unordered_set<std::string> actualValues;
         for (auto row : rows) {
-            std::string value = row[colId];
-            std::set<std::string>::iterator it = std::find(requiredValues.begin(), requiredValues.end(), value);
-            if (it != requiredValues.end()) {
-                requiredValues.erase(it);
+            actualValues.insert(row[colPos]);
+            if (requiredValues == actualValues) {
+                return true;
             }
         }
-        return requiredValues.empty();
+        return false;
     };
 }
 
@@ -353,12 +354,12 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
 
     //register physical stream - wrk1
     NES::AbstractPhysicalStreamConfigPtr confCar1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 10), 3000, 5, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 2), 0, 5, "frequency");
     wrk1->registerPhysicalStream(confCar1);
 
     //register physical stream - wrk2
     NES::AbstractPhysicalStreamConfigPtr confCar2 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "car2", "car", generatorLambda(2, 20), 3000, 5, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car2", "car", generatorLambda(2, 4), 0, 5, "frequency");
     wrk2->registerPhysicalStream(confCar2);
 
     auto wrk1Src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"),
@@ -448,9 +449,9 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     auto wrk34Src =
         LogicalOperatorFactory::createSourceOperator(Network::NetworkSourceDescriptor::create(wrk34Schema, qsp34NSrcNesPartition),
                                                      qsp34NSrcNesPartition.getOperatorId());
-    auto querySink1 =
-        LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testReconfigurationNewBranchOnLevel3_1.out"),
-                                                   UtilityFunctions::getNextOperatorId());
+    auto querySink1 = LogicalOperatorFactory::createSinkOperator(
+        FileSinkDescriptor::create("testReconfigurationNewBranchOnLevel3_1.csv", "CSV_FORMAT", "OVERWRITE"),
+        UtilityFunctions::getNextOperatorId());
 
     auto qsp4 = QueryPlan::create(wrk34Src);
     qsp4->appendOperatorAsNewRoot(querySink1);
@@ -462,7 +463,11 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     wrk4->getNodeEngine()->registerQueryInNodeEngine(tqsp4);
     wrk4->getNodeEngine()->startQuery(tqsp4->getQueryId());
 
-    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, "testReconfigurationNewBranchOnLevel3_1.out"));
+    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
+                                                "testReconfigurationNewBranchOnLevel3_1.csv",
+                                                true,
+                                                ",",
+                                                120));
 
     auto wrk3Qsp5Map = wrk3Map->duplicate();
     const LogicalUnaryOperatorNodePtr wrk3NewBranchMap =
@@ -496,9 +501,9 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     auto wrk56Src =
         LogicalOperatorFactory::createSourceOperator(Network::NetworkSourceDescriptor::create(wrk56Schema, qsp56NSrcNesPartition),
                                                      qsp56NSrcNesPartition.getOperatorId());
-    auto querySink2 =
-        LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testReconfigurationNewBranchOnLevel3_2.out"),
-                                                   UtilityFunctions::getNextOperatorId());
+    auto querySink2 = LogicalOperatorFactory::createSinkOperator(
+        FileSinkDescriptor::create("testReconfigurationNewBranchOnLevel3_2.csv", "CSV_FORMAT", "OVERWRITE"),
+        UtilityFunctions::getNextOperatorId());
 
     auto qsp6 = QueryPlan::create(wrk56Src);
     qsp6->appendOperatorAsNewRoot(querySink2);
@@ -529,9 +534,25 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     }
     NES_DEBUG("QueryReconfigurationTest: QEP 6 is running.");
 
-    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, "testReconfigurationNewBranchOnLevel3_2.out"));
+    // FileSink will only receive data from source 1, wait for `timeout` seconds to give confidence that no values received from `car2`
+    EXPECT_FALSE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"2"}),
+                                                 "testReconfigurationNewBranchOnLevel3_2.csv",
+                                                 true,
+                                                 ","));
+    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1"}),
+                                                "testReconfigurationNewBranchOnLevel3_2.csv",
+                                                true,
+                                                ",",
+                                                120));
 
     wrk2->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);
+
+    // Since source 2 sends reconfiguration only now, we will data from both 1 and 2 must write data to
+    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
+                                                "testReconfigurationNewBranchOnLevel3_2.csv",
+                                                true,
+                                                ",",
+                                                120));
 
     stopWorker(wrk1, 1);
     stopWorker(wrk2, 2);
