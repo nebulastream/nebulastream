@@ -17,6 +17,7 @@
 #include <Plans/Query/QueryReconfigurationPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <sstream>
 
 namespace NES {
@@ -25,8 +26,9 @@ QueryReconfigurationPlan::QueryReconfigurationPlan(
     const std::vector<QuerySubPlanId> querySubPlanIdsToStart,
     const std::vector<QuerySubPlanId> querySubPlanIdsToStop,
     const std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace)
-    : id(PlanIdGenerator::getNextQueryReconfigurationPlanId()), querySubPlanIdsToStop(querySubPlanIdsToStop),
-      querySubPlanIdsToStart(querySubPlanIdsToStart), querySubPlanIdsToReplace(querySubPlanIdsToReplace) {}
+    : id(PlanIdGenerator::getNextQueryReconfigurationPlanId()), queryId(INVALID_QUERY_ID),
+      querySubPlanIdsToStop(querySubPlanIdsToStop), querySubPlanIdsToStart(querySubPlanIdsToStart),
+      querySubPlanIdsToReplace(querySubPlanIdsToReplace) {}
 
 const std::vector<QuerySubPlanId> QueryReconfigurationPlan::getQuerySubPlanIdsToStop() const { return querySubPlanIdsToStop; }
 const std::vector<QuerySubPlanId> QueryReconfigurationPlan::getQuerySubPlanIdsToStart() const { return querySubPlanIdsToStart; }
@@ -44,6 +46,7 @@ QueryReconfigurationPlan::create(const std::vector<QuerySubPlanId> querySubPlanI
 const std::string QueryReconfigurationPlan::serializeToString() {
     std::stringstream ss;
     ss << "reconfigurationId:" << id << "|";
+    ss << "queryId:" << queryId << "|";
     ss << "querySubPlanIdsToStart:";
     for (auto querySubPlanIdToStart : querySubPlanIdsToStart) {
         ss << querySubPlanIdToStart << " ";
@@ -63,18 +66,16 @@ const std::string QueryReconfigurationPlan::serializeToString() {
 }
 
 QueryReconfigurationId QueryReconfigurationPlan::getId() const { return id; }
+
 void QueryReconfigurationPlan::setId(QueryReconfigurationId reconfigurationId) { id = reconfigurationId; }
 
 std::vector<QuerySubPlanId> lineToValues(std::string& line) {
     std::string valueDelimiter = " ";
     std::vector<QuerySubPlanId> values;
-    size_t pos;
-    while ((pos = line.find(valueDelimiter)) != std::string::npos) {
-        auto valueToken = line.substr(0, pos);
+    for (auto valueToken : UtilityFunctions::splitWithStringDelimiter(line, valueDelimiter)) {
         if (!valueToken.empty()) {
             values.push_back(std::stoull(valueToken));
         }
-        line.erase(0, pos + valueDelimiter.length());
     }
     return values;
 }
@@ -87,6 +88,8 @@ void parseFields(QueryReconfigurationPlanPtr queryReconfigurationPlan, std::stri
         line.erase(0, pos + fieldDelimiter.length());
         if (field == "reconfigurationId") {
             queryReconfigurationPlan->setId(std::stoull(line));
+        } else if (field == "queryId") {
+            queryReconfigurationPlan->setQueryId(std::stoull(line));
         } else if (field == "querySubPlanIdsToStart") {
             queryReconfigurationPlan->setQuerySubPlanIdsToStart(lineToValues(line));
         } else if (field == "querySubPlanIdsToStop") {
@@ -110,11 +113,8 @@ void parseFields(QueryReconfigurationPlanPtr queryReconfigurationPlan, std::stri
 QueryReconfigurationPlanPtr QueryReconfigurationPlan::deserializeFromString(std::string serializedString) {
     auto queryReconfigurationPlan = std::make_shared<QueryReconfigurationPlan>();
     std::string lineDelimiter = "|";
-    size_t pos;
-    while ((pos = serializedString.find(lineDelimiter)) != std::string::npos) {
-        auto token = serializedString.substr(0, pos);
-        parseFields(queryReconfigurationPlan, token);
-        serializedString.erase(0, pos + lineDelimiter.length());
+    for (auto line : UtilityFunctions::splitWithStringDelimiter(serializedString, lineDelimiter)) {
+        parseFields(queryReconfigurationPlan, line);
     }
     return queryReconfigurationPlan;
 }
@@ -131,10 +131,9 @@ void QueryReconfigurationPlan::setQuerySubPlanIdsToReplace(
 }
 
 QueryReconfigurationPlan::QueryReconfigurationPlan() {}
+QueryId QueryReconfigurationPlan::getQueryId() const { return queryId; }
+void QueryReconfigurationPlan::setQueryId(QueryId queryId) { QueryReconfigurationPlan::queryId = queryId; }
 
-std::ostream& operator<<(std::ostream& os, QueryReconfigurationPlan plan) {
-    os << plan.serializeToString();
-    return os;
-}
+std::string QueryReconfigurationPlan::toString() { return serializeToString(); }
 
 }// namespace NES

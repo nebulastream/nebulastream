@@ -18,4 +18,5 @@ add_source_nes(
         SchemaSerializationUtil.cpp
         ExpressionSerializationUtil.cpp
         QueryPlanSerializationUtil.cpp
+        QueryReconfigurationPlanSerializationUtil.cpp
 )
