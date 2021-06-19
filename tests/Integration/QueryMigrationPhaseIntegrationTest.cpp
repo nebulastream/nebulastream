@@ -75,16 +75,8 @@ class QueryMigrationPhaseIntegrationTest : public testing::Test {
             if(temp.empty()){
                 break;
             }
-            auto pos = temp.find(',');
-            if(pos == std::string::npos){
-                auto data = idsAfterMaintenance.size();
-                NES_DEBUG(data);
-                NES_DEBUG("QueryMigrationIntegrationtest: Error while parsing row. No comma found");
-                file.close();
-                return false;
-            }
-            auto token = temp.substr(0,pos);
-            uint64_t id = std::stoul(token);
+
+            uint64_t id = std::stoul(temp);
             idsAfterMaintenance.push_back(id);
         }
         if(ids.size() != idsAfterMaintenance.size()){
@@ -542,9 +534,9 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
     srcConf->setSourceConfig("../tests/test_data/testDataBalint.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
     srcConf->setPhysicalStreamName("test_stream");
-    srcConf->setLogicalStreamName("exdra");
+    srcConf->setLogicalStreamName("testStream");
     //srcConf->setSkipHeader(true);
-    srcConf->setNumberOfBuffersToProduce(1000);
+    srcConf->setNumberOfBuffersToProduce(11000);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk4->registerPhysicalStream(conf);
@@ -557,7 +549,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
     NES_DEBUG("MaintenanceServiceTest: Submit query");
     //register query
     std::string queryString =
-        R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+        R"(Query::from("testStream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -604,11 +596,11 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 
-//    std::vector<uint64_t> ids (11000);
-//    std::iota(ids.begin(), ids.end(),1);
-//
-//    bool success = compareDataToBaseline(filePath,ids);
-//    EXPECT_EQ(success , true);
+    std::vector<uint64_t> ids (11000);
+    std::iota(ids.begin(), ids.end(),1);
+
+    bool success = compareDataToBaseline(filePath,ids);
+    EXPECT_EQ(success , true);
 
 }
 TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTest) {
@@ -652,15 +644,25 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTes
     ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1UL);
     ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1UL);
 
+    //register logical stream
+    std::string testSchema = "Schema::create()->addField(createField(\"id\", UINT64));";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+    wrk4->registerLogicalStream("testStream", testSchemaFileName);
+
     srcConf->setSourceType("CSVSource");
     srcConf->setSourceConfig("../tests/test_data/testDataBalint.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
     srcConf->setPhysicalStreamName("test_stream");
-    srcConf->setLogicalStreamName("exdra");
-    srcConf->setNumberOfBuffersToProduce(0);
+    srcConf->setLogicalStreamName("testStream");
+    //srcConf->setSkipHeader(true);
+    srcConf->setNumberOfBuffersToProduce(11000);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk4->registerPhysicalStream(conf);
+
     std::string filePath = "withoutBuffer.csv";
     remove(filePath.c_str());
     QueryServicePtr queryService = crd->getQueryService();
@@ -670,7 +672,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTes
     NES_DEBUG("MaintenanceServiceTest: Submit query");
     //register query
     std::string queryString =
-        R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+        R"(Query::from("testStream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -717,9 +719,13 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTes
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 
+    std::vector<uint64_t> ids (11000);
+    std::iota(ids.begin(), ids.end(),1);
 
-
+    bool success = compareDataToBaseline(filePath,ids);
+    EXPECT_EQ(success , true);
 }
+
 TEST_F(QueryMigrationPhaseIntegrationTest, test) {
 
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
