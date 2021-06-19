@@ -23,6 +23,7 @@
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
+#include <GRPC/Serialization/QueryReconfigurationPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
@@ -63,6 +64,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Query/QueryReconfigurationPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger.hpp>
@@ -676,4 +678,25 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
         }
         EXPECT_TRUE(found);
     }
+}
+
+TEST_F(SerializationUtilTest, queryReconfigurationPlanSerDe) {
+    auto expectedToStart = std::vector<QuerySubPlanId>{111, 222, 333};
+    auto expectedToStop = std::vector<QuerySubPlanId>{444, 555, 666};
+    auto expectedToReplace = std::unordered_map<QuerySubPlanId, QuerySubPlanId>{{777, 888}, {999, 1111}};
+    auto expectedId = 10;
+    auto expectedQueryId = 100;
+
+    auto expectedPlan = QueryReconfigurationPlan::create(expectedToStart, expectedToStop, expectedToReplace);
+    expectedPlan->setId(expectedId);
+    expectedPlan->setQueryId(expectedQueryId);
+
+    auto serializedPlan = QueryReconfigurationPlanSerializationUtil::serializeQueryReconfigurationPlan(expectedPlan);
+    auto actualPlan = QueryReconfigurationPlanSerializationUtil::deserializeQueryReconfigurationPlan(serializedPlan);
+
+    ASSERT_EQ(actualPlan->getId(), expectedId);
+    ASSERT_EQ(actualPlan->getQueryId(), expectedQueryId);
+    ASSERT_TRUE(actualPlan->getQuerySubPlanIdsToStart() == expectedToStart);
+    ASSERT_TRUE(actualPlan->getQuerySubPlanIdsToStop() == expectedToStop);
+    ASSERT_TRUE(actualPlan->getQuerySubPlanIdsToReplace() == expectedToReplace);
 }
