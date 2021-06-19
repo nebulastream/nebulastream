@@ -34,6 +34,7 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <algorithm>
 #include <iostream>
 
 using namespace std;
@@ -106,11 +107,12 @@ std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr> getDummyNetworkSrcSchema(
     const char* logicalStreamName = "default";
     streamCatalog->addLogicalStream(logicalStreamName, schema);
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName), 25000);
+    auto src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName),
+                                                            UtilityFunctions::getNextOperatorId());
     Network::NodeLocation location{1, "localhost", static_cast<uint32_t>(11001)};
     SinkDescriptorPtr baseSinkDescPtr =
         Network::NetworkSinkDescriptor::create(location, nesPartition, std::chrono::seconds(60), 2);
-    OperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(baseSinkDescPtr, 25001);
+    OperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(baseSinkDescPtr, UtilityFunctions::getNextOperatorId());
     auto queryPlan = QueryPlan::create(src);
     queryPlan->appendOperatorAsNewRoot(sink);
     auto tQueryPlan = typeInferencePhase->execute(queryPlan);
@@ -123,7 +125,7 @@ TEST_F(QueryReconfigurationTest, testPartitionPinningQepStarts) {
 
     auto schema = Schema::create()->addField("id", UINT64);
 
-    Network::NesPartition nesPartition{1, 2001, 1, 1};
+    Network::NesPartition nesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
 
     NesWorkerPtr wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Worker, false);
     auto nodeEngine = wrk1->getNodeEngine();
@@ -135,7 +137,8 @@ TEST_F(QueryReconfigurationTest, testPartitionPinningQepStarts) {
         Network::NetworkSourceDescriptor::create(defaultOutputSchema.first, nesPartition),
         nesPartition.getOperatorId());
 
-    auto dataSink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testPartitionPinning_1.out"), 4);
+    auto dataSink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testPartitionPinning_1.out"),
+                                                               UtilityFunctions::getNextOperatorId());
 
     auto qsp1 = QueryPlan::create(networkSrc);
     qsp1->appendOperatorAsNewRoot(dataSink);
@@ -183,27 +186,28 @@ TEST_F(QueryReconfigurationTest, testPartitionPinningQepReplacements) {
 
     auto schema = Schema::create()->addField("id", UINT64);
 
-    Network::NesPartition nesPartition{1, 2001, 1, 1};
+    Network::NesPartition nesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
 
     NesWorkerPtr wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Worker, false);
     auto nodeEngine = wrk1->getNodeEngine();
     auto queryManager = nodeEngine->getQueryManager();
     auto partitionManager = nodeEngine->getPartitionManager();
-    auto defaultOutputSchema = getDummyNetworkSrcSchema(schema, nesPartition);
+    auto schemaHelperQsp1 = getDummyNetworkSrcSchema(schema, nesPartition);
     auto numberOfProducers = 100;
 
     auto networkSrc = LogicalOperatorFactory::createSourceOperator(
-        Network::NetworkSourceDescriptor::create(defaultOutputSchema.first, nesPartition),
+        Network::NetworkSourceDescriptor::create(schemaHelperQsp1.first, nesPartition),
         nesPartition.getOperatorId());
 
     auto dataSink1 =
-        LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testPartitionPinningQepReplacements_1.out"), 4);
+        LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testPartitionPinningQepReplacements_1.out"),
+                                                   UtilityFunctions::getNextOperatorId());
 
     auto qsp1 = QueryPlan::create(networkSrc);
     qsp1->appendOperatorAsNewRoot(dataSink1);
     qsp1->setQueryId(1);
     qsp1->setQuerySubPlanId(1);
-    auto tqsp1 = defaultOutputSchema.second->execute(qsp1);
+    auto tqsp1 = schemaHelperQsp1.second->execute(qsp1);
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp1->getQuerySubPlanId() << ".\n" << tqsp1->toString());
 
     nodeEngine->registerQueryInNodeEngine(tqsp1);
@@ -229,12 +233,13 @@ TEST_F(QueryReconfigurationTest, testPartitionPinningQepReplacements) {
     ASSERT_EQ(partitionManager->getSubpartitionCounter(nesPartition), numberOfProducers);
 
     auto dataSink2 =
-        LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testPartitionPinningQepReplacements_2.out"), 5);
+        LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testPartitionPinningQepReplacements_2.out"),
+                                                   UtilityFunctions::getNextOperatorId());
     auto qsp2 = QueryPlan::create(networkSrc);
     qsp2->appendOperatorAsNewRoot(dataSink2);
     qsp2->setQueryId(1);
     qsp2->setQuerySubPlanId(2);
-    auto tqsp2 = defaultOutputSchema.second->execute(qsp2);
+    auto tqsp2 = schemaHelperQsp1.second->execute(qsp2);
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp2->getQuerySubPlanId() << ".\n" << tqsp2->toString());
 
     nodeEngine->registerQueryForReconfigurationInNodeEngine(tqsp2);
@@ -266,8 +271,49 @@ TEST_F(QueryReconfigurationTest, testPartitionPinningQepReplacements) {
     stopWorker(wrk1, 1);
 }
 
+std::function<bool(std::vector<std::vector<std::string>>)> distinctColumnValuesValidator(uint8_t colId,
+                                                                                         std::set<std::string> requiredValues) {
+    return [colId, &requiredValues](std::vector<std::vector<std::string>> rows) {
+        for (auto row : rows) {
+            std::string value = row[colId];
+            std::set<std::string>::iterator it = std::find(requiredValues.begin(), requiredValues.end(), value);
+            if (it != requiredValues.end()) {
+                requiredValues.erase(it);
+            }
+        }
+        return requiredValues.empty();
+    };
+}
+
 /**
  * Test adding a new branch for a QEP in Level 3
+ *
+ * Running Query:
+ *
+ * Lambda Source 1 (1) ----> Network Sink 1 (1) --|
+ *                                                |----> Network Source 3 (3) --|
+ *                                                                              |
+ *                                                                              -----> Map 1 (3) ----> Network Sink 3 (3) ----> Network Source 5 (4) ----> File Sink 1 (4)
+ *                                                                              |
+ *                                                |----> Network Source 4 (3)--|
+ * Lambda Source 2 (2) ----> Network Sink 2 (2) --|
+ *
+ *
+ * Running Query: Add new branch to QEP running on Node 3
+ *
+ * Lambda Source 1 (1) ----> Network Sink 1 (1) --|
+ *                                                |----> Network Source 3 (3)---|
+ *                                                                              |
+ *                                                                              |                  |--> Map 2 (3)--> Network Sink 4 (3) ----> Network Source 6 (4) ----> File Sink 2 (4)
+ *                                                                              |                  |
+ *                                                                              -----> Map 1 (3) --|
+ *                                                                              |                  |
+ *                                                                              |                  |--> Network Sink 3 (3) ----> Network Source 5 (4) ----> File Sink 1 (4)
+ *                                                                              |
+ *                                                |----> Network Source 4 (3)---|
+ * Lambda Source 2 (2) ----> Network Sink 2 (2) --|
+ *
+ *
  */
 TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
@@ -315,11 +361,13 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
         NES::LambdaSourceStreamConfig::create("LambdaSource", "car2", "car", generatorLambda(2, 20), 3000, 5, "frequency");
     wrk2->registerPhysicalStream(confCar2);
 
-    auto wrk1Src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"), 1001);
-    auto wrk2Src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"), 2001);
+    auto wrk1Src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"),
+                                                                UtilityFunctions::getNextOperatorId());
+    auto wrk2Src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"),
+                                                                UtilityFunctions::getNextOperatorId());
 
-    Network::NesPartition wrk13NSrcNesPartition{1, 3001, 1, 1};
-    Network::NesPartition wrk23NSrcNesPartition{1, 3002, 1, 1};
+    Network::NesPartition wrk13NSrcNesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
+    Network::NesPartition wrk23NSrcNesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
 
     Network::NodeLocation wrk3NSrcLocation{3, "localhost", static_cast<uint32_t>(port + 31)};
 
@@ -334,8 +382,10 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
                                                                                  sinkConnnectionWaitTime,
                                                                                  connectionRetries);
 
-    OperatorNodePtr wrk1NSink = LogicalOperatorFactory::createSinkOperator(wrk13NSinkDescPtr, 1002);
-    OperatorNodePtr wrk2NSink = LogicalOperatorFactory::createSinkOperator(wrk23NSinkDescPtr, 2002);
+    OperatorNodePtr wrk1NSink =
+        LogicalOperatorFactory::createSinkOperator(wrk13NSinkDescPtr, UtilityFunctions::getNextOperatorId());
+    OperatorNodePtr wrk2NSink =
+        LogicalOperatorFactory::createSinkOperator(wrk23NSinkDescPtr, UtilityFunctions::getNextOperatorId());
 
     auto qsp1 = QueryPlan::create(wrk1Src);
     qsp1->appendOperatorAsNewRoot(wrk1NSink);
@@ -368,17 +418,19 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
                                                      wrk23NSrcNesPartition.getOperatorId());
 
     Network::NodeLocation wrk4NSrcLocation{4, "localhost", static_cast<uint32_t>(port + 41)};
-    Network::NesPartition qsp34NSrcNesPartition{1, 4001, 1, 1};
+    Network::NesPartition qsp34NSrcNesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
 
     SinkDescriptorPtr wrk34NSinkDescPtr = Network::NetworkSinkDescriptor::create(wrk4NSrcLocation,
                                                                                  qsp34NSrcNesPartition,
                                                                                  sinkConnnectionWaitTime,
                                                                                  connectionRetries);
 
-    OperatorNodePtr qsp34NSink = LogicalOperatorFactory::createSinkOperator(wrk34NSinkDescPtr, 3004);
+    OperatorNodePtr qsp34NSink =
+        LogicalOperatorFactory::createSinkOperator(wrk34NSinkDescPtr, UtilityFunctions::getNextOperatorId());
 
     const LogicalUnaryOperatorNodePtr wrk3Map =
-        LogicalOperatorFactory::createMapOperator(Attribute("newId") = Attribute("id") + Attribute("value"), 3003);
+        LogicalOperatorFactory::createMapOperator(Attribute("newId") = Attribute("id") + Attribute("value"),
+                                                  UtilityFunctions::getNextOperatorId());
 
     auto qsp3 = QueryPlan::create(wrk13Src);
     qsp3->addRootOperator(wrk23Src);
@@ -398,7 +450,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
                                                      qsp34NSrcNesPartition.getOperatorId());
     auto querySink1 =
         LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testReconfigurationNewBranchOnLevel3_1.out"),
-                                                   4002);
+                                                   UtilityFunctions::getNextOperatorId());
 
     auto qsp4 = QueryPlan::create(wrk34Src);
     qsp4->appendOperatorAsNewRoot(querySink1);
@@ -414,16 +466,18 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
 
     auto wrk3Qsp5Map = wrk3Map->duplicate();
     const LogicalUnaryOperatorNodePtr wrk3NewBranchMap =
-        LogicalOperatorFactory::createMapOperator(Attribute("newBranch") = Attribute("id") + 2000, 3103);
+        LogicalOperatorFactory::createMapOperator(Attribute("newBranch") = Attribute("id") + 2000,
+                                                  UtilityFunctions::getNextOperatorId());
 
-    Network::NesPartition qsp56NSrcNesPartition{1, 4101, 1, 1};
+    Network::NesPartition qsp56NSrcNesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
 
     SinkDescriptorPtr wrk56NSinkDescPtr = Network::NetworkSinkDescriptor::create(wrk4NSrcLocation,
                                                                                  qsp56NSrcNesPartition,
                                                                                  sinkConnnectionWaitTime,
                                                                                  connectionRetries);
 
-    OperatorNodePtr qsp56NSink = LogicalOperatorFactory::createSinkOperator(wrk56NSinkDescPtr, 3104);
+    OperatorNodePtr qsp56NSink =
+        LogicalOperatorFactory::createSinkOperator(wrk56NSinkDescPtr, UtilityFunctions::getNextOperatorId());
 
     auto qsp5 = QueryPlan::create(wrk13Src);
     qsp5->addRootOperator(wrk23Src);
@@ -444,7 +498,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
                                                      qsp56NSrcNesPartition.getOperatorId());
     auto querySink2 =
         LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("testReconfigurationNewBranchOnLevel3_2.out"),
-                                                   4102);
+                                                   UtilityFunctions::getNextOperatorId());
 
     auto qsp6 = QueryPlan::create(wrk56Src);
     qsp6->appendOperatorAsNewRoot(querySink2);
