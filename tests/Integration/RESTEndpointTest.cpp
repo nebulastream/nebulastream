@@ -117,7 +117,7 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("get execution-plan: try to acc return");
     NES_DEBUG("getExecutionPlan response: " << getExecutionPlanJsonReturn.serialize());
     const auto* expected =
-        R"({"executionNodes":[{"ScheduledQueries":[{"queryId":1,"querySubPlans":[{"operator":"SINK(4)\n  SOURCE(1,default_logical)\n","querySubPlanId":1}]}],"executionNodeId":2,"topologyNodeId":2,"topologyNodeIpAddress":"127.0.0.1"},{"ScheduledQueries":[{"queryId":1,"querySubPlans":[{"operator":"SINK(2)\n  SOURCE(3,)\n","querySubPlanId":2}]}],"executionNodeId":1,"topologyNodeId":1,"topologyNodeIpAddress":"127.0.0.1"}]})";
+        R"({"executionNodes":[{"ScheduledQueries":[{"queryId":1,"querySubPlans":[{"operator":"SINK(4, NetworkSinkDescriptor(NodeLocation(nodeId: 1 hostname: 127.0.0.1 port: 4032), 1::3::0::0))\n  SOURCE(1,default_logical)\n","querySubPlanId":1}]}],"executionNodeId":2,"topologyNodeId":2,"topologyNodeIpAddress":"127.0.0.1"},{"ScheduledQueries":[{"queryId":1,"querySubPlans":[{"operator":"SINK(2, PrintSinkDescriptor())\n  SOURCE(3,)\n","querySubPlanId":2}]}],"executionNodeId":1,"topologyNodeId":1,"topologyNodeIpAddress":"127.0.0.1"}]})";
     NES_DEBUG("getExecutionPlan response: expected = " << expected);
     ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), expected);
 
