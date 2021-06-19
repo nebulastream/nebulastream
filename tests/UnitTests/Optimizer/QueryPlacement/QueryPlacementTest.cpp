@@ -1062,16 +1062,16 @@ class ILPPlacementTest : public testing::Test {
 
         topologyForILP = Topology::create();
 
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 4);
-        rootNode->addNodeProperty("slots", 1);
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 100);
+        rootNode->addNodeProperty("slots", 100);
         topologyForILP->setAsRoot(rootNode);
 
-        TopologyNodePtr middleNode = TopologyNode::create(2, "localhost", 123, 124, 4);
+        TopologyNodePtr middleNode = TopologyNode::create(2, "localhost", 123, 124, 10);
         middleNode->addNodeProperty("slots", 10);
         topologyForILP->addNewPhysicalNodeAsChild(rootNode, middleNode);
 
-        TopologyNodePtr sourceNode = TopologyNode::create(3, "localhost", 123, 124, 4);
-        sourceNode->addNodeProperty("slots", 10);
+        TopologyNodePtr sourceNode = TopologyNode::create(3, "localhost", 123, 124, 1);
+        sourceNode->addNodeProperty("slots", 1);
         topologyForILP->addNewPhysicalNodeAsChild(middleNode, sourceNode);
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
@@ -1197,7 +1197,7 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
 
     // adding property of the source
     std::map<std::string, std::any> srcProp;
-    double srcout = 1000.0;
+    double srcout = 100.0;
     srcProp.insert(std::make_pair("output", srcout));
     srcProp.insert(std::make_pair("slots", 1));
 

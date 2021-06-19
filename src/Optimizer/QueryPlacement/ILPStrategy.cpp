@@ -166,20 +166,16 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     }
 
     // optimize ILP problem and print solution
-    opt.minimize(1 * cost_net + 10000 * cost_ou);
+    opt.minimize(1 * cost_net + 1000 * cost_ou);
     if (sat == opt.check()) {
         model m = opt.get_model();
         NES_INFO("ILPStrategy:\n" << m);
 
         std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
-        for(int i = 0; i< m.num_consts(); i++) {
-            func_decl f = m.get_const_decl(i);
-            std::string variable = f.name().str();
-            NES_INFO("Placement Variable:\n" << variable <<" value: " << m.get_const_interp(f).to_string());
-            int operatorId = (int)std::strtol(variable.substr(0,1).c_str(), nullptr, 10);
-            int topologyNodeId = (int)std::strtol(variable.substr(2,3).c_str(), nullptr, 10);
-            int value = (int)std::strtol(m.get_const_interp(f).to_string().c_str(), nullptr, 10);
-            if(operatorId != 0 && value == 1){
+        for (auto const& [topologyID, P] : placementVariables) {
+            if (m.eval(P).get_numeral_int() == 1) {
+                int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
+                int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
                 OperatorNodePtr operatorNode = queryPlan->getOperatorWithId(operatorId);
                 TopologyNodePtr topologyNode = topology->findNodeWithId(topologyNodeId);
                 operatorToTopologyNodeMap.insert(std::make_pair(operatorNode, topologyNode));
