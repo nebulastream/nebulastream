@@ -47,7 +47,9 @@ void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHand
 
 SchemaPtr WindowOperatorHandler::getResultSchema() { return resultSchema; }
 
-void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, NodeEngine::StateManagerPtr stateManager, uint32_t localStateVariableId) {
+void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr,
+                                  NodeEngine::StateManagerPtr stateManager,
+                                  uint32_t localStateVariableId) {
     windowHandler->start(stateManager, localStateVariableId);
 }
 void WindowOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->stop(); }
