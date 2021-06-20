@@ -17,11 +17,11 @@
 #ifndef STATEMANAGER_HPP
 #define STATEMANAGER_HPP
 
+#include <State/StateId.hpp>
 #include <State/StateVariable.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <mutex>
 #include <unordered_map>
-#include <State/StateId.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
 
 namespace NES {
 namespace NodeEngine {
@@ -39,9 +39,7 @@ class StateManager {
     uint64_t nodeId;
 
   public:
-    explicit StateManager(uint64_t nodeId) {
-        this->nodeId = nodeId;
-    }
+    explicit StateManager(uint64_t nodeId) { this->nodeId = nodeId; }
 
     /**
      * Register a new StateVariable object with default value callback
@@ -69,7 +67,7 @@ class StateManager {
      */
     template<typename Key, typename Value>
     StateVariable<Key, Value>* registerState(const StateId& variableStateId) {
-        
+
         std::unique_lock<std::mutex> lock(mutex);
         auto stateVariable = new StateVariable<Key, Value>(variableStateId);
         NES_ASSERT(stateVariables.find(variableStateId) == stateVariables.end(), "State variable with this id already exists");
@@ -118,9 +116,7 @@ class StateManager {
         }
     }
 
-    uint64_t getNodeId() {
-        return this->nodeId;
-    }
+    uint64_t getNodeId() { return this->nodeId; }
 
     ~StateManager() { destroy(); }
 
