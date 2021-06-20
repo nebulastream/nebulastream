@@ -20,7 +20,7 @@
 #include <Nodes/Expressions/UnaryExpressionNode.hpp>
 namespace NES {
 /**
- * @brief This node rresents a arithmetical expression.
+ * @brief This node represents an arithmetical expression.
  */
 class ArithmeticalUnaryExpressionNode : public UnaryExpressionNode, public ArithmeticalExpressionNode {
   public:
@@ -37,7 +37,7 @@ class ArithmeticalUnaryExpressionNode : public UnaryExpressionNode, public Arith
   protected:
     explicit ArithmeticalUnaryExpressionNode(DataTypePtr stamp);
     explicit ArithmeticalUnaryExpressionNode(ArithmeticalUnaryExpressionNode* other);
-    ~ArithmeticalUnaryExpressionNode() = default;
+    ~ArithmeticalUnaryExpressionNode() override = default;
 };
 
 }// namespace NES

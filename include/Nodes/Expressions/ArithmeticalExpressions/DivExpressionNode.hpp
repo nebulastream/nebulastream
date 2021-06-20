@@ -25,7 +25,7 @@ namespace NES {
 class DivExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit DivExpressionNode(DataTypePtr stamp);
-    ~DivExpressionNode() noexcept = default;
+    ~DivExpressionNode() noexcept final = default;
     /**
      * @brief Create a new DIV expression
      */

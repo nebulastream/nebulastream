@@ -25,7 +25,7 @@ ModExpressionNode::ModExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpr
 
 ModExpressionNode::ModExpressionNode(ModExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr ModExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
+ExpressionNodePtr ModExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto addNode = std::make_shared<ModExpressionNode>(
         DataTypeFactory::createFloat());// TODO: stamp should always be float, but is this the right way?
     addNode->setChildren(left, right);
@@ -67,6 +67,8 @@ void ModExpressionNode::inferStamp(SchemaPtr schema) {
             leftL = (double) leftAsInteger->lowerBound;
             leftU = (double) leftAsInteger->upperBound;
             // leftL, leftU = leftAsFloat->lowerBound, leftAsFloat->upperBound;
+        } else {
+            return;
         }
 
         if (rightStamp->isFloat()) {
@@ -79,6 +81,8 @@ void ModExpressionNode::inferStamp(SchemaPtr schema) {
             rightL = (double) rightAsInteger->lowerBound;
             rightU = (double) rightAsInteger->upperBound;
             // rightL, rightU = rightAsFloat->lowerBound, rightAsFloat->upperBound;
+        } else {
+            return;
         }
 
         double range = std::max(std::abs(rightL), std::abs(rightU));
@@ -90,7 +94,7 @@ void ModExpressionNode::inferStamp(SchemaPtr schema) {
     // do nothing if the stamp is of type undefined (from ArithmeticalBinaryExpressionNode::inferStamp(schema);)
 }
 
-bool ModExpressionNode::equal(const NodePtr rhs) const {
+bool ModExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<ModExpressionNode>()) {
         auto otherAddNode = rhs->as<ModExpressionNode>();
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
@@ -98,7 +102,7 @@ bool ModExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string ModExpressionNode::toString() const {
+std::string ModExpressionNode::toString() const {
     std::stringstream ss;
     ss << children[0]->toString() << "%" << children[1]->toString();
     return ss.str();

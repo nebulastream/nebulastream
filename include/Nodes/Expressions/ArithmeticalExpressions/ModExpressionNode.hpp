@@ -23,14 +23,14 @@ namespace NES {
  */
     class ModExpressionNode final : public ArithmeticalBinaryExpressionNode {
     public:
-        ModExpressionNode(DataTypePtr stamp);
-        ~ModExpressionNode() = default;
+        explicit ModExpressionNode(DataTypePtr stamp);
+        ~ModExpressionNode() noexcept final = default;
         /**
          * @brief Create a new MODULO expression
          */
-        static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
-        bool equal(const NodePtr rhs) const final;
-        const std::string toString() const final;
+        static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
+        [[nodiscard]] bool equal(NodePtr const& rhs) const final;
+        [[nodiscard]] std::string toString() const final;
 
         /**
          * @brief Determine returned datatype (-> UInt64/Double/ Throw exception for invalid inputs). Override ArithmeticalBinaryExpressionNode::inferStamp to tighten bounds.

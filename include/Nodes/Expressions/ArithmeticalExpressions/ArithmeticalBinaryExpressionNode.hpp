@@ -37,7 +37,7 @@ class ArithmeticalBinaryExpressionNode : public BinaryExpressionNode, public Ari
   protected:
     explicit ArithmeticalBinaryExpressionNode(DataTypePtr stamp);
     explicit ArithmeticalBinaryExpressionNode(ArithmeticalBinaryExpressionNode* other);
-    ~ArithmeticalBinaryExpressionNode() = default;
+    ~ArithmeticalBinaryExpressionNode() override = default;
 };
 
 }// namespace NES
