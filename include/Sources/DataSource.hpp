@@ -18,9 +18,9 @@
 #define INCLUDE_DATASOURCE_H_
 
 #include <API/Schema.hpp>
-#include <NodeEngine/Execution/DataEmitter.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/Reconfigurable.hpp>
+#include <Runtime/Execution/DataEmitter.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/Reconfigurable.hpp>
 #include <Operators/OperatorId.hpp>
 #include <atomic>
 #include <chrono>
@@ -58,7 +58,7 @@ enum SourceType {
 *  3.) If the user just set numBuffersToProcess to n but does not say how many tuples he wants per buffer, we loop over the source until the buffer is full
 */
 
-class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
+class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
   public:
     enum GatheringMode { FREQUENCY_MODE, INGESTION_RATE_MODE };
@@ -70,13 +70,13 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * @param schema of the data that this source produces
      */
     explicit DataSource(const SchemaPtr& schema,
-                        NodeEngine::BufferManagerPtr bufferManager,
-                        NodeEngine::QueryManagerPtr queryManager,
+                        Runtime::BufferManagerPtr bufferManager,
+                        Runtime::QueryManagerPtr queryManager,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
-                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors =
-                            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
+                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
+                            std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     DataSource() = delete;
 
@@ -109,7 +109,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * @Note this function is overwritten by the particular data source
      * @return returns a tuple buffer
      */
-    virtual std::optional<NodeEngine::TupleBuffer> receiveData() = 0;
+    virtual std::optional<Runtime::TupleBuffer> receiveData() = 0;
 
     /**
      * @brief virtual function to get a string describing the particular source
@@ -201,9 +201,9 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
 
     /**
      * @brief Returns the list of successor pipelines.
-     * @return  std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>
+     * @return  std::vector<Runtime::Execution::SuccessorExecutablePipeline>
      */
-    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> getExecutableSuccessors();
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> getExecutableSuccessors();
 
     /**
  * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
@@ -216,10 +216,10 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     }
 
   protected:
-    NodeEngine::QueryManagerPtr queryManager;
-    NodeEngine::BufferManagerPtr globalBufferManager;
-    NodeEngine::FixedSizeBufferPoolPtr bufferManager{nullptr};
-    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors;
+    Runtime::QueryManagerPtr queryManager;
+    Runtime::BufferManagerPtr globalBufferManager;
+    Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
     SchemaPtr schema;
     uint64_t generatedTuples{0};
@@ -236,7 +236,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * @brief Emits a tuple buffer to the successors.
      * @param buffer
      */
-    void emitWork(NodeEngine::TupleBuffer& buffer) override;
+    void emitWork(Runtime::TupleBuffer& buffer) override;
 
     void emitWorkFromSource(NodeEngine::TupleBuffer& buffer);
 

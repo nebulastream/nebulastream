@@ -18,11 +18,11 @@
 
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/WorkerContext.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
@@ -47,12 +47,12 @@
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/LocalBufferPool.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/LocalBufferPool.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 
 using namespace NES;
-using NodeEngine::TupleBuffer;
+using Runtime::TupleBuffer;
 
 class QueryExecutionTest : public testing::Test {
   public:
@@ -72,7 +72,7 @@ class QueryExecutionTest : public testing::Test {
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        nodeEngine = Runtime::create("127.0.0.1", 31337, streamConf);
     }
 
     /* Will be called before a test is executed. */
@@ -86,7 +86,7 @@ class QueryExecutionTest : public testing::Test {
 
     SchemaPtr testSchema;
     SchemaPtr windowSchema;
-    NodeEngine::NodeEnginePtr nodeEngine;
+    Runtime::NodeEnginePtr nodeEngine;
 };
 
 /**
@@ -102,14 +102,14 @@ class WindowSource : public NES::DefaultSource {
     bool varyWatermark;
     bool decreaseTime;
     WindowSource(SchemaPtr schema,
-                 NodeEngine::BufferManagerPtr bufferManager,
-                 NodeEngine::QueryManagerPtr queryManager,
+                 Runtime::BufferManagerPtr bufferManager,
+                 Runtime::QueryManagerPtr queryManager,
                  const uint64_t numbersOfBufferToProduce,
                  uint64_t frequency,
                  bool varyWatermark,
                  bool decreaseTime,
                  int64_t timestamp,
-                 std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+                 std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : DefaultSource(std::move(schema),
                         std::move(bufferManager),
                         std::move(queryManager),
@@ -122,17 +122,17 @@ class WindowSource : public NES::DefaultSource {
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
-        auto rowLayout = NES::NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        auto rowLayout = NES::Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
 
         auto bindedRowLayout = rowLayout->bind(buffer);
 
         for (int i = 0; i < 10; i++) {
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout)[i] = 1;
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout)[i] = 1;
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout)[i] = 1;
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout)[i] = 1;
 
             if (varyWatermark) {
                 if (!decreaseTime) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
                         timestamp++;
                 } else {
                     if (runCnt == 0) {
@@ -154,11 +154,11 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         if (i < 9) {
-                            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2,
+                            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2,
                                                                                                            bindedRowLayout)[i] =
                                 timestamp++;
                         } else {
-                            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2,
+                            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2,
                                                                                                            bindedRowLayout)[i] =
                                 timestamp + 20;
                         }
@@ -180,12 +180,12 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         timestamp = timestamp - 1 <= 0 ? 0 : timestamp - 1;
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
                             timestamp;
                     }
                 }
             } else {
-                NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
+                Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
             }
         }
         buffer.setNumberOfTuples(10);
@@ -197,11 +197,11 @@ class WindowSource : public NES::DefaultSource {
     };
 
     static DataSourcePtr create(const SchemaPtr& schema,
-                                const NodeEngine::BufferManagerPtr& bufferManager,
-                                const NodeEngine::QueryManagerPtr& queryManager,
+                                const Runtime::BufferManagerPtr& bufferManager,
+                                const Runtime::QueryManagerPtr& queryManager,
                                 const uint64_t numbersOfBufferToProduce,
                                 uint64_t frequency,
-                                const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors,
+                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
                                 const bool varyWatermark = false,
                                 bool decreaseTime = false,
                                 int64_t timestamp = 5) {
@@ -222,15 +222,15 @@ using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
 
 class TestSink : public SinkMedium {
   public:
-    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager)
+    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0), expectedBuffer(expectedBuffer){};
 
     static std::shared_ptr<TestSink>
-    create(uint64_t expectedBuffer, const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager) {
+    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
         return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
     }
 
-    bool writeData(TupleBuffer& input_buffer, NodeEngine::WorkerContext&) override {
+    bool writeData(TupleBuffer& input_buffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
         NES_DEBUG("QueryExecutionTest: TestSink: got buffer " << input_buffer);
         NES_DEBUG("QueryExecutionTest: PrettyPrintTupleBuffer"
@@ -284,12 +284,12 @@ class TestSink : public SinkMedium {
     std::vector<TupleBuffer> resultBuffers;
 };
 
-void fillBuffer(TupleBuffer& buf, const NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout) {
+void fillBuffer(TupleBuffer& buf, const Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout) {
 
     auto bindedRowLayout = memoryLayout->bind(buf);
-    auto recordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
-    auto fields01 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
-    auto fields02 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayout);
+    auto recordIndexFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto fields01 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
+    auto fields02 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayout);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         recordIndexFields[recordIndex] = recordIndex;
@@ -306,9 +306,9 @@ TEST_F(QueryExecutionTest, filterQuery) {
         testSchema,
         [&](OperatorId id,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
@@ -331,16 +331,16 @@ TEST_F(QueryExecutionTest, filterQuery) {
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
     // The plan should have one pipeline
-    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1u);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
-    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
-    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
-    NodeEngine::WorkerContext workerContext{1};
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    Runtime::WorkerContext workerContext{1};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -352,7 +352,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
     auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
     auto resultRecordIndexFields =
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
         // id
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
@@ -371,9 +371,9 @@ TEST_F(QueryExecutionTest, projectionQuery) {
         testSchema,
         [&](OperatorId id,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
@@ -396,16 +396,16 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     auto plan = result->getExecutableQueryPlan();
 
     // The plan should have one pipeline
-    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
-    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
-    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
-    NodeEngine::WorkerContext workerContext{1};
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    Runtime::WorkerContext workerContext{1};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -415,10 +415,10 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10UL);
 
-    auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto resultLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields =
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
 
     for (uint32_t recordIndex = 0UL; recordIndex < 10UL; ++recordIndex) {
         // id
@@ -437,9 +437,9 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
         testSchema,
         [&](OperatorId id,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
@@ -476,16 +476,16 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
     // The plan should have one pipeline
-    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
-    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
-    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
-    NodeEngine::WorkerContext workerContext{1};
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    Runtime::WorkerContext workerContext{1};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -526,9 +526,9 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
         windowSchema,
         [&](OperatorId,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return WindowSource::create(windowSchema,
                                         nodeEngine->getBufferManager(),
                                         nodeEngine->getQueryManager(),
@@ -601,9 +601,9 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
         windowSchema,
         [&](OperatorId,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return WindowSource::create(windowSchema,
                                         nodeEngine->getBufferManager(),
                                         nodeEngine->getQueryManager(),
@@ -656,13 +656,13 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
 
-    auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(windowResultSchema, true);
+    auto resultLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(windowResultSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
 
-    auto startFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayoutResult);
-    auto endFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayoutResult);
-    auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayoutResult);
-    auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayoutResult);
+    auto startFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayoutResult);
+    auto endFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayoutResult);
+    auto keyFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayoutResult);
+    auto valueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
         // start
@@ -691,9 +691,9 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
         windowSchema,
         [&](OperatorId,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return WindowSource::create(windowSchema,
                                         nodeEngine->getBufferManager(),
                                         nodeEngine->getQueryManager(),
@@ -746,13 +746,13 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
 
-    auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(windowResultSchema, true);
+    auto resultLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(windowResultSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
 
-    auto startFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayoutResult);
-    auto endFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayoutResult);
-    auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayoutResult);
-    auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayoutResult);
+    auto startFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayoutResult);
+    auto endFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayoutResult);
+    auto keyFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayoutResult);
+    auto valueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
         // start
@@ -776,9 +776,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
         windowSchema,
         [&](OperatorId,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return WindowSource::create(windowSchema,
                                         nodeEngine->getBufferManager(),
                                         nodeEngine->getQueryManager(),
@@ -848,9 +848,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
         windowSchema,
         [&](OperatorId,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return WindowSource::create(windowSchema,
                                         nodeEngine->getBufferManager(),
                                         nodeEngine->getQueryManager(),
@@ -932,9 +932,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
         windowSchema,
         [&](OperatorId,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return WindowSource::create(windowSchema,
                                         nodeEngine->getBufferManager(),
                                         nodeEngine->getQueryManager(),
@@ -1036,14 +1036,14 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // EXPECT_EQ(plan->getNumberOfPipelines(), 3);
 
     // TODO switch to event time if that is ready to remove sleep
-    auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
     // ingest test data
     //plan->setup();
     // plan->start(nodeEngine->getStateManager());
-    NodeEngine::WorkerContext workerContext{1};
+    Runtime::WorkerContext workerContext{1};
     //auto stage_0 = plan->getPipeline(0);
     //auto stage_1 = plan->getPipeline(1);
     for (int i = 0; i < 10; i++) {
@@ -1069,7 +1069,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 
     auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
     auto recordIndexFields =
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
 
     for (auto recordIndex = 0L; recordIndex < 5L; ++recordIndex) {
         EXPECT_EQ(recordIndexFields[recordIndex], recordIndex);

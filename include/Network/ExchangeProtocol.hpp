@@ -19,7 +19,7 @@
 
 #include <Network/NetworkMessage.hpp>
 #include <Network/PartitionManager.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <functional>
 
 namespace NES {
@@ -52,7 +52,7 @@ class ExchangeProtocol {
      * @param id of the buffer
      * @param buffer content
      */
-    void onBuffer(NesPartition nesPartition, NodeEngine::TupleBuffer& buffer);
+    void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer);
 
     /**
      * @brief Reaction of the zmqServer after an error occurs.

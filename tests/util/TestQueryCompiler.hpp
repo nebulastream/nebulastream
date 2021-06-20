@@ -34,15 +34,15 @@ class TestSourceDescriptor : public SourceDescriptor {
         SchemaPtr schema,
         std::function<DataSourcePtr(OperatorId,
                                     SourceDescriptorPtr,
-                                    NodeEngine::NodeEnginePtr,
+                                    Runtime::NodeEnginePtr,
                                     size_t,
-                                    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>)> createSourceFunction)
+                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline>)> createSourceFunction)
         : SourceDescriptor(std::move(std::move(schema))), createSourceFunction(std::move(std::move(createSourceFunction))) {}
     DataSourcePtr create(OperatorId operatorId,
                          SourceDescriptorPtr sourceDescriptor,
-                         NodeEngine::NodeEnginePtr nodeEngine,
+                         Runtime::NodeEnginePtr nodeEngine,
                          size_t numSourceLocalBuffers,
-                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
         return createSourceFunction(operatorId,
                                     std::move(std::move(sourceDescriptor)),
                                     std::move(std::move(nodeEngine)),
@@ -56,9 +56,9 @@ class TestSourceDescriptor : public SourceDescriptor {
   private:
     std::function<DataSourcePtr(OperatorId,
                                 SourceDescriptorPtr,
-                                NodeEngine::NodeEnginePtr,
+                                Runtime::NodeEnginePtr,
                                 size_t,
-                                std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>)>
+                                std::vector<Runtime::Execution::SuccessorExecutablePipeline>)>
         createSourceFunction;
 };
 
@@ -79,7 +79,7 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
     DataSinkPtr lower(OperatorId operatorId,
                       SinkDescriptorPtr sinkDescriptor,
                       SchemaPtr schema,
-                      NodeEngine::NodeEnginePtr nodeEngine,
+                      Runtime::NodeEnginePtr nodeEngine,
                       QuerySubPlanId querySubPlanId) override {
         if (sinkDescriptor->instanceOf<TestSinkDescriptor>()) {
             auto testSinkDescriptor = sinkDescriptor->as<TestSinkDescriptor>();
@@ -95,8 +95,8 @@ class TestSourceProvider : public QueryCompilation::DataSourceProvider {
         : QueryCompilation::DataSourceProvider(std::move(std::move(options))){};
     DataSourcePtr lower(OperatorId operatorId,
                         SourceDescriptorPtr sourceDescriptor,
-                        NodeEngine::NodeEnginePtr nodeEngine,
-                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) override {
+                        Runtime::NodeEnginePtr nodeEngine,
+                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override {
         if (sourceDescriptor->instanceOf<TestSourceDescriptor>()) {
             auto testSourceDescriptor = sourceDescriptor->as<TestSourceDescriptor>();
             return testSourceDescriptor->create(operatorId,

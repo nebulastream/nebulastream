@@ -19,7 +19,7 @@
 
 #include <Monitoring/MetricValues/CpuValues.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
@@ -56,7 +56,7 @@ class CpuMetrics {
      * @param prefix
      * @return The object
      */
-    static CpuMetrics fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static CpuMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json
@@ -81,7 +81,7 @@ class CpuMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const CpuMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief Class specific getSchema() method

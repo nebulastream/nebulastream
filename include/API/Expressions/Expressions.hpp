@@ -92,7 +92,7 @@ ExpressionItem Attribute(std::string name);
 /**
  * @brief Attribute(name, type) allows the user to reference a field, with a specific type in his expression.
  * Field("f1", Int) < 10.
- * todo remove this case if we added type inference at runtime from the operator tree.
+ * todo remove this case if we added type inference at Runtime from the operator tree.
  * todo rename to field if conflict with legacy code is resolved.
  * @param fieldName, type
  */

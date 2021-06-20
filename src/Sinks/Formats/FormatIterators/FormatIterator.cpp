@@ -15,12 +15,12 @@
 */
 
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
 #include <utility>
 
 namespace NES {
 
-FormatIterator::FormatIterator(SchemaPtr schema, NodeEngine::TupleBuffer buffer, FormatTypes formatType)
+FormatIterator::FormatIterator(SchemaPtr schema, Runtime::TupleBuffer buffer, FormatTypes formatType)
     : schema(std::move(schema)), buffer(std::move(buffer)), sinkFormatType(formatType){};
 }// namespace NES

@@ -16,7 +16,7 @@
 
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
@@ -36,7 +36,7 @@ namespace NES {
 DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                                          const SinkDescriptorPtr& sinkDescriptor,
                                                          const SchemaPtr& schema,
-                                                         const NodeEngine::NodeEnginePtr& nodeEngine,
+                                                         const Runtime::NodeEnginePtr& nodeEngine,
                                                          QuerySubPlanId querySubPlanId) {
     NES_DEBUG("Convert sink " << operatorId);
     NES_ASSERT(nodeEngine, "Invalid node engine");

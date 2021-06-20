@@ -31,7 +31,7 @@ uint64_t startupSleepIntervalInSeconds;
 std::vector<std::string> queryMergerRules;
 std::vector<bool> enableQueryMerging;
 std::string querySetLocation;
-std::chrono::nanoseconds runtime;
+std::chrono::nanoseconds Runtime;
 NES::NesCoordinatorPtr coordinator;
 
 void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource, uint64_t noOfDistinctSources = 1) {

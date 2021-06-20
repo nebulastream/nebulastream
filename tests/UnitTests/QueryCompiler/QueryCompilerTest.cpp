@@ -19,7 +19,7 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -78,7 +78,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     auto streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
@@ -109,7 +109,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     auto streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
@@ -180,7 +180,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     auto streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
@@ -214,7 +214,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
     streamCatalog->addLogicalStream("leftStream", schema);
     streamCatalog->addLogicalStream("rightStream", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);

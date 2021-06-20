@@ -18,8 +18,8 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <NodeEngine/ErrorListener.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/ErrorListener.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
@@ -105,7 +105,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     * @param id of the query
     * @return vector of queryStatistics
     */
-    std::vector<NodeEngine::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
+    std::vector<Runtime::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
 
     /**
      * @brief catalog method for debug use only
@@ -139,7 +139,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      */
     GlobalQueryPlanPtr getGlobalQueryPlan();
 
-    NodeEngine::NodeEnginePtr getNodeEngine();
+    Runtime::NodeEnginePtr getNodeEngine();
 
     void onFatalError(int signalNumber, std::string string) override;
     void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;

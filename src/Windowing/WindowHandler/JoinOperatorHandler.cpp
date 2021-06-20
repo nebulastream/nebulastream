@@ -48,26 +48,26 @@ LogicalJoinDefinitionPtr JoinOperatorHandler::getJoinDefinition() { return joinD
 void JoinOperatorHandler::setJoinHandler(AbstractJoinHandlerPtr joinHandler) { this->joinHandler = std::move(joinHandler); }
 
 SchemaPtr JoinOperatorHandler::getResultSchema() { return resultSchema; }
-void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr,
-                                NodeEngine::StateManagerPtr stateManager,
+void JoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+                                Runtime::StateManagerPtr stateManager,
                                 uint32_t localStateVariableId) {
     if (joinHandler) {
         joinHandler->start(stateManager, localStateVariableId);
     }
 }
 
-void JoinOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) {
+void JoinOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
     if (joinHandler) {
         joinHandler->stop();
     }
 }
-void JoinOperatorHandler::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) {
-    NodeEngine::Execution::OperatorHandler::reconfigure(task, context);
+void JoinOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
+    Runtime::Execution::OperatorHandler::reconfigure(task, context);
     joinHandler->reconfigure(task, context);
 }
 
-void JoinOperatorHandler::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) {
-    NodeEngine::Execution::OperatorHandler::postReconfigurationCallback(task);
+void JoinOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
+    Runtime::Execution::OperatorHandler::postReconfigurationCallback(task);
     joinHandler->postReconfigurationCallback(task);
 }
 

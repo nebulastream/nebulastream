@@ -15,7 +15,7 @@
 */
 
 #include <Network/PartitionManager.hpp>
-#include <NodeEngine/Execution/DataEmitter.hpp>
+#include <Runtime/Execution/DataEmitter.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 

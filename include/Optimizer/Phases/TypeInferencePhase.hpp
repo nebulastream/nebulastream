@@ -37,7 +37,7 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 /**
  * @brief The type inference phase receives and query plan and infers all input and output schemata for all operators.
- * If this is not possible it throws an runtime exception.
+ * If this is not possible it throws an Runtime exception.
  */
 class TypeInferencePhase {
   public:

@@ -27,7 +27,7 @@
 #include <open62541/server_config_default.h>
 
 #include <API/Schema.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <thread>
@@ -140,9 +140,9 @@ class OPCSourceTest : public testing::Test {
 
     static void stopServer() { running = false; }
 
-    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
-    NodeEngine::BufferManagerPtr bufferManager;
-    NodeEngine::QueryManagerPtr queryManager;
+    Runtime::NodeEnginePtr nodeEngine{nullptr};
+    Runtime::BufferManagerPtr bufferManager;
+    Runtime::QueryManagerPtr queryManager;
     SchemaPtr test_schema;
     uint64_t buffer_size;
 

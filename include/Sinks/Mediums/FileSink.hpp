@@ -60,7 +60,7 @@ class FileSink : public SinkMedium {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) override;
+    bool writeData(Runtime::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) override;
 
     /**
      * @brief override the toString method for the file output sink

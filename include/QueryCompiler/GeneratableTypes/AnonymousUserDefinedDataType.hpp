@@ -25,7 +25,7 @@
 namespace NES::QueryCompilation {
 /**
  * @brief A generatable data type that generates code for anonymous user define types.
- * This is usually used to generate code for runtime types, which are not covered by the nes type system.
+ * This is usually used to generate code for Runtime types, which are not covered by the nes type system.
  */
 class AnonymousUserDefinedDataType final : public GeneratableDataType {
   public:

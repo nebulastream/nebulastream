@@ -17,11 +17,11 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -30,13 +30,13 @@
 namespace NES {
 
 DefaultSource::DefaultSource(SchemaPtr schema,
-                             NodeEngine::BufferManagerPtr bufferManager,
-                             NodeEngine::QueryManagerPtr queryManager,
+                             Runtime::BufferManagerPtr bufferManager,
+                             Runtime::QueryManagerPtr queryManager,
                              const uint64_t numbersOfBufferToProduce,
                              uint64_t frequency,
                              OperatorId operatorId,
                              size_t numSourceLocalBuffers,
-                             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+                             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
                       std::move(queryManager),
@@ -49,7 +49,7 @@ DefaultSource::DefaultSource(SchemaPtr schema,
     this->gatheringInterval = std::chrono::milliseconds(frequency);
 }
 
-std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {
+std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
     // 10 tuples of size one
     NES_DEBUG("Source:" << this << " requesting buffer");
 
@@ -57,8 +57,8 @@ std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {
     NES_DEBUG("Source:" << this << " got buffer");
     uint64_t tupleCnt = 10;
 
-    auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(std::make_shared<Schema>(schema), true);
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = layout->bind(buf);
+    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(std::make_shared<Schema>(schema), true);
+    Runtime::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = layout->bind(buf);
 
     auto value = 1;
     auto fields = schema->fields;
@@ -69,47 +69,47 @@ std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {
             if (physicalType->isBasicType()) {
                 auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
                 if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<char, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<char, true>::create(fieldIndex,
                                                                                                bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, true>::create(fieldIndex,
                                                                                                   bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, true>::create(fieldIndex,
                                                                                                    bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, true>::create(fieldIndex,
                                                                                                    bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(fieldIndex,
                                                                                                    bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, true>::create(fieldIndex,
                                                                                                  bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(fieldIndex,
                                                                                                   bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, true>::create(fieldIndex,
                                                                                                   bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(fieldIndex,
                                                                                                   bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(fieldIndex,
                                                                                                 bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(fieldIndex,
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(fieldIndex,
                                                                                                  bindedRowLayout)[recordIndex] =
                         value;
                 } else {

@@ -19,18 +19,18 @@
 
 namespace NES::QueryCompilation {
 
-QueryCompilationResult::QueryCompilationResult(NodeEngine::Execution::ExecutableQueryPlanPtr executableQueryPlan)
+QueryCompilationResult::QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan)
     : executableQueryPlan(executableQueryPlan) {}
 QueryCompilationResult::QueryCompilationResult(std::exception_ptr exception) : exception(exception) {}
 
-QueryCompilationResultPtr QueryCompilationResult::create(NodeEngine::Execution::ExecutableQueryPlanPtr qep) {
+QueryCompilationResultPtr QueryCompilationResult::create(Runtime::Execution::ExecutableQueryPlanPtr qep) {
     return std::make_shared<QueryCompilationResult>(QueryCompilationResult(std::move(qep)));
 }
 QueryCompilationResultPtr QueryCompilationResult::create(std::exception_ptr exception) {
     return std::make_shared<QueryCompilationResult>(QueryCompilationResult(std::move(exception)));
 }
 
-NodeEngine::Execution::ExecutableQueryPlanPtr QueryCompilationResult::getExecutableQueryPlan() {
+Runtime::Execution::ExecutableQueryPlanPtr QueryCompilationResult::getExecutableQueryPlan() {
     if (hasError()) {
         std::rethrow_exception(exception.value());
     }

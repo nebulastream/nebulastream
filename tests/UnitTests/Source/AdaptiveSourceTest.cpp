@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/AdaptiveSource.hpp>
 
 #include <Util/UtilityFunctions.hpp>
@@ -30,7 +30,7 @@
 #include <utility>
 
 namespace NES {
-using NodeEngine::TupleBuffer;
+using Runtime::TupleBuffer;
 class AdaptiveSourceTest : public testing::Test {
   public:
     static void SetUpTestCase() {
@@ -52,8 +52,8 @@ struct __attribute__((packed)) inputRow {
 class MockCSVAdaptiveSource : public AdaptiveSource {
   public:
     MockCSVAdaptiveSource(SchemaPtr schema,
-                          NodeEngine::BufferManagerPtr bufferManager,
-                          NodeEngine::QueryManagerPtr queryManager,
+                          Runtime::BufferManagerPtr bufferManager,
+                          Runtime::QueryManagerPtr queryManager,
                           uint64_t initialGatheringInterval,
                           std::string filePath,
                           uint64_t intervalIncrease)
@@ -117,8 +117,8 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
 };
 
 DataSourcePtr createMockCSVAdaptiveSource(const SchemaPtr& schema,
-                                          const NodeEngine::BufferManagerPtr& bufferManager,
-                                          const NodeEngine::QueryManagerPtr& queryManager,
+                                          const Runtime::BufferManagerPtr& bufferManager,
+                                          const Runtime::QueryManagerPtr& queryManager,
                                           uint64_t initialGatheringInterval,
                                           const std::string& filePath,
                                           uint64_t intervalIncrease) {
@@ -137,7 +137,7 @@ DataSourcePtr createMockCSVAdaptiveSource(const SchemaPtr& schema,
  */
 TEST_F(AdaptiveSourceTest, testSamplingChange) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 3133, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 3133, streamConf);
 
     std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
 
@@ -169,7 +169,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
  */
 TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 3133, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 3133, streamConf);
 
     std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
 

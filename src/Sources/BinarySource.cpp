@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger.hpp>
@@ -25,13 +25,13 @@
 namespace NES {
 
 BinarySource::BinarySource(const SchemaPtr& schema,
-                           NodeEngine::BufferManagerPtr bufferManager,
-                           NodeEngine::QueryManagerPtr queryManager,
+                           Runtime::BufferManagerPtr bufferManager,
+                           Runtime::QueryManagerPtr queryManager,
                            const std::string& _file_path,
                            OperatorId operatorId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
-                           std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema,
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -49,7 +49,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
     tuple_size = schema->getSchemaSizeInBytes();
 }
 
-std::optional<NodeEngine::TupleBuffer> BinarySource::receiveData() {
+std::optional<Runtime::TupleBuffer> BinarySource::receiveData() {
     auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
     return buf;
@@ -61,7 +61,7 @@ std::string BinarySource::toString() const {
     return ss.str();
 }
 
-void BinarySource::fillBuffer(NodeEngine::TupleBuffer& buf) {
+void BinarySource::fillBuffer(Runtime::TupleBuffer& buf) {
     /** while(generated_tuples < num_tuples_to_process)
      * read <buf.buffer_size> bytes data from file into buffer
      * advance internal file pointer, if we reach the file end, set to file begin

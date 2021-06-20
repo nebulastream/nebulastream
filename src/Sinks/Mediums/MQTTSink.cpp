@@ -15,7 +15,7 @@
 */
 
 #ifdef ENABLE_MQTT_BUILD
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -74,7 +74,7 @@ MQTTSink::~MQTTSink() {
     }
 }
 
-bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
+bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     NES_ASSERT(connected, "MQTTSink::writeData: cannot write buffer because client is not connected");
 

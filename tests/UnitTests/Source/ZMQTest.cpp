@@ -23,7 +23,7 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
@@ -50,7 +50,7 @@ class ZMQTest : public testing::Test {
     void SetUp() override {
         NES_DEBUG("Setup ZMQTest test case.");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 3001, conf);
+        nodeEngine = Runtime::create("127.0.0.1", 3001, conf);
 
         address = std::string("tcp://") + std::string(LOCAL_ADDRESS) + std::string(":") + std::to_string(LOCAL_PORT);
 
@@ -78,7 +78,7 @@ class ZMQTest : public testing::Test {
     uint64_t test_data_size{};
     std::array<uint32_t, 8> test_data{};
 
-    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
+    Runtime::NodeEnginePtr nodeEngine{nullptr};
 };
 
 /* - ZeroMQ Data Source ---------------------------------------------------- */
@@ -92,7 +92,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
                                       LOCAL_PORT,
                                       1,
                                       12,
-                                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
+                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     std::cout << zmq_source->toString() << std::endl;
     // bufferManager->resizeFixedBufferSize(testDataSize);
 

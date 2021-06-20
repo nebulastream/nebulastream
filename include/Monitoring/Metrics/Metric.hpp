@@ -19,7 +19,7 @@
 
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
@@ -37,8 +37,8 @@ MetricType getMetricType(const T&) {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(uint64_t metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
-void writeToBuffer(const std::string& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const std::string& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief class specific getSchema() methods
@@ -97,7 +97,7 @@ class Metric {
      * @param the metric
      * @return the type of the metric
      */
-    friend void writeToBuffer(const Metric& x, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+    friend void writeToBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
         x.self->writeToBufferConcept(buf, byteOffset);
     }
 
@@ -119,7 +119,7 @@ class Metric {
         /**
          * @brief The serialize concept to enable polymorphism across different metrics to make them serializable.
          */
-        virtual void writeToBufferConcept(NodeEngine::TupleBuffer&, uint64_t byteOffset) = 0;
+        virtual void writeToBufferConcept(Runtime::TupleBuffer&, uint64_t byteOffset) = 0;
 
         virtual SchemaPtr getSchemaConcept(const std::string& prefix) = 0;
     };
@@ -136,7 +136,7 @@ class Metric {
 
         [[nodiscard]] MetricType getType() const override { return getMetricType(data); }
 
-        void writeToBufferConcept(NodeEngine::TupleBuffer& buf, uint64_t byteOffset) override {
+        void writeToBufferConcept(Runtime::TupleBuffer& buf, uint64_t byteOffset) override {
             writeToBuffer(data, buf, byteOffset);
         }
 

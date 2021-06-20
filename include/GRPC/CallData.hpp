@@ -27,7 +27,7 @@ class WorkerRPCServer;
  * @brief This is taken from https://github.com/grpc/grpc/tree/master/examples/cpp/helloworld
  *  Take in the "service" instance (in this case representing an asynchronous
  * server) and the completion queue "completionQueue" used for asynchronous communication
- * with the gRPC runtime.
+ * with the gRPC Runtime.
  */
 class CallData {
   public:
@@ -44,7 +44,7 @@ class CallData {
     void proceed();
 
   private:
-    // The means of communication with the gRPC runtime for an asynchronous
+    // The means of communication with the gRPC Runtime for an asynchronous
     // server.
     WorkerRPCServer& service;
 

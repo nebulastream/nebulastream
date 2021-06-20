@@ -31,17 +31,17 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
 DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
     OperatorId operatorId,
     const SourceDescriptorPtr& sourceDescriptor,
-    const NodeEngine::NodeEnginePtr& nodeEngine,
+    const Runtime::NodeEnginePtr& nodeEngine,
     size_t numSourceLocalBuffers,
-    const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) {
+    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     NES_ASSERT(nodeEngine, "invalid engine");
     auto bufferManager = nodeEngine->getBufferManager();
     auto queryManager = nodeEngine->getQueryManager();

@@ -16,7 +16,7 @@
 
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
-#include <NodeEngine/QueryStatistics.hpp>
+#include <Runtime/QueryStatistics.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>

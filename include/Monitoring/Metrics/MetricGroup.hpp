@@ -65,7 +65,7 @@ class MetricGroup {
      * @param schema
      * @param buf
      */
-    void getSample(NodeEngine::TupleBuffer& buf);
+    void getSample(Runtime::TupleBuffer& buf);
 
     /**
      * @brief Returns the schema of the class.

@@ -17,13 +17,13 @@
 #include <Monitoring/MetricValues/CpuValues.hpp>
 
 #include <API/Schema.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <cpprest/json.h>
 #include <cstring>
 
@@ -44,7 +44,7 @@ SchemaPtr CpuValues::getSchema(const std::string& prefix) {
     return schema;
 }
 
-CpuValues CpuValues::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+CpuValues CpuValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     CpuValues output{};
     //get index where the schema for CpuValues is starting
     auto i = schema->getIndex(prefix + "user");
@@ -53,21 +53,21 @@ CpuValues CpuValues::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer
         && UtilityFunctions::endsWith(schema->fields[i + 9]->getName(), "guestnice")) {
         NES_DEBUG("CpuValues: Index found for " + prefix + "user" + " at " + std::to_string(i));
 
-        auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         auto bindedRowLayout = layout->bind(buf);
 
-        output.user = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 0, bindedRowLayout)[0];
-        output.nice = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 1, bindedRowLayout)[0];
-        output.system = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 2, bindedRowLayout)[0];
-        output.idle = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 3, bindedRowLayout)[0];
-        output.iowait = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 4, bindedRowLayout)[0];
-        output.irq = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 5, bindedRowLayout)[0];
+        output.user = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 0, bindedRowLayout)[0];
+        output.nice = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 1, bindedRowLayout)[0];
+        output.system = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 2, bindedRowLayout)[0];
+        output.idle = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 3, bindedRowLayout)[0];
+        output.iowait = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 4, bindedRowLayout)[0];
+        output.irq = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 5, bindedRowLayout)[0];
         output.softirq =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 6, bindedRowLayout)[0];
-        output.steal = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 7, bindedRowLayout)[0];
-        output.guest = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 8, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 6, bindedRowLayout)[0];
+        output.steal = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 7, bindedRowLayout)[0];
+        output.guest = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 8, bindedRowLayout)[0];
         output.guestnice =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 9, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 9, bindedRowLayout)[0];
 
     } else {
         NES_THROW_RUNTIME_ERROR("CpuValues: Metrics could not be parsed from schema with prefix " + prefix + ":\n"
@@ -100,7 +100,7 @@ web::json::value CpuValues::toJson() const {
     return metricsJson;
 }
 
-void writeToBuffer(const CpuValues& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+void writeToBuffer(const CpuValues& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(CpuValues) < buf.getBufferSize(), "CpuValues: Content does not fit in TupleBuffer");
 

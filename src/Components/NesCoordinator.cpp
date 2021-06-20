@@ -19,7 +19,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -141,7 +141,7 @@ NesCoordinator::~NesCoordinator() {
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
 
-NodeEngine::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
+Runtime::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
 bool NesCoordinator::isCoordinatorRunning() { return isRunning; }
 
 uint64_t NesCoordinator::startCoordinator(bool blocking) {
@@ -298,7 +298,7 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServer end listening");
 }
 
-std::vector<NodeEngine::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
+std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
     NES_INFO("NesCoordinator: Get query statistics for query Id " << queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }

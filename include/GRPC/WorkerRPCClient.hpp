@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 #define NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
@@ -146,7 +146,7 @@ class WorkerRPCClient {
      * @param the buffer where the data will be written into
      * @return true if successful, else false
      */
-    static bool requestMonitoringData(const std::string& address, NodeEngine::TupleBuffer& buf, uint64_t schemaSizeBytes);
+    static bool requestMonitoringData(const std::string& address, Runtime::TupleBuffer& buf, uint64_t schemaSizeBytes);
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return

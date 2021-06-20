@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -64,10 +64,10 @@ class ExecutableSliceAggregationTriggerAction
 
         this->windowSchema = outputSchema;
 
-        windowTupleLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
+        windowTupleLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
     }
 
-    bool doAction(NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
+    bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
                   uint64_t currentWatermark,
                   uint64_t lastWatermark) {
         NES_DEBUG("ExecutableSliceAggregationTriggerAction " << id << ": doAction for currentWatermark=" << currentWatermark
@@ -114,7 +114,7 @@ class ExecutableSliceAggregationTriggerAction
   */
     void aggregateWindows(KeyType key,
                           WindowSliceStore<PartialAggregateType>* store,
-                          NodeEngine::TupleBuffer& tupleBuffer,
+                          Runtime::TupleBuffer& tupleBuffer,
                           uint64_t currentWatermark,
                           uint64_t lastWatermark) {
 
@@ -206,7 +206,7 @@ class ExecutableSliceAggregationTriggerAction
     */
     template<typename ValueType>
 
-    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
+    void writeResultRecord(Runtime::TupleBuffer& tupleBuffer,
                            uint64_t index,
                            uint64_t startTs,
                            uint64_t endTs,
@@ -226,7 +226,7 @@ class ExecutableSliceAggregationTriggerAction
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
+    Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
     uint64_t id;
 };
 }// namespace NES::Windowing

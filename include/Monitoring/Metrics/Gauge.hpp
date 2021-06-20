@@ -19,7 +19,7 @@
 
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <functional>
 
 namespace NES {
@@ -48,7 +48,7 @@ MetricType getMetricType(const Gauge<T>&) {
 }
 
 template<typename T>
-void writeToBuffer(Gauge<T>& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+void writeToBuffer(Gauge<T>& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     writeToBuffer(metric.measure(), buf, byteOffset);
 }
 

@@ -44,7 +44,7 @@ class KafkaSink : public SinkMedium {
      */
     SinkMediumTypes getSinkMediumType();
 
-    bool writeData(NodeEngine::TupleBuffer& input_buffer);
+    bool writeData(Runtime::TupleBuffer& input_buffer);
     void setup() override;
     void shutdown() override;
 

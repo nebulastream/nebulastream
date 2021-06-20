@@ -27,7 +27,7 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <iostream>
 #include <memory>

@@ -19,7 +19,7 @@
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/ZmqServer.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <filesystem>
 #include <future>
 #include <netdb.h>
@@ -59,7 +59,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
             ExchangeListener(std::atomic<std::uint64_t>& bufferReceived, std::promise<bool>& completedProm)
                 : bufferReceived(bufferReceived), completedProm(completedProm) {}
 
-            void onDataBuffer(Network::NesPartition id, NodeEngine::TupleBuffer& buffer) override {
+            void onDataBuffer(Network::NesPartition id, Runtime::TupleBuffer& buffer) override {
                 ((void) id);
                 ((void) buffer);
                 bufferReceived++;
@@ -71,7 +71,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
         };
 
         auto partMgr = std::make_shared<Network::PartitionManager>();
-        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
 
         auto netManager = Network::NetworkManager::create(
             "127.0.0.1",

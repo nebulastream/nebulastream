@@ -20,10 +20,10 @@
 #include <utility>
 #include <vector>
 
-#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
@@ -37,7 +37,7 @@
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
@@ -55,7 +55,7 @@
 
 using namespace NES::Windowing;
 namespace NES {
-using NodeEngine::TupleBuffer;
+using Runtime::TupleBuffer;
 
 class WindowManagerTest : public testing::Test {
   public:
@@ -70,33 +70,33 @@ class WindowManagerTest : public testing::Test {
     const uint64_t buffer_size = 4 * 1024;
 };
 
-class MockedExecutablePipelineStage : public NodeEngine::Execution::ExecutablePipelineStage {
+class MockedExecutablePipelineStage : public Runtime::Execution::ExecutablePipelineStage {
   public:
-    static NodeEngine::Execution::ExecutablePipelineStagePtr create() {
+    static Runtime::Execution::ExecutablePipelineStagePtr create() {
         return std::make_shared<MockedExecutablePipelineStage>();
     }
 
-    ExecutionResult execute(TupleBuffer&, NodeEngine::Execution::PipelineExecutionContext&, NodeEngine::WorkerContext&) override {
+    ExecutionResult execute(TupleBuffer&, Runtime::Execution::PipelineExecutionContext&, Runtime::WorkerContext&) override {
         return ExecutionResult::Ok;
     }
 };
 
-class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
+class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
-                                   NodeEngine::BufferManagerPtr bufferManager,
-                                   NodeEngine::Execution::OperatorHandlerPtr operatorHandler)
+    MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
+                                   Runtime::BufferManagerPtr bufferManager,
+                                   Runtime::Execution::OperatorHandlerPtr operatorHandler)
         : MockedPipelineExecutionContext(std::move(queryManager),
                                          std::move(bufferManager),
-                                         std::vector<NodeEngine::Execution::OperatorHandlerPtr>{std::move(operatorHandler)}) {}
-    MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
-                                   NodeEngine::BufferManagerPtr bufferManager,
-                                   std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
+                                         std::vector<Runtime::Execution::OperatorHandlerPtr>{std::move(operatorHandler)}) {}
+    MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
+                                   Runtime::BufferManagerPtr bufferManager,
+                                   std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
             0,
             std::move(queryManager),
             std::move(bufferManager),
-            [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
+            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
             [this](TupleBuffer& buffer) {
@@ -208,7 +208,7 @@ createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinitio
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31341, conf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 31341, conf);
 
     auto aggregation = Avg(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -394,7 +394,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31341, conf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 31341, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -478,7 +478,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31338, conf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 31338, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -559,7 +559,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31339, conf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 31339, conf);
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -645,7 +645,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -730,7 +730,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31340, conf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 31340, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);

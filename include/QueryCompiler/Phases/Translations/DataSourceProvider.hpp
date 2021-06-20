@@ -15,7 +15,7 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASOURCEPROVIDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASOURCEPROVIDER_HPP_
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Operators/OperatorId.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 namespace NES {
@@ -38,8 +38,8 @@ class DataSourceProvider {
      */
     virtual DataSourcePtr lower(OperatorId operatorId,
                                 SourceDescriptorPtr sourceDescriptor,
-                                NodeEngine::NodeEnginePtr nodeEngine,
-                                std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
+                                Runtime::NodeEnginePtr nodeEngine,
+                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     virtual ~DataSourceProvider() = default;
 

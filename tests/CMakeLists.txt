@@ -82,11 +82,11 @@ message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}")
 #------------------------------- # Unit Test Suite --------------------------------
 
 ### Node Engine Tests ###
-add_executable(node-engine-test "UnitTests/NodeEngine/NodeEngineTest.cpp")
+add_executable(node-engine-test "UnitTests/Runtime/NodeEngineTest.cpp")
 target_link_libraries(node-engine-test nes ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
 
-add_executable(watermark-manager-test "UnitTests/NodeEngine/WatermarkManagerTest.cpp")
+add_executable(watermark-manager-test "UnitTests/Runtime/WatermarkManagerTest.cpp")
 target_link_libraries(watermark-manager-test nes ${GTEST_LIBRARIES})
 add_test(NAME watermark-manager-test COMMAND watermark-manager-test)
 
@@ -146,7 +146,7 @@ target_link_libraries(topology-iterator-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-iterator-tests COMMAND topology-iterator-tests)
 
 ### Buffer Manager Test ###
-add_executable(buffer-manager-tests "UnitTests/NodeEngine/BufferManagerTest.cpp" UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp)
+add_executable(buffer-manager-tests "UnitTests/Runtime/BufferManagerTest.cpp" UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp)
 target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
@@ -234,7 +234,7 @@ target_link_libraries(projection-test nes ${GTEST_LIBRARIES})
 add_test(NAME projection-test COMMAND projection-test)
 
 ### TupleBufferTest ###
-add_executable(tuple-buffer-test "UnitTests/NodeEngine/TupleBufferTest.cpp")
+add_executable(tuple-buffer-test "UnitTests/Runtime/TupleBufferTest.cpp")
 target_link_libraries(tuple-buffer-test nes ${GTEST_LIBRARIES})
 add_test(NAME tuple-buffer-test COMMAND tuple-buffer-test)
 

@@ -18,9 +18,9 @@
 #include <Network/NetworkMessage.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqUtils.hpp>
-#include <NodeEngine/NesThread.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/detail/TupleBufferImpl.hpp>
+#include <Runtime/NesThread.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES::Network {
@@ -38,7 +38,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                                                      uint8_t retryTimes) {
     std::chrono::seconds backOffTime = waitTime;
     try {
-        ChannelId channelId(nesPartition, NodeEngine::NesThread::getId());
+        ChannelId channelId(nesPartition, Runtime::NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
         constexpr int linger = -1;
         NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);
@@ -118,7 +118,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
     return nullptr;
 }
 
-bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tupleSize) {
+bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize) {
     auto numOfTuples = inputBuffer.getNumberOfTuples();
     auto originId = inputBuffer.getOriginId();
     auto watermark = inputBuffer.getWatermark();
@@ -141,7 +141,7 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
     inputBuffer.retain();
     auto const sentBytesOpt = zmqSocket.send(
-        zmq::message_t(ptr, payloadSize, &NodeEngine::detail::zmqBufferRecyclingCallback, inputBuffer.getControlBlock()),
+        zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, inputBuffer.getControlBlock()),
         kZmqSendDefault);
     if (sentBytesOpt.has_value()) {
         NES_TRACE("OutputChannel: Sending buffer with " << inputBuffer.getNumberOfTuples() << "/" << inputBuffer.getBufferSize()

@@ -65,8 +65,8 @@ uint64_t BenchmarkUtils::calcExpectedTuplesSelectivity(std::list<uint64_t> list,
     return countExpectedTuples;
 }
 
-void BenchmarkUtils::recordStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec,
-                                      NodeEngine::NodeEnginePtr nodeEngine) {
+void BenchmarkUtils::recordStatistics(std::vector<Runtime::QueryStatistics*>& statisticsVec,
+                                      Runtime::NodeEnginePtr nodeEngine) {
 
     for (uint64_t i = 0; i < BenchmarkUtils::runSingleExperimentSeconds + 1; ++i) {
         int64_t nextPeriodStartTime = BenchmarkUtils::periodLengthInSeconds * 1000
@@ -75,7 +75,7 @@ void BenchmarkUtils::recordStatistics(std::vector<NodeEngine::QueryStatistics*>&
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(1);
         for (auto it : queryStatisticsPtrs) {
 
-            auto* statistics = new NodeEngine::QueryStatistics(0, 0);
+            auto* statistics = new Runtime::QueryStatistics(0, 0);
             statistics->setProcessedBuffers(it->getProcessedBuffers());
             statistics->setProcessedTasks(it->getProcessedTasks());
             statistics->setProcessedTuple(it->getProcessedTuple());
@@ -92,7 +92,7 @@ void BenchmarkUtils::recordStatistics(std::vector<NodeEngine::QueryStatistics*>&
     }
 }
 
-void BenchmarkUtils::computeDifferenceOfStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec) {
+void BenchmarkUtils::computeDifferenceOfStatistics(std::vector<Runtime::QueryStatistics*>& statisticsVec) {
     for (uint64_t i = statisticsVec.size() - 1; i > 1; --i) {
         statisticsVec[i]->setProcessedTuple(statisticsVec[i]->getProcessedTuple() - statisticsVec[i - 1]->getProcessedTuple());
         statisticsVec[i]->setProcessedBuffers(statisticsVec[i]->getProcessedBuffers()
@@ -113,7 +113,7 @@ std::string BenchmarkUtils::getCurDateTimeStringWithNESVersion() {
     return oss.str();
 }
 
-std::string BenchmarkUtils::getStatisticsAsCSV(NodeEngine::QueryStatistics* statistic, SchemaPtr schema) {
+std::string BenchmarkUtils::getStatisticsAsCSV(Runtime::QueryStatistics* statistic, SchemaPtr schema) {
     return "," + std::to_string(statistic->getProcessedBuffers()) + "," + std::to_string(statistic->getProcessedTasks()) + ","
         + std::to_string(statistic->getProcessedTuple()) + ","
         + std::to_string(statistic->getProcessedTuple() * schema->getSchemaSizeInBytes()) + ","
@@ -122,14 +122,14 @@ std::string BenchmarkUtils::getStatisticsAsCSV(NodeEngine::QueryStatistics* stat
                          / (1024 * 1024 * BenchmarkUtils::runSingleExperimentSeconds));
 }
 
-void BenchmarkUtils::printOutConsole(NodeEngine::QueryStatistics* statistic, SchemaPtr schema) {
+void BenchmarkUtils::printOutConsole(Runtime::QueryStatistics* statistic, SchemaPtr schema) {
     std::cout << "numberOfTuples/sec=" << statistic << schema;
 }
 
-void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec,
+void BenchmarkUtils::runBenchmark(std::vector<Runtime::QueryStatistics*>& statisticsVec,
                                   std::vector<DataSourcePtr> benchmarkSource,
                                   std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
-                                  NodeEngine::NodeEnginePtr nodeEngine,
+                                  Runtime::NodeEnginePtr nodeEngine,
                                   Query query) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
@@ -153,7 +153,7 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
     //    }
     //    auto plan = builder.build();
     //    nodeEngine->registerQueryInNodeEngine(plan);
-    //    NES_INFO("BenchmarkUtils: QEP for " << queryPlan->toString() << " was registered in NodeEngine. Starting query now...");
+    //    NES_INFO("BenchmarkUtils: QEP for " << queryPlan->toString() << " was registered in Runtime. Starting query now...");
     //
     //    NES_INFO("BenchmarkUtils: Starting query...");
     //    nodeEngine->startQuery(1);

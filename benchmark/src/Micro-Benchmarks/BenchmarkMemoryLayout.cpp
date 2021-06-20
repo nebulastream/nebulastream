@@ -17,10 +17,10 @@
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <benchmark/benchmark.h>
 
 namespace NES::Benchmarking {
@@ -48,7 +48,7 @@ namespace NES::Benchmarking {
 static void BM_WriteRecordsRowLayoutOldLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
@@ -100,7 +100,7 @@ static void BM_WriteRecordsRowLayoutOldLayout(benchmark::State& state) {
 static void BM_WriteRecordsCustomRowLayoutOldLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
@@ -132,7 +132,7 @@ static void BM_WriteRecordsCustomRowLayoutOldLayout(benchmark::State& state) {
 static void BM_ReadRecordsCustomRowLayoutOldLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
@@ -223,7 +223,7 @@ static void BM_ReadRecordsCustomRowLayoutOldLayout(benchmark::State& state) {
 static void BM_ReadRecordsRowLayoutOldLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
@@ -335,7 +335,7 @@ static void BM_ReadRecordsRowLayoutOldLayout(benchmark::State& state) {
 static void BM_WriteFieldRowLayoutOldLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
@@ -352,7 +352,7 @@ static void BM_WriteFieldRowLayoutOldLayout(benchmark::State& state) {
 static void BM_ReadFieldRowLayoutOldLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());

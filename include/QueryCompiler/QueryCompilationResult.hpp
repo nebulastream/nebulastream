@@ -30,14 +30,14 @@ namespace QueryCompilation {
  */
 class QueryCompilationResult {
   public:
-    static QueryCompilationResultPtr create(NodeEngine::Execution::ExecutableQueryPlanPtr qep);
+    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep);
     static QueryCompilationResultPtr create(std::exception_ptr exception);
     /**
      * @brief Returns the query execution plan if hasError() == false.
      * @throws QueryCompilationException if hasError() == true.
      * @return NewExecutableQueryPlanPtr
      */
-    NodeEngine::Execution::ExecutableQueryPlanPtr getExecutableQueryPlan();
+    Runtime::Execution::ExecutableQueryPlanPtr getExecutableQueryPlan();
 
     /**
      * @brief Indicates if the query compilation succeeded.
@@ -52,9 +52,9 @@ class QueryCompilationResult {
     std::exception_ptr getError();
 
   private:
-    explicit QueryCompilationResult(NodeEngine::Execution::ExecutableQueryPlanPtr executableQueryPlan);
+    explicit QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan);
     explicit QueryCompilationResult(std::exception_ptr exception);
-    std::optional<NodeEngine::Execution::ExecutableQueryPlanPtr> executableQueryPlan;
+    std::optional<Runtime::Execution::ExecutableQueryPlanPtr> executableQueryPlan;
     std::optional<std::exception_ptr> exception;
 };
 }// namespace QueryCompilation

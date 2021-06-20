@@ -27,7 +27,7 @@ static constexpr auto MANGELED_ENTRY_POINT = "_ZN3NES6createEv";
 #error "unsupported platform/OS"
 #endif
 
-using CreateFunctionPtr = NodeEngine::Execution::ExecutablePipelineStagePtr (*)();
+using CreateFunctionPtr = Runtime::Execution::ExecutablePipelineStagePtr (*)();
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(const CompiledCodePtr& compiledCode,
                                                                  PipelineStageArity arity,
@@ -37,7 +37,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(const CompiledC
     this->executablePipelineStage = (*createFunction)();
 }
 
-NodeEngine::Execution::ExecutablePipelineStagePtr CompiledExecutablePipelineStage::create(const CompiledCodePtr& compiledCode,
+Runtime::Execution::ExecutablePipelineStagePtr CompiledExecutablePipelineStage::create(const CompiledCodePtr& compiledCode,
                                                                                           PipelineStageArity arity,
                                                                                           const std::string& sourceCode) {
     return std::make_shared<CompiledExecutablePipelineStage>(compiledCode, arity, sourceCode);
@@ -50,7 +50,7 @@ CompiledExecutablePipelineStage::~CompiledExecutablePipelineStage() {
     this->compiledCode.reset();
 }
 
-uint32_t CompiledExecutablePipelineStage::setup(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) {
+uint32_t CompiledExecutablePipelineStage::setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != NotInitialized) {
         NES_FATAL_ERROR("CompiledExecutablePipelineStage: The pipeline stage, is already initialized."
@@ -61,7 +61,7 @@ uint32_t CompiledExecutablePipelineStage::setup(NodeEngine::Execution::PipelineE
     return executablePipelineStage->setup(pipelineExecutionContext);
 }
 
-uint32_t CompiledExecutablePipelineStage::start(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) {
+uint32_t CompiledExecutablePipelineStage::start(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Initialized) {
         NES_FATAL_ERROR("CompiledExecutablePipelineStage: The pipeline stage, is not initialized."
@@ -73,8 +73,8 @@ uint32_t CompiledExecutablePipelineStage::start(NodeEngine::Execution::PipelineE
     return executablePipelineStage->start(pipelineExecutionContext);
 }
 
-uint32_t CompiledExecutablePipelineStage::open(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
-                                               NodeEngine::WorkerContext& workerContext) {
+uint32_t CompiledExecutablePipelineStage::open(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+                                               Runtime::WorkerContext& workerContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Running) {
         NES_FATAL_ERROR(
@@ -87,8 +87,8 @@ uint32_t CompiledExecutablePipelineStage::open(NodeEngine::Execution::PipelineEx
 
 ExecutionResult
 CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
-                                         NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
-                                         NodeEngine::WorkerContext& workerContext) {
+                                         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+                                         Runtime::WorkerContext& workerContext) {
     // we dont get the lock here as we dont was to serialize the execution.
     // currentExecutionStage is an atomic so its still save to read it
     if (currentExecutionStage != Running) {
@@ -104,8 +104,8 @@ CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
 
 std::string CompiledExecutablePipelineStage::getCodeAsString() { return sourceCode; }
 
-uint32_t CompiledExecutablePipelineStage::close(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
-                                                NodeEngine::WorkerContext& workerContext) {
+uint32_t CompiledExecutablePipelineStage::close(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+                                                Runtime::WorkerContext& workerContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Running) {
         NES_FATAL_ERROR(
@@ -115,7 +115,7 @@ uint32_t CompiledExecutablePipelineStage::close(NodeEngine::Execution::PipelineE
     }
     return this->executablePipelineStage->close(pipelineExecutionContext, workerContext);
 }
-uint32_t CompiledExecutablePipelineStage::stop(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) {
+uint32_t CompiledExecutablePipelineStage::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) {
     if (currentExecutionStage != Running) {
         NES_FATAL_ERROR(
             "CompiledExecutablePipelineStage:stop The pipeline stage, was not correctly initialized and started. You must first "

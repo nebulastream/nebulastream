@@ -40,8 +40,8 @@ class NetworkSink : public SinkMedium {
                          NetworkManagerPtr networkManager,
                          NodeLocation const& nodeLocation,
                          NesPartition nesPartition,
-                         const NodeEngine::BufferManagerPtr& bufferManager,
-                         NodeEngine::QueryManagerPtr queryManager,
+                         const Runtime::BufferManagerPtr& bufferManager,
+                         Runtime::QueryManagerPtr queryManager,
                          std::chrono::seconds waitTime = std::chrono::seconds(5),
                          uint8_t retryTimes = 10);
 
@@ -53,7 +53,7 @@ class NetworkSink : public SinkMedium {
      * @param workerContext
      * @return true if no error occurred
      */
-    bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) override;
+    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
 
     /**
      * @return the string representation of the network sink
@@ -65,9 +65,9 @@ class NetworkSink : public SinkMedium {
      * @param task descriptor of the reconfiguration
      * @param workerContext the thread on which this is called
      */
-    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& workerContext) override;
+    void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) override;
 
-    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage&) override;
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage&) override;
 
     /**
      * @brief setup method to configure the network sink via a reconfiguration
@@ -87,7 +87,7 @@ class NetworkSink : public SinkMedium {
 
   private:
     NetworkManagerPtr networkManager;
-    NodeEngine::QueryManagerPtr queryManager;
+    Runtime::QueryManagerPtr queryManager;
     const NodeLocation nodeLocation;
     NesPartition nesPartition;
 

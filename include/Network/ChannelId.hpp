@@ -18,7 +18,7 @@
 #define NES_INCLUDE_NETWORK_CHANNELID_HPP_
 
 #include <Network/NesPartition.hpp>
-#include <NodeEngine/NesThread.hpp>
+#include <Runtime/NesThread.hpp>
 
 namespace NES {
 namespace Network {

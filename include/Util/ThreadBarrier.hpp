@@ -17,7 +17,7 @@
 #ifndef NES_THREADBARRIER_HPP
 #define NES_THREADBARRIER_HPP
 
-#include <NodeEngine/NesThread.hpp>
+#include <Runtime/NesThread.hpp>
 #include <condition_variable>
 #include <mutex>
 namespace NES {
@@ -33,7 +33,7 @@ class ThreadBarrier {
      * @param size
      */
     explicit ThreadBarrier(uint32_t size) : size(size), count(0) {
-        NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
+        NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
     }
 
     ThreadBarrier() = delete;
@@ -45,7 +45,7 @@ class ThreadBarrier {
     ~ThreadBarrier() {
         std::unique_lock<std::mutex> lock(mutex);
         NES_ASSERT2_FMT(count >= size, "destroying not completed thread barrier count=" << count << " size=" << size);
-        NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
+        NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
     }
 
     /**
@@ -53,7 +53,7 @@ class ThreadBarrier {
      */
     void wait() {
         std::unique_lock<std::mutex> lock(mutex);
-        NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
+        NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
         if (++count >= size) {
             cvar.notify_all();
         } else {

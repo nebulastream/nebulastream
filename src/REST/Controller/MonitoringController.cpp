@@ -16,8 +16,8 @@
 
 #include <REST/Controller/MonitoringController.hpp>
 
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger.hpp>
 

@@ -39,13 +39,13 @@ class GeneratorSource : public DataSource {
    * @param via template, the functor that determines what to do
    */
     GeneratorSource(SchemaPtr schema,
-                    NodeEngine::BufferManagerPtr bufferManager,
-                    NodeEngine::QueryManagerPtr queryManager,
+                    Runtime::BufferManagerPtr bufferManager,
+                    Runtime::QueryManagerPtr queryManager,
                     uint64_t numbersOfBufferToProduce,
                     OperatorId operatorId,
                     size_t numSourceLocalBuffers,
                     GatheringMode gatheringMode,
-                    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : DataSource(std::move(schema),
                      std::move(bufferManager),
                      std::move(queryManager),
@@ -59,7 +59,7 @@ class GeneratorSource : public DataSource {
    * @brief override function to create one buffer
    * @return pointer to a buffer containing the created tuples
    */
-    std::optional<NodeEngine::TupleBuffer> receiveData() override = 0;
+    std::optional<Runtime::TupleBuffer> receiveData() override = 0;
 
     /**
      * @brief override the toString method for the generator source

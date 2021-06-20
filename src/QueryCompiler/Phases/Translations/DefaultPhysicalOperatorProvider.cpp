@@ -188,7 +188,7 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const
 
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
-    // create join operator handler, to establish a common runtime object for build and prob.
+    // create join operator handler, to establish a common Runtime object for build and prob.
     auto joinOperatorHandler =
         Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
 
@@ -231,7 +231,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
-    // create window operator handler, to establish a common runtime object for aggregation and trigger phase.
+    // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator

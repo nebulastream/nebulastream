@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_WINDOWOPERATORHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_WINDOWOPERATORHANDLER_HPP_
 
-#include <NodeEngine/Execution/OperatorHandler.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 namespace NES::Windowing {
@@ -25,7 +25,7 @@ namespace NES::Windowing {
 /**
  * @brief Operator handler for window aggregations.
  */
-class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
+class WindowOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
     WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
 
@@ -83,23 +83,23 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
      * @param localStateVariableId local id of a state on an engine node
      * @param stateManager pointer to the current state manager
     */
-    void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               NodeEngine::StateManagerPtr stateManager,
+    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+               Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
     /**
     * @brief Stops window handler
      * @param pipelineExecutionContext pointer to the current pipeline execution context
     */
-    void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     ~WindowOperatorHandler() override { NES_DEBUG("~WindowOperatorHandler()" + std::to_string(windowHandler.use_count())); }
 
     LogicalWindowDefinitionPtr getWindowDefinition();
 
-    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override;
+    void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) override;
 
-    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override;
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override;
 
     SchemaPtr getResultSchema();
 

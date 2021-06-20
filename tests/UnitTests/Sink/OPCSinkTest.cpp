@@ -17,8 +17,8 @@
 #ifdef ENABLE_OPC_BUILD
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <NodeEngine/WorkerContext.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
@@ -31,7 +31,7 @@
 #include <string>
 #include <thread>
 
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <future>
 
 const std::string& url = "opc.tcp://localhost:4840";
@@ -43,7 +43,7 @@ namespace NES {
 
 class OPCSinkTest : public testing::Test {
   public:
-    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
+    Runtime::NodeEnginePtr nodeEngine{nullptr};
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -176,8 +176,8 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     t1.detach();
     p.get_future().wait();
     auto test_schema = Schema::create()->addField("var", UINT32);
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    NodeEngine::TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
+    Runtime::TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     write_buffer.getBuffer<uint32_t>()[0] = 45;
     write_buffer.setNumberOfTuples(1);
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);

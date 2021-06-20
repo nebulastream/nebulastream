@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <State/StateVariable.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
@@ -31,8 +31,8 @@ class BaseExecutableJoinAction {
      * @return bool indicating success
      */
     virtual bool
-    doAction(NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
-             NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
+    doAction(Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
+             Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
              uint64_t currentWatermark,
              uint64_t lastWatermark) = 0;
 
@@ -45,7 +45,7 @@ class BaseExecutableJoinAction {
 
     virtual SchemaPtr getJoinSchema() = 0;
 
-    virtual void setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint64_t originId) {
+    virtual void setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint64_t originId) {
         NES_ASSERT(pipelineExecutionContext, "invalid pipelineExecutionContext");
         this->originId = originId;
         this->weakExecutionContext = pipelineExecutionContext;
@@ -54,10 +54,10 @@ class BaseExecutableJoinAction {
 
   protected:
     std::atomic<uint64_t> emitSequenceNumber = 0;
-    std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
+    std::weak_ptr<Runtime::Execution::PipelineExecutionContext> weakExecutionContext;
     // sorry i need to do this to remind us of this hack
     // otherwise we ll file an issue and forget about it
-    std::shared_ptr<NodeEngine::Execution::PipelineExecutionContext> phantom;
+    std::shared_ptr<Runtime::Execution::PipelineExecutionContext> phantom;
 
     uint64_t originId;
 };

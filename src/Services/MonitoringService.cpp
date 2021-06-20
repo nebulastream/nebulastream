@@ -22,8 +22,8 @@
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringManager.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -34,7 +34,7 @@
 namespace NES {
 
 MonitoringService::MonitoringService(TopologyPtr topology,
-                                     NodeEngine::BufferManagerPtr bufferManager,
+                                     Runtime::BufferManagerPtr bufferManager,
                                      MonitoringManagerPtr monitoringManager)
     : topology(std::move(topology)), bufferManager(std::move(bufferManager)), monitoringManager(std::move(monitoringManager)) {
     NES_DEBUG("MonitoringService: Initializing");

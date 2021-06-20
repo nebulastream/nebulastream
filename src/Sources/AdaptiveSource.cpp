@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/AdaptiveSource.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -30,8 +30,8 @@
 namespace NES {
 
 AdaptiveSource::AdaptiveSource(SchemaPtr schema,
-                               NodeEngine::BufferManagerPtr bufferManager,
-                               NodeEngine::QueryManagerPtr queryManager,
+                               Runtime::BufferManagerPtr bufferManager,
+                               Runtime::QueryManagerPtr queryManager,
                                uint64_t initialGatheringInterval,
                                OperatorId operatorId,
                                size_t numSourceLocalBuffers,
@@ -48,7 +48,7 @@ AdaptiveSource::AdaptiveSource(SchemaPtr schema,
 
 SourceType AdaptiveSource::getType() const { return ADAPTIVE_SOURCE; }
 
-std::optional<NodeEngine::TupleBuffer> AdaptiveSource::receiveData() {
+std::optional<Runtime::TupleBuffer> AdaptiveSource::receiveData() {
     NES_DEBUG("AdaptiveSource::receiveData called");
     auto buf = this->bufferManager->getBufferBlocking();
     this->sampleSourceAndFillBuffer(buf);

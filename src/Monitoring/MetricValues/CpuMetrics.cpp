@@ -17,10 +17,10 @@
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -44,16 +44,16 @@ CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const { return cpuVa
 
 CpuValues CpuMetrics::getTotal() const { return total; }
 
-CpuMetrics CpuMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+CpuMetrics CpuMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     //get index where the schema for CpuMetrics is starting
     auto idx = schema->getIndex(prefix + "CORE_NO");
 
     if (idx < schema->getSize() && buf.getNumberOfTuples() == 1
         && UtilityFunctions::endsWith(schema->fields[idx]->getName(), "CORE_NO")) {
         //if schema contains cpuMetrics parse the wrapper object
-        auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         auto bindedRowLayout = layout->bind(buf);
-        auto numCores = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, true>::create(idx, bindedRowLayout)[0];
+        auto numCores = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, true>::create(idx, bindedRowLayout)[0];
 
         auto cpu = std::vector<CpuValues>(numCores);
         auto totalCpu = CpuValues::fromBuffer(schema, buf, prefix + "CPU[TOTAL]_");
@@ -81,7 +81,7 @@ web::json::value CpuMetrics::toJson() {
     return metricsJson;
 }
 
-void writeToBuffer(const CpuMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     uint64_t totalSize = byteOffset + sizeof(uint16_t) + sizeof(CpuValues) * (metrics.getNumCores() + 1);
     NES_ASSERT(totalSize < buf.getBufferSize(), "CpuMetrics: Content does not fit in TupleBuffer");

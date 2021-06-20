@@ -86,7 +86,7 @@ class MillisecondIntervalTest : public testing::Test {
         rpcPort = rpcPort + 40;
 
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        this->nodeEngine = Runtime::create("127.0.0.1", 31337, streamConf);
 
         crdConf = CoordinatorConfig::create();
         crdConf->setRpcPort(rpcPort);
@@ -113,7 +113,7 @@ class MillisecondIntervalTest : public testing::Test {
         NES_INFO("Tear down MillisecondIntervalTest test case.");
     }
 
-    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
+    Runtime::NodeEnginePtr nodeEngine{nullptr};
 };// MillisecondIntervalTest
 
 TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSecond) {

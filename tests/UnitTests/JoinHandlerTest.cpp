@@ -21,9 +21,9 @@
 
 #include <API/Windowing.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>

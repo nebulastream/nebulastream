@@ -15,8 +15,8 @@
 */
 
 #include <API/Schema.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -25,10 +25,10 @@
 #include <utility>
 namespace NES {
 
-CsvFormat::CsvFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
+CsvFormat::CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
-std::optional<NodeEngine::TupleBuffer> CsvFormat::getSchema() {
+std::optional<Runtime::TupleBuffer> CsvFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
     std::stringstream ss;
     uint64_t numberOfFields = schema->fields.size();
@@ -49,8 +49,8 @@ std::optional<NodeEngine::TupleBuffer> CsvFormat::getSchema() {
     return buf;
 }
 
-std::vector<NodeEngine::TupleBuffer> CsvFormat::getData(NodeEngine::TupleBuffer& inputBuffer) {
-    std::vector<NodeEngine::TupleBuffer> buffers;
+std::vector<Runtime::TupleBuffer> CsvFormat::getData(Runtime::TupleBuffer& inputBuffer) {
+    std::vector<Runtime::TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("CsvFormat::getData: write watermark-only buffer");
@@ -93,6 +93,6 @@ std::string CsvFormat::toString() { return "CSV_FORMAT"; }
 
 FormatTypes CsvFormat::getSinkFormat() { return CSV_FORMAT; }
 
-FormatIterator CsvFormat::getTupleIterator(NodeEngine::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+FormatIterator CsvFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 
 }// namespace NES

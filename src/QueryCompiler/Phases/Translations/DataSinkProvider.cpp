@@ -24,7 +24,7 @@ DataSinkProviderPtr DataSinkProvider::create() { return std::make_shared<DataSin
 DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
                                     SinkDescriptorPtr sinkDescriptor,
                                     SchemaPtr schema,
-                                    NodeEngine::NodeEnginePtr nodeEngine,
+                                    Runtime::NodeEnginePtr nodeEngine,
                                     QuerySubPlanId querySubPlanId) {
     return ConvertLogicalToPhysicalSink::createDataSink(sinkId,
                                                         std::move(sinkDescriptor),

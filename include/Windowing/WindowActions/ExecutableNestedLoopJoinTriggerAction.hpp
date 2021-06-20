@@ -16,11 +16,11 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
@@ -53,13 +53,13 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         : joinDefinition(joinDefinition), id(id) {
         windowSchema = joinDefinition->getOutputSchema();
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << " join output schema=" << windowSchema->toString());
-        windowTupleLayout = NES::NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
+        windowTupleLayout = NES::Runtime::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
     }
 
     virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_DEBUG("~ExecutableNestedLoopJoinTriggerAction " << id << ":()"); }
 
-    bool doAction(NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
-                  NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
+    bool doAction(Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
+                  Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
                   uint64_t currentWatermark,
                   uint64_t lastWatermark) override {
 
@@ -133,7 +133,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     size_t joinWindows(KeyType key,
                        Windowing::WindowedJoinSliceListStore<InputTypeLeft>* leftStore,
                        Windowing::WindowedJoinSliceListStore<InputTypeRight>* rightStore,
-                       NodeEngine::TupleBuffer& tupleBuffer,
+                       Runtime::TupleBuffer& tupleBuffer,
                        uint64_t currentWatermark,
                        uint64_t lastWatermark) {
         NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":::joinWindows:leftStore currentWatermark is="
@@ -262,7 +262,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     * @param key key of the value
     * @param value value
     */
-    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
+    void writeResultRecord(Runtime::TupleBuffer& tupleBuffer,
                            uint64_t index,
                            uint64_t startTs,
                            uint64_t endTs,
@@ -286,7 +286,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   private:
     LogicalJoinDefinitionPtr joinDefinition;
     SchemaPtr windowSchema;
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
+    Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
     uint64_t id;
 };
 }// namespace NES::Join

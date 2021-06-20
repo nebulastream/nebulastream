@@ -15,7 +15,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -23,15 +23,15 @@
 
 namespace NES {
 
-SinkFormat::SinkFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
+SinkFormat::SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : schema(std::move(schema)), bufferManager(std::move(bufferManager)) {}
 
 SchemaPtr SinkFormat::getSchemaPtr() { return schema; }
 
 void SinkFormat::setSchemaPtr(SchemaPtr schema) { this->schema = std::move(schema); }
 
-NodeEngine::BufferManagerPtr SinkFormat::getBufferManager() { return bufferManager; }
+Runtime::BufferManagerPtr SinkFormat::getBufferManager() { return bufferManager; }
 
-void SinkFormat::setBufferManager(NodeEngine::BufferManagerPtr bufferManager) { this->bufferManager = std::move(bufferManager); }
+void SinkFormat::setBufferManager(Runtime::BufferManagerPtr bufferManager) { this->bufferManager = std::move(bufferManager); }
 
 }// namespace NES

@@ -35,17 +35,17 @@ class MonitoringSource : public DefaultSource {
   public:
     MonitoringSource(const MonitoringPlanPtr& monitoringPlan,
                      MetricCatalogPtr metricCatalog,
-                     NodeEngine::BufferManagerPtr bufferManager,
-                     NodeEngine::QueryManagerPtr queryManager,
+                     Runtime::BufferManagerPtr bufferManager,
+                     Runtime::QueryManagerPtr queryManager,
                      uint64_t numbersOfBufferToProduce,
                      uint64_t frequency,
                      OperatorId operatorId,
                      size_t numSourceLocalBuffers,
-                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors = {});
+                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {});
 
     SourceType getType() const override;
 
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the binary source

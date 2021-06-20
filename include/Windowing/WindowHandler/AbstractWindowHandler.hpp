@@ -17,8 +17,8 @@
 #ifndef INCLUDE_WINDOWS_WINDOW_HPP_
 #define INCLUDE_WINDOWS_WINDOW_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/Reconfigurable.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/Reconfigurable.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -43,9 +43,9 @@ namespace NES::Windowing {
  * @brief The abstract window handler is the base class for all window handlers
  */
 class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<AbstractWindowHandler, false>,
-                              public NodeEngine::Reconfigurable {
+                              public Runtime::Reconfigurable {
     using inherited0 = detail::virtual_enable_shared_from_this<AbstractWindowHandler, false>;
-    using inherited1 = NodeEngine::Reconfigurable;
+    using inherited1 = Runtime::Reconfigurable;
 
   public:
     explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition)
@@ -66,7 +66,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
     * @param localStateVariableId local id of a state on an engine node
     * @return boolean if the window thread is started
     */
-    virtual bool start(NodeEngine::StateManagerPtr stateManager, uint32_t localStateVariableId) = 0;
+    virtual bool start(Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) = 0;
 
     /**
      * @brief Stops the window thread.
@@ -83,7 +83,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+    virtual bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
     /**
      * @brief Returns window manager.
@@ -149,7 +149,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      * @param task
      * @param context
      */
-    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override {
+    void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) override {
         Reconfigurable::reconfigure(task, context);
     }
 
@@ -157,7 +157,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      * @brief Reconfigure machinery for the window hander: does nothing in this class but can be overidden in its children
      * @param task
      */
-    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override {
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override {
         Reconfigurable::postReconfigurationCallback(task);
     }
 

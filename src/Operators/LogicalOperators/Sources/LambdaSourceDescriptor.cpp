@@ -21,7 +21,7 @@ namespace NES {
 
 LambdaSourceDescriptor::LambdaSourceDescriptor(
     SchemaPtr schema,
-    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
     DataSource::GatheringMode gatheringMode)
@@ -30,7 +30,7 @@ LambdaSourceDescriptor::LambdaSourceDescriptor(
 
 std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     const SchemaPtr& schema,
-    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
     DataSource::GatheringMode gatheringMode) {
@@ -51,7 +51,7 @@ bool LambdaSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return schema == otherMemDescr->schema;
 }
 
-std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&&
+std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&&
 LambdaSourceDescriptor::getGeneratorFunction() {
     return std::move(generationFunction);
 }

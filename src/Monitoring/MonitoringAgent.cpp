@@ -20,7 +20,7 @@
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 
@@ -49,7 +49,7 @@ SchemaPtr MonitoringAgent::registerMonitoringPlan(const MonitoringPlanPtr& monit
     return schema;
 }
 
-bool MonitoringAgent::getMetrics(NodeEngine::TupleBuffer& tupleBuffer) {
+bool MonitoringAgent::getMetrics(Runtime::TupleBuffer& tupleBuffer) {
     MetricGroupPtr metricGroup = monitoringPlan->createMetricGroup(catalog);
     metricGroup->getSample(tupleBuffer);
     return true;

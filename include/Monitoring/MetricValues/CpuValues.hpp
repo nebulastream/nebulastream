@@ -18,7 +18,7 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <string>
 
 namespace NES {
@@ -44,7 +44,7 @@ class CpuValues {
      * @param prefix
      * @return The object
      */
-    static CpuValues fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static CpuValues fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Stream operator to convert the object to string
@@ -83,7 +83,7 @@ class CpuValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const CpuValues& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const CpuValues& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 }// namespace NES
 

@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -30,7 +30,7 @@
 namespace NES {
 class ConvertLogicalToPhysicalSourceTest : public testing::Test {
   public:
-    NodeEngine::NodeEnginePtr engine;
+    Runtime::NodeEnginePtr engine;
 
     static void SetUpTestCase() {
         NES::setupLogging("ConvertLogicalToPhysicalSourceTest.log", NES::LOG_DEBUG);
@@ -42,7 +42,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
     void SetUp() override {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        engine = NodeEngine::NodeEngine::create("127.0.0.1", 9090, streamConf, 1, 4096, 1024, 12, 12);
+        engine = Runtime::NodeEngine::create("127.0.0.1", 9090, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     void TearDown() override {

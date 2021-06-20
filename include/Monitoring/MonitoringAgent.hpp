@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
 #define NES_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
 #include <unordered_map>
 
@@ -57,7 +57,7 @@ class MonitoringAgent {
      * @param tupleBuffer
      * @return the schema of the monitoring plan
      */
-    bool getMetrics(NodeEngine::TupleBuffer& tupleBuffer);
+    bool getMetrics(Runtime::TupleBuffer& tupleBuffer);
 
     /**
      * @brief Return the schema based on the monitoring plan. If no schema is provided then the default schema is return, which

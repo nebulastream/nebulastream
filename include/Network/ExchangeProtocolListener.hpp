@@ -19,7 +19,7 @@
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES {
 namespace Network {
@@ -34,7 +34,7 @@ class ExchangeProtocolListener {
      * @brief This is called on every data buffer that the network stack receives
      * for a specific nes partition
      */
-    virtual void onDataBuffer(NesPartition, NodeEngine::TupleBuffer&) = 0;
+    virtual void onDataBuffer(NesPartition, Runtime::TupleBuffer&) = 0;
     /**
      * @brief this is called once a nes partition receives an end of stream message
      */

@@ -20,7 +20,7 @@
 #include <Sources/GeneratorSource.hpp>
 #include <chrono>
 
-namespace NES::NodeEngine {
+namespace NES::Runtime{
 class TupleBuffer;
 }
 
@@ -38,19 +38,19 @@ class LambdaSource : public GeneratorSource {
    */
     explicit LambdaSource(
         SchemaPtr schema,
-        NodeEngine::BufferManagerPtr bufferManager,
-        NodeEngine::QueryManagerPtr queryManager,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
         uint64_t numbersOfBufferToProduce,
         uint64_t gatheringValue,
-        std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+        std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         OperatorId operatorId,
         size_t numSourceLocalBuffers,
         GatheringMode gatheringMode,
-        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     SourceType getType() const override;
 
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
     * @brief Provides a string representation of the source
@@ -66,7 +66,7 @@ class LambdaSource : public GeneratorSource {
 
   private:
     uint64_t numberOfTuplesToProduce;
-    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
+    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
 };
 
 using LambdaSourcePtr = std::shared_ptr<LambdaSource>;

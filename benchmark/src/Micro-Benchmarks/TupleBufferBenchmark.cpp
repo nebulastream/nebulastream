@@ -15,10 +15,10 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <benchmark/benchmark.h>
 #include <random>
@@ -101,7 +101,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state) {
     }
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto buffer = bufferManager->getBufferBlocking();
 
     uint64_t maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
@@ -188,7 +188,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
     }
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto buffer = bufferManager->getBufferBlocking();
 
     uint64_t maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
@@ -280,7 +280,7 @@ static void BM_WriteRecordsStruct(benchmark::State& state) {
     }
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto buffer = bufferManager->getBufferBlocking();
 
     uint64_t maxTuplesPerBuffer = 0;
@@ -381,7 +381,7 @@ static void BM_ReadRecordsStruct(benchmark::State& state) {
     }
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto buffer = bufferManager->getBufferBlocking();
 
     uint64_t maxTuplesPerBuffer = 0;
@@ -605,7 +605,7 @@ static void BM_WriteFieldStruct(benchmark::State& state) {
     }
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto buffer = bufferManager->getBufferBlocking();
 
     uint64_t maxTuplesPerBuffer = 0;
@@ -691,7 +691,7 @@ static void BM_ReadFieldStruct(benchmark::State& state) {
     }
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto buffer = bufferManager->getBufferBlocking();
 
     uint64_t maxTuplesPerBuffer = 0;

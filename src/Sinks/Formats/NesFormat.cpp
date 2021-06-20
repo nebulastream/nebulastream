@@ -17,20 +17,20 @@
 #include "SerializableOperator.pb.h"
 #include <API/Schema.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <utility>
 namespace NES {
 
-NesFormat::NesFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
+NesFormat::NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {
     serializedSchema = std::make_shared<SerializableSchema>();
 }
 
-std::optional<NodeEngine::TupleBuffer> NesFormat::getSchema() {
+std::optional<Runtime::TupleBuffer> NesFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
     SerializableSchemaPtr protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema.get());
     bool const success = protoBuff->SerializeToArray(buf.getBuffer(), protoBuff->ByteSizeLong());
@@ -41,8 +41,8 @@ std::optional<NodeEngine::TupleBuffer> NesFormat::getSchema() {
     return buf;
 }
 
-std::vector<NodeEngine::TupleBuffer> NesFormat::getData(NodeEngine::TupleBuffer& inputBuffer) {
-    std::vector<NodeEngine::TupleBuffer> buffers;
+std::vector<Runtime::TupleBuffer> NesFormat::getData(Runtime::TupleBuffer& inputBuffer) {
+    std::vector<Runtime::TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("NesFormat::getData: write watermark-only buffer");
@@ -59,5 +59,5 @@ std::string NesFormat::toString() { return "NES_FORMAT"; }
 
 FormatTypes NesFormat::getSinkFormat() { return NES_FORMAT; }
 
-FormatIterator NesFormat::getTupleIterator(NodeEngine::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+FormatIterator NesFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 }// namespace NES

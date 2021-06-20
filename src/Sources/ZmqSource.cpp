@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <Util/Logger.hpp>
 #include <cstdint>
@@ -28,14 +28,14 @@
 namespace NES {
 
 ZmqSource::ZmqSource(SchemaPtr schema,
-                     NodeEngine::BufferManagerPtr bufferManager,
-                     NodeEngine::QueryManagerPtr queryManager,
+                     Runtime::BufferManagerPtr bufferManager,
+                     Runtime::QueryManagerPtr queryManager,
                      const std::string& host,
                      uint16_t port,
                      OperatorId operatorId,
                      uint64_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
-                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -58,7 +58,7 @@ ZmqSource::~ZmqSource() noexcept(false) {
     NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source");
 }
 
-std::optional<NodeEngine::TupleBuffer> ZmqSource::receiveData() {
+std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
     NES_DEBUG("ZMQSource  " << this << ": receiveData ");
     if (connect()) {
         try {

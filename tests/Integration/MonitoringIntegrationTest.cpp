@@ -29,8 +29,8 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>

@@ -16,13 +16,13 @@
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <cpprest/json.h>
 #include <cstring>
 
@@ -38,7 +38,7 @@ SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void writeToBuffer(const DiskMetrics& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+void writeToBuffer(const DiskMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(DiskMetrics) < buf.getBufferSize(), "DiskMetrics: Content does not fit in TupleBuffer");
 
@@ -46,7 +46,7 @@ void writeToBuffer(const DiskMetrics& metric, NodeEngine::TupleBuffer& buf, uint
     buf.setNumberOfTuples(1);
 }
 
-DiskMetrics DiskMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+DiskMetrics DiskMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     DiskMetrics output{};
     auto i = schema->getIndex(prefix);
 
@@ -61,14 +61,14 @@ DiskMetrics DiskMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBu
         NES_THROW_RUNTIME_ERROR("DiskMetrics: Missing fields in schema.");
     }
 
-    auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
-    output.fBsize = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.fFrsize = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.fBlocks = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.fBfree = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.fBavail = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBsize = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fFrsize = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBlocks = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBfree = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBavail = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
     return output;
 }

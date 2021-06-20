@@ -52,12 +52,12 @@ std::vector<BlockScopeStatementPtr> PipelineContext::getSetupScopes() { return s
 
 std::vector<BlockScopeStatementPtr> PipelineContext::getStartScopes() { return startScopes; }
 
-int64_t PipelineContext::registerOperatorHandler(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler) {
+int64_t PipelineContext::registerOperatorHandler(const Runtime::Execution::OperatorHandlerPtr& operatorHandler) {
     operatorHandlers.emplace_back(operatorHandler);
     return operatorHandlers.size() - 1;
 }
 
-uint64_t PipelineContext::getHandlerIndex(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler) {
+uint64_t PipelineContext::getHandlerIndex(const Runtime::Execution::OperatorHandlerPtr& operatorHandler) {
     for (auto i{0ul}; i < operatorHandlers.size(); ++i) {
         if (operatorHandlers[i] == operatorHandler) {
             return i;
@@ -67,5 +67,5 @@ uint64_t PipelineContext::getHandlerIndex(const NodeEngine::Execution::OperatorH
     return 0;
 }
 
-std::vector<NodeEngine::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() { return this->operatorHandlers; }
+std::vector<Runtime::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() { return this->operatorHandlers; }
 }// namespace NES::QueryCompilation

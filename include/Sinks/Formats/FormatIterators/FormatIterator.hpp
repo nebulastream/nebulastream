@@ -29,7 +29,7 @@ namespace NES {
  */
 class FormatIterator {
   public:
-    explicit FormatIterator(SchemaPtr schema, NodeEngine::TupleBuffer buffer, FormatTypes sinkFormatType);
+    explicit FormatIterator(SchemaPtr schema, Runtime::TupleBuffer buffer, FormatTypes sinkFormatType);
 
     class Iterator {
         friend class FormatIterator;
@@ -39,7 +39,7 @@ class FormatIterator {
         using difference_type = std::ptrdiff_t;
 
         explicit Iterator(uint64_t currentSeek,
-                          NodeEngine::TupleBuffer buffer,
+                          Runtime::TupleBuffer buffer,
                           const SchemaPtr& schema,
                           FormatTypes sinkFormatType)
             : buffer(std::move(buffer)), sinkFormatType(sinkFormatType) {
@@ -121,7 +121,7 @@ class FormatIterator {
         /**
          * @brief Buffer to be read
          */
-        NodeEngine::TupleBuffer buffer;
+        Runtime::TupleBuffer buffer;
 
         /**
          * @brief Format in which data is to be read
@@ -164,7 +164,7 @@ class FormatIterator {
 
   private:
     SchemaPtr schema;
-    NodeEngine::TupleBuffer buffer;
+    Runtime::TupleBuffer buffer;
     FormatTypes sinkFormatType;
 };
 }// namespace NES

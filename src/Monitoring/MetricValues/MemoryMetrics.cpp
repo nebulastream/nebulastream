@@ -17,9 +17,9 @@
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 
 #include <API/Schema.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
@@ -45,7 +45,7 @@ SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void writeToBuffer(const MemoryMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(MemoryMetrics) < buf.getBufferSize(), "MemoryMetrics: Content does not fit in TupleBuffer");
 
@@ -53,7 +53,7 @@ void writeToBuffer(const MemoryMetrics& metrics, NodeEngine::TupleBuffer& buf, u
     buf.setNumberOfTuples(1);
 }
 
-MemoryMetrics MemoryMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+MemoryMetrics MemoryMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     MemoryMetrics output{};
     //get index where the schema for MemoryMetrics is starting
     auto i = schema->getIndex(prefix + "TOTAL_RAM");
@@ -62,32 +62,32 @@ MemoryMetrics MemoryMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::Tup
         && UtilityFunctions::endsWith(schema->fields[i]->getName(), "TOTAL_RAM")
         && UtilityFunctions::endsWith(schema->fields[i + 12]->getName(), "LOADS_15MIN")) {
         //if buffer contains memory metric information read the values from each buffer and assign them to the output wrapper object
-        auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         auto bindedRowLayout = layout->bind(buf);
 
         output.TOTAL_RAM =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
         output.TOTAL_SWAP =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-        output.FREE_RAM = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.FREE_RAM = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
         output.SHARED_RAM =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
         output.BUFFER_RAM =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
         output.FREE_SWAP =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
         output.TOTAL_HIGH =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
         output.FREE_HIGH =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-        output.PROCS = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-        output.MEM_UNIT = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.PROCS = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.MEM_UNIT = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
         output.LOADS_1MIN =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
         output.LOADS_5MIN =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
         output.LOADS_15MIN =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
     } else {
         NES_THROW_RUNTIME_ERROR("MemoryMetrics: Metrics could not be parsed from schema " + schema->toString());

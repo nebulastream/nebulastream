@@ -19,7 +19,7 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
-#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
@@ -101,7 +101,7 @@ CodeGeneratorPtr CCodeGenerator::create() { return std::make_shared<CCodeGenerat
 
 bool CCodeGenerator::generateCodeForScanSetup(PipelineContextPtr context) {
     auto tf = getTypeFactory();
-    auto pipelineExecutionContextType = tf->createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
     VariableDeclaration varDeclarationPipelineExecutionContext =
         VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
     context->code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
@@ -142,9 +142,9 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     code->structDeclarationResultTuple = getStructDeclarationFromSchema("ResultTuple", outputSchema);
     auto tf = getTypeFactory();
     /* === declarations === */
-    auto tupleBufferType = tf->createAnonymusDataType("NES::NodeEngine::TupleBuffer");
-    auto pipelineExecutionContextType = tf->createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
-    auto workerContextType = tf->createAnonymusDataType("NodeEngine::WorkerContext");
+    auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
+    auto workerContextType = tf->createAnonymusDataType("Runtime::WorkerContext");
     VariableDeclaration varDeclarationInputBuffer =
         VariableDeclaration::create(tf->createReference(tupleBufferType), "inputTupleBuffer");
 
@@ -346,10 +346,10 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
     // increment number of tuples in buffer -> ++numberOfResultTuples;
     code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
 
-    // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the runtime.
+    // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
     generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple);
 
-    // Generate final logic to emit the last buffer to the runtime
+    // Generate final logic to emit the last buffer to the Runtime
     // 1. set the number of tuples to the buffer
     code->cleanupStmts.push_back(
         setNumberOfTuples(code->varDeclarationResultBuffer, code->varDeclarationNumberOfResultTuples).copy());
@@ -528,7 +528,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     // 1.1 set the watermar to the output buffer -> resultTupleBuffer.setWatermark(numberOfResultTuples);
     thenStatement->addStatement(setWatermark(code->varDeclarationResultBuffer, code->varDeclarationInputBuffer).copy());
 
-    // 1.2 emit the output buffers to the runtime -> pipelineExecutionContext.emitBuffer(resultTupleBuffer);
+    // 1.2 emit the output buffers to the Runtime -> pipelineExecutionContext.emitBuffer(resultTupleBuffer);
     thenStatement->addStatement(
         emitTupleBuffer(code->varDeclarationExecutionContext, code->varDeclarationResultBuffer, code->varDeclarationWorkerContext)
             .copy());
@@ -945,7 +945,7 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
     auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", join->getLeftStreamType());
     context->code->structDeclarationInputTuples.emplace_back(leftTypeStruct);
 
-    auto pipelineExecutionContextType = tf->createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
     VariableDeclaration varDeclarationPipelineExecutionContext =
         VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
     context->code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
@@ -1541,7 +1541,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     //        NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>* state_variable = (NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) state_var;
     auto stateVariableDeclaration =
         VariableDeclaration::create(tf->createPointer(tf->createAnonymusDataType(
-                                        "NES::NodeEngine::StateVariable<int64_t, NES::Windowing::WindowSliceStore<int64_t>*>")),
+                                        "NES::Runtime::StateVariable<int64_t, NES::Windowing::WindowSliceStore<int64_t>*>")),
                                     "state_variable");
 
     auto stateVarDeclarationStatement =
@@ -2011,10 +2011,10 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     }
 
     auto ctorFunction = ConstructorDefinition::create("ExecutablePipelineStage" + context->pipelineName, true)
-                            ->addInitializer("NodeEngine::Execution::ExecutablePipelineStage", arityStatement);
+                            ->addInitializer("Runtime::Execution::ExecutablePipelineStage", arityStatement);
 
     auto executablePipeline = ClassDefinition::create("ExecutablePipelineStage" + context->pipelineName);
-    executablePipeline->addBaseClass("NodeEngine::Execution::ExecutablePipelineStage");
+    executablePipeline->addBaseClass("Runtime::Execution::ExecutablePipelineStage");
     executablePipeline->addMethod(ClassDefinition::Public, functionBuilder);
     executablePipeline->addMethod(ClassDefinition::Public, setupFunction);
     executablePipeline->addConstructor(ctorFunction);
@@ -2030,14 +2030,14 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 
     createFunction->returns(
         SharedPointerGen::createSharedPtrType(NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType(
-            "NodeEngine::Execution::ExecutablePipelineStage")));
+            "Runtime::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileBuilder.addDeclaration(pipelineNamespace->getDeclaration()).build();
 
     return file.code;
 }
 
-NodeEngine::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(PipelineContextPtr code) {
+Runtime::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(PipelineContextPtr code) {
     std::string src = generateCode(code);
     auto compiledCode = compiler->compile(src);
     PipelineStageArity const arity = [&ari = code->arity]() {

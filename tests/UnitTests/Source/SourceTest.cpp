@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <cstring>
 #include <iostream>
 #include <limits>
@@ -24,7 +24,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 
@@ -99,7 +99,7 @@ class SourceTest : public testing::Test {
   public:
     void SetUp() override {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        this->nodeEngine = Runtime::create("127.0.0.1", 31337, streamConf);
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
@@ -114,7 +114,7 @@ class SourceTest : public testing::Test {
         nodeEngine = nullptr;
     }
 
-    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
+    Runtime::NodeEnginePtr nodeEngine{nullptr};
 };
 
 TEST_F(SourceTest, testBinarySource) {
@@ -606,7 +606,7 @@ TEST_F(SourceTest, testLambdaSource) {
                            ->addField("d3", UINT32)
                            ->addField("d4", UINT16);
 
-    auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+    auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         uint64_t currentEventType = 0;
         struct __attribute__((packed)) Record {
             //          Record() = default;
@@ -754,7 +754,7 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
                            ->addField("d3", UINT32)
                            ->addField("d4", UINT16);
 
-    auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+    auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         uint64_t currentEventType = 0;
         struct __attribute__((packed)) Record {
             //          Record() = default;
@@ -866,7 +866,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     out << input;
     out.close();
 
-    auto func1 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
             uint64_t id;
             uint64_t value;
@@ -1004,7 +1004,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     out << input;
     out.close();
 
-    auto func1 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
             uint64_t id;
             uint64_t value;
@@ -1021,7 +1021,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
         }
     };
 
-    auto func2 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+    auto func2 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
             uint64_t id;
             uint64_t value;
@@ -1101,7 +1101,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     crd->getNesWorker()->registerLogicalStream("input", testSchemaFileName);
 
     for (int64_t i = 0; i < 4; i++) {
-        auto func1 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
             struct Record {
                 uint64_t id;
                 uint64_t value;

@@ -17,10 +17,10 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
@@ -54,7 +54,7 @@ SchemaPtr NetworkValues::getSchema(const std::string& prefix) {
     return schema;
 }
 
-NetworkValues NetworkValues::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+NetworkValues NetworkValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     NetworkValues output{};
     auto i = schema->getIndex(prefix);
     auto nvSchemaSize = NetworkValues::getSchema("")->getSize();
@@ -73,28 +73,28 @@ NetworkValues NetworkValues::fromBuffer(const SchemaPtr& schema, NodeEngine::Tup
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
     }
 
-    auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
     output.interfaceName =
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rBytes = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rPackets = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rErrs = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rDrop = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rFifo = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rFrame = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rCompressed = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rMulticast = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rBytes = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rPackets = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rErrs = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rDrop = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rFifo = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rFrame = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rCompressed = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rMulticast = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
-    output.tBytes = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tPackets = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tErrs = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tDrop = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tFifo = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tColls = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tCarrier = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tCompressed = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i, bindedRowLayout)[0];
+    output.tBytes = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tPackets = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tErrs = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tDrop = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tFifo = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tColls = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tCarrier = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tCompressed = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i, bindedRowLayout)[0];
 
     return output;
 }
@@ -123,7 +123,7 @@ web::json::value NetworkValues::toJson() const {
     return metricsJson;
 }
 
-void writeToBuffer(const NetworkValues& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+void writeToBuffer(const NetworkValues& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(NetworkValues) < buf.getBufferSize(), "NetworkValues: Content does not fit in TupleBuffer");
 

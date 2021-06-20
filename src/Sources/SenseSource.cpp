@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Util/Logger.hpp>
@@ -30,12 +30,12 @@ using namespace std;
 namespace NES {
 
 SenseSource::SenseSource(SchemaPtr schema,
-                         NodeEngine::BufferManagerPtr bufferManager,
-                         NodeEngine::QueryManagerPtr queryManager,
+                         Runtime::BufferManagerPtr bufferManager,
+                         Runtime::QueryManagerPtr queryManager,
                          std::string udsf,
                          OperatorId operatorId,
                          size_t numSourceLocalBuffers,
-                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -45,7 +45,7 @@ SenseSource::SenseSource(SchemaPtr schema,
                  std::move(successors)),
       udsf(std::move(udsf)) {}
 
-std::optional<NodeEngine::TupleBuffer> SenseSource::receiveData() {
+std::optional<Runtime::TupleBuffer> SenseSource::receiveData() {
     NES_DEBUG("SenseSource::receiveData called");
     auto buf = bufferManager->getBufferBlocking();
     fillBuffer(buf);
@@ -59,7 +59,7 @@ std::string SenseSource::toString() const {
     return ss.str();
 }
 
-void SenseSource::fillBuffer(NodeEngine::TupleBuffer&) {}
+void SenseSource::fillBuffer(Runtime::TupleBuffer&) {}
 
 SourceType SenseSource::getType() const { return SENSE_SOURCE; }
 

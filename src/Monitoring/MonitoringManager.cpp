@@ -22,8 +22,8 @@
 #include <Monitoring/MetricValues/GroupedValues.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -81,7 +81,7 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
     return true;
 }
 
-bool MonitoringManager::requestMonitoringData(uint64_t nodeId, NodeEngine::TupleBuffer& tupleBuffer) {
+bool MonitoringManager::requestMonitoringData(uint64_t nodeId, Runtime::TupleBuffer& tupleBuffer) {
     NES_DEBUG("MonitoringManager: Requesting metrics for node id=" + std::to_string(nodeId));
     auto plan = getMonitoringPlan(nodeId);
 

@@ -15,7 +15,7 @@
 */
 
 #ifdef ENABLE_KAFKA_BUILD
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Util/Logger.hpp>
 #include <chrono>
@@ -38,7 +38,7 @@ KafkaSink::KafkaSink(SchemaPtr schema, const std::string& brokers, const std::st
 
 KafkaSink::~KafkaSink() {}
 
-bool KafkaSink::writeData(NodeEngine::TupleBuffer& input_buffer) {
+bool KafkaSink::writeData(Runtime::TupleBuffer& input_buffer) {
     NES_DEBUG("KAFKASINK " << this << ": writes buffer " << input_buffer);
     try {
         cppkafka::Buffer buffer(input_buffer.getBuffer(), input_buffer.getBufferSize());

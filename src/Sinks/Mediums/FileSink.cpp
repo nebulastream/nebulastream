@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <filesystem>
@@ -61,7 +61,7 @@ void FileSink::setup() {}
 
 void FileSink::shutdown() {}
 
-bool FileSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
+bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
 
     NES_DEBUG("FileSink: getSchema medium " << toString() << " format " << sinkFormat->toString() << " and mode "

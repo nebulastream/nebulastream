@@ -20,7 +20,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Topology/Topology.hpp>
@@ -53,12 +53,12 @@ class TestUtils {
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
-     * @param ptr to NodeEngine
+     * @param ptr to Runtime
      * @param queryId
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    static bool checkCompleteOrTimeout(const NodeEngine::NodeEnginePtr& ptr, QueryId queryId, uint64_t expectedResult) {
+    static bool checkCompleteOrTimeout(const Runtime::NodeEnginePtr& ptr, QueryId queryId, uint64_t expectedResult) {
         if (ptr->getQueryStatistics(queryId).empty()) {
             NES_ERROR("checkCompleteOrTimeout query does not exists");
             return false;

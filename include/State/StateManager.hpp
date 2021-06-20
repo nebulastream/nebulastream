@@ -24,7 +24,7 @@
 #include <unordered_map>
 
 namespace NES {
-namespace NodeEngine {
+namespace Runtime {
 /**
  * This class is the entry point for stateful operators that require state
  * This class is used as a singleton and creates StateVariable<K, V>, i.e., mutable data set of key-value pairs.
@@ -128,6 +128,6 @@ class StateManager {
         stateVariables.clear();
     }
 };
-}// namespace NodeEngine
+}// namespace Runtime
 }// namespace NES
 #endif//STATEMANAGER_HPP

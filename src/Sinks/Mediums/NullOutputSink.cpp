@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -28,7 +28,7 @@ NullOutputSink::~NullOutputSink() = default;
 
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
-bool NullOutputSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
+bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     NES_DEBUG("NullOutputSink output=" << inputBuffer);
 
     return true;

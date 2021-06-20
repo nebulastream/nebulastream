@@ -19,20 +19,20 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/LocalBufferPool.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/LocalBufferPool.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
 #include <list>
 #include <memory>
 
 #if __linux
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <sys/syscall.h>
 #endif
 
@@ -48,8 +48,8 @@ class SimpleBenchmarkSource : public DataSource {
     uint64_t numberOfTuplesPerBuffer;
 
     SimpleBenchmarkSource(const SchemaPtr& schema,
-                          const NodeEngine::BufferManagerPtr& bufferManager,
-                          const NodeEngine::QueryManagerPtr& queryManager,
+                          const Runtime::BufferManagerPtr& bufferManager,
+                          const Runtime::QueryManagerPtr& queryManager,
                           uint64_t ingestionRate,
                           uint64_t numberOfTuplesPerBuffer,
                           uint64_t operatorId)
@@ -58,7 +58,7 @@ class SimpleBenchmarkSource : public DataSource {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
         this->ingestionRate = ingestionRate;
         this->numberOfTuplesPerBuffer = numberOfTuplesPerBuffer;
-        this->rowLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, false);
+        this->rowLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, false);
         this->curNumberOfTuplesPerBuffer = this->numberOfTuplesPerBuffer;
         this->maxNumberOfPeriods =
             std::ceil((double) BenchmarkUtils::runSingleExperimentSeconds / (double) BenchmarkUtils::periodLengthInSeconds);
@@ -152,7 +152,7 @@ class SimpleBenchmarkSource : public DataSource {
         }//end of if source not empty
     }
 
-    std::optional<NodeEngine::TupleBuffer> receiveData() override {
+    std::optional<Runtime::TupleBuffer> receiveData() override {
 
         // 10 tuples of size one
         NES_DEBUG("Source:" << this << " requesting buffer");
@@ -172,47 +172,47 @@ class SimpleBenchmarkSource : public DataSource {
                 if (physicalType->isBasicType()) {
                     auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
                     if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<char, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<char, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, false>::create(
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else {
@@ -238,8 +238,8 @@ class SimpleBenchmarkSource : public DataSource {
 
     virtual ~SimpleBenchmarkSource() = default;
 
-    static std::shared_ptr<SimpleBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager,
-                                                         NodeEngine::QueryManagerPtr queryManager,
+    static std::shared_ptr<SimpleBenchmarkSource> create(Runtime::BufferManagerPtr bufferManager,
+                                                         Runtime::QueryManagerPtr queryManager,
                                                          SchemaPtr& benchmarkSchema,
                                                          uint64_t ingestionRate,
                                                          uint64_t operatorId,
@@ -271,7 +271,7 @@ class SimpleBenchmarkSource : public DataSource {
     uint64_t keyPos = 0;
     uint64_t curNumberOfTuplesPerBuffer;
     uint64_t maxNumberOfPeriods;
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout;
+    Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout;
 };
 }// namespace NES::Benchmarking
 

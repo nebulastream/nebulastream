@@ -18,7 +18,7 @@
 #define NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SOURCES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 
 #include <Network/NetworkSink.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
@@ -43,7 +43,7 @@ class ConvertLogicalToPhysicalSink {
     static DataSinkPtr createDataSink(OperatorId operatorId,
                                       const SinkDescriptorPtr& sinkDescriptor,
                                       const SchemaPtr& schema,
-                                      const NodeEngine::NodeEnginePtr& nodeEngine,
+                                      const Runtime::NodeEnginePtr& nodeEngine,
                                       QuerySubPlanId querySubPlanId);
 
   private:
