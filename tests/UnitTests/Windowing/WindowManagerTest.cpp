@@ -311,7 +311,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
                                                    aggregation,
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createCompleteWindowType(),
-                                                   0,
+                                                   1,
                                                    trigger,
                                                    triggerAction,
                                                    0);
@@ -344,7 +344,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     auto store = key_value_handle.value();
 
     uint64_t ts = 7;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 1);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
@@ -354,7 +354,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     //    store->setLastWatermark(7);
 
     ts = 14;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 2);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
