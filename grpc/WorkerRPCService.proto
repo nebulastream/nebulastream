@@ -18,6 +18,7 @@ syntax = "proto3";
 import "SerializableQueryPlan.proto";
 import "SerializableOperator.proto";
 import "SerializableDataType.proto";
+import "SerializableQueryReconfigurationPlan.proto";
 
 service WorkerRPCService {
   rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
@@ -26,11 +27,22 @@ service WorkerRPCService {
   rpc RegisterQuery (RegisterQueryRequest) returns (RegisterQueryReply) {}
   rpc UnregisterQuery (UnregisterQueryRequest) returns (UnregisterQueryReply) {}
 
+  rpc RegisterQueryForReconfiguration (RegisterQueryRequest) returns (RegisterQueryReply) {}
+  rpc StartQueryReconfiguration (StartQueryReconfigurationRequest) returns (StartQueryReconfigurationReply) {}
+
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
 
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
+}
+
+message StartQueryReconfigurationRequest {
+  NES.SerializableQueryReconfigurationPlan reconfigurationPlan = 1;
+}
+
+message StartQueryReconfigurationReply {
+  bool success = 1;
 }
 
 message DeployQueryRequest {

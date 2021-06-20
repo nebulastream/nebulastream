@@ -166,7 +166,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param queryReconfigurationPlan to reconfigure
      * @return true if succeeded, else false
      */
-    bool startQueryReconfiguration(QueryId queryId, QueryReconfigurationPlanPtr queryReconfigurationPlan);
+    bool startQueryReconfiguration(QueryReconfigurationPlanPtr queryReconfigurationPlan);
 
     /**
      * @brief ungregisters a query
