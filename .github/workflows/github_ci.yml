@@ -34,6 +34,14 @@ jobs:
       - name: Run tests
         run: |
           docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+      - name: Repository Dispatch
+        if: success() && steps.findPr.outputs.number
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.CI_PERSONAL_TOKEN }}
+          repository: nebulastream/nebulastream-java-client
+          event-type: nes-executable-image-update
+          client-payload: '{"prtitle": "${{ steps.findPr.outputs.title }}", "prnumber": "${{ steps.findPr.outputs.pr }}"}'
       - name: docker cleanup
         if: ${{ always() }}
         run: |
@@ -119,14 +127,6 @@ jobs:
         id: findPr
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Repository Dispatch
-        if: success() && steps.findPr.outputs.number
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ secrets.CI_PERSONAL_TOKEN }}
-          repository: nebulastream/nebulastream-java-client
-          event-type: nes-executable-image-update
-          client-payload: '{"prtitle": "${{ steps.findPr.outputs.title }}", "prnumber": "${{ steps.findPr.outputs.pr }}"}'
 #      - name: Invoke Benchmark Workflow
 #        uses: benc-uk/workflow-dispatch@v1
 #        with:
