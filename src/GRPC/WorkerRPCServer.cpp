@@ -15,6 +15,7 @@
 */
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
+#include <GRPC/Serialization/QueryReconfigurationPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
@@ -90,6 +91,54 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     NES_ERROR("WorkerRPCServer::StopQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
+}
+
+Status
+WorkerRPCServer::RegisterQueryForReconfiguration(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
+    auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
+    NES_DEBUG("WorkerRPCServer::RegisterQueryForReconfiguration: got request for queryId: " << queryPlan->getQueryId()
+                                                                                            << " plan=" << queryPlan->toString());
+    bool success;
+    try {
+        success = nodeEngine->registerQueryForReconfigurationInNodeEngine(queryPlan);
+    } catch (std::exception& error) {
+        NES_ERROR("Register query for reconfiguration crashed: " << error.what());
+        success = false;
+    }
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::RegisterQueryForReconfiguration: success");
+        reply->set_success(true);
+        return Status::OK;
+    } else {
+        NES_ERROR("WorkerRPCServer::RegisterQueryForReconfiguration: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+}
+
+Status WorkerRPCServer::StartQueryReconfiguration(ServerContext*,
+                                                  const StartQueryReconfigurationRequest* request,
+                                                  StartQueryReconfigurationReply* reply) {
+    auto reconfigurationQueryPlan = QueryReconfigurationPlanSerializationUtil::deserializeQueryReconfigurationPlan(
+        (SerializableQueryReconfigurationPlan*) &request->reconfigurationplan());
+    NES_DEBUG("WorkerRPCServer::StartQueryReconfiguration: got request for queryId: "
+              << reconfigurationQueryPlan->getQueryId() << " reconfigurationId: " << reconfigurationQueryPlan->getId());
+    bool success;
+    try {
+        success = nodeEngine->startQueryReconfiguration(reconfigurationQueryPlan);
+    } catch (std::exception& error) {
+        NES_ERROR("Start reconfiguration for query crashed: " << error.what());
+        success = false;
+    }
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::StartQueryReconfiguration: success");
+        reply->set_success(true);
+        return Status::OK;
+    } else {
+        NES_ERROR("WorkerRPCServer::StartQueryReconfiguration: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
 }
 
 Status

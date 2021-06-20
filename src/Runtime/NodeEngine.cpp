@@ -275,8 +275,9 @@ bool NodeEngine::registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryP
     return true;
 }
 
-bool NodeEngine::startQueryReconfiguration(QueryId queryId, QueryReconfigurationPlanPtr queryReconfigurationPlan) {
+bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReconfigurationPlan) {
     // TODO: Handle Reconfiguration at the Data source
+    QueryId queryId = queryReconfigurationPlan->getQueryId();
     NES_DEBUG("NodeEngine::startQueryReconfiguration: Received Reconfiguration Plan: " << queryReconfigurationPlan->getId()
                                                                                        << " to apply on QueryId: " << queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) == queryIdToQuerySubPlanIds.end()) {
