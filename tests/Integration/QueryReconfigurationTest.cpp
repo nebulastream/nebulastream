@@ -49,7 +49,7 @@ static uint64_t rpcPort = 4000;
 class QueryReconfigurationTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("QueryReconfigurationTest.log", NES::LOG_INFO);
+        NES::setupLogging("QueryReconfigurationTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup QueryReconfigurationTest test class.");
     }
 
@@ -82,7 +82,8 @@ void stopWorker(NesWorkerPtr wrk, uint16_t workerId) {
 
 std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generatorLambda(uint64_t origin,
                                                                                                             uint64_t sleepTime) {
-    return [origin, sleepTime](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+    uint64_t counter = 0;
+    return [origin, sleepTime, counter](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) mutable {
         struct Record {
             uint64_t id;
             uint64_t value;
@@ -90,9 +91,11 @@ std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuples
             uint64_t originId;
         };
         std::this_thread::sleep_for(std::chrono::seconds{sleepTime});
+        NES_DEBUG("generatorLambda: invoked on threadId: " << std::this_thread::get_id() << " originId: " << origin
+                                                           << " customCounter: " << counter);
         auto records = buffer.getBuffer<Record>();
         for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-            records[u].id = u;
+            records[u].id = counter++;
             records[u].value = u % 10;
             records[u].timestamp = time(nullptr);
             records[u].originId = origin;
@@ -117,6 +120,21 @@ std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr> getDummyNetworkSrcSchema(
     queryPlan->appendOperatorAsNewRoot(sink);
     auto tQueryPlan = typeInferencePhase->execute(queryPlan);
     return std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr>(sink->getOutputSchema(), typeInferencePhase);
+}
+
+std::function<bool(std::vector<std::vector<std::string>>)>
+distinctColumnValuesValidator(uint8_t colId, std::unordered_set<std::string> requiredValues) {
+    return [colId, requiredValues](std::vector<std::vector<std::string>> rows) {
+        auto colPos = colId - 1;
+        std::unordered_set<std::string> actualValues;
+        for (auto row : rows) {
+            actualValues.insert(row[colPos]);
+            if (requiredValues == actualValues) {
+                return true;
+            }
+        }
+        return false;
+    };
 }
 
 TEST_F(QueryReconfigurationTest, testPartitionPinningQepStarts) {
@@ -271,21 +289,6 @@ TEST_F(QueryReconfigurationTest, testPartitionPinningQepReplacements) {
     stopWorker(wrk1, 1);
 }
 
-std::function<bool(std::vector<std::vector<std::string>>)>
-distinctColumnValuesValidator(uint8_t colId, std::unordered_set<std::string> requiredValues) {
-    return [colId, requiredValues](std::vector<std::vector<std::string>> rows) {
-        auto colPos = colId - 1;
-        std::unordered_set<std::string> actualValues;
-        for (auto row : rows) {
-            actualValues.insert(row[colPos]);
-            if (requiredValues == actualValues) {
-                return true;
-            }
-        }
-        return false;
-    };
-}
-
 /**
  * Test adding a new branch for a QEP in Level 3
  *
@@ -400,10 +403,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp2->getQuerySubPlanId() << ".\n" << tqsp2->toString());
 
     wrk1->getNodeEngine()->registerQueryInNodeEngine(tqsp1);
-    wrk1->getNodeEngine()->startQuery(tqsp1->getQueryId());
-
     wrk2->getNodeEngine()->registerQueryInNodeEngine(tqsp2);
-    wrk2->getNodeEngine()->startQuery(tqsp2->getQueryId());
 
     auto wrk13Schema = tqsp1->getRootOperators()[0]->getOutputSchema();
     auto wrk23Schema = tqsp2->getRootOperators()[0]->getOutputSchema();
@@ -440,7 +440,6 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp3->getQuerySubPlanId() << ".\n" << tqsp3->toString());
 
     wrk3->getNodeEngine()->registerQueryInNodeEngine(tqsp3);
-    wrk3->getNodeEngine()->startQuery(tqsp3->getQueryId());
 
     auto wrk34Schema = qsp34NSink->getOutputSchema();
     auto wrk34Src =
@@ -458,7 +457,11 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp4->getQuerySubPlanId() << ".\n" << tqsp4->toString());
 
     wrk4->getNodeEngine()->registerQueryInNodeEngine(tqsp4);
+
     wrk4->getNodeEngine()->startQuery(tqsp4->getQueryId());
+    wrk3->getNodeEngine()->startQuery(tqsp3->getQueryId());
+    wrk2->getNodeEngine()->startQuery(tqsp2->getQueryId());
+    wrk1->getNodeEngine()->startQuery(tqsp1->getQueryId());
 
     EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
                                                 "testReconfigurationNewBranchOnLevel3_1.csv",
@@ -515,17 +518,16 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     std::vector<QuerySubPlanId> qepStops{};
     auto queryReconfigurationPlan = QueryReconfigurationPlan::create(qepStarts, qepStops, qepReplace);
     queryReconfigurationPlan->setQueryId(1);
-
     wrk1->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlan);
 
-    while (wrk3->getNodeEngine()->getQueryManager()->getQepStatus(5)
+    while (wrk3->getNodeEngine()->getQueryManager()->getQepStatus(tqsp5->getQuerySubPlanId())
            != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
         NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 5 to be in running mode.");
         sleep(10);
     }
     NES_DEBUG("QueryReconfigurationTest: QEP 5 is running.");
 
-    while (wrk4->getNodeEngine()->getQueryManager()->getQepStatus(6)
+    while (wrk4->getNodeEngine()->getQueryManager()->getQepStatus(tqsp6->getQuerySubPlanId())
            != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
         NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 6 to be in running mode.");
         sleep(10);
@@ -756,14 +758,14 @@ TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationReplacementInLevel3
 
     wrk1->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlan);
 
-    while (wrk3->getNodeEngine()->getQueryManager()->getQepStatus(5)
+    while (wrk3->getNodeEngine()->getQueryManager()->getQepStatus(tqsp5->getQuerySubPlanId())
            != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
         NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 5 to be in running mode.");
         sleep(5);
     }
-    while (wrk4->getNodeEngine()->getQueryManager()->getQepStatus(6)
+    while (wrk4->getNodeEngine()->getQueryManager()->getQepStatus(tqsp6->getQuerySubPlanId())
            != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
-        NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 5 to be in running mode.");
+        NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 6 to be in running mode.");
         sleep(5);
     }
     // FileSink will only receive data from source 1, wait for `timeout` seconds to give confidence that no values received from `car2`
