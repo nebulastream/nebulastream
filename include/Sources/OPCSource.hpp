@@ -44,8 +44,8 @@ class OPCSource : public DataSource {
      * @param password for authentication if needed
      */
     OPCSource(const SchemaPtr& schema,
-              NodeEngine::BufferManagerPtr bufferManager,
-              NodeEngine::QueryManagerPtr queryManager,
+              Runtime::BufferManagerPtr bufferManager,
+              Runtime::QueryManagerPtr queryManager,
               const std::string& url,
               UA_NodeId nodeId,
               std::string password,
@@ -53,7 +53,7 @@ class OPCSource : public DataSource {
               OperatorId operatorId,
               size_t numSourceLocalBuffers,
               GatheringMode gatheringMode,
-              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors);
+              std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**
      * @brief destructor of OPC source that disconnects the queue before deconstruction
@@ -65,7 +65,7 @@ class OPCSource : public DataSource {
      * @brief blocking method to receive a buffer from the OPC source
      * @return TupleBufferPtr containing the received buffer
      */
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the opc source

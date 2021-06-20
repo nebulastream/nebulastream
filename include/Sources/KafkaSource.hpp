@@ -30,8 +30,8 @@ class KafkaSource : public DataSource {
 
   public:
     KafkaSource(SchemaPtr schema,
-                NodeEngine::BufferManagerPtr bufferManager,
-                NodeEngine::QueryManagerPtr queryManager,
+                Runtime::BufferManagerPtr bufferManager,
+                Runtime::QueryManagerPtr queryManager,
                 std::string brokers,
                 std::string topic,
                 std::string groupId,
@@ -45,7 +45,7 @@ class KafkaSource : public DataSource {
      */
     SourceType getType() const override;
     ~KafkaSource() override;
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the kafka source

@@ -16,13 +16,13 @@
 
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>
 
 namespace NES {
 
-void writeToBuffer(uint64_t metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+void writeToBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(uint64_t) < buf.getBufferSize(), "Metric: Content does not fit in TupleBuffer");
 
@@ -30,7 +30,7 @@ void writeToBuffer(uint64_t metric, NodeEngine::TupleBuffer& buf, uint64_t byteO
     buf.setNumberOfTuples(1);
 }
 
-void writeToBuffer(const std::string& metric, NodeEngine::TupleBuffer&, uint64_t) {
+void writeToBuffer(const std::string& metric, Runtime::TupleBuffer&, uint64_t) {
     NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " + metric);
 }
 

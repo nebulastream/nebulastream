@@ -18,7 +18,7 @@
 #define NES_INCLUDE_MONITORING_METRICS_MONITORINGPLAN_HPP_
 
 #include <Monitoring/MetricValues/MetricValueType.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <memory>
 #include <set>
 #include <string>
@@ -78,7 +78,7 @@ class MonitoringPlan {
      * @param buf
      * @return
      */
-    GroupedValues fromBuffer(const std::shared_ptr<Schema>& schema, NodeEngine::TupleBuffer& buf) const;
+    GroupedValues fromBuffer(const std::shared_ptr<Schema>& schema, Runtime::TupleBuffer& buf) const;
 
     /**
      * @brief Returns the schema of the class.

@@ -50,14 +50,14 @@ std::string SinkMedium::getAppendAsString() const {
     }
     return "OVERWRITE";
 }
-void SinkMedium::reconfigure(NodeEngine::ReconfigurationMessage& message, NodeEngine::WorkerContext& context) {
+void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(message, context);
 }
-void SinkMedium::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& message) {
+void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);
     switch (message.getType()) {
-        case NodeEngine::SoftEndOfStream:
-        case NodeEngine::HardEndOfStream: {
+        case Runtime::SoftEndOfStream:
+        case Runtime::HardEndOfStream: {
             shutdown();
             break;
         }

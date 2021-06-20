@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_SINKS_SINKFORMAT_HPP_
 #define NES_INCLUDE_SINKS_SINKFORMAT_HPP_
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
 
 #include <fstream>
@@ -33,7 +33,7 @@ class SinkFormat {
      * @param schema
      * @param append
      */
-    SinkFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager);
+    SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
     virtual ~SinkFormat() noexcept = default;
 
     /**
@@ -41,20 +41,20 @@ class SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    virtual std::vector<NodeEngine::TupleBuffer> getData(NodeEngine::TupleBuffer& inputBuffer) = 0;
+    virtual std::vector<Runtime::TupleBuffer> getData(Runtime::TupleBuffer& inputBuffer) = 0;
 
     /**
     * @brief depending on the SinkFormat type, returns an iterator that can be used to retrieve tuples from the TupleBuffer
     * @param a tuple buffer pointer
     * @return TupleBuffer iterator
      */
-    virtual FormatIterator getTupleIterator(NodeEngine::TupleBuffer& inputBuffer) = 0;
+    virtual FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) = 0;
 
     /**
     * @brief method to write the schema of the data
     * @return TupleBuffer containing the schema
     */
-    virtual std::optional<NodeEngine::TupleBuffer> getSchema() = 0;
+    virtual std::optional<Runtime::TupleBuffer> getSchema() = 0;
 
     /**
      * @brief method to return the format as a string
@@ -67,12 +67,12 @@ class SinkFormat {
     SchemaPtr getSchemaPtr();
     void setSchemaPtr(SchemaPtr schema);
 
-    NodeEngine::BufferManagerPtr getBufferManager();
-    void setBufferManager(NodeEngine::BufferManagerPtr bufferManager);
+    Runtime::BufferManagerPtr getBufferManager();
+    void setBufferManager(Runtime::BufferManagerPtr bufferManager);
 
   protected:
     SchemaPtr schema;
-    NodeEngine::BufferManagerPtr bufferManager;
+    Runtime::BufferManagerPtr bufferManager;
 };
 
 using SinkFormatPtr = std::shared_ptr<SinkFormat>;

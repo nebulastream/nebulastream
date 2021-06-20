@@ -20,8 +20,8 @@
 #include "SimpleBenchmarkSink.hpp"
 #include <API/Query.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/QueryStatistics.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryStatistics.hpp>
 #include <Version/version.hpp>
 #include <cstdint>
 #include <list>
@@ -77,13 +77,13 @@ class BenchmarkUtils {
      * @param statisticsVec
      * @param nodeEngine
      */
-    static void recordStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec, NodeEngine::NodeEnginePtr nodeEngine);
+    static void recordStatistics(std::vector<Runtime::QueryStatistics*>& statisticsVec, Runtime::NodeEnginePtr nodeEngine);
 
     /**
      * @brief computes difference between each vector item of its predecessor. Also deletes statisticsVec[0]
      * @param statisticsVec
      */
-    static void computeDifferenceOfStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec);
+    static void computeDifferenceOfStatistics(std::vector<Runtime::QueryStatistics*>& statisticsVec);
 
     /**
      * @return string with format {dateTime}_v{current NES_VERSION}
@@ -96,7 +96,7 @@ class BenchmarkUtils {
      * @param schema
      * @return comma seperated string {ProcessedBuffers},{ProcessedTasks},{ProcessedTuples},{ProcessedBytes}
      */
-    static std::string getStatisticsAsCSV(NodeEngine::QueryStatistics* statistic, SchemaPtr schema);
+    static std::string getStatisticsAsCSV(Runtime::QueryStatistics* statistic, SchemaPtr schema);
 
     /**
      *
@@ -104,7 +104,7 @@ class BenchmarkUtils {
      */
     static std::string getTsInRfc3339();
 
-    static void printOutConsole(NodeEngine::QueryStatistics* statistic, SchemaPtr schema);
+    static void printOutConsole(Runtime::QueryStatistics* statistic, SchemaPtr schema);
 
     /**
      * @brief runs a benchmark with the given ingestion rate, given query, and a benchmark schema. The statistics (processedTuples)
@@ -115,10 +115,10 @@ class BenchmarkUtils {
      * @param ingestionRate
      */
 
-    static void runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec,
+    static void runBenchmark(std::vector<Runtime::QueryStatistics*>& statisticsVec,
                              std::vector<DataSourcePtr> benchmarkSource,
                              std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
-                             NodeEngine::NodeEnginePtr nodeEngine,
+                             Runtime::NodeEnginePtr nodeEngine,
                              NES::Query query);
 };
 
@@ -152,7 +152,7 @@ class BenchmarkUtils {
                                 PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();                        \
                                 uint64_t zmqPort = distr(gen);                                                                   \
                                 NES_WARNING("BenchmarkUtils: Starting zmq on port " << zmqPort);                                 \
-                                auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1",                                    \
+                                auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1",                                    \
                                                                                  zmqPort,                                        \
                                                                                  streamConf,                                     \
                                                                                  workerThreads,                                  \
@@ -164,7 +164,7 @@ class BenchmarkUtils {
                                 BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;                                 \
                                 BenchmarkUtils::periodLengthInSeconds = periodLength;                                            \
                                                                                                                                  \
-                                std::vector<NodeEngine::QueryStatistics*> statisticsVec;                                         \
+                                std::vector<Runtime::QueryStatistics*> statisticsVec;                                         \
                                 NES_WARNING("BenchmarkUtils: Starting benchmark with ingestRate="                                \
                                             + std::to_string(ingestionRate) + ", " + "singleExpSec="                             \
                                             + std::to_string(BenchmarkUtils::runSingleExperimentSeconds) + ", " + "benchPeriod=" \

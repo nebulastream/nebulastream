@@ -25,7 +25,7 @@
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Util/Logger.hpp>
 #include <csignal>
 #include <future>
@@ -121,14 +121,14 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                 << " localWorkerRpcPort=" << localWorkerRpcPort
                                                 << " localWorkerZmqPort=" << localWorkerZmqPort << " type=" << type);
 
-    NES_DEBUG("NesWorker::start: start NodeEngine");
+    NES_DEBUG("NesWorker::start: start Runtime");
     auto expected = false;
     if (!isRunning.compare_exchange_strong(expected, true)) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
 
     try {
-        nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp,
+        nodeEngine = Runtime::NodeEngine::create(localWorkerIp,
                                                     localWorkerZmqPort,
                                                     conf,
                                                     numWorkerThreads,
@@ -194,7 +194,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     return true;
 }
 
-NodeEngine::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
+Runtime::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
 
 bool NesWorker::isWorkerRunning() const noexcept { return isRunning; }
 
@@ -346,7 +346,7 @@ bool NesWorker::removeParent(uint64_t parentId) {
     return success;
 }
 
-std::vector<NodeEngine::QueryStatisticsPtr> NesWorker::getQueryStatistics(QueryId queryId) {
+std::vector<Runtime::QueryStatisticsPtr> NesWorker::getQueryStatistics(QueryId queryId) {
     return nodeEngine->getQueryStatistics(queryId);
 }
 

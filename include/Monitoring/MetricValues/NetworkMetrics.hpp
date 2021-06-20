@@ -19,7 +19,7 @@
 
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
@@ -46,7 +46,7 @@ class NetworkMetrics {
      * @param prefix A prefix that is appended to the schema fields
      * @return The NetworkMetrics object
      */
-    static NetworkMetrics fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static NetworkMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json
@@ -71,7 +71,7 @@ class NetworkMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const NetworkMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief Class specific getSchema() method for NetworkMetrics

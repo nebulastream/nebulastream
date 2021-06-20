@@ -26,7 +26,7 @@ LambdaSourceStreamConfig::LambdaSourceStreamConfig(
     std::string sourceType,
     std::string physicalStreamName,
     std::string logicalStreamName,
-    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
     std::string gatheringMode)
@@ -60,7 +60,7 @@ AbstractPhysicalStreamConfigPtr LambdaSourceStreamConfig::create(
     const std::string& sourceType,
     const std::string& physicalStreamName,
     const std::string& logicalStreamName,
-    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
     const std::string& gatheringMode) {

@@ -51,7 +51,7 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
     return Messages::ServerReadyMessage(msg.getChannelId(), Messages::kPartitionNotRegisteredError);
 }
 
-void ExchangeProtocol::onBuffer(NesPartition nesPartition, NodeEngine::TupleBuffer& buffer) {
+void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer) {
     if (partitionManager->isRegistered(nesPartition)) {
         protocolListener->onDataBuffer(nesPartition, buffer);
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);

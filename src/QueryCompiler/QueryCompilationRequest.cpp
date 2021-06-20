@@ -18,11 +18,11 @@
 
 namespace NES::QueryCompilation {
 
-QueryCompilationRequestPtr QueryCompilationRequest::create(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine) {
+QueryCompilationRequestPtr QueryCompilationRequest::create(QueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine) {
     return std::make_shared<QueryCompilationRequest>(QueryCompilationRequest(std::move(queryPlan), std::move(nodeEngine)));
 }
 
-QueryCompilationRequest::QueryCompilationRequest(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine)
+QueryCompilationRequest::QueryCompilationRequest(QueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine)
     : queryPlan(std::move(queryPlan)), nodeEngine(std::move(nodeEngine)), debug(false), optimize(false), dumpQueryPlans(false) {}
 
 void QueryCompilationRequest::enableDump() { this->dumpQueryPlans = true; }
@@ -39,6 +39,6 @@ bool QueryCompilationRequest::isDumpEnabled() const { return dumpQueryPlans; }
 
 QueryPlanPtr QueryCompilationRequest::getQueryPlan() { return queryPlan; }
 
-NodeEngine::NodeEnginePtr QueryCompilationRequest::getNodeEngine() { return nodeEngine; }
+Runtime::NodeEnginePtr QueryCompilationRequest::getNodeEngine() { return nodeEngine; }
 
 }// namespace NES::QueryCompilation

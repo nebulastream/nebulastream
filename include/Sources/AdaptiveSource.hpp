@@ -34,8 +34,8 @@ class AdaptiveSource : public DataSource {
      * @param queryManager
      */
     AdaptiveSource(SchemaPtr schema,
-                   NodeEngine::BufferManagerPtr bufferManager,
-                   NodeEngine::QueryManagerPtr queryManager,
+                   Runtime::BufferManagerPtr bufferManager,
+                   Runtime::QueryManagerPtr queryManager,
                    uint64_t initialGatheringInterval,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
@@ -57,13 +57,13 @@ class AdaptiveSource : public DataSource {
      * @brief sample data and choose to update the new frequency
      * @return the filled tuple buffer
      */
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
   private:
     /**
      * @brief sample a source, implemented by derived
      */
-    virtual void sampleSourceAndFillBuffer(NodeEngine::TupleBuffer&) = 0;
+    virtual void sampleSourceAndFillBuffer(Runtime::TupleBuffer&) = 0;
 
     /**
      * @brief decision of new frequency, implemented by derived

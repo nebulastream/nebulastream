@@ -18,11 +18,11 @@
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/WorkerContext.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
@@ -47,9 +47,9 @@
 #include <iostream>
 #include <utility>
 
-#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/LocalBufferPool.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/LocalBufferPool.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
@@ -64,7 +64,7 @@
 
 using std::cout;
 using std::endl;
-using namespace NES::NodeEngine;
+using namespace NES::Runtime;
 namespace NES {
 
 class OperatorCodeGenerationTest : public testing::Test {
@@ -88,22 +88,22 @@ class OperatorCodeGenerationTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down OperatorOperatorCodeGenerationTest test class." << std::endl; }
 };
 
-class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
+class TestPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
-                                 NodeEngine::BufferManagerPtr bufferManager,
-                                 NodeEngine::Execution::OperatorHandlerPtr operatorHandler)
+    TestPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
+                                 Runtime::BufferManagerPtr bufferManager,
+                                 Runtime::Execution::OperatorHandlerPtr operatorHandler)
         : TestPipelineExecutionContext(std::move(queryManager),
                                        std::move(bufferManager),
                                        std::vector<NodeEngine::Execution::OperatorHandlerPtr>{std::move(operatorHandler)}) {}
-    TestPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
-                                 NodeEngine::BufferManagerPtr bufferManager,
-                                 std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
+    TestPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
+                                 Runtime::BufferManagerPtr bufferManager,
+                                 std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
             0,
             std::move(queryManager),
             std::move(bufferManager),
-            [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
+            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
             [this](TupleBuffer& buffer) {
@@ -117,7 +117,7 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
     std::vector<TupleBuffer> buffers;
 };
 
-DataSourcePtr createTestSourceCodeGen(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
+DataSourcePtr createTestSourceCodeGen(const Runtime::BufferManagerPtr& bPtr, const Runtime::QueryManagerPtr& dPtr) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()),
                                            bPtr,
                                            dPtr,
@@ -130,8 +130,8 @@ DataSourcePtr createTestSourceCodeGen(const NodeEngine::BufferManagerPtr& bPtr, 
 class SelectionDataGenSource : public GeneratorSource {
   public:
     SelectionDataGenSource(SchemaPtr schema,
-                           NodeEngine::BufferManagerPtr bPtr,
-                           NodeEngine::QueryManagerPtr dPtr,
+                           Runtime::BufferManagerPtr bPtr,
+                           Runtime::QueryManagerPtr dPtr,
                            const uint64_t pNum_buffers_to_process)
         : GeneratorSource(std::move(schema),
                           std::move(bPtr),
@@ -144,7 +144,7 @@ class SelectionDataGenSource : public GeneratorSource {
 
     ~SelectionDataGenSource() override = default;
 
-    std::optional<NodeEngine::TupleBuffer> receiveData() override {
+    std::optional<Runtime::TupleBuffer> receiveData() override {
         // 10 tuples of size one
         auto buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize() / sizeof(InputTuple);
@@ -174,7 +174,7 @@ class SelectionDataGenSource : public GeneratorSource {
     };
 };
 
-DataSourcePtr createTestSourceCodeGenFilter(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
+DataSourcePtr createTestSourceCodeGenFilter(const Runtime::BufferManagerPtr& bPtr, const Runtime::QueryManagerPtr& dPtr) {
     DataSourcePtr source(std::make_shared<SelectionDataGenSource>(Schema::create()
                                                                       ->addField("id", DataTypeFactory::createUInt32())
                                                                       ->addField("value", DataTypeFactory::createUInt32())
@@ -189,8 +189,8 @@ DataSourcePtr createTestSourceCodeGenFilter(const NodeEngine::BufferManagerPtr& 
 class PredicateTestingDataGeneratorSource : public GeneratorSource {
   public:
     PredicateTestingDataGeneratorSource(SchemaPtr schema,
-                                        NodeEngine::BufferManagerPtr bPtr,
-                                        NodeEngine::QueryManagerPtr dPtr,
+                                        Runtime::BufferManagerPtr bPtr,
+                                        Runtime::QueryManagerPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
         : GeneratorSource(std::move(schema),
                           std::move(bPtr),
@@ -237,8 +237,8 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
     }
 };
 
-DataSourcePtr createTestSourceCodeGenPredicate(const NodeEngine::BufferManagerPtr& bPtr,
-                                               const NodeEngine::QueryManagerPtr& dPtr) {
+DataSourcePtr createTestSourceCodeGenPredicate(const Runtime::BufferManagerPtr& bPtr,
+                                               const Runtime::QueryManagerPtr& dPtr) {
     DataSourcePtr source(
         std::make_shared<PredicateTestingDataGeneratorSource>(Schema::create()
                                                                   ->addField("id", DataTypeFactory::createUInt32())
@@ -257,8 +257,8 @@ DataSourcePtr createTestSourceCodeGenPredicate(const NodeEngine::BufferManagerPt
 class WindowTestingDataGeneratorSource : public GeneratorSource {
   public:
     WindowTestingDataGeneratorSource(SchemaPtr schema,
-                                     NodeEngine::BufferManagerPtr bPtr,
-                                     NodeEngine::QueryManagerPtr dPtr,
+                                     Runtime::BufferManagerPtr bPtr,
+                                     Runtime::QueryManagerPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
         : GeneratorSource(std::move(schema),
                           std::move(bPtr),
@@ -303,8 +303,8 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
 class WindowTestingWindowGeneratorSource : public GeneratorSource {
   public:
     WindowTestingWindowGeneratorSource(SchemaPtr schema,
-                                       NodeEngine::BufferManagerPtr bPtr,
-                                       NodeEngine::QueryManagerPtr dPtr,
+                                       Runtime::BufferManagerPtr bPtr,
+                                       Runtime::QueryManagerPtr dPtr,
                                        const uint64_t pNum_buffers_to_process)
         : GeneratorSource(std::move(schema),
                           std::move(bPtr),
@@ -350,7 +350,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
     }
 };
 
-DataSourcePtr createWindowTestDataSource(const NodeEngine::BufferManagerPtr& bPtr, const NodeEngine::QueryManagerPtr& dPtr) {
+DataSourcePtr createWindowTestDataSource(const Runtime::BufferManagerPtr& bPtr, const Runtime::QueryManagerPtr& dPtr) {
     DataSourcePtr source(
         std::make_shared<WindowTestingDataGeneratorSource>(Schema::create()
                                                                ->addField("window$key", DataTypeFactory::createUInt64())
@@ -361,8 +361,8 @@ DataSourcePtr createWindowTestDataSource(const NodeEngine::BufferManagerPtr& bPt
     return source;
 }
 
-DataSourcePtr createWindowTestSliceSource(const NodeEngine::BufferManagerPtr& bPtr,
-                                          const NodeEngine::QueryManagerPtr& dPtr,
+DataSourcePtr createWindowTestSliceSource(const Runtime::BufferManagerPtr& bPtr,
+                                          const Runtime::QueryManagerPtr& dPtr,
                                           const SchemaPtr& schema) {
     DataSourcePtr source(std::make_shared<WindowTestingWindowGeneratorSource>(schema, bPtr, dPtr, 10));
     return source;
@@ -394,7 +394,7 @@ createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinitio
 TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
@@ -417,16 +417,16 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        nodeEngine->getBufferManager(),
                                                                        std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
-    NodeEngine::WorkerContext wctx{0};
+    Runtime::WorkerContext wctx{0};
     stage->setup(*queryContext);
     stage->start(*queryContext);
     stage->execute(buffer, *queryContext, wctx);
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
-    auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buffer);
-    auto firstFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+    auto firstFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
     for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
         EXPECT_EQ(firstFields[recordIndex], 1UL);
     }
@@ -437,7 +437,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -469,8 +469,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        nodeEngine->getBufferManager(),
-                                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
-    NodeEngine::WorkerContext wctx{0};
+                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
+    Runtime::WorkerContext wctx{0};
     stage->setup(*queryContext);
     stage->start(*queryContext);
     stage->execute(inputBuffer, *queryContext, wctx);
@@ -489,7 +489,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -509,8 +509,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context1 = QueryCompilation::PipelineContext::create();
@@ -551,7 +551,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -609,7 +609,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
     stage1->setup(*executionContext);
     stage1->start(*executionContext);
     stage1->execute(inputBuffer, *executionContext, wctx);
@@ -626,9 +626,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
                       ->addField(createField("window$end", UINT64))
@@ -687,15 +687,15 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     {
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout =
+            Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         auto bindedRowLayout = rowLayout->bind(buffer);
 
-        auto startFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
-        auto stopFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
-        auto cntFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
-        auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
-        auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
+        auto startFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+        auto stopFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
+        auto cntFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
+        auto keyFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
+        auto valueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
 
         startFields[0] = 100;//start 100
         stopFields[0] = 110; //stop 200
@@ -775,9 +775,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
                       ->addField(createField("window$end", UINT64))
@@ -818,7 +818,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -851,9 +851,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        nodeEngine->getBufferManager(),
-                                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
     cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
-    NodeEngine::WorkerContext wctx{0};
+    Runtime::WorkerContext wctx{0};
     stage->setup(*queryContext);
     stage->start(*queryContext);
     stage->execute(inputBuffer, *queryContext, wctx);
@@ -871,7 +871,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -910,11 +910,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    NodeEngine::WorkerContext wctx{0};
+    Runtime::WorkerContext wctx{0};
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        nodeEngine->getBufferManager(),
-                                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
 
     stage->setup(*queryContext);
     stage->start(*queryContext);
@@ -922,19 +922,19 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
 
     auto resultBuffer = queryContext->buffers[0];
     {
-        auto inputLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(inputSchema, true);
-        auto outputLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+        auto inputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(inputSchema, true);
+        auto outputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
 
         auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
         auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
 
         auto secondFieldsInput =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputRowLayout);
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputRowLayout);
         auto thirdFieldsInput =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputRowLayout);
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputRowLayout);
 
         auto fourthFieldsOutput =
-            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputRowLayout);
+            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputRowLayout);
 
         for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
             auto floatValue = secondFieldsInput[recordIndex];
@@ -951,7 +951,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -994,11 +994,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    NodeEngine::WorkerContext wctx{0};
+    Runtime::WorkerContext wctx{0};
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        nodeEngine->getBufferManager(),
-                                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
 
     stage->setup(*queryContext);
     stage->start(*queryContext);
@@ -1006,16 +1006,16 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
 
     auto resultBuffer = queryContext->buffers[0];
 
-    auto inputLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(inputSchema, true);
-    auto outputLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(inputSchema, true);
+    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
 
     auto bindedInputLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputLayout = outputLayout->bind(resultBuffer);
 
-    auto floatValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputLayout);
-    auto doubleValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputLayout);
+    auto floatValueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputLayout);
+    auto doubleValueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputLayout);
 
-    auto mappedValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputLayout);
+    auto mappedValueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputLayout);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = floatValueFields[recordIndex];
@@ -1031,7 +1031,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
 TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -1100,7 +1100,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
     cout << "buffer content=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, input_schema);
 
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
     stage1->setup(*executionContext);
     stage1->start(*executionContext);
     executionContext->getOperatorHandlers()[0]->start(executionContext, nodeEngine->getStateManager(), 0);
@@ -1146,8 +1146,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
     try {
         /* prepare objects for test */
         auto streamConf = PhysicalStreamConfig::createEmpty();
-        auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-        NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+        auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
+        Runtime::WorkerContext wctx(Runtime::NesThread::getId());
         auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
         auto codeGenerator = QueryCompilation::CCodeGenerator::create();
         auto context1 = QueryCompilation::PipelineContext::create();
@@ -1194,9 +1194,9 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
                                                                                nodeEngine->getBufferManager(),
                                                                                windowOperatorHandler);
 
-        auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(2, 0, executionContext, stage2, 1, {});
+        auto nextPipeline = Runtime::Execution::ExecutablePipeline::create(2, 0, executionContext, stage2, 1, {});
 
-        auto firstPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, executionContext, stage1, 1, {nextPipeline});
+        auto firstPipeline = Runtime::Execution::ExecutablePipeline::create(1, 0, executionContext, stage1, 1, {nextPipeline});
 
         ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
         ASSERT_TRUE(firstPipeline->start(nodeEngine->getStateManager()));
@@ -1233,8 +1233,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
 TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTime) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context1 = QueryCompilation::PipelineContext::create();
@@ -1280,8 +1280,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
                                                                            nodeEngine->getBufferManager(),
                                                                            windowOperatorHandler);
 
-    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(2, 0, executionContext, stage2, 1, {});
-    auto firstPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, executionContext, stage1, 1, {nextPipeline});
+    auto nextPipeline = Runtime::Execution::ExecutablePipeline::create(2, 0, executionContext, stage2, 1, {});
+    auto firstPipeline = Runtime::Execution::ExecutablePipeline::create(1, 0, executionContext, stage1, 1, {nextPipeline});
 
     ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
     ASSERT_TRUE(firstPipeline->start(nodeEngine->getStateManager()));
@@ -1312,8 +1312,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
 TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context1 = QueryCompilation::PipelineContext::create();

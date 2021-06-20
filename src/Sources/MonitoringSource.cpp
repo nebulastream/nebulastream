@@ -17,11 +17,11 @@
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/MonitoringSource.hpp>
 
-#include <NodeEngine/BufferManager.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/Logger.hpp>
 
 #include <Util/UtilityFunctions.hpp>
@@ -32,13 +32,13 @@ namespace NES {
 
 MonitoringSource::MonitoringSource(const MonitoringPlanPtr& monitoringPlan,
                                    MetricCatalogPtr metricCatalog,
-                                   NodeEngine::BufferManagerPtr bufferManager,
-                                   NodeEngine::QueryManagerPtr queryManager,
+                                   Runtime::BufferManagerPtr bufferManager,
+                                   Runtime::QueryManagerPtr queryManager,
                                    const uint64_t numbersOfBufferToProduce,
                                    uint64_t frequency,
                                    OperatorId operatorId,
                                    size_t numSourceLocalBuffers,
-                                   std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+                                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DefaultSource(Schema::create(),
                     std::move(bufferManager),
                     std::move(queryManager),
@@ -52,7 +52,7 @@ MonitoringSource::MonitoringSource(const MonitoringPlanPtr& monitoringPlan,
     NES_INFO("MonitoringSources: Created with schema:\n" << schema->toString());
 }
 
-std::optional<NodeEngine::TupleBuffer> MonitoringSource::receiveData() {
+std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
     NES_DEBUG("MonitoringSource:" << this << " requesting buffer");
     auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("MonitoringSource:" << this << " got buffer");

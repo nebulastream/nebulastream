@@ -1378,7 +1378,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
     out << input;
     out.close();
 
-    auto func1 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
             uint64_t id;
             uint64_t value;
@@ -1404,7 +1404,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
         NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", func1, 10, 1, "frequency");
     wrk1->registerPhysicalStream(conf1);
 
-    auto func2 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+    auto func2 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
             uint64_t id;
             uint64_t value;

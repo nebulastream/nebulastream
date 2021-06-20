@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <cpprest/json.h>
 #include <memory>
 
@@ -40,7 +40,7 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
  */
 class MonitoringService {
   public:
-    explicit MonitoringService(TopologyPtr topology, NodeEngine::BufferManagerPtr bufferManager, MonitoringManagerPtr manager);
+    explicit MonitoringService(TopologyPtr topology, Runtime::BufferManagerPtr bufferManager, MonitoringManagerPtr manager);
     ~MonitoringService();
 
     web::json::value registerMonitoringPlanToAllNodes(MonitoringPlanPtr monitoringPlan);
@@ -82,7 +82,7 @@ class MonitoringService {
 
   private:
     TopologyPtr topology;
-    NodeEngine::BufferManagerPtr bufferManager;
+    Runtime::BufferManagerPtr bufferManager;
     MonitoringManagerPtr monitoringManager;
 };
 

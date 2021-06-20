@@ -19,7 +19,7 @@
 #include <memory>
 
 #include <API/Schema.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
@@ -204,7 +204,7 @@ class CodeGenerator {
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
 
-    virtual NodeEngine::Execution::ExecutablePipelineStagePtr compile(PipelineContextPtr pipelineContext) = 0;
+    virtual Runtime::Execution::ExecutablePipelineStagePtr compile(PipelineContextPtr pipelineContext) = 0;
 
     virtual std::string generateCode(PipelineContextPtr pipelineContext) = 0;
 

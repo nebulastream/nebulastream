@@ -21,13 +21,13 @@
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <utility>
 
 namespace NES {
 
-WorkerRPCServer::WorkerRPCServer(NodeEngine::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent)
+WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent)
     : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }

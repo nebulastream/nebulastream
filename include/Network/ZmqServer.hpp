@@ -20,7 +20,7 @@
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NesPartition.hpp>
 #include <Network/PartitionManager.hpp>
-#include <NodeEngine/BufferManager.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <atomic>
 #include <boost/core/noncopyable.hpp>
 #include <future>
@@ -49,7 +49,7 @@ class ZmqServer : public boost::noncopyable {
                        uint16_t port,
                        uint16_t numNetworkThreads,
                        ExchangeProtocol& exchangeProtocol,
-                       NodeEngine::BufferManagerPtr bufferManager);
+                       Runtime::BufferManagerPtr bufferManager);
 
     ~ZmqServer();
 
@@ -102,7 +102,7 @@ class ZmqServer : public boost::noncopyable {
     std::atomic_bool keepRunning;
 
     ExchangeProtocol& exchangeProtocol;
-    NodeEngine::BufferManagerPtr bufferManager;
+    Runtime::BufferManagerPtr bufferManager;
 
     /**
      * @brief error management done using 3 values

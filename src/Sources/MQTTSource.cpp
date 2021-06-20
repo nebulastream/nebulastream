@@ -18,10 +18,10 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/LocalBufferPool.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/LocalBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/MQTTSource.hpp>
 #include <Util/Logger.hpp>
 #include <cassert>
@@ -38,8 +38,8 @@ using namespace std::chrono;
 namespace NES {
 
 MQTTSource::MQTTSource(SchemaPtr schema,
-                       NodeEngine::BufferManagerPtr bufferManager,
-                       NodeEngine::QueryManagerPtr queryManager,
+                       Runtime::BufferManagerPtr bufferManager,
+                       Runtime::QueryManagerPtr queryManager,
                        const std::string& serverAddress,
                        const std::string& clientId,
                        const std::string& user,
@@ -47,7 +47,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
-                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
+                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -72,7 +72,7 @@ MQTTSource::~MQTTSource() {
     NES_DEBUG("MQTTSource  " << this << ": Destroy MQTT Source");
 }
 
-std::optional<NodeEngine::TupleBuffer> MQTTSource::receiveData() {
+std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
     NES_DEBUG("MQTTSource  " << this << ": receiveData ");
 
     if (connect()) {// was if (connect()) {
@@ -118,7 +118,7 @@ std::string MQTTSource::toString() const {
     return ss.str();
 }
 
-void MQTTSource::fillBuffer(NodeEngine::TupleBuffer& buf, const std::string& data) {
+void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf, const std::string& data) {
 
     NES_DEBUG("Client consume message: '" << data << "'");
 

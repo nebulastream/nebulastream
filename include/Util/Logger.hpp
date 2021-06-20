@@ -18,7 +18,7 @@
 #define INCLUDE_UTIL_LOGGER_HPP_
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
 #include <Exceptions/NesRuntimeException.hpp>
-#include <NodeEngine/ErrorListener.hpp>
+#include <Runtime/ErrorListener.hpp>
 #include <Util/DisableWarningsPragma.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <iostream>
@@ -314,7 +314,7 @@ struct LoggingBlackHole {
 #endif
 
 namespace NES {
-namespace NodeEngine {
+namespace Runtime {
 void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
 }
 }// namespace NES
@@ -329,12 +329,12 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
         if (!(CONDITION)) {                                                                                                      \
             LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
             {                                                                                                                    \
-                auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
+                auto __stacktrace = NES::Runtime::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << TEXT;                                                                              \
-                NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
+                NES::Runtime::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
@@ -347,12 +347,12 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
         if (!(CONDITION)) {                                                                                                      \
             LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
             {                                                                                                                    \
-                auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
+                auto __stacktrace = NES::Runtime::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << TEXT;                                                                              \
-                NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
+                NES::Runtime::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
@@ -362,19 +362,19 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
         if (!(CONDITION)) {                                                                                                      \
             LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << __VA_ARGS__);                      \
             {                                                                                                                    \
-                auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
+                auto __stacktrace = NES::Runtime::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << __VA_ARGS__;                                                                       \
-                NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
+                NES::Runtime::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
 
 #define NES_THROW_RUNTIME_ERROR(...)                                                                                             \
     do {                                                                                                                         \
-        auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                        \
+        auto __stacktrace = NES::Runtime::collectAndPrintStacktrace();                                                        \
         std::stringbuf __buffer;                                                                                                 \
         std::ostream __os(&__buffer);                                                                                            \
         __os << __VA_ARGS__;                                                                                                     \

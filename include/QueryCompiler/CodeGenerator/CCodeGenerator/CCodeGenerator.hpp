@@ -191,7 +191,7 @@ class CCodeGenerator : public CodeGenerator {
      * @param code generated code.
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
-    NodeEngine::Execution::ExecutablePipelineStagePtr compile(PipelineContextPtr code) override;
+    Runtime::Execution::ExecutablePipelineStagePtr compile(PipelineContextPtr context) override;
 
     std::string generateCode(PipelineContextPtr context) override;
 

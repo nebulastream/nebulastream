@@ -19,7 +19,7 @@
 namespace NES {
 namespace QueryCompilation {
 /**
- * @brief Utility to generate runtime calls for shared pointers.
+ * @brief Utility to generate Runtime calls for shared pointers.
  */
 class SharedPointerGen {
   public:

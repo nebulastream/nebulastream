@@ -25,7 +25,7 @@
 #include <utility>
 #include <zmq.hpp>
 
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -51,7 +51,7 @@ ZmqSink::~ZmqSink() {
     NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
 }
 
-bool ZmqSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
+bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     connect();
     if (!connected) {

@@ -18,8 +18,8 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -29,15 +29,15 @@ namespace NES {
 
 LambdaSource::LambdaSource(
     SchemaPtr schema,
-    NodeEngine::BufferManagerPtr bufferManager,
-    NodeEngine::QueryManagerPtr queryManager,
+    Runtime::BufferManagerPtr bufferManager,
+    Runtime::QueryManagerPtr queryManager,
     uint64_t numbersOfBufferToProduce,
     uint64_t gatheringValue,
-    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     OperatorId operatorId,
     size_t numSourceLocalBuffers,
     GatheringMode gatheringMode,
-    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
                       std::move(queryManager),
@@ -59,11 +59,11 @@ LambdaSource::LambdaSource(
     wasGracefullyStopped = true;
 }
 
-std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
+std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
     NES_DEBUG("LambdaSource::receiveData called on operatorId=" << operatorId);
     using namespace std::chrono_literals;
 
-    auto buffer = this->globalBufferManager->getBufferTimeout(NES::NodeEngine::DEFAULT_BUFFER_TIMEOUT);
+    auto buffer = this->globalBufferManager->getBufferTimeout(NES::Runtime::DEFAULT_BUFFER_TIMEOUT);
     if (!buffer) {
         NES_ERROR("Buffer invalid after waiting on timeout");
         return std::nullopt;

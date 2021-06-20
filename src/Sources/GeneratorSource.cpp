@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/BufferManager.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Sources/GeneratorSource.hpp>
 
 #include <iostream>

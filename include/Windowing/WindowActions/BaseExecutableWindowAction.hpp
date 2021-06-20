@@ -16,9 +16,9 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
@@ -38,26 +38,26 @@ class BaseExecutableWindowAction {
      * @param lastWatermark
      * @return bool indicating success
      */
-    virtual bool doAction(NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
+    virtual bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
                           uint64_t currentWatermark,
                           uint64_t lastWatermark) = 0;
 
     virtual std::string toString() = 0;
 
-    void emitBuffer(NodeEngine::TupleBuffer& tupleBuffer) {
+    void emitBuffer(Runtime::TupleBuffer& tupleBuffer) {
         tupleBuffer.setSequenceNumber(++emitSequenceNumber);
         weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
     };
 
-    void setup(const NodeEngine::Execution::PipelineExecutionContextPtr& executionContext) {
+    void setup(const Runtime::Execution::PipelineExecutionContextPtr& executionContext) {
         this->weakExecutionContext = executionContext;
         this->phantom = executionContext;
     }
 
   protected:
     std::atomic<uint64_t> emitSequenceNumber = 0;
-    std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
-    std::shared_ptr<NodeEngine::Execution::PipelineExecutionContext> phantom;
+    std::weak_ptr<Runtime::Execution::PipelineExecutionContext> weakExecutionContext;
+    std::shared_ptr<Runtime::Execution::PipelineExecutionContext> phantom;
     SchemaPtr windowSchema;
 };
 }// namespace NES::Windowing

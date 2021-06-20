@@ -38,14 +38,14 @@ class ZmqSource : public DataSource {
      * @param port of the source queue
      */
     explicit ZmqSource(SchemaPtr schema,
-                       NodeEngine::BufferManagerPtr bufferManager,
-                       NodeEngine::QueryManagerPtr queryManager,
+                       Runtime::BufferManagerPtr bufferManager,
+                       Runtime::QueryManagerPtr queryManager,
                        const std::string& host,
                        uint16_t port,
                        OperatorId operatorId,
                        uint64_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
-                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
+                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
      * @brief destructor of zmq sink that disconnects the queue before deconstruction
@@ -57,7 +57,7 @@ class ZmqSource : public DataSource {
      * @brief blocking method to receive a buffer from the zmq source
      * @return TupleBufferPtr containing thre received buffer
      */
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the zmq source

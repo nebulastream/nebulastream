@@ -19,7 +19,7 @@
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkManager.hpp>
-#include <NodeEngine/Execution/DataEmitter.hpp>
+#include <Runtime/Execution/DataEmitter.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
@@ -32,13 +32,13 @@ class NetworkSource : public DataSource {
 
   public:
     NetworkSource(SchemaPtr schema,
-                  NodeEngine::BufferManagerPtr bufferManager,
-                  NodeEngine::QueryManagerPtr queryManager,
+                  Runtime::BufferManagerPtr bufferManager,
+                  Runtime::QueryManagerPtr queryManager,
                   NetworkManagerPtr networkManager,
                   NesPartition nesPartition,
                   size_t numSourceLocalBuffers,
-                  std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors =
-                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
+                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors =
+                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     ~NetworkSource() override;
 
@@ -46,7 +46,7 @@ class NetworkSource : public DataSource {
      * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
      * @return TupleBufferPtr containing the received buffer
      */
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method
@@ -78,13 +78,13 @@ class NetworkSource : public DataSource {
      * @param bufferManager
      * @param queryManager
      */
-    static void runningRoutine(const NodeEngine::BufferManagerPtr&, const NodeEngine::QueryManagerPtr&);
+    static void runningRoutine(const Runtime::BufferManagerPtr&, const Runtime::QueryManagerPtr&);
 
     /**
      * @brief
      * @param buffer
      */
-    void emitWork(NodeEngine::TupleBuffer& buffer) override;
+    void emitWork(Runtime::TupleBuffer& buffer) override;
 
   private:
     NetworkManagerPtr networkManager;

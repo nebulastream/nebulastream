@@ -42,19 +42,19 @@ class MemorySource : public GeneratorSource {
     explicit MemorySource(SchemaPtr schema,
                           const std::shared_ptr<uint8_t>& memoryArea,
                           size_t memoryAreaSize,
-                          NodeEngine::BufferManagerPtr bufferManager,
-                          NodeEngine::QueryManagerPtr queryManager,
+                          Runtime::BufferManagerPtr bufferManager,
+                          Runtime::QueryManagerPtr queryManager,
                           uint64_t numBuffersToProcess,
                           uint64_t gatheringValue,
                           OperatorId operatorId,
                           size_t numSourceLocalBuffers,
                           GatheringMode gatheringMode,
-                          std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
+                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt
      */
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
      * @brief Provides a string representation of the source

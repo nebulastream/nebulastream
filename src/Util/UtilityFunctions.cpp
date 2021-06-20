@@ -22,7 +22,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -268,7 +268,7 @@ std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string&
     return elems;
 }
 
-std::string UtilityFunctions::printTupleBufferAsText(NodeEngine::TupleBuffer& buffer) {
+std::string UtilityFunctions::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
         ss << buffer.getBuffer<char>()[i];
@@ -276,7 +276,7 @@ std::string UtilityFunctions::printTupleBufferAsText(NodeEngine::TupleBuffer& bu
     return ss.str();
 }
 
-std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, const SchemaPtr& schema) {
+std::string UtilityFunctions::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema) {
     if (!buffer.isValid()) {
         return "INVALID_BUFFER_PTR";
     }
@@ -330,7 +330,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, const SchemaPtr& schema) {
+std::string UtilityFunctions::printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto* buffer = tbuffer.getBuffer<char>();

@@ -27,7 +27,7 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
-#include <NodeEngine/BufferManager.hpp>
+#include <Runtime/BufferManager.hpp>
 
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -43,7 +43,7 @@ uint64_t rpcPort = 5000;
 
 class MonitoringSerializationTest : public testing::Test {
   public:
-    NodeEngine::BufferManagerPtr bufferManager;
+    Runtime::BufferManagerPtr bufferManager;
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
     CoordinatorConfigPtr crdConf;
@@ -63,7 +63,7 @@ class MonitoringSerializationTest : public testing::Test {
         crdConf->resetCoordinatorOptions();
         wrkConf->resetWorkerOptions();
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
-        bufferManager = std::make_shared<NodeEngine::BufferManager>(4096, 10);
+        bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
         rpcPort = rpcPort + 30;
         crdConf->setRpcPort(rpcPort);
         wrkConf->setCoordinatorPort(rpcPort);

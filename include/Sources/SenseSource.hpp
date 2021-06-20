@@ -32,24 +32,24 @@ class SenseSource : public DataSource {
    * @param udfs to apply
    */
     explicit SenseSource(SchemaPtr schema,
-                         NodeEngine::BufferManagerPtr bufferManager,
-                         NodeEngine::QueryManagerPtr queryManager,
+                         Runtime::BufferManagerPtr bufferManager,
+                         Runtime::QueryManagerPtr queryManager,
                          std::string udsf,
                          OperatorId operatorId,
                          size_t numSourceLocalBuffers,
-                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
+                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
    * @brief override the receiveData method for the source
    * @return returns a buffer if available
    */
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
    *  @brief method to fill the buffer with tuples
    *  @param buffer to be filled
    */
-    void fillBuffer(NodeEngine::TupleBuffer&);
+    void fillBuffer(Runtime::TupleBuffer&);
 
     /**
      * @brief override the toString method for the csv source

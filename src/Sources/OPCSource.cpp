@@ -29,10 +29,10 @@
 #include <sstream>
 #include <string>
 
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/LocalBufferPool.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/LocalBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Util/Logger.hpp>
 #include <open62541/types.h>
@@ -41,8 +41,8 @@
 namespace NES {
 
 OPCSource::OPCSource(const SchemaPtr& schema,
-                     NodeEngine::BufferManagerPtr bufferManager,
-                     NodeEngine::QueryManagerPtr queryManager,
+                     Runtime::BufferManagerPtr bufferManager,
+                     Runtime::QueryManagerPtr queryManager,
                      std::string url,
                      UA_NodeId nodeId,
                      std::string password,
@@ -50,7 +50,7 @@ OPCSource::OPCSource(const SchemaPtr& schema,
                      OperatorId operatorId,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
-                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
+                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(schema,
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -74,7 +74,7 @@ OPCSource::~OPCSource() {
     }
 }
 
-std::optional<NodeEngine::TupleBuffer> OPCSource::receiveData() {
+std::optional<Runtime::TupleBuffer> OPCSource::receiveData() {
 
     NES_DEBUG("OPCSOURCE::receiveData()  " << this << ": receiveData() ");
     if (connect()) {

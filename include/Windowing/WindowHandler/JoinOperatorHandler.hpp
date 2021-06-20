@@ -16,16 +16,16 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINOPERATORHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINOPERATORHANDLER_HPP_
-#include <NodeEngine/Execution/OperatorHandler.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/Reconfigurable.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/Reconfigurable.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 namespace NES::Join {
 
 /**
  * @brief Operator handler for join.
  */
-class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler {
+class JoinOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
     JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema);
     JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr joinHandler);
@@ -66,19 +66,19 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler {
         return std::static_pointer_cast<JoinHandlerType<KeyType, LeftStreamType, RightStreamType>>(joinHandler);
     }
 
-    void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               NodeEngine::StateManagerPtr stateManager,
+    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+               Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     LogicalJoinDefinitionPtr getJoinDefinition();
 
     SchemaPtr getResultSchema();
 
-    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override;
+    void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) override;
 
-    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override;
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override;
 
   private:
     LogicalJoinDefinitionPtr joinDefinition;

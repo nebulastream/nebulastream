@@ -16,8 +16,8 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger.hpp>
@@ -32,8 +32,8 @@
 namespace NES {
 
 CSVSource::CSVSource(SchemaPtr schema,
-                     NodeEngine::BufferManagerPtr bufferManager,
-                     NodeEngine::QueryManagerPtr queryManager,
+                     Runtime::BufferManagerPtr bufferManager,
+                     Runtime::QueryManagerPtr queryManager,
                      std::string const& filePath,
                      std::string const& delimiter,
                      uint64_t numberOfTuplesToProducePerBuffer,
@@ -43,7 +43,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                      OperatorId operatorId,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
-                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema,
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -78,7 +78,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     fileEnded = false;
 }
 
-std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
+std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called on " << operatorId);
     auto buffer = this->bufferManager->getBufferBlocking();
     fillBuffer(buffer);
@@ -101,7 +101,7 @@ std::string CSVSource::toString() const {
     return ss.str();
 }
 
-void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
+void CSVSource::fillBuffer(Runtime::TupleBuffer& buf) {
     NES_DEBUG("CSVSource::fillBuffer: start at pos=" << currentPosInFile << " fileSize=" << fileSize);
     if (fileEnded) {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");

@@ -20,11 +20,11 @@
 #include <Network/NetworkSource.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqServer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/WorkerContext.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
@@ -34,7 +34,7 @@
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/BufferManager.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -49,7 +49,7 @@
 using namespace std;
 
 namespace NES {
-using NodeEngine::TupleBuffer;
+using Runtime::TupleBuffer;
 
 const uint64_t buffersManaged = 8 * 1024;
 const uint64_t bufferSize = 32 * 1024;
@@ -81,10 +81,10 @@ class TestSink : public SinkMedium {
   public:
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
-    TestSink(const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager)
+    TestSink(const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0){};
 
-    bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override {
+    bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContextRef) override {
         std::unique_lock lock(m);
         NES_DEBUG("TestSink:\n" << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
 
@@ -110,12 +110,12 @@ class TestSink : public SinkMedium {
     std::promise<uint64_t> completed;
 };
 
-void fillBuffer(TupleBuffer& buf, const NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout) {
+void fillBuffer(TupleBuffer& buf, const Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout) {
 
     auto bindedRowLayout = memoryLayout->bind(buf);
-    auto recordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
-    auto fields01 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
-    auto fields02 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayout);
+    auto recordIndexFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto fields01 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
+    auto fields02 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayout);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         recordIndexFields[recordIndex] = recordIndex;
@@ -138,7 +138,7 @@ class DummyExchangeProtocolListener : public ExchangeProtocolListener {
 TEST_F(NetworkStackTest, serverMustStartAndStop) {
     try {
         auto partMgr = std::make_shared<PartitionManager>();
-        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
         auto exchangeProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
         ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol, buffMgr);
         server.start();
@@ -152,7 +152,7 @@ TEST_F(NetworkStackTest, serverMustStartAndStop) {
 TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
     try {
         auto partMgr = std::make_shared<PartitionManager>();
-        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
         auto exchangeProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
         auto netManager = NetworkManager::create("127.0.0.1", 31337, std::move(exchangeProtocol), buffMgr);
     } catch (...) {
@@ -181,7 +181,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
-        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
         auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed));
         auto netManager = NetworkManager::create("127.0.0.1", 31337, std::move(ep), buffMgr);
 
@@ -248,7 +248,7 @@ TEST_F(NetworkStackTest, testSendData) {
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
-        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
 
         auto netManager =
             NetworkManager::create("127.0.0.1",
@@ -330,7 +330,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
-        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
 
         auto netManager =
             NetworkManager::create("127.0.0.1",
@@ -434,7 +434,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
-        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
 
         auto netManager =
             NetworkManager::create("127.0.0.1",
@@ -500,7 +500,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
-        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
 
         auto netManager = NetworkManager::create(
             "127.0.0.1",
@@ -615,7 +615,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         };
 
         auto pManager = std::make_shared<PartitionManager>();
-        auto bMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
+        auto bMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
 
         auto netManager = NetworkManager::create(
             "127.0.0.1",
@@ -640,8 +640,8 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
-                NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
-                auto rt = NodeEngine::ReconfigurationMessage(0, NodeEngine::Initialize, networkSink);
+                Runtime::WorkerContext workerContext(Runtime::NesThread::getId());
+                auto rt = Runtime::ReconfigurationMessage(0, Runtime::Initialize, networkSink);
                 networkSink->reconfigure(rt, workerContext);
                 std::mt19937 rnd;
                 std::uniform_int_distribution gen(50'000, 100'000);
@@ -655,7 +655,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                     usleep(gen(rnd));
                     networkSink->writeData(buffer, workerContext);
                 }
-                auto rtEnd = NodeEngine::ReconfigurationMessage(0, NodeEngine::HardEndOfStream, networkSink);
+                auto rtEnd = Runtime::ReconfigurationMessage(0, Runtime::HardEndOfStream, networkSink);
                 networkSink->reconfigure(rtEnd, workerContext);
             });
             sendingThreads.emplace_back(std::move(sendingThread));
@@ -675,7 +675,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
 TEST_F(NetworkStackTest, testNetworkSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+    auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -698,7 +698,7 @@ TEST_F(NetworkStackTest, testNetworkSource) {
 
 TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+    auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -734,9 +734,9 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
     try {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
-        auto bufferManager = std::make_shared<NodeEngine::BufferManager>(bufferSize, numBuffers);
-        auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
-        auto networkManagerCreator = [=](const NodeEngine::NodeEnginePtr& engine) {
+        auto bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers);
+        auto queryManager = std::make_shared<Runtime::QueryManager>(bufferManager, 0, 1);
+        auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(hostname,
                                                    port,
                                                    Network::ExchangeProtocol(partitionManager, engine),
@@ -774,7 +774,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
 
-    class MockedNodeEngine : public NodeEngine::NodeEngine {
+    class MockedNodeEngine : public Runtime::NodeEngine {
       public:
         NesPartition nesPartition;
         std::promise<bool>& completed;
@@ -783,9 +783,9 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
         explicit MockedNodeEngine(
             PhysicalStreamConfigPtr streamConf,
-            NES::NodeEngine::BufferManagerPtr&& bufferManager,
-            NES::NodeEngine::QueryManagerPtr&& queryManager,
-            std::function<Network::NetworkManagerPtr(NES::NodeEngine::NodeEnginePtr)>&& networkManagerCreator,
+            NES::Runtime::BufferManagerPtr&& bufferManager,
+            NES::Runtime::QueryManagerPtr&& queryManager,
+            std::function<Network::NetworkManagerPtr(NES::Runtime::NodeEnginePtr)>&& networkManagerCreator,
             Network::PartitionManagerPtr&& partitionManager,
             QueryCompilation::QueryCompilerPtr&& queryCompiler,
             std::promise<bool>& completed,
@@ -797,7 +797,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                          std::move(networkManagerCreator),
                          std::move(partitionManager),
                          std::move(queryCompiler),
-                         std::make_shared<NES::NodeEngine::StateManager>(0),
+                         std::make_shared<NES::Runtime::StateManager>(0),
                          0,
                          64,
                          64,
@@ -855,8 +855,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
-                NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
-                auto rt = NodeEngine::ReconfigurationMessage(0, NodeEngine::Initialize, networkSink);
+                Runtime::WorkerContext workerContext(Runtime::NesThread::getId());
+                auto rt = Runtime::ReconfigurationMessage(0, Runtime::Initialize, networkSink);
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -898,7 +898,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                            ->addField("test$value", DataTypeFactory::createInt64());
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 12);
+    auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 12);
     auto netManager = nodeEngine->getNetworkManager();
     // create NetworkSink
 
@@ -906,9 +906,9 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
         schema,
         [&](OperatorId,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
-            const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors) -> DataSourcePtr {
+            const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) -> DataSourcePtr {
             return std::make_shared<NetworkSource>(schema,
                                                    nodeEngine->getBufferManager(),
                                                    nodeEngine->getQueryManager(),
@@ -937,9 +937,9 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
         schema,
         [&](OperatorId,
             const SourceDescriptorPtr&,
-            const NodeEngine::NodeEnginePtr&,
+            const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
-            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(schema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),

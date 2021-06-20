@@ -27,7 +27,7 @@
 #include <Util/libcuckoo/cuckoohash_map.hh>
 
 namespace NES {
-namespace NodeEngine {
+namespace Runtime {
 namespace detail {
 
 template<typename T>
@@ -334,6 +334,6 @@ class StateVariable : public detail::Destroyable {
    */
     KeyValueRangeHandle rangeAll() { return KeyValueRangeHandle(backend); }
 };
-}// namespace NodeEngine
+}// namespace Runtime
 }// namespace NES
 #endif//STATEVARIABLE_HPP

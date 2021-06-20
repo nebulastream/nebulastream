@@ -19,8 +19,8 @@
 #include <random>
 
 namespace NES {
-using NodeEngine::StateManager;
-using NodeEngine::StateVariable;
+using Runtime::StateManager;
+using Runtime::StateVariable;
 /**
  * @brief benchmarks how many updates per second on a single key can be done
  */

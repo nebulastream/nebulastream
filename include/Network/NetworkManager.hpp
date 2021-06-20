@@ -22,7 +22,7 @@
 #include <Network/NodeLocation.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/PartitionManager.hpp>
-#include <NodeEngine/BufferManager.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -51,7 +51,7 @@ class NetworkManager {
     static std::shared_ptr<NetworkManager> create(const std::string& hostname,
                                                   uint16_t port,
                                                   Network::ExchangeProtocol&& exchangeProtocol,
-                                                  const NodeEngine::BufferManagerPtr& bufferManager,
+                                                  const Runtime::BufferManagerPtr& bufferManager,
                                                   uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
@@ -102,7 +102,7 @@ class NetworkManager {
     explicit NetworkManager(const std::string& hostname,
                             uint16_t port,
                             ExchangeProtocol&& exchangeProtocol,
-                            const NodeEngine::BufferManagerPtr& bufferManager,
+                            const Runtime::BufferManagerPtr& bufferManager,
                             uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**

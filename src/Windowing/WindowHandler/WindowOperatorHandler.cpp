@@ -47,17 +47,17 @@ void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHand
 
 SchemaPtr WindowOperatorHandler::getResultSchema() { return resultSchema; }
 
-void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr,
-                                  NodeEngine::StateManagerPtr stateManager,
+void WindowOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+                                  Runtime::StateManagerPtr stateManager,
                                   uint32_t localStateVariableId) {
     windowHandler->start(stateManager, localStateVariableId);
 }
-void WindowOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->stop(); }
-void WindowOperatorHandler::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) {
+void WindowOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) { windowHandler->stop(); }
+void WindowOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
     windowHandler->reconfigure(task, context);
 }
-void WindowOperatorHandler::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) {
+void WindowOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
     Reconfigurable::postReconfigurationCallback(task);
     windowHandler->postReconfigurationCallback(task);
 }

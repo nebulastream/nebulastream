@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
 #define NES_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -58,7 +58,7 @@ class MonitoringManager {
      * @param tupleBuffer
      * @return
      */
-    bool requestMonitoringData(uint64_t nodeId, NodeEngine::TupleBuffer& tupleBuffer);
+    bool requestMonitoringData(uint64_t nodeId, Runtime::TupleBuffer& tupleBuffer);
 
     /**
      * @brief Get the monitoring plan for a given node ID. If the node exists in the topology but has not a registered

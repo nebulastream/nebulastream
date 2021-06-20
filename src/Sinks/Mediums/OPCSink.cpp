@@ -21,7 +21,7 @@
 #include <sstream>
 #include <string>
 
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 
@@ -58,7 +58,7 @@ OPCSink::~OPCSink() {
     NES_DEBUG("OPCSink  " << this << ": Destroy OPC Sink");
 }
 
-bool OPCSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext&) {
+bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     std::unique_lock lock(writeMutex);
     NES_DEBUG("OPCSINK::writeData()  " << this);
     NES_DEBUG("OPCSINK::writeData url: " << url << ".");

@@ -18,13 +18,13 @@
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/WorkerContext.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ClassDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/FunctionDefinition.hpp>
@@ -74,7 +74,7 @@ class CodeGenerationTest : public testing::Test {
     void SetUp() override {
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf, 1, 4096, 1024, 12, 12);
+        nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 6262, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     /* Will be called before a test is executed. */
@@ -86,22 +86,22 @@ class CodeGenerationTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down CodeGenerationTest test class." << std::endl; }
 
-    NodeEngine::NodeEnginePtr nodeEngine;
+    Runtime::NodeEnginePtr nodeEngine;
 };
 
-class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
+class TestPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
-                                 NodeEngine::BufferManagerPtr bufferManager,
-                                 std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
+    TestPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
+                                 Runtime::BufferManagerPtr bufferManager,
+                                 std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
             0,
             std::move(queryManager),
             std::move(bufferManager),
-            [this](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
+            [this](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            [this](NodeEngine::TupleBuffer& buffer) {
+            [this](Runtime::TupleBuffer& buffer) {
                 this->buffers.emplace_back(std::move(buffer));
             },
             std::move(operatorHandlers),
@@ -109,7 +109,7 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
             // nop
         };
 
-    std::vector<NodeEngine::TupleBuffer> buffers;
+    std::vector<Runtime::TupleBuffer> buffers;
 };
 
 /**
@@ -372,10 +372,10 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto tf = GeneratableTypesFactory();
-    auto tupleBufferType = NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::TupleBuffer");
+    auto tupleBufferType = NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("Runtime::TupleBuffer");
     auto pipelineExecutionContextType =
-        NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
-    auto workerContextType = NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("NodeEngine::WorkerContext");
+        NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
+    auto workerContextType = NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("Runtime::WorkerContext");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
     auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
 
@@ -506,7 +506,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     fileB.addDeclaration(structDeclResultTuple.copy());
 
     auto executablePipeline = ClassDefinition::create("ExecutablePipelineStage1");
-    executablePipeline->addBaseClass("NodeEngine::Execution::ExecutablePipelineStage");
+    executablePipeline->addBaseClass("Runtime::Execution::ExecutablePipelineStage");
     executablePipeline->addMethod(ClassDefinition::Public, mainFunction);
 
     auto executablePipelineDeclaration = executablePipeline->getDeclaration();
@@ -519,7 +519,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     ;
     createFunction->returns(
         SharedPointerGen::createSharedPtrType(NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType(
-            "NodeEngine::Execution::ExecutablePipelineStage")));
+            "Runtime::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileB.addDeclaration(pipelineNamespace->getDeclaration()).build();
 
@@ -530,11 +530,11 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto recordSchema = Schema::create()->addField("id", DataTypeFactory::createInt64());
 
-    auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(recordSchema, true);
+    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(recordSchema, true);
     auto bindedRowLayout = layout->bind(inputBuffer);
 
     auto recordIndexFieldsInput =
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
 
     for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         recordIndexFieldsInput[recordIndex] = recordIndex;
@@ -543,7 +543,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     inputBuffer.setNumberOfTuples(100);
 
     /* execute code */
-    auto wctx = NodeEngine::WorkerContext{0};
+    auto wctx = Runtime::WorkerContext{0};
     auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                   nodeEngine->getBufferManager(),
                                                                   std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
@@ -556,7 +556,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* check result for correctness */
     auto bindedOutputRowLayout = layout->bind(outputBuffer);
     auto sumGeneratedCode =
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedOutputRowLayout)[0];
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedOutputRowLayout)[0];
     auto sum = 0;
     for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         sum += recordIndexFieldsInput[recordIndex];

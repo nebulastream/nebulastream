@@ -147,13 +147,13 @@ class NesWorker {
     * @param id of the query
     * @return vector of queryStatistics
     */
-    std::vector<NodeEngine::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
+    std::vector<Runtime::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
 
     /**
      * @brief method to get a ptr to the node engine
      * @return pt to node engine
      */
-    NodeEngine::NodeEnginePtr getNodeEngine();
+    Runtime::NodeEnginePtr getNodeEngine();
 
     /**
      * @brief method to get the id of the worker
@@ -180,7 +180,7 @@ class NesWorker {
     std::shared_ptr<std::thread> rpcThread;
     std::unique_ptr<grpc::ServerCompletionQueue> completionQueue;
 
-    NodeEngine::NodeEnginePtr nodeEngine;
+    Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
 

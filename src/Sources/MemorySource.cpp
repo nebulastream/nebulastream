@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -27,14 +27,14 @@ namespace NES {
 MemorySource::MemorySource(SchemaPtr schema,
                            const std::shared_ptr<uint8_t>& memoryArea,
                            size_t memoryAreaSize,
-                           NodeEngine::BufferManagerPtr bufferManager,
-                           NodeEngine::QueryManagerPtr queryManager,
+                           Runtime::BufferManagerPtr bufferManager,
+                           Runtime::QueryManagerPtr queryManager,
                            uint64_t numBuffersToProcess,
                            uint64_t gatheringValue,
                            OperatorId operatorId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
-                           std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
                       std::move(queryManager),
@@ -72,9 +72,9 @@ MemorySource::MemorySource(SchemaPtr schema,
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
-std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
+std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
-    auto buffer = this->bufferManager->getBufferTimeout(NES::NodeEngine::DEFAULT_BUFFER_TIMEOUT);
+    auto buffer = this->bufferManager->getBufferTimeout(NES::Runtime::DEFAULT_BUFFER_TIMEOUT);
 
     if (memoryAreaSize > buffer->getBufferSize()) {
         if (currentPositionInBytes + numberOfTuplesToProduce * schema->getSchemaSizeInBytes() > memoryAreaSize) {
@@ -98,7 +98,7 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     memcpy(buffer->getBuffer(), memoryArea.get() + currentPositionInBytes, buffer->getBufferSize());
 
     //        TODO: replace copy with inplace add like with the wraparound #1853
-    //    auto buffer2 = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, buffer->getBufferSize(), this);
+    //    auto buffer2 = Runtime::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, buffer->getBufferSize(), this);
 
     if (memoryAreaSize > buffer->getBufferSize()) {
         NES_DEBUG("MemorySource::receiveData: add offset=" << buffer->getBufferSize()

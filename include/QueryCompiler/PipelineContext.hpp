@@ -51,15 +51,15 @@ class PipelineContext {
 
     /**
      * @brief Appends a new operator handler and returns the handler index.
-     * The index enables runtime lookups.
+     * The index enables Runtime lookups.
      * @param operatorHandler
      * @return operator handler index
      */
-    int64_t registerOperatorHandler(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler);
+    int64_t registerOperatorHandler(const Runtime::Execution::OperatorHandlerPtr& operatorHandler);
 
-    std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
+    std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();
 
-    uint64_t getHandlerIndex(const NodeEngine::Execution::OperatorHandlerPtr& operatorHandler);
+    uint64_t getHandlerIndex(const Runtime::Execution::OperatorHandlerPtr& operatorHandler);
 
     std::string pipelineName;
     PipelineContextArity arity;
@@ -71,7 +71,7 @@ class PipelineContext {
     std::vector<PipelineContextPtr> nextPipelines;
     std::vector<BlockScopeStatementPtr> setupScopes;
     std::vector<BlockScopeStatementPtr> startScopes;
-    std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers;
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 };
 }// namespace QueryCompilation
 }// namespace NES

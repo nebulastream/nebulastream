@@ -25,17 +25,17 @@ namespace NES {
 class DefaultSource : public GeneratorSource {
   public:
     DefaultSource(SchemaPtr schema,
-                  NodeEngine::BufferManagerPtr bufferManager,
-                  NodeEngine::QueryManagerPtr queryManager,
+                  Runtime::BufferManagerPtr bufferManager,
+                  Runtime::QueryManagerPtr queryManager,
                   uint64_t numbersOfBufferToProduce,
                   uint64_t frequency,
                   OperatorId operatorId,
                   size_t numSourceLocalBuffers,
-                  std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors = {});
+                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {});
 
     SourceType getType() const override;
 
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 };
 
 using DefaultSourcePtr = std::shared_ptr<DefaultSource>;

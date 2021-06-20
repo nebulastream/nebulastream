@@ -17,7 +17,7 @@
 #include <Network/NetworkMessage.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Network/ZmqUtils.hpp>
-#include <NodeEngine/BufferManager.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -29,7 +29,7 @@ ZmqServer::ZmqServer(std::string hostname,
                      uint16_t port,
                      uint16_t numNetworkThreads,
                      ExchangeProtocol& exchangeProtocol,
-                     NodeEngine::BufferManagerPtr bufferManager)
+                     Runtime::BufferManagerPtr bufferManager)
     : hostname(std::move(hostname)), port(port), numNetworkThreads(std::max(DEFAULT_NUM_SERVER_THREADS, numNetworkThreads)),
       isRunning(false), keepRunning(true), exchangeProtocol(exchangeProtocol), bufferManager(std::move(bufferManager)) {
     NES_DEBUG("ZmqServer: Creating ZmqServer()");

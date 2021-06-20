@@ -20,23 +20,23 @@
 namespace NES::QueryCompilation {
 
 ExecutableOperator::ExecutableOperator(OperatorId id,
-                                       NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
+                                       Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+                                       std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
     : OperatorNode(id), UnaryOperatorNode(id), executablePipelineStage(std::move(executablePipelineStage)),
       operatorHandlers(std::move(operatorHandlers)) {}
 
-OperatorNodePtr ExecutableOperator::create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                                           std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers) {
+OperatorNodePtr ExecutableOperator::create(Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+                                           std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers) {
     return std::make_shared<ExecutableOperator>(ExecutableOperator(UtilityFunctions::getNextOperatorId(),
                                                                    std::move(executablePipelineStage),
                                                                    std::move(operatorHandlers)));
 }
 
-NodeEngine::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecutablePipelineStage() {
+Runtime::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecutablePipelineStage() {
     return executablePipelineStage;
 }
 
-std::vector<NodeEngine::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers() { return operatorHandlers; }
+std::vector<Runtime::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers() { return operatorHandlers; }
 
 std::string ExecutableOperator::toString() const { return "ExecutableOperator"; }
 

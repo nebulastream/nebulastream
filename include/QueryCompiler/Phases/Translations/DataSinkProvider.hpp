@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -41,7 +41,7 @@ class DataSinkProvider {
     virtual DataSinkPtr lower(OperatorId sinkId,
                               SinkDescriptorPtr sinkDescriptor,
                               SchemaPtr schema,
-                              NodeEngine::NodeEnginePtr nodeEngine,
+                              Runtime::NodeEnginePtr nodeEngine,
                               QuerySubPlanId querySubPlanId);
 
     virtual ~DataSinkProvider() = default;

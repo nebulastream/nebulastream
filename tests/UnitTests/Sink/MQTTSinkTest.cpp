@@ -19,9 +19,9 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/WorkerContext.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -52,7 +52,7 @@ class MQTTTSinkTest : public testing::Test {
     const std::string USER = "rfRqLGZRChg8eS30PEeR";
 
     SchemaPtr testSchema;
-    NodeEngine::NodeEnginePtr nodeEngine{};
+    Runtime::NodeEnginePtr nodeEngine{};
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -64,7 +64,7 @@ class MQTTTSinkTest : public testing::Test {
     void SetUp() override {
         NES_DEBUG("Setup MQTTTSinkTest test case.");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 3111, conf);
+        nodeEngine = Runtime::create("127.0.0.1", 3111, conf);
         testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     }
 
@@ -75,7 +75,7 @@ class MQTTTSinkTest : public testing::Test {
         NES_DEBUG("Setup MQTT test case.");
     }
 
-    static NES::NodeEngine::TupleBuffer createTupleBuffer(uint64_t bufferSize,
+    static NES::Runtime::TupleBuffer createTupleBuffer(uint64_t bufferSize,
                                                           const std::shared_ptr<NodeEngine::BufferManager>& buffMgr) {
         auto buffer = buffMgr->getBufferBlocking();
         std::mt19937 rnd;
@@ -103,7 +103,7 @@ class MQTTTSinkTest : public testing::Test {
                                                 bool asynchronousClient,
                                                 bool printBuffer) {
         // Create MQTT Sink
-        NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
+        Runtime::WorkerContext workerContext(Runtime::NesThread::getId());
         SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
 
         /* This was originally done like the other sink tests, using the createMQTTSink() function, which returns a DataSinkPtr.
@@ -127,7 +127,7 @@ class MQTTTSinkTest : public testing::Test {
 
         // Create Buffer
         const uint64_t bufferSize = 8 * numTuples;
-        auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, 1);
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, 1);
         auto inputBuffer = createTupleBuffer(bufferSize, buffMgr);
         if (printBuffer) {
             NES_DEBUG("bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, testSchema) << '\n');

@@ -20,7 +20,7 @@
 #include <string>
 
 namespace NES {
-namespace NodeEngine {
+namespace Runtime {
 std::string collectAndPrintStacktrace();
 }
 }// namespace NES

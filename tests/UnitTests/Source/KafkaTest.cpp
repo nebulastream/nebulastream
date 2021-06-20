@@ -16,8 +16,8 @@
 
 #include <gtest/gtest.h>
 #ifdef ENABLE_KAFKA_BUILD
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <cstring>
 #include <string>
 #include <thread>

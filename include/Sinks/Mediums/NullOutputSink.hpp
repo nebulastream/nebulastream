@@ -62,7 +62,7 @@ class NullOutputSink : public SinkMedium {
      * @param tuple buffer to write
      * @return bool indicating success of the write
      */
-    bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) override;
+    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
 
     /**
      * @brief override the toString method for the print sink

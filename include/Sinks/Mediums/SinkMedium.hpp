@@ -18,7 +18,7 @@
 #define INCLUDE_DATASINK_H_
 
 #include <API/Schema.hpp>
-#include <NodeEngine/Reconfigurable.hpp>
+#include <Runtime/Reconfigurable.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <mutex>
@@ -30,7 +30,7 @@ enum SinkMediumTypes { ZMQ_SINK, PRINT_SINK, KAFKA_SINK, FILE_SINK, NETWORK_SINK
  * @brief Base class for all data sinks in NES
  * @note this code is not thread safe
  */
-class SinkMedium : public NodeEngine::Reconfigurable {
+class SinkMedium : public Runtime::Reconfigurable {
 
   public:
     /**FF
@@ -61,7 +61,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    virtual bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) = 0;
+    virtual bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) = 0;
 
     /**
      * @brief get the id of the owning plan
@@ -118,8 +118,8 @@ class SinkMedium : public NodeEngine::Reconfigurable {
       */
     virtual SinkMediumTypes getSinkMediumType() = 0;
 
-    void reconfigure(NodeEngine::ReconfigurationMessage& message, NodeEngine::WorkerContext& context) override;
-    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& message) override;
+    void reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) override;
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
   protected:
     SinkFormatPtr sinkFormat;

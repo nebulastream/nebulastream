@@ -18,7 +18,7 @@
 #define NES_OUTPUTCHANNEL_HPP
 
 #include <Network/NetworkMessage.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <iostream>
 #include <memory>
 #include <zmq.hpp>
@@ -72,7 +72,7 @@ class OutputChannel {
      * @param the tupleSize represents the size in bytes of one tuple in the buffer
      * @return true if send was successful, else false
      */
-    bool sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tupleSizeInBytes);
+    bool sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSizeInBytes);
 
     /**
      * @brief Method to handle the error

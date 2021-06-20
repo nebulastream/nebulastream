@@ -15,7 +15,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -23,17 +23,17 @@
 
 namespace NES {
 
-JsonFormat::JsonFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
+JsonFormat::JsonFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
-std::vector<NodeEngine::TupleBuffer> JsonFormat::getData(NodeEngine::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+std::vector<Runtime::TupleBuffer> JsonFormat::getData(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 
-std::optional<NodeEngine::TupleBuffer> JsonFormat::getSchema() { NES_NOT_IMPLEMENTED(); }
+std::optional<Runtime::TupleBuffer> JsonFormat::getSchema() { NES_NOT_IMPLEMENTED(); }
 
 std::string JsonFormat::toString() { return "JSON_FORMAT"; }
 FormatTypes JsonFormat::getSinkFormat() { return JSON_FORMAT; }
 
-FormatIterator JsonFormat::getTupleIterator(NodeEngine::TupleBuffer& inputBuffer) {
+FormatIterator JsonFormat::getTupleIterator(Runtime::TupleBuffer& inputBuffer) {
     return FormatIterator(schema, inputBuffer, JSON_FORMAT);
 }
 

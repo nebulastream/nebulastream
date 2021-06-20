@@ -16,13 +16,13 @@
 
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/MemoryLayout/DynamicColumnLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicColumnLayoutField.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 #include <gtest/gtest.h>
 
@@ -30,7 +30,7 @@
 #include <iostream>
 #include <vector>
 
-namespace NES::NodeEngine::DynamicMemoryLayout {
+namespace NES::Runtime::DynamicMemoryLayout {
 class DynamicMemoryLayoutTest : public testing::Test {
   public:
     BufferManagerPtr bufferManager;
@@ -681,4 +681,4 @@ TEST_F(DynamicMemoryLayoutTest, getFieldViaFieldNameColumnLayout) {
     ASSERT_THROW((DynamicColumnLayoutField<uint32_t, true>::create("t6", bindedColumnLayout)), NES::NesRuntimeException);
 }
 
-}// namespace NES::NodeEngine::DynamicMemoryLayout
+}// namespace NES::Runtime::DynamicMemoryLayout

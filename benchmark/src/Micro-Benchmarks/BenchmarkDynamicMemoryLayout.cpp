@@ -15,18 +15,18 @@
 */
 
 #include <API/Schema.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/MemoryLayout/DynamicColumnLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicColumnLayoutField.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <benchmark/benchmark.h>
 
-using namespace NES::NodeEngine::DynamicMemoryLayout;
+using namespace NES::Runtime::DynamicMemoryLayout;
 namespace NES::Benchmarking {
 
 #define bufferSize (40 * 1024 * 1024)
@@ -52,7 +52,7 @@ namespace NES::Benchmarking {
 static void BM_WriteRecordsRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -89,7 +89,7 @@ static void BM_WriteRecordsRowLayoutNewLayout(benchmark::State& state) {
 static void BM_ReadRecordsRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -161,7 +161,7 @@ static void BM_ReadRecordsRowLayoutNewLayout(benchmark::State& state) {
 static void BM_WriteRecordsColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -198,7 +198,7 @@ static void BM_WriteRecordsColumnLayoutNewLayout(benchmark::State& state) {
 static void BM_ReadRecordsColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -270,7 +270,7 @@ static void BM_ReadRecordsColumnLayoutNewLayout(benchmark::State& state) {
 static void BM_ReadFieldRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -312,7 +312,7 @@ static void BM_ReadFieldRowLayoutNewLayout(benchmark::State& state) {
 static void BM_ReadFieldColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -355,7 +355,7 @@ static void BM_ReadFieldColumnLayoutNewLayout(benchmark::State& state) {
 static void BM_WriteFieldRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -374,7 +374,7 @@ static void BM_WriteFieldRowLayoutNewLayout(benchmark::State& state) {
 static void BM_WriteFieldColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -393,7 +393,7 @@ static void BM_WriteFieldColumnLayoutNewLayout(benchmark::State& state) {
 static void BM_WriteWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -449,7 +449,7 @@ static void BM_WriteWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& 
 static void BM_WriteWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -505,7 +505,7 @@ static void BM_WriteWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& sta
 static void BM_ReadWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -626,7 +626,7 @@ static void BM_ReadWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& s
 static void BM_ReadWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -751,7 +751,7 @@ static void BM_ReadWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& stat
 static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
@@ -1477,7 +1477,7 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
 static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicColumnLayoutPtr colLayout = DynamicColumnLayout::create(schema, false);
@@ -2204,7 +2204,7 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
 static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
@@ -2509,7 +2509,7 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
 static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicColumnLayoutPtr colLayout = DynamicColumnLayout::create(schema, false);

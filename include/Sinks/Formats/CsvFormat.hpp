@@ -22,7 +22,7 @@ namespace NES {
 
 class CsvFormat : public SinkFormat {
   public:
-    CsvFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager);
+    CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
     virtual ~CsvFormat() noexcept = default;
 
     /**
@@ -30,20 +30,20 @@ class CsvFormat : public SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    std::vector<NodeEngine::TupleBuffer> getData(NodeEngine::TupleBuffer& inputBuffer) override;
+    std::vector<Runtime::TupleBuffer> getData(Runtime::TupleBuffer& inputBuffer) override;
 
     /**
     * @brief method to write a TupleBuffer
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    FormatIterator getTupleIterator(NodeEngine::TupleBuffer& inputBuffer) override;
+    FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
 
     /**
     * @brief method to write the schema of the data
     * @return TupleBuffer containing the schema
     */
-    std::optional<NodeEngine::TupleBuffer> getSchema() override;
+    std::optional<Runtime::TupleBuffer> getSchema() override;
 
     /**
      * @brief method to return the format as a string

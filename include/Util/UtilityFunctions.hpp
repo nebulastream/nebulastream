@@ -17,7 +17,7 @@
 #ifndef UTILITY_FUNCTIONS_HPP
 #define UTILITY_FUNCTIONS_HPP
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <cpprest/json.h>
@@ -141,20 +141,20 @@ class UtilityFunctions {
 
     static std::vector<std::string> splitWithStringDelimiter(std::string& s, const std::string& delim);
 
-    static std::string prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, const SchemaPtr& schema);
+    static std::string prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema);
 
     /**
    * @brief Outputs a tuple buffer in text format
    * @param buffer the tuple buffer
    * @return string of tuple buffer
    */
-    static std::string printTupleBufferAsText(NodeEngine::TupleBuffer& buffer);
+    static std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
 
     /**
     * @brief this method creates a string from the content of a tuple buffer
     * @return string of the buffer content
     */
-    static std::string printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, const SchemaPtr& schema);
+    static std::string printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffer, const SchemaPtr& schema);
 
     /**
       * @brief function to obtain JSON representation of a NES Topology

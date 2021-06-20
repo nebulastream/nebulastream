@@ -33,29 +33,29 @@ class ExecutableOperator : public UnaryOperatorNode {
      * @param operatorHandlers a list of operator handlers
      * @return OperatorNodePtr
      */
-    static OperatorNodePtr create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                                  std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers);
+    static OperatorNodePtr create(Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+                                  std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
 
     /**
      * @brief Gets the executable pipeline stage.
      * @return ExecutablePipelineStagePtr
      */
-    NodeEngine::Execution::ExecutablePipelineStagePtr getExecutablePipelineStage();
+    Runtime::Execution::ExecutablePipelineStagePtr getExecutablePipelineStage();
 
     /**
      * @brief Gets the operator handlers, which capture specific operator state.
-     * @return std::vector<NodeEngine::Execution::OperatorHandlerPtr>
+     * @return std::vector<Runtime::Execution::OperatorHandlerPtr>
      */
-    std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
+    std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
     ExecutableOperator(OperatorId id,
-                       NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                       std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers);
-    NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage;
-    std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers;
+                       Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+                       std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
+    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 };
 
 }// namespace QueryCompilation

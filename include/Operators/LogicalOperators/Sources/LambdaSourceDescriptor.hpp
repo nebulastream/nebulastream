@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LambdaSourceDescriptor_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LambdaSourceDescriptor_HPP_
 
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #include <functional>
@@ -35,7 +35,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      */
     explicit LambdaSourceDescriptor(
         SchemaPtr schema,
-        std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+        std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         uint64_t numBuffersToProcess,
         uint64_t gatheringValue,
         DataSource::GatheringMode gatheringMode);
@@ -50,7 +50,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      */
     static std::shared_ptr<LambdaSourceDescriptor>
     create(const SchemaPtr& schema,
-           std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+           std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProcess,
            uint64_t gatheringValue,
            DataSource::GatheringMode gatheringMode);
@@ -72,7 +72,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      * @brief returns the the generator function
      * @return generator function
      */
-    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& getGeneratorFunction();
+    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& getGeneratorFunction();
 
     /**
      * @brief returns number of buffer to process
@@ -93,7 +93,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     uint64_t getGatheringValue() const;
 
   private:
-    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
+    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
     DataSource::GatheringMode gatheringMode;

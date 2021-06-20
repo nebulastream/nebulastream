@@ -42,15 +42,15 @@ class ArrayBase : public std::array<T, s> {
 
     /// @brief Construct from arguments which can be used to construct the underlying std::array `J...`.
     template<typename... J, typename = std::enable_if_t<std::is_constructible_v<std::array<T, size>, std::decay_t<J>...>>>
-    inline ArrayBase(J&&... f) noexcept(noexcept(this->runtimeConstructionTest())) : std::array<T, size>(std::forward<J>(f)...) {
-        this->runtimeConstructionTest();
+    inline ArrayBase(J&&... f) noexcept(noexcept(this->RuntimeConstructionTest())) : std::array<T, size>(std::forward<J>(f)...) {
+        this->RuntimeConstructionTest();
     }
 
     /// @brief Construct from `size` values of type T.
     template<typename... J,
              typename = std::enable_if_t<std::conjunction_v<std::is_same<T, std::decay_t<J>>...> && sizeof...(J) <= size
                                          && (std::is_same_v<T, char> || sizeof...(J) == size)>>
-    inline ArrayBase(J... f) noexcept(sizeof...(J) < size || noexcept(this->runtimeConstructionTest()))
+    inline ArrayBase(J... f) noexcept(sizeof...(J) < size || noexcept(this->RuntimeConstructionTest()))
         : std::array<T, size>({std::forward<J>(f)...}) {
         if constexpr (sizeof...(J) == size) {
             this->runtimeConstructionTest();
@@ -58,9 +58,9 @@ class ArrayBase : public std::array<T, s> {
     }
 
     /// @brief Construct from c-style array `val`.
-    constexpr ArrayBase(T const (&val)[size]) noexcept(noexcept(this->runtimeConstructionTest())) : std::array<T, size>() {
+    constexpr ArrayBase(T const (&val)[size]) noexcept(noexcept(this->RuntimeConstructionTest())) : std::array<T, size>() {
         this->initializeFrom(val, size, std::make_integer_sequence<std::size_t, size>());
-        this->runtimeConstructionTest();
+        this->RuntimeConstructionTest();
     }
 
     /***
@@ -71,7 +71,7 @@ class ArrayBase : public std::array<T, s> {
      */
     inline ArrayBase(std::vector<T> const& vec) noexcept(false) : std::array<T, size>() {
         this->initializeFrom(vec, vec.size(), std::make_integer_sequence<std::size_t, size>());
-        runtimeConstructionTest();
+        RuntimeConstructionTest();
     }
 
   protected:
@@ -87,7 +87,7 @@ class ArrayBase : public std::array<T, s> {
         : std::array<T, size>() {
         this->initializeFrom(v, pSize, std::make_integer_sequence<std::size_t, size>());
         if constexpr (conductConstructionTest) {
-            runtimeConstructionTest();
+            RuntimeConstructionTest();
         }
     }
 
@@ -132,8 +132,8 @@ class ArrayBase : public std::array<T, s> {
         (*this)[i] = v[i];
     }
 
-    /// @brief Conduct runtime tests that ensure that the datatype is constructed.
-    inline void runtimeConstructionTest() const noexcept(!std::is_same_v<std::decay_t<T>, char>) {
+    /// @brief Conduct Runtime tests that ensure that the datatype is constructed.
+    inline void RuntimeConstructionTest() const noexcept(!std::is_same_v<std::decay_t<T>, char>) {
         if constexpr (std::is_same_v<std::decay_t<T>, char>) {
             if (!std::any_of(this->rbegin(), this->rend(), [](char f) {
                     return f == '\0';

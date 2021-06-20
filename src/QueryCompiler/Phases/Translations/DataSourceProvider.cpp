@@ -29,8 +29,8 @@ DataSourceProviderPtr QueryCompilation::DataSourceProvider::create(const QueryCo
 
 DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
                                         SourceDescriptorPtr sourceDescriptor,
-                                        NodeEngine::NodeEnginePtr nodeEngine,
-                                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
+                                        Runtime::NodeEnginePtr nodeEngine,
+                                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
     return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
                                                             std::move(sourceDescriptor),
                                                             std::move(nodeEngine),

@@ -17,8 +17,8 @@
 #ifndef INCLUDE_JOIN_WINDOW_HPP_
 #define INCLUDE_JOIN_WINDOW_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/Reconfigurable.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/Reconfigurable.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
@@ -46,9 +46,9 @@ enum JoinSides { leftSide = 0, rightSide = 1 };
  * @brief The abstract window handler is the base class for all window handlers
  */
 class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<AbstractJoinHandler, false>,
-                            public NodeEngine::Reconfigurable {
+                            public Runtime::Reconfigurable {
     using inherited0 = detail::virtual_enable_shared_from_this<AbstractJoinHandler, false>;
-    using inherited1 = NodeEngine::Reconfigurable;
+    using inherited1 = Runtime::Reconfigurable;
 
   public:
     explicit AbstractJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
@@ -70,7 +70,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
     * @param localStateVariableId local id of a state on an engine node
     * @return boolean if the window thread is started
     */
-    virtual bool start(NodeEngine::StateManagerPtr stateManager, uint32_t localStateVariableId) = 0;
+    virtual bool start(Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) = 0;
 
     /**
      * @brief Stops the window thread.
@@ -87,7 +87,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+    virtual bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
     /**
      * @brief Returns window manager.

@@ -15,7 +15,7 @@
 */
 
 #include <Network/NetworkSink.hpp>
-#include <NodeEngine/WorkerContext.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <utility>
 
@@ -26,8 +26,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          NetworkManagerPtr networkManager,
                          const NodeLocation& nodeLocation,
                          NesPartition nesPartition,
-                         const NodeEngine::BufferManagerPtr& bufferManager,
-                         NodeEngine::QueryManagerPtr queryManager,
+                         const Runtime::BufferManagerPtr& bufferManager,
+                         Runtime::QueryManagerPtr queryManager,
                          std::chrono::seconds waitTime,
                          uint8_t retryTimes)
     : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),
@@ -41,7 +41,7 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 NetworkSink::~NetworkSink() { NES_INFO("NetworkSink: Destructor called " << nesPartition); }
 
-bool NetworkSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) {
+bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
     if (channel) {
         return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
@@ -54,7 +54,7 @@ void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString() << " qep " << parentPlanId);
     queryManager->addReconfigurationMessage(
         parentPlanId,
-        NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Initialize, shared_from_this()),
+        Runtime::ReconfigurationMessage(parentPlanId, Runtime::Initialize, shared_from_this()),
         false);
 }
 
@@ -64,22 +64,22 @@ void NetworkSink::shutdown() {
 
 std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
-void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& workerContext) {
+void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString() << " parent plan " << parentPlanId);
     NES::SinkMedium::reconfigure(task, workerContext);
     switch (task.getType()) {
-        case NodeEngine::Initialize: {
+        case Runtime::Initialize: {
             auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes);
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
             NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread "
-                                                                      << NodeEngine::NesThread::getId());
+                                                                      << Runtime::NesThread::getId());
             break;
         }
-        case NodeEngine::Destroy: {
+        case Runtime::Destroy: {
             workerContext.releaseChannel(nesPartition.getOperatorId());
             NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
-                                                                        << NodeEngine::NesThread::getId());
+                                                                        << Runtime::NesThread::getId());
             break;
         }
         default: {
@@ -88,13 +88,13 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
     }
 }
 
-void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) {
+void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
     NES_DEBUG("NetworkSink: postReconfigurationCallback() called " << nesPartition.toString() << " parent plan " << parentPlanId);
     NES::SinkMedium::postReconfigurationCallback(task);
     switch (task.getType()) {
-        case NodeEngine::HardEndOfStream:
-        case NodeEngine::SoftEndOfStream: {
-            auto newReconf = NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Destroy, shared_from_this());
+        case Runtime::HardEndOfStream:
+        case Runtime::SoftEndOfStream: {
+            auto newReconf = Runtime::ReconfigurationMessage(parentPlanId, Runtime::Destroy, shared_from_this());
             queryManager->addReconfigurationMessage(parentPlanId, newReconf, false);
             break;
         }

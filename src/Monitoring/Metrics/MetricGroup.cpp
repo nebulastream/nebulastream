@@ -17,7 +17,7 @@
 #include <Monitoring/Metrics/MetricGroup.hpp>
 
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -37,7 +37,7 @@ bool MetricGroup::add(const std::string& desc, Metric&& metric) {
 
 bool MetricGroup::remove(const std::string& name) { return metricMap.erase(name); }
 
-void MetricGroup::getSample(NodeEngine::TupleBuffer& buf) {
+void MetricGroup::getSample(Runtime::TupleBuffer& buf) {
     NES_DEBUG("MetricGroup: Collecting sample via serialize(..)");
     uint64_t offset = 0;
     for (auto const& x : metricMap) {

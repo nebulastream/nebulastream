@@ -17,7 +17,7 @@
 #ifndef NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SINKS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_
 #define NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SINKS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 
@@ -37,10 +37,10 @@ class ConvertLogicalToPhysicalSource {
      */
     static DataSourcePtr createDataSource(OperatorId operatorId,
                                           const SourceDescriptorPtr& sourceDescriptor,
-                                          const NodeEngine::NodeEnginePtr& nodeEngine,
+                                          const Runtime::NodeEnginePtr& nodeEngine,
                                           size_t numSourceLocalBuffers,
-                                          const std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>& successors =
-                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
+                                          const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors =
+                                              std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
   private:
     ConvertLogicalToPhysicalSource() = default;

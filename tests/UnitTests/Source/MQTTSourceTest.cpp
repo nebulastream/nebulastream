@@ -23,7 +23,7 @@
 #include <string>
 
 #include <API/Schema.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <thread>
@@ -60,14 +60,10 @@ class MQTTSourceTest : public testing::Test {
         test_schema = Schema::create()->addField("var", UINT32);
 
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
+        nodeEngine = Runtime::create("127.0.0.1", 31337, conf);
 
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();
-
-        buffer_size = bufferManager->getBufferSize();
-
-        ASSERT_GT(buffer_size, 0);
     }
 
     /* Will be called after a test is executed. */
@@ -80,9 +76,9 @@ class MQTTSourceTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("MQTTSOURCETEST::TearDownTestCases() Tear down MQTTSourceTest test class."); }
 
-    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
-    NodeEngine::BufferManagerPtr bufferManager;
-    NodeEngine::QueryManagerPtr queryManager;
+    Runtime::NodeEnginePtr nodeEngine{nullptr};
+    Runtime::BufferManagerPtr bufferManager;
+    Runtime::QueryManagerPtr queryManager;
     SchemaPtr test_schema;
     uint64_t buffer_size{};
 };

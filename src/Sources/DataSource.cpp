@@ -19,8 +19,8 @@
 #include <iostream>
 #include <thread>
 
-#include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <future>
@@ -33,7 +33,7 @@
 #include <zconf.h>
 namespace NES {
 
-std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors() {
+std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors() {
     return executableSuccessors;
 }
 
@@ -50,12 +50,12 @@ DataSource::GatheringMode DataSource::getGatheringModeFromString(const std::stri
 }
 
 DataSource::DataSource(const SchemaPtr& pSchema,
-                       NodeEngine::BufferManagerPtr bufferManager,
-                       NodeEngine::QueryManagerPtr queryManager,
+                       Runtime::BufferManagerPtr bufferManager,
+                       Runtime::QueryManagerPtr queryManager,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
-                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
+                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : queryManager(std::move(queryManager)), globalBufferManager(std::move(bufferManager)),
       executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(pSchema),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
@@ -65,7 +65,7 @@ DataSource::DataSource(const SchemaPtr& pSchema,
     NES_ASSERT(this->queryManager, "Invalid query manager");
 }
 
-void DataSource::emitWorkFromSource(NodeEngine::TupleBuffer& buffer) {
+void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     // set the origin id for this source
     buffer.setOriginId(operatorId);
     // set the creation timestamp
@@ -79,7 +79,7 @@ void DataSource::emitWorkFromSource(NodeEngine::TupleBuffer& buffer) {
     emitWork(buffer);
 }
 
-void DataSource::emitWork(NodeEngine::TupleBuffer& buffer) {
+void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
 
     for (const auto& successor : executableSuccessors) {
         queryManager->addWorkForNextPipeline(buffer, successor);

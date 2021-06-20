@@ -194,7 +194,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     out.close();
     NES_ASSERT(crd->getNesWorker()->registerLogicalStream("ysb", testSchemaFileName), "failed to create logical stream ysb");
 
-    auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+    auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct __attribute__((packed)) YsbRecord {
             YsbRecord() = default;
             YsbRecord(uint64_t userId,

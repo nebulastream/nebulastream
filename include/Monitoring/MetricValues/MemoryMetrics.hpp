@@ -18,7 +18,7 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
@@ -43,7 +43,7 @@ class MemoryMetrics {
      * @param prefix
      * @return The MemoryMetrics object
      */
-    static MemoryMetrics fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static MemoryMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json
@@ -78,7 +78,7 @@ class MemoryMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const MemoryMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief Class specific getSchema() method

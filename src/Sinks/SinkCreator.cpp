@@ -15,7 +15,7 @@
 */
 
 #include <Network/NetworkSink.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
@@ -37,7 +37,7 @@ namespace NES {
 
 DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                QuerySubPlanId parentPlanId,
-                               const NodeEngine::NodeEnginePtr& nodeEngine,
+                               const Runtime::NodeEnginePtr& nodeEngine,
                                const std::string& filePath,
                                bool append) {
     //TODO: this is not nice and should be fixed such that we only provide the paramter once
@@ -47,7 +47,7 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
 
 DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               QuerySubPlanId parentPlanId,
-                              const NodeEngine::NodeEnginePtr& nodeEngine,
+                              const Runtime::NodeEnginePtr& nodeEngine,
                               const std::string& filePath,
                               bool append) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
@@ -56,7 +56,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
 
 DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                     QuerySubPlanId parentPlanId,
-                                    const NodeEngine::NodeEnginePtr& nodeEngine,
+                                    const Runtime::NodeEnginePtr& nodeEngine,
                                     const std::string& filePath,
                                     bool append) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
@@ -65,7 +65,7 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
 
 DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                QuerySubPlanId parentPlanId,
-                               const NodeEngine::NodeEnginePtr& nodeEngine,
+                               const Runtime::NodeEnginePtr& nodeEngine,
                                const std::string& filePath,
                                bool append) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(schema, nodeEngine->getBufferManager());
@@ -74,7 +74,7 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
 
 DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
                               QuerySubPlanId parentPlanId,
-                              const NodeEngine::NodeEnginePtr& nodeEngine,
+                              const Runtime::NodeEnginePtr& nodeEngine,
                               const std::string& host,
                               uint16_t port) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
@@ -83,7 +83,7 @@ DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
 
 DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                              QuerySubPlanId parentPlanId,
-                             const NodeEngine::NodeEnginePtr& nodeEngine,
+                             const Runtime::NodeEnginePtr& nodeEngine,
                              const std::string& host,
                              uint16_t port) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
@@ -92,7 +92,7 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
 
 DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                 QuerySubPlanId parentPlanId,
-                                const NodeEngine::NodeEnginePtr& nodeEngine,
+                                const Runtime::NodeEnginePtr& nodeEngine,
                                 const std::string& host,
                                 uint16_t port,
                                 bool internal) {
@@ -102,7 +102,7 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
 
 DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 QuerySubPlanId parentPlanId,
-                                const NodeEngine::NodeEnginePtr& nodeEngine,
+                                const Runtime::NodeEnginePtr& nodeEngine,
                                 std::ostream& out) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<PrintSink>(format, parentPlanId, out);
@@ -112,7 +112,7 @@ DataSinkPtr createNullOutputSink(QuerySubPlanId parentPlanId) { return std::make
 
 DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                QuerySubPlanId parentPlanId,
-                               const NodeEngine::NodeEnginePtr& nodeEngine,
+                               const Runtime::NodeEnginePtr& nodeEngine,
                                std::ostream& out) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<PrintSink>(format, parentPlanId, out);
@@ -122,7 +122,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               QuerySubPlanId parentPlanId,
                               Network::NodeLocation const& nodeLocation,
                               Network::NesPartition nesPartition,
-                              NodeEngine::NodeEnginePtr const& nodeEngine,
+                              Runtime::NodeEnginePtr const& nodeEngine,
                               std::chrono::seconds waitTime,
                               uint8_t retryTimes) {
     return std::make_shared<Network::NetworkSink>(schema,
@@ -146,7 +146,7 @@ createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const st
 #ifdef ENABLE_OPC_BUILD
 DataSinkPtr createOPCSink(SchemaPtr schema,
                           QuerySubPlanId parentPlanId,
-                          NodeEngine::NodeEnginePtr nodeEngine,
+                          Runtime::NodeEnginePtr nodeEngine,
                           std::string url,
                           UA_NodeId nodeId,
                           std::string user,
@@ -160,7 +160,7 @@ DataSinkPtr createOPCSink(SchemaPtr schema,
 #ifdef ENABLE_MQTT_BUILD
 DataSinkPtr createMQTTSink(const SchemaPtr& schema,
                            QuerySubPlanId parentPlanId,
-                           const NodeEngine::NodeEnginePtr& nodeEngine,
+                           const Runtime::NodeEnginePtr& nodeEngine,
                            const std::string& address,
                            const std::string& clientId,
                            const std::string& topic,

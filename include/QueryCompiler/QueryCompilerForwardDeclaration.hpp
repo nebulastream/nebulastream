@@ -24,7 +24,7 @@ using BasicValuePtr = std::shared_ptr<BasicValue>;
 class ArrayPhysicalType;
 using ArrayPhysicalTypePtr = std::shared_ptr<ArrayPhysicalType>;
 
-namespace NodeEngine {
+namespace Runtime {
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
@@ -43,7 +43,7 @@ using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
 }// namespace Execution
 
-}// namespace NodeEngine
+}// namespace Runtime
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;

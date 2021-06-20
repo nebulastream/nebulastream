@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
@@ -32,7 +32,7 @@ using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
-    WorkerRPCServer(NodeEngine::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent);
+    WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent);
 
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
@@ -49,7 +49,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
 
   private:
-    NodeEngine::NodeEnginePtr nodeEngine;
+    Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
 };
 

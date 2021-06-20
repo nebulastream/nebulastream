@@ -18,7 +18,7 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
@@ -43,7 +43,7 @@ class NetworkValues {
      * @param prefix
      * @return The object
      */
-    static NetworkValues fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static NetworkValues fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json
@@ -83,7 +83,7 @@ class NetworkValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const NetworkValues& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const NetworkValues& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 }// namespace NES
 

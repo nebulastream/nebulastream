@@ -16,9 +16,9 @@
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -58,7 +58,7 @@ std::vector<std::string> NetworkMetrics::getInterfaceNames() {
     return keys;
 }
 
-NetworkMetrics NetworkMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+NetworkMetrics NetworkMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     auto output = NetworkMetrics();
     auto i = schema->getIndex(prefix + "INTERFACE_NO");
     auto fieldName = schema->fields[i]->getName();
@@ -67,9 +67,9 @@ NetworkMetrics NetworkMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::T
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && hasField) {
         NES_DEBUG("NetworkMetrics: Prefix found in schema " + prefix + "INTERFACE_NO with index " + std::to_string(i));
 
-        auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         auto bindedRowLayout = layout->bind(buf);
-        auto numInt = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i, bindedRowLayout)[0];
+        auto numInt = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i, bindedRowLayout)[0];
 
         for (auto n{0ul}; n < numInt; ++n) {
             NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");
@@ -92,7 +92,7 @@ web::json::value NetworkMetrics::toJson() {
     return metricsJson;
 }
 
-void writeToBuffer(const NetworkMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     uint64_t intNum = metrics.getInterfaceNum();
 

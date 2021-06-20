@@ -18,7 +18,7 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_DISKMETRICS_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
@@ -43,7 +43,7 @@ class DiskMetrics {
      * @param prefix
      * @return The object
      */
-    static DiskMetrics fromBuffer(const SchemaPtr& schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+    static DiskMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json
@@ -68,7 +68,7 @@ using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const DiskMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief Class specific getSchema() method for DiskMetrics

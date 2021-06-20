@@ -16,8 +16,8 @@
 
 #ifdef ENABLE_KAFKA_BUILD
 
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Util/Logger.hpp>
 #include <cstdint>
@@ -28,8 +28,8 @@
 namespace NES {
 
 KafkaSource::KafkaSource(SchemaPtr schema,
-                         NodeEngine::BufferManagerPtr bufferManager,
-                         NodeEngine::QueryManagerPtr queryManager,
+                         Runtime::BufferManagerPtr bufferManager,
+                         Runtime::QueryManagerPtr queryManager,
                          const std::string brokers,
                          const std::string topic,
                          const std::string groupId,
@@ -50,7 +50,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
 
 KafkaSource::~KafkaSource() {}
 
-std::optional<NodeEngine::TupleBuffer> KafkaSource::receiveData() {
+std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
     NES_DEBUG("KAFKASOURCE tries to receive data...");
 
     cppkafka::Message msg = consumer->poll(kafkaConsumerTimeout);
@@ -62,7 +62,7 @@ std::optional<NodeEngine::TupleBuffer> KafkaSource::receiveData() {
             }
             return std::nullopt;
         } else {
-            NodeEngine::TupleBuffer buffer = bufferManager->getBufferBlocking();
+            Runtime::TupleBuffer buffer = bufferManager->getBufferBlocking();
 
             const uint64_t tupleSize = schema->getSchemaSizeInBytes();
             const uint64_t tupleCnt = msg.get_payload().get_size() / tupleSize;

@@ -16,21 +16,21 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
-#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
-#include <NodeEngine/ExecutionResult.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
+#include <Runtime/ExecutionResult.hpp>
 #include <atomic>
 #include <mutex>
 namespace NES {
-using NodeEngine::TupleBuffer;
-using NodeEngine::WorkerContext;
-using NodeEngine::Execution::PipelineExecutionContext;
+using Runtime::TupleBuffer;
+using Runtime::WorkerContext;
+using Runtime::Execution::PipelineExecutionContext;
 /**
  * @brief The CompiledExecutablePipelineStage maintains a reference to an compiled ExecutablePipelineStage.
  * To this end, it ensures that the compiled code is correctly destructed.
  */
-class CompiledExecutablePipelineStage : public NodeEngine::Execution::ExecutablePipelineStage {
-    using base = NodeEngine::Execution::ExecutablePipelineStage;
+class CompiledExecutablePipelineStage : public Runtime::Execution::ExecutablePipelineStage {
+    using base = Runtime::Execution::ExecutablePipelineStage;
 
   public:
     /**
@@ -42,7 +42,7 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
     explicit CompiledExecutablePipelineStage(const CompiledCodePtr& compiledCode,
                                              PipelineStageArity arity,
                                              std::string sourceCode);
-    static NodeEngine::Execution::ExecutablePipelineStagePtr
+    static Runtime::Execution::ExecutablePipelineStagePtr
     create(const CompiledCodePtr& compiledCode, PipelineStageArity arity, const std::string& sourceCode = "");
     ~CompiledExecutablePipelineStage();
 
@@ -51,7 +51,7 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
     uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
     ExecutionResult execute(TupleBuffer& inputTupleBuffer,
                             PipelineExecutionContext& pipelineExecutionContext,
-                            NodeEngine::WorkerContext& workerContext) override;
+                            Runtime::WorkerContext& workerContext) override;
 
     std::string getCodeAsString() override;
 
@@ -60,7 +60,7 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
 
   private:
     enum ExecutionStage { NotInitialized, Initialized, Running, Stopped };
-    NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage;
+    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
     CompiledCodePtr compiledCode;
     std::mutex executionStageLock;
     std::atomic<ExecutionStage> currentExecutionStage;

@@ -22,8 +22,8 @@
 #include <State/StateVariable.hpp>
 
 namespace NES {
-using NodeEngine::StateManager;
-using NodeEngine::StateVariable;
+using Runtime::StateManager;
+using Runtime::StateVariable;
 class StateTest : public testing::Test {
   public:
     static void SetUpTestCase() {

@@ -18,11 +18,11 @@
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -71,10 +71,10 @@ class ExecutableCompleteAggregationTriggerAction
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString()
                                                                                        << " id=" << id);
         this->windowSchema = outputSchema;
-        windowTupleLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
+        windowTupleLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
     }
 
-    bool doAction(NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
+    bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
                   uint64_t currentWatermark,
                   uint64_t lastWatermark) override {
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id="
@@ -133,7 +133,7 @@ class ExecutableCompleteAggregationTriggerAction
     void aggregateWindows(KeyType key,
                           WindowSliceStore<PartialAggregateType>* store,
                           const LogicalWindowDefinitionPtr& windowDef,
-                          NodeEngine::TupleBuffer& tupleBuffer,
+                          Runtime::TupleBuffer& tupleBuffer,
                           uint64_t currentWatermark,
                           uint64_t lastWatermark) {
 
@@ -297,7 +297,7 @@ class ExecutableCompleteAggregationTriggerAction
     */
     template<typename ValueType>
 
-    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
+    void writeResultRecord(Runtime::TupleBuffer& tupleBuffer,
                            uint64_t index,
                            uint64_t startTs,
                            uint64_t endTs,
@@ -327,7 +327,7 @@ class ExecutableCompleteAggregationTriggerAction
      * @param value value
      */
     template<typename ValueType>
-    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
+    void writeResultRecord(Runtime::TupleBuffer& tupleBuffer,
                            uint64_t index,
                            uint64_t startTs,
                            uint64_t endTs,
@@ -346,7 +346,7 @@ class ExecutableCompleteAggregationTriggerAction
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
+    Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
     uint64_t id;
     PartialAggregateType partialAggregateTypeInitialValue;
 };

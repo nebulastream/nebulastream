@@ -27,7 +27,7 @@ namespace QueryCompilation {
  */
 class QueryCompilationRequest {
   public:
-    static QueryCompilationRequestPtr create(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine);
+    static QueryCompilationRequestPtr create(QueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine);
 
     /**
      * @brief Enable debugging for this query.
@@ -70,14 +70,14 @@ class QueryCompilationRequest {
 
     /**
      * @brief Gets the node engine
-     * @return NodeEngine::NodeEnginePtr
+     * @return Runtime::NodeEnginePtr
      */
-    NodeEngine::NodeEnginePtr getNodeEngine();
+    Runtime::NodeEnginePtr getNodeEngine();
 
   private:
-    QueryCompilationRequest(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine);
+    QueryCompilationRequest(QueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine);
     QueryPlanPtr queryPlan;
-    NodeEngine::NodeEnginePtr nodeEngine;
+    Runtime::NodeEnginePtr nodeEngine;
     bool debug;
     bool optimize;
     bool dumpQueryPlans;

@@ -16,8 +16,8 @@
 
 #include <API/Schema.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/TextFormat.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -26,18 +26,18 @@
 #include <utility>
 namespace NES {
 
-TextFormat::TextFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
+TextFormat::TextFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {
     NES_DEBUG("TextFormat::()");
 }
 
-std::optional<NodeEngine::TupleBuffer> TextFormat::getSchema() {
+std::optional<Runtime::TupleBuffer> TextFormat::getSchema() {
     //noting to do as this is part of pretty print
     return std::nullopt;
 }
 
-std::vector<NodeEngine::TupleBuffer> TextFormat::getData(NodeEngine::TupleBuffer& inputBuffer) {
-    std::vector<NodeEngine::TupleBuffer> buffers;
+std::vector<Runtime::TupleBuffer> TextFormat::getData(Runtime::TupleBuffer& inputBuffer) {
+    std::vector<Runtime::TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("TextFormat::getData: write watermark-only buffer");
@@ -75,6 +75,6 @@ std::string TextFormat::toString() { return "TEXT_FORMAT"; }
 
 FormatTypes TextFormat::getSinkFormat() { return TEXT_FORMAT; }
 
-FormatIterator TextFormat::getTupleIterator(NodeEngine::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+FormatIterator TextFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 
 }// namespace NES

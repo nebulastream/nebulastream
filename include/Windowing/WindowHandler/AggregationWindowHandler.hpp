@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/Reconfigurable.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/Reconfigurable.hpp>
 #include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -71,7 +71,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
    * @brief Starts thread to check if the window should be triggered
    * @return boolean if the window thread is started
    */
-    bool start(NodeEngine::StateManagerPtr stateManager, uint32_t localStateVariableId) override {
+    bool start(Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) override {
         std::unique_lock lock(windowMutex);
         this->stateManager = stateManager;
         auto expected = false;
@@ -122,11 +122,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return ss.str();
     }
 
-    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override {
+    void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) override {
         AbstractWindowHandler::reconfigure(task, context);
     }
 
-    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override {
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override {
         AbstractWindowHandler::postReconfigurationCallback(task);
         auto flushInflightWindows = []() {
             //            return;
@@ -155,11 +155,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         //switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {
-            case NodeEngine::SoftEndOfStream: {
+            case Runtime::SoftEndOfStream: {
                 flushInflightWindows();
                 break;
             }
-            case NodeEngine::HardEndOfStream: {
+            case Runtime::HardEndOfStream: {
                 break;
             }
             default: {
@@ -242,7 +242,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
+    bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
         // Initialize AggregationWindowHandler Manager
         //for agg handler we create a unique id from the
         this->windowManager =
@@ -262,14 +262,14 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     auto getWindowAction() { return executableWindowAction; }
 
   private:
-    NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable{nullptr};
+    Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable{nullptr};
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
     std::string handlerType;
     uint64_t id;
     std::atomic<bool> isRunning{false};
-    NodeEngine::StateManagerPtr stateManager;
+    Runtime::StateManagerPtr stateManager;
     PartialAggregateType partialAggregateInitialValue;
 };
 

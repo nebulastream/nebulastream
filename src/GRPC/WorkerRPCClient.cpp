@@ -18,7 +18,7 @@
 
 #include <API/Schema.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
@@ -334,7 +334,7 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const M
     return false;
 }
 
-bool WorkerRPCClient::requestMonitoringData(const std::string& address, NodeEngine::TupleBuffer& buf, uint64_t schemaSizeBytes) {
+bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime::TupleBuffer& buf, uint64_t schemaSizeBytes) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
     MonitoringDataRequest request;
     ClientContext context;

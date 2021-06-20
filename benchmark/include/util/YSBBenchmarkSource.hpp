@@ -33,15 +33,15 @@ namespace NES::Benchmarking {
 class YSBBenchmarkSource : public SimpleBenchmarkSource {
   public:
     YSBBenchmarkSource(const SchemaPtr& schema,
-                       const NodeEngine::BufferManagerPtr& bufferManager,
-                       const NodeEngine::QueryManagerPtr& queryManager,
+                       const Runtime::BufferManagerPtr& bufferManager,
+                       const Runtime::QueryManagerPtr& queryManager,
                        uint64_t ingestionRate,
                        uint64_t numberOfTuplesPerBuffer,
                        uint64_t operatorId)
         : SimpleBenchmarkSource(schema, bufferManager, queryManager, ingestionRate, numberOfTuplesPerBuffer, operatorId) {}
 
-    static std::shared_ptr<YSBBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager,
-                                                      NodeEngine::QueryManagerPtr queryManager,
+    static std::shared_ptr<YSBBenchmarkSource> create(Runtime::BufferManagerPtr bufferManager,
+                                                      Runtime::QueryManagerPtr queryManager,
                                                       SchemaPtr& benchmarkSchema,
                                                       uint64_t ingestionRate,
                                                       uint64_t operatorId) {
@@ -118,7 +118,7 @@ class YSBBenchmarkSource : public SimpleBenchmarkSource {
         rec.ip = 0x01020304;
     }
 
-    std::optional<NodeEngine::TupleBuffer> receiveData() override {
+    std::optional<Runtime::TupleBuffer> receiveData() override {
         NES_DEBUG("YSBSource:" << this << " requesting buffer");
         auto buf = this->bufferManager->getBufferBlocking();
         NES_DEBUG("YSBSource:" << this << " got buffer");

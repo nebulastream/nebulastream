@@ -48,8 +48,8 @@ class MQTTSource : public DataSource {
      * @param operatorId
      */
     explicit MQTTSource(SchemaPtr schema,
-                        NodeEngine::BufferManagerPtr bufferManager,
-                        NodeEngine::QueryManagerPtr queryManager,
+                        Runtime::BufferManagerPtr bufferManager,
+                        Runtime::QueryManagerPtr queryManager,
                         std::string const& serverAddress,
                         std::string const& clientId,
                         std::string const& user,
@@ -57,7 +57,7 @@ class MQTTSource : public DataSource {
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
-                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors);
+                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
@@ -69,14 +69,14 @@ class MQTTSource : public DataSource {
      * @brief blocking method to receive a buffer from the mqtt source
      * @return TupleBufferPtr containing the received buffer
      */
-    std::optional<NodeEngine::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
      * @brief fill buffer with appropriate data type
      * @param buf buffer to be filled
      * @param data the received data as string
      */
-    void fillBuffer(NodeEngine::TupleBuffer& buf, const std::string& data);
+    void fillBuffer(Runtime::TupleBuffer& buf, const std::string& data);
 
     /**
      * @brief override the toString method for the mqtt source

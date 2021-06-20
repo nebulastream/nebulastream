@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/QueryManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -30,7 +30,7 @@ PrintSink::~PrintSink() = default;
 
 SinkMediumTypes PrintSink::getSinkMediumType() { return PRINT_SINK; }
 
-bool PrintSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
+bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     NES_DEBUG("PrintSink: getSchema medium " << toString() << " format " << sinkFormat->toString());
 
