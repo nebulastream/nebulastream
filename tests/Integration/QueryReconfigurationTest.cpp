@@ -514,8 +514,9 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     std::unordered_map<QuerySubPlanId, QuerySubPlanId> qepReplace{{3, 5}};
     std::vector<QuerySubPlanId> qepStops{};
     auto queryReconfigurationPlan = QueryReconfigurationPlan::create(qepStarts, qepStops, qepReplace);
+    queryReconfigurationPlan->setQueryId(1);
 
-    wrk1->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);
+    wrk1->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlan);
 
     while (wrk3->getNodeEngine()->getQueryManager()->getQepStatus(5)
            != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
@@ -542,7 +543,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
                                                 ",",
                                                 120));
 
-    wrk2->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);
+    wrk2->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlan);
 
     // Since source 2 sends reconfiguration only now, we will data from both 1 and 2 must write data to
     EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
@@ -751,8 +752,9 @@ TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationReplacementInLevel3
     std::unordered_map<QuerySubPlanId, QuerySubPlanId> qepReplace{{4, 6}, {3, 5}};
     std::vector<QuerySubPlanId> qepStops{};
     auto queryReconfigurationPlan = QueryReconfigurationPlan::create(qepStarts, qepStops, qepReplace);
+    queryReconfigurationPlan->setQueryId(1);
 
-    wrk1->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);
+    wrk1->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlan);
 
     while (wrk3->getNodeEngine()->getQueryManager()->getQepStatus(5)
            != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
@@ -775,7 +777,7 @@ TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationReplacementInLevel3
                                                 ",",
                                                 120));
 
-    wrk2->getNodeEngine()->startQueryReconfiguration(1, queryReconfigurationPlan);
+    wrk2->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlan);
 
     // Since source 2 sends reconfiguration only now, we will data from both 1 and 2 must write data to
     EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
