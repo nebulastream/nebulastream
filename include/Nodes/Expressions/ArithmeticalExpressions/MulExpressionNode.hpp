@@ -22,10 +22,10 @@ namespace NES {
 /**
  * @brief This node represents a multiplication expression.
  */
-class MulExpressionNode : public ArithmeticalBinaryExpressionNode {
+class MulExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit MulExpressionNode(DataTypePtr stamp);
-    ~MulExpressionNode() = default;
+    ~MulExpressionNode() final = default;
     /**
      * @brief Create a new Mul expression
      */

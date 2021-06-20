@@ -22,10 +22,10 @@ namespace NES {
 /**
  * @brief This node represents a subtraction expression.
  */
-class SubExpressionNode : public ArithmeticalBinaryExpressionNode {
+class SubExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit SubExpressionNode(DataTypePtr stamp);
-    ~SubExpressionNode() = default;
+    ~SubExpressionNode() final = default;
 
     /**
      * @brief Create a new SUB expression
