@@ -37,7 +37,7 @@ class ArithmeticalUnaryExpressionNode : public UnaryExpressionNode, public Arith
   protected:
     explicit ArithmeticalUnaryExpressionNode(DataTypePtr stamp);
     explicit ArithmeticalUnaryExpressionNode(ArithmeticalUnaryExpressionNode* other);
-    ~ArithmeticalUnaryExpressionNode() override = default;
+    ~ArithmeticalUnaryExpressionNode() noexcept override = default;
 };
 
 }// namespace NES

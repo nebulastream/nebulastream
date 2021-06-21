@@ -25,7 +25,7 @@ namespace NES {
 class SubExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit SubExpressionNode(DataTypePtr stamp);
-    ~SubExpressionNode() final = default;
+    ~SubExpressionNode() noexcept final = default;
 
     /**
      * @brief Create a new SUB expression

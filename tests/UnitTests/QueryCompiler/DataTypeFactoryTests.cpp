@@ -57,6 +57,47 @@ namespace NES {
  *
  */
     TEST_F(DataTypeFactoryTests, stampModificationTest) {
+        // increase lower bound
+        {
+            auto stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypeFactory::createInt32(), -200.0);
+            stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, -100L);
+            ASSERT_TRUE(stamp->isInteger());
+            const auto intStamp = DataType::as<Integer>(stamp);
+            ASSERT_EQ(intStamp->getBits(), 32);
+            ASSERT_EQ(intStamp->lowerBound, -100);
+            ASSERT_EQ(intStamp->upperBound, INT32_MAX);
+        }
+        {
+            auto stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypeFactory::createFloat(), -200.0);
+            stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, -100L);
+            ASSERT_TRUE(stamp->isFloat());
+            const auto floatStamp = DataType::as<Float>(stamp);
+            ASSERT_EQ(floatStamp->getBits(), 32);
+            ASSERT_EQ(floatStamp->lowerBound, -100);
+            ASSERT_EQ(floatStamp->upperBound, MAXFLOAT);
+        }
+
+        // decrease upper bound
+        {
+            auto stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypeFactory::createInt32(), 200.0);
+            stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(stamp, 100L);
+            ASSERT_TRUE(stamp->isInteger());
+            const auto intStamp = DataType::as<Integer>(stamp);
+            ASSERT_EQ(intStamp->getBits(), 32);
+            ASSERT_EQ(intStamp->lowerBound, INT32_MIN);
+            ASSERT_EQ(intStamp->upperBound, 100);
+        }
+        {
+            auto stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypeFactory::createFloat(), 200.0);
+            stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(stamp, 100L);
+            ASSERT_TRUE(stamp->isFloat());
+            const auto floatStamp = DataType::as<Float>(stamp);
+            ASSERT_EQ(floatStamp->getBits(), 32);
+            ASSERT_EQ(floatStamp->lowerBound, -MAXFLOAT);
+            ASSERT_EQ(floatStamp->upperBound, 100);
+        }
+
+        // tighten both bounds at once
         // test behavior of integer stamp
         {
             auto stamp = DataTypeFactory::copyTypeAndTightenBounds(DataTypeFactory::createInt32(), -100L, 100L);

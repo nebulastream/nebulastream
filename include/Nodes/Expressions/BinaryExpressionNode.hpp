@@ -23,7 +23,7 @@ namespace NES {
  */
 class BinaryExpressionNode : public ExpressionNode {
   public:
-    ~BinaryExpressionNode() = default;
+    ~BinaryExpressionNode() noexcept override = default;
 
     /**
      * @brief set the children node of this expression.
