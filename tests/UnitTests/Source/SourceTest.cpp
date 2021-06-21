@@ -38,6 +38,7 @@
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
@@ -157,10 +158,13 @@ class DataSourceProxy : public DataSource {
     MOCK_METHOD(std::optional<NodeEngine::TupleBuffer>, receiveData, ());
     MOCK_METHOD(std::string, toString, (), (const));
     MOCK_METHOD(SourceType, getType, (), (const));
+    MOCK_METHOD(void, emitWork, (NodeEngine::TupleBuffer& buffer));
+    MOCK_METHOD(void, emitWorkFromSource, (NodeEngine::TupleBuffer& buffer));
 
   private:
     FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
-    FRIEND_TEST(SourceTest, testDataSourceIngestionRoutine);
+    FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
+    FRIEND_TEST(SourceTest, testDataSourceOpen);
 };
 
 class SourceTest : public testing::Test {
@@ -199,7 +203,7 @@ class SourceTest : public testing::Test {
         nodeEngine = nullptr;
     }
 
-    // mock results of receiveData, don't mock buffer (yet)
+    // instead of mocking results of receiveData, don't mock buffer (yet)
     std::optional<NodeEngine::TupleBuffer> GetBufferWithValue() {
         auto buf = this->nodeEngine->getBufferManager()->getBufferBlocking();
         std::ifstream is ("test", std::ifstream::binary);
@@ -325,13 +329,50 @@ TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
     mDataSource.running = true;
     mDataSource.wasGracefullyStopped = false;
     auto buf = this->GetBufferWithValue();
+    ON_CALL(mDataSource, toString()).WillByDefault(Return("MOCKED STRING"));
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
     ON_CALL(mDataSource, receiveData()).WillByDefault(Return(buf));
+    ON_CALL(mDataSource, emitWork(_)).WillByDefault(Return());
     mDataSource.runningRoutine();
-    // branch 0: if (cnt < numBuffersToProcess || numBuffersToProcess == 0) {
-    // mock emitWork, expect call
-    // branch 1: not 0
-    // expect running = false, wasGracefullyStopped = true
+    // C++ exception with description "bad_weak_ptr" thrown in the test body.
+    // look more into the from_this machinery, the test isn't wrapped around that
+    EXPECT_CALL(mDataSource, receiveData()).Times(1);
+    EXPECT_CALL(mDataSource, emitWork(_)).Times(1);
+    EXPECT_FALSE(mDataSource.isRunning());
+    EXPECT_TRUE(mDataSource.wasGracefullyStopped);
+}
+
+TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
+    DataSourceProxy mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                                this->nodeEngine->getQueryManager(), this->operatorId,
+                                this->numSourceLocalBuffersDefault,
+                                DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+    mDataSource.numBuffersToProcess = 1;
+    mDataSource.gatheringIngestionRate = 2;
+    mDataSource.running = false; // this will need to change to true or in a separate test
+    auto buf = this->GetBufferWithValue();
+    ON_CALL(mDataSource, toString()).WillByDefault(Return("MOCKED STRING"));
+    ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
+    ON_CALL(mDataSource, receiveData()).WillByDefault(Return(buf));
+    ON_CALL(mDataSource, emitWorkFromSource(_)).WillByDefault(Return());
+    ON_CALL(mDataSource, emitWork(_)).WillByDefault(Return());
+    // C++ exception with description "bad_weak_ptr" thrown in the test body.
+    // branch: (buffersProcessedCnt < gatheringIngestionRate && running && processedOverallBufferCnt < numBuffersToProcess)
+    mDataSource.runningRoutine();
+    EXPECT_CALL(mDataSource, receiveData()).Times(0);
+    EXPECT_CALL(mDataSource, emitWorkFromSource(_)).Times(0);
+    EXPECT_CALL(mDataSource, emitWork(_)).Times(0);
+}
+
+TEST_F(SourceTest, testDataSourceOpen) {
+    DataSourceProxy mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(), this->operatorId,
+                               this->numSourceLocalBuffersDefault,
+                               DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+    // EXPECT_ANY_THROW(mDataSource.bufferManager->getAvailableBuffers()); currently not possible w/ Error: success :)
+    mDataSource.open();
+    auto size = mDataSource.bufferManager->getAvailableBuffers();
+    EXPECT_EQ(size, this->numSourceLocalBuffersDefault);
 }
 
 TEST_F(SourceTest, testBinarySource) {
