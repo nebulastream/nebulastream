@@ -67,6 +67,26 @@ class Predicate : public LegacyExpression {
     std::string functionCallOverload;
 };
 
+class UnaryPredicate : public LegacyExpression {
+  public:
+    UnaryPredicate(UnaryOperatorType const& op,
+              LegacyExpressionPtr const& child,
+              bool bracket = true);
+
+    ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] LegacyExpressionPtr copy() const override;
+    [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
+    [[nodiscard]] UnaryOperatorType getOperatorType() const;
+    [[nodiscard]] LegacyExpressionPtr getChild() const;
+
+  private:
+    UnaryPredicate() = default;
+    UnaryOperatorType op;
+    LegacyExpressionPtr child;
+    bool bracket{};
+};
+
 class PredicateItem : public LegacyExpression {
   public:
     PredicateItem(AttributeFieldPtr attribute);
