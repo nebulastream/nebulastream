@@ -54,6 +54,11 @@ ExecutableQueryPlanPtr ExecutableQueryPlan::create(QueryId queryId,
                                                  std::move(bufferManager));
 }
 
+void ExecutableQueryPlan::setSources(std::vector<DataSourcePtr> newSources) {
+    sources = newSources;
+    numOfProducers = newSources.size();
+}
+
 void ExecutableQueryPlan::incrementProducerCount() { numOfProducers++; }
 
 const QueryId ExecutableQueryPlan::getQueryId() const { return queryId; }
@@ -194,8 +199,6 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
     Reconfigurable::postReconfigurationCallback(task);
     //soft eos means we drain the state and hard means we truncate it
     switch (task.getType()) {
-        case ReplaceSources: {
-        }
         case HardEndOfStream: {
             NES_DEBUG("ExecutableQueryPlan::postReconfigurationCallback: Received: " << task.getType() << " on qep " << queryId
                                                                                      << " " << querySubPlanId);

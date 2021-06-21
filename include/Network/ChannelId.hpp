@@ -27,7 +27,7 @@ namespace Network {
 class ChannelId {
   public:
     explicit ChannelId(QuerySubPlanId querySubPlanId, NesPartition nesPartition, uint32_t threadId)
-        : nesPartition(nesPartition), threadId(threadId), querySubPlanId(querySubPlanId) {
+        : querySubPlanId(querySubPlanId), nesPartition(nesPartition), threadId(threadId) {
         // nop
     }
 

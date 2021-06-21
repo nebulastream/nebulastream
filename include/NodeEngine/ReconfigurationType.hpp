@@ -33,8 +33,6 @@ enum ReconfigurationType : uint8_t {
     QueryReconfiguration,
     // use StopViaReconfiguration for stopping QEP without propagating End Of Stream Messages (i.e) locally stop a QEP
     StopViaReconfiguration,
-    // use ReplaceSources for replacing Datasources of a QEP
-    ReplaceSources,
     // use ReplaceDataEmitter for replacing data emitter successor pipelines for Datasources
     ReplaceDataEmitter
 };
