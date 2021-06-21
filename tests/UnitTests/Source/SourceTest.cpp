@@ -41,6 +41,7 @@
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/BinarySource.hpp>
+#include <Sources/CSVSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
 #include <Util/TestUtils.hpp>
@@ -187,6 +188,32 @@ class BinarySourceProxy : public BinarySource {
     FRIEND_TEST(SourceTest, testBinarySourceFillBufferContents);
 };
 
+class CSVSourceProxy : public CSVSource {
+  public:
+    CSVSourceProxy(SchemaPtr schema,
+                   NodeEngine::BufferManagerPtr bufferManager,
+                   NodeEngine::QueryManagerPtr queryManager,
+                   std::string const& filePath,
+                   std::string const& delimiter,
+                   uint64_t numberOfTuplesToProducePerBuffer,
+                   uint64_t numBuffersToProcess,
+                   uint64_t frequency,
+                   bool skipHeader,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+        : CSVSource(schema, bufferManager, queryManager,
+                    filePath, delimiter, numberOfTuplesToProducePerBuffer,
+                    numBuffersToProcess, frequency, skipHeader, operatorId,
+                    numSourceLocalBuffers, DataSource::FREQUENCY_MODE, successors) {};
+  private:
+    FRIEND_TEST(SourceTest, testCSVSourceGetType);
+    FRIEND_TEST(SourceTest, testCSVSourceWrongFilePath);
+    FRIEND_TEST(SourceTest, testCSVSourceCorrectFilePath);
+    FRIEND_TEST(SourceTest, testCSVSourceFillBufferFileEnded);
+    FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFile);
+};
+
 class SourceTest : public testing::Test {
   public:
     void SetUp() override {
@@ -209,6 +236,8 @@ class SourceTest : public testing::Test {
         this->operatorId = 1;
         this->numSourceLocalBuffersDefault = 12;
         this->frequency = 1000;
+        this->delimiter = ",";
+        this->wrong_filepath = "this_doesnt_exist";
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
@@ -240,7 +269,7 @@ class SourceTest : public testing::Test {
     }
 
     NodeEngine::NodeEnginePtr nodeEngine{nullptr};
-    std::string path_to_file, path_to_bin_file;
+    std::string path_to_file, path_to_bin_file, delimiter, wrong_filepath;
     SchemaPtr schema;
     uint64_t tuple_size, buffer_size, numberOfBuffers,
         numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault, frequency;
@@ -407,9 +436,8 @@ TEST_F(SourceTest, testBinarySourceGetType) {
 }
 
 TEST_F(SourceTest, testBinarySourceWrongPath) {
-    auto bogusPath = "this_doesnt_exist";
     BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                             this->nodeEngine->getQueryManager(), bogusPath,
+                             this->nodeEngine->getQueryManager(), this->wrong_filepath,
                              this->operatorId, this->numSourceLocalBuffersDefault, {});
     EXPECT_FALSE(bDataSource.input.is_open());
 }
@@ -469,6 +497,57 @@ TEST_F(SourceTest, testBinarySourceFillBufferContents) {
     EXPECT_STREQ(content->ad_type, "banner78");
     EXPECT_TRUE((!strcmp(content->event_type, "view") || !strcmp(content->event_type, "click")
                  || !strcmp(content->event_type, "purchase")));
+}
+
+TEST_F(SourceTest, testCSVSourceGetType) {
+    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(), this->path_to_file,
+                                 this->delimiter, 0, 0,
+                                 this->frequency, false, this->operatorId,
+                                 this->numSourceLocalBuffersDefault, {});
+    EXPECT_EQ(csvDataSource.getType(), NES::SourceType::CSV_SOURCE);
+}
+
+TEST_F(SourceTest, testCSVSourceWrongFilePath) {
+    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(), this->wrong_filepath,
+                                 this->delimiter, 0, 0,
+                                 this->frequency, false, this->operatorId,
+                                 this->numSourceLocalBuffersDefault, {});
+    EXPECT_FALSE(csvDataSource.input.is_open());
+}
+
+TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
+    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(), this->path_to_file,
+                                 this->delimiter, 0, 0,
+                                 this->frequency, false, this->operatorId,
+                                 this->numSourceLocalBuffersDefault, {});
+    EXPECT_TRUE(csvDataSource.input.is_open());
+}
+
+TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
+    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(), this->path_to_file,
+                                 this->delimiter, 0, 0,
+                                 this->frequency, false, this->operatorId,
+                                 this->numSourceLocalBuffersDefault, {});
+    csvDataSource.fileEnded = true;
+    auto buf = this->GetEmptyBuffer();
+    csvDataSource.fillBuffer(*buf);
+    EXPECT_EQ(buf->getNumberOfTuples(), 0);
+}
+
+TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
+    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(), this->path_to_file,
+                                 this->delimiter, 1, 1,
+                                 this->frequency, false, this->operatorId,
+                                 this->numSourceLocalBuffersDefault, {});
+    csvDataSource.running = true;
+    auto buf = this->GetEmptyBuffer();
+    csvDataSource.fillBuffer(*buf);
+    // TODO: currentPosInFile should be at the std::ifstream::end
 }
 
 TEST_F(SourceTest, DISABLED_testCSVSourceOnePassOverFile) {

@@ -94,6 +94,10 @@ class CSVSource : public DataSource {
      */
     bool getSkipHeader() const;
 
+  protected:
+    std::ifstream input;
+    bool fileEnded;
+
   private:
     std::string filePath;
     uint64_t tupleSize;
@@ -101,9 +105,7 @@ class CSVSource : public DataSource {
     std::string delimiter;
     uint64_t currentPosInFile{0};
     bool loopOnFile;
-    std::ifstream input;
     uint64_t fileSize;
-    bool fileEnded;
     bool skipHeader;
 };
 
