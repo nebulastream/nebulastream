@@ -40,6 +40,7 @@
 #include <Components/NesWorker.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <Services/QueryService.hpp>
+#include <Sources/BinarySource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
 #include <Util/TestUtils.hpp>
@@ -151,9 +152,7 @@ class DataSourceProxy : public DataSource {
                    GatheringMode gatheringMode,
                    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
         : DataSource(schema, bufferManager, queryManager, operatorId,
-                     numSourceLocalBuffers, gatheringMode, executableSuccessors) {
-        // nop
-    };
+                     numSourceLocalBuffers, gatheringMode, executableSuccessors) {};
 
     MOCK_METHOD(std::optional<NodeEngine::TupleBuffer>, receiveData, ());
     MOCK_METHOD(std::string, toString, (), (const));
@@ -165,6 +164,27 @@ class DataSourceProxy : public DataSource {
     FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
+};
+
+class BinarySourceProxy : public BinarySource {
+  public:
+    BinarySourceProxy(const SchemaPtr& schema,
+                      NodeEngine::BufferManagerPtr bufferManager,
+                      NodeEngine::QueryManagerPtr queryManager,
+                      const std::string& file_path,
+                      OperatorId operatorId,
+                      size_t numSourceLocalBuffers,
+                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+        : BinarySource(schema, bufferManager, queryManager, file_path, operatorId,
+                       numSourceLocalBuffers, DataSource::FREQUENCY_MODE, successors) {};
+
+  private:
+    FRIEND_TEST(SourceTest, testBinarySourceGetType);
+    FRIEND_TEST(SourceTest, testBinarySourceWrongPath);
+    FRIEND_TEST(SourceTest, testBinarySourceCorrectPath);
+    FRIEND_TEST(SourceTest, testBinarySourceFillBuffer);
+    FRIEND_TEST(SourceTest, testBinarySourceFillBufferRandomTimes);
+    FRIEND_TEST(SourceTest, testBinarySourceFillBufferContents);
 };
 
 class SourceTest : public testing::Test {
@@ -213,6 +233,10 @@ class SourceTest : public testing::Test {
         is.read(buf.getBuffer<char>(), length);
         buf.setNumberOfTuples(1);
         return buf;
+    }
+
+    std::optional<NodeEngine::TupleBuffer> GetEmptyBuffer() {
+        return this->nodeEngine->getBufferManager()->getBufferNoBlocking();
     }
 
     NodeEngine::NodeEnginePtr nodeEngine{nullptr};
@@ -375,45 +399,76 @@ TEST_F(SourceTest, testDataSourceOpen) {
     EXPECT_EQ(size, this->numSourceLocalBuffersDefault);
 }
 
-TEST_F(SourceTest, testBinarySource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+TEST_F(SourceTest, testBinarySourceGetType) {
+    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(), this->path_to_bin_file,
+                                  this->operatorId, this->numSourceLocalBuffersDefault, {});
+    EXPECT_EQ(bDataSource.getType(), NES::SourceType::BINARY_SOURCE);
+}
 
-    std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.bin";
+TEST_F(SourceTest, testBinarySourceWrongPath) {
+    auto bogusPath = "this_doesnt_exist";
+    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                             this->nodeEngine->getQueryManager(), bogusPath,
+                             this->operatorId, this->numSourceLocalBuffersDefault, {});
+    EXPECT_FALSE(bDataSource.input.is_open());
+}
 
-    SchemaPtr schema = Schema::create()
-                           ->addField("user_id", DataTypeFactory::createFixedChar(16))
-                           ->addField("page_id", DataTypeFactory::createFixedChar(16))
-                           ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
-                           ->addField("ad_type", DataTypeFactory::createFixedChar(9))
-                           ->addField("event_type", DataTypeFactory::createFixedChar(9))
-                           ->addField("current_ms", UINT64)
-                           ->addField("ip", INT32);
+TEST_F(SourceTest, testBinarySourceCorrectPath) {
+    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(), this->path_to_bin_file,
+                                  this->operatorId, this->numSourceLocalBuffersDefault, {});
+    EXPECT_TRUE(bDataSource.input.is_open());
+}
 
-    uint64_t tuple_size = schema->getSchemaSizeInBytes();
-    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
-    uint64_t numberOfBuffers = 1;
+TEST_F(SourceTest, testBinarySourceFillBuffer) {
+    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(), this->path_to_bin_file,
+                                  this->operatorId, this->numSourceLocalBuffersDefault, {});
+    uint64_t tuple_size = this->schema->getSchemaSizeInBytes();
+    uint64_t buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
+    uint64_t numberOfBuffers = 1; // increased by 1 every fillBuffer()
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
+    auto buf = this->GetEmptyBuffer();
+    EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0);
+    EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0);
+    bDataSource.fillBuffer(*buf);
+    EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), numberOfTuplesToProcess);
+    EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), numberOfBuffers);
+    EXPECT_STREQ(buf->getBuffer<ysbRecord>()->ad_type, "banner78");
+}
 
-    const DataSourcePtr source =
-        createBinaryFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, 1, 12, {});
-    source->open();
-    while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
-        auto optBuf = source->receiveData();
-        uint64_t i = 0;
-        while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
-            ysbRecord record(*((ysbRecord*) (optBuf->getBuffer<char>() + i * tuple_size)));
-            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
-                      << std::endl;
-            EXPECT_STREQ(record.ad_type, "banner78");
-            EXPECT_TRUE((!strcmp(record.event_type, "view") || !strcmp(record.event_type, "click")
-                         || !strcmp(record.event_type, "purchase")));
-            i++;
-        }
+TEST_F(SourceTest, testBinarySourceFillBufferRandomTimes) {
+    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(), this->path_to_bin_file,
+                                  this->operatorId, this->numSourceLocalBuffersDefault, {});
+    uint64_t tuple_size = this->schema->getSchemaSizeInBytes();
+    uint64_t buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
+    uint64_t numberOfBuffers = 1; // increased by 1 every fillBuffer()
+    uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
+    auto buf = this->GetEmptyBuffer();
+    auto iterations = rand() % 5;
+    EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0);
+    EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0);
+    for (int i = 0; i < iterations; ++i) {
+        bDataSource.fillBuffer(*buf);
+        EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), (i+1) * numberOfTuplesToProcess);
+        EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), (i+1) * numberOfBuffers);
     }
+    EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), iterations * numberOfTuplesToProcess);
+    EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), iterations * numberOfBuffers);
+}
 
-    EXPECT_EQ(source->getNumberOfGeneratedTuples(), numberOfTuplesToProcess);
-    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numberOfBuffers);
+TEST_F(SourceTest, testBinarySourceFillBufferContents) {
+    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(), this->path_to_bin_file,
+                                  this->operatorId, this->numSourceLocalBuffersDefault, {});
+    auto buf = this->GetEmptyBuffer();
+    bDataSource.fillBuffer(*buf);
+    auto content = buf->getBuffer<ysbRecord>();
+    EXPECT_STREQ(content->ad_type, "banner78");
+    EXPECT_TRUE((!strcmp(content->event_type, "view") || !strcmp(content->event_type, "click")
+                 || !strcmp(content->event_type, "purchase")));
 }
 
 TEST_F(SourceTest, DISABLED_testCSVSourceOnePassOverFile) {
