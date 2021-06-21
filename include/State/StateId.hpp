@@ -17,6 +17,8 @@
 #ifndef NES_STATEID_HPP
 #define NES_STATEID_HPP
 
+#include <functional>
+
 namespace NES {
 /**
      * This structure represents a key in a hashmap of state variables, which is stored in the StateManager.
