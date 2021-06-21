@@ -19,7 +19,6 @@
 #include <NodeEngine/StopQueryMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
-#include <utility>
 
 namespace NES::Network {
 

@@ -285,38 +285,43 @@ bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReco
         NES_ERROR("NodeEngine::startQueryReconfiguration: Query ID does not exists. Reconfiguration failed" << queryId);
         return false;
     }
-    std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+    std::vector<QuerySubPlanId>& querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
     if (querySubPlanIds.empty()) {
         NES_ERROR("NodeEngine::startQueryReconfiguration: Unable to find SubQueryPlans for the query "
                   << queryId << ". Reconfiguration failed.");
         queryIdToQuerySubPlanIds.erase(queryId);
         return false;
     }
+    std::set<QuerySubPlanId> reconfiguredSubPlans;
     // At source only replace QEP for stopping at source, use stop query endpoint
     std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace =
         queryReconfigurationPlan->getQuerySubPlanIdsToReplace();
-    for (auto itr = querySubPlanIds.begin(); itr != querySubPlanIds.end(); ++itr) {
-        auto querySubPlanId = *itr;
+    for (auto querySubPlanId : querySubPlanIds) {
         if (querySubPlanIdsToReplace.find(querySubPlanId) != querySubPlanIdsToReplace.end()) {
             auto oldQep = deployedQEPs[querySubPlanId];
             auto newQep = reconfigurationQEPs[querySubPlanIdsToReplace[querySubPlanId]];
 
             // TODO: source level equality check instead of assuming size to be one
-            NES_ASSERT2_FMT(oldQep->getSources().size() == newQep->getSources().size() && oldQep->getSources().size() == 1,
+            std::vector<DataSourcePtr> oldSources = oldQep->getSources();
+            NES_ASSERT2_FMT(oldSources.size() == newQep->getSources().size() && oldSources.size() == 1,
                             "NodeEngine::startQueryReconfiguration: Failed to replace qep: "
                                 << oldQep->getQuerySubPlanId() << " with qep:" << newQep->getQuerySubPlanId()
                                 << " as number of sources are different");
 
+            auto updatedSuccessors = newQep->getSources()[0]->getExecutableSuccessors();
+
+            // Replace sources in new QEP with sources in old QEP
+            newQep->setSources(std::move(oldQep->getSources()));
             // Register source mapping in Query Manager
             registerQueryInNodeEngine(newQep, false);
 
             // No need to start the sources but we need to start new QEP and setup sinks
             queryManager->startQueryForSources(newQep, stateManager, std::vector<DataSourcePtr>{});
 
-            DataSourcePtr oldSource = oldQep->getSources()[0];
+            DataSourcePtr oldSource = oldSources[0];
             auto oldSuccessors = oldSource->getExecutableSuccessors();
-            auto updatedSuccessorPipeline = std::make_any<std::vector<Execution::SuccessorExecutablePipeline>>(
-                newQep->getSources()[0]->getExecutableSuccessors());
+            auto updatedSuccessorPipeline = std::make_any<std::vector<Execution::SuccessorExecutablePipeline>>(updatedSuccessors);
+            queryManager->propagateQueryReconfigurationPlan(newQep, queryReconfigurationPlan);
             queryManager->addReconfigurationMessage(
                 newQep->getQueryId(),
                 ReconfigurationMessage(newQep->getQueryId(), ReplaceDataEmitter, oldSource, std::move(updatedSuccessorPipeline)),
@@ -330,13 +335,18 @@ bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReco
                 },
                 oldQep,
                 oldSuccessors);
-            queryManager->propagateQueryReconfigurationPlan(newQep, queryReconfigurationPlan);
             reconfigurationQEPs.erase(newQep->getQuerySubPlanId());
             deployedQEPs.erase(oldQep->getQuerySubPlanId());
-            querySubPlanIds.erase(itr);
+            reconfiguredSubPlans.insert(oldQep->getQuerySubPlanId());
         }
     }
-    if (querySubPlanIds.empty()) {
+    auto originalSubQueryPlans = queryIdToQuerySubPlanIds[queryId];
+    originalSubQueryPlans.erase(std::remove_if(originalSubQueryPlans.begin(),
+                                               originalSubQueryPlans.end(),
+                                               [reconfiguredSubPlans](QuerySubPlanId subPlanId) {
+                                                   return reconfiguredSubPlans.contains(subPlanId);
+                                               }));
+    if (queryIdToQuerySubPlanIds[queryId].empty()) {
         queryIdToQuerySubPlanIds.erase(queryId);
     }
     return true;
@@ -354,7 +364,8 @@ bool NodeEngine::startQuery(QueryId queryId) {
         }
 
         for (auto querySubPlanId : querySubPlanIds) {
-            if (queryManager->getQepStatus(querySubPlanId) == Execution::ExecutableQueryPlanStatus::Created) {
+            Execution::ExecutableQueryPlanStatus status = deployedQEPs[querySubPlanId]->getStatus();
+            if (status == Execution::ExecutableQueryPlanStatus::Created) {
                 if (queryManager->startQuery(deployedQEPs[querySubPlanId], stateManager)) {
                     NES_DEBUG("Runtime: start of QEP " << querySubPlanId << " succeeded");
                 } else {
