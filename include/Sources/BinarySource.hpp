@@ -63,8 +63,10 @@ class BinarySource : public DataSource {
 
     const std::string& getFilePath() const;
 
-  private:
+  protected:
     std::ifstream input;
+
+  private:
     std::string file_path;
 
     int file_size;
