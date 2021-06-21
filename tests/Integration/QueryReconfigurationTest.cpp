@@ -133,10 +133,11 @@ distinctColumnValuesValidator(uint8_t colId, std::unordered_set<std::string> req
     };
 }
 
-std::function<bool(std::vector<std::vector<std::string>>)> noMissingValuesForIntRange(uint8_t colId) {
-    return [colId](std::vector<std::vector<std::string>> rows) {
+std::function<bool(std::vector<std::vector<std::string>>)> noMissingValuesForIntRange(uint8_t colId,
+                                                                                      uint64_t minimumNumberOfRows) {
+    return [=](std::vector<std::vector<std::string>> rows) {
         auto colPos = colId - 1;
-        if (rows.size() < 2) {
+        if (rows.size() < minimumNumberOfRows) {
             return false;
         }
         std::vector<uint64_t> intValues;
@@ -457,8 +458,13 @@ TEST_F(QueryReconfigurationTest, testReconfigurationAtSourceNode) {
     // wait for more buffers to be written to file before comparison
     sleep(5);
 
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1), "testReconfigurationAtSourceNode_1.csv", true));
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1), "testReconfigurationAtSourceNode_2.csv", true));
+    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1, 5000),
+                                                "testReconfigurationAtSourceNode_1.csv",
+                                                true,
+                                                ",",
+                                                120));
+    EXPECT_TRUE(
+        TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1, 5000), "testReconfigurationAtSourceNode_2.csv", true));
 
     stopWorker(wrk1, 1);
     stopWorker(wrk2, 2);

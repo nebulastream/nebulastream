@@ -344,12 +344,13 @@ bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReco
             reconfiguredSubPlans.insert(oldQep->getQuerySubPlanId());
         }
     }
-    auto originalSubQueryPlans = queryIdToQuerySubPlanIds[queryId];
-    originalSubQueryPlans.erase(std::remove_if(originalSubQueryPlans.begin(),
-                                               originalSubQueryPlans.end(),
-                                               [reconfiguredSubPlans](QuerySubPlanId subPlanId) {
-                                                   return reconfiguredSubPlans.contains(subPlanId);
-                                               }));
+    auto originalSubQueryPlans = queryIdToQuerySubPlanIds.find(queryId);
+    originalSubQueryPlans->second.erase(std::remove_if(originalSubQueryPlans->second.begin(),
+                                                       originalSubQueryPlans->second.end(),
+                                                       [reconfiguredSubPlans](QuerySubPlanId subPlanId) {
+                                                           return reconfiguredSubPlans.contains(subPlanId);
+                                                       }),
+                                        originalSubQueryPlans->second.end());
     if (queryIdToQuerySubPlanIds[queryId].empty()) {
         queryIdToQuerySubPlanIds.erase(queryId);
     }
