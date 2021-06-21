@@ -28,21 +28,17 @@
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <algorithm>
-#include <iostream>
 
 using namespace std;
 
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
@@ -140,6 +136,9 @@ distinctColumnValuesValidator(uint8_t colId, std::unordered_set<std::string> req
 std::function<bool(std::vector<std::vector<std::string>>)> noMissingValuesForIntRange(uint8_t colId) {
     return [colId](std::vector<std::vector<std::string>> rows) {
         auto colPos = colId - 1;
+        if (rows.size() < 2) {
+            return false;
+        }
         std::vector<uint64_t> intValues;
         for (auto row : rows) {
             intValues.emplace_back(std::stoull(row[colPos]));
@@ -307,6 +306,165 @@ TEST_F(QueryReconfigurationTest, testPartitionPinningQepReplacements) {
 }
 
 /**
+ * Test adding a new branch for a QEP in the source node
+ *
+ * Running Query:
+ * Lambda Source 1 (1) ----> Map 1 (1) ----> Network Sink 1 (1) ----> Network Source 1 (2) ----> File Sink 1 (2)
+ *
+ * Running Query: Add new branch to QEP running on Node 1
+ *
+ *
+ *
+ *                                       |----> Map 2 (1) ----> Network Sink 2 (1) ----> Network Source 2 (2) ----> File Sink 2 (2)
+ * Lambda Source 1 (1) ----> Map 1 (1) --|
+ *                                       |----> Network Sink 1 (1) ----> Network Source 1 (2) ----> File Sink 1 (2)
+ */
+TEST_F(QueryReconfigurationTest, testReconfigurationAtSourceNode) {
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+
+    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+
+    uint64_t port = 2000;
+    wrkConf->setRpcPort(port);
+
+    NesWorkerPtr wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Sensor, false);
+    NesWorkerPtr wrk2 = startWorker(wrkConf, port, 2, NesNodeType::Worker, false);
+
+    auto schema = Schema::create()
+                      ->addField("id", UINT64)
+                      ->addField("value", UINT64)
+                      ->addField("timestamp", UINT64)
+                      ->addField("originId", UINT64);
+    streamCatalog->addLogicalStream("car", schema);
+
+    //register physical stream - wrk1
+    NES::AbstractPhysicalStreamConfigPtr confCar1 =
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 2), 0, 5, "frequency");
+    wrk1->getNodeEngine()->setConfig(confCar1);
+
+    auto wrk1Src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"),
+                                                                UtilityFunctions::getNextOperatorId());
+
+    const LogicalUnaryOperatorNodePtr oldBranchMap =
+        LogicalOperatorFactory::createMapOperator(Attribute("initialBranch") = 1, UtilityFunctions::getNextOperatorId());
+
+    Network::NesPartition wrk12NSrcNesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
+
+    Network::NodeLocation wrk2NSrcLocation{2, "localhost", static_cast<uint32_t>(port + 21)};
+
+    const auto sinkConnectionWaitTime = std::chrono::seconds(60);
+    int connectionRetries = 2;
+    SinkDescriptorPtr wrk12NSinkDescPtr = Network::NetworkSinkDescriptor::create(wrk2NSrcLocation,
+                                                                                 wrk12NSrcNesPartition,
+                                                                                 sinkConnectionWaitTime,
+                                                                                 connectionRetries);
+    OperatorNodePtr wrk12NSink =
+        LogicalOperatorFactory::createSinkOperator(wrk12NSinkDescPtr, UtilityFunctions::getNextOperatorId());
+
+    auto qsp1Template = QueryPlan::create(wrk1Src);
+    qsp1Template->appendOperatorAsNewRoot(oldBranchMap);
+    qsp1Template->appendOperatorAsNewRoot(wrk12NSink);
+    qsp1Template->setQueryId(1);
+    auto qsp1 = qsp1Template->copy();
+    qsp1->setQuerySubPlanId(1);
+    auto tqsp1 = typeInferencePhase->execute(qsp1);
+    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp1->getQuerySubPlanId() << ".\n" << tqsp1->toString());
+    wrk1->getNodeEngine()->registerQueryInNodeEngine(tqsp1);
+
+    auto wrk12Src = LogicalOperatorFactory::createSourceOperator(
+        Network::NetworkSourceDescriptor::create(wrk12NSink->getOutputSchema(), wrk12NSrcNesPartition),
+        wrk12NSrcNesPartition.getOperatorId());
+
+    auto querySink1 = LogicalOperatorFactory::createSinkOperator(
+        FileSinkDescriptor::create("testReconfigurationAtSourceNode_1.csv", "CSV_FORMAT", "OVERWRITE"),
+        UtilityFunctions::getNextOperatorId());
+
+    auto qsp2 = QueryPlan::create(wrk12Src);
+    qsp2->appendOperatorAsNewRoot(querySink1);
+    qsp2->setQueryId(1);
+    qsp2->setQuerySubPlanId(2);
+    auto tqsp2 = typeInferencePhase->execute(qsp2);
+    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp2->getQuerySubPlanId() << ".\n" << tqsp2->toString());
+    wrk2->getNodeEngine()->registerQueryInNodeEngine(tqsp2);
+
+    wrk2->getNodeEngine()->startQuery(tqsp2->getQueryId());
+    wrk1->getNodeEngine()->startQuery(tqsp1->getQueryId());
+
+    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, "testReconfigurationAtSourceNode_1.csv"));
+
+    // Reconfiguration Related changes
+
+    // Prestart qsp4 in wrk2, it will be waiting for data from new sink in qsp3
+
+    Network::NesPartition wrk34NSrcNesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
+
+    SinkDescriptorPtr wrk34NSinkDescPtr = Network::NetworkSinkDescriptor::create(wrk2NSrcLocation,
+                                                                                 wrk34NSrcNesPartition,
+                                                                                 sinkConnectionWaitTime,
+                                                                                 connectionRetries);
+    OperatorNodePtr wrk34NSink =
+        LogicalOperatorFactory::createSinkOperator(wrk34NSinkDescPtr, UtilityFunctions::getNextOperatorId());
+
+    const LogicalUnaryOperatorNodePtr newBranchMap =
+        LogicalOperatorFactory::createMapOperator(Attribute("newBranch") = 1, UtilityFunctions::getNextOperatorId());
+
+    auto qsp3 = QueryPlan::create(wrk1Src->copy());
+    const OperatorNodePtr& oldBranchCopy = oldBranchMap->copy();
+    qsp3->appendOperatorAsNewRoot(oldBranchCopy);
+    qsp3->appendOperatorAsNewRoot(newBranchMap);
+    qsp3->appendOperatorAsNewRoot(wrk34NSink);
+    const OperatorNodePtr& wrk12NSinkCopy = wrk12NSink->copy();
+    qsp3->addRootOperator(wrk12NSinkCopy);
+    oldBranchCopy->addParent(wrk12NSinkCopy);
+    qsp3->setQueryId(1);
+    qsp3->setQuerySubPlanId(3);
+    auto tqsp3 = typeInferencePhase->execute(qsp3);
+    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp3->getQuerySubPlanId() << ".\n" << tqsp3->toString());
+    wrk1->getNodeEngine()->registerQueryForReconfigurationInNodeEngine(tqsp3);
+
+    auto wrk34Src = LogicalOperatorFactory::createSourceOperator(
+        Network::NetworkSourceDescriptor::create(wrk34NSink->getOutputSchema(), wrk34NSrcNesPartition),
+        wrk34NSrcNesPartition.getOperatorId());
+
+    auto querySink2 = LogicalOperatorFactory::createSinkOperator(
+        FileSinkDescriptor::create("testReconfigurationAtSourceNode_2.csv", "CSV_FORMAT", "OVERWRITE"),
+        UtilityFunctions::getNextOperatorId());
+
+    auto qsp4 = QueryPlan::create(wrk34Src);
+    qsp4->appendOperatorAsNewRoot(querySink2);
+    qsp4->setQueryId(1);
+    qsp4->setQuerySubPlanId(4);
+    auto tqsp4 = typeInferencePhase->execute(qsp4);
+    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp4->getQuerySubPlanId() << ".\n" << tqsp4->toString());
+    wrk2->getNodeEngine()->registerQueryInNodeEngine(qsp4);
+    wrk2->getNodeEngine()->startQuery(1);
+
+    std::vector<QuerySubPlanId> qepStarts{};
+    std::unordered_map<QuerySubPlanId, QuerySubPlanId> qepReplace{{1, 3}};
+    std::vector<QuerySubPlanId> qepStops{};
+    auto queryReconfigurationPlan = QueryReconfigurationPlan::create(qepStarts, qepStops, qepReplace);
+    queryReconfigurationPlan->setQueryId(1);
+    wrk1->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlan);
+
+    while (wrk1->getNodeEngine()->getQueryManager()->getQepStatus(tqsp3->getQuerySubPlanId())
+           != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
+        NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 3 to be in running mode.");
+        sleep(10);
+    }
+    NES_DEBUG("QueryReconfigurationTest: QEP 3 is running.");
+
+    // wait for more buffers to be written to file before comparison
+    sleep(5);
+
+    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1), "testReconfigurationAtSourceNode_1.csv", true));
+    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1), "testReconfigurationAtSourceNode_2.csv", true));
+
+    stopWorker(wrk1, 1);
+    stopWorker(wrk2, 2);
+}
+
+/**
  * Test adding a new branch for a QEP in Level 3
  *
  * Running Query:
@@ -336,7 +494,7 @@ TEST_F(QueryReconfigurationTest, testPartitionPinningQepReplacements) {
  *
  *
  */
-TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
+TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationNewBranchOnLevel3) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -580,162 +738,6 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryReconfigurationTest: Test finished");
-}
-
-/**
- * Test adding a new branch for a QEP in the source node
- *
- * Running Query:
- * Lambda Source 1 (1) ----> Map 1 (1) ----> Network Sink 1 (1) ----> Network Source 1 (2) ----> File Sink 1 (2)
- *
- * Running Query: Add new branch to QEP running on Node 1
- *
- *
- *
- *                                       |----> Map 2 (1) ----> Network Sink 2 (1) ----> Network Source 2 (2) ----> File Sink 2 (2)
- * Lambda Source 1 (1) ----> Map 1 (1) --|
- *                                       |----> Network Sink 1 (1) ----> Network Source 1 (2) ----> File Sink 1 (2)
- */
-TEST_F(QueryReconfigurationTest, testReconfigurationAtSourceNode) {
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-
-    auto streamCatalog = std::make_shared<StreamCatalog>();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-
-    uint64_t port = 2000;
-    wrkConf->setRpcPort(port);
-
-    NesWorkerPtr wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Sensor, false);
-    NesWorkerPtr wrk2 = startWorker(wrkConf, port, 2, NesNodeType::Worker, false);
-
-    auto schema = Schema::create()
-                      ->addField("id", UINT64)
-                      ->addField("value", UINT64)
-                      ->addField("timestamp", UINT64)
-                      ->addField("originId", UINT64);
-    streamCatalog->addLogicalStream("car", schema);
-
-    //register physical stream - wrk1
-    NES::AbstractPhysicalStreamConfigPtr confCar1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 2), 0, 5, "frequency");
-    wrk1->getNodeEngine()->setConfig(confCar1);
-
-    auto wrk1Src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"),
-                                                                UtilityFunctions::getNextOperatorId());
-
-    auto wrk1SrcCopy = wrk1Src->duplicate();
-
-    Network::NesPartition wrk12NSrcNesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
-
-    Network::NodeLocation wrk2NSrcLocation{2, "localhost", static_cast<uint32_t>(port + 21)};
-
-    const auto sinkConnectionWaitTime = std::chrono::seconds(60);
-    int connectionRetries = 2;
-    SinkDescriptorPtr wrk12NSinkDescPtr = Network::NetworkSinkDescriptor::create(wrk2NSrcLocation,
-                                                                                 wrk12NSrcNesPartition,
-                                                                                 sinkConnectionWaitTime,
-                                                                                 connectionRetries);
-    OperatorNodePtr wrk12NSink =
-        LogicalOperatorFactory::createSinkOperator(wrk12NSinkDescPtr, UtilityFunctions::getNextOperatorId());
-
-    auto wrk12SinkCopy = wrk12NSink->duplicate();
-
-    const LogicalUnaryOperatorNodePtr oldBranchMap =
-        LogicalOperatorFactory::createMapOperator(Attribute("initialBranch") = 1, UtilityFunctions::getNextOperatorId());
-
-    auto qsp1Template = QueryPlan::create(wrk1Src);
-    qsp1Template->appendOperatorAsNewRoot(oldBranchMap);
-    qsp1Template->appendOperatorAsNewRoot(wrk12NSink);
-    qsp1Template->setQueryId(1);
-    auto qsp1 = qsp1Template->copy();
-    qsp1->setQuerySubPlanId(1);
-    auto tqsp1 = typeInferencePhase->execute(qsp1);
-    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp1->getQuerySubPlanId() << ".\n" << tqsp1->toString());
-    wrk1->getNodeEngine()->registerQueryInNodeEngine(tqsp1);
-
-    auto wrk12Src = LogicalOperatorFactory::createSourceOperator(
-        Network::NetworkSourceDescriptor::create(wrk12NSink->getOutputSchema(), wrk12NSrcNesPartition),
-        wrk12NSrcNesPartition.getOperatorId());
-
-    auto querySink1 = LogicalOperatorFactory::createSinkOperator(
-        FileSinkDescriptor::create("testReconfigurationAtSourceNode_1.csv", "CSV_FORMAT", "OVERWRITE"),
-        UtilityFunctions::getNextOperatorId());
-
-    auto qsp2 = QueryPlan::create(wrk12Src);
-    qsp2->appendOperatorAsNewRoot(querySink1);
-    qsp2->setQueryId(1);
-    qsp2->setQuerySubPlanId(2);
-    auto tqsp2 = typeInferencePhase->execute(qsp2);
-    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp2->getQuerySubPlanId() << ".\n" << tqsp2->toString());
-    wrk2->getNodeEngine()->registerQueryInNodeEngine(tqsp2);
-
-    wrk2->getNodeEngine()->startQuery(tqsp2->getQueryId());
-    wrk1->getNodeEngine()->startQuery(tqsp1->getQueryId());
-
-//    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, "testReconfigurationAtSourceNode_1.csv"));
-
-    // Reconfiguration Related changes
-
-    // Prestart qsp4 in wrk2, it will be waiting for data from new sink in qsp3
-
-    Network::NesPartition wrk34NSrcNesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
-
-    SinkDescriptorPtr wrk34NSinkDescPtr = Network::NetworkSinkDescriptor::create(wrk2NSrcLocation,
-                                                                                 wrk34NSrcNesPartition,
-                                                                                 sinkConnectionWaitTime,
-                                                                                 connectionRetries);
-    OperatorNodePtr wrk34NSink =
-        LogicalOperatorFactory::createSinkOperator(wrk34NSinkDescPtr, UtilityFunctions::getNextOperatorId());
-
-    auto wrk34Src = LogicalOperatorFactory::createSourceOperator(
-        Network::NetworkSourceDescriptor::create(wrk34NSink->getOutputSchema(), wrk34NSrcNesPartition),
-        wrk12NSrcNesPartition.getOperatorId());
-
-    auto querySink2 = LogicalOperatorFactory::createSinkOperator(
-        FileSinkDescriptor::create("testReconfigurationAtSourceNode_2.csv", "CSV_FORMAT", "OVERWRITE"),
-        UtilityFunctions::getNextOperatorId());
-
-    auto qsp4 = QueryPlan::create(wrk34Src);
-    qsp4->appendOperatorAsNewRoot(querySink2);
-    qsp4->setQueryId(1);
-    qsp4->setQuerySubPlanId(4);
-    auto tqsp4 = typeInferencePhase->execute(qsp4);
-    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp4->getQuerySubPlanId() << ".\n" << tqsp4->toString());
-    wrk2->getNodeEngine()->registerQueryInNodeEngine(qsp4);
-    wrk2->getNodeEngine()->startQuery(1);
-
-    const LogicalUnaryOperatorNodePtr newBranchMap =
-        LogicalOperatorFactory::createMapOperator(Attribute("newBranch") = 1, UtilityFunctions::getNextOperatorId());
-
-    auto qsp3 = qsp1Template->copy();
-    qsp3->addRootOperator(wrk34NSink);
-    newBranchMap->addParent(wrk34NSink);
-    oldBranchMap->addParent(newBranchMap);
-    qsp3->setQueryId(1);
-    qsp3->setQuerySubPlanId(3);
-    auto tqsp3 = typeInferencePhase->execute(qsp3);
-    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp3->getQuerySubPlanId() << ".\n" << tqsp3->toString());
-    wrk1->getNodeEngine()->registerQueryForReconfigurationInNodeEngine(tqsp3);
-
-    std::vector<QuerySubPlanId> qepStarts{};
-    std::unordered_map<QuerySubPlanId, QuerySubPlanId> qepReplace{{1, 3}};
-    std::vector<QuerySubPlanId> qepStops{};
-    auto queryReconfigurationPlan = QueryReconfigurationPlan::create(qepStarts, qepStops, qepReplace);
-    queryReconfigurationPlan->setQueryId(1);
-    wrk1->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlan);
-
-    while (wrk1->getNodeEngine()->getQueryManager()->getQepStatus(tqsp3->getQuerySubPlanId())
-           != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
-        NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 3 to be in running mode.");
-        sleep(10);
-    }
-    NES_DEBUG("QueryReconfigurationTest: QEP 3 is running.");
-
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1), "testReconfigurationAtSourceNode_1.csv", true));
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1), "testReconfigurationAtSourceNode_2.csv", true));
-
-    stopWorker(wrk1, 1);
-    stopWorker(wrk2, 2);
 }
 
 TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationReplacementInLevel3) {
