@@ -36,7 +36,7 @@ jobs:
           docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: Repository Dispatch
 #        if: !success() && steps.findPr.outputs.number
-        if: !success()
+        if: ${{ failure() }}
         uses: peter-evans/repository-dispatch@v1
         with:
           token: ${{ secrets.CI_PERSONAL_TOKEN }}
