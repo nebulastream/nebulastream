@@ -128,6 +128,51 @@ LegacyExpressionPtr Predicate::getLeft() const { return left; }
 
 LegacyExpressionPtr Predicate::getRight() const { return right; }
 
+UnaryPredicate::UnaryPredicate(const UnaryOperatorType& op,
+                     const LegacyExpressionPtr& child,
+                     bool bracket)
+    : op(op), child(child), bracket(bracket) {}
+
+LegacyExpressionPtr UnaryPredicate::copy() const { return std::make_shared<UnaryPredicate>(*this); }
+
+ExpressionStatmentPtr UnaryPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
+    if (bracket) {
+        return UnaryOperatorStatement(*(child->generateCode(code, recordHandler)),
+                                       op,
+                                       BRACKETS)
+            .copy();
+    }
+    return UnaryOperatorStatement(*(child->generateCode(code, recordHandler)),
+                                   op)
+        .copy();
+}
+
+std::string UnaryPredicate::toString() const {
+    std::stringstream stream;
+    if (bracket) {
+        stream << "(";
+    }
+    stream << toCodeExpression(op)->code_ << " " << child->toString(); // todo this isnt right yet
+    if (bracket) {
+        stream << ")";
+    }
+    return stream.str();
+}
+
+bool UnaryPredicate::equals(const LegacyExpression& _rhs) const {
+    try {
+        auto rhs = dynamic_cast<const UnaryPredicate&>(_rhs);
+        if ((child == nullptr && rhs.child == nullptr) || (child->equals(*rhs.child.get()))) {
+            return op == rhs.op && bracket == rhs.bracket;
+        }
+        return false;
+    } catch (const std::bad_cast& e) {
+        return false;
+    }
+}
+
+UnaryOperatorType UnaryPredicate::getOperatorType() const { return op; }
+
 PredicateItem::PredicateItem(ValueTypePtr value) : mutation(PredicateItemMutation::VALUE), value(std::move(value)) {}
 
 PredicateItem::PredicateItem(int8_t val)
@@ -262,7 +307,7 @@ Predicate operator|(const LegacyExpression& lhs, const LegacyExpression& rhs) {
 Predicate operator^(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::BITWISE_XOR_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator<<(const LegacyExpression& lhs, const LegacyExpression& rhs) {
+Predicate operator <<(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::BITWISE_LEFT_SHIFT_OP, lhs.copy(), rhs.copy());
 }
 Predicate operator>>(const LegacyExpression& lhs, const LegacyExpression& rhs) {

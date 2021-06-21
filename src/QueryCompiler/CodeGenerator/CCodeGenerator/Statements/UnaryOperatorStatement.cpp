@@ -23,7 +23,8 @@
 
 namespace NES::QueryCompilation {
 std::string toString(const UnaryOperatorType& type) {
-    constexpr std::array<char const*, 10> names{"ADDRESS_OF_OP",
+    constexpr std::array<char const*, 10> names{"ABS_VALUE_OF_OP",
+                                                "ADDRESS_OF_OP",
                                                 "DEREFERENCE_POINTER_OP",
                                                 "PREFIX_INCREMENT_OP",
                                                 "PREFIX_DECREMENT_OP",
@@ -31,13 +32,12 @@ std::string toString(const UnaryOperatorType& type) {
                                                 "POSTFIX_DECREMENT_OP",
                                                 "BITWISE_COMPLEMENT_OP",
                                                 "LOGICAL_NOT_OP",
-                                                "SIZE_OF_TYPE_OP",
-                                                "ABS_VALUE_OF_OP"};
+                                                "SIZE_OF_TYPE_OP"};
     return names[type];
 }
 
 CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type) {
-    const char* const names[] = {"&", "*", "++", "--", "++", "--", "~", "!", "sizeof", "abs"};
+    const char* const names[] = {"abs", "&", "*", "++", "--", "++", "--", "~", "!", "sizeof"};
     return std::make_shared<CodeExpression>(names[type]);
 }
 

@@ -115,10 +115,9 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         return Predicate(BinaryOperatorType::POWER_OP, legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<AbsExpressionNode>()) {
         // Translate ABS expression node.
-        auto const str = expression->as<AbsExpressionNode>()->toString();
-        NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expression"
-                        << str << "not supported in legacy expressions: " << expression->toString());
-        NES_NOT_IMPLEMENTED();
+        auto absExpressionNode = expression->as<AbsExpressionNode>();
+        auto legacyChild = transformExpression(absExpressionNode->child());
+        return UnaryPredicate(UnaryOperatorType::ABSOLUTE_VALUE_OF_OP, legacyChild).copy();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
                     << expression->toString());
