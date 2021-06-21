@@ -596,7 +596,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
  * Lambda Source 1 (1) ----> Map 1 (1) --|
  *                                       |----> Network Sink 1 (1) ----> Network Source 1 (2) ----> File Sink 1 (2)
  */
-TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationAtSourceNode) {
+TEST_F(QueryReconfigurationTest, testReconfigurationAtSourceNode) {
     WorkerConfigPtr wrkConf = WorkerConfig::create();
 
     auto streamCatalog = std::make_shared<StreamCatalog>();
@@ -672,9 +672,11 @@ TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationAtSourceNode) {
     wrk2->getNodeEngine()->startQuery(tqsp2->getQueryId());
     wrk1->getNodeEngine()->startQuery(tqsp1->getQueryId());
 
-    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, "testReconfigurationAtSourceNode_1.csv"));
+//    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, "testReconfigurationAtSourceNode_1.csv"));
 
     // Reconfiguration Related changes
+
+    // Prestart qsp4 in wrk2, it will be waiting for data from new sink in qsp3
 
     Network::NesPartition wrk34NSrcNesPartition{1, UtilityFunctions::getNextOperatorId(), 1, 1};
 
@@ -684,19 +686,6 @@ TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationAtSourceNode) {
                                                                                  connectionRetries);
     OperatorNodePtr wrk34NSink =
         LogicalOperatorFactory::createSinkOperator(wrk34NSinkDescPtr, UtilityFunctions::getNextOperatorId());
-
-    const LogicalUnaryOperatorNodePtr newBranchMap =
-        LogicalOperatorFactory::createMapOperator(Attribute("newBranch") = 1, UtilityFunctions::getNextOperatorId());
-
-    auto qsp3 = qsp1Template->copy();
-    qsp3->addRootOperator(wrk34NSink);
-    newBranchMap->addParent(wrk34NSink);
-    oldBranchMap->addParent(newBranchMap);
-    qsp3->setQueryId(1);
-    qsp3->setQuerySubPlanId(3);
-    auto tqsp3 = typeInferencePhase->execute(qsp3);
-    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp3->getQuerySubPlanId() << ".\n" << tqsp3->toString());
-    wrk1->getNodeEngine()->registerQueryForReconfigurationInNodeEngine(tqsp3);
 
     auto wrk34Src = LogicalOperatorFactory::createSourceOperator(
         Network::NetworkSourceDescriptor::create(wrk34NSink->getOutputSchema(), wrk34NSrcNesPartition),
@@ -712,10 +701,24 @@ TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationAtSourceNode) {
     qsp4->setQuerySubPlanId(4);
     auto tqsp4 = typeInferencePhase->execute(qsp4);
     NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp4->getQuerySubPlanId() << ".\n" << tqsp4->toString());
-    wrk2->getNodeEngine()->registerQueryForReconfigurationInNodeEngine(qsp4);
+    wrk2->getNodeEngine()->registerQueryInNodeEngine(qsp4);
+    wrk2->getNodeEngine()->startQuery(1);
 
-    std::vector<QuerySubPlanId> qepStarts{4};
-    std::unordered_map<QuerySubPlanId, QuerySubPlanId> qepReplace{{1, 2}};
+    const LogicalUnaryOperatorNodePtr newBranchMap =
+        LogicalOperatorFactory::createMapOperator(Attribute("newBranch") = 1, UtilityFunctions::getNextOperatorId());
+
+    auto qsp3 = qsp1Template->copy();
+    qsp3->addRootOperator(wrk34NSink);
+    newBranchMap->addParent(wrk34NSink);
+    oldBranchMap->addParent(newBranchMap);
+    qsp3->setQueryId(1);
+    qsp3->setQuerySubPlanId(3);
+    auto tqsp3 = typeInferencePhase->execute(qsp3);
+    NES_INFO("QueryReconfigurationTest: Query Sub Plan: " << tqsp3->getQuerySubPlanId() << ".\n" << tqsp3->toString());
+    wrk1->getNodeEngine()->registerQueryForReconfigurationInNodeEngine(tqsp3);
+
+    std::vector<QuerySubPlanId> qepStarts{};
+    std::unordered_map<QuerySubPlanId, QuerySubPlanId> qepReplace{{1, 3}};
     std::vector<QuerySubPlanId> qepStops{};
     auto queryReconfigurationPlan = QueryReconfigurationPlan::create(qepStarts, qepStops, qepReplace);
     queryReconfigurationPlan->setQueryId(1);
@@ -727,12 +730,6 @@ TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationAtSourceNode) {
         sleep(10);
     }
     NES_DEBUG("QueryReconfigurationTest: QEP 3 is running.");
-
-    while (wrk2->getNodeEngine()->getQueryManager()->getQepStatus(tqsp4->getQuerySubPlanId())
-           != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
-        NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 4 to be in running mode.");
-        sleep(10);
-    }
 
     EXPECT_TRUE(TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1), "testReconfigurationAtSourceNode_1.csv", true));
     EXPECT_TRUE(TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1), "testReconfigurationAtSourceNode_2.csv", true));

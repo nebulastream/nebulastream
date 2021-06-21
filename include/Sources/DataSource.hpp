@@ -21,6 +21,7 @@
 #include <NodeEngine/Execution/DataEmitter.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <Operators/OperatorId.hpp>
 #include <atomic>
 #include <chrono>
@@ -214,6 +215,19 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     std::shared_ptr<Derived> shared_from_base() {
         return std::static_pointer_cast<Derived>(DataEmitter::shared_from_this());
     }
+
+    /**
+     * @brief reconfigure callback called upon a reconfiguration
+     * @param task the reconfig descriptor
+     * @param context the worker context
+    */
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override;
+
+    /**
+     * @brief final reconfigure callback called upon a reconfiguration
+     * @param task the reconfig descriptor
+     */
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override;
 
   protected:
     NodeEngine::QueryManagerPtr queryManager;

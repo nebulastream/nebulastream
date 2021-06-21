@@ -317,6 +317,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool allSourcesMappedToQep(Execution::ExecutableQueryPlanPtr qep);
     void propagateQueryReconfigurationPlan(const Execution::ExecutableQueryPlanPtr qep,
                                            const QueryReconfigurationPlanPtr queryReconfigurationPlan);
+    void propagateViaSuccessorPipelines(const ReconfigurationType type,
+                                        const std::function<std::any(Execution::ExecutableQueryPlanPtr)>& userdataSupplier,
+                                        const Execution::ExecutableQueryPlanPtr executableQueryPlan,
+                                        std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors);
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

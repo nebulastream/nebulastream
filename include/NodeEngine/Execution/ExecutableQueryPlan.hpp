@@ -19,6 +19,7 @@
 
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationMessage.hpp>
 #include <Plans/Query/QueryId.hpp>
