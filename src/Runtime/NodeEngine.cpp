@@ -21,6 +21,7 @@
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
+#include <NodeEngine/StopQueryMessage.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -276,7 +277,7 @@ bool NodeEngine::registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryP
 }
 
 bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReconfigurationPlan) {
-    // TODO: Handle Reconfiguration at the Data source
+    std::unique_lock lock(engineMutex);
     QueryId queryId = queryReconfigurationPlan->getQueryId();
     NES_DEBUG("NodeEngine::startQueryReconfiguration: Received Reconfiguration Plan: " << queryReconfigurationPlan->getId()
                                                                                        << " to apply on QueryId: " << queryId);
@@ -288,10 +289,55 @@ bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReco
     if (querySubPlanIds.empty()) {
         NES_ERROR("NodeEngine::startQueryReconfiguration: Unable to find SubQueryPlans for the query "
                   << queryId << ". Reconfiguration failed.");
+        queryIdToQuerySubPlanIds.erase(queryId);
         return false;
     }
-    for (auto querySubPlanId : querySubPlanIds) {
-        queryManager->propagateQueryReconfigurationPlan(deployedQEPs[querySubPlanId], queryReconfigurationPlan);
+    // At source only replace QEP for stopping at source, use stop query endpoint
+    std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace =
+        queryReconfigurationPlan->getQuerySubPlanIdsToReplace();
+    for (auto itr = querySubPlanIds.begin(); itr != querySubPlanIds.end(); ++itr) {
+        auto querySubPlanId = *itr;
+        if (querySubPlanIdsToReplace.find(querySubPlanId) != querySubPlanIdsToReplace.end()) {
+            auto oldQep = deployedQEPs[querySubPlanId];
+            auto newQep = reconfigurationQEPs[querySubPlanIdsToReplace[querySubPlanId]];
+
+            // TODO: source level equality check instead of assuming size to be one
+            NES_ASSERT2_FMT(oldQep->getSources().size() == newQep->getSources().size() && oldQep->getSources().size() == 1,
+                            "NodeEngine::startQueryReconfiguration: Failed to replace qep: "
+                                << oldQep->getQuerySubPlanId() << " with qep:" << newQep->getQuerySubPlanId()
+                                << " as number of sources are different");
+
+            // Register source mapping in Query Manager
+            registerQueryInNodeEngine(newQep, false);
+
+            // No need to start the sources but we need to start new QEP and setup sinks
+            queryManager->startQueryForSources(newQep, stateManager, std::vector<DataSourcePtr>{});
+
+            DataSourcePtr oldSource = oldQep->getSources()[0];
+            auto oldSuccessors = oldSource->getExecutableSuccessors();
+            auto updatedSuccessorPipeline = std::make_any<std::vector<Execution::SuccessorExecutablePipeline>>(
+                newQep->getSources()[0]->getExecutableSuccessors());
+            queryManager->addReconfigurationMessage(
+                newQep->getQueryId(),
+                ReconfigurationMessage(newQep->getQueryId(), ReplaceDataEmitter, oldSource, std::move(updatedSuccessorPipeline)),
+                false);
+            queryManager->propagateViaSuccessorPipelines(
+                StopViaReconfiguration,
+                [queryReconfigurationPlan](Execution::ExecutableQueryPlanPtr qepToStop) {
+                    auto weakQep = std::weak_ptr<Execution::ExecutableQueryPlan>(qepToStop);
+                    StopQueryMessagePtr data = std::make_unique<StopQueryMessage>(weakQep, queryReconfigurationPlan);
+                    return std::make_any<StopQueryMessagePtr>(data);
+                },
+                oldQep,
+                oldSuccessors);
+            queryManager->propagateQueryReconfigurationPlan(newQep, queryReconfigurationPlan);
+            reconfigurationQEPs.erase(newQep->getQuerySubPlanId());
+            deployedQEPs.erase(oldQep->getQuerySubPlanId());
+            querySubPlanIds.erase(itr);
+        }
+    }
+    if (querySubPlanIds.empty()) {
+        queryIdToQuerySubPlanIds.erase(queryId);
     }
     return true;
 }
@@ -308,11 +354,13 @@ bool NodeEngine::startQuery(QueryId queryId) {
         }
 
         for (auto querySubPlanId : querySubPlanIds) {
-            if (queryManager->startQuery(deployedQEPs[querySubPlanId], stateManager)) {
-                NES_DEBUG("Runtime: start of QEP " << querySubPlanId << " succeeded");
-            } else {
-                NES_DEBUG("Runtime: start of QEP " << querySubPlanId << " failed");
-                return false;
+            if (queryManager->getQepStatus(querySubPlanId) == Execution::ExecutableQueryPlanStatus::Created) {
+                if (queryManager->startQuery(deployedQEPs[querySubPlanId], stateManager)) {
+                    NES_DEBUG("Runtime: start of QEP " << querySubPlanId << " succeeded");
+                } else {
+                    NES_DEBUG("Runtime: start of QEP " << querySubPlanId << " failed");
+                    return false;
+                }
             }
         }
         return true;

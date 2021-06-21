@@ -215,6 +215,19 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
         return std::static_pointer_cast<Derived>(DataEmitter::shared_from_this());
     }
 
+    /**
+     * @brief reconfigure callback called upon a reconfiguration
+     * @param task the reconfig descriptor
+     * @param context the worker context
+    */
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override;
+
+    /**
+     * @brief final reconfigure callback called upon a reconfiguration
+     * @param task the reconfig descriptor
+     */
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override;
+
   protected:
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr globalBufferManager;

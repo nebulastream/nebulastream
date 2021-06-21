@@ -373,4 +373,21 @@ uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess
 std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
 uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
 
+void DataSource::reconfigure(NodeEngine::ReconfigurationMessage& message, NodeEngine::WorkerContext& context) {
+    Reconfigurable::reconfigure(message, context);
+}
+
+void DataSource::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& message) {
+    Reconfigurable::postReconfigurationCallback(message);
+    switch (message.getType()) {
+        case NodeEngine::ReplaceDataEmitter: {
+            executableSuccessors = message.getUserData<std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>>();
+            break;
+        }
+        default: {
+            NES_THROW_RUNTIME_ERROR("DataSource: task type not supported");
+        }
+    }
+}
+
 }// namespace NES

@@ -682,22 +682,34 @@ bool QueryManager::addSoftStop(const OperatorId sourceId,
                                const ReconfigurationType type,
                                const std::function<std::any(Execution::ExecutableQueryPlanPtr)>& userdataSupplier) {
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
-    QuerySubPlanId querySubPlanId = executableQueryPlan->getQuerySubPlanId();
     // todo adopt this code for multiple source pipelines
     auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
+    propagateViaSuccessorPipelines(type, userdataSupplier, executableQueryPlan, pipelineSuccessors);
+    return true;
+}
+void QueryManager::propagateViaSuccessorPipelines(
+    const ReconfigurationType type,
+    const std::function<std::any(Execution::ExecutableQueryPlanPtr)>& userdataSupplier,
+    const Execution::ExecutableQueryPlanPtr executableQueryPlan,
+    std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors) {
     for (auto successor : pipelineSuccessors) {
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
         auto userData = userdataSupplier(executableQueryPlan);
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
-            addReconfigurationMessage(querySubPlanId,
-                                      ReconfigurationMessage(querySubPlanId, type, (*executablePipeline), std::move(userData)));
+            addReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
+                                      ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
+                                                             type,
+                                                             (*executablePipeline),
+                                                             std::move(userData)));
         } else {
-            addReconfigurationMessage(querySubPlanId,
-                                      ReconfigurationMessage(querySubPlanId, type, (executableQueryPlan), std::move(userData)));
+            addReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
+                                      ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
+                                                             type,
+                                                             (executableQueryPlan),
+                                                             std::move(userData)));
         }
     }
-    return true;
 }
 
 bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
