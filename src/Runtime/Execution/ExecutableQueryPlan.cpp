@@ -16,6 +16,7 @@
 
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/StopQueryMessage.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -194,6 +195,8 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
     Reconfigurable::postReconfigurationCallback(task);
     //soft eos means we drain the state and hard means we truncate it
     switch (task.getType()) {
+        case ReplaceSources: {
+        }
         case HardEndOfStream: {
             NES_DEBUG("ExecutableQueryPlan::postReconfigurationCallback: Received: " << task.getType() << " on qep " << queryId
                                                                                      << " " << querySubPlanId);
@@ -221,6 +224,11 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                     sink->postReconfigurationCallback(task);
                 }
                 qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
+                if (task.getType() == StopViaReconfiguration) {
+                    queryManager->addReconfigurationMessage(querySubPlanId,
+                                                            ReconfigurationMessage(querySubPlanId, Destroy, queryManager),
+                                                            false);
+                }
                 return;
             }
             break;
