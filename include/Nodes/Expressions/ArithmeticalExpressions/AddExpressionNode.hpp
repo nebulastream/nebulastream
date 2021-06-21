@@ -24,7 +24,7 @@ namespace NES {
 class AddExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit AddExpressionNode(DataTypePtr stamp);
-    ~AddExpressionNode() final = default;
+    ~AddExpressionNode() noexcept final = default;
     /**
      * @brief Create a new ADD expression
      */

@@ -159,13 +159,13 @@ DataTypePtr DataTypeFactory::createType(BasicType type) {
 
 DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, double minLowerBound) {
     if (stamp->isFloat()) {
-        auto floatStamp = DataType::as<Float>(stamp);
-        if (floatStamp->lowerBound < minLowerBound) { return createFloat(floatStamp->getBits(), minLowerBound, floatStamp->upperBound); }
+        if (auto const floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound) {
+            return createFloat(floatStamp->getBits(), minLowerBound, floatStamp->upperBound);
+        }
     } else if (stamp->isInteger()) {
-        auto intStamp = DataType::as<Integer>(stamp);
-        if (intStamp->lowerBound < minLowerBound) {
+        if (auto const intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound) {
             NES_WARNING("DataTypeFactory: A Float is passed as the minimum lower bound of an Integer data type. Will be executed with the Floor of the Float argument instead.");
-            return createInteger(intStamp->getBits(), (int64_t) minLowerBound, intStamp->upperBound);
+            return createInteger(intStamp->getBits(), static_cast<int64_t>(minLowerBound), intStamp->upperBound);
         }
     } else {
         // non-numeric data types do not have a lower bound
@@ -176,13 +176,13 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, do
 
 DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, int64_t minLowerBound) {
     if (stamp->isInteger()) {
-        auto intStamp = DataType::as<Integer>(stamp);
-        if (intStamp->lowerBound < minLowerBound) { return createInteger(intStamp->getBits(), minLowerBound, intStamp->upperBound); }
+        if (auto const intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound) {
+            return createInteger(intStamp->getBits(), minLowerBound, intStamp->upperBound);
+        }
     } else if (stamp->isFloat()) {
-        auto floatStamp = DataType::as<Float>(stamp);
-        if (floatStamp->lowerBound < minLowerBound) {
+        if (auto const floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound) {
             NES_INFO("DataTypeFactory: An Integer is passed as the minimum lower bound of a Float data type. Progresses with standard casting to Double.");
-            return createFloat(floatStamp->getBits(), (double) minLowerBound, floatStamp->upperBound);
+            return createFloat(floatStamp->getBits(), static_cast<double>(minLowerBound), floatStamp->upperBound);
         }
     } else {
         // non-numeric data types do not have a lower bound
@@ -194,13 +194,13 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, in
 
 DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, double maxUpperBound) {
     if (stamp->isFloat()) {
-        auto floatStamp = DataType::as<Float>(stamp);
-        if (maxUpperBound < floatStamp->upperBound) { return createFloat(floatStamp->getBits(), floatStamp->lowerBound, maxUpperBound); }
+        if (auto const floatStamp = DataType::as<Float>(stamp); maxUpperBound < floatStamp->upperBound) {
+            return createFloat(floatStamp->getBits(), floatStamp->lowerBound, maxUpperBound);
+        }
     } else if (stamp->isInteger()) {
-        auto intStamp = DataType::as<Integer>(stamp);
-        if (maxUpperBound < intStamp->upperBound) {
+        if (auto const intStamp = DataType::as<Integer>(stamp); maxUpperBound < intStamp->upperBound) {
             NES_WARNING("DataTypeFactory: A Float is passed as the minimum lower bound of an Integer data type. Progresses with the Ceiling of the Float argument instead.");
-            return createInteger(intStamp->getBits(), intStamp->lowerBound, (int64_t) std::ceil(maxUpperBound));
+            return createInteger(intStamp->getBits(), intStamp->lowerBound, static_cast<int64_t>(std::ceil(maxUpperBound)));
         }
     } else {
         // non-numeric data types do not have a lower bound
@@ -212,13 +212,13 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, do
 
 DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, int64_t maxUpperBound) {
     if (stamp->isInteger()) {
-        auto intStamp = DataType::as<Integer>(stamp);
-        if (maxUpperBound < intStamp->upperBound) { return createInteger(intStamp->getBits(), intStamp->lowerBound, maxUpperBound); }
+        if (auto const intStamp = DataType::as<Integer>(stamp); maxUpperBound < intStamp->upperBound) {
+            return createInteger(intStamp->getBits(), intStamp->lowerBound, maxUpperBound);
+        }
     } else if (stamp->isFloat()) {
-        auto floatStamp = DataType::as<Float>(stamp);
-        if (maxUpperBound < floatStamp->upperBound) {
+        if (auto const floatStamp = DataType::as<Float>(stamp); maxUpperBound < floatStamp->upperBound) {
             NES_INFO("DataTypeFactory: An Integer is passed as the maximum upper bound of an Float data type. Progresses with standard casting to Double.");
-            return createFloat(floatStamp->getBits(), floatStamp->lowerBound, (double) maxUpperBound);
+            return createFloat(floatStamp->getBits(), floatStamp->lowerBound, static_cast<double>(maxUpperBound));
         }
     } else {
         // non-numeric data types do not have a lower bound
@@ -230,8 +230,7 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, in
 
 DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, int64_t maxUpperBound) {
     if (stamp->isInteger()) {
-        auto intStamp = DataType::as<Integer>(stamp);
-        if (intStamp->lowerBound < minLowerBound) {
+        if (auto const intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound) {
             // we must create a new stamp for an increased lower bound, so we calculate the upper bound by predication
             int64_t newUpperBound = std::min(intStamp->upperBound, maxUpperBound);
             return createInteger(intStamp->getBits(), minLowerBound, newUpperBound);
@@ -241,7 +240,7 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t
         }
     } else if (stamp->isFloat()) {
         NES_INFO("DataTypeFactory: Integers are passed as new bounds of an Float data type. Progresses with standard casting to Double.");
-        return DataTypeFactory::copyTypeAndTightenBounds(stamp, (double) minLowerBound, (double) maxUpperBound);
+        return DataTypeFactory::copyTypeAndTightenBounds(stamp, static_cast<double>(minLowerBound), static_cast<double>(maxUpperBound));
     } else {
         // non-numeric data types do not have a lower bound
         NES_WARNING("DataTypeFactory: Can not modify bounds on a non-numeric data type. Returning Original stamp."); // Todo: what is the appropriate handling here? Warning or even throw an error?
@@ -252,8 +251,7 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t
 
 DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, double maxUpperBound) {
     if (stamp->isFloat()) {
-        auto floatStamp = DataType::as<Float>(stamp);
-        if (floatStamp->lowerBound < minLowerBound) {
+        if (auto const floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound) {
             // we must create a new stamp for an increased lower bound, so we calculate the upper bound by predication
             double newUpperBound = fmin(floatStamp->upperBound, maxUpperBound);
             return createFloat(floatStamp->getBits(), minLowerBound, newUpperBound);
@@ -263,7 +261,7 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double 
         }
     } else if (stamp->isInteger()) {
         NES_INFO("DataTypeFactory: Floats are passed as new bounds of an Integer data type. Progresses with the floor of the lower bound and ceiling of the upper bound instead.");
-        return DataTypeFactory::copyTypeAndTightenBounds(stamp, (int64_t) std::floor(minLowerBound), (int64_t) std::ceil(maxUpperBound));
+        return DataTypeFactory::copyTypeAndTightenBounds(stamp, static_cast<int64_t>(std::floor(minLowerBound)), static_cast<int64_t>(std::ceil(maxUpperBound)));
     } else {
         // non-numeric data types do not have a lower bound
         NES_WARNING("DataTypeFactory: Can not modify bounds on a non-numeric data type. Returning Original stamp."); // Todo: what is the appropriate handling here? Warning or even throw an error?

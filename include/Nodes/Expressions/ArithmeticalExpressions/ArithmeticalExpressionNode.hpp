@@ -24,7 +24,7 @@ namespace NES {
 class ArithmeticalExpressionNode {
   protected:
     ArithmeticalExpressionNode() = default;
-    virtual ~ArithmeticalExpressionNode() = default;
+    virtual ~ArithmeticalExpressionNode() noexcept = default;
 };
 
 }// namespace NES

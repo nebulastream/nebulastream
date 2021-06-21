@@ -24,7 +24,7 @@ namespace NES {
 class AbsExpressionNode final : public ArithmeticalUnaryExpressionNode {
   public:
     explicit AbsExpressionNode(DataTypePtr stamp);
-    ~AbsExpressionNode() final = default;
+    ~AbsExpressionNode() noexcept final = default;
     /**
      * @brief Create a new ABS expression
      */
