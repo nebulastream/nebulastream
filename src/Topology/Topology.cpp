@@ -540,6 +540,7 @@ TopologyNodePtr Topology::findCommonNodeBetween(std::vector<TopologyNodePtr> chi
     return commonAncestorForChildren;
 }
 
+//TODO: adjust to igrnore nodes marked for maintenance
 std::vector<TopologyNodePtr> Topology::findNodesBetween(const TopologyNodePtr& sourceNode,
                                                         const TopologyNodePtr& destinationNode) {
 
