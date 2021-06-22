@@ -19,6 +19,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <vector>
+#include <REST/runtime_utils.hpp>
 using namespace web;
 using namespace http;
 
@@ -37,6 +38,62 @@ void TopologyController::handleGet(std::vector<utility::string_t> paths, http_re
     }
     resourceNotFoundImpl(message);
     return;
+}
+    // BDAPRO add parameters for ip adress, ports, and resources
+    // return json for bad request and success!
+    //  return hash id for physicalNode
+void TopologyController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
+    if (path[1] == "createTopologyNode") {
+        NES_DEBUG("TopologyController: handlePost -createTopologyNode: REST received request to add new topology node"
+                          << message.to_string());
+        message.extract_string(true)
+                .then([this, message](utility::string_t body) {
+                    try {
+                        NES_DEBUG("TopologyController: handlePost -createTopologyNode: Start trying to add new topology node");
+                        //Prepare Input query from user string
+                        std::string payload(body.begin(), body.end());
+                        NES_DEBUG("TopologyController: handlePost -createTopologyNode: userRequest: " << payload);
+                        json::value req = json::value::parse(payload);
+                        NES_DEBUG("TopologyController: handlePost -createTopologyNode: Json Parse Value: " << req);
+                        uint64_t nodeId = UtilityFunctions::getNextTopologyNodeId();
+                        std::string ipAddress = req.at("ipAddress").as_string();
+                        uint32_t grpcPort = req.at("grpcPort").as_integer();
+                        uint32_t dataPort = req.at("dataPort").as_integer();
+                        uint16_t resources = req.at("resources").as_integer();
+                        NES_DEBUG("TopologyController: handlePost -createTopologyNode: Try to add new topology node "
+                                          << ipAddress << " and" << grpcPort << " and " << dataPort << " and " << resources);
+                        TopologyPtr topology = Topology::create();
+                        // BDAPRO get hashID generator?
+                        TopologyNodePtr physicalNode = TopologyNode::create(nodeId, ipAddress, grpcPort, dataPort, resources);
+                        NES_DEBUG("TopologyController: handlePost -createTopologyNode: Successfully created new toplogy node with nodeId: "
+                                          << physicalNode->getId());
+                        //Prepare the response
+                        json::value result{};
+                        result["nodeId"] = json::value::number(physicalNode->getId());
+                        successMessageImpl(message, result);
+                        return;
+                    }
+                    catch (const std::exception& exc) {
+                NES_ERROR("TopologyController: handlePost -createTopologyNode: Exception occurred while trying to add new "
+                          "topology node"
+                                  << exc.what());
+                handleException(message, exc);
+                return;
+            } catch (...) {
+                RuntimeUtils::printStackTrace();
+                internalServerErrorImpl(message);
+                return;
+            }
+        })
+            .wait();
+
+
+
+
+
+    } else{
+        resourceNotFoundImpl(message);
+    }
 }
 
 }// namespace NES

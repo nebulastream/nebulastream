@@ -369,7 +369,7 @@ std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     return ss.str();
 }
 
-// BDAPRO test this function
+// BDAPRO test this function - done in stream-catalog-remote-test
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string logicalStreamName) {
     std::vector<std::string> physicalStreamsNames = logicalToPhysicalStreamMapping[logicalStreamName];
     std::vector<StreamCatalogEntryPtr> physicalStreams;

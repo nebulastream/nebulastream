@@ -18,8 +18,7 @@ namespace NES {
 
     class PhysicalStreamState {
     public:
-        // BDAPRO add constructor
-       // PhysicalStreamState();
+        PhysicalStreamState();
         /**
          * @brief raises state objects count variable by one if a logical stream is added. Also checks internally if count > 0 now, which changes state to regular.
          *
@@ -38,9 +37,16 @@ namespace NES {
          */
         void changeState();
 
+        /**
+         * @brief getter for description of state
+         *
+         */
+         std::string getStateDescription();
+
         State state;
     private:
         int count;
+        std::string description;
     };
 
 
