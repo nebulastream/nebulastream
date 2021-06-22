@@ -323,11 +323,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
                                   ->addField("key", DataTypeFactory::createFixedChar(32))
                                   ->addField("value", UINT32);
 
-    auto windowHandler =
-        createWindowHandler<NES::QueryCompilation::Array<char, 32>, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
-            windowDef,
-            windowOutputSchema,
-            0);
+    auto windowHandler = createWindowHandler<NES::QueryCompilation::Array<char, 32>,
+                                             uint64_t,
+                                             uint64_t,
+                                             uint64_t,
+                                             Windowing::ExecutableSumAggregation<uint64_t>>(windowDef, windowOutputSchema, 0);
     windowHandler->start(nodeEngine->getStateManager(), 0);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
@@ -365,7 +365,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
     auto windowAction = std::dynamic_pointer_cast<
-        Windowing::ExecutableCompleteAggregationTriggerAction<NES::QueryCompilation::Array<char, 32>, uint64_t, uint64_t, uint64_t>>(
+        Windowing::
+            ExecutableCompleteAggregationTriggerAction<NES::QueryCompilation::Array<char, 32>, uint64_t, uint64_t, uint64_t>>(
         windowHandler->getWindowAction());
     windowAction->aggregateWindows(keyOne, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(keyOne, store, windowDef, buf, ts, ts);

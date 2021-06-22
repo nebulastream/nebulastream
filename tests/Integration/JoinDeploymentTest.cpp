@@ -1478,12 +1478,12 @@ TEST_F(JoinDeploymentTest, testJoinWithFixedCharKey) {
     };
 
     auto window1Schema = Schema::create()
-        ->addField("id1", DataTypeFactory::createFixedChar(8))
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id1", DataTypeFactory::createFixedChar(8))
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window2Schema = Schema::create()
-        ->addField("id2", DataTypeFactory::createFixedChar(8))
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id2", DataTypeFactory::createFixedChar(8))
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
@@ -1525,8 +1525,7 @@ TEST_F(JoinDeploymentTest, testJoinWithFixedCharKey) {
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
             return (window1window2$start == rhs.window1window2$start && window1window2$end == rhs.window1window2$end
-                    && window1window2$key == rhs.window1window2$key && window2$timestamp == rhs.window2$timestamp
-                    );
+                    && window1window2$key == rhs.window1window2$key && window2$timestamp == rhs.window2$timestamp);
         }
     };
 
