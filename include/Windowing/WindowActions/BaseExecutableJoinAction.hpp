@@ -38,7 +38,7 @@ class BaseExecutableJoinAction {
 
     virtual std::string toString() = 0;
 
-    void emitBuffer(NodeEngine::TupleBuffer& tupleBuffer) {
+    void emitBuffer(Runtime::TupleBuffer& tupleBuffer) {
         tupleBuffer.setSequenceNumber(++emitSequenceNumber);
         weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
     };
