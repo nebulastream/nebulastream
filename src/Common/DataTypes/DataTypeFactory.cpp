@@ -169,7 +169,7 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, do
         }
     } else {
         // non-numeric data types do not have a lower bound
-        NES_WARNING("DataTypeFactory: Can not increase a lower bound on a non-numeric data type. Returning Original stamp."); // Todo: what is the appropriate handling here? Warning or even throw an error?
+        NES_ERROR("DataTypeFactory: Can not increase a lower bound on a non-numeric data type.");
     }
     return stamp; // increase does not apply -> return shared pointer given as argument
 }
@@ -186,7 +186,7 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, in
         }
     } else {
         // non-numeric data types do not have a lower bound
-        NES_WARNING("DataTypeFactory: Can not increase a lower bound on a non-numeric data type. Returning Original stamp."); // Todo: what is the appropriate handling here? Warning or even throw an error?
+        NES_ERROR("DataTypeFactory: Can not increase a lower bound on a non-numeric data type.");
     }
     NES_INFO("DataTypeFactory: Increase of lower bound does not apply. Returning original stamp.");
     return stamp; // increase does not apply -> return shared pointer given as argument
@@ -199,12 +199,12 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, do
         }
     } else if (stamp->isInteger()) {
         if (auto const intStamp = DataType::as<Integer>(stamp); maxUpperBound < intStamp->upperBound) {
-            NES_WARNING("DataTypeFactory: A Float is passed as the minimum lower bound of an Integer data type. Progresses with the Ceiling of the Float argument instead.");
+            NES_WARNING("DataTypeFactory: A Float is passed as the maximum upper bound of an Integer data type. Progresses with the Ceiling of the Float argument instead.");
             return createInteger(intStamp->getBits(), intStamp->lowerBound, static_cast<int64_t>(std::ceil(maxUpperBound)));
         }
     } else {
         // non-numeric data types do not have a lower bound
-        NES_WARNING("DataTypeFactory: Can not increase a lower bound on a non-numeric data type. Returning Original stamp."); // Todo: what is the appropriate handling here? Warning or even throw an error?
+        NES_ERROR("DataTypeFactory: Can not increase a lower bound on a non-numeric data type.");
     }
     NES_INFO("DataTypeFactory: Decrease of upper bound does not apply. Returning original stamp.");
     return stamp; // decrease does not apply -> return shared pointer given as argument
@@ -222,7 +222,7 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, in
         }
     } else {
         // non-numeric data types do not have a lower bound
-        NES_WARNING("DataTypeFactory: Can not increase a lower bound on a non-numeric data type. Returning Original stamp."); // Todo: what is the appropriate handling here? Warning or even throw an error?
+        NES_ERROR("DataTypeFactory: Can not increase a lower bound on a non-numeric data type.");
     }
     NES_INFO("DataTypeFactory: Decrease of upper bound does not apply. Returning original stamp.");
     return stamp; // decrease does not apply -> return shared pointer given as argument
@@ -243,7 +243,7 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t
         return DataTypeFactory::copyTypeAndTightenBounds(stamp, static_cast<double>(minLowerBound), static_cast<double>(maxUpperBound));
     } else {
         // non-numeric data types do not have a lower bound
-        NES_WARNING("DataTypeFactory: Can not modify bounds on a non-numeric data type. Returning Original stamp."); // Todo: what is the appropriate handling here? Warning or even throw an error?
+        NES_ERROR("DataTypeFactory: Can not modify bounds on a non-numeric data type.");
     }
     NES_INFO("DataTypeFactory: Lower and upper bound do not need to be changed. Returning original stamp.");
     return stamp; // neither bound needs to be modified -> return shared pointer given as argument
@@ -264,7 +264,7 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double 
         return DataTypeFactory::copyTypeAndTightenBounds(stamp, static_cast<int64_t>(std::floor(minLowerBound)), static_cast<int64_t>(std::ceil(maxUpperBound)));
     } else {
         // non-numeric data types do not have a lower bound
-        NES_WARNING("DataTypeFactory: Can not modify bounds on a non-numeric data type. Returning Original stamp."); // Todo: what is the appropriate handling here? Warning or even throw an error?
+        NES_ERROR("DataTypeFactory: Can not modify bounds on a non-numeric data type.");
     }
     NES_INFO("DataTypeFactory: Lower and upper bound do not need to be changed. Returning original stamp.");
     return stamp; // neither bound needs to be modified -> return shared pointer given as argument
