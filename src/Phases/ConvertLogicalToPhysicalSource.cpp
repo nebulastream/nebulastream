@@ -38,6 +38,7 @@ namespace NES {
 
 DataSourcePtr
 ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
+                                                 OperatorId logicalSourceOperatorId,
                                                  const SourceDescriptorPtr& sourceDescriptor,
                                                  const Runtime::NodeEnginePtr& nodeEngine,
                                                  size_t numSourceLocalBuffers,
@@ -56,6 +57,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                zmqSourceDescriptor->getHost(),
                                zmqSourceDescriptor->getPort(),
                                operatorId,
+                               logicalSourceOperatorId,
                                numSourceLocalBuffers,
                                successors);
     }
@@ -68,6 +70,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                               defaultSourceDescriptor->getNumbersOfBufferToProduce(),
                                                               defaultSourceDescriptor->getFrequencyCount(),
                                                               operatorId,
+                                                              logicalSourceOperatorId,
                                                               numSourceLocalBuffers,
                                                               successors);
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
@@ -78,6 +81,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                       queryManager,
                                       binarySourceDescriptor->getFilePath(),
                                       operatorId,
+                                      logicalSourceOperatorId,
                                       numSourceLocalBuffers,
                                       successors);
     } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
@@ -93,6 +97,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                    csvSourceDescriptor->getFrequencyCount(),
                                    csvSourceDescriptor->getSkipHeader(),
                                    operatorId,
+                                   logicalSourceOperatorId,
                                    numSourceLocalBuffers,
                                    successors);
 #ifdef ENABLE_KAFKA_BUILD
@@ -106,7 +111,10 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  kafkaSourceDescriptor->getTopic(),
                                  kafkaSourceDescriptor->getGroupId(),
                                  kafkaSourceDescriptor->isAutoCommit(),
-                                 kafkaSourceDescriptor->getKafkaConnectTimeout());
+                                 kafkaSourceDescriptor->getKafkaConnectTimeout(),
+                                 operatorId,
+                                 logicalSourceOperatorId,
+                                 numSourceLocalBuffers);
 #endif
 #ifdef ENABLE_MQTT_BUILD
     } else if (sourceDescriptor->instanceOf<MQTTSourceDescriptor>()) {
@@ -120,6 +128,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                 mqttSourceDescriptor->getUser(),
                                 mqttSourceDescriptor->getTopic(),
                                 operatorId,
+                                logicalSourceOperatorId,
                                 numSourceLocalBuffers,
                                 successors);
 #endif
@@ -135,6 +144,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                opcSourceDescriptor->getUser(),
                                opcSourceDescriptor->getPassword(),
                                operatorId,
+                               logicalSourceOperatorId,
                                numSourceLocalBuffers,
                                successors);
 #endif
@@ -146,6 +156,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  queryManager,
                                  senseSourceDescriptor->getUdfs(),
                                  operatorId,
+                                 logicalSourceOperatorId,
                                  numSourceLocalBuffers,
                                  successors);
     } else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
@@ -157,6 +168,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                    queryManager,
                                    networkManager,
                                    networkSourceDescriptor->getNesPartition(),
+                                   logicalSourceOperatorId,
                                    numSourceLocalBuffers,
                                    successors);
     } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
@@ -170,6 +182,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   memorySourceDescriptor->getNumBuffersToProcess(),
                                   memorySourceDescriptor->getGatheringValue(),
                                   operatorId,
+                                  logicalSourceOperatorId,
                                   numSourceLocalBuffers,
                                   memorySourceDescriptor->getGatheringMode(),
                                   memorySourceDescriptor->getSourceMode(),
@@ -184,6 +197,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   lambdaSourceDescriptor->getGatheringValue(),
                                   std::move(lambdaSourceDescriptor->getGeneratorFunction()),
                                   operatorId,
+                                  logicalSourceOperatorId,
                                   numSourceLocalBuffers,
                                   lambdaSourceDescriptor->getGatheringMode(),
                                   successors);

@@ -62,6 +62,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
                          std::move(queryManager),
                          initialGatheringInterval,
                          1,
+                         0,
                          12,
                          DataSource::GatheringMode::FREQUENCY_MODE),
           filePath(std::move(filePath)) {

@@ -71,7 +71,7 @@ struct __attribute__((packed)) ysbRecord {
  * sub-second intervals. Before, NES was sampling every second and was checking
  * every second if that future timestamp is now stale (older).
  *
- * First we check for sub-second unit-tests on a soruce and its behavior. Then,
+ * First we check for sub-second unit-tests on a source and its behavior. Then,
  * we include an E2Etest with a stream that samples at sub-second interval.
  */
 class MillisecondIntervalTest : public testing::Test {
@@ -243,6 +243,7 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
                                                      numberOfBuffers,
                                                      frequency,
                                                      false,
+                                                     1,
                                                      1,
                                                      12,
                                                      {});

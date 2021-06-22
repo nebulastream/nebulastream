@@ -1274,9 +1274,10 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
                                        0,
                                        func,
                                        this->operatorId,
-                                       12,
-                                       DataSource::GatheringMode::FREQUENCY_MODE,
-                                       {});
+                                       1,
+                                                    12,
+                                                    DataSource::GatheringMode::FREQUENCY_MODE,
+                                                    {});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0u);
     ASSERT_EQ(lambdaDataSource.numberOfTuplesToProduce, 52u);
@@ -1323,9 +1324,10 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
                                        1,
                                        func,
                                        this->operatorId,
-                                       12,
-                                       DataSource::GatheringMode::INGESTION_RATE_MODE,
-                                       {});
+                                       1,
+                                                    12,
+                                                    DataSource::GatheringMode::INGESTION_RATE_MODE,
+                                                    {});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.gatheringIngestionRate, 1u);
     lambdaDataSource.open();

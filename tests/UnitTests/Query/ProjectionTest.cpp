@@ -109,6 +109,7 @@ class WindowSource : public NES::DefaultSource {
                         numbersOfBufferToProduce,
                         frequency,
                         1,
+                        0,
                         12,
                         std::move(successors)),
           timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
@@ -311,6 +312,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 id,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -379,6 +381,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 id,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -445,6 +448,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
+                                                                 id,
                                                                  id,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
@@ -515,6 +519,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
+                                                                 id,
                                                                  id,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));

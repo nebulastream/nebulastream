@@ -116,6 +116,7 @@ class WindowSource : public NES::DefaultSource {
                         numbersOfBufferToProduce,
                         frequency,
                         1,
+                        0,
                         12,
                         std::move(successors)),
           timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
@@ -311,6 +312,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 id,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -375,6 +377,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
+                                                                 id,
                                                                  id,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
@@ -441,6 +444,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
+                                                                 id,
                                                                  id,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));

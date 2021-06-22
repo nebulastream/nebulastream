@@ -305,14 +305,35 @@ bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReco
             auto oldQep = deployedQEPs[querySubPlanId];
             auto newQep = reconfigurationQEPs[querySubPlanIdsToReplace[querySubPlanId]];
 
-            // TODO: source level equality check instead of assuming size to be one
             std::vector<DataSourcePtr> oldSources = oldQep->getSources();
-            NES_ASSERT2_FMT(oldSources.size() == newQep->getSources().size() && oldSources.size() == 1,
+            std::unordered_map<OperatorId, DataSourcePtr> logicalOperatorIdSourceMapping;
+            NES_ASSERT2_FMT(oldSources.size() == newQep->getSources().size(),
                             "NodeEngine::startQueryReconfiguration: Failed to replace qep: "
                                 << oldQep->getQuerySubPlanId() << " with qep:" << newQep->getQuerySubPlanId()
                                 << " as number of sources are different");
+            for (auto oldSource : oldSources) {
+                logicalOperatorIdSourceMapping[oldSource->getLogicalSourceOperatorId()] = oldSource;
+            }
 
-            auto updatedSuccessors = newQep->getSources()[0]->getExecutableSuccessors();
+            std::vector<ReconfigurationMessage> replaceDataEmitterMessages;
+            std::vector<std::vector<Execution::SuccessorExecutablePipeline>> oldPipelineSuccessors;
+
+            for (auto newSource : newQep->getSources()) {
+                OperatorId logicalSourceOperatorId = newSource->getLogicalSourceOperatorId();
+                if (logicalOperatorIdSourceMapping.find(logicalSourceOperatorId) == logicalOperatorIdSourceMapping.end()) {
+                    NES_ERROR("NodeEngine::startQueryReconfiguration: Source with logicalOperatorId: "
+                              << logicalSourceOperatorId << " not found in oldQep: " << oldQep->getQuerySubPlanId());
+                }
+                DataSourcePtr oldSource = logicalOperatorIdSourceMapping[logicalSourceOperatorId];
+                auto updatedSuccessors = newSource->getExecutableSuccessors();
+                auto updatedSuccessorPipeline =
+                    std::make_any<std::vector<Execution::SuccessorExecutablePipeline>>(updatedSuccessors);
+                replaceDataEmitterMessages.emplace_back(ReconfigurationMessage(newQep->getQueryId(),
+                                                                               ReplaceDataEmitter,
+                                                                               oldSource,
+                                                                               std::move(updatedSuccessorPipeline)));
+                oldPipelineSuccessors.emplace_back(oldSource->getExecutableSuccessors());
+            }
 
             // Replace sources in new QEP with sources in old QEP
             newQep->setSources(std::move(oldQep->getSources()));
@@ -322,23 +343,21 @@ bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReco
             // No need to start the sources but we need to start new QEP and setup sinks
             queryManager->startQueryForSources(newQep, stateManager, std::vector<DataSourcePtr>{});
 
-            DataSourcePtr oldSource = oldSources[0];
-            auto oldSuccessors = oldSource->getExecutableSuccessors();
-            auto updatedSuccessorPipeline = std::make_any<std::vector<Execution::SuccessorExecutablePipeline>>(updatedSuccessors);
             queryManager->propagateQueryReconfigurationPlan(newQep, queryReconfigurationPlan);
-            queryManager->addReconfigurationMessage(
-                newQep->getQueryId(),
-                ReconfigurationMessage(newQep->getQueryId(), ReplaceDataEmitter, oldSource, std::move(updatedSuccessorPipeline)),
-                false);
-            queryManager->propagateViaSuccessorPipelines(
-                StopViaReconfiguration,
-                [queryReconfigurationPlan](Execution::ExecutableQueryPlanPtr qepToStop) {
-                    auto weakQep = std::weak_ptr<Execution::ExecutableQueryPlan>(qepToStop);
-                    StopQueryMessagePtr data = std::make_unique<StopQueryMessage>(weakQep, queryReconfigurationPlan);
-                    return std::make_any<StopQueryMessagePtr>(data);
-                },
-                oldQep,
-                oldSuccessors);
+            for (auto replaceDataEmitterMessage : replaceDataEmitterMessages) {
+                queryManager->addReconfigurationMessage(newQep->getQueryId(), replaceDataEmitterMessage, false);
+            }
+            for (auto oldPipelineSuccessor : oldPipelineSuccessors) {
+                queryManager->propagateViaSuccessorPipelines(
+                    StopViaReconfiguration,
+                    [queryReconfigurationPlan](Execution::ExecutableQueryPlanPtr qepToStop) {
+                        auto weakQep = std::weak_ptr<Execution::ExecutableQueryPlan>(qepToStop);
+                        StopQueryMessagePtr data = std::make_unique<StopQueryMessage>(weakQep, queryReconfigurationPlan);
+                        return std::make_any<StopQueryMessagePtr>(data);
+                    },
+                    oldQep,
+                    oldPipelineSuccessor);
+            }
             reconfigurationQEPs.erase(newQep->getQuerySubPlanId());
             deployedQEPs.erase(oldQep->getQuerySubPlanId());
             reconfiguredSubPlans.insert(oldQep->getQuerySubPlanId());

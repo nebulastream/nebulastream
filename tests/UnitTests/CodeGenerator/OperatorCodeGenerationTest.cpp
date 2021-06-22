@@ -131,6 +131,7 @@ DataSourcePtr createTestSourceCodeGen(const Runtime::BufferManagerPtr& bPtr, con
                                            1,
                                            1,
                                            1,
+                                           1,
                                            12);
 }
 
@@ -142,10 +143,7 @@ class SelectionDataGenSource : public GeneratorSource {
                            const uint64_t pNum_buffers_to_process)
         : GeneratorSource(std::move(schema),
                           std::move(bPtr),
-                          std::move(dPtr),
-                          pNum_buffers_to_process,
-                          1,
-                          12,
+                          std::move(dPtr), pNum_buffers_to_process, 1, 0, 12,
                           DataSource::GatheringMode::FREQUENCY_MODE,
                           {}) {}
 
@@ -200,10 +198,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
                                         const uint64_t pNum_buffers_to_process)
         : GeneratorSource(std::move(schema),
                           std::move(bPtr),
-                          std::move(dPtr),
-                          pNum_buffers_to_process,
-                          1,
-                          12,
+                          std::move(dPtr), pNum_buffers_to_process, 1, 0, 12,
                           DataSource::GatheringMode::FREQUENCY_MODE,
                           {}) {}
 
@@ -297,10 +292,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
                                      const uint64_t pNum_buffers_to_process)
         : GeneratorSource(std::move(schema),
                           std::move(bPtr),
-                          std::move(dPtr),
-                          pNum_buffers_to_process,
-                          1,
-                          12,
+                          std::move(dPtr), pNum_buffers_to_process, 1, 0, 12,
                           DataSource::GatheringMode::FREQUENCY_MODE,
                           {}) {}
 
@@ -343,10 +335,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
                                        const uint64_t pNum_buffers_to_process)
         : GeneratorSource(std::move(schema),
                           std::move(bPtr),
-                          std::move(dPtr),
-                          pNum_buffers_to_process,
-                          1,
-                          12,
+                          std::move(dPtr), pNum_buffers_to_process, 1, 0, 12,
                           DataSource::GatheringMode::FREQUENCY_MODE,
                           {}) {}
 
