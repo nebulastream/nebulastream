@@ -166,6 +166,7 @@ class DataSourceProxy : public DataSource {
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
 };
+using DataSourceProxyPtr = std::shared_ptr<DataSourceProxy>;
 
 class BinarySourceProxy : public BinarySource {
   public:
@@ -268,6 +269,18 @@ class SourceTest : public testing::Test {
 
     std::optional<NodeEngine::TupleBuffer> GetEmptyBuffer() {
         return this->nodeEngine->getBufferManager()->getBufferNoBlocking();
+    }
+
+    DataSourceProxyPtr createDataSourceProxy(const SchemaPtr& schema,
+                                             NodeEngine::BufferManagerPtr bufferManager,
+                                             NodeEngine::QueryManagerPtr queryManager,
+                                             OperatorId operatorId,
+                                             size_t numSourceLocalBuffers,
+                                             DataSource::GatheringMode gatheringMode,
+                                             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors) {
+        return std::make_shared<DataSourceProxy>(schema, bufferManager, queryManager,
+                                                 operatorId, numSourceLocalBuffers,
+                                                 gatheringMode, executableSuccessors);
     }
 
     NodeEngine::NodeEnginePtr nodeEngine{nullptr};
@@ -376,47 +389,45 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
 }
 
 TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
-    DataSourceProxy mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(), this->operatorId,
-                               this->numSourceLocalBuffersDefault,
-                               DataSource::GatheringMode::FREQUENCY_MODE, {});
-    mDataSource.numBuffersToProcess = 1;
-    mDataSource.running = true;
-    mDataSource.wasGracefullyStopped = false;
+    // mock query manager for passing addEndOfStream
+    DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema, this->nodeEngine->getBufferManager(),
+                                              this->nodeEngine->getQueryManager(), this->operatorId,
+                                              this->numSourceLocalBuffersDefault,
+                                              DataSource::GatheringMode::FREQUENCY_MODE, {});
+    mDataSource->numBuffersToProcess = 1;
+    mDataSource->running = true;
+    mDataSource->wasGracefullyStopped = false;
     auto buf = this->GetBufferWithValue();
-    ON_CALL(mDataSource, toString()).WillByDefault(Return("MOCKED STRING"));
-    ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
-    ON_CALL(mDataSource, receiveData()).WillByDefault(Return(buf));
-    ON_CALL(mDataSource, emitWork(_)).WillByDefault(Return());
-    mDataSource.runningRoutine();
-    // C++ exception with description "bad_weak_ptr" thrown in the test body.
-    // look more into the from_this machinery, the test isn't wrapped around that
-    EXPECT_CALL(mDataSource, receiveData()).Times(1);
-    EXPECT_CALL(mDataSource, emitWork(_)).Times(1);
-    EXPECT_FALSE(mDataSource.isRunning());
-    EXPECT_TRUE(mDataSource.wasGracefullyStopped);
+    ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED STRING"));
+    ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
+    ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(buf));
+    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    mDataSource->runningRoutine();
+    EXPECT_CALL(*mDataSource, receiveData()).Times(1);
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(1);
+    EXPECT_FALSE(mDataSource->isRunning());
+    EXPECT_TRUE(mDataSource->wasGracefullyStopped);
 }
 
 TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
-    DataSourceProxy mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                                this->nodeEngine->getQueryManager(), this->operatorId,
-                                this->numSourceLocalBuffersDefault,
-                                DataSource::GatheringMode::INGESTION_RATE_MODE, {});
-    mDataSource.numBuffersToProcess = 1;
-    mDataSource.gatheringIngestionRate = 2;
-    mDataSource.running = false; // this will need to change to true or in a separate test
+    // mock query manager for passing addEndOfStream
+    DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema, this->nodeEngine->getBufferManager(),
+                                                           this->nodeEngine->getQueryManager(), this->operatorId,
+                                                           this->numSourceLocalBuffersDefault,
+                                                           DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+    mDataSource->numBuffersToProcess = 1;
+    mDataSource->gatheringIngestionRate = 2;
+    mDataSource->running = false; // this will need to change to true or in a separate test
     auto buf = this->GetBufferWithValue();
-    ON_CALL(mDataSource, toString()).WillByDefault(Return("MOCKED STRING"));
-    ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
-    ON_CALL(mDataSource, receiveData()).WillByDefault(Return(buf));
-    ON_CALL(mDataSource, emitWorkFromSource(_)).WillByDefault(Return());
-    ON_CALL(mDataSource, emitWork(_)).WillByDefault(Return());
-    // C++ exception with description "bad_weak_ptr" thrown in the test body.
-    // branch: (buffersProcessedCnt < gatheringIngestionRate && running && processedOverallBufferCnt < numBuffersToProcess)
-    mDataSource.runningRoutine();
-    EXPECT_CALL(mDataSource, receiveData()).Times(0);
-    EXPECT_CALL(mDataSource, emitWorkFromSource(_)).Times(0);
-    EXPECT_CALL(mDataSource, emitWork(_)).Times(0);
+    ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED STRING"));
+    ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
+    ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(buf));
+    ON_CALL(*mDataSource, emitWorkFromSource(_)).WillByDefault(Return());
+    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    mDataSource->runningRoutine();
+    EXPECT_CALL(*mDataSource, receiveData()).Times(0);
+    EXPECT_CALL(*mDataSource, emitWorkFromSource(_)).Times(0);
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(0);
 }
 
 TEST_F(SourceTest, testDataSourceOpen) {
