@@ -29,10 +29,10 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstring>
 #include <limits>
 #include <utility>
-#include <cmath>
 
 namespace NES {
 
@@ -164,14 +164,15 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, do
         }
     } else if (stamp->isInteger()) {
         if (auto const intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound) {
-            NES_WARNING("DataTypeFactory: A Float is passed as the minimum lower bound of an Integer data type. Will be executed with the Floor of the Float argument instead.");
+            NES_WARNING("DataTypeFactory: A Float is passed as the minimum lower bound of an Integer data type. Will be executed "
+                        "with the Floor of the Float argument instead.");
             return createInteger(intStamp->getBits(), static_cast<int64_t>(minLowerBound), intStamp->upperBound);
         }
     } else {
         // non-numeric data types do not have a lower bound
         NES_ERROR("DataTypeFactory: Can not increase a lower bound on a non-numeric data type.");
     }
-    return stamp; // increase does not apply -> return shared pointer given as argument
+    return stamp;// increase does not apply -> return shared pointer given as argument
 }
 
 DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, int64_t minLowerBound) {
@@ -181,7 +182,8 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, in
         }
     } else if (stamp->isFloat()) {
         if (auto const floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound) {
-            NES_INFO("DataTypeFactory: An Integer is passed as the minimum lower bound of a Float data type. Progresses with standard casting to Double.");
+            NES_INFO("DataTypeFactory: An Integer is passed as the minimum lower bound of a Float data type. Progresses with "
+                     "standard casting to Double.");
             return createFloat(floatStamp->getBits(), static_cast<double>(minLowerBound), floatStamp->upperBound);
         }
     } else {
@@ -189,7 +191,7 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, in
         NES_ERROR("DataTypeFactory: Can not increase a lower bound on a non-numeric data type.");
     }
     NES_INFO("DataTypeFactory: Increase of lower bound does not apply. Returning original stamp.");
-    return stamp; // increase does not apply -> return shared pointer given as argument
+    return stamp;// increase does not apply -> return shared pointer given as argument
 }
 
 DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, double maxUpperBound) {
@@ -199,7 +201,8 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, do
         }
     } else if (stamp->isInteger()) {
         if (auto const intStamp = DataType::as<Integer>(stamp); maxUpperBound < intStamp->upperBound) {
-            NES_WARNING("DataTypeFactory: A Float is passed as the maximum upper bound of an Integer data type. Progresses with the Ceiling of the Float argument instead.");
+            NES_WARNING("DataTypeFactory: A Float is passed as the maximum upper bound of an Integer data type. Progresses with "
+                        "the Ceiling of the Float argument instead.");
             return createInteger(intStamp->getBits(), intStamp->lowerBound, static_cast<int64_t>(std::ceil(maxUpperBound)));
         }
     } else {
@@ -207,7 +210,7 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, do
         NES_ERROR("DataTypeFactory: Can not increase a lower bound on a non-numeric data type.");
     }
     NES_INFO("DataTypeFactory: Decrease of upper bound does not apply. Returning original stamp.");
-    return stamp; // decrease does not apply -> return shared pointer given as argument
+    return stamp;// decrease does not apply -> return shared pointer given as argument
 }
 
 DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, int64_t maxUpperBound) {
@@ -217,7 +220,8 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, in
         }
     } else if (stamp->isFloat()) {
         if (auto const floatStamp = DataType::as<Float>(stamp); maxUpperBound < floatStamp->upperBound) {
-            NES_INFO("DataTypeFactory: An Integer is passed as the maximum upper bound of an Float data type. Progresses with standard casting to Double.");
+            NES_INFO("DataTypeFactory: An Integer is passed as the maximum upper bound of an Float data type. Progresses with "
+                     "standard casting to Double.");
             return createFloat(floatStamp->getBits(), floatStamp->lowerBound, static_cast<double>(maxUpperBound));
         }
     } else {
@@ -225,7 +229,7 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, in
         NES_ERROR("DataTypeFactory: Can not increase a lower bound on a non-numeric data type.");
     }
     NES_INFO("DataTypeFactory: Decrease of upper bound does not apply. Returning original stamp.");
-    return stamp; // decrease does not apply -> return shared pointer given as argument
+    return stamp;// decrease does not apply -> return shared pointer given as argument
 }
 
 DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, int64_t maxUpperBound) {
@@ -239,14 +243,17 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t
             return createInteger(intStamp->getBits(), intStamp->lowerBound, maxUpperBound);
         }
     } else if (stamp->isFloat()) {
-        NES_INFO("DataTypeFactory: Integers are passed as new bounds of an Float data type. Progresses with standard casting to Double.");
-        return DataTypeFactory::copyTypeAndTightenBounds(stamp, static_cast<double>(minLowerBound), static_cast<double>(maxUpperBound));
+        NES_INFO("DataTypeFactory: Integers are passed as new bounds of an Float data type. Progresses with standard casting to "
+                 "Double.");
+        return DataTypeFactory::copyTypeAndTightenBounds(stamp,
+                                                         static_cast<double>(minLowerBound),
+                                                         static_cast<double>(maxUpperBound));
     } else {
         // non-numeric data types do not have a lower bound
         NES_ERROR("DataTypeFactory: Can not modify bounds on a non-numeric data type.");
     }
     NES_INFO("DataTypeFactory: Lower and upper bound do not need to be changed. Returning original stamp.");
-    return stamp; // neither bound needs to be modified -> return shared pointer given as argument
+    return stamp;// neither bound needs to be modified -> return shared pointer given as argument
 }
 
 DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, double maxUpperBound) {
@@ -260,14 +267,17 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double 
             return createFloat(floatStamp->getBits(), floatStamp->lowerBound, maxUpperBound);
         }
     } else if (stamp->isInteger()) {
-        NES_INFO("DataTypeFactory: Floats are passed as new bounds of an Integer data type. Progresses with the floor of the lower bound and ceiling of the upper bound instead.");
-        return DataTypeFactory::copyTypeAndTightenBounds(stamp, static_cast<int64_t>(std::floor(minLowerBound)), static_cast<int64_t>(std::ceil(maxUpperBound)));
+        NES_INFO("DataTypeFactory: Floats are passed as new bounds of an Integer data type. Progresses with the floor of the "
+                 "lower bound and ceiling of the upper bound instead.");
+        return DataTypeFactory::copyTypeAndTightenBounds(stamp,
+                                                         static_cast<int64_t>(std::floor(minLowerBound)),
+                                                         static_cast<int64_t>(std::ceil(maxUpperBound)));
     } else {
         // non-numeric data types do not have a lower bound
         NES_ERROR("DataTypeFactory: Can not modify bounds on a non-numeric data type.");
     }
     NES_INFO("DataTypeFactory: Lower and upper bound do not need to be changed. Returning original stamp.");
-    return stamp; // neither bound needs to be modified -> return shared pointer given as argument
+    return stamp;// neither bound needs to be modified -> return shared pointer given as argument
 }
 
 }// namespace NES

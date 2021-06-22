@@ -16,6 +16,8 @@
 
 #include <API/Query.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/Integer.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -27,8 +29,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
-#include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/Float.hpp>
 #include <stdint.h>
 
 namespace NES {
@@ -162,11 +162,9 @@ TEST_F(ExpressionNodeTest, inferAssertionTest) {
 }
 
 TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {
-    auto schema = Schema::create()
-          ->addField("test$left", UINT32)
-          ->addField("test$right", INT16);
+    auto schema = Schema::create()->addField("test$left", UINT32)->addField("test$right", INT16);
 
-    auto multiplicationNode =Attribute("left") * Attribute("right");
+    auto multiplicationNode = Attribute("left") * Attribute("right");
     multiplicationNode->inferStamp(schema);
     ASSERT_TRUE(multiplicationNode->getStamp()->isInteger());
     auto intStamp = DataType::as<Integer>(multiplicationNode->getStamp());
@@ -183,9 +181,7 @@ TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {
  * @brief Test behaviour of special ModExpressionNode::inferStamp function. (integers)
  */
 TEST_F(ExpressionNodeTest, moduloIntegerInferStampTest) {
-    auto schema = Schema::create()
-          ->addField("test$left", UINT32)
-          ->addField("test$right", INT16);
+    auto schema = Schema::create()->addField("test$left", UINT32)->addField("test$right", INT16);
 
     auto moduloNode = MOD(Attribute("left"), Attribute("right"));
     moduloNode->inferStamp(schema);
@@ -198,17 +194,18 @@ TEST_F(ExpressionNodeTest, moduloIntegerInferStampTest) {
     NES_INFO(upperBound);
     EXPECT_EQ(bits, 32);
     EXPECT_EQ(lowerBound, 0);
-    EXPECT_EQ(upperBound, -INT16_MIN - 1); // e.g. when calculating MOD(..., -128) the result will always be in range [-127, 127]. And no other INT8 divisor will yield a wider range than -128 (=INT8_MIN).
-    EXPECT_EQ(upperBound, INT16_MAX); // equivalent to above
+    EXPECT_EQ(
+        upperBound,
+        -INT16_MIN
+            - 1);// e.g. when calculating MOD(..., -128) the result will always be in range [-127, 127]. And no other INT8 divisor will yield a wider range than -128 (=INT8_MIN).
+    EXPECT_EQ(upperBound, INT16_MAX);// equivalent to above
 };
 
 /**
  * @brief Test behaviour of special ModExpressionNode::inferStamp function. (float)
  */
 TEST_F(ExpressionNodeTest, moduloFloatInferStampTest) {
-    auto schema = Schema::create()
-          ->addField("test$left", UINT32)
-          ->addField("test$right", FLOAT32);
+    auto schema = Schema::create()->addField("test$left", UINT32)->addField("test$right", FLOAT32);
 
     auto moduloNode = MOD(Attribute("left"), Attribute("right"));
     moduloNode->inferStamp(schema);
@@ -220,8 +217,8 @@ TEST_F(ExpressionNodeTest, moduloFloatInferStampTest) {
     int64_t upperBound = floatStamp->upperBound;
     NES_INFO(upperBound);
     EXPECT_EQ(bits, 32);
-    EXPECT_EQ(lowerBound, 0); // == lower bound of UINT32, as it is is higher than range spanned by Float divisor
-    EXPECT_EQ(upperBound, UINT32_MAX); // == upper bound of UINT32, as it  is lower than range spanned by Float divisor
+    EXPECT_EQ(lowerBound, 0);         // == lower bound of UINT32, as it is is higher than range spanned by Float divisor
+    EXPECT_EQ(upperBound, UINT32_MAX);// == upper bound of UINT32, as it  is lower than range spanned by Float divisor
 }
 
 }// namespace NES
