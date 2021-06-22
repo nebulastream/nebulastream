@@ -852,6 +852,7 @@ TEST_F(NetworkStackTest, testNetworkSource) {
                                                          nodeEngine->getQueryManager(),
                                                          netManager,
                                                          nesPartition,
+                                                         1,
                                                          64);
     EXPECT_TRUE(networkSource->start());
 
@@ -874,6 +875,7 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
                                                          nodeEngine->getQueryManager(),
                                                          nodeEngine->getNetworkManager(),
                                                          nesPartition,
+                                                         1,
                                                          64);
     EXPECT_TRUE(networkSource->start());
 
@@ -1005,6 +1007,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                                                           nodeEngine->getQueryManager(),
                                                           netManager,
                                                           nesPartition,
+                                                          nesPartition.getOperatorId(),
                                                           64);
             EXPECT_TRUE(source->start());
             EXPECT_TRUE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
@@ -1081,6 +1084,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                    nodeEngine->getQueryManager(),
                                                    netManager,
                                                    nesPartition,
+                                                   1,
                                                    numSourceLocalBuffers,
                                                    successors);
         });
@@ -1110,6 +1114,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
             return createDefaultDataSourceWithSchemaForOneBuffer(schema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
+                                                                 1,
                                                                  1,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));

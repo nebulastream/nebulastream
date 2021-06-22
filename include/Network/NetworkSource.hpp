@@ -36,6 +36,7 @@ class NetworkSource : public DataSource {
                   Runtime::QueryManagerPtr queryManager,
                   NetworkManagerPtr networkManager,
                   NesPartition nesPartition,
+                  OperatorId logicalSourceOperatorId,
                   size_t numSourceLocalBuffers,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors =
                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());

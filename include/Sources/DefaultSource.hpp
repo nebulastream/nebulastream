@@ -30,6 +30,7 @@ class DefaultSource : public GeneratorSource {
                   uint64_t numbersOfBufferToProduce,
                   uint64_t frequency,
                   OperatorId operatorId,
+                  OperatorId logicalSourceOperatorId,
                   size_t numSourceLocalBuffers,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {});
 

@@ -38,6 +38,7 @@ class KafkaSource : public DataSource {
                 bool autoCommit,
                 uint64_t kafkaConsumerTimeout,
                 OperatorId operatorId,
+                OperatorId logicalSourceOperatorId,
                 size_t numSourceLocalBuffers);
 
     /**

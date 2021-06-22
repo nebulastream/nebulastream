@@ -147,7 +147,11 @@ void LowerToExecutableQueryPlanPhase::processSource(
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
-    auto source = sourceProvider->lower(sourceOperator->getId(), sourceDescriptor, nodeEngine, executableSuccessorPipelines);
+    auto source = sourceProvider->lower(sourceOperator->getId(),
+                                        sourceOperator->getLogicalSourceOperatorId(),
+                                        sourceDescriptor,
+                                        nodeEngine,
+                                        executableSuccessorPipelines);
     sources.emplace_back(source);
 }
 

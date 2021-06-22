@@ -38,6 +38,7 @@ class AdaptiveSource : public DataSource {
                    Runtime::QueryManagerPtr queryManager,
                    uint64_t initialGatheringInterval,
                    OperatorId operatorId,
+                   OperatorId logicalSourceOperatorId,
                    size_t numSourceLocalBuffers,
                    GatheringMode gatheringMode);
 

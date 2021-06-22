@@ -46,6 +46,7 @@ class CSVSource : public DataSource {
                        uint64_t frequency,
                        bool skipHeader,
                        OperatorId operatorId,
+                       OperatorId logicalSourceOperatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);

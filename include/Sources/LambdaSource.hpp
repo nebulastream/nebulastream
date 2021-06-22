@@ -44,6 +44,7 @@ class LambdaSource : public GeneratorSource {
         uint64_t gatheringValue,
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         OperatorId operatorId,
+        OperatorId logicalSourceOperatorId,
         size_t numSourceLocalBuffers,
         GatheringMode gatheringMode,
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);

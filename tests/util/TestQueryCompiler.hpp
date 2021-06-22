@@ -94,6 +94,7 @@ class TestSourceProvider : public QueryCompilation::DataSourceProvider {
     explicit TestSourceProvider(QueryCompilation::QueryCompilerOptionsPtr options)
         : QueryCompilation::DataSourceProvider(std::move(std::move(options))){};
     DataSourcePtr lower(OperatorId operatorId,
+                        OperatorId logicalSourceOperatorId,
                         SourceDescriptorPtr sourceDescriptor,
                         Runtime::NodeEnginePtr nodeEngine,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override {
@@ -105,7 +106,7 @@ class TestSourceProvider : public QueryCompilation::DataSourceProvider {
                                                 compilerOptions->getNumSourceLocalBuffers(),
                                                 successors);
         }
-        return DataSourceProvider::lower(operatorId, sourceDescriptor, nodeEngine, successors);
+        return DataSourceProvider::lower(operatorId, logicalSourceOperatorId, sourceDescriptor, nodeEngine, successors);
     }
 };
 

@@ -101,7 +101,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         auto logicalSourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
         auto physicalSourceOperator =
-            PhysicalOperators::PhysicalSourceOperator::create(logicalSourceOperator->getInputSchema(),
+            PhysicalOperators::PhysicalSourceOperator::create(logicalSourceOperator->getId(),
+                                                              logicalSourceOperator->getInputSchema(),
                                                               logicalSourceOperator->getOutputSchema(),
                                                               logicalSourceOperator->getSourceDescriptor());
         operatorNode->replace(physicalSourceOperator);

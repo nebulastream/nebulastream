@@ -35,6 +35,7 @@ LambdaSource::LambdaSource(
     uint64_t gatheringValue,
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     OperatorId operatorId,
+    OperatorId logicalSourceOperatorId,
     size_t numSourceLocalBuffers,
     GatheringMode gatheringMode,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -43,6 +44,7 @@ LambdaSource::LambdaSource(
                       std::move(queryManager),
                       numbersOfBufferToProduce,
                       operatorId,
+                      logicalSourceOperatorId,
                       numSourceLocalBuffers,
                       gatheringMode,
                       std::move(successors)),
@@ -75,7 +77,7 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
 
     NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
                                                                      << " outOrgID=" << buffer.getOriginId());
-//    NES_ERROR("bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer
+    //    NES_ERROR("bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer
     //                                                                                        , schema) << '\n');
 
     if (buffer.getNumberOfTuples() == 0) {

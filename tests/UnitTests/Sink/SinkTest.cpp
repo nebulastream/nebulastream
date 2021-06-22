@@ -336,6 +336,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
                                       "localhost",
                                       zmqPort,
                                       1,
+                                      1,
                                       12,
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     std::cout << zmq_source->toString() << std::endl;
@@ -392,6 +393,7 @@ TEST_F(SinkTest, testTextZMQSink) {
                                       "localhost",
                                       zmqPort,
                                       1,
+                                      1,
                                       12,
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     std::cout << zmq_source->toString() << std::endl;
@@ -435,6 +437,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
                                       nodeEngine->getQueryManager(),
                                       "localhost",
                                       zmqPort,
+                                      1,
                                       1,
                                       12,
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
@@ -487,6 +490,7 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
                                       nodeEngine->getQueryManager(),
                                       "localhost",
                                       zmqPort,
+                                      1,
                                       1,
                                       12,
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());

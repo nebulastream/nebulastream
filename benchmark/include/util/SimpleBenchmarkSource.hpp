@@ -52,9 +52,15 @@ class SimpleBenchmarkSource : public DataSource {
                           const Runtime::QueryManagerPtr& queryManager,
                           uint64_t ingestionRate,
                           uint64_t numberOfTuplesPerBuffer,
-                          uint64_t operatorId)
+                          uint64_t operatorId,
+                          OperatorId logicalSourceOperatorId)
 
-        : DataSource(schema, bufferManager, queryManager, operatorId, 12, DataSource::GatheringMode::FREQUENCY_MODE) {
+        : DataSource(schema,
+                     bufferManager,
+                     queryManager,
+                     operatorId,
+                     logicalSourceOperatorId,
+                     DataSource::GatheringMode::FREQUENCY_MODE) {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
         this->ingestionRate = ingestionRate;
         this->numberOfTuplesPerBuffer = numberOfTuplesPerBuffer;

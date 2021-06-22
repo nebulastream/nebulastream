@@ -37,14 +37,22 @@ class YSBBenchmarkSource : public SimpleBenchmarkSource {
                        const Runtime::QueryManagerPtr& queryManager,
                        uint64_t ingestionRate,
                        uint64_t numberOfTuplesPerBuffer,
-                       uint64_t operatorId)
-        : SimpleBenchmarkSource(schema, bufferManager, queryManager, ingestionRate, numberOfTuplesPerBuffer, operatorId) {}
+                       uint64_t operatorId,
+                       OperatorId logicalSourceOperatorId)
+        : SimpleBenchmarkSource(schema,
+                                bufferManager,
+                                queryManager,
+                                ingestionRate,
+                                numberOfTuplesPerBuffer,
+                                operatorId,
+                                logicalSourceOperatorId) {}
 
     static std::shared_ptr<YSBBenchmarkSource> create(Runtime::BufferManagerPtr bufferManager,
                                                       Runtime::QueryManagerPtr queryManager,
                                                       SchemaPtr& benchmarkSchema,
                                                       uint64_t ingestionRate,
-                                                      uint64_t operatorId) {
+                                                      uint64_t operatorId,
+                                                      OperatorId logicalSourceOperatorId) {
 
         auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
         //        maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)
@@ -61,7 +69,8 @@ class YSBBenchmarkSource : public SimpleBenchmarkSource {
                                                     queryManager,
                                                     ingestionRate,
                                                     maxTuplesPerBuffer,
-                                                    operatorId);
+                                                    operatorId,
+                                                    logicalSourceOperatorId);
     }
 
     struct __attribute__((packed)) YsbRecord {

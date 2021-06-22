@@ -30,14 +30,15 @@ namespace NES {
 KafkaSource::KafkaSource(SchemaPtr schema,
                          Runtime::BufferManagerPtr bufferManager,
                          Runtime::QueryManagerPtr queryManager,
-                         const std::string brokers,
-                         const std::string topic,
-                         const std::string groupId,
+                         std::string brokers,
+                         std::string topic,
+                         std::string groupId,
                          bool autoCommit,
                          uint64_t kafkaConsumerTimeout,
                          OperatorId operatorId,
+                         OperatorId logicalSourceOperatorId,
                          size_t numSourceLocalBuffers)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers), brokers(brokers), topic(topic),
+    : DataSource(schema, bufferManager, queryManager, operatorId, logicalSourceOperatorId, numSourceLocalBuffers), brokers(brokers), topic(topic),
       groupId(groupId), autoCommit(autoCommit), kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))) {
 
     config = {{"metadata.broker.list", brokers.c_str()},

@@ -27,8 +27,9 @@ namespace NES {
 BinarySource::BinarySource(const SchemaPtr& schema,
                            Runtime::BufferManagerPtr bufferManager,
                            Runtime::QueryManagerPtr queryManager,
-                           const std::string& _file_path,
+                           const std::string& file_path,
                            OperatorId operatorId,
+                           OperatorId logicalSourceOperatorId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -36,14 +37,15 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                  std::move(bufferManager),
                  std::move(queryManager),
                  operatorId,
+                 logicalSourceOperatorId,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(successors)),
-      input(std::ifstream(_file_path.c_str())), filePath(_file_path) {
+      input(std::ifstream(file_path.c_str())), filePath(file_path) {
     input.seekg(0, std::ifstream::end);
     fileSize = input.tellg();
     if (fileSize < 0) {
-        NES_FATAL_ERROR("ERROR: File " << _file_path << " is corrupted");
+        NES_FATAL_ERROR("ERROR: File " << file_path << " is corrupted");
     }
     input.seekg(0, std::ifstream::beg);
     tupleSize = schema->getSchemaSizeInBytes();

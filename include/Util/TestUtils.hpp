@@ -503,17 +503,19 @@ class TestUtils {
     /**
      * Reads delimited file contents and validates
      * @param validator function used for validation
+     * @param validation string
      * @param outputFilePath path of file to process
      * @param skipHeader if true first line is removed
      * @param delimiter delimiter for output
      * @param customTimeout timeout value for failing
      * @return true if validation succeeded before timeout
      */
-    static bool checkIfCSVHasContent(std::function<bool(std::vector<std::vector<std::string>>)> validator,
-                                     string outputFilePath,
-                                     bool skipHeader,
-                                     std::string delimiter = ",",
-                                     uint64_t customTimeout = 0) {
+    static bool validateCSVContent(std::function<bool(std::vector<std::vector<std::string>>)> validator,
+                                   std::string validationMsg,
+                                   string outputFilePath,
+                                   bool skipHeader,
+                                   std::string delimiter = ",",
+                                   uint64_t customTimeout = 0) {
         std::chrono::seconds timeoutInSec;
         if (customTimeout == 0) {
             timeoutInSec = std::chrono::seconds(timeout);
@@ -525,7 +527,7 @@ class TestUtils {
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             sleep(1);
-            NES_DEBUG("checkIfCSVHasContent: check content for file " << outputFilePath);
+            NES_DEBUG("validateCSVContent: validate: " << validationMsg << " on file: " << outputFilePath);
             std::ifstream ifs(outputFilePath);
             if (ifs.good() && ifs.is_open()) {
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -546,7 +548,7 @@ class TestUtils {
                 }
             }
         }
-        NES_ERROR("checkIfCSVHasContent: failed timeout.");
+        NES_ERROR("validateCSVContent: validate: " << validationMsg << " failed timeout.");
         return false;
     }
 
