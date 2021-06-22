@@ -37,7 +37,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                      std::string const& filePath,
                      std::string const& delimiter,
                      uint64_t numberOfTuplesToProducePerBuffer,
-                     uint64_t numBuffersToProcess,
+                     uint64_t numberOfBuffersToProcess,
                      uint64_t frequency,
                      bool skipHeader,
                      OperatorId operatorId,
@@ -53,7 +53,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                  std::move(successors)),
       filePath(filePath), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), delimiter(delimiter),
       skipHeader(skipHeader) {
-    this->numBuffersToProcess = numBuffersToProcess;
+    this->numBuffersToProcess = numberOfBuffersToProcess;
     this->gatheringInterval = std::chrono::milliseconds(frequency);
     tupleSize = schema->getSchemaSizeInBytes();
 
@@ -70,13 +70,13 @@ CSVSource::CSVSource(SchemaPtr schema,
         fileSize = static_cast<decltype(fileSize)>(reportedFileSize);
     }
 
-    loopOnFile = numBuffersToProcess != 0;
+    loopOnFile = numberOfBuffersToProcess == 0;
 
     NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval.count() << "ms"
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
-                                      << numberOfTuplesToProducePerBuffer << "loopOnFile=" << loopOnFile);
+                                      << this->numberOfTuplesToProducePerBuffer << "loopOnFile=" << this->loopOnFile);
 
-    fileEnded = false;
+    this->fileEnded = false;
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
@@ -84,9 +84,6 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     auto buffer = this->bufferManager->getBufferBlocking();
     fillBuffer(buffer);
     NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
-
-    generatedTuples += buffer.getNumberOfTuples();
-    generatedBuffers++;
 
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
@@ -111,15 +108,15 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buf) {
     }
     input.seekg(currentPosInFile, std::ifstream::beg);
 
-    uint64_t generatedTuples = 0;
+    uint64_t generatedTuplesThisPass = 0;
     //fill buffer maximally
     if (numberOfTuplesToProducePerBuffer == 0) {
-        generatedTuples = buf.getBufferSize() / tupleSize;
+        generatedTuplesThisPass = buf.getBufferSize() / tupleSize;
     } else {
-        generatedTuples = numberOfTuplesToProducePerBuffer;
-        NES_ASSERT2_FMT(generatedTuples * tupleSize < buf.getBufferSize(), "Wrong parameters");
+        generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
+        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buf.getBufferSize(), "Wrong parameters");
     }
-    NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generatedTuples << " of size=" << tupleSize);
+    NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generatedTuplesThisPass << " of size=" << tupleSize);
 
     std::string line;
     uint64_t tupCnt = 0;
@@ -136,7 +133,7 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buf) {
         currentPosInFile = input.tellg();
     }
 
-    while (tupCnt < generatedTuples && this->isRunning()) {
+    while (tupCnt < generatedTuplesThisPass) {
         if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1) {
             NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
             input.clear();
@@ -217,10 +214,10 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buf) {
 
     currentPosInFile = input.tellg();
     buf.setNumberOfTuples(tupCnt);
+    generatedTuples += tupCnt;
+    generatedBuffers++;
     NES_TRACE("CSVSource::fillBuffer: reading finished read " << tupCnt << " tuples at posInFile=" << currentPosInFile);
     NES_TRACE("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
-
-    //update statistics
 }
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }
