@@ -328,7 +328,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
             windowDef,
             windowOutputSchema,
             0);
-    windowHandler->start(nodeEngine->getStateManager());
+    windowHandler->start(nodeEngine->getStateManager(), 0);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                     nodeEngine->getBufferManager(),
