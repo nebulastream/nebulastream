@@ -196,7 +196,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     out.close();
     NES_ASSERT(crd->getNesWorker()->registerLogicalStream("ysb", testSchemaFileName), "failed to create logical stream ysb");
 
-    auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+    auto func = [](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct __attribute__((packed)) YsbRecord {
             YsbRecord() = default;
             YsbRecord(uint64_t userId,
@@ -2313,7 +2313,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testLongWindow) {
     out.close();
     NES_ASSERT(crd->getNesWorker()->registerLogicalStream("schema", testSchemaFileName), "failed to create logical stream ysb");
     std::atomic<int> recordCounter = 0;
-    auto func = [&recordCounter](NES::NodeEngine::TupleBuffer& buffer, uint64_t) {
+    auto func = [&recordCounter](Runtime::TupleBuffer& buffer, uint64_t) {
         struct __attribute__((packed)) Record {
             Record() = default;
             Record(uint64_t key, uint64_t value, uint64_t ts) : key(key), value(value), ts(ts) {}

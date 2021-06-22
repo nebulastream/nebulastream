@@ -300,7 +300,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31341, conf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 31341, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
