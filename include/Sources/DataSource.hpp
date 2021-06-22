@@ -238,7 +238,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     void emitWork(Runtime::TupleBuffer& buffer) override;
 
-    void emitWorkFromSource(NodeEngine::TupleBuffer& buffer);
+    void emitWorkFromSource(Runtime::TupleBuffer& buffer);
 
   private:
     mutable std::mutex startStopMutex;
