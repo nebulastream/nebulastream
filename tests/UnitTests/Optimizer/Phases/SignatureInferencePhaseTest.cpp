@@ -63,7 +63,8 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    std::vector<std::string> logicalStreamNames1{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames1, sce);
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     z3::ContextPtr context = std::make_shared<z3::context>();

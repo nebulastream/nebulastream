@@ -81,7 +81,9 @@ TEST_F(QueryTest, testQueryFilter) {
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -110,7 +112,9 @@ TEST_F(QueryTest, testQueryProjection) {
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -139,7 +143,8 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -172,7 +177,8 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -205,7 +211,8 @@ TEST_F(QueryTest, DISABLED_testQueryMerge) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -230,7 +237,8 @@ TEST_F(QueryTest, testQueryJoin) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     auto lessExpression = Attribute("field_1") <= 10;

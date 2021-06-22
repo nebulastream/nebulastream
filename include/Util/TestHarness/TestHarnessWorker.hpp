@@ -36,7 +36,7 @@ class TestHarnessWorker {
 
     NesWorkerPtr wrk;
     TestHarnessWorkerType type;
-    std::string logicalStreamName;
+    std::vector<std::string> logicalStreamName;
     std::string physicalStreamName;
     SchemaPtr schema;
     std::vector<uint8_t*> record;

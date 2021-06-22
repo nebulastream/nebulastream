@@ -172,7 +172,7 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
 
     EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
     EXPECT_TRUE(
-        streamCatalog->removePhysicalStream(conf->getLogicalStreamName(), conf->getPhysicalStreamName(), physicalNode->getId()));
+        streamCatalog->removePhysicalStream(conf->getLogicalStreamName().back(), conf->getPhysicalStreamName(), physicalNode->getId()));
     NES_INFO(streamCatalog->getPhysicalStreamAndSchemaAsString());
 }
 TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
@@ -231,7 +231,8 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
-    streamCatalog->addPhysicalStream(newLogicalStreamName, catalogEntryPtr);
+    std::vector<std::string> newLogicalStreamNameVec{newLogicalStreamName};
+    streamCatalog->addPhysicalStream(newLogicalStreamNameVec, catalogEntryPtr);
     const vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(newLogicalStreamName);
     EXPECT_EQ(allPhysicalStream.size(), 1);
 }

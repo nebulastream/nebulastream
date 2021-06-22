@@ -59,8 +59,10 @@ class ProjectBeforeUnionOperatorRuleTest : public testing::Test {
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-        streamCatalog->addPhysicalStream("x", sce);
-        streamCatalog->addPhysicalStream("y", sce);
+        std::vector<std::string> logicalStreamName1{"x"};
+        streamCatalog->addPhysicalStream(logicalStreamName1, sce);
+        std::vector<std::string> logicalStreamName2{"y"};
+        streamCatalog->addPhysicalStream(logicalStreamName2, sce);
         streamCatalog->addLogicalStream("x", schema);
         streamCatalog->addLogicalStream("y", schema);
     }

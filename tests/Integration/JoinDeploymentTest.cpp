@@ -1397,8 +1397,10 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
 
     wrk1->registerLogicalStream("input1", testSchemaFileName);
 
+    std::vector<std::string> logicalStreamNames1{"input1"};
+
     NES::AbstractPhysicalStreamConfigPtr conf1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", func1, 10, 1, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", logicalStreamNames1, func1, 10, 1, "frequency");
     wrk1->registerPhysicalStream(conf1);
 
     auto func2 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
@@ -1423,8 +1425,9 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
     };
 
     wrk2->registerLogicalStream("input2", testSchemaFileName);
+    std::vector<std::string> logicalStreamNames2{"input2"};
     NES::AbstractPhysicalStreamConfigPtr conf2 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", func2, 10, 1, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", logicalStreamNames2, func2, 10, 1, "frequency");
 
     wrk2->registerPhysicalStream(conf2);
 

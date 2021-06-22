@@ -241,13 +241,14 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
+    std::vector<std::string> logStreamNames{"test_stream"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    streamCatalog->addPhysicalStream(logStreamNames, sce);
 
     Query query = Query::from("default_logical");
     QueryPlanPtr queryPlan = query.getQueryPlan();

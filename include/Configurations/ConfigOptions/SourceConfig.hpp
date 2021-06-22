@@ -128,6 +128,11 @@ class SourceConfig {
     void setLogicalStreamName(std::vector<std::string> logicalStreamName);
 
     /**
+     * @brief set the value for logicalStreamName with the appropriate data format (expects a single string with the names separated by comma)
+     */
+    void setLogicalStreamName(std::string logicalStreamName);
+
+    /**
      * @brief add the logicalStreamName to the vector of logicalStreamNames
      */
     void addLogicalStreamName(std::string logicalStreamName);

@@ -75,8 +75,9 @@ void setupSensorNodeAndStreamCatalogTwoNodes(StreamCatalogPtr streamCatalog) {
 
     StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
     StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
-    streamCatalog->addPhysicalStream("default_logical", sce1);
-    streamCatalog->addPhysicalStream("default_logical", sce2);
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce1);
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce2);
 }
 
 void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
@@ -106,11 +107,12 @@ void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
     StreamCatalogEntryPtr sce4 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode4);
     StreamCatalogEntryPtr sce5 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode5);
 
-    streamCatalog->addPhysicalStream("default_logical", sce1);
-    streamCatalog->addPhysicalStream("default_logical", sce2);
-    streamCatalog->addPhysicalStream("default_logical", sce3);
-    streamCatalog->addPhysicalStream("default_logical", sce4);
-    streamCatalog->addPhysicalStream("default_logical", sce5);
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce1);
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce2);
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce3);
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce4);
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce5);
 }
 
 void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
@@ -120,7 +122,8 @@ void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce);
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {

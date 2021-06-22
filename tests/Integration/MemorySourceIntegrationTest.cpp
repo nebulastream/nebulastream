@@ -102,10 +102,10 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
         records[i].key = i;
         records[i].timestamp = i;
     }
-
+    std::vector<std::string> logStreamNames{"memory_stream"};
     AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create("MemorySource",
                                                                             "memory_stream_0",
-                                                                            "memory_stream",
+                                                                            logStreamNames,
                                                                             memArea,
                                                                             memAreaSize,
                                                                             buffersToExpect,
@@ -212,10 +212,10 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
         records[i].key = i;
         records[i].timestamp = i;
     }
-
+    std::vector<std::string> logStreamNames{"memory_stream"};
     AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create("MemorySource",
                                                                             "memory_stream_0",
-                                                                            "memory_stream",
+                                                                            logStreamNames,
                                                                             memArea,
                                                                             memAreaSize,
                                                                             1,
@@ -324,10 +324,11 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
         records[i].key = i;
         records[i].timestamp = i;
     }
+    std::vector<std::string> logStreamNames{"memory_stream"};
 
     AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create("MemorySource",
                                                                             "memory_stream_0",
-                                                                            "memory_stream",
+                                                                            logStreamNames,
                                                                             memArea,
                                                                             memAreaSize,
                                                                             buffersToExpect + 1,

@@ -253,8 +253,9 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     };
 
     std::string outputFilePath = "ysb.out";
+    std::vector<std::string> logicalStreamNames{"ysb"};
     NES::AbstractPhysicalStreamConfigPtr conf =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "YSB_phy", "ysb", func, 10, 100, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "YSB_phy", logicalStreamNames, func, 10, 100, "frequency");
 
     wrk1->registerPhysicalStream(conf);
 

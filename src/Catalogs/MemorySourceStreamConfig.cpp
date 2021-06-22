@@ -29,7 +29,7 @@ struct MemoryAreaDeleter {
 
 MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
                                                    std::string physicalStreamName,
-                                                   std::string logicalStreamName,
+                                                   std::vector<std::string> logicalStreamName,
                                                    uint8_t* memoryArea,
                                                    size_t memoryAreaSize,
                                                    uint64_t numBuffersToProcess,
@@ -51,9 +51,10 @@ const std::string MemorySourceStreamConfig::toString() { return sourceType; }
 
 const std::string MemorySourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-const std::string MemorySourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+const std::vector<std::string> MemorySourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
-SourceDescriptorPtr MemorySourceStreamConfig::build(SchemaPtr ptr) {
+SourceDescriptorPtr MemorySourceStreamConfig::build(SchemaPtr ptr, std::string logicalStreamName) {
+    std::string notUsed = logicalStreamName;
     return std::make_shared<MemorySourceDescriptor>(ptr,
                                                     memoryArea,
                                                     memoryAreaSize,
@@ -64,7 +65,7 @@ SourceDescriptorPtr MemorySourceStreamConfig::build(SchemaPtr ptr) {
 
 AbstractPhysicalStreamConfigPtr MemorySourceStreamConfig::create(std::string sourceType,
                                                                  std::string physicalStreamName,
-                                                                 std::string logicalStreamName,
+                                                                 std::vector<std::string> logicalStreamName,
                                                                  uint8_t* memoryArea,
                                                                  size_t memoryAreaSize,
                                                                  uint64_t numBuffersToProcess,

@@ -157,6 +157,10 @@ void SourceConfig::setPhysicalStreamName(std::string physicalStreamNameValue) {
 void SourceConfig::setLogicalStreamName(std::vector<std::string> logicalStreamNameValue) {
     logicalStreamName->setValue(logicalStreamNameValue);
 }
+void SourceConfig::setLogicalStreamName(std::string logicalStreamNameStr){
+    std::vector<std::string> logicalStreamNameVec = UtilityFunctions::splitWithStringDelimiter(logicalStreamNameStr, ",");
+    logicalStreamName->setValue(logicalStreamNameVec);
+}
 
 void SourceConfig::addLogicalStreamName(std::string logicalStreamNameValue) {
     logicalStreamName->getValue().push_back(logicalStreamNameValue);

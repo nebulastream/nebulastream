@@ -264,7 +264,8 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(2);
     sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("default_logical");
+    std::vector<std::string> logStreamNames{"default_logical"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     bool success = wrk->registerPhysicalStream(conf);
@@ -324,7 +325,8 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(2);
     sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
+    std::vector<std::string> logStreamNames{"default_logical"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     bool success2 = wrk->registerPhysicalStream(conf);

@@ -83,7 +83,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("exdra");
+    std::vector<std::string> logStreamNames{"exdra"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
@@ -205,7 +206,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
+    std::vector<std::string> logStreamNames{"testStream"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     //register physical stream
@@ -274,7 +276,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
+    std::vector<std::string> logStreamNames{"testStream"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
@@ -342,7 +345,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
+    std::vector<std::string> logStreamNames{"testStream"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
@@ -469,7 +473,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
+    std::vector<std::string> logStreamNames{"testStream"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
@@ -606,7 +611,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
+    std::vector<std::string> logStreamNames{"testStream"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
@@ -682,7 +688,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
+    std::vector<std::string> logStreamNames{"testStream"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
@@ -1281,7 +1288,8 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(5);
     sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("exdra");
+    std::vector<std::string> logStreamNames{"testStream"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
 
@@ -1524,7 +1532,8 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setLogicalStreamName("car");
+    std::vector<std::string> logStreamNames{"car"};
+    sourceConfig->setLogicalStreamName(logStreamNames);
     sourceConfig->setPhysicalStreamName("car");
     sourceConfig->setSourceConfig("../tests/test_data/long_running.csv");
     sourceConfig->setSourceFrequency(0);

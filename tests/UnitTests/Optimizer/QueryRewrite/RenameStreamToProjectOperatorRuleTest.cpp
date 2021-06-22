@@ -59,7 +59,9 @@ class RenameStreamToProjectOperatorRuleTest : public testing::Test {
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-        streamCatalog->addPhysicalStream("src", sce);
+        std::vector<std::string> logicalStreamNames{"src"};
+        streamCatalog->addPhysicalStream(logicalStreamNames, sce);
+        //add all logical streams in the vector (in this case only one)
         streamCatalog->addLogicalStream("src", schema);
     }
 };

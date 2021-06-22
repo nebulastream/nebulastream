@@ -89,8 +89,10 @@ class QueryPlacementTest : public testing::Test {
         StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode1);
         StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode2);
 
-        streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
-        streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
+        std::vector<std::string> logicalStreamNames{"car"};
+
+        streamCatalog->addPhysicalStream(logicalStreamNames, streamCatalogEntry1);
+        streamCatalog->addPhysicalStream(logicalStreamNames, streamCatalogEntry2);
     }
 
     StreamCatalogPtr streamCatalog;

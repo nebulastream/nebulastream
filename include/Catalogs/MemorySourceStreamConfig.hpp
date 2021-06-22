@@ -30,13 +30,13 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      * @brief Create a MemorySourceStreamConfig using a set of parameters
      * @param sourceType the type of the source
      * @param physicalStreamName the name of the physical stream
-     * @param logicalStreamName the name of the logical stream
+     * @param logicalStreamName the names of the logical stream
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
      */
     explicit MemorySourceStreamConfig(std::string sourceType,
                                       std::string physicalStreamName,
-                                      std::string logicalStreamName,
+                                      std::vector<std::string> logicalStreamName,
                                       uint8_t* memoryArea,
                                       size_t memoryAreaSize,
                                       uint64_t numBuffersToProcess,
@@ -46,9 +46,10 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
     /**
      * @brief Creates the source descriptor for the underlying source
      * @param ptr the schama to build the source with
+     * @param logicalStreamName needed for inheritance relation but actually here not used
      * @return
      */
-    SourceDescriptorPtr build(SchemaPtr) override;
+    SourceDescriptorPtr build(SchemaPtr, std::string) override;
 
     /**
      * @brief The string representation of the object
@@ -69,10 +70,10 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
     const std::string getPhysicalStreamName() override;
 
     /**
-     * @brief Provides the logical stream name of the source
-     * @return the logical stream name of the source
+     * @brief Provides the logical stream names of the source
+     * @return the logical stream names of the source
      */
-    const std::string getLogicalStreamName() override;
+    const std::vector<std::string> getLogicalStreamName() override;
 
     /**
      * @brief Factory method of MemorySourceStreamConfig
@@ -85,7 +86,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      */
     static AbstractPhysicalStreamConfigPtr create(std::string sourceType,
                                                   std::string physicalStreamName,
-                                                  std::string logicalStreamName,
+                                                  std::vector<std::string> logicalStreamName,
                                                   uint8_t* memoryArea,
                                                   size_t memoryAreaSize,
                                                   uint64_t numBuffersToProcess,

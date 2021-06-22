@@ -62,7 +62,8 @@ void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce);
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
@@ -636,7 +637,8 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("example", sce);
+    std::vector<std::string> logicalStreamName{"example"};
+    streamCatalog->addPhysicalStream(logicalStreamName, sce);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();

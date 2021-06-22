@@ -908,8 +908,10 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     wrk1->registerLogicalStream("input1", testSchemaFileName);
 
+    std::vector<std::string> logicalStreamNames{"input1"};
+
     NES::AbstractPhysicalStreamConfigPtr conf1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 6, 2, "ingestionrate");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", logicalStreamNames, std::move(func1), 6, 2, "ingestionrate");
     wrk1->registerPhysicalStream(conf1);
 
     std::string outputFilePath = "testIngestionRateFromQuery.out";
@@ -1065,12 +1067,17 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     wrk1->registerLogicalStream("input1", testSchemaFileName);
     wrk1->registerLogicalStream("input2", testSchemaFileName);
 
+    std::vector<std::string> logicalStreamNames1{"input1"};
+    std::vector<std::string> logicalStreamNames2{"input2"};
+
+
+
     NES::AbstractPhysicalStreamConfigPtr conf1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 3, 0, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", logicalStreamNames1, std::move(func1), 3, 0, "frequency");
     wrk1->registerPhysicalStream(conf1);
 
     NES::AbstractPhysicalStreamConfigPtr conf2 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", std::move(func2), 3, 0, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", logicalStreamNames2, std::move(func2), 3, 0, "frequency");
     wrk1->registerPhysicalStream(conf2);
 
     string query =
@@ -1143,9 +1150,11 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
             return;
         };
 
+        std::vector<std::string> logicalStreamNames{"input"};
+
         NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create("LambdaSource",
                                                                                            "test_stream" + std::to_string(i),
-                                                                                           "input",
+                                                                                           logicalStreamNames,
                                                                                            std::move(func1),
                                                                                            3000000,
                                                                                            0,

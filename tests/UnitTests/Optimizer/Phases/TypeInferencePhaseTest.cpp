@@ -216,7 +216,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce);
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
@@ -243,7 +244,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    std::vector<std::string> logicalStreamNames{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamNames, sce);
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }

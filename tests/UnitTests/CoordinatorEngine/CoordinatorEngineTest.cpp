@@ -23,6 +23,7 @@
 #include <CoordinatorRPCService.pb.h>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 #include <string>
 using namespace std;
@@ -127,26 +128,31 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
 
     //setup test
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    bool successRegisterLogicalStream = coordinatorEngine->registerLogicalStream(conf->getLogicalStreamName(), testSchema);
+
+    // coordinator engine aspects combined string
+    std::vector<std::string> logicalStreamName = conf->getLogicalStreamName();
+    std::string logicalStreamNameStr = UtilityFunctions::combineStringsWithDelimiter(logicalStreamName, ",");
+
+    bool successRegisterLogicalStream = coordinatorEngine->registerLogicalStream(logicalStreamNameStr, testSchema);
     EXPECT_TRUE(successRegisterLogicalStream);
 
     // common case
     bool successRegisterPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId,
                                                                                    conf->getSourceType(),
                                                                                    conf->getPhysicalStreamName(),
-                                                                                   conf->getLogicalStreamName());
+                                                                                   logicalStreamNameStr);
     EXPECT_TRUE(successRegisterPhysicalStream);
 
     //test register existing stream
     bool successRegisterExistingPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId,
                                                                                            conf->getSourceType(),
                                                                                            conf->getPhysicalStreamName(),
-                                                                                           conf->getLogicalStreamName());
+                                                                                           logicalStreamNameStr);
     EXPECT_TRUE(!successRegisterExistingPhysicalStream);
 
     //test unregister not existing physical stream
     bool successUnregisterNotExistingPhysicalStream =
-        coordinatorEngine->unregisterPhysicalStream(nodeId, "asd", conf->getLogicalStreamName());
+        coordinatorEngine->unregisterPhysicalStream(nodeId, "asd", logicalStreamNameStr);
     EXPECT_TRUE(!successUnregisterNotExistingPhysicalStream);
 
     //test unregister not existing local stream
@@ -156,6 +162,6 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
 
     //test unregister existing node
     bool successUnregisterExistingPhysicalStream =
-        coordinatorEngine->unregisterPhysicalStream(nodeId, conf->getPhysicalStreamName(), conf->getLogicalStreamName());
+        coordinatorEngine->unregisterPhysicalStream(nodeId, conf->getPhysicalStreamName(), logicalStreamNameStr);
     EXPECT_TRUE(successUnregisterExistingPhysicalStream);
 }

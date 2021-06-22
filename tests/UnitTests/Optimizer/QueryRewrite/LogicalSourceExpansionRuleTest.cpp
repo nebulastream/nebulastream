@@ -71,8 +71,10 @@ void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
 
     StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
     StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
-    streamCatalog->addPhysicalStream("default_logical", sce1);
-    streamCatalog->addPhysicalStream("default_logical", sce2);
+
+    std::vector<std::string> logicalStreamName{"default_logical"};
+    streamCatalog->addPhysicalStream(logicalStreamName, sce1);
+    streamCatalog->addPhysicalStream(logicalStreamName, sce2);
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithJustSource) {

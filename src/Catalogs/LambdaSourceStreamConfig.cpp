@@ -24,7 +24,7 @@ namespace detail {}// namespace detail
 LambdaSourceStreamConfig::LambdaSourceStreamConfig(
     std::string sourceType,
     std::string physicalStreamName,
-    std::string logicalStreamName,
+    std::vector<std::string> logicalStreamName,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
@@ -44,9 +44,10 @@ const std::string LambdaSourceStreamConfig::toString() { return sourceType; }
 
 const std::string LambdaSourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-const std::string LambdaSourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+const std::vector<std::string> LambdaSourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
-SourceDescriptorPtr LambdaSourceStreamConfig::build(SchemaPtr schema) {
+SourceDescriptorPtr LambdaSourceStreamConfig::build(SchemaPtr schema, std::string logicalStreamName) {
+    std::string notUsed = logicalStreamName;
     return std::make_shared<LambdaSourceDescriptor>(schema,
                                                     std::move(generationFunction),
                                                     this->numberOfBuffersToProduce,
@@ -57,7 +58,7 @@ SourceDescriptorPtr LambdaSourceStreamConfig::build(SchemaPtr schema) {
 AbstractPhysicalStreamConfigPtr LambdaSourceStreamConfig::create(
     std::string sourceType,
     std::string physicalStreamName,
-    std::string logicalStreamName,
+    std::vector<std::string> logicalStreamName,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,

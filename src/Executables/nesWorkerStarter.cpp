@@ -25,15 +25,20 @@
  ********************************************************/
 
 #include "boost/program_options.hpp"
+#include <Util/UtilityFunctions.hpp>
+
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <CoordinatorRPCService.pb.h>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <thread>
-#include <Util/UtilityFunctions.hpp>
+#include <unistd.h>
+
 
 namespace po = boost::program_options;
 
@@ -90,7 +95,7 @@ int main(int argc, char** argv) {
                                                   << workerConfig->getDataPort()->getValue() << " pid=" << getpid()
                                                   << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig,
-                                                   NodeType::Sensor// TODO what is this?!
+                                                   NesNodeType::Sensor// TODO what is this?!
     );
 
     //register phy stream if necessary
