@@ -455,8 +455,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
             ->addField("result_pow_int", BasicType::UINT32)
             ->addField("result_pow_float", BasicType::FLOAT64)
             ->addField("result_mod_int", BasicType::INT64)
-            ->addField("result_mod_float", BasicType::FLOAT64)
-            ;
+            ->addField("result_mod_float", BasicType::FLOAT64);
 
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
