@@ -48,9 +48,7 @@ ExpressionNodePtr operator%(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
     return ModExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
-ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
-    return std::move(leftExp) % std::move(rightExp);
-}
+ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) { return std::move(leftExp) % std::move(rightExp); }
 
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
     return PowExpressionNode::create(std::move(leftExp), std::move(rightExp));

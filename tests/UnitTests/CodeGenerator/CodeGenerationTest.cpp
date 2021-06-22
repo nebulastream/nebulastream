@@ -248,8 +248,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                                         "num_tuples",
                                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), ADDRESS_OF_OP).getCode()->code_,
-                  "&num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), ADDRESS_OF_OP).getCode()->code_, "&num_tuples");
         EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), DEREFERENCE_POINTER_OP).getCode()->code_,
                   "*num_tuples");
         EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), PREFIX_INCREMENT_OP).getCode()->code_,
@@ -262,8 +261,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                   "num_tuples--");
         EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), BITWISE_COMPLEMENT_OP).getCode()->code_,
                   "~num_tuples");
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), LOGICAL_NOT_OP).getCode()->code_,
-                  "!num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), LOGICAL_NOT_OP).getCode()->code_, "!num_tuples");
         EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), SIZE_OF_TYPE_OP).getCode()->code_,
                   "sizeof(num_tuples)");
         EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), ABSOLUTE_VALUE_OF_OP).getCode()->code_,

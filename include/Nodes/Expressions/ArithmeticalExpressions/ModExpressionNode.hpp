@@ -21,34 +21,34 @@ namespace NES {
 /**
  * @brief This node represents an MODER expression.
  */
-    class ModExpressionNode final : public ArithmeticalBinaryExpressionNode {
-    public:
-        explicit ModExpressionNode(DataTypePtr stamp);
-        ~ModExpressionNode() noexcept final = default;
-        /**
+class ModExpressionNode final : public ArithmeticalBinaryExpressionNode {
+  public:
+    explicit ModExpressionNode(DataTypePtr stamp);
+    ~ModExpressionNode() noexcept final = default;
+    /**
          * @brief Create a new MODULO expression
          */
-        static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-        [[nodiscard]] bool equal(NodePtr const& rhs) const final;
-        [[nodiscard]] std::string toString() const final;
+    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
+    [[nodiscard]] std::string toString() const final;
 
-        /**
+    /**
          * @brief Determine returned datatype (-> UInt64/Double/ Throw exception for invalid inputs). Override ArithmeticalBinaryExpressionNode::inferStamp to tighten bounds.
          * @comment E.g. if the divisor in the modulo operation is a Int8, we can set the results to be Int8.
          * @comment More general: We set upperbound = max(abs(lowerbound_of_divisor), abs(upperbound_of_divisor)) and the lowerbound to the negation of the same maxiumum. This follows the mathematical definition and implementation in C.
          * @param schema: the current schema.
          */
-        void inferStamp(SchemaPtr schema) final;
+    void inferStamp(SchemaPtr schema) final;
 
-        /**
+    /**
         * @brief Create a deep copy of this expression node.
         * @return ExpressionNodePtr
         */
-        ExpressionNodePtr copy() final;
+    ExpressionNodePtr copy() final;
 
-    protected:
-        explicit ModExpressionNode(ModExpressionNode* other);
-    };
+  protected:
+    explicit ModExpressionNode(ModExpressionNode* other);
+};
 
 }// namespace NES
 

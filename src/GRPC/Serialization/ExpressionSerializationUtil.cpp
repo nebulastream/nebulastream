@@ -202,7 +202,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(const Express
     } else if (expression->instanceOf<ModExpressionNode>()) {
         // serialize mod expression node.
         NES_TRACE(
-                "ExpressionSerializationUtil:: serialize MODULO arithmetical expression to SerializableExpression_PowExpression");
+            "ExpressionSerializationUtil:: serialize MODULO arithmetical expression to SerializableExpression_PowExpression");
         auto modExpressionNode = expression->as<ModExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_ModExpression();
         serializeExpression(modExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
