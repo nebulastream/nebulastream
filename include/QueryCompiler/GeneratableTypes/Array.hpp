@@ -186,7 +186,7 @@ class Array<char, size> final : public ArrayBase<char, size> {
     constexpr Array(std::string&& str) noexcept(false) : ArrayBase<char, size>(str.c_str(), str.size() + 1, std::false_type{}) {}
 
     inline friend std::ostream& operator<<(std::ostream& os, const Array<char, size>& array) {
-        for (size_t i=0; i<size; i++) {
+        for (size_t i = 0; i < size; i++) {
             os << array[i];
         }
         return os;
@@ -386,7 +386,7 @@ Array(J const& array) -> Array<std::decay_t<decltype(array[0])>, std::extent<J>:
  */
 template<class T, size_t N>
 struct std::hash<NES::QueryCompilation::Array<T, N>> {
-    auto operator() (const NES::QueryCompilation::Array<T, N>& key) const {
+    auto operator()(const NES::QueryCompilation::Array<T, N>& key) const {
         std::hash<T> hasher;
         size_t result = 0;
         for (size_t i = 0; i < N; ++i) {// FIXME: Potential bottleneck (#2014)
@@ -396,6 +396,5 @@ struct std::hash<NES::QueryCompilation::Array<T, N>> {
         return result;
     }
 };
-
 
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_ARRAYTYPE_HPP_

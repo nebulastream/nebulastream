@@ -1913,10 +1913,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createDouble())
-        ->addField("value1", DataTypeFactory::createUInt64())
-        ->addField("value2", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createDouble())
+                         ->addField("value1", DataTypeFactory::createUInt64())
+                         ->addField("value2", DataTypeFactory::createUInt64())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -1959,9 +1959,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createFloat())
-        ->addField("value1", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createFloat())
+                         ->addField("value1", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -2005,10 +2005,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithBoolKey) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createBoolean())
-        ->addField("value1", DataTypeFactory::createFixedChar(3))
-        ->addField("value2", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createBoolean())
+                         ->addField("value1", DataTypeFactory::createFixedChar(3))
+                         ->addField("value2", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -2029,9 +2029,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithBoolKey) {
         uint32_t value;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const {
-            return (value == rhs.value);
-        }
+        bool operator==(Output const& rhs) const { return (value == rhs.value); }
     };
 
     std::vector<Output> expectedOutput = {{2}, {4}};
@@ -2050,10 +2048,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWitCharKey) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createChar())
-        ->addField("value1", DataTypeFactory::createFixedChar(3))
-        ->addField("value2", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createChar())
+                         ->addField("value1", DataTypeFactory::createFixedChar(3))
+                         ->addField("value2", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -2074,9 +2072,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWitCharKey) {
         uint32_t value;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const {
-            return (value == rhs.value);
-        }
+        bool operator==(Output const& rhs) const { return (value == rhs.value); }
     };
 
     std::vector<Output> expectedOutput = {{2}, {4}};
@@ -2094,9 +2090,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createFixedChar(4))
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createFixedChar(4))
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
