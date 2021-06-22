@@ -31,18 +31,20 @@ namespace NES {
 SenseSource::SenseSource(SchemaPtr schema,
                          NodeEngine::BufferManagerPtr bufferManager,
                          NodeEngine::QueryManagerPtr queryManager,
-                         const std::string& udsf,
+                         const std::string& udfs,
                          OperatorId operatorId,
+                         OperatorId logicalSourceOperatorId,
                          size_t numSourceLocalBuffers,
                          std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema,
                  bufferManager,
                  queryManager,
                  operatorId,
+                 logicalSourceOperatorId,
                  numSourceLocalBuffers,
                  DataSource::GatheringMode::FREQUENCY_MODE,
                  successors),
-      udsf(udsf) {}
+      udsf(udfs) {}
 
 std::optional<NodeEngine::TupleBuffer> SenseSource::receiveData() {
     NES_DEBUG("SenseSource::receiveData called");

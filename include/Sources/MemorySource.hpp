@@ -47,6 +47,7 @@ class MemorySource : public GeneratorSource {
                           uint64_t numBuffersToProcess,
                           uint64_t gatheringValue,
                           OperatorId operatorId,
+                          OperatorId logicalSourceOperatorId,
                           size_t numSourceLocalBuffers,
                           GatheringMode gatheringMode,
                           std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);

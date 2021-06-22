@@ -68,7 +68,7 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
     auto operatorPlan = QueryCompilation::OperatorPipeline::createSourcePipeline();
 
     auto source =
-        QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
+        QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(1, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     operatorPlan->prependOperator(source);
     pipelineQueryPlan->addPipeline(operatorPlan);
 

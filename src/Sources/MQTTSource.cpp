@@ -44,10 +44,11 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        const std::string user,
                        const std::string topic,
                        OperatorId operatorId,
+                       OperatorId logicalSourceOperatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors),
+    : DataSource(schema, bufferManager, queryManager, operatorId, logicalSourceOperatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors),
       connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic) {
     NES_DEBUG("MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId << " and ");
     client = std::make_shared<mqtt::async_client>(serverAddress, clientId);

@@ -68,16 +68,16 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * @brief public constructor for data source
      * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
      * by some test to produce a deterministic behavior
-     * @param schema of the data that this source produces
+     * @param pSchema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr schema,
+    explicit DataSource(const SchemaPtr pSchema,
                         NodeEngine::BufferManagerPtr bufferManager,
                         NodeEngine::QueryManagerPtr queryManager,
                         OperatorId operatorId,
+                        OperatorId logicalSourceOperatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
-                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors =
-                            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
+                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     DataSource() = delete;
 
@@ -177,6 +177,11 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     uint64_t getNumBuffersToProcess() const;
 
     /**
+     * @brief Get the logical operator ID corresponding to source
+     */
+    OperatorId getLogicalSourceOperatorId() const;
+
+    /**
      * @brief Get frequency of gathering the data
      */
     std::chrono::milliseconds getGatheringInterval() const;
@@ -235,6 +240,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     NodeEngine::FixedSizeBufferPoolPtr bufferManager;
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
+    OperatorId logicalSourceOperatorId;
     SchemaPtr schema;
     uint64_t generatedTuples;
     uint64_t generatedBuffers;

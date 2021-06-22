@@ -40,6 +40,7 @@ class MonitoringSource : public DefaultSource {
                      const uint64_t numbersOfBufferToProduce,
                      uint64_t frequency,
                      OperatorId operatorId,
+                     OperatorId logicalSourceOperatorId,
                      size_t numSourceLocalBuffers,
                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors = {});
 

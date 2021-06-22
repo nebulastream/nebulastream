@@ -125,6 +125,7 @@ const DataSourcePtr createTestSourceCodeGen(NodeEngine::BufferManagerPtr bPtr, N
                                            1,
                                            1,
                                            1,
+                                           1,
                                            12);
 }
 
@@ -134,7 +135,7 @@ class SelectionDataGenSource : public GeneratorSource {
                            NodeEngine::BufferManagerPtr bPtr,
                            NodeEngine::QueryManagerPtr dPtr,
                            const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 0, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
     ~SelectionDataGenSource() = default;
 
@@ -185,7 +186,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
                                         NodeEngine::BufferManagerPtr bPtr,
                                         NodeEngine::QueryManagerPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 0, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
     ~PredicateTestingDataGeneratorSource() = default;
 
@@ -245,7 +246,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
                                      NodeEngine::BufferManagerPtr bPtr,
                                      NodeEngine::QueryManagerPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 0, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
     ~WindowTestingDataGeneratorSource() = default;
 
@@ -284,7 +285,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
                                        NodeEngine::BufferManagerPtr bPtr,
                                        NodeEngine::QueryManagerPtr dPtr,
                                        const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 0, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
     ~WindowTestingWindowGeneratorSource() = default;
 

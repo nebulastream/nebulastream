@@ -32,11 +32,19 @@ ZmqSource::ZmqSource(SchemaPtr schema,
                      const std::string& host,
                      uint16_t port,
                      OperatorId operatorId,
+                     OperatorId logicalSourceOperatorId,
                      uint64_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, successors), host(host),
-      port(port), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
+    : DataSource(schema,
+                 bufferManager,
+                 queryManager,
+                 operatorId,
+                 logicalSourceOperatorId,
+                 numSourceLocalBuffers,
+                 gatheringMode,
+                 successors),
+      host(host), port(port), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
     NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
 }
 

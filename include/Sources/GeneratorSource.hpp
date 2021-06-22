@@ -42,10 +42,18 @@ class GeneratorSource : public DataSource {
                     NodeEngine::QueryManagerPtr queryManager,
                     const uint64_t numbersOfBufferToProduce,
                     OperatorId operatorId,
+                    OperatorId logicalSourceOperatorId,
                     size_t numSourceLocalBuffers,
                     GatheringMode gatheringMode,
                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-        : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, successors) {
+        : DataSource(schema,
+                     bufferManager,
+                     queryManager,
+                     operatorId,
+                     logicalSourceOperatorId,
+                     numSourceLocalBuffers,
+                     gatheringMode,
+                     successors) {
         this->numBuffersToProcess = numbersOfBufferToProduce;
     }
     /**

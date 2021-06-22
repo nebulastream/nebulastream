@@ -106,6 +106,7 @@ typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr,
                                                         const std::string&,
                                                         uint64_t,
                                                         uint64_t,
+                                                        uint64_t,
                                                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>);
 
 typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr,
@@ -159,7 +160,7 @@ TEST_F(SourceTest, testBinarySource) {
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source =
-        createBinaryFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, 1, 12, {});
+        createBinaryFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, 1, 1, 12, {});
     source->open();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -206,6 +207,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceOnePassOverFile) {
                                                      0,
                                                      frequency,
                                                      false,
+                                                     1,
                                                      1,
                                                      12,
                                                      {});
@@ -274,6 +276,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceWithLoopOverFile) {
                                                      frequency,
                                                      false,
                                                      1,
+                                                     1,
                                                      12,
                                                      {});
     source->open();
@@ -319,6 +322,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceWatermark) {
                                                      numberOfBuffers,
                                                      frequency,
                                                      false,
+                                                     1,
                                                      1,
                                                      12,
                                                      {});
@@ -373,6 +377,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceIntTypes) {
                                                      numberOfBuffers,
                                                      frequency,
                                                      false,
+                                                     1,
                                                      1,
                                                      12,
                                                      {});
@@ -457,6 +462,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceFloatTypes) {
                                                      frequency,
                                                      false,
                                                      1,
+                                                     1,
                                                      12,
                                                      {});
     source->start();
@@ -512,6 +518,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceBooleanTypes) {
                                                      frequency,
                                                      false,
                                                      1,
+                                                     1,
                                                      12,
                                                      {});
     source->start();
@@ -559,7 +566,7 @@ TEST_F(SourceTest, DISABLED_testSenseSource) {
     ASSERT_GT(buffer_size, 0);
 
     const DataSourcePtr source =
-        (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS, 1, 12, {});
+        (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS, 1, 1, 12, {});
 
     //TODO: please add here to code to test the setup
     std::cout << "Success" << std::endl;
@@ -692,6 +699,7 @@ TEST_F(SourceTest, testLambdaSource) {
                                                     numBuffers,
                                                     0,
                                                     func,
+                                                    1,
                                                     1,
                                                     12,
                                                     DataSource::GatheringMode::FREQUENCY_MODE,
@@ -841,6 +849,7 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
                                                     1,
                                                     func,
                                                     1,
+                                                    1,
                                                     12,
                                                     DataSource::GatheringMode::INGESTION_RATE_MODE,
                                                     {});
@@ -978,6 +987,7 @@ TEST_F(SourceTest, DISABLED_testMonitoringSource) {
                                                      nodeEngine->getBufferManager(),
                                                      nodeEngine->getQueryManager(),
                                                      numBuffers,
+                                                     1,
                                                      1,
                                                      1,
                                                      12);

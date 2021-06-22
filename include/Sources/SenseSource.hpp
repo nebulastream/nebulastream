@@ -36,6 +36,7 @@ class SenseSource : public DataSource {
                          NodeEngine::QueryManagerPtr queryManager,
                          const std::string& udfs,
                          OperatorId operatorId,
+                         OperatorId logicalSourceOperatorId,
                          size_t numSourceLocalBuffers,
                          std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 

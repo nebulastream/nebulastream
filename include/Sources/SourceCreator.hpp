@@ -39,6 +39,7 @@ namespace NES {
  * @param bufferManager
  * @param queryManager
  * @param operatorId
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return a const data source pointer
  */
 const DataSourcePtr
@@ -46,6 +47,7 @@ createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema,
                                               NodeEngine::BufferManagerPtr bufferManager,
                                               NodeEngine::QueryManagerPtr queryManager,
                                               OperatorId operatorId,
+                                              OperatorId logicalSourceOperatorId,
                                               size_t numSourceLocalBuffers,
                                               std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
@@ -55,6 +57,7 @@ createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema,
  * @param bufferManager
  * @param queryManager
  * @param operatorId
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @param number of buffers that should be produced
  * @param frequency when to gather the next buffer
  * @return a const data source pointer
@@ -66,6 +69,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema,
                                                uint64_t numbersOfBufferToProduce,
                                                uint64_t frequency,
                                                OperatorId operatorId,
+                                               OperatorId logicalSourceOperatorId,
                                                size_t numSourceLocalBuffers,
                                                std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
@@ -74,12 +78,14 @@ createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema,
  * @param bufferManager
  * @param queryManager
  * @param operatorId
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return a const data source pointer
  */
 const DataSourcePtr
 createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
                                              NodeEngine::QueryManagerPtr queryManager,
                                              OperatorId operatorId,
+                                             OperatorId logicalSourceOperatorId,
                                              size_t numSourceLocalBuffers,
                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
@@ -92,6 +98,7 @@ createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::BufferManagerPtr buffer
  * @param frequency when to gather the next buffer
  * @param generationFunction
  * @param operatorId
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return a const data source pointer */
 const DataSourcePtr createLambdaSource(
     SchemaPtr schema,
@@ -101,6 +108,7 @@ const DataSourcePtr createLambdaSource(
     uint64_t gatheringValue,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     OperatorId operatorId,
+    OperatorId logicalSourceOperatorId,
     size_t numSourceLocalBuffers,
     DataSource::GatheringMode gatheringMode,
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
@@ -113,6 +121,7 @@ const DataSourcePtr createLambdaSource(
  * @param host
  * @param port
  * @param operatorId
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return a const data source pointer
  */
 const DataSourcePtr createZmqSource(SchemaPtr schema,
@@ -121,6 +130,7 @@ const DataSourcePtr createZmqSource(SchemaPtr schema,
                                     const std::string& host,
                                     uint16_t port,
                                     OperatorId operatorId,
+                                    OperatorId logicalSourceOperatorId,
                                     size_t numSourceLocalBuffers,
                                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
@@ -131,6 +141,7 @@ const DataSourcePtr createZmqSource(SchemaPtr schema,
  * @param queryManager
  * @param path to the file to reading
  * @param operatorId
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return a const data source pointer
  */
 const DataSourcePtr createBinaryFileSource(SchemaPtr schema,
@@ -138,6 +149,7 @@ const DataSourcePtr createBinaryFileSource(SchemaPtr schema,
                                            NodeEngine::QueryManagerPtr queryManager,
                                            const std::string& pathToFile,
                                            OperatorId operatorId,
+                                           OperatorId logicalSourceOperatorId,
                                            size_t numSourceLocalBuffers,
                                            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
@@ -148,6 +160,7 @@ const DataSourcePtr createBinaryFileSource(SchemaPtr schema,
  * @param queryManager
  * @param udfs of the file
  * @param operatorId
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return a const data source pointer
  */
 const DataSourcePtr createSenseSource(SchemaPtr schema,
@@ -155,6 +168,7 @@ const DataSourcePtr createSenseSource(SchemaPtr schema,
                                       NodeEngine::QueryManagerPtr queryManager,
                                       const std::string& udfs,
                                       OperatorId operatorId,
+                                      OperatorId logicalSourceOperatorId,
                                       size_t numSourceLocalBuffers,
                                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
@@ -170,6 +184,7 @@ const DataSourcePtr createSenseSource(SchemaPtr schema,
  * @param frequency
  * @param skipHeader
  * @param operatorId
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return a const data source pointer
  */
 const DataSourcePtr createCSVFileSource(SchemaPtr schema,
@@ -182,6 +197,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema,
                                         uint64_t frequency,
                                         bool skipHeader,
                                         OperatorId operatorId,
+                                        OperatorId logicalSourceOperatorId,
                                         size_t numSourceLocalBuffers,
                                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
@@ -195,6 +211,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema,
  * @param numBuffersToProcess
  * @param frequency
  * @param operatorId
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return
  */
 const DataSourcePtr createMemorySource(SchemaPtr schema,
@@ -205,6 +222,7 @@ const DataSourcePtr createMemorySource(SchemaPtr schema,
                                        uint64_t numBuffersToProcess,
                                        uint64_t gatheringValue,
                                        OperatorId operatorId,
+                                       OperatorId logicalSourceOperatorId,
                                        size_t numSourceLocalBuffers,
                                        DataSource::GatheringMode gatheringMode,
                                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
@@ -216,6 +234,7 @@ const DataSourcePtr createMemorySource(SchemaPtr schema,
  * @param queryManager
  * @param networkManager
  * @param nesPartition
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return a const data source pointer
  */
 const DataSourcePtr createNetworkSource(SchemaPtr schema,
@@ -223,6 +242,7 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema,
                                         NodeEngine::QueryManagerPtr queryManager,
                                         Network::NetworkManagerPtr networkManager,
                                         Network::NesPartition nesPartition,
+                                        OperatorId logicalSourceOperatorId,
                                         size_t numSourceLocalBuffers,
                                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
@@ -236,6 +256,7 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema,
  * @param autoCommit bool indicating if offset has to be committed automatically or not
  * @param kafkaConsumerTimeout  kafka consumer timeout
  * @param operatorId: operator id
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return
  */
 const DataSourcePtr createKafkaSource(SchemaPtr schema,
@@ -247,6 +268,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       bool autoCommit,
                                       uint64_t kafkaConsumerTimeout,
                                       OperatorId operatorId,
+                                      OperatorId logicalSourceOperatorId,
                                       size_t numSourceLocalBuffers);
 #endif
 
@@ -259,6 +281,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
  * @param nodeId the node id of the desired node
  * @param user name if connecting with a server with authentication
  * @param password for authentication if needed
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return a const data source pointer
  */
 const DataSourcePtr createOPCSource(SchemaPtr schema,
@@ -269,6 +292,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                     std::string user,
                                     std::string password,
                                     OperatorId operatorId,
+                                    OperatorId logicalSourceOperatorId,
                                     size_t numSourceLocalBuffers,
                                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 #endif
@@ -282,6 +306,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
  * @param clientId the client id of the data, we want to obtain
  * @param user name to connect to the server
  * @param topic the topic needed for a subscription
+ * @param logicalSourceOperatorId operatorId of operator in logical query plan
  * @return a const data source pointer
  */
 const DataSourcePtr createMQTTSource(SchemaPtr schema,
@@ -292,6 +317,7 @@ const DataSourcePtr createMQTTSource(SchemaPtr schema,
                                      std::string user,
                                      std::string topic,
                                      OperatorId operatorId,
+                                     OperatorId logicalSourceOperatorId,
                                      size_t numSourceLocalBuffers,
                                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 #endif

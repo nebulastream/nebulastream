@@ -32,10 +32,12 @@ class ConvertLogicalToPhysicalSource {
     /**
      * @brief This method produces corresponding physical source for an input logical source descriptor
      * @param operator id: the operator id
+     * @param logicalSourceOperatorId: the operator ID of the logical operator this source corresponds to
      * @param sourceDescriptor : the logical source descriptor
      * @return Data source pointer for the physical source
      */
     static DataSourcePtr createDataSource(OperatorId operatorId,
+                                          OperatorId logicalSourceOperatorId,
                                           SourceDescriptorPtr sourceDescriptor,
                                           NodeEngine::NodeEnginePtr nodeEngine,
                                           size_t numSourceLocalBuffers,

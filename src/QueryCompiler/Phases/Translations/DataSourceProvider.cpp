@@ -28,10 +28,12 @@ DataSourceProviderPtr QueryCompilation::DataSourceProvider::create(QueryCompiler
 }
 
 DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
+                                        OperatorId logicalSourceId,
                                         SourceDescriptorPtr sourceDescriptor,
                                         NodeEngine::NodeEnginePtr nodeEngine,
                                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
     return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
+                                                            logicalSourceId,
                                                             sourceDescriptor,
                                                             nodeEngine,
                                                             compilerOptions->getNumSourceLocalBuffers(),

@@ -116,6 +116,7 @@ class WindowSource : public NES::DefaultSource {
                         numbersOfBufferToProduce,
                         frequency,
                         1,
+                        0,
                         12,
                         successors),
           varyWatermark(varyWatermark), decreaseTime(decreaseTime), timestamp(timestamp) {}
@@ -316,6 +317,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 id,
                                                                  numSourceLocalBuffers,
                                                                  successors);
         });
@@ -380,6 +382,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
+                                                                 id,
                                                                  id,
                                                                  numSourceLocalBuffers,
                                                                  successors);
@@ -446,6 +449,7 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
+                                                                 id,
                                                                  id,
                                                                  numSourceLocalBuffers,
                                                                  successors);

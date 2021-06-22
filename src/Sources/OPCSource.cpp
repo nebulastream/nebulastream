@@ -47,10 +47,11 @@ OPCSource::OPCSource(SchemaPtr schema,
                      std::string password,
                      std::string user,
                      OperatorId operatorId,
+                     OperatorId logicalSourceOperatorId,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors),
+    : DataSource(schema, bufferManager, queryManager, operatorId, logicalSourceOperatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors),
       url(url), nodeId(nodeId), retval(UA_STATUSCODE_GOOD), client(UA_Client_new()), connected(false), user(user),
       password(password) {
 

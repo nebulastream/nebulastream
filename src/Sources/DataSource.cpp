@@ -51,12 +51,13 @@ DataSource::DataSource(const SchemaPtr pSchema,
                        NodeEngine::BufferManagerPtr bufferManager,
                        NodeEngine::QueryManagerPtr queryManager,
                        OperatorId operatorId,
+                       OperatorId logicalSourceOperatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : queryManager(queryManager), globalBufferManager(bufferManager), executableSuccessors(executableSuccessors),
-      operatorId(operatorId), schema(pSchema), generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX),
-      numSourceLocalBuffers(numSourceLocalBuffers), gatheringInterval(0),
+      operatorId(operatorId), logicalSourceOperatorId(logicalSourceOperatorId), schema(pSchema), generatedTuples(0),
+      generatedBuffers(0), numBuffersToProcess(UINT64_MAX), numSourceLocalBuffers(numSourceLocalBuffers), gatheringInterval(0),
       gatheringMode(gatheringMode), NodeEngine::Reconfigurable(), wasGracefullyStopped(false), running(false), thread(nullptr),
       DataEmitter() {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
@@ -81,6 +82,8 @@ DataSource::~DataSource() {
     stop(false);
     NES_DEBUG("DataSource " << operatorId << ": Destroy Data Source.");
 }
+
+OperatorId DataSource::getLogicalSourceOperatorId() const { return logicalSourceOperatorId; }
 
 bool DataSource::start() {
     NES_DEBUG("DataSource " << operatorId << ": start source " << this);
@@ -352,17 +355,6 @@ void DataSource::runningRoutineWithFrequency() {
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
-// debugging
-uint64_t DataSource::getNumberOfGeneratedTuples() { return generatedTuples; };
-uint64_t DataSource::getNumberOfGeneratedBuffers() { return generatedBuffers; };
-
-std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
-
-uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess; }
-
-std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
-uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
-
 void DataSource::reconfigure(NodeEngine::ReconfigurationMessage& message, NodeEngine::WorkerContext& context) {
     Reconfigurable::reconfigure(message, context);
 }
@@ -379,5 +371,16 @@ void DataSource::postReconfigurationCallback(NodeEngine::ReconfigurationMessage&
         }
     }
 }
+
+// debugging
+uint64_t DataSource::getNumberOfGeneratedTuples() { return generatedTuples; };
+uint64_t DataSource::getNumberOfGeneratedBuffers() { return generatedBuffers; };
+
+std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
+
+uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess; }
+
+std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
+uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
 
 }// namespace NES

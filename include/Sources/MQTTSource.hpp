@@ -46,6 +46,7 @@ class MQTTSource : public DataSource {
      * @param user name to connect to the mqtt broker
      * @param topic to listen to, to obtain the desired data
      * @param operatorId
+     * @param logicalSourceOperatorId operatorId of operator in logical query plan
      */
     explicit MQTTSource(SchemaPtr schema,
                         NodeEngine::BufferManagerPtr bufferManager,
@@ -55,6 +56,7 @@ class MQTTSource : public DataSource {
                         const std::string user,
                         const std::string topic,
                         OperatorId operatorId,
+                        OperatorId logicalSourceOperatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors);

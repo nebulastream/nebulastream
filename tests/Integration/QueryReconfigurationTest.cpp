@@ -451,20 +451,23 @@ TEST_F(QueryReconfigurationTest, testReconfigurationAtSourceNode) {
     while (wrk1->getNodeEngine()->getQueryManager()->getQepStatus(tqsp3->getQuerySubPlanId())
            != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
         NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 3 to be in running mode.");
-        sleep(10);
+        sleep(1);
     }
     NES_DEBUG("QueryReconfigurationTest: QEP 3 is running.");
 
     // wait for more buffers to be written to file before comparison
     sleep(5);
 
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1, 5000),
-                                                "testReconfigurationAtSourceNode_1.csv",
-                                                true,
-                                                ",",
-                                                120));
-    EXPECT_TRUE(
-        TestUtils::checkIfCSVHasContent(noMissingValuesForIntRange(1, 5000), "testReconfigurationAtSourceNode_2.csv", true));
+    EXPECT_TRUE(TestUtils::validateCSVContent(noMissingValuesForIntRange(1, 5000),
+                                              "no missing integers ID column",
+                                              "testReconfigurationAtSourceNode_1.csv",
+                                              true,
+                                              ",",
+                                              120));
+    EXPECT_TRUE(TestUtils::validateCSVContent(noMissingValuesForIntRange(1, 5000),
+                                              "no missing integers ID column",
+                                              "testReconfigurationAtSourceNode_2.csv",
+                                              true));
 
     stopWorker(wrk1, 1);
     stopWorker(wrk2, 2);
@@ -647,11 +650,12 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     wrk2->getNodeEngine()->startQuery(tqsp2->getQueryId());
     wrk1->getNodeEngine()->startQuery(tqsp1->getQueryId());
 
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
-                                                "testReconfigurationNewBranchOnLevel3_1.csv",
-                                                true,
-                                                ",",
-                                                120));
+    EXPECT_TRUE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
+                                              "column contains required values",
+                                              "testReconfigurationNewBranchOnLevel3_1.csv",
+                                              true,
+                                              ",",
+                                              120));
 
     // QEP 5 is copy of QEP1 with sink point to QEP 7, QEP 5 will replace QEP 1
 
@@ -747,15 +751,17 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     wrk1->getNodeEngine()->startQueryReconfiguration(reconfigurationPlanWrk1);
 
     // New sink must not contain data from source 2, give 2 minutes to and then say correct
-    EXPECT_FALSE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"2"}),
-                                                 "testReconfigurationNewBranchOnLevel3_2.csv",
-                                                 true,
-                                                 ",",
-                                                 120));
+    EXPECT_FALSE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"2"}),
+                                               "column does not contain {2}",
+                                               "testReconfigurationNewBranchOnLevel3_2.csv",
+                                               true,
+                                               ",",
+                                               120));
 
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1"}),
-                                                "testReconfigurationNewBranchOnLevel3_2.csv",
-                                                true));
+    EXPECT_TRUE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1"}),
+                                              "column contains value {1}",
+                                              "testReconfigurationNewBranchOnLevel3_2.csv",
+                                              true));
 
     auto reconfigurationPlanWrk2 = QueryReconfigurationPlan::create(std::vector<QuerySubPlanId>{},
                                                                     std::vector<QuerySubPlanId>{},
@@ -763,11 +769,12 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     reconfigurationPlanWrk2->setQueryId(1);
     wrk2->getNodeEngine()->startQueryReconfiguration(reconfigurationPlanWrk2);
 
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
-                                                "testReconfigurationNewBranchOnLevel3_2.csv",
-                                                true,
-                                                ",",
-                                                120));
+    EXPECT_TRUE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
+                                              "column contains value {1, 2}",
+                                              "testReconfigurationNewBranchOnLevel3_2.csv",
+                                              true,
+                                              ",",
+                                              120));
     for (auto wrk : std::vector<NesWorkerPtr>{wrk1, wrk2, wrk3, wrk4}) {
         wrk->getNodeEngine()->stopQuery(1, true);
         wrk->getNodeEngine()->undeployQuery(1);
@@ -926,10 +933,11 @@ TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationReplacementInLevel3
     wrk2->getNodeEngine()->startQuery(tqsp4->getQueryId());
     wrk1->getNodeEngine()->startQuery(tqsp4->getQueryId());
 
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
-                                                fileSink1Name,
-                                                true,
-                                                ","));
+    EXPECT_TRUE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
+                                              "column contains value {1, 2}",
+                                              fileSink1Name,
+                                              true,
+                                              ","));
 
     const char* fileSink2Name = "testReconfigurationReplacementInLevel3_2.csv";
 
@@ -988,24 +996,27 @@ TEST_F(QueryReconfigurationTest, DISABLED_testReconfigurationReplacementInLevel3
         sleep(5);
     }
     // FileSink will only receive data from source 1, wait for `timeout` seconds to give confidence that no values received from `car2`
-    EXPECT_FALSE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"2"}),
-                                                 fileSink2Name,
-                                                 true,
-                                                 ","));
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1"}),
-                                                fileSink2Name,
-                                                true,
-                                                ",",
-                                                120));
+    EXPECT_FALSE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"2"}),
+                                               "column does not contain value {2}",
+                                               fileSink2Name,
+                                               true,
+                                               ","));
+    EXPECT_TRUE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1"}),
+                                              "column contains value {1}",
+                                              fileSink2Name,
+                                              true,
+                                              ",",
+                                              120));
 
     wrk2->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlan);
 
     // Since source 2 sends reconfiguration only now, we will data from both 1 and 2 must write data to
-    EXPECT_TRUE(TestUtils::checkIfCSVHasContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
-                                                fileSink2Name,
-                                                true,
-                                                ",",
-                                                120));
+    EXPECT_TRUE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
+                                              "column contains value {1, 2}",
+                                              fileSink2Name,
+                                              true,
+                                              ",",
+                                              120));
 
     stopWorker(wrk1, 1);
     stopWorker(wrk2, 2);

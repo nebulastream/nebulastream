@@ -20,28 +20,37 @@ namespace QueryCompilation {
 namespace PhysicalOperators {
 
 PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
+                                               OperatorId logicalSourceOperatorId,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                SourceDescriptorPtr sourceDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), sourceDescriptor(sourceDescriptor) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), logicalSourceOperatorId(logicalSourceOperatorId),
+      sourceDescriptor(sourceDescriptor) {}
 
 PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id,
+                                                   OperatorId logicalSourceOperatorId,
                                                    SchemaPtr inputSchema,
                                                    SchemaPtr outputSchema,
                                                    SourceDescriptorPtr sourceDescriptor) {
-    return std::make_shared<PhysicalSourceOperator>(id, inputSchema, outputSchema, sourceDescriptor);
+    return std::make_shared<PhysicalSourceOperator>(id, logicalSourceOperatorId, inputSchema, outputSchema, sourceDescriptor);
 }
 
-PhysicalOperatorPtr
-PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, sourceDescriptor);
+PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId logicalSourceOperatorId,
+                                                   SchemaPtr inputSchema,
+                                                   SchemaPtr outputSchema,
+                                                   SourceDescriptorPtr sourceDescriptor) {
+    return create(UtilityFunctions::getNextOperatorId(), logicalSourceOperatorId, inputSchema, outputSchema, sourceDescriptor);
 }
 
 SourceDescriptorPtr PhysicalSourceOperator::getSourceDescriptor() { return sourceDescriptor; }
 
+OperatorId PhysicalSourceOperator::getLogicalSourceOperatorId() { return logicalSourceOperatorId; }
+
 const std::string PhysicalSourceOperator::toString() const { return "PhysicalSourceOperator"; }
 
-OperatorNodePtr PhysicalSourceOperator::copy() { return create(id, inputSchema, outputSchema, sourceDescriptor); }
+OperatorNodePtr PhysicalSourceOperator::copy() {
+    return create(id, logicalSourceOperatorId, inputSchema, outputSchema, sourceDescriptor);
+}
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
