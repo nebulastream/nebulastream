@@ -16,7 +16,7 @@
 
 #include <Runtime/WorkerContext.hpp>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 WorkerContext::WorkerContext(uint32_t workerId) : workerId(workerId) {}
 

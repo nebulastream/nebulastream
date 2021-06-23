@@ -16,10 +16,10 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_
-#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 namespace NES {
 namespace QueryCompilation {
 /**

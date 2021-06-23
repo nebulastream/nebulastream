@@ -21,8 +21,8 @@
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <utility>
 
 namespace NES {

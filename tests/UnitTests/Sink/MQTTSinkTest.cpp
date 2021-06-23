@@ -76,7 +76,7 @@ class MQTTTSinkTest : public testing::Test {
     }
 
     static NES::Runtime::TupleBuffer createTupleBuffer(uint64_t bufferSize,
-                                                          const std::shared_ptr<Runtime::BufferManager>& buffMgr) {
+                                                       const std::shared_ptr<Runtime::BufferManager>& buffMgr) {
         auto buffer = buffMgr->getBufferBlocking();
         std::mt19937 rnd;
         std::uniform_int_distribution gen(1, 100);

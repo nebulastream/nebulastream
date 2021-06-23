@@ -19,7 +19,7 @@
 #include <Runtime/MemoryLayout/PhysicalField.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 /**
  * @brief Represents an array field at a specific position in a memory buffer.

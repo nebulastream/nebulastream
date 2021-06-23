@@ -16,7 +16,7 @@
 
 #include <Runtime/MemoryLayout/PhysicalField.hpp>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 PhysicalField::PhysicalField(uint64_t bufferOffset) : bufferOffset(bufferOffset){};
 
 PhysicalField::~PhysicalField() = default;

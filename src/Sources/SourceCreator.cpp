@@ -59,15 +59,15 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
                                            successors);
 }
 
-DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
-    const SchemaPtr& schema,
-    const Runtime::BufferManagerPtr& bufferManager,
-    const Runtime::QueryManagerPtr& queryManager,
-    uint64_t numbersOfBufferToProduce,
-    uint64_t frequency,
-    OperatorId operatorId,
-    size_t numSourceLocalBuffers,
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+DataSourcePtr
+createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
+                                               const Runtime::BufferManagerPtr& bufferManager,
+                                               const Runtime::QueryManagerPtr& queryManager,
+                                               uint64_t numbersOfBufferToProduce,
+                                               uint64_t frequency,
+                                               OperatorId operatorId,
+                                               size_t numSourceLocalBuffers,
+                                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<DefaultSource>(schema,
                                            bufferManager,
                                            queryManager,
@@ -94,17 +94,17 @@ createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bu
                                            successors);
 }
 
-DataSourcePtr createLambdaSource(
-    const SchemaPtr& schema,
-    const Runtime::BufferManagerPtr& bufferManager,
-    const Runtime::QueryManagerPtr& queryManager,
-    uint64_t numbersOfBufferToProduce,
-    uint64_t gatheringValue,
-    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    OperatorId operatorId,
-    size_t numSourceLocalBuffers,
-    DataSource::GatheringMode gatheringMode,
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+DataSourcePtr
+createLambdaSource(const SchemaPtr& schema,
+                   const Runtime::BufferManagerPtr& bufferManager,
+                   const Runtime::QueryManagerPtr& queryManager,
+                   uint64_t numbersOfBufferToProduce,
+                   uint64_t gatheringValue,
+                   std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   DataSource::GatheringMode gatheringMode,
+                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<LambdaSource>(schema,
                                           bufferManager,
                                           queryManager,

@@ -22,7 +22,7 @@
 #include <Util/Logger.hpp>
 #include <memory>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 /**
  * @brief This is the base class to represent a physical field.

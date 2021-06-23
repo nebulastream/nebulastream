@@ -24,7 +24,7 @@
 #include <cassert>
 #include <utility>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(std::move(schemaPtr)){};
 

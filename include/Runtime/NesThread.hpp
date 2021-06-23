@@ -29,7 +29,7 @@
 
 // this class was inspired by FASTER (Microsoft (c))
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 /// Gives every thread a unique, numeric thread ID, and recycles IDs when threads exit.
 /// do not use this class from components that do not belong to the worker execution engine!!!
 class NesThread {

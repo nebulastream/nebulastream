@@ -16,11 +16,11 @@
 
 #ifndef NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_
 #define NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>
 #include <variant>
 #include <vector>

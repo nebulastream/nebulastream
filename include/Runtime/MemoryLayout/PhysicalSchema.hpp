@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 /**
  * @brief the physical schema which maps a logical schema do physical fields, which can be accessed dynamically.

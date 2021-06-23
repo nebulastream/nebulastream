@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -22,6 +21,7 @@
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <filesystem>
 #include <iostream>

@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 class QueryStatistics {
   public:

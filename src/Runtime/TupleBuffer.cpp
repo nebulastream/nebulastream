@@ -18,7 +18,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent) {
     auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler) {

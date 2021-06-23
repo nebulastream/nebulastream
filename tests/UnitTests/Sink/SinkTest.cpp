@@ -36,7 +36,7 @@ using namespace std;
  * @todo add tests for processing multiple buffers in a row
  */
 namespace NES {
-using Runtime::TupleBuffer ;
+using Runtime::TupleBuffer;
 
 class SinkTest : public testing::Test {
   public:

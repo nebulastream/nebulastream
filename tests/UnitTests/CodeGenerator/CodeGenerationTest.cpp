@@ -18,13 +18,6 @@
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ClassDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/FunctionDefinition.hpp>
@@ -43,6 +36,13 @@
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
@@ -517,9 +517,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto returnStatement = ReturnStatement::create(SharedPointerGen::makeShared(executablePipelineDeclaration->getType()));
     createFunction->addStatement(returnStatement);
     ;
-    createFunction->returns(
-        SharedPointerGen::createSharedPtrType(NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType(
-            "Runtime::Execution::ExecutablePipelineStage")));
+    createFunction->returns(SharedPointerGen::createSharedPtrType(
+        NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("Runtime::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileB.addDeclaration(pipelineNamespace->getDeclaration()).build();
 
@@ -533,8 +532,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(recordSchema, true);
     auto bindedRowLayout = layout->bind(inputBuffer);
 
-    auto recordIndexFieldsInput =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto recordIndexFieldsInput = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
 
     for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         recordIndexFieldsInput[recordIndex] = recordIndex;

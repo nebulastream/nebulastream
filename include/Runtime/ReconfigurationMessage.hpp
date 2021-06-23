@@ -17,16 +17,16 @@
 #ifndef NES_INCLUDE_NODEENGINE_ReconfigurationMessage_HPP_
 #define NES_INCLUDE_NODEENGINE_ReconfigurationMessage_HPP_
 
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationType.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <any>
 #include <atomic>
 #include <memory>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 class Reconfigurable;
 using ReconfigurablePtr = std::shared_ptr<Reconfigurable>;

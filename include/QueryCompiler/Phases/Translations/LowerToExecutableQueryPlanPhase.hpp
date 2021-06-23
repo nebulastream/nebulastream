@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_
 
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <vector>
@@ -31,7 +31,7 @@ class LowerToExecutableQueryPlanPhase {
     static LowerToExecutableQueryPlanPhasePtr create(const DataSinkProviderPtr& sinkProvider,
                                                      const DataSourceProviderPtr& sourceProvider);
     Runtime::Execution::ExecutableQueryPlanPtr apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
-                                                        const Runtime::NodeEnginePtr& nodeEngine);
+                                                     const Runtime::NodeEnginePtr& nodeEngine);
 
   private:
     DataSinkProviderPtr sinkProvider;

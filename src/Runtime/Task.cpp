@@ -24,7 +24,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 Task::Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer buffer)
     : pipeline(std::move(pipeline)), buf(std::move(buffer)) {

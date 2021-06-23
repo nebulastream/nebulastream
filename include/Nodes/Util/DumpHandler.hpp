@@ -17,9 +17,9 @@
 #ifndef NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
 #define NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
 
-#include <Runtime/NodeEngine.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <memory>
 namespace NES {
 

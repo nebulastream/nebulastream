@@ -20,7 +20,7 @@
 #include <Sources/GeneratorSource.hpp>
 #include <chrono>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 class TupleBuffer;
 }
 

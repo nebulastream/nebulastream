@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 #define NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
 #include <grpcpp/grpcpp.h>

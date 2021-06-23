@@ -17,12 +17,12 @@
 #ifndef INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLAN_H_
 #define INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLAN_H_
 
+#include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
-#include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwaredRefs.hpp>
 #include <atomic>

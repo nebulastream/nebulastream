@@ -295,8 +295,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoSingleton) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
-TupleBuffer getBufferTimeout(const std::shared_ptr<Runtime::BufferManager>& bufferManager,
-                             std::chrono::milliseconds&& timeout) {
+TupleBuffer getBufferTimeout(const std::shared_ptr<Runtime::BufferManager>& bufferManager, std::chrono::milliseconds&& timeout) {
     std::optional<TupleBuffer> opt;
     while (!(opt = bufferManager->getBufferTimeout(timeout)).has_value()) {
         // nop

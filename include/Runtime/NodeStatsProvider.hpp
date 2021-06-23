@@ -20,7 +20,7 @@
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 /**
  * @brief: This class gathers the properties of a node.

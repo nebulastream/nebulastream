@@ -29,11 +29,11 @@
 #include <sstream>
 #include <string>
 
+#include <Operators/OperatorId.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Operators/OperatorId.hpp>
 #include <Util/Logger.hpp>
 #include <open62541/types.h>
 #include <utility>

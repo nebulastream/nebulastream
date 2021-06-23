@@ -16,7 +16,7 @@
 
 #include <Runtime/QueryStatistics.hpp>
 #include <sstream>
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 uint64_t QueryStatistics::getProcessedTasks() const { return processedTasks.load(); }
 

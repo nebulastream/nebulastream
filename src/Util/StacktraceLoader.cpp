@@ -20,7 +20,7 @@
 
 #define CALLSTACK_MAX_SIZE 32
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 /**
  * @brief This methods collects the call stacks and prints is
  */

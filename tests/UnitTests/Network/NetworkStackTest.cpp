@@ -34,13 +34,13 @@
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <gtest/gtest.h>
 #include <random>
@@ -781,16 +781,15 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         atomic<int> eosCnt = 0;
         atomic<int>& bufferCnt;
 
-        explicit MockedNodeEngine(
-            PhysicalStreamConfigPtr streamConf,
-            NES::Runtime::BufferManagerPtr&& bufferManager,
-            NES::Runtime::QueryManagerPtr&& queryManager,
-            std::function<Network::NetworkManagerPtr(NES::Runtime::NodeEnginePtr)>&& networkManagerCreator,
-            Network::PartitionManagerPtr&& partitionManager,
-            QueryCompilation::QueryCompilerPtr&& queryCompiler,
-            std::promise<bool>& completed,
-            NesPartition nesPartition,
-            std::atomic<int>& bufferCnt)
+        explicit MockedNodeEngine(PhysicalStreamConfigPtr streamConf,
+                                  NES::Runtime::BufferManagerPtr&& bufferManager,
+                                  NES::Runtime::QueryManagerPtr&& queryManager,
+                                  std::function<Network::NetworkManagerPtr(NES::Runtime::NodeEnginePtr)>&& networkManagerCreator,
+                                  Network::PartitionManagerPtr&& partitionManager,
+                                  QueryCompilation::QueryCompilerPtr&& queryCompiler,
+                                  std::promise<bool>& completed,
+                                  NesPartition nesPartition,
+                                  std::atomic<int>& bufferCnt)
             : NodeEngine(std::move(streamConf),
                          std::move(bufferManager),
                          std::move(queryManager),

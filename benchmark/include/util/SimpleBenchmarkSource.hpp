@@ -172,9 +172,9 @@ class SimpleBenchmarkSource : public DataSource {
                 if (physicalType->isBasicType()) {
                     auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
                     if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
-                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<char, false>::create(
-                            fieldIndex,
-                            bindedRowLayout)[recordIndex] = value;
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<char, false>::create(fieldIndex,
+                                                                                                 bindedRowLayout)[recordIndex] =
+                            value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, false>::create(
                             fieldIndex,
@@ -192,9 +192,9 @@ class SimpleBenchmarkSource : public DataSource {
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
-                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, false>::create(
-                            fieldIndex,
-                            bindedRowLayout)[recordIndex] = value;
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, false>::create(fieldIndex,
+                                                                                                   bindedRowLayout)[recordIndex] =
+                            value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, false>::create(
                             fieldIndex,
@@ -208,13 +208,13 @@ class SimpleBenchmarkSource : public DataSource {
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
-                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, false>::create(
-                            fieldIndex,
-                            bindedRowLayout)[recordIndex] = value;
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, false>::create(fieldIndex,
+                                                                                                  bindedRowLayout)[recordIndex] =
+                            value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
-                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, false>::create(
-                            fieldIndex,
-                            bindedRowLayout)[recordIndex] = value;
+                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, false>::create(fieldIndex,
+                                                                                                   bindedRowLayout)[recordIndex] =
+                            value;
                     } else {
                         NES_DEBUG("This data source only generates data for numeric fields");
                     }

@@ -34,7 +34,7 @@ namespace NES::Network {
 class OutputChannel;
 }
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 /**
  * @brief The TupleBuffer allows Runtime components to access memory to store records in a reference-counted and
  * thread-safe manner.

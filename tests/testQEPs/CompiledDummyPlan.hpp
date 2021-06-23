@@ -24,8 +24,8 @@
 #ifndef TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
 #define TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
 #include <API/InputQuery.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <memory>
 

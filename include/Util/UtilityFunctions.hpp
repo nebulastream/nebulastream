@@ -17,9 +17,9 @@
 #ifndef UTILITY_FUNCTIONS_HPP
 #define UTILITY_FUNCTIONS_HPP
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <cpprest/json.h>
 #include <map>
 #include <string>
