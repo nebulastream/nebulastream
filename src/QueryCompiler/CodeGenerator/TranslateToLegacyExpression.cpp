@@ -14,13 +14,20 @@
     limitations under the License.
 */
 
+#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -118,6 +125,41 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         auto absExpressionNode = expression->as<AbsExpressionNode>();
         auto legacyChild = transformExpression(absExpressionNode->child());
         return UnaryPredicate(UnaryOperatorType::ABSOLUTE_VALUE_OF_OP, legacyChild).copy();
+    } else if (expression->instanceOf<CeilExpressionNode>()) {
+        // Translate CEIL expression node.
+        auto ceilExpressionNode = expression->as<CeilExpressionNode>();
+        auto legacyChild = transformExpression(ceilExpressionNode->child());
+        return UnaryPredicate(UnaryOperatorType::CEIL_OP, legacyChild).copy();
+    } else if (expression->instanceOf<ExpExpressionNode>()) {
+        // Translate EXP expression node.
+        auto expExpressionNode = expression->as<ExpExpressionNode>();
+        auto legacyChild = transformExpression(expExpressionNode->child());
+        return UnaryPredicate(UnaryOperatorType::EXP_OP, legacyChild).copy();
+    } else if (expression->instanceOf<FloorExpressionNode>()) {
+        // Translate FLOOR expression node.
+        auto floorExpressionNode = expression->as<FloorExpressionNode>();
+        auto legacyChild = transformExpression(floorExpressionNode->child());
+        return UnaryPredicate(UnaryOperatorType::FLOOR_OP, legacyChild).copy();
+    } else if (expression->instanceOf<Log10ExpressionNode>()) {
+        // Translate LOG10 expression node.
+        auto log10ExpressionNode = expression->as<Log10ExpressionNode>();
+        auto legacyChild = transformExpression(log10ExpressionNode->child());
+        return UnaryPredicate(UnaryOperatorType::LOG10_OP, legacyChild).copy();
+    } else if (expression->instanceOf<LogExpressionNode>()) {
+        // Translate LOG expression node.
+        auto logExpressionNode = expression->as<LogExpressionNode>();
+        auto legacyChild = transformExpression(logExpressionNode->child());
+        return UnaryPredicate(UnaryOperatorType::LOG_OP, legacyChild).copy();
+    } else if (expression->instanceOf<RoundExpressionNode>()) {
+        // Translate ROUND expression node.
+        auto roundExpressionNode = expression->as<RoundExpressionNode>();
+        auto legacyChild = transformExpression(roundExpressionNode->child());
+        return UnaryPredicate(UnaryOperatorType::ROUND_OP, legacyChild).copy();
+    } else if (expression->instanceOf<SqrtExpressionNode>()) {
+        // Translate SQRT expression node.
+        auto sqrtExpressionNode = expression->as<SqrtExpressionNode>();
+        auto legacyChild = transformExpression(sqrtExpressionNode->child());
+        return UnaryPredicate(UnaryOperatorType::SQRT_OP, legacyChild).copy();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
                     << expression->toString());

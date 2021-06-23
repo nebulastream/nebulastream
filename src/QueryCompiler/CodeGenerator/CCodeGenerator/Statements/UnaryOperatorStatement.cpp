@@ -23,21 +23,28 @@
 
 namespace NES::QueryCompilation {
 std::string toString(const UnaryOperatorType& type) {
-    constexpr std::array<char const*, 10> names{"ABS_VALUE_OF_OP",
+    constexpr std::array<char const*, 17> names{"ABS_VALUE_OF_OP",
                                                 "ADDRESS_OF_OP",
+                                                "BITWISE_COMPLEMENT_OP",
+                                                "CEIL_OP",
                                                 "DEREFERENCE_POINTER_OP",
+                                                "EXP_OP",
+                                                "FLOOR_OP",
+                                                "LOG_OP",
+                                                "LOG10_OP",
+                                                "LOGICAL_NOT_OP",
                                                 "PREFIX_INCREMENT_OP",
                                                 "PREFIX_DECREMENT_OP",
                                                 "POSTFIX_INCREMENT_OP",
                                                 "POSTFIX_DECREMENT_OP",
-                                                "BITWISE_COMPLEMENT_OP",
-                                                "LOGICAL_NOT_OP",
-                                                "SIZE_OF_TYPE_OP"};
+                                                "ROUND_OP",
+                                                "SIZE_OF_TYPE_OP",
+                                                "SQRT_OP"};
     return names[type];
 }
 
 CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type) {
-    const char* const names[] = {"abs", "&", "*", "++", "--", "++", "--", "~", "!", "sizeof"};
+    const char* const names[] = {"abs", "&", "~", "ceil", "*", "exp", "floor", "log", "log10", "!", "++", "--", "++", "--", "round", "sizeof", "sqrt"};
     return std::make_shared<CodeExpression>(names[type]);
 }
 
@@ -54,7 +61,7 @@ CodeExpressionPtr UnaryOperatorStatement::getCode() const {
     if (POSTFIX_INCREMENT_OP == op_ || POSTFIX_DECREMENT_OP == op_) {
         /* postfix operators */
         code = combine(expr_->getCode(), toCodeExpression(op_));
-    } else if (SIZE_OF_TYPE_OP == op_ || ABSOLUTE_VALUE_OF_OP == op_) {
+    } else if (ABSOLUTE_VALUE_OF_OP == op_ || ROUND_OP == op_ || CEIL_OP == op_ || EXP_OP == op_ || FLOOR_OP == op_ || LOG_OP == op_ || LOG10_OP == op_ || SIZE_OF_TYPE_OP == op_ || SQRT_OP == op_) {
         code = combine(toCodeExpression(op_), std::make_shared<CodeExpression>("("));
         code = combine(code, expr_->getCode());
         code = combine(code, std::make_shared<CodeExpression>(")"));

@@ -37,6 +37,13 @@ ExpressionNodePtr operator%(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr ABS(const ExpressionNodePtr& exp);
+ExpressionNodePtr SQRT(const ExpressionNodePtr& exp);
+ExpressionNodePtr EXP(const ExpressionNodePtr& exp);
+ExpressionNodePtr LOG(const ExpressionNodePtr& exp);
+ExpressionNodePtr LOG10(const ExpressionNodePtr& exp);
+ExpressionNodePtr ROUND(const ExpressionNodePtr& exp);
+ExpressionNodePtr CEIL(const ExpressionNodePtr& exp);
+ExpressionNodePtr FLOOR(const ExpressionNodePtr& exp);
 ExpressionNodePtr operator++(ExpressionNodePtr exp);
 ExpressionNodePtr operator--(ExpressionNodePtr exp);
 ExpressionNodePtr operator++(ExpressionNodePtr exp, int value);
@@ -79,6 +86,13 @@ ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionItem rightExp);
  * @brief Defines common unary arithmetical operations on an expression items.
  */
 ExpressionNodePtr ABS(ExpressionItem exp);
+ExpressionNodePtr SQRT(ExpressionItem exp);
+ExpressionNodePtr EXP(ExpressionItem exp);
+ExpressionNodePtr LOG(ExpressionItem exp);
+ExpressionNodePtr LOG10(ExpressionItem exp);
+ExpressionNodePtr ROUND(ExpressionItem exp);
+ExpressionNodePtr CEIL(ExpressionItem exp);
+ExpressionNodePtr FLOOR(ExpressionItem exp);
 ExpressionNodePtr operator++(ExpressionItem exp);
 ExpressionNodePtr operator--(ExpressionItem exp);
 ExpressionNodePtr operator++(ExpressionItem exp, int);

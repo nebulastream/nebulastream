@@ -280,4 +280,17 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double 
     return stamp;// neither bound needs to be modified -> return shared pointer given as argument
 }
 
+DataTypePtr DataTypeFactory::createFloatFromInteger(DataTypePtr stamp) {
+    if (stamp->isInteger()) {
+        auto const intStamp = DataType::as<Integer>(stamp);
+        return DataTypeFactory::createFloat(intStamp->lowerBound, intStamp->upperBound);
+    } else if (stamp->isFloat()) {
+        NES_INFO("DataTypeFactory: A Float is passed to be converted to a Float. Return stamp passed as argument.");
+    } else {
+        // call with non-numeric is not allowed
+        NES_ERROR("DataTypeFactory: Can not modify bounds on a non-numeric data type.");
+    }
+    return stamp;
+}
+
 }// namespace NES

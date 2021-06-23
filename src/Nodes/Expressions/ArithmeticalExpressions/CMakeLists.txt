@@ -15,12 +15,19 @@
 add_source_nes(
         ArithmeticalUnaryExpressionNode.cpp
         ArithmeticalBinaryExpressionNode.cpp
-        AddExpressionNode.cpp
-        SubExpressionNode.cpp
-        MulExpressionNode.cpp
-        DivExpressionNode.cpp
-        ModExpressionNode.cpp
-        PowExpressionNode.cpp
         AbsExpressionNode.cpp
+        AddExpressionNode.cpp
+        CeilExpressionNode.cpp
+        DivExpressionNode.cpp
+        ExpExpressionNode.cpp
+        FloorExpressionNode.cpp
+        Log10ExpressionNode.cpp
+        LogExpressionNode.cpp
+        ModExpressionNode.cpp
+        MulExpressionNode.cpp
+        PowExpressionNode.cpp
+        RoundExpressionNode.cpp
+        SqrtExpressionNode.cpp
+        SubExpressionNode.cpp
 )
 
