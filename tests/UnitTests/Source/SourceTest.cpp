@@ -311,6 +311,22 @@ class LambdaSourceProxy : public LambdaSource {
     FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeIngestion);
 };
 
+class MonitoringSourceProxy : public MonitoringSource {
+  public:
+    MonitoringSourceProxy(const MonitoringPlanPtr& monitoringPlan,
+                          MetricCatalogPtr metricCatalog,
+                          NodeEngine::BufferManagerPtr bufferManager,
+                          NodeEngine::QueryManagerPtr queryManager,
+                          const uint64_t numbersOfBufferToProduce,
+                          uint64_t frequency,
+                          OperatorId operatorId,
+                          size_t numSourceLocalBuffers,
+                          std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+        : MonitoringSource(monitoringPlan, metricCatalog, bufferManager,
+                           queryManager, numbersOfBufferToProduce, frequency,
+                           operatorId, numSourceLocalBuffers, successors) {};
+};
+
 class SourceTest : public testing::Test {
   public:
     void SetUp() override {
@@ -1109,38 +1125,74 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     std::cout << "E2EBase: Test finished" << std::endl;
 }
 
-TEST_F(SourceTest, DISABLED_testMonitoringSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
-
-    uint64_t numBuffers = 2;
-
-    // create the MonitoringSource
+TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
+    // create metrics and plan for MonitoringSource
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
 
-    auto source = std::make_shared<MonitoringSource>(plan,
-                                                     MetricCatalog::NesMetrics(),
-                                                     nodeEngine->getBufferManager(),
-                                                     nodeEngine->getQueryManager(),
-                                                     numBuffers,
-                                                     1,
-                                                     1,
-                                                     12);
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(plan,
+                                               MetricCatalog::NesMetrics(),
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               numBuffers, 1, this->operatorId,
+                                               this->numSourceLocalBuffersDefault, {});
+    EXPECT_EQ(monitoringDataSource.getType(), SourceType::MONITORING_SOURCE);
+}
 
-    SchemaPtr schema = source->getSchema();
+TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
+    // create metrics and plan for MonitoringSource
+    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto plan = MonitoringPlan::create(metrics);
 
-    while (source->getNumberOfGeneratedBuffers() < numBuffers) {
-        auto optBuf = source->receiveData();
-        GroupedValues parsedValues = plan->fromBuffer(schema, optBuf.value());
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(plan,
+                                               MetricCatalog::NesMetrics(),
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               numBuffers, 1, this->operatorId,
+                                               this->numSourceLocalBuffersDefault, {});
+    // open starts the bufferManager, otherwise receiveData will fail
+    // TODO: issue to open automatically before receiveData in DefaultSource
+    monitoringDataSource.open();
+    // TODO: monitoring source could follow fillBuffer instead of metricGroup->getSample
+    auto buf = monitoringDataSource.receiveData();
+    EXPECT_TRUE(buf.has_value());
+    EXPECT_EQ(buf->getNumberOfTuples(), 1);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1);
+    GroupedValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), buf.value());
+    EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
+    EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
+    EXPECT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
+}
 
+TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
+    // create metrics and plan for MonitoringSource
+    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto plan = MonitoringPlan::create(metrics);
+
+    uint64_t numBuffers = 2;
+    MonitoringSourceProxy monitoringDataSource(plan,
+                                               MetricCatalog::NesMetrics(),
+                                               this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                               numBuffers, 1, this->operatorId,
+                                               this->numSourceLocalBuffersDefault, {});
+    // open starts the bufferManager, otherwise receiveData will fail
+    // TODO: issue to open automatically before receiveData in DefaultSource
+    monitoringDataSource.open();
+    // TODO: monitoring source could follow fillBuffer instead of metricGroup->getSample
+    while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = monitoringDataSource.receiveData();
+        GroupedValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), optBuf.value());
         EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
         EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
         EXPECT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
     }
 
-    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numBuffers);
-    EXPECT_EQ(source->getNumberOfGeneratedTuples(), 2UL);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
 }
 
 TEST_F(SourceTest, testMemorySource) {
