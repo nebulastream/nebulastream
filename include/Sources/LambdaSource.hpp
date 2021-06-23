@@ -64,7 +64,7 @@ class LambdaSource : public GeneratorSource {
      */
     bool stop(bool graceful) override;
 
-  private:
+  protected:
     uint64_t numberOfTuplesToProduce;
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
 };
