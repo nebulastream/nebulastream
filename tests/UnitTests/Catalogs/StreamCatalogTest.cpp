@@ -115,7 +115,7 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
 
     EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
 
-    std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=test_stream "
+    std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=(test_stream) "
                            "sourceType=DefaultSource on node=1\n";
     cout << " string=" << streamCatalog->getPhysicalStreamAndSchemaAsString() << endl;
 
@@ -145,7 +145,7 @@ TEST_F(StreamCatalogTest, testAddTwoPhysicalStreamsToOneLogical) {
 
     EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
 
-    std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=test_stream "
+    std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=(test_stream) "
                            "sourceType=DefaultSource on node=1\n";
     cout << " string=" << streamCatalog->getPhysicalStreamAndSchemaAsString() << endl;
 
@@ -188,7 +188,7 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
     EXPECT_TRUE(streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce));
 
     std::string expected =
-        "stream name=default_logical with 1 elements:physicalName=default_physical logicalStreamName=default_logical "
+        "stream name=default_logical with 1 elements:physicalName=default_physical logicalStreamName=(default_logical) "
         "sourceType=DefaultSource on node=1\n";
     EXPECT_EQ(expected, streamCatalog->getPhysicalStreamAndSchemaAsString());
 }

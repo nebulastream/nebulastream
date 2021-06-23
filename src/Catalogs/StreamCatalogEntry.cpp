@@ -54,7 +54,7 @@ std::vector<std::string> StreamCatalogEntry::getLogicalName() { return logicalSt
 
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
-    ss << "physicalName=" << physicalStreamName << " logicalStreamName= (" << UtilityFunctions::combineStringsWithDelimiter(logicalStreamName,",") << ") sourceType=" << sourceType
+    ss << "physicalName=" << physicalStreamName << " logicalStreamName=(" << UtilityFunctions::combineStringsWithDelimiter(logicalStreamName,",") << ") sourceType=" << sourceType
        << " on node=" + std::to_string(node->getId());
     return ss.str();
 }
