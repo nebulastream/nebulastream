@@ -98,6 +98,48 @@ struct __attribute__((packed)) everyBooleanTypeRecord {
     bool truthy_entry;
 };
 
+struct __attribute__((packed)) IngestionRecord {
+    IngestionRecord(uint64_t userId,
+           uint64_t pageId,
+           uint64_t campaignId,
+           uint64_t adType,
+           uint64_t eventType,
+           uint64_t currentMs,
+           uint64_t ip)
+        : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
+          currentMs(currentMs), ip(ip) {}
+
+    uint64_t userId;
+    uint64_t pageId;
+    uint64_t campaignId;
+    uint64_t adType;
+    uint64_t eventType;
+    uint64_t currentMs;
+    uint64_t ip;
+
+    // placeholder to reach 78 bytes
+    uint64_t dummy1{0};
+    uint64_t dummy2{0};
+    uint32_t dummy3{0};
+    uint16_t dummy4{0};
+
+    IngestionRecord(const IngestionRecord& rhs) {
+        userId = rhs.userId;
+        pageId = rhs.pageId;
+        campaignId = rhs.campaignId;
+        adType = rhs.adType;
+        eventType = rhs.eventType;
+        currentMs = rhs.currentMs;
+        ip = rhs.ip;
+    }
+
+    [[nodiscard]] std::string toString() const {
+        return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
+               + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
+               + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
+    }
+};
+
 using ::testing::Return;
 using ::testing::_;
 
@@ -247,6 +289,28 @@ class DefaultSourceProxy : public DefaultSource {
                         successors) {};
 };
 
+class LambdaSourceProxy : public LambdaSource {
+  public:
+    LambdaSourceProxy(
+        SchemaPtr schema,
+        NodeEngine::BufferManagerPtr bufferManager,
+        NodeEngine::QueryManagerPtr queryManager,
+        uint64_t numbersOfBufferToProduce,
+        uint64_t gatheringValue,
+        std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+        OperatorId operatorId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+        : LambdaSource(schema, bufferManager, queryManager,
+                       numbersOfBufferToProduce, gatheringValue, std::move(generationFunction),
+                       operatorId, numSourceLocalBuffers, gatheringMode, successors) {};
+
+  private:
+    FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeFrequency);
+    FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeIngestion);
+};
+
 class SourceTest : public testing::Test {
   public:
     void SetUp() override {
@@ -263,6 +327,18 @@ class SourceTest : public testing::Test {
             ->addField("event_type", DataTypeFactory::createFixedChar(9))
             ->addField("current_ms", UINT64)
             ->addField("ip", INT32);
+        this->lambdaSchema = Schema::create()
+            ->addField("user_id", UINT64)
+            ->addField("page_id", UINT64)
+            ->addField("campaign_id", UINT64)
+            ->addField("ad_type", UINT64)
+            ->addField("event_type", UINT64)
+            ->addField("current_ms", UINT64)
+            ->addField("ip", UINT64)
+            ->addField("d1", UINT64)
+            ->addField("d2", UINT64)
+            ->addField("d3", UINT32)
+            ->addField("d4", UINT16);
         this->tuple_size = this->schema->getSchemaSizeInBytes();
         this->buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
         this->numberOfBuffers = 1;
@@ -316,7 +392,7 @@ class SourceTest : public testing::Test {
 
     NodeEngine::NodeEnginePtr nodeEngine{nullptr};
     std::string path_to_file, path_to_bin_file, delimiter, wrong_filepath, path_to_file_head;
-    SchemaPtr schema;
+    SchemaPtr schema, lambdaSchema;
     uint64_t tuple_size, buffer_size, numberOfBuffers,
         numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault, frequency;
 };
@@ -839,329 +915,97 @@ TEST_F(SourceTest, testDefaultSourceReceiveData) {
     EXPECT_EQ(buf->getNumberOfTuples(), 10);
 }
 
-TEST_F(SourceTest, DISABLED_testSenseSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
-
-    std::string testUDFS("...");
-    auto funcPtr = &createSenseSource;
-
-    SchemaPtr schema = Schema::create()
-                           ->addField("user_id", DataTypeFactory::createFixedChar(16))
-                           ->addField("page_id", DataTypeFactory::createFixedChar(16))
-                           ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
-                           ->addField("ad_type", DataTypeFactory::createFixedChar(9))
-                           ->addField("event_type", DataTypeFactory::createFixedChar(9))
-                           ->addField("current_ms", UINT64)
-                           ->addField("ip", INT32);
-
-    uint64_t numberOfTuplesToProcess = 1000;
-    uint64_t numberOfBuffers = 1000;
-    uint64_t tuple_size = schema->getSchemaSizeInBytes();
-    uint64_t buffer_size = numberOfTuplesToProcess * tuple_size / numberOfBuffers;
-    ASSERT_GT(buffer_size, 0ULL);
-
-    const DataSourcePtr source =
-        (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS, 1, 12, {});
-
-    //TODO: please add here to code to test the setup
-    std::cout << "Success" << std::endl;
-}
-
-TEST_F(SourceTest, testLambdaSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
-
-    struct __attribute__((packed)) Record {
-        //          Record() = default;
-        Record(uint64_t userId,
-               uint64_t pageId,
-               uint64_t campaignId,
-               uint64_t adType,
-               uint64_t eventType,
-               uint64_t currentMs,
-               uint64_t ip)
-            : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs),
-              ip(ip) {}
-
-        uint64_t userId;
-        uint64_t pageId;
-        uint64_t campaignId;
-        uint64_t adType;
-        uint64_t eventType;
-        uint64_t currentMs;
-        uint64_t ip;
-
-        // placeholder to reach 78 bytes
-        uint64_t dummy1{0};
-        uint64_t dummy2{0};
-        uint32_t dummy3{0};
-        uint16_t dummy4{0};
-
-        Record(const Record& rhs) {
-            userId = rhs.userId;
-            pageId = rhs.pageId;
-            campaignId = rhs.campaignId;
-            adType = rhs.adType;
-            eventType = rhs.eventType;
-            currentMs = rhs.currentMs;
-            ip = rhs.ip;
-        }
-
-        [[nodiscard]] std::string toString() const {
-            return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId) + ", campaignId="
-                + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType=" + std::to_string(eventType)
-                + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
-        }
-    };
-
+TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
     uint64_t numBuffers = 2;
-    uint64_t numberOfTuplesToProduce = 52;
-    SchemaPtr schema = Schema::create()
-                           ->addField("user_id", UINT64)
-                           ->addField("page_id", UINT64)
-                           ->addField("campaign_id", UINT64)
-                           ->addField("ad_type", UINT64)
-                           ->addField("event_type", UINT64)
-                           ->addField("current_ms", UINT64)
-                           ->addField("ip", UINT64)
-                           ->addField("d1", UINT64)
-                           ->addField("d2", UINT64)
-                           ->addField("d3", UINT32)
-                           ->addField("d4", UINT16);
-
-    auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        uint64_t currentEventType = 0;
-        struct __attribute__((packed)) Record {
-            //          Record() = default;
-            Record(uint64_t userId,
-                   uint64_t pageId,
-                   uint64_t campaignId,
-                   uint64_t adType,
-                   uint64_t eventType,
-                   uint64_t currentMs,
-                   uint64_t ip)
-                : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
-                  currentMs(currentMs), ip(ip) {}
-
-            uint64_t userId;
-            uint64_t pageId;
-            uint64_t campaignId;
-            uint64_t adType;
-            uint64_t eventType;
-            uint64_t currentMs;
-            uint64_t ip;
-
-            // placeholder to reach 78 bytes
-            uint64_t dummy1{0};
-            uint64_t dummy2{0};
-            uint32_t dummy3{0};
-            uint16_t dummy4{0};
-
-            Record(const Record& rhs) {
-                userId = rhs.userId;
-                pageId = rhs.pageId;
-                campaignId = rhs.campaignId;
-                adType = rhs.adType;
-                eventType = rhs.eventType;
-                currentMs = rhs.currentMs;
-                ip = rhs.ip;
-            }
-
-            [[nodiscard]] std::string toString() const {
-                return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
-                    + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
-                    + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
-            }
-        };
-        auto* ysbRecords = buffer.getBuffer<Record>();
-        for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
-            //            auto record = ysbRecords[i];
-            ysbRecords[i].userId = i;
-            ysbRecords[i].pageId = 0;
-            ysbRecords[i].adType = 0;
-            ysbRecords[i].campaignId = rand() % 10000;
-            ysbRecords[i].eventType = (currentEventType++) % 3;
-            ysbRecords[i].currentMs = time(nullptr);
-            ysbRecords[i].ip = 0x01020304;
-            std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(Record)
-                      << " addr=" << &ysbRecords[i] << std::endl;
-        }
+    auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+      uint64_t currentEventType = 0;
+      auto* ysbRecords = buffer.getBuffer<IngestionRecord>();
+      for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+          ysbRecords[i].userId = i;
+          ysbRecords[i].pageId = 0;
+          ysbRecords[i].adType = 0;
+          ysbRecords[i].campaignId = rand() % 10000;
+          ysbRecords[i].eventType = (currentEventType++) % 3;
+          ysbRecords[i].currentMs = time(nullptr);
+          ysbRecords[i].ip = 0x01020304;
+          std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(IngestionRecord)
+                    << " addr=" << &ysbRecords[i] << std::endl;
+      }
     };
 
-    DataSourcePtr lambdaSource = createLambdaSource(schema,
-                                                    nodeEngine->getBufferManager(),
-                                                    nodeEngine->getQueryManager(),
-                                                    numBuffers,
-                                                    0,
-                                                    func,
-                                                    1,
-                                                    12,
-                                                    DataSource::GatheringMode::FREQUENCY_MODE,
-                                                    {});
-    lambdaSource->open();
-    while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
-        auto optBuf = lambdaSource->receiveData();
-        auto* ysbRecords = optBuf.value().getBuffer<Record>();
+    LambdaSourceProxy lambdaDataSource(lambdaSchema,
+                                       this->nodeEngine->getBufferManager(),
+                                       this->nodeEngine->getQueryManager(),
+                                       numBuffers, 0,
+                                       func, this->operatorId,
+                                       12,
+                                       DataSource::GatheringMode::FREQUENCY_MODE,
+                                       {});
+    EXPECT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
+    EXPECT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0);
+    EXPECT_EQ(lambdaDataSource.numberOfTuplesToProduce, 52);
 
-        for (uint64_t i = 0; i < numberOfTuplesToProduce; ++i) {
-            std::cout << "Read rec i=" << i << " content=" << ysbRecords[i].toString() << std::endl;
-
+    // open is not needed here, since there's no local buff mgr to init
+    while (lambdaDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto resBuf = lambdaDataSource.receiveData();
+        EXPECT_NE(resBuf, std::nullopt);
+        EXPECT_TRUE(resBuf.has_value());
+        EXPECT_EQ(resBuf->getNumberOfTuples(), lambdaDataSource.numberOfTuplesToProduce);
+        auto ysbRecords = resBuf->getBuffer<IngestionRecord>();
+        for (uint64_t i = 0; i < lambdaDataSource.numberOfTuplesToProduce; ++i) {
             EXPECT_TRUE(0 <= ysbRecords[i].campaignId && ysbRecords[i].campaignId < 10000);
             EXPECT_TRUE(0 <= ysbRecords[i].eventType && ysbRecords[i].eventType < 3);
         }
     }
 
-    EXPECT_EQ(lambdaSource->getNumberOfGeneratedBuffers(), numBuffers);
-    EXPECT_EQ(lambdaSource->getNumberOfGeneratedTuples(), numBuffers * numberOfTuplesToProduce);
+    EXPECT_EQ(lambdaDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(lambdaDataSource.getNumberOfGeneratedTuples(), numBuffers * lambdaDataSource.numberOfTuplesToProduce);
 }
 
-TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
-
-    struct __attribute__((packed)) Record {
-        //          Record() = default;
-        Record(uint64_t userId,
-               uint64_t pageId,
-               uint64_t campaignId,
-               uint64_t adType,
-               uint64_t eventType,
-               uint64_t currentMs,
-               uint64_t ip)
-            : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs),
-              ip(ip) {}
-
-        uint64_t userId;
-        uint64_t pageId;
-        uint64_t campaignId;
-        uint64_t adType;
-        uint64_t eventType;
-        uint64_t currentMs;
-        uint64_t ip;
-
-        // placeholder to reach 78 bytes
-        uint64_t dummy1{0};
-        uint64_t dummy2{0};
-        uint32_t dummy3{0};
-        uint16_t dummy4{0};
-
-        Record(const Record& rhs) {
-            userId = rhs.userId;
-            pageId = rhs.pageId;
-            campaignId = rhs.campaignId;
-            adType = rhs.adType;
-            eventType = rhs.eventType;
-            currentMs = rhs.currentMs;
-            ip = rhs.ip;
-        }
-
-        [[nodiscard]] std::string toString() const {
-            return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId) + ", campaignId="
-                + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType=" + std::to_string(eventType)
-                + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
-        }
-    };
-
+TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
     uint64_t numBuffers = 2;
-    uint64_t numberOfTuplesToProduce = 52;
-    SchemaPtr schema = Schema::create()
-                           ->addField("user_id", UINT64)
-                           ->addField("page_id", UINT64)
-                           ->addField("campaign_id", UINT64)
-                           ->addField("ad_type", UINT64)
-                           ->addField("event_type", UINT64)
-                           ->addField("current_ms", UINT64)
-                           ->addField("ip", UINT64)
-                           ->addField("d1", UINT64)
-                           ->addField("d2", UINT64)
-                           ->addField("d3", UINT32)
-                           ->addField("d4", UINT16);
-
-    auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        uint64_t currentEventType = 0;
-        struct __attribute__((packed)) Record {
-            //          Record() = default;
-            Record(uint64_t userId,
-                   uint64_t pageId,
-                   uint64_t campaignId,
-                   uint64_t adType,
-                   uint64_t eventType,
-                   uint64_t currentMs,
-                   uint64_t ip)
-                : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
-                  currentMs(currentMs), ip(ip) {}
-
-            uint64_t userId;
-            uint64_t pageId;
-            uint64_t campaignId;
-            uint64_t adType;
-            uint64_t eventType;
-            uint64_t currentMs;
-            uint64_t ip;
-
-            // placeholder to reach 78 bytes
-            uint64_t dummy1{0};
-            uint64_t dummy2{0};
-            uint32_t dummy3{0};
-            uint16_t dummy4{0};
-
-            Record(const Record& rhs) {
-                userId = rhs.userId;
-                pageId = rhs.pageId;
-                campaignId = rhs.campaignId;
-                adType = rhs.adType;
-                eventType = rhs.eventType;
-                currentMs = rhs.currentMs;
-                ip = rhs.ip;
-            }
-
-            [[nodiscard]] std::string toString() const {
-                return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
-                    + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
-                    + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
-            }
-        };
-        auto* ysbRecords = buffer.getBuffer<Record>();
-        for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
-            //            auto record = ysbRecords[i];
-            ysbRecords[i].userId = i;
-            ysbRecords[i].pageId = 0;
-            ysbRecords[i].adType = 0;
-            ysbRecords[i].campaignId = rand() % 10000;
-            ysbRecords[i].eventType = (currentEventType++) % 3;
-            ysbRecords[i].currentMs = time(nullptr);
-            ysbRecords[i].ip = 0x01020304;
-            std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(Record)
-                      << " addr=" << &ysbRecords[i] << std::endl;
-        }
+    auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+      uint64_t currentEventType = 0;
+      auto* ysbRecords = buffer.getBuffer<IngestionRecord>();
+      for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+          ysbRecords[i].userId = i;
+          ysbRecords[i].pageId = 0;
+          ysbRecords[i].adType = 0;
+          ysbRecords[i].campaignId = rand() % 10000;
+          ysbRecords[i].eventType = (currentEventType++) % 3;
+          ysbRecords[i].currentMs = time(nullptr);
+          ysbRecords[i].ip = 0x01020304;
+          std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(IngestionRecord)
+                    << " addr=" << &ysbRecords[i] << std::endl;
+      }
     };
 
-    DataSourcePtr lambdaSource = createLambdaSource(schema,
-                                                    nodeEngine->getBufferManager(),
-                                                    nodeEngine->getQueryManager(),
-                                                    numBuffers,
-                                                    1,
-                                                    func,
-                                                    1,
-                                                    12,
-                                                    DataSource::GatheringMode::INGESTION_RATE_MODE,
-                                                    {});
-    lambdaSource->open();
-    while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
-        auto optBuf = lambdaSource->receiveData();
-        auto* ysbRecords = optBuf.value().getBuffer<Record>();
+    LambdaSourceProxy lambdaDataSource(lambdaSchema,
+                                       this->nodeEngine->getBufferManager(),
+                                       this->nodeEngine->getQueryManager(),
+                                       numBuffers, 1,
+                                       func, this->operatorId,
+                                       12,
+                                       DataSource::GatheringMode::INGESTION_RATE_MODE,
+                                       {});
+    EXPECT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
+    EXPECT_EQ(lambdaDataSource.gatheringIngestionRate, 1);
 
-        for (uint64_t i = 0ull; i < numberOfTuplesToProduce; ++i) {
-            std::cout << "Read rec i=" << i << " content=" << ysbRecords[i].toString() << std::endl;
-
+    // open is not needed here, since there's no local buff mgr to init
+    while (lambdaDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
+        auto resBuf = lambdaDataSource.receiveData();
+        EXPECT_NE(resBuf, std::nullopt);
+        EXPECT_TRUE(resBuf.has_value());
+        EXPECT_EQ(resBuf->getNumberOfTuples(), lambdaDataSource.numberOfTuplesToProduce);
+        auto ysbRecords = resBuf->getBuffer<IngestionRecord>();
+        for (uint64_t i = 0; i < lambdaDataSource.numberOfTuplesToProduce; ++i) {
             EXPECT_TRUE(0 <= ysbRecords[i].campaignId && ysbRecords[i].campaignId < 10000);
             EXPECT_TRUE(0 <= ysbRecords[i].eventType && ysbRecords[i].eventType < 3);
         }
     }
 
-    EXPECT_EQ(lambdaSource->getNumberOfGeneratedBuffers(), numBuffers);
-    EXPECT_EQ(lambdaSource->getNumberOfGeneratedTuples(), numBuffers * numberOfTuplesToProduce);
+    EXPECT_EQ(lambdaDataSource.getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(lambdaDataSource.getNumberOfGeneratedTuples(), numBuffers * lambdaDataSource.numberOfTuplesToProduce);
 }
 
 TEST_F(SourceTest, testIngestionRateFromQuery) {
