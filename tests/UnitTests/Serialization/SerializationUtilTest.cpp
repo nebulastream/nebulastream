@@ -26,10 +26,16 @@
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -430,6 +436,24 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
     }
     {
         auto expression = SubExpressionNode::create(f1, f2);
+        auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        EXPECT_TRUE(expression->equal(deserializedExpression));
+    }
+    {
+        auto expression = AbsExpressionNode::create(f1);
+        auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        EXPECT_TRUE(expression->equal(deserializedExpression));
+    }
+    {
+        auto expression = Log10ExpressionNode::create(f1);
+        auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        EXPECT_TRUE(expression->equal(deserializedExpression));
+    }
+    {
+        auto expression = SqrtExpressionNode::create(f1);
         auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
         EXPECT_TRUE(expression->equal(deserializedExpression));

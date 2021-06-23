@@ -19,15 +19,23 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <utility>
 namespace NES {
-
+    
+// calls of binary operators with two ExpressionNodes 
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
     return AddExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
@@ -54,8 +62,37 @@ ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
     return PowExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
+// calls of unary operators with ExpressionNode
 ExpressionNodePtr ABS(const ExpressionNodePtr& exp) {
     return AbsExpressionNode::create(exp);
+}
+
+ExpressionNodePtr SQRT(const ExpressionNodePtr& exp) {
+    return SqrtExpressionNode::create(exp);
+}
+
+ExpressionNodePtr EXP(const ExpressionNodePtr& exp) {
+    return ExpExpressionNode::create(exp);
+}
+
+ExpressionNodePtr LOG(const ExpressionNodePtr& exp) {
+    return LogExpressionNode::create(exp);
+}
+
+ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) {
+    return Log10ExpressionNode::create(exp);
+}
+
+ExpressionNodePtr ROUND(const ExpressionNodePtr& exp) {
+    return RoundExpressionNode::create(exp);
+}
+
+ExpressionNodePtr CEIL(const ExpressionNodePtr& exp) {
+    return CeilExpressionNode::create(exp);
+}
+
+ExpressionNodePtr FLOOR(const ExpressionNodePtr& exp) {
+    return FloorExpressionNode::create(exp);
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp) {
@@ -79,6 +116,7 @@ ExpressionNodePtr operator--(ExpressionNodePtr leftExp, int) {
 }
 
 // calls of Binary operators with one or two ExpressionItems
+// l: item, r: node
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
     return leftExp.getExpressionNode() + std::move(rightExp);
 }
@@ -107,6 +145,7 @@ ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
     return POWER(leftExp.getExpressionNode(), std::move(rightExp));
 }
 
+// l: node, r: item
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
     return std::move(leftExp) + rightExp.getExpressionNode();
 }
@@ -135,6 +174,7 @@ ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
     return POWER(std::move(leftExp), rightExp.getExpressionNode());
 }
 
+// l: item, r: item
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionItem rightExp) {
     return leftExp.getExpressionNode() + rightExp.getExpressionNode();
 }
@@ -165,6 +205,20 @@ ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionItem rightExp) {
 
 // calls of Unary operators with ExpressionItem
 ExpressionNodePtr ABS(ExpressionItem exp) { return ABS(exp.getExpressionNode()); }
+
+ExpressionNodePtr SQRT(ExpressionItem exp) { return SQRT(exp.getExpressionNode()); }
+
+ExpressionNodePtr EXP(ExpressionItem exp) { return EXP(exp.getExpressionNode()); }
+
+ExpressionNodePtr LOG(ExpressionItem exp) { return LOG(exp.getExpressionNode()); }
+
+ExpressionNodePtr LOG10(ExpressionItem exp) { return LOG10(exp.getExpressionNode()); }
+
+ExpressionNodePtr ROUND(ExpressionItem exp) { return ROUND(exp.getExpressionNode()); }
+
+ExpressionNodePtr CEIL(ExpressionItem exp) { return CEIL(exp.getExpressionNode()); }
+
+ExpressionNodePtr FLOOR(ExpressionItem exp) { return FLOOR(exp.getExpressionNode()); }
 
 ExpressionNodePtr operator++(ExpressionItem exp) { return ++exp.getExpressionNode(); }
 

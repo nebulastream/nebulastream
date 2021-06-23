@@ -290,6 +290,13 @@ class DataTypeFactory {
      * @return DataTypePtr
      */
     static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, double maxUpperBound);
+
+    /**
+     * @brief Creates Integer stamp with bounds equivalent to passed FLoat stamp
+     * @param Integer stamp Datatype to copy. If float is passed the same stamp is returned. Error at non-numeric stamp.
+     * @return DataTypePtr
+     */
+    static DataTypePtr createFloatFromInteger(DataTypePtr stamp);
 };
 
 }// namespace NES

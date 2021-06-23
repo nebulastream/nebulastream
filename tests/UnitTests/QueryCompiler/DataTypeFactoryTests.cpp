@@ -166,6 +166,14 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
         ASSERT_EQ(floatStamp->lowerBound, -99.9);
         ASSERT_EQ(floatStamp->upperBound, 99.9);
     }
+
+    // conversion of Integer to Stamp
+    {
+        auto const intStamp = DataTypeFactory::createInteger(-100, 100);
+        auto const floatStamp = DataType::as<Float>(DataTypeFactory::createFloatFromInteger(intStamp));
+        ASSERT_EQ(floatStamp->lowerBound, -100.0);
+        ASSERT_EQ(floatStamp->upperBound, 100.0);
+    }
 }
 
 }// namespace NES
