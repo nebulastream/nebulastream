@@ -70,47 +70,46 @@ std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
                 auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
                 if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<char, true>::create(fieldIndex,
-                                                                                               bindedRowLayout)[recordIndex] =
-                        value;
+                                                                                            bindedRowLayout)[recordIndex] = value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, true>::create(fieldIndex,
-                                                                                                  bindedRowLayout)[recordIndex] =
+                                                                                               bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, true>::create(fieldIndex,
-                                                                                                   bindedRowLayout)[recordIndex] =
+                                                                                                bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, true>::create(fieldIndex,
-                                                                                                   bindedRowLayout)[recordIndex] =
+                                                                                                bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(fieldIndex,
-                                                                                                   bindedRowLayout)[recordIndex] =
+                                                                                                bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, true>::create(fieldIndex,
-                                                                                                 bindedRowLayout)[recordIndex] =
+                                                                                              bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(fieldIndex,
-                                                                                                  bindedRowLayout)[recordIndex] =
+                                                                                               bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, true>::create(fieldIndex,
-                                                                                                  bindedRowLayout)[recordIndex] =
+                                                                                               bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(fieldIndex,
-                                                                                                  bindedRowLayout)[recordIndex] =
+                                                                                               bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(fieldIndex,
-                                                                                                bindedRowLayout)[recordIndex] =
+                                                                                             bindedRowLayout)[recordIndex] =
                         value;
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
                     Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(fieldIndex,
-                                                                                                 bindedRowLayout)[recordIndex] =
+                                                                                              bindedRowLayout)[recordIndex] =
                         value;
                 } else {
                     NES_DEBUG("This data source only generates data for numeric fields");

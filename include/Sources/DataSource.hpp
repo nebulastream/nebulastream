@@ -18,10 +18,10 @@
 #define INCLUDE_DATASOURCE_H_
 
 #include <API/Schema.hpp>
+#include <Operators/OperatorId.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Operators/OperatorId.hpp>
 #include <atomic>
 #include <chrono>
 #include <mutex>

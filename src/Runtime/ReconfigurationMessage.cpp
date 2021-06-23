@@ -16,7 +16,7 @@
 
 #include <Runtime/ReconfigurationMessage.hpp>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 void ReconfigurationMessage::wait() { syncBarrier->wait(); }
 

@@ -19,7 +19,7 @@
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 /**
  * @brief Util class to create a PhysicalField for a specific data type and a offset in a buffer.

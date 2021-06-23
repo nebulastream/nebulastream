@@ -19,12 +19,12 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <REST/RestServer.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Services/NESRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>

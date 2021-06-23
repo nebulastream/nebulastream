@@ -17,8 +17,8 @@
 #ifndef NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SINKS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_
 #define NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SINKS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Sources/DataSource.hpp>
 
 namespace NES {

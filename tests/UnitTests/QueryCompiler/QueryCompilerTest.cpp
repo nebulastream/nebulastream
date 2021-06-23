@@ -19,7 +19,6 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -35,6 +34,7 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>

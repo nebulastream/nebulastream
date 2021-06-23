@@ -16,10 +16,10 @@
 
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>

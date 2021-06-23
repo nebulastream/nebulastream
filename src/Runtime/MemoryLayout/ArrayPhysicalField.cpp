@@ -20,7 +20,7 @@
 #include <Runtime/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <memory>
 #include <utility>
-namespace NES::Runtime{
+namespace NES::Runtime {
 ArrayPhysicalField::ArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset)
     : PhysicalField(bufferOffset), componentField(std::move(componentField)) {}
 

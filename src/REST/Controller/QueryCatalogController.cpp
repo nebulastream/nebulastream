@@ -16,11 +16,11 @@
 
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
-#include <Runtime/QueryStatistics.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/runtime_utils.hpp>
+#include <Runtime/QueryStatistics.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 

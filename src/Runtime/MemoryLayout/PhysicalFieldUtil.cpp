@@ -25,7 +25,7 @@
 #include <Runtime/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 class ArrayDataType;
 

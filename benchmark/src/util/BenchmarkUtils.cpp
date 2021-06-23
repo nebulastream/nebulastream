@@ -65,8 +65,7 @@ uint64_t BenchmarkUtils::calcExpectedTuplesSelectivity(std::list<uint64_t> list,
     return countExpectedTuples;
 }
 
-void BenchmarkUtils::recordStatistics(std::vector<Runtime::QueryStatistics*>& statisticsVec,
-                                      Runtime::NodeEnginePtr nodeEngine) {
+void BenchmarkUtils::recordStatistics(std::vector<Runtime::QueryStatistics*>& statisticsVec, Runtime::NodeEnginePtr nodeEngine) {
 
     for (uint64_t i = 0; i < BenchmarkUtils::runSingleExperimentSeconds + 1; ++i) {
         int64_t nextPeriodStartTime = BenchmarkUtils::periodLengthInSeconds * 1000

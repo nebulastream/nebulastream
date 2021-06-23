@@ -23,7 +23,7 @@
 #include <memory>
 #include <mutex>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 /// this mutex protected the globalErrorListeners vector
 static std::recursive_mutex globalErrorListenerMutex;

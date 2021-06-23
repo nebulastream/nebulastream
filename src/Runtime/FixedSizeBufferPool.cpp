@@ -20,7 +20,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 FixedSizeBufferPool::FixedSizeBufferPool(const BufferManagerPtr& bufferManager,
                                          std::deque<detail::MemorySegment*>&& buffers,

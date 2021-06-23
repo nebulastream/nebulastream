@@ -38,8 +38,8 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(const CompiledC
 }
 
 Runtime::Execution::ExecutablePipelineStagePtr CompiledExecutablePipelineStage::create(const CompiledCodePtr& compiledCode,
-                                                                                          PipelineStageArity arity,
-                                                                                          const std::string& sourceCode) {
+                                                                                       PipelineStageArity arity,
+                                                                                       const std::string& sourceCode) {
     return std::make_shared<CompiledExecutablePipelineStage>(compiledCode, arity, sourceCode);
 }
 
@@ -85,10 +85,9 @@ uint32_t CompiledExecutablePipelineStage::open(Runtime::Execution::PipelineExecu
     return executablePipelineStage->open(pipelineExecutionContext, workerContext);
 }
 
-ExecutionResult
-CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
-                                         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-                                         Runtime::WorkerContext& workerContext) {
+ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
+                                                         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+                                                         Runtime::WorkerContext& workerContext) {
     // we dont get the lock here as we dont was to serialize the execution.
     // currentExecutionStage is an atomic so its still save to read it
     if (currentExecutionStage != Running) {

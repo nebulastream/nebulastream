@@ -22,7 +22,7 @@
 #include <thread>
 #include <vector>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 /**
  * @brief the tread pool handles the dynamic scheduling of tasks during Runtime

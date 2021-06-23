@@ -22,7 +22,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <limits>
 #include <memory>
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 /**
  * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers

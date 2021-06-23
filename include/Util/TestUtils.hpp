@@ -20,9 +20,9 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>

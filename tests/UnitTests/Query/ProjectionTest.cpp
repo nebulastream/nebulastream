@@ -146,12 +146,10 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         if (i < 9) {
-                            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2,
-                                                                                                           bindedRowLayout)[i] =
+                            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
                                 timestamp++;
                         } else {
-                            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2,
-                                                                                                           bindedRowLayout)[i] =
+                            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
                                 timestamp + 20;
                         }
                     } else {
@@ -799,8 +797,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
 
     auto resultLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto recordIndexFields =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto recordIndexFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
         EXPECT_EQ(recordIndexFields[recordIndex], recordIndex);

@@ -20,7 +20,7 @@
 #include <Runtime/MemoryLayout/PhysicalField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 /**
  * @brief Represents an value field at a specific position in a memory buffer.
  * This class has to be implemented in the header as it is a template type.

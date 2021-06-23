@@ -22,7 +22,6 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -38,6 +37,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>

@@ -93,17 +93,17 @@ createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bu
  * @param generationFunction
  * @param operatorId
  * @return a const data source pointer */
-DataSourcePtr createLambdaSource(
-    const SchemaPtr& schema,
-    const Runtime::BufferManagerPtr& bufferManager,
-    const Runtime::QueryManagerPtr& queryManager,
-    uint64_t numbersOfBufferToProduce,
-    uint64_t gatheringValue,
-    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    OperatorId operatorId,
-    size_t numSourceLocalBuffers,
-    DataSource::GatheringMode gatheringMode,
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+DataSourcePtr
+createLambdaSource(const SchemaPtr& schema,
+                   const Runtime::BufferManagerPtr& bufferManager,
+                   const Runtime::QueryManagerPtr& queryManager,
+                   uint64_t numbersOfBufferToProduce,
+                   uint64_t gatheringValue,
+                   std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   DataSource::GatheringMode gatheringMode,
+                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create an empty zmq source

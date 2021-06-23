@@ -17,6 +17,8 @@
 #ifndef INCLUDE_QUERY_MANAGER_HPP_
 #define INCLUDE_QUERY_MANAGER_HPP_
 
+#include <Phases/ConvertLogicalToPhysicalSource.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
@@ -26,8 +28,6 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/Task.hpp>
-#include <Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sources/DataSource.hpp>
 #include <State/StateManager.hpp>
 #include <Util/ThreadBarrier.hpp>

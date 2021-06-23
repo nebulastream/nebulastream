@@ -15,11 +15,6 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Runtime/ErrorListener.hpp>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeStatsProvider.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -31,13 +26,18 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/ErrorListener.hpp>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeStatsProvider.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
 #include <utility>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
@@ -201,7 +201,7 @@ bool NodeEngine::registerQueryInNodeEngine(const Execution::ExecutableQueryPlanP
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
     NES_DEBUG("Runtime: registerQueryInNodeEngine query " << queryExecutionPlan << " queryId=" << queryId
-                                                             << " querySubPlanId =" << querySubPlanId);
+                                                          << " querySubPlanId =" << querySubPlanId);
     NES_ASSERT(queryManager->isThreadPoolRunning(), "Registering query but thread pool not running");
     if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
         auto found = queryIdToQuerySubPlanIds.find(queryId);

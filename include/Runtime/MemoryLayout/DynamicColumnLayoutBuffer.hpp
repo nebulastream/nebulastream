@@ -156,10 +156,10 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 };
 
 template<size_t I, typename... Ts>
-typename std::enable_if<(I == sizeof...(Ts)), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(
-    std::tuple<Ts...> tup,
-    const std::vector<NES::Runtime::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes,
-    uint64_t recordIndex) {
+typename std::enable_if<(I == sizeof...(Ts)), void>::type
+DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
+                                                   const std::vector<NES::Runtime::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes,
+                                                   uint64_t recordIndex) {
     // Finished iterating through tuple via template recursion. So all that is left is to do a simple return.
     // As we are not using any variable, we need to have them set void otherwise the compiler will throw an unused variable error.
     ((void) tup);
@@ -168,10 +168,10 @@ typename std::enable_if<(I == sizeof...(Ts)), void>::type DynamicColumnLayoutBuf
 }
 
 template<size_t I, typename... Ts>
-typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(
-    std::tuple<Ts...> tup,
-    const std::vector<NES::Runtime::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes,
-    uint64_t recordIndex) {
+typename std::enable_if<(I < sizeof...(Ts)), void>::type
+DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
+                                                   const std::vector<NES::Runtime::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes,
+                                                   uint64_t recordIndex) {
     // Get current type of tuple and cast address to this type pointer
     const auto* address = basePointer + columnOffsets[I] + fieldSizes[I] * recordIndex;
     *((typename std::tuple_element<I, std::tuple<Ts...>>::type*) (address)) = std::get<I>(tup);

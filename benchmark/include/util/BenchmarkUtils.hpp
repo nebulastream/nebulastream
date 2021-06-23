@@ -152,19 +152,19 @@ class BenchmarkUtils {
                                 PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();                        \
                                 uint64_t zmqPort = distr(gen);                                                                   \
                                 NES_WARNING("BenchmarkUtils: Starting zmq on port " << zmqPort);                                 \
-                                auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1",                                    \
-                                                                                 zmqPort,                                        \
-                                                                                 streamConf,                                     \
-                                                                                 workerThreads,                                  \
-                                                                                 bufferSize,                                     \
-                                                                                 numBuffers,                                     \
-                                                                                 12,                                             \
-                                                                                 12);                                            \
+                                auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1",                                       \
+                                                                              zmqPort,                                           \
+                                                                              streamConf,                                        \
+                                                                              workerThreads,                                     \
+                                                                              bufferSize,                                        \
+                                                                              numBuffers,                                        \
+                                                                              12,                                                \
+                                                                              12);                                               \
                                                                                                                                  \
                                 BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;                                 \
                                 BenchmarkUtils::periodLengthInSeconds = periodLength;                                            \
                                                                                                                                  \
-                                std::vector<Runtime::QueryStatistics*> statisticsVec;                                         \
+                                std::vector<Runtime::QueryStatistics*> statisticsVec;                                            \
                                 NES_WARNING("BenchmarkUtils: Starting benchmark with ingestRate="                                \
                                             + std::to_string(ingestionRate) + ", " + "singleExpSec="                             \
                                             + std::to_string(BenchmarkUtils::runSingleExperimentSeconds) + ", " + "benchPeriod=" \

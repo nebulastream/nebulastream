@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LambdaSourceDescriptor_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LambdaSourceDescriptor_HPP_
 
-#include <Runtime/TupleBuffer.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
 #include <functional>
 

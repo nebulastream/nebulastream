@@ -18,9 +18,9 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Runtime/ErrorListener.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
-#include <Plans/Query/QueryId.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
 #include <string>

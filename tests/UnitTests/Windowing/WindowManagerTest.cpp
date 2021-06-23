@@ -37,8 +37,8 @@
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
@@ -72,9 +72,7 @@ class WindowManagerTest : public testing::Test {
 
 class MockedExecutablePipelineStage : public Runtime::Execution::ExecutablePipelineStage {
   public:
-    static Runtime::Execution::ExecutablePipelineStagePtr create() {
-        return std::make_shared<MockedExecutablePipelineStage>();
-    }
+    static Runtime::Execution::ExecutablePipelineStagePtr create() { return std::make_shared<MockedExecutablePipelineStage>(); }
 
     ExecutionResult execute(TupleBuffer&, Runtime::Execution::PipelineExecutionContext&, Runtime::WorkerContext&) override {
         return ExecutionResult::Ok;

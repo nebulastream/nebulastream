@@ -18,8 +18,8 @@
 #define INCLUDE_DATASINK_H_
 
 #include <API/Schema.hpp>
-#include <Runtime/Reconfigurable.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <mutex>
 

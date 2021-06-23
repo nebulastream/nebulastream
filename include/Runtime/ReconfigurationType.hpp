@@ -19,7 +19,7 @@
 
 #include <cstdint>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 enum ReconfigurationType : uint8_t {
     // use Initialize for reconfiguration tasks that initialize a reconfigurable instance
     Initialize,

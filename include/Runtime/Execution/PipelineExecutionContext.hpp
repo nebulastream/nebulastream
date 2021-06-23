@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
-#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>

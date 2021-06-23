@@ -129,13 +129,13 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     try {
         nodeEngine = Runtime::NodeEngine::create(localWorkerIp,
-                                                    localWorkerZmqPort,
-                                                    conf,
-                                                    numWorkerThreads,
-                                                    bufferSizeInBytes,
-                                                    numberOfBuffersInGlobalBufferManager,
-                                                    numberOfBuffersInSourceLocalBufferPool,
-                                                    numberOfBuffersPerPipeline);
+                                                 localWorkerZmqPort,
+                                                 conf,
+                                                 numWorkerThreads,
+                                                 bufferSizeInBytes,
+                                                 numberOfBuffersInGlobalBufferManager,
+                                                 numberOfBuffersInSourceLocalBufferPool,
+                                                 numberOfBuffersPerPipeline);
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create();
         NES_DEBUG("NesWorker: MonitoringAgent configured with default values");

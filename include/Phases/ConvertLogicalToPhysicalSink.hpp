@@ -18,8 +18,8 @@
 #define NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SOURCES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 
 #include <Network/NetworkSink.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES {

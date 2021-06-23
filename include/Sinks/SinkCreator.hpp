@@ -18,8 +18,8 @@
 #define INCLUDE_SOURCESINK_SINKCREATOR_HPP_
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#include <Runtime/NodeEngine.hpp>
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #ifdef ENABLE_KAFKA_BUILD

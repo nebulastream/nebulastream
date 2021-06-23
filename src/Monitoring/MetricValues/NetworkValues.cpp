@@ -76,8 +76,7 @@ NetworkValues NetworkValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleB
     auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
-    output.interfaceName =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.interfaceName = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.rBytes = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.rPackets = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.rErrs = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];

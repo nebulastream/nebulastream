@@ -16,12 +16,12 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 #include <Util/Logger.hpp>

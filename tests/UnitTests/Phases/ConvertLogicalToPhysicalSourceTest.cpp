@@ -17,7 +17,6 @@
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -25,6 +24,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

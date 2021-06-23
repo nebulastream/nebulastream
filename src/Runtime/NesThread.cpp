@@ -16,7 +16,7 @@
 
 #include <Runtime/NesThread.hpp>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 /// The first thread will have index 0.
 std::atomic<uint32_t> NesThread::next_index{0};

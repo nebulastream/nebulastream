@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include <utility>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 
 NodeStatsProvider::NodeStatsProvider() : nodeStats(std::make_shared<NodeStats>()) {}
 

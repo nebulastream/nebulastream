@@ -15,9 +15,9 @@
 */
 
 #include <Network/NetworkSink.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
