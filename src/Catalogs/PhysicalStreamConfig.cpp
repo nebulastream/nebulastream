@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <sstream>
 #include <utility>
@@ -100,6 +101,11 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     } else if (type == "SenseSource") {
         NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
+    } else if (type == "ZMQSource") {
+        std::string host = conf.substr(0, conf.find(":"));
+        uint16_t port = std::stoi(conf.substr(conf.find(":") + 1, conf.length() - 1));
+        NES_DEBUG("PhysicalStreamConfig: create ZMQ source for " << host << ":" << std::to_string(port));
+        return ZmqSourceDescriptor::create(schema, streamName, host, port);
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
         return nullptr;

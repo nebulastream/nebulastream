@@ -13,7 +13,7 @@ sourceType: NoSource
 #            identifier is a string containing the nodeId identifier,
 #            user is a string containing the user name for server authentication ToDo: Implement server authentication.
 #            pwd is a string containing the password for server authentication
-# ZMQSource (ToDo: Make source available): String set up as: "host;port"
+# ZMQSource: String with ZeroMQ address <host>:<port>
 #            where host is a string containing the zmq host's ip address
 #            and port is a uint16_t containing the zmq port
 # KafkaSource (ToDo: Make source available): String set up as follows: "brokers;topic;groupId;autoCommit;kafkaConnectTimeout"
