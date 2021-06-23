@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SHAREDQUERYMETADATA_HPP
-#define NES_SHAREDQUERYMETADATA_HPP
+#ifndef NES_SHAREDQUERYPLAN_HPP
+#define NES_SHAREDQUERYPLAN_HPP
 
 #include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -34,55 +34,73 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class GlobalQueryNode;
-using GlobalQueryNodePtr = std::shared_ptr<GlobalQueryNode>;
-
-class SharedQueryMetaData;
-using SharedQueryMetaDataPtr = std::shared_ptr<SharedQueryMetaData>;
+class SharedQueryPlan;
+using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
 /**
- * @brief This class holds the meta-data about a collection of QueryPlans.
- * The QueryPlans in the metadata are inter-connected, i.e. from its source nodes we can reach all sink nodes.
- * A Global Query Plan can consists of multiple Shared Query Plans and for each shared query plan we store a Shared Query Meta Data.
- * Additionally, a user query con only occur in one of the Shared Query Meta Data within a Global Query Plan.
+ * @brief This class holds a query plan shared by multiple queries i.e. from its source nodes we can reach the sink nodes of all
+ * the queries participating in the shared query plan. A Global Query Plan can consists of multiple Shared Query Plans.
+ * Additionally, a query con share only one Shared Query Plan within a Global Query Plan.
  *
  * Example:
- *                                                         GQPRoot
- *                                                         /     \
- *                                                       /        \
- *                                                     /           \
- *                                         GQN1({Sink1},{Q1})  GQN5({Sink2},{Q2})
- *                                                |                 |
- *                                        GQN2({Map1},{Q1})    GQN6({Map1},{Q2})
- *                                                |                 |
- *                                     GQN3({Filter1},{Q1})    GQN7({Filter1},{Q2})
- *                                                |                 |
- *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
- * In the above GQP, we have two QueryPlans with GQN1 and GQN5 as respective sink nodes.
- * A SharedQueryMetaData consists of a unique:
- *  - Shared Query Id : this id is equivalent to the Query Id assigned to the user queryId. Since, there can be more than one query that can be merged
+ * Example Query Plan:
+ *
+ *               {Q1}             {Q2}
+ *             (Sink1)           (Sink2)
+ *                |                 |
+ *             (Map1)            (Map1)
+ *                |                 |
+ *            (Filter1)         (Filter1)
+ *               |                 |
+ *         (Source(Car))      (Source(Car))
+ *
+ * Shared Query Plan:
+ *
+ * sharedQueryPlanId: 1
+ * queryPlan:
+ *             (Sink1)       (Sink2)
+ *                \          /
+ *                  \      /
+ *                     |
+ *                  (Map1)
+ *                    |
+ *                (Filter1)
+ *                   |
+ *             (Source(Car))
+ *
+ * sharedQueryPlanId:
+ *
+ * queryIdToSinkOperatorMap:  {Q1:Sink1,Q2:Sink2}
+ * queryIds: [Q1, Q2]
+ * sinkOperators: [Sink1, Sink2]
+ * deployed: false
+ * newMetaData: true
+ *
+ * In the above Shared query plan, we have two QueryPlans with Sink1 and sink2 as respective sink nodes.
+ * A SharedQueryPlan consists of a unique:
+ *
+ * - sharedQueryPlanId : this id is equivalent to the Query Id assigned to the user queryId. Since, there can be more than one query that can be merged
  *                      together we generate a unique Shared Query Id that can be associated to more than one Query Ids.
- *  - Query Ids : A vector of original Query Ids that shares a common Global Query Id.
- *  - Sink Global Query Nodes : The vector of Global Query Nodes that contains sink operators of all the Query Ids that share a common Global QueryId.
- *  - Deployed : A boolean flag indicating if the query plan is deployed or not.
- *  - NewMetaData : A boolean flag indicating if the meta data is a newly created one (i.e. it was never deployed before).
- *
- *  For the above GQP, following will be the Global Query Metadata:
- *  GQM = {1, {Q1, Q2}, {Sink1, Sink2}, False, True}
+ * - queryPlan : the query plan for the shared query plan
+ * - queryIdToSinkOperatorMap: the mapping among the query and the sink operator
+ * - queryIds : A vector of original Query Ids participating in the shared query plan
+ * - sinkOperators: A vector of sink operators in the query plan.
+ * - deployed : A boolean flag indicating if the query plan is deployed or not.
+ * - newMetaData : A boolean flag indicating if the meta data is a newly created one (i.e. it was never deployed before).
  *
  */
-class SharedQueryMetaData {
+class SharedQueryPlan {
 
   public:
-    static SharedQueryMetaDataPtr create(QueryPlanPtr queryPlan);
+    static SharedQueryPlanPtr create(QueryPlanPtr queryPlan);
 
     /**
      * @brief Add a global query metadata into this
      * @param queryMetaData :  the input query metadata
      * @return true if successful else false
      */
-    bool addSharedQueryMetaData(const SharedQueryMetaDataPtr& queryMetaData);
+    bool addSharedQueryMetaData(const SharedQueryPlanPtr& queryMetaData);
 
     /**
      * @brief Remove a Query Id and associated Global Query Node with sink operators and clear the sink global query node lists
@@ -162,7 +180,7 @@ class SharedQueryMetaData {
     void setAsOld();
 
   private:
-    explicit SharedQueryMetaData(const QueryPlanPtr& queryPlan);
+    explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
     SharedQueryId sharedQueryId;
     QueryPlanPtr queryPlan;
@@ -174,4 +192,4 @@ class SharedQueryMetaData {
 };
 }// namespace NES
 
-#endif//NES_SHAREDQUERYMETADATA_HPP
+#endif//NES_SHAREDQUERYPLAN_HPP
