@@ -216,6 +216,37 @@ class CSVSourceProxy : public CSVSource {
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileOnLoop);
 };
 
+class GeneratorSourceProxy : public GeneratorSource {
+  public:
+    GeneratorSourceProxy(SchemaPtr schema,
+                         NodeEngine::BufferManagerPtr bufferManager,
+                         NodeEngine::QueryManagerPtr queryManager,
+                         uint64_t numbersOfBufferToProduce,
+                         OperatorId operatorId,
+                         size_t numSourceLocalBuffers,
+                         GatheringMode gatheringMode,
+                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+        : GeneratorSource(schema, bufferManager, queryManager, numbersOfBufferToProduce,
+                          operatorId, numSourceLocalBuffers, gatheringMode, successors) {};
+    MOCK_METHOD(std::optional<NodeEngine::TupleBuffer>, receiveData, ());
+};
+
+class DefaultSourceProxy : public DefaultSource {
+  public:
+    DefaultSourceProxy(SchemaPtr schema,
+                       NodeEngine::BufferManagerPtr bufferManager,
+                       NodeEngine::QueryManagerPtr queryManager,
+                       const uint64_t numbersOfBufferToProduce,
+                       uint64_t frequency,
+                       OperatorId operatorId,
+                       size_t numSourceLocalBuffers,
+                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+        : DefaultSource(schema, bufferManager, queryManager,
+                        numbersOfBufferToProduce, frequency, operatorId,
+                        numSourceLocalBuffers,
+                        successors) {};
+};
+
 class SourceTest : public testing::Test {
   public:
     void SetUp() override {
@@ -769,6 +800,43 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     EXPECT_TRUE(content->true_entry);
     EXPECT_FALSE(content->falsey_entry);
     EXPECT_TRUE(content->truthy_entry);
+}
+
+TEST_F(SourceTest, testGeneratorSourceGetType) {
+    GeneratorSourceProxy genDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                                       this->nodeEngine->getQueryManager(), 1, this->operatorId,
+                                       this->numSourceLocalBuffersDefault,
+                                       DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+    EXPECT_EQ(genDataSource.getType(), SourceType::TEST_SOURCE);
+}
+
+TEST_F(SourceTest, testDefaultSourceGetType) {
+    DefaultSourceProxy defDataSource(this->schema,
+                                     this->nodeEngine->getBufferManager(),
+                                     this->nodeEngine->getQueryManager(),
+                                     1, 1000,
+                                     this->operatorId,
+                                     this->numSourceLocalBuffersDefault,
+                                     {});
+    EXPECT_EQ(defDataSource.getType(), SourceType::DEFAULT_SOURCE);
+}
+
+TEST_F(SourceTest, testDefaultSourceReceiveData) {
+    // call receiveData, get the generated buffer
+    // assert it has values and the tuples are as many as the predefined size
+    DefaultSourceProxy defDataSource(this->schema,
+                                     this->nodeEngine->getBufferManager(),
+                                     this->nodeEngine->getQueryManager(),
+                                     1, 1000,
+                                     this->operatorId,
+                                     this->numSourceLocalBuffersDefault,
+                                     {});
+    // open starts the bufferManager, otherwise receiveData will fail
+    // TODO: issue to open automatically before receiveData in DefaultSource
+    defDataSource.open();
+    auto buf = defDataSource.receiveData();
+    EXPECT_TRUE(buf.has_value());
+    EXPECT_EQ(buf->getNumberOfTuples(), 10);
 }
 
 TEST_F(SourceTest, DISABLED_testSenseSource) {
