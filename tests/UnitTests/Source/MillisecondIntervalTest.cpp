@@ -23,15 +23,15 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
 
-using namespace NES::NodeEngine;
-using namespace NES::NodeEngine::Execution;
+using namespace NES::Runtime;
+using namespace NES::Runtime::Execution;
 
 namespace NES {
 
@@ -123,21 +123,21 @@ class MillisecondIntervalTest : public testing::Test {
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 };// MillisecondIntervalTest
 
-class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
+class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
-                                   NodeEngine::BufferManagerPtr bufferManager,
+    MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
+                                   Runtime::BufferManagerPtr bufferManager,
                                    DataSinkPtr sink)
         : PipelineExecutionContext(
         0,
         std::move(queryManager),
         std::move(bufferManager),
-        [sink](TupleBuffer& buffer, NodeEngine::WorkerContextRef worker) {
+        [sink](TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
           sink->writeData(buffer, worker);
         },
         [sink](TupleBuffer&) {
         },
-        std::vector<NodeEngine::Execution::OperatorHandlerPtr>(),
+        std::vector<Runtime::Execution::OperatorHandlerPtr>(),
         12){
         // nop
     };
