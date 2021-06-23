@@ -21,7 +21,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryMetaData.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger.hpp>
@@ -196,7 +196,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert To check if Global Query Plan is created properly
     //Get MetaData information
-    std::vector<SharedQueryMetaDataPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    std::vector<SharedQueryPlanPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
 
     //Assert
     EXPECT_TRUE(sharedQueryMetaData.size() == 2u);
@@ -241,7 +241,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     syntaxBasedCompleteQueryMergerRule->apply(globalQueryPlan);
 
     //Get MetaData information
-    std::vector<SharedQueryMetaDataPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    std::vector<SharedQueryPlanPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
 
     //Assert
     EXPECT_TRUE(sharedQueryMetaData.size() == 1);
@@ -290,7 +290,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //Get MetaData information
-    std::vector<SharedQueryMetaDataPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    std::vector<SharedQueryPlanPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
 
     //Assert
     EXPECT_TRUE(sharedQueryMetaData.size() == 2u);

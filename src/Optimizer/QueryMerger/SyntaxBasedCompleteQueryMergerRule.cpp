@@ -20,7 +20,7 @@
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryMetaData.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Optimizer {
@@ -32,14 +32,14 @@ SyntaxBasedCompleteQueryMergerRulePtr SyntaxBasedCompleteQueryMergerRule::create
 bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("SyntaxBasedCompleteQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
-    std::vector<SharedQueryMetaDataPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();
+    std::vector<SharedQueryPlanPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();
     if (allNewSharedQueryMetaData.empty()) {
         NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Syntax Based Equal Query Merger Rule.");
         return true;
     }
 
-    std::vector<SharedQueryMetaDataPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryMetaData();
+    std::vector<SharedQueryPlanPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryMetaData();
     NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
     for (auto& targetSharedQueryMetaData : allNewSharedQueryMetaData) {
         bool merged = false;

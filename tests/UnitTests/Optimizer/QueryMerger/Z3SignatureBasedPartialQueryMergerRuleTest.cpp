@@ -28,7 +28,8 @@
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryMetaData.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>

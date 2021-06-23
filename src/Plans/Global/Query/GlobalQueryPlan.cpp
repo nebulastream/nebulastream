@@ -17,9 +17,8 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryMetaData.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES {
@@ -38,7 +37,7 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
         throw Exception("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId) + " already present.");
     }
 
-    auto sharedQueryMetadata = SharedQueryMetaData::create(queryPlan);
+    auto sharedQueryMetadata = SharedQueryPlan::create(queryPlan);
     SharedQueryId sharedQueryId = sharedQueryMetadata->getSharedQueryId();
     queryIdToSharedQueryIdMap[inputQueryPlanId] = sharedQueryId;
     sharedQueryIdToMetaDataMap[sharedQueryId] = sharedQueryMetadata;
@@ -48,7 +47,7 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
 void GlobalQueryPlan::removeQuery(QueryId queryId) {
     NES_DEBUG("GlobalQueryPlan: Removing query information from the meta data");
     SharedQueryId sharedQueryId = queryIdToSharedQueryIdMap[queryId];
-    SharedQueryMetaDataPtr sharedQueryMetaData = sharedQueryIdToMetaDataMap[sharedQueryId];
+    SharedQueryPlanPtr sharedQueryMetaData = sharedQueryIdToMetaDataMap[sharedQueryId];
     if (!sharedQueryMetaData->removeQueryId(queryId)) {
         throw Exception("GlobalQueryPlan: Unable to remove query with id " + std::to_string(queryId)
                         + " from shared query plan with id " + std::to_string(sharedQueryId));
@@ -56,9 +55,9 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
     queryIdToSharedQueryIdMap.erase(queryId);
 }
 
-std::vector<SharedQueryMetaDataPtr> GlobalQueryPlan::getSharedQueryMetaDataToDeploy() {
+std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryMetaDataToDeploy() {
     NES_DEBUG("GlobalQueryPlan: Get the Global MetaData to be deployed.");
-    std::vector<SharedQueryMetaDataPtr> sharedQueryMetaDataToDeploy;
+    std::vector<SharedQueryPlanPtr> sharedQueryMetaDataToDeploy;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map with global query metadata.");
     for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToMetaDataMap) {
         if (sharedQueryMetaData->isDeployed()) {
@@ -80,7 +79,7 @@ SharedQueryId GlobalQueryPlan::getSharedQueryIdForQuery(QueryId queryId) {
     return INVALID_SHARED_QUERY_ID;
 }
 
-bool GlobalQueryPlan::updateSharedQueryMetadata(const SharedQueryMetaDataPtr& sharedQueryMetaData) {
+bool GlobalQueryPlan::updateSharedQueryMetadata(const SharedQueryPlanPtr& sharedQueryMetaData) {
     NES_INFO("GlobalQueryPlan: updating the shared query metadata information");
     auto sharedQueryId = sharedQueryMetaData->getSharedQueryId();
     sharedQueryIdToMetaDataMap[sharedQueryId] = sharedQueryMetaData;
@@ -105,9 +104,9 @@ void GlobalQueryPlan::removeEmptySharedQueryMetaData() {
     }
 }
 
-std::vector<SharedQueryMetaDataPtr> GlobalQueryPlan::getAllSharedQueryMetaData() {
+std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllSharedQueryMetaData() {
     NES_INFO("GlobalQueryPlan: Get all metadata information");
-    std::vector<SharedQueryMetaDataPtr> sharedQueryMetaDataToDeploy;
+    std::vector<SharedQueryPlanPtr> sharedQueryMetaDataToDeploy;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
     for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToMetaDataMap) {
         sharedQueryMetaDataToDeploy.emplace_back(sharedQueryMetaData);
@@ -116,9 +115,9 @@ std::vector<SharedQueryMetaDataPtr> GlobalQueryPlan::getAllSharedQueryMetaData()
     return sharedQueryMetaDataToDeploy;
 }
 
-std::vector<SharedQueryMetaDataPtr> GlobalQueryPlan::getAllNewSharedQueryMetaData() {
+std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllNewSharedQueryMetaData() {
     NES_INFO("GlobalQueryPlan: Get all metadata information");
-    std::vector<SharedQueryMetaDataPtr> newSharedQueryMetaData;
+    std::vector<SharedQueryPlanPtr> newSharedQueryMetaData;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
     for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToMetaDataMap) {
         if (sharedQueryMetaData->isNew()) {
@@ -129,9 +128,9 @@ std::vector<SharedQueryMetaDataPtr> GlobalQueryPlan::getAllNewSharedQueryMetaDat
     return newSharedQueryMetaData;
 }
 
-std::vector<SharedQueryMetaDataPtr> GlobalQueryPlan::getAllOldSharedQueryMetaData() {
+std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllOldSharedQueryMetaData() {
     NES_INFO("GlobalQueryPlan: Get all metadata information");
-    std::vector<SharedQueryMetaDataPtr> oldSharedQueryMetaData;
+    std::vector<SharedQueryPlanPtr> oldSharedQueryMetaData;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
     for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToMetaDataMap) {
         if (!sharedQueryMetaData->isNew()) {
@@ -142,7 +141,7 @@ std::vector<SharedQueryMetaDataPtr> GlobalQueryPlan::getAllOldSharedQueryMetaDat
     return oldSharedQueryMetaData;
 }
 
-SharedQueryMetaDataPtr GlobalQueryPlan::getSharedQueryMetaData(SharedQueryId sharedQueryId) {
+SharedQueryPlanPtr GlobalQueryPlan::getSharedQueryMetaData(SharedQueryId sharedQueryId) {
     auto found = sharedQueryIdToMetaDataMap.find(sharedQueryId);
     if (found == sharedQueryIdToMetaDataMap.end()) {
         return nullptr;

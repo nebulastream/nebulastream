@@ -33,7 +33,7 @@
 #include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryMetaData.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Services/NESRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>

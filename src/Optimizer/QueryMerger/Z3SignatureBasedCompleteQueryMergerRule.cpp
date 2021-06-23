@@ -21,7 +21,7 @@
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryMetaData.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
@@ -39,14 +39,14 @@ Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRu
 bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     NES_INFO(
         "Z3SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
-    std::vector<SharedQueryMetaDataPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();
+    std::vector<SharedQueryPlanPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();
     if (allNewSharedQueryMetaData.empty()) {
         NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    std::vector<SharedQueryMetaDataPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryMetaData();
+    std::vector<SharedQueryPlanPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryMetaData();
     NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (auto& targetSharedQueryMetaData : allNewSharedQueryMetaData) {
