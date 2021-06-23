@@ -1084,7 +1084,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     crdConf->setNumWorkerThreads(8);
     crdConf->setNumberOfBuffersInGlobalBufferManager(1000);
     crdConf->setNumberOfBuffersInSourceLocalBufferPool(124);
-    crdConf->setnumberOfBuffersPerPipeline(124);
+    crdConf->setNumberOfBuffersPerPipeline(124);
     crdConf->setBufferSizeInBytes(524288);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
