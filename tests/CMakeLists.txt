@@ -439,9 +439,9 @@ target_link_libraries(binary-operator-sort-rule-tests nes ${GTEST_LIBRARIES})
 add_test(NAME binary-operator-sort-rule-tests COMMAND binary-operator-sort-rule-tests)
 
 ### Config Tests ###
-add_executable(config-tests "UnitTests/Configurations/ConfigTest.cpp")
-target_link_libraries(config-tests nes ${GTEST_LIBRARIES})
-add_test(config-tests COMMAND config-tests)
+add_executable(config-test "UnitTests/Configurations/ConfigTest.cpp")
+target_link_libraries(config-test nes ${GTEST_LIBRARIES})
+add_test(NAME config-test COMMAND config-test)
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
