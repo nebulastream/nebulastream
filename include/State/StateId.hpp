@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <cstdint>
 
 namespace NES {
 /**
