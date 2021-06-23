@@ -475,7 +475,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 
     for(auto &conf: configs){
         auto logicalStreamNames = conf ->getLogicalStreamName();
-        for(auto logicalStreamName : logicalStreamNames){
+        for(std::string logicalStreamName : logicalStreamNames){
             if(logicalStreamName == sourceDescriptorName){
                 return conf->build(sourceDescriptor->getSchema(), sourceDescriptorName);
             }

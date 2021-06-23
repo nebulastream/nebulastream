@@ -64,6 +64,8 @@ const std::string PhysicalStreamConfig::getPhysicalStreamName() { return physica
 
 const std::vector<std::string> PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
+void PhysicalStreamConfig::addLogicalStreamName(std::string logicalStreamName){this->logicalStreamName.push_back(logicalStreamName);}
+
 bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
 
 SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema, std::string streamName) {

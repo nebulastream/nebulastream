@@ -86,6 +86,13 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      */
     const std::vector<std::string> getLogicalStreamName() override;
 
+    /**
+     * Utility method to add one new logicalStreamName to an existing PhysicalStreamConfig
+     * (only used in the test cases)
+     * @param logicalStreamName
+     */
+    void addLogicalStreamName(std::string logicalStreamName);
+
     const std::string toString() override;
 
     bool getSkipHeader() const;

@@ -173,7 +173,7 @@ bool StreamCatalog::addPhysicalStream(std::vector<std::string> logicalStreamName
     auto inAndExclude = testIfLogicalStreamVecExistsInSchemaMapping(logicalStreamNames);
 
     // flag showing whether the physical was added without any problems
-    bool succ = !std::get<1>(inAndExclude).empty();
+    bool succ = std::get<1>(inAndExclude).empty();
 
     // Handle logicalStream names which were not found in schema mapping
     for(std::string notFound : std::get<1>(inAndExclude)){
