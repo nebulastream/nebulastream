@@ -99,7 +99,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
 //    memcpy(buffer->getBuffer(), memoryArea.get() + currentPositionInBytes, buffer->getBufferSize());
 
     //        TODO: replace copy with inplace add like with the wraparound #1853
-    auto buffer = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, bufferSize, this);
+    auto buffer = Runtime::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, bufferSize, this);
 
     if (memoryAreaSize > bufferSize) {
         NES_DEBUG("MemorySource::receiveData: add offset=" << bufferSize

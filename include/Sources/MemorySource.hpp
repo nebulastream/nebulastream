@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 #define NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 
-#include <NodeEngine/BufferRecycler.hpp>
+#include <Runtime/BufferRecycler.hpp>
 #include <Sources/GeneratorSource.hpp>
 namespace NES {
 namespace NodeEngine {
@@ -31,7 +31,7 @@ class MemorySegment;
  * that must have ownership of the area, i.e., it must control when to free it.
  * Do not use in distributed settings but only for single node dev and testing.
  */
-class MemorySource : public GeneratorSource, public NodeEngine::BufferRecycler {
+class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
     /**
      * @brief The constructor of a MemorySource
@@ -72,13 +72,13 @@ class MemorySource : public GeneratorSource, public NodeEngine::BufferRecycler {
      */
     SourceType getType() const override;
 
-    virtual void recyclePooledBuffer(NodeEngine::detail::MemorySegment*){};
+    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*){};
 
     /**
      * @brief Interface method for unpooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recycleUnpooledBuffer(NodeEngine::detail::MemorySegment*){};
+    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*){};
 
   private:
     uint64_t numberOfTuplesToProduce;
