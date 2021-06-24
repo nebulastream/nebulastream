@@ -44,6 +44,35 @@ std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode){
     return path;
 }
 
+void ILPStrategy::computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileageMap){
+    std::string topologyID = std::to_string(node->getId());
+    auto& parents = node->getParents();
+    if (parents.empty()){
+        mileageMap[topologyID] = 0.0;
+        return;
+    }
+    TopologyNodePtr parent = parents[0]->as<TopologyNode>();
+    std::string parentID = std::to_string(parent->getId());
+    if(mileageMap.find(parentID) == mileageMap.end()){
+        computeDistanceRecursive(parent, mileageMap);
+    }
+    mileageMap[topologyID] = 1.0 / node->getLinkProperty(parent)->bandwidth + mileageMap[parentID];
+}
+
+std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr queryPlan){
+    std::map<std::string, double> mileageMap; // (operatorid, M)
+    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+
+    for (const auto& sourceNode : sourceOperators) {
+        std::string streamName = sourceNode->getSourceDescriptor()->getStreamName();
+        for (const auto& sourceToplogyNode : streamCatalog->getSourceNodesForLogicalStream(streamName)) {
+            computeDistanceRecursive(sourceToplogyNode, mileageMap);
+        }
+    }
+
+    return mileageMap;
+}
+
 void ILPStrategy::addPath(context& c,
                           optimize& opt,
                           std::vector<NodePtr>& operatorPath,
@@ -52,7 +81,8 @@ void ILPStrategy::addPath(context& c,
                           std::map<std::string, TopologyNodePtr>& topologyNodes,
                           std::map<std::string, expr>& placementVariables,
                           std::map<std::string, expr>& positions,
-                          std::map<std::string, expr>& utilizations) {
+                          std::map<std::string, expr>& utilizations,
+                          std::map<std::string, double>& mileages) {
 
     for (int i = 0; i < operatorPath.size(); i++) {
         OperatorNodePtr operatorNode = operatorPath[i]->as<OperatorNode>();
@@ -105,8 +135,8 @@ void ILPStrategy::addPath(context& c,
             }
 
             // add distance to root (positive part of distance equation)
-            int M = topologyPath.size() - j - 1;
-            D_i = D_i + M * P_IJ;
+            double M = mileages[topologyID];
+            D_i = D_i + c.real_val(std::to_string(M).c_str()) * P_IJ;
         }
         positions.insert(std::make_pair(operatorID,D_i));
         // add constraint that operator is placed exactly once on topology path
@@ -127,13 +157,14 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     std::map<std::string, expr> placementVariables;         // (operatorID,topologyID)
     std::map<std::string, expr> positions;                  // operatorID
     std::map<std::string, expr> utilizations;               // topologyID
+    std::map<std::string, double> milages = computeDistanceHeuristic(queryPlan);
 
     for (const auto& sourceNode : sourceOperators) {
         std::string streamName = sourceNode->getSourceDescriptor()->getStreamName();
         TopologyNodePtr sourceToplogyNode = streamCatalog->getSourceNodesForLogicalStream(streamName)[0];
         std::vector<NodePtr> operatorPath = findPathToRoot(sourceNode);
         std::vector<NodePtr> topologyPath = findPathToRoot(sourceToplogyNode);
-        addPath(c, opt, operatorPath, topologyPath, operatorNodes, topologyNodes, placementVariables, positions, utilizations);
+        addPath(c, opt, operatorPath, topologyPath, operatorNodes, topologyNodes, placementVariables, positions, utilizations, milages);
     }
 
     // calculate network cost
@@ -166,7 +197,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     }
 
     // optimize ILP problem and print solution
-    opt.minimize(1 * cost_net + 1000 * cost_ou);
+    opt.minimize(1 * cost_net + 1 * cost_ou);
     if (sat == opt.check()) {
         model m = opt.get_model();
         NES_INFO("ILPStrategy:\n" << m);
@@ -182,8 +213,9 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
             }
         }
 
+        NES_INFO("Solver found solution with cost: " << m.eval(cost_net).get_decimal_string(4));
         for(auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap){
-            NES_INFO("\n Operator " << operatorNode->toString() <<" is executed on Topology Node " << topologyNode->toString() "\n");
+            NES_INFO("Operator " << operatorNode->toString() <<" is executed on Topology Node " << topologyNode->toString());
         }
     } else {
         NES_INFO("ILPStrategy: Solver failed.");
