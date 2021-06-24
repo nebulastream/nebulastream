@@ -38,8 +38,11 @@
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Services/QueryService.hpp>
+#include <Sinks/SinkCreator.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/LambdaSource.hpp>
@@ -327,6 +330,42 @@ class MonitoringSourceProxy : public MonitoringSource {
                            operatorId, numSourceLocalBuffers, successors) {};
 };
 
+class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
+  public:
+    MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
+                                   Runtime::BufferManagerPtr bufferManager,
+                                   DataSinkPtr sink)
+        : PipelineExecutionContext(0,
+        std::move(queryManager), std::move(bufferManager),
+        [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
+          sink->writeData(buffer, worker);
+        },
+        [sink](Runtime::TupleBuffer&) {},
+        std::vector<Runtime::Execution::OperatorHandlerPtr>(),
+        12) {};
+};
+
+class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineStage {
+  public:
+    std::atomic<uint64_t> count = 0;
+    std::promise<bool> completedPromise;
+
+    ExecutionResult
+    execute(Runtime::TupleBuffer& inputTupleBuffer,
+            Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+            Runtime::WorkerContext& wctx) override {
+        count += inputTupleBuffer.getNumberOfTuples();
+
+        Runtime::TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
+        auto arr = outputBuffer.getBuffer<uint32_t>();
+        arr[0] = static_cast<uint32_t>(count.load());
+        outputBuffer.setNumberOfTuples(count);
+        pipelineExecutionContext.emitBuffer(outputBuffer, wctx);
+        completedPromise.set_value(true);
+        return ExecutionResult::Ok;
+    }
+};
+
 class SourceTest : public testing::Test {
   public:
     void SetUp() override {
@@ -364,6 +403,7 @@ class SourceTest : public testing::Test {
         this->frequency = 1000;
         this->delimiter = ",";
         this->wrong_filepath = "this_doesnt_exist";
+        this->queryId = 1;
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
@@ -406,11 +446,26 @@ class SourceTest : public testing::Test {
                                                  gatheringMode, executableSuccessors);
     }
 
+    std::shared_ptr<Runtime::Execution::ExecutablePipeline>
+    createExecutablePipeline(std::shared_ptr<MockedExecutablePipeline> executableStage,
+                             std::shared_ptr<SinkMedium> sink) {
+        auto context =
+            std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(),
+                                                                        this->nodeEngine->getBufferManager(),
+                                                                        sink);
+        return Runtime::Execution::ExecutablePipeline::create(0,
+                                                           this->queryId,
+                                                           context,
+                                                           executableStage,
+                                                           1,
+                                                           {sink});
+    }
+
     Runtime::NodeEnginePtr nodeEngine{nullptr};
     std::string path_to_file, path_to_bin_file, delimiter, wrong_filepath, path_to_file_head;
     SchemaPtr schema, lambdaSchema;
     uint64_t tuple_size, buffer_size, numberOfBuffers,
-        numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault, frequency;
+        numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault, frequency, queryId;
 };
 
 TEST_F(SourceTest, testDataSourceGetOperatorId) {
@@ -512,19 +567,38 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
 }
 
 TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
+    // create executable stage
+    auto executableStage = std::make_shared<MockedExecutablePipeline>();
+    // create sink
+    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-freq-routine.csv", false);
+    // get mocked pipeline to add to source
+    auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
-    DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema, this->nodeEngine->getBufferManager(),
-                                              this->nodeEngine->getQueryManager(), this->operatorId,
-                                              this->numSourceLocalBuffersDefault,
-                                              DataSource::GatheringMode::FREQUENCY_MODE, {});
+    DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema,
+                                                           this->nodeEngine->getBufferManager(),
+                                               this->nodeEngine->getQueryManager(),
+                                                           this->operatorId,
+                                                           this->numSourceLocalBuffersDefault,
+                                              DataSource::GatheringMode::FREQUENCY_MODE,
+                                                           {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = false;
     auto buf = this->GetBufferWithValue();
-    ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED STRING"));
+    ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
     ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(buf));
     ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
+                                                     this->queryId,
+                                                     {mDataSource},
+                                                     {sink},
+                                                     {pipeline},
+                                                     this->nodeEngine->getQueryManager(),
+                                                     this->nodeEngine->getBufferManager());
+    EXPECT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    EXPECT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    EXPECT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     mDataSource->runningRoutine();
     EXPECT_CALL(*mDataSource, receiveData()).Times(1);
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(1);
@@ -533,24 +607,43 @@ TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
 }
 
 TEST_F(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue) {
+    // create executable stage
+    auto executableStage = std::make_shared<MockedExecutablePipeline>();
+    // create sink
+    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-ingest-routine.csv", false);
+    // get mocked pipeline to add to source
+    auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
-    DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema, this->nodeEngine->getBufferManager(),
-                                                           this->nodeEngine->getQueryManager(), this->operatorId,
+    DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema,
+                                                           this->nodeEngine->getBufferManager(),
+                                                           this->nodeEngine->getQueryManager(),
+                                                           this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+                                                           DataSource::GatheringMode::INGESTION_RATE_MODE,
+                                                           {pipeline});
     mDataSource->numBuffersToProcess = 1;
-    mDataSource->gatheringIngestionRate = 2;
-    mDataSource->running = false; // this will need to change to true or in a separate test
+    mDataSource->running = true;
+    mDataSource->wasGracefullyStopped = false;
     auto buf = this->GetBufferWithValue();
-    ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED STRING"));
-    ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
+    ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
+    ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
     ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(buf));
-    ON_CALL(*mDataSource, emitWorkFromSource(_)).WillByDefault(Return());
     ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
+                                                                         this->queryId,
+                                                                         {mDataSource},
+                                                                         {sink},
+                                                                         {pipeline},
+                                                                         this->nodeEngine->getQueryManager(),
+                                                                         this->nodeEngine->getBufferManager());
+    EXPECT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    EXPECT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    EXPECT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     mDataSource->runningRoutine();
-    EXPECT_CALL(*mDataSource, receiveData()).Times(0);
-    EXPECT_CALL(*mDataSource, emitWorkFromSource(_)).Times(0);
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(0);
+    EXPECT_CALL(*mDataSource, receiveData()).Times(1);
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(1);
+    EXPECT_FALSE(mDataSource->isRunning());
+    EXPECT_TRUE(mDataSource->wasGracefullyStopped);
 }
 
 TEST_F(SourceTest, testDataSourceOpen) {
