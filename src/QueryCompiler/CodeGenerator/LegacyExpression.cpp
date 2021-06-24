@@ -46,7 +46,7 @@ Predicate::Predicate(const BinaryOperatorType& op,
 
 LegacyExpressionPtr Predicate::copy() const { return std::make_shared<Predicate>(*this); }
 
-ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
+ExpressionStatementPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
     if (functionCallOverload.empty()) {
         if (bracket) {
             return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)),
@@ -79,7 +79,7 @@ ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHand
         .copy();
 }
 
-ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, RecordHandlerPtr recordHandler) const {
+ExpressionStatementPtr PredicateItem::generateCode(GeneratedCodePtr&, RecordHandlerPtr recordHandler) const {
     if (attribute) {
         //checks if the predicate field is contained in the current stream record.
         if (recordHandler->hasAttribute(attribute->getName())) {
@@ -135,7 +135,7 @@ UnaryPredicate::UnaryPredicate(const UnaryOperatorType& op,
 
 LegacyExpressionPtr UnaryPredicate::copy() const { return std::make_shared<UnaryPredicate>(*this); }
 
-ExpressionStatmentPtr UnaryPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
+ExpressionStatementPtr UnaryPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
     if (bracket) {
         return UnaryOperatorStatement(*(child->generateCode(code, recordHandler)),
                                        op,

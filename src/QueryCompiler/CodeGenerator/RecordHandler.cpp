@@ -20,7 +20,7 @@
 namespace NES::QueryCompilation {
 RecordHandlerPtr RecordHandler::create() { return std::make_shared<RecordHandler>(); }
 
-void RecordHandler::registerAttribute(const std::string& name, ExpressionStatmentPtr variableAccessStatement) {
+void RecordHandler::registerAttribute(const std::string& name, ExpressionStatementPtr variableAccessStatement) {
     if (hasAttribute(name)) {
         NES_DEBUG("RecordHandler: replace attribute with name " << name);
     } else {
@@ -31,7 +31,7 @@ void RecordHandler::registerAttribute(const std::string& name, ExpressionStatmen
 
 bool RecordHandler::hasAttribute(const std::string& name) { return this->statementMap.count(name) == 1; }
 
-ExpressionStatmentPtr RecordHandler::getAttribute(const std::string& name) {
+ExpressionStatementPtr RecordHandler::getAttribute(const std::string& name) {
     if (!hasAttribute(name)) {
         NES_ASSERT2_FMT(hasAttribute(name), "RecordHandler: Attribute name: " << name << " is not registered.");
     }

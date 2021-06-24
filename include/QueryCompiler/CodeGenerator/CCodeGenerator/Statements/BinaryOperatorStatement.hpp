@@ -26,16 +26,16 @@
 namespace NES::QueryCompilation {
 CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type);
 
-class BinaryOperatorStatement : public ExpressionStatment {
+class BinaryOperatorStatement : public ExpressionStatement {
   public:
-    BinaryOperatorStatement(const ExpressionStatmentPtr& lhs,
+    BinaryOperatorStatement(const ExpressionStatementPtr& lhs,
                             const BinaryOperatorType& op,
-                            const ExpressionStatmentPtr& rhs,
+                            const ExpressionStatementPtr& rhs,
                             BracketMode bracket_mode = NO_BRACKETS);
 
-    BinaryOperatorStatement(const ExpressionStatment& lhs,
+    BinaryOperatorStatement(const ExpressionStatement& lhs,
                             const BinaryOperatorType& op,
-                            const ExpressionStatment& rhs,
+                            const ExpressionStatement& rhs,
                             BracketMode bracket_mode = NO_BRACKETS);
 
     ~BinaryOperatorStatement() override = default;
@@ -49,53 +49,53 @@ class BinaryOperatorStatement : public ExpressionStatment {
 
     [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] ExpressionStatementPtr copy() const override;
 
   private:
-    ExpressionStatmentPtr lhs_;
-    ExpressionStatmentPtr rhs_;
+    ExpressionStatementPtr lhs_;
+    ExpressionStatementPtr rhs_;
     BinaryOperatorType op_;
     BracketMode bracket_mode_;
 };
 
 /** \brief small utility operator overloads to make code generation simpler and */
 
-BinaryOperatorStatement assign(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement assign(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator==(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator==(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator!=(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator!=(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator<(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator<(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator<=(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator<=(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator>(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator>(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator>=(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator>=(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator+(const ExpressionStatment&, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator+(const ExpressionStatement&, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator-(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator-(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator*(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator*(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator/(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator/(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator%(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator%(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator&&(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator&&(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator||(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator||(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator&(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator&(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator|(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator|(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator^(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator^(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator<<(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator<<(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
-BinaryOperatorStatement operator>>(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator>>(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
 }// namespace NES::QueryCompilation

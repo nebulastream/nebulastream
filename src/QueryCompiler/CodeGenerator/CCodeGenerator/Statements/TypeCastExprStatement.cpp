@@ -30,9 +30,9 @@ CodeExpressionPtr TypeCastExprStatement::getCode() const {
     return code;
 }
 
-ExpressionStatmentPtr TypeCastExprStatement::copy() const { return std::make_shared<TypeCastExprStatement>(*this); }
+ExpressionStatementPtr TypeCastExprStatement::copy() const { return std::make_shared<TypeCastExprStatement>(*this); }
 
-TypeCastExprStatement::TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type)
+TypeCastExprStatement::TypeCastExprStatement(const ExpressionStatement& expr, GeneratableDataTypePtr type)
     : expression(expr.copy()), dataType(std::move(type)) {}
 
 TypeCastExprStatement::~TypeCastExprStatement() = default;

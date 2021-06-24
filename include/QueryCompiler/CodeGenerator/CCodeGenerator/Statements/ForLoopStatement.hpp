@@ -24,8 +24,8 @@ namespace QueryCompilation {
 class ForLoopStatement : public Statement {
   public:
     ForLoopStatement(DeclarationPtr varDeclaration,
-                     ExpressionStatmentPtr condition,
-                     ExpressionStatmentPtr advance,
+                     ExpressionStatementPtr condition,
+                     ExpressionStatementPtr advance,
                      std::vector<StatementPtr> loop_body = std::vector<StatementPtr>());
 
     ~ForLoopStatement() noexcept override = default;
@@ -42,8 +42,8 @@ class ForLoopStatement : public Statement {
 
   private:
     DeclarationPtr varDeclaration;
-    ExpressionStatmentPtr condition;
-    ExpressionStatmentPtr advance;
+    ExpressionStatementPtr condition;
+    ExpressionStatementPtr advance;
     CompoundStatementPtr body;
 };
 

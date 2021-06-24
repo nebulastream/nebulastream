@@ -21,22 +21,22 @@
 
 namespace NES::QueryCompilation {
 
-class TypeCastExprStatement : public ExpressionStatment {
+class TypeCastExprStatement : public ExpressionStatement {
   public:
     [[nodiscard]] StatementType getStamentType() const override;
 
     [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] ExpressionStatementPtr copy() const override;
 
     TypeCastExprStatement(const TypeCastExprStatement&) = default;
 
-    TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type);
+    TypeCastExprStatement(const ExpressionStatement& expr, GeneratableDataTypePtr type);
 
     ~TypeCastExprStatement() override;
 
   private:
-    ExpressionStatmentPtr expression;
+    ExpressionStatementPtr expression;
     GeneratableDataTypePtr dataType;
 };
 

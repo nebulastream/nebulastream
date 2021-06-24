@@ -35,7 +35,7 @@ class RecordHandler {
      * @param name attribute name.
      * @param variableAccessStatement reference to the statement that generates this attribute.
      */
-    void registerAttribute(const std::string& name, ExpressionStatmentPtr variableAccessStatement);
+    void registerAttribute(const std::string& name, ExpressionStatementPtr variableAccessStatement);
 
     /**
      * @brief Checks a specific attribute was already registered.
@@ -48,10 +48,10 @@ class RecordHandler {
      * @param name attribute name
      * @return VariableDeclarationPtr
      */
-    ExpressionStatmentPtr getAttribute(const std::string& name);
+    ExpressionStatementPtr getAttribute(const std::string& name);
 
   private:
-    std::map<std::string, ExpressionStatmentPtr> statementMap;
+    std::map<std::string, ExpressionStatementPtr> statementMap;
 };
 }// namespace QueryCompilation
 }// namespace NES

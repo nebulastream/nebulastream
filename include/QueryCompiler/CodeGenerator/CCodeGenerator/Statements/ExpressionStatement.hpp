@@ -20,28 +20,28 @@
 
 namespace NES::QueryCompilation {
 
-class ExpressionStatment : public Statement {
+class ExpressionStatement : public Statement {
   public:
     [[nodiscard]] StatementType getStamentType() const override = 0;
     [[nodiscard]] CodeExpressionPtr getCode() const override = 0;
     /** @brief virtual copy constructor */
-    [[nodiscard]] virtual ExpressionStatmentPtr copy() const = 0;
+    [[nodiscard]] virtual ExpressionStatementPtr copy() const = 0;
     /** @brief virtual copy constructor of base class
      *  todo create one unified version, having this twice is problematic
     */
     [[nodiscard]] StatementPtr createCopy() const final;
 
-    BinaryOperatorStatement assign(const ExpressionStatment& ref);
-    [[nodiscard]] BinaryOperatorStatement assign(ExpressionStatmentPtr ref) const;
-    BinaryOperatorStatement accessPtr(const ExpressionStatment& ref);
-    [[nodiscard]] BinaryOperatorStatement accessPtr(ExpressionStatmentPtr const& ref) const;
-    BinaryOperatorStatement accessRef(const ExpressionStatment& ref);
-    [[nodiscard]] BinaryOperatorStatement accessRef(ExpressionStatmentPtr ref) const;
-    BinaryOperatorStatement operator[](const ExpressionStatment& ref);
+    BinaryOperatorStatement assign(const ExpressionStatement& ref);
+    [[nodiscard]] BinaryOperatorStatement assign(ExpressionStatementPtr ref) const;
+    BinaryOperatorStatement accessPtr(const ExpressionStatement& ref);
+    [[nodiscard]] BinaryOperatorStatement accessPtr(ExpressionStatementPtr const& ref) const;
+    BinaryOperatorStatement accessRef(const ExpressionStatement& ref);
+    [[nodiscard]] BinaryOperatorStatement accessRef(ExpressionStatementPtr ref) const;
+    BinaryOperatorStatement operator[](const ExpressionStatement& ref);
 
-    ExpressionStatment() = default;
-    ExpressionStatment(const ExpressionStatment&) = default;
-    ~ExpressionStatment() override = default;
+    ExpressionStatement() = default;
+    ExpressionStatement(const ExpressionStatement&) = default;
+    ~ExpressionStatement() override = default;
 };
 
 }// namespace NES::QueryCompilation

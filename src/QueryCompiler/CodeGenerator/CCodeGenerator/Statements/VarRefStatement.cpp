@@ -21,7 +21,7 @@ StatementType VarRefStatement::getStamentType() const { return VAR_REF_STMT; }
 
 CodeExpressionPtr VarRefStatement::getCode() const { return varDeclaration->getIdentifier(); }
 
-ExpressionStatmentPtr VarRefStatement::copy() const { return std::make_shared<VarRefStatement>(*this); }
+ExpressionStatementPtr VarRefStatement::copy() const { return std::make_shared<VarRefStatement>(*this); }
 
 VarRefStatement::VarRefStatement(const VariableDeclaration& var_decl)
     : varDeclaration(std::dynamic_pointer_cast<VariableDeclaration>(var_decl.copy())) {}

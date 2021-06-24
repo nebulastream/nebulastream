@@ -121,8 +121,8 @@ using VarRefStatementPtr = std::shared_ptr<VarRefStatement>;
 class VariableDeclaration;
 using VariableDeclarationPtr = std::shared_ptr<VariableDeclaration>;
 
-class ExpressionStatment;
-using ExpressionStatmentPtr = std::shared_ptr<ExpressionStatment>;
+class ExpressionStatement;
+using ExpressionStatementPtr = std::shared_ptr<ExpressionStatement>;
 
 class BlockScopeStatement;
 using BlockScopeStatementPtr = std::shared_ptr<BlockScopeStatement>;
