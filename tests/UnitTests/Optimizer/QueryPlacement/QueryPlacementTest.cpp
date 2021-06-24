@@ -1062,7 +1062,7 @@ class ILPPlacementTest : public testing::Test {
 
         topologyForILP = Topology::create();
 
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 100);
+        TopologyNodePtr rootNode = TopologyNode::create(3, "localhost", 123, 124, 100);
         rootNode->addNodeProperty("slots", 100);
         topologyForILP->setAsRoot(rootNode);
 
@@ -1070,9 +1070,16 @@ class ILPPlacementTest : public testing::Test {
         middleNode->addNodeProperty("slots", 10);
         topologyForILP->addNewPhysicalNodeAsChild(rootNode, middleNode);
 
-        TopologyNodePtr sourceNode = TopologyNode::create(3, "localhost", 123, 124, 1);
+        TopologyNodePtr sourceNode = TopologyNode::create(1, "localhost", 123, 124, 1);
         sourceNode->addNodeProperty("slots", 1);
         topologyForILP->addNewPhysicalNodeAsChild(middleNode, sourceNode);
+
+        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+
+        sourceNode->addLinkProperty(middleNode, linkProperty);
+        middleNode->addLinkProperty(sourceNode, linkProperty);
+        middleNode->addLinkProperty(rootNode, linkProperty);
+        rootNode->addLinkProperty(middleNode, linkProperty);
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                              "->addField(\"value\", BasicType::UINT64);";
