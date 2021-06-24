@@ -36,10 +36,10 @@ CodeExpressionPtr FunctionCallStatement::getCode() const {
     return code;
 }
 
-ExpressionStatmentPtr FunctionCallStatement::copy() const { return std::make_shared<FunctionCallStatement>(*this); }
+ExpressionStatementPtr FunctionCallStatement::copy() const { return std::make_shared<FunctionCallStatement>(*this); }
 
-void FunctionCallStatement::addParameter(const ExpressionStatment& expr) { expressions.push_back(expr.copy()); }
+void FunctionCallStatement::addParameter(const ExpressionStatement& expr) { expressions.push_back(expr.copy()); }
 
-void FunctionCallStatement::addParameter(ExpressionStatmentPtr expr) { expressions.push_back(expr); }
+void FunctionCallStatement::addParameter(ExpressionStatementPtr expr) { expressions.push_back(expr); }
 
 }// namespace NES::QueryCompilation

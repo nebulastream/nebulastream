@@ -24,36 +24,36 @@
 namespace NES::QueryCompilation {
 CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type);
 
-class UnaryOperatorStatement : public ExpressionStatment {
+class UnaryOperatorStatement : public ExpressionStatement {
   public:
-    UnaryOperatorStatement(const ExpressionStatment& expr, const UnaryOperatorType& op, BracketMode bracket_mode = NO_BRACKETS);
+    UnaryOperatorStatement(const ExpressionStatement& expr, const UnaryOperatorType& op, BracketMode bracket_mode = NO_BRACKETS);
 
     [[nodiscard]] StatementType getStamentType() const override;
 
     [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] ExpressionStatementPtr copy() const override;
 
     ~UnaryOperatorStatement() override = default;
 
   private:
-    ExpressionStatmentPtr expr_{nullptr};
-    UnaryOperatorType op_{INVALID_UNARY_OPERATOR_TYPE};
-    BracketMode bracket_mode_{NO_BRACKETS};
+    ExpressionStatementPtr expr_{nullptr};
+    UnaryOperatorType op{INVALID_UNARY_OPERATOR_TYPE};
+    BracketMode bracket_mode{NO_BRACKETS};
 };
 
-UnaryOperatorStatement operator&(const ExpressionStatment& ref);
+UnaryOperatorStatement operator&(const ExpressionStatement& ref);
 
-UnaryOperatorStatement operator*(const ExpressionStatment& ref);
+UnaryOperatorStatement operator*(const ExpressionStatement& ref);
 
-UnaryOperatorStatement operator++(const ExpressionStatment& ref);
+UnaryOperatorStatement operator++(const ExpressionStatement& ref);
 
-UnaryOperatorStatement operator--(const ExpressionStatment& ref);
+UnaryOperatorStatement operator--(const ExpressionStatement& ref);
 
-UnaryOperatorStatement operator~(const ExpressionStatment& ref);
+UnaryOperatorStatement operator~(const ExpressionStatement& ref);
 
-UnaryOperatorStatement operator!(const ExpressionStatment& ref);
+UnaryOperatorStatement operator!(const ExpressionStatement& ref);
 
-UnaryOperatorStatement sizeOf(const ExpressionStatment& ref);
+UnaryOperatorStatement sizeOf(const ExpressionStatement& ref);
 
 }// namespace NES::QueryCompilation

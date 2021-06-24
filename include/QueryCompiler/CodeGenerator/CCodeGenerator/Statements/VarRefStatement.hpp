@@ -19,7 +19,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 namespace NES {
 namespace QueryCompilation {
-class VarRefStatement : public ExpressionStatment {
+class VarRefStatement : public ExpressionStatement {
   public:
     VariableDeclarationPtr varDeclaration;
 
@@ -27,7 +27,7 @@ class VarRefStatement : public ExpressionStatment {
 
     [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] ExpressionStatementPtr copy() const override;
 
     explicit VarRefStatement(const VariableDeclaration& var_decl);
 

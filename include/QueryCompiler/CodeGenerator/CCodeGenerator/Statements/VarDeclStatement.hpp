@@ -21,7 +21,7 @@
 
 namespace NES {
 namespace QueryCompilation {
-class VarDeclStatement : public ExpressionStatment {
+class VarDeclStatement : public ExpressionStatement {
   public:
     explicit VarDeclStatement(const VariableDeclaration& var_decl);
 
@@ -31,7 +31,7 @@ class VarDeclStatement : public ExpressionStatment {
 
     [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] ExpressionStatementPtr copy() const override;
 
   private:
     std::shared_ptr<VariableDeclaration> variableDeclaration;

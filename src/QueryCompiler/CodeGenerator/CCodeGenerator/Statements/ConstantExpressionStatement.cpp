@@ -25,7 +25,7 @@ StatementType ConstantExpressionStatement::getStamentType() const { return CONST
 
 CodeExpressionPtr ConstantExpressionStatement::getCode() const { return constantValue->getCodeExpression(); }
 
-ExpressionStatmentPtr ConstantExpressionStatement::copy() const {
+ExpressionStatementPtr ConstantExpressionStatement::copy() const {
     auto copy = std::make_shared<ConstantExpressionStatement>(*this);
     copy->constantValue = constantValue;
     return copy;

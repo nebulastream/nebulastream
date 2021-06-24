@@ -22,7 +22,7 @@
 
 namespace NES::QueryCompilation {
 
-class ConstantExpressionStatement : public ExpressionStatment {
+class ConstantExpressionStatement : public ExpressionStatement {
   public:
     explicit ConstantExpressionStatement(GeneratableValueTypePtr val);
 
@@ -30,7 +30,7 @@ class ConstantExpressionStatement : public ExpressionStatment {
 
     [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] ExpressionStatementPtr copy() const override;
 
     ConstantExpressionStatement() = default;
 

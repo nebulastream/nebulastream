@@ -22,7 +22,7 @@
 #include <vector>
 
 namespace NES::QueryCompilation {
-class FunctionCallStatement : public ExpressionStatment {
+class FunctionCallStatement : public ExpressionStatement {
   public:
     explicit inline FunctionCallStatement(std::string const& f) noexcept : functionName(f){};
     explicit inline FunctionCallStatement(std::string&& f) noexcept : functionName(std::move(f)){};
@@ -36,16 +36,16 @@ class FunctionCallStatement : public ExpressionStatment {
         return std::make_shared<FunctionCallStatement>(std::forward<T>(f));
     }
 
-    [[nodiscard]] ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] ExpressionStatementPtr copy() const override;
 
-    virtual void addParameter(const ExpressionStatment& expr);
-    virtual void addParameter(ExpressionStatmentPtr expr);
+    virtual void addParameter(const ExpressionStatement& expr);
+    virtual void addParameter(ExpressionStatementPtr expr);
 
     ~FunctionCallStatement() override = default;
 
   private:
     std::string functionName;
-    std::vector<ExpressionStatmentPtr> expressions;
+    std::vector<ExpressionStatementPtr> expressions;
 };
 
 }// namespace NES::QueryCompilation

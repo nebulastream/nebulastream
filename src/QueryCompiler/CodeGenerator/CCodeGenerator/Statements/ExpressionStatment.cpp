@@ -18,33 +18,33 @@
 #include <utility>
 
 namespace NES::QueryCompilation {
-StatementPtr ExpressionStatment::createCopy() const { return this->copy(); }
+StatementPtr ExpressionStatement::createCopy() const { return this->copy(); }
 
-BinaryOperatorStatement ExpressionStatment::operator[](const ExpressionStatment& ref) {
+BinaryOperatorStatement ExpressionStatement::operator[](const ExpressionStatement& ref) {
     return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);
 }
 
-BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatment& ref) {
+BinaryOperatorStatement ExpressionStatement::accessPtr(const ExpressionStatement& ref) {
     return BinaryOperatorStatement(*this, MEMBER_SELECT_POINTER_OP, ref);
 }
 
-BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatmentPtr& ref) const {
+BinaryOperatorStatement ExpressionStatement::accessPtr(const ExpressionStatementPtr& ref) const {
     return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_POINTER_OP, ref);
 }
 
-BinaryOperatorStatement ExpressionStatment::accessRef(const ExpressionStatment& ref) {
+BinaryOperatorStatement ExpressionStatement::accessRef(const ExpressionStatement& ref) {
     return BinaryOperatorStatement(*this, MEMBER_SELECT_REFERENCE_OP, ref);
 }
 
-BinaryOperatorStatement ExpressionStatment::accessRef(ExpressionStatmentPtr ref) const {
+BinaryOperatorStatement ExpressionStatement::accessRef(ExpressionStatementPtr ref) const {
     return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_REFERENCE_OP, std::move(ref));
 }
 
-BinaryOperatorStatement ExpressionStatment::assign(const ExpressionStatment& ref) {
+BinaryOperatorStatement ExpressionStatement::assign(const ExpressionStatement& ref) {
     return BinaryOperatorStatement(*this, ASSIGNMENT_OP, ref);
 }
 
-BinaryOperatorStatement ExpressionStatment::assign(ExpressionStatmentPtr ref) const {
+BinaryOperatorStatement ExpressionStatement::assign(ExpressionStatementPtr ref) const {
     return BinaryOperatorStatement(this->copy(), ASSIGNMENT_OP, std::move(ref));
 }
 }// namespace NES::QueryCompilation

@@ -1991,7 +1991,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     }
 
     // define param to use in the ctor of pipeline to determine its arity.
-    ExpressionStatmentPtr arityStatement;
+    ExpressionStatementPtr arityStatement;
     switch (context->arity) {
         case PipelineContext::Unary: {
             arityStatement = std::make_shared<ConstantExpressionStatement>(

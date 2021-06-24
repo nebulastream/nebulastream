@@ -31,7 +31,7 @@ class LegacyExpression {
   public:
     virtual ~LegacyExpression() = default;
     ;
-    virtual ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const = 0;
+    virtual ExpressionStatementPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const = 0;
     [[nodiscard]] virtual std::string toString() const = 0;
     [[nodiscard]] virtual LegacyExpressionPtr copy() const = 0;
     [[nodiscard]] virtual bool equals(const LegacyExpression& rhs) const = 0;
@@ -50,7 +50,7 @@ class Predicate : public LegacyExpression {
               LegacyExpressionPtr const& right,
               bool bracket = true);
 
-    ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    ExpressionStatementPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] LegacyExpressionPtr copy() const override;
     [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
@@ -73,7 +73,7 @@ class UnaryPredicate : public LegacyExpression {
               LegacyExpressionPtr const& child,
               bool bracket = true);
 
-    ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    ExpressionStatementPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] LegacyExpressionPtr copy() const override;
     [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
@@ -106,7 +106,7 @@ class PredicateItem : public LegacyExpression {
     PredicateItem(char val);
     PredicateItem(const char* val);
 
-    ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    ExpressionStatementPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] LegacyExpressionPtr copy() const override;
 

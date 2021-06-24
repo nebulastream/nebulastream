@@ -58,15 +58,15 @@ CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type) {
     return std::make_shared<CodeExpression>(names[type]);
 }
 
-BinaryOperatorStatement::BinaryOperatorStatement(const ExpressionStatment& lhs,
+BinaryOperatorStatement::BinaryOperatorStatement(const ExpressionStatement& lhs,
                                                  const BinaryOperatorType& op,
-                                                 const ExpressionStatment& rhs,
+                                                 const ExpressionStatement& rhs,
                                                  BracketMode bracket_mode)
     : lhs_(lhs.copy()), rhs_(rhs.copy()), op_(op), bracket_mode_(bracket_mode) {}
 
-BinaryOperatorStatement::BinaryOperatorStatement(const ExpressionStatmentPtr& lhs,
+BinaryOperatorStatement::BinaryOperatorStatement(const ExpressionStatementPtr& lhs,
                                                  const BinaryOperatorType& op,
-                                                 const ExpressionStatmentPtr& rhs,
+                                                 const ExpressionStatementPtr& rhs,
                                                  BracketMode bracket_mode)
     : lhs_(lhs), rhs_(rhs), op_(op), bracket_mode_(bracket_mode) {}
 
@@ -105,11 +105,11 @@ CodeExpressionPtr BinaryOperatorStatement::getCode() const {
     return std::make_shared<CodeExpression>(ret);
 }
 
-ExpressionStatmentPtr BinaryOperatorStatement::copy() const { return std::make_shared<BinaryOperatorStatement>(*this); }
+ExpressionStatementPtr BinaryOperatorStatement::copy() const { return std::make_shared<BinaryOperatorStatement>(*this); }
 
 /** \brief small utility operator overloads to make code generation simpler and */
 
-BinaryOperatorStatement assign(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement assign(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, ASSIGNMENT_OP, rhs);
 }
 
@@ -133,58 +133,58 @@ BinaryOperatorStatement assign(const ExpressionStatment& lhs, const ExpressionSt
 //   return BinaryOperatorStatement(*this, ASSIGNMENT_OP, ref);
 //  }
 
-BinaryOperatorStatement operator==(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator==(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, EQUAL_OP, rhs);
 }
-BinaryOperatorStatement operator!=(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator!=(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, UNEQUAL_OP, rhs);
 }
-BinaryOperatorStatement operator<(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator<(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, LESS_THAN_OP, rhs);
 }
-BinaryOperatorStatement operator<=(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator<=(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, LESS_THAN_EQUAL_OP, rhs);
 }
-BinaryOperatorStatement operator>(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator>(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, GREATER_THAN_OP, rhs);
 }
-BinaryOperatorStatement operator>=(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator>=(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, GREATER_THAN_EQUAL_OP, rhs);
 }
-BinaryOperatorStatement operator+(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator+(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, PLUS_OP, rhs);
 }
-BinaryOperatorStatement operator-(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator-(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, MINUS_OP, rhs);
 }
-BinaryOperatorStatement operator*(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator*(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, MULTIPLY_OP, rhs);
 }
-BinaryOperatorStatement operator/(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator/(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, DIVISION_OP, rhs);
 }
-BinaryOperatorStatement operator%(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator%(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, MODULO_OP, rhs);
 }
-BinaryOperatorStatement operator&&(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator&&(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, LOGICAL_AND_OP, rhs);
 }
-BinaryOperatorStatement operator||(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator||(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, LOGICAL_OR_OP, rhs);
 }
-BinaryOperatorStatement operator&(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator&(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, BITWISE_AND_OP, rhs);
 }
-BinaryOperatorStatement operator|(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator|(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, BITWISE_OR_OP, rhs);
 }
-BinaryOperatorStatement operator^(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator^(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, BITWISE_XOR_OP, rhs);
 }
-BinaryOperatorStatement operator<<(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator<<(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, BITWISE_LEFT_SHIFT_OP, rhs);
 }
-BinaryOperatorStatement operator>>(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator>>(const ExpressionStatement& lhs, const ExpressionStatement& rhs) {
     return BinaryOperatorStatement(lhs, BITWISE_RIGHT_SHIFT_OP, rhs);
 }
 }// namespace NES::QueryCompilation
