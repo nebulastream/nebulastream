@@ -37,12 +37,9 @@ void ExpExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // if stamp is integer, convert stamp to float
-    stamp = DataTypeFactory::createFloatFromInteger(stamp);
-
-    // increase lower bound to 0
-    stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0.0);
-    NES_TRACE("ExpExpressionNode: converted stamp to float and increased the lower bound of stamp to 0: " << toString());
+    // change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are always positive and become high quickly.
+    stamp = DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max());
+    NES_TRACE("ExpExpressionNode: change stamp to float with bounds [0, DOUBLE_MAX]: " << toString());
 }
 
 bool ExpExpressionNode::equal(NodePtr const& rhs) const {

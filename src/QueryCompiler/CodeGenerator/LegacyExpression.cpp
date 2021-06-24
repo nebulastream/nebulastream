@@ -307,7 +307,7 @@ Predicate operator|(const LegacyExpression& lhs, const LegacyExpression& rhs) {
 Predicate operator^(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::BITWISE_XOR_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator <<(const LegacyExpression& lhs, const LegacyExpression& rhs) {
+Predicate operator<<(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::BITWISE_LEFT_SHIFT_OP, lhs.copy(), rhs.copy());
 }
 Predicate operator>>(const LegacyExpression& lhs, const LegacyExpression& rhs) {
