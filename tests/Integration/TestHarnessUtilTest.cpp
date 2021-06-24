@@ -147,8 +147,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
 /*
  * Testing testHarness utility using two logical source with one physical source each
  */
-//FIXME: Enabled while solving #1467
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDifferentLogicalSources) {
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogicalSources) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -661,7 +660,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
 /*
  * Testing test harness pushing element push to wrong source (should not work)
  */
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToWrongSource) {
+TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
     struct Car {
         uint32_t key;
         uint32_t value;
