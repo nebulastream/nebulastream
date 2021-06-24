@@ -230,7 +230,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::chrono::milliseconds gatheringInterval{0};
     GatheringMode gatheringMode;
     SourceType type;
-    std::atomic<bool> wasGracefullyStopped{false};
+    std::atomic<bool> wasGracefullyStopped{true};
     std::atomic_bool running{false};
 
     /**
