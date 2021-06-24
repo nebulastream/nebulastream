@@ -37,11 +37,14 @@ void LogExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // TODO: should we throw an error if a type with a negative lower bound is passed into LOG?
+    if((stamp->isInteger() && DataType::as<Integer>(stamp)->upperBound <= 0)
+       || (stamp->isFloat() && DataType::as<Float>(stamp)->upperBound <= 0)) {
+        NES_ERROR("Log10ExpressionNode: Non-positive DataType is passed into Log10 expression. Arithmetic errors would occur at run-time.");
+    }
 
-    // if stamp is integer, convert stamp to float
-    stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE("LogExpressionNode: converted stamp to float: " << toString());
+    // Output values can become highly negative for inputs close to +0. Set Double as output stamp.
+    stamp = DataTypeFactory::createDouble();
+    NES_TRACE("LogExpressionNode: set Double as output stamp DataType: " << toString());
 }
 
 bool LogExpressionNode::equal(NodePtr const& rhs) const {

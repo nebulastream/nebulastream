@@ -33,6 +33,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
@@ -498,19 +499,11 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
-        /*
-        * Unary operators are available in the C++ API but not in the legacy compiler.
-        * We therefore throw a not implemented exception when ABS is used.
-        * TODO:  re-enable this test when ABS is fully implemented
-        */
-        EXPECT_ANY_THROW({
-            auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = ABS(Attribute("f3")));
-            auto serializedOperator = OperatorSerializationUtil::serializeOperator(map, new SerializableOperator());
-            auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-            EXPECT_TRUE(map->equal(mapOperator));
-        });
+        auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = ABS(Attribute("f3")));
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(map, new SerializableOperator());
+        auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(map->equal(mapOperator));
     }
-
     {
         auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         auto* serializedOperator = OperatorSerializationUtil::serializeOperator(sink, new SerializableOperator());

@@ -27,23 +27,23 @@ PowExpressionNode::PowExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpr
 PowExpressionNode::PowExpressionNode(PowExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
 ExpressionNodePtr PowExpressionNode::create(ExpressionNodePtr const& left, ExpressionNodePtr const& right) {
-    auto addNode = std::make_shared<PowExpressionNode>(
-        DataTypeFactory::createFloat());// TODO: stamp should always be float, but is this the right way?
-    addNode->setChildren(left, right);
-    return addNode;
+    auto powNode = std::make_shared<PowExpressionNode>(DataTypeFactory::createFloat());
+    powNode->setChildren(left, right);
+    return powNode;
 }
 
 void PowExpressionNode::inferStamp(SchemaPtr schema) {
+    // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalBinaryExpressionNode::inferStamp(schema);
+
+    // Output of POW is always positive:
     if (stamp->isInteger()) {
         stamp = DataTypeFactory::createUInt32();
-        NES_DEBUG("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to UINT32.");
+        NES_TRACE("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to UINT32.");
     } else if (stamp->isFloat()) {
-        stamp = DataTypeFactory::
-            createDouble();// We could also create an "unsigned double" (as results of pow() is always non-negative), but this is very uncommon in programming languages.
-        NES_DEBUG(
-            "PowExpressionNode: Updated stamp from Float (assigned in ArithmeticalBinaryExpressionNode::inferStamp) to Double "
-            "(FLOAT64).");
+        // change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are always positive and become high quickly
+        stamp = DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max());
+        NES_TRACE("PowExpressionNode: Update bounds of float (assigned in ArithmeticalBinaryExpressionNode) stamp to bounds [0, DOUBLE_MAX]: " << toString());
     }
 }
 
