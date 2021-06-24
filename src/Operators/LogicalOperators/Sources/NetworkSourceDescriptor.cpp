@@ -20,11 +20,11 @@
 
 namespace NES::Network {
 
-NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition)
-    : SourceDescriptor(std::move(schema)), nesPartition(nesPartition) {}
+NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition, uint64_t sinkTopologyNodeId)
+    : SourceDescriptor(std::move(schema)), nesPartition(nesPartition), sinkTopologyNodeId(sinkTopologyNodeId) {}
 
-SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema, NesPartition nesPartition) {
-    return std::make_shared<NetworkSourceDescriptor>(NetworkSourceDescriptor(std::move(schema), nesPartition));
+SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema, NesPartition nesPartition, uint64_t sinkTopologyNodeId ) {
+    return std::make_shared<NetworkSourceDescriptor>(NetworkSourceDescriptor(std::move(schema), nesPartition, sinkTopologyNodeId));
 }
 
 bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) {

@@ -809,31 +809,129 @@ TEST_F(QueryMigrationPhaseIntegrationTest, test) {
 
 }
 
-TEST_F(QueryMigrationPhaseIntegrationTest, WorkerRPCBufferDataTest) {
-    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+TEST_F(QueryMigrationPhaseIntegrationTest, DetectionOfParentAndChildExecutionNodesOfAQuerySubPlanTest) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
-    coConf->setRpcPort(rpcPort);
-    coConf->setRestPort(restPort);
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+
+    NES_INFO("JoinDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
-    //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    NES_INFO("JoinDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("JoinDeploymentTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
+    NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
-    auto node = crd->getTopology()->findNodeWithId(2);
-    auto ipAddress = node->getIpAddress();
-    auto grpcPort = node->getGrpcPort();
-    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-    //auto success = crd->getWorkerRPCClient()->bufferData(rpcAddress,1);
-    //TODO: update test for new bufferData RPC call
-    NES_DEBUG(rpcAddress);
+    NES_INFO("JoinDeploymentTest: Start worker 2");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
+
+    std::string outputFilePath = "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
+    remove(outputFilePath.c_str());
+
+    //register logical stream qnv
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "window.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << window;
+    out.close();
+    wrk1->registerLogicalStream("window1", testSchemaFileName);
+
+    //register logical stream qnv
+    std::string window2 =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName2 = "window.hpp";
+    std::ofstream out2(testSchemaFileName2);
+    out2 << window2;
+    out2.close();
+    wrk1->registerLogicalStream("window2", testSchemaFileName2);
+
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(true);
+    //register physical stream R2000070
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setLogicalStreamName("window2");
+
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+
+    wrk1->registerPhysicalStream(windowStream);
+    wrk2->registerPhysicalStream(windowStream2);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    NES_INFO("JoinDeploymentTest: Submit query");
+    string query =
+        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+
+    string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$value:"
+                             "INTEGER,window1$id:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$value:INTEGER,window2$id:INTEGER,window2$timestamp:INTEGER\n"
+                             "1000,2000,4,1,4,1002,1,4,1002\n"
+                             "1000,2000,12,1,12,1001,1,12,1001\n"
+                             "2000,3000,1,2,1,2000,2,1,2000\n"
+                             "2000,3000,11,2,11,2001,2,11,2001\n"
+                             "2000,3000,16,2,16,2002,2,16,2002\n";
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    auto globalExecutionPlan = crd->getGlobalExecutionPlan();
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
+    auto querySubPlansOnRoot = globalExecutionPlan->getExecutionNodeByNodeId(1)->getQuerySubPlans(1);
+    ASSERT_TRUE(querySubPlansOnRoot.size() == 1);
+    auto leafOperators = querySubPlansOnRoot[0]->getLeafOperators();
+    EXPECT_TRUE(leafOperators.size() == 2);
+
+
+
+
+    NES_DEBUG("JoinDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_DEBUG("JoinDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_DEBUG("JoinDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_DEBUG("JoinDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("JoinDeploymentTest: Test finished");
 }
 }//namepsace nes

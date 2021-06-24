@@ -193,11 +193,11 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId
         Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));
 }
 
-OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId) {
+OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId, const TopologyNodePtr& sinkTopologyNode) {
     NES_DEBUG("BasePlacementStrategy: create Network Source operator");
     const Network::NesPartition nesPartition = Network::NesPartition(queryId, operatorId, 0, 0);
     return LogicalOperatorFactory::createSourceOperator(
-        Network::NetworkSourceDescriptor::create(std::move(inputSchema), nesPartition),
+        Network::NetworkSourceDescriptor::create(std::move(inputSchema), nesPartition,sinkTopologyNode->getId()),
         operatorId);
 }
 
@@ -268,7 +268,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                 if (i == nodesBetween.size() - 1) {
                     NES_TRACE("BasePlacementStrategy: Find the query plan with parent operator.");
                     std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
-                    OperatorNodePtr sourceOperator = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId);
+                    OperatorNodePtr sourceOperator = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId, nodesBetween[i-1]);
                     bool found = false;
                     for (auto& querySubPlan : querySubPlans) {
                         OperatorNodePtr targetDownstreamOperator = querySubPlan->getOperatorWithId(parentOperator->getId());
@@ -294,7 +294,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                     querySubPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());
 
                     NES_TRACE("BasePlacementStrategy: add network source operator");
-                    const OperatorNodePtr networkSource = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId);
+                    const OperatorNodePtr networkSource = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId,nodesBetween[i-1]);
                     querySubPlan->appendOperatorAsNewRoot(networkSource);
 
                     NES_TRACE("BasePlacementStrategy: add network sink operator");

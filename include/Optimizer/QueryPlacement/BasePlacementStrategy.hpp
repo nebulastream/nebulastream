@@ -164,7 +164,7 @@ class BasePlacementStrategy {
      * @param operatorId : the operator id of the source network operator
      * @return the instance of network source operator
      */
-    static OperatorNodePtr createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId);
+    static OperatorNodePtr createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId, const TopologyNodePtr& sinkTopologyNode);
 
     /**
      * @brief Attach network source or sink operator to the given operator

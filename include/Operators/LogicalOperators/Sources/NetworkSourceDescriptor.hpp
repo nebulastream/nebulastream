@@ -36,7 +36,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      * @param nesPartition
      * @return instance of network source descriptor
      */
-    static SourceDescriptorPtr create(SchemaPtr schema, NesPartition nesPartition);
+    static SourceDescriptorPtr create(SchemaPtr schema, NesPartition nesPartition, uint64_t sinkTopologyNodeId = 0);
 
     /**
      * @brief equal method for the NetworkSourceDescriptor
@@ -58,9 +58,11 @@ class NetworkSourceDescriptor : public SourceDescriptor {
     NesPartition getNesPartition() const;
 
   private:
-    explicit NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition);
+    explicit NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition, uint64_t sinkTopologyNodeId);
 
     NesPartition nesPartition;
+
+    [[maybe_unused]] uint64_t sinkTopologyNodeId;
 };
 
 using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
