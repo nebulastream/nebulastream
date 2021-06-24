@@ -547,13 +547,13 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "10000,20000,1,870\n"
-                             "5000,15000,1,570\n"
-                             "0,10000,1,307\n"
-                             "0,10000,4,6\n"
-                             "0,10000,11,30\n"
-                             "0,10000,12,7\n"
-                             "0,10000,16,12\n";
+                             "0,10000,1,51\n"
+                             "5000,15000,1,95\n"
+                             "10000,20000,1,145\n"
+                             "0,10000,4,1\n"
+                             "0,10000,11,5\n"
+                             "0,10000,12,1\n"
+                             "0,10000,16,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -862,13 +862,13 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,614\n"
-                             "5000,15000,1,1140\n"
-                             "10000,20000,1,1740\n"
-                             "0,10000,4,12\n"
-                             "0,10000,11,60\n"
-                             "0,10000,12,14\n"
-                             "0,10000,16,24\n";
+                             "0,10000,1,102\n"
+                             "5000,15000,1,190\n"
+                             "10000,20000,1,290\n"
+                             "0,10000,4,2\n"
+                             "0,10000,11,10\n"
+                             "0,10000,12,2\n"
+                             "0,10000,16,4\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -1058,9 +1058,9 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$value:INTEGER\n"
-                             "10000,20000,870\n"
-                             "5000,15000,570\n"
-                             "0,10000,362\n";
+                             "0,10000,60\n"
+                             "5000,15000,95\n"
+                             "10000,20000,145\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -1265,9 +1265,9 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$value:INTEGER\n"
-                             "0,10000,724\n"
-                             "5000,15000,1140\n"
-                             "10000,20000,1740\n";
+                             "0,10000,120\n"
+                             "5000,15000,190\n"
+                             "10000,20000,290\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
