@@ -91,7 +91,7 @@ class NetworkManager {
                                                   NesPartition nesPartition,
                                                   std::chrono::seconds waitTime,
                                                   uint8_t retryTimes,
-                                                  std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& buffer = {});
+                                                  std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer = {});
 
     /**
      * @brief Creates a new network manager object, which comprises of a zmq server and an exchange protocol

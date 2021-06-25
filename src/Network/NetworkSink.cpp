@@ -86,7 +86,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                                         << Runtime::NesThread::getId());
             break;
         }
-        case NodeEngine::UpdateSinks: {
+        case Runtime::UpdateSinks: {
               NES_DEBUG("NetworkSink: reconfiguring NetworkSink: " << nesPartition.toString());
 
                 NodeLocationPOD pod = task.getUserData<NodeLocationPOD>();
@@ -100,14 +100,14 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 
                 break;
         }
-        case NodeEngine::RemoveSink: {
+        case Runtime::RemoveSink: {
             NES_DEBUG("When removing a qep, NetworkSink ZMQ sockets must be closed. Closing ZMQ socket for Sink ");
             workerContext.removeChannel(nesPartition.getOperatorId(), false);
             NES_DEBUG("NetworkSink: reconfigure() removed channel without propagating EoS message on " << nesPartition.toString() << " Thread "
-                                                                        << NodeEngine::NesThread::getId());
+                                                                        << Runtime::NesThread::getId());
             break;
         }
-        case NodeEngine::BufferData: {
+        case Runtime::BufferData: {
             NES_DEBUG("Buffering Data for every Threads OutputChannel");
             workerContext.getChannel(nesPartition.getOperatorId())->setBuffer(true);
             break;
@@ -128,7 +128,7 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             queryManager->addReconfigurationMessage(parentPlanId, newReconf, false);
             break;
         }
-        case NodeEngine::UpdateSinks:{
+        case Runtime::UpdateSinks:{
             NodeLocationPOD pod = task.getUserData<NodeLocationPOD>();
             Network::NodeLocation updatedNodeLocation(pod.nodeId, pod.hostname, pod.port);
             nodeLocation = updatedNodeLocation;
@@ -137,9 +137,9 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             break;
 
         }
-        case NodeEngine::RemoveQEP:{
+        case Runtime::RemoveQEP:{
             NES_DEBUG("NetworkSink: postReconfigurationCallBack: injecting RemoveSink for each sink of qep");
-            auto newReconf = NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::RemoveSink, shared_from_this());
+            auto newReconf = Runtime::ReconfigurationMessage(parentPlanId, Runtime::RemoveSink, shared_from_this());
             queryManager->addReconfigurationMessage(parentPlanId, newReconf, false);
             break;
         }

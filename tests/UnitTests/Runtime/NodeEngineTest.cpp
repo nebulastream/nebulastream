@@ -16,6 +16,13 @@
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <gtest/gtest.h>
+
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -35,7 +42,6 @@
 #include <Util/TestUtils.hpp>
 #include <csignal>
 #include <future>
-#include <gtest/gtest.h>
 #include <iostream>
 #include <utility>
 
@@ -587,7 +593,7 @@ TEST_F(EngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
 }
 TEST_F(EngineTest, testPassingLogicalOpreratorIdToPhysicalSink) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto engine = Runtime::create("127.0.0.1", 31337, streamConf);
 
     TopologyNodePtr node = TopologyNode::create(1, "localhost", 123, 124, 4);
     Network::NesPartition nesPartition(0, 0, 0, 0);
@@ -607,7 +613,7 @@ TEST_F(EngineTest, testPassingLogicalOpreratorIdToPhysicalSink) {
     ASSERT_TRUE(qep);
     ASSERT_TRUE(qep->get()->getStatus() == ExecutableQueryPlanStatus::Running);
     EXPECT_TRUE(qep->get()->getSinks()[0]->getOperatorId() == 47);
-    ReconfigurationMessage message = ReconfigurationMessage(queryPlan->getQuerySubPlanId(),NES::NodeEngine::RemoveQEP,*qep);
+    ReconfigurationMessage message = ReconfigurationMessage(queryPlan->getQuerySubPlanId(),RemoveQEP,*qep);
     engine->getQueryManager()->addReconfigurationMessage(queryPlan->getQuerySubPlanId(),message,false);
 
 

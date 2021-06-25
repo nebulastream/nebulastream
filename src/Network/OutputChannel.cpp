@@ -25,7 +25,7 @@
 
 namespace NES::Network {
 
-OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, std::string&& address,std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& buffer)
+OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, std::string&& address,std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer)
     : socketAddr(std::move(address)), zmqSocket(std::move(zmqSocket)), channelId(channelId), buffer(std::move(buffer)), buffering (false) {
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
 }
@@ -36,7 +36,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                                                      ExchangeProtocol& protocol,
                                                      std::chrono::seconds waitTime,
                                                      uint8_t retryTimes,
-                                                     std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& buffer) {
+                                                     std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer) {
     std::chrono::seconds backOffTime = waitTime;
     try {
         ChannelId channelId(nesPartition, Runtime::NesThread::getId());
@@ -192,7 +192,7 @@ void OutputChannel::setBuffer(bool b) {
 }
 bool OutputChannel::isBuffering() { return buffering;}
 
-std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& OutputChannel::moveBuffer() {
+std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& OutputChannel::moveBuffer() {
     return std::move(buffer);
 }
 bool OutputChannel::emptyBuffer() {

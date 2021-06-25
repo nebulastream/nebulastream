@@ -38,7 +38,7 @@ using OutputChannelPtr = std::unique_ptr<OutputChannel>;
 
 class OutputChannel {
   public:
-    explicit OutputChannel(zmq::socket_t&& zmqSocket, ChannelId channelId, std::string&& address,std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& buffer);
+    explicit OutputChannel(zmq::socket_t&& zmqSocket, ChannelId channelId, std::string&& address,std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer);
 
     /**
      * @brief close the output channel and release resources
@@ -65,7 +65,7 @@ class OutputChannel {
                                    ExchangeProtocol& protocol,
                                    std::chrono::seconds waitTime,
                                    uint8_t retryTimes,
-                                   std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& buffer = {});
+                                   std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer = {});
 
     /**
      * @brief Send buffer to the destination defined in the constructor. Note that this method will internally
@@ -103,14 +103,14 @@ class OutputChannel {
 
     bool isBuffering();
 
-    std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>>&& moveBuffer();
+    std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& moveBuffer();
 
   private:
     const std::string socketAddr;
     zmq::socket_t zmqSocket;
     const ChannelId channelId;
     bool isClosed{false};
-    std::queue<std::pair<NodeEngine::TupleBuffer, uint64_t>> buffer;
+    std::queue<std::pair<Runtime::TupleBuffer, uint64_t>> buffer;
     bool buffering;
 };
 
