@@ -113,7 +113,8 @@ class MQTTTSinkTest : public testing::Test {
            server/broker and SinkMedium does not provide such a connect() function. There also seems to be no 'good' way of casting
            a std::shared_ptr<SinkMedium> to a std::shared_ptr<MQTTSink>. As it seems, shared pointers should be initialized with
            std::make_shared.  */
-        MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format,
+        MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(0,
+                                                          format,
                                                           0,
                                                           LOCAL_ADDRESS,
                                                           CLIENT_ID,
@@ -153,7 +154,8 @@ TEST_F(MQTTTSinkTest, testMQTTClientCreation) {
     uint64_t msgDelay = 500;
     MQTTSinkDescriptor::ServiceQualities qualityOfService = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
     bool asynchronousClient = true;
-    auto mqttSink = createMQTTSink(testSchema,
+    auto mqttSink = createMQTTSink(0,
+                                   testSchema,
                                    0,
                                    nodeEngine,
                                    LOCAL_ADDRESS,
@@ -177,7 +179,8 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
     MQTTSinkDescriptor::ServiceQualities qualityOfService = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
     bool asynchronousClient = true;
     SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
-    MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format,
+    MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(0,
+                                                      format,
                                                       0,
                                                       LOCAL_ADDRESS,
                                                       CLIENT_ID,
@@ -262,7 +265,8 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
     MQTTSinkDescriptor::ServiceQualities qualityOfService = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
     bool asynchronousClient = false;
     auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
-    auto mqttSink = createMQTTSink(testSchema,
+    auto mqttSink = createMQTTSink(0,
+                                   testSchema,
                                    0,
                                    nodeEngine,
                                    LOCAL_ADDRESS,

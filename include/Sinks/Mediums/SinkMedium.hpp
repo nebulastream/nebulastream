@@ -18,6 +18,7 @@
 #define INCLUDE_DATASINK_H_
 
 #include <API/Schema.hpp>
+#include <Operators/OperatorId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
@@ -36,7 +37,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**FF
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId);
+    explicit SinkMedium(OperatorId logicalOperatorId, SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId);
 
     /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
@@ -80,6 +81,11 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @return number of sent buffer
      */
     uint64_t getNumberOfWrittenOutTuples();
+
+    /**
+     * @brief increments number of sub query plans that can write to this sink
+     */
+     void addNewProducer();
 
     /**
      * @brief virtual function to get a string describing the particular sink
@@ -126,11 +132,15 @@ class SinkMedium : public Runtime::Reconfigurable {
     bool append{false};
     std::atomic_bool schemaWritten{false};
 
+    OperatorId logicalOperatorId;
     QuerySubPlanId parentPlanId;
 
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};
     std::mutex writeMutex{};
+
+  private:
+    std::atomic<uint32_t> numOfProducers;
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
