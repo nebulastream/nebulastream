@@ -127,6 +127,12 @@ class ExecutableQueryPlan : public Reconfigurable {
     void setSources(std::vector<DataSourcePtr> newSources);
 
     /**
+     * @brief Replace sinks of a QEP.
+     * @param new vector of sinks to associate with QEP
+     */
+    void setSinks(std::vector<DataSinkPtr> newSinks);
+
+    /**
      * @brief Get data sinks.
      */
     const std::vector<DataSinkPtr>& getSinks() const;

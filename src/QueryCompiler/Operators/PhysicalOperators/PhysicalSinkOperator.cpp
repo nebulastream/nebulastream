@@ -48,6 +48,8 @@ SinkDescriptorPtr PhysicalSinkOperator::getSinkDescriptor() { return sinkDescrip
 std::string PhysicalSinkOperator::toString() const { return "PhysicalSinkOperator"; }
 OperatorId PhysicalSinkOperator::getLogicalOperatorId() { return logicalSourceOperatorId; }
 
-OperatorNodePtr PhysicalSinkOperator::copy() { return create(id, inputSchema, outputSchema, sinkDescriptor); }
+OperatorNodePtr PhysicalSinkOperator::copy() {
+    return create(id, logicalSourceOperatorId, inputSchema, outputSchema, sinkDescriptor);
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators
