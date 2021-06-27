@@ -26,7 +26,6 @@ add_source_nes(
         NesThread.cpp
         WorkerContext.cpp
         LocalBufferPool.cpp
-        StopQueryMessage.cpp
 )
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)

@@ -29,12 +29,12 @@ void WorkerContext::storeChannel(Network::OutputChannelKey id, Network::OutputCh
     channels[id] = std::move(channel);
 }
 
-void WorkerContext::releaseChannel(Network::OutputChannelKey id, bool notifyRelease) {
+void WorkerContext::releaseChannel(Network::OutputChannelKey id) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     auto it = channels.find(id);
     if (it != channels.end()) {
         if (it->second) {
-            it->second->close(notifyRelease);
+            it->second->close();
         }
         channels.erase(it);
     }

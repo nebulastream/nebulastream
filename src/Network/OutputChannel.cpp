@@ -153,25 +153,13 @@ bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tuple
     return false;
 }
 
-void OutputChannel::sendReconfigurationMessage(QueryReconfigurationPlanPtr queryReconfigurationPlan) {
-    NES_DEBUG("OutputChannel::sendReconfigurationMessage: sending reconfiguration message ("
-              << queryReconfigurationPlan << ") on channel (" << channelId << ").");
-    std::string serializedReconfigurationPlan = queryReconfigurationPlan->serializeToString();
-    auto sz = serializedReconfigurationPlan.size();
-    sendMessage<Messages::QueryReconfigurationMessage, kZmqSendMore>(zmqSocket, channelId, sz);
-    zmq::message_t query = zmq::message_t(serializedReconfigurationPlan.c_str(), sz);
-    zmqSocket.send(query, kZmqSendDefault);
-}
-
 void OutputChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR(errorMsg.getErrorTypeAsString()); }
 
-void OutputChannel::close(bool notifyRelease) {
+void OutputChannel::close() {
     if (isClosed) {
         return;
     }
-    if (notifyRelease) {
-        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId);
-    }
+    sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId);
     zmqSocket.close();
     NES_DEBUG("OutputChannel: Socket closed for " << channelId);
     isClosed = true;

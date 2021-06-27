@@ -161,13 +161,6 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
             });
             break;
         }
-        case StopViaReconfiguration: {
-            auto stopMessage = task.getUserData<StopQueryMessagePtr>();
-            handleSoftStop(task, stopMessage->getTargetQep(), [stopMessage]() {
-                return std::make_any<StopQueryMessagePtr>(stopMessage);
-            });
-            break;
-        }
         case HardEndOfStream: {
             NES_DEBUG("Going to reconfigure pipeline belonging to subplanId: " << querySubPlanId << " stage id: " << pipelineId
                                                                                << " got HardEndOfStream");

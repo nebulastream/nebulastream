@@ -60,7 +60,7 @@ class WorkerContext {
      * @param querySubPlanId and id of the operator
      * @param notifyRelease: if true, then channel sends EoS messages
      */
-    void releaseChannel(Network::OutputChannelKey id, bool notifyRelease);
+    void releaseChannel(Network::OutputChannelKey id);
 
     /**
      * @brief retrieve a registered output channel

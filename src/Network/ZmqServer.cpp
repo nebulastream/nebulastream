@@ -255,27 +255,6 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     exchangeProtocol.onEndOfStream(eosMsg);
                     break;
                 }
-                case Messages::kQueryReconfiguration: {
-                    // if server receives a message that a query reconfiguration is in progress
-                    zmq::message_t channelEnvelope;
-                    auto optRecvStatus = dispatcherSocket.recv(channelEnvelope, kZmqRecvDefault);
-                    NES_ASSERT2_FMT(optRecvStatus.has_value(), "Invalid recv size");
-                    auto payloadHeader = *channelEnvelope.data<Messages::QueryReconfigurationMessage>();
-                    NES_DEBUG("ZmqServer::QueryReconfigurationMessage: received for channel " << payloadHeader.getChannelId());
-
-                    zmq::message_t xc(payloadHeader.sizeOfReconfigurationPlan);
-                    auto optRetSize = dispatcherSocket.recv(xc, kZmqRecvDefault);
-                    NES_ASSERT2_FMT(optRetSize.has_value(), "ZmqServer::QueryReconfigurationMessage: Invalid recv size");
-                    NES_ASSERT2_FMT(optRetSize.value() == payloadHeader.sizeOfReconfigurationPlan,
-                                    "ZmqServer::QueryReconfigurationMessage: Recv not matching sizes "
-                                        << optRetSize.value() << "!=" << payloadHeader.sizeOfReconfigurationPlan);
-                    std::string msg_str(static_cast<char*>(xc.data()), xc.size());
-                    auto queryReconfigurationPlan = QueryReconfigurationPlan::deserializeFromString(msg_str);
-                    NES_DEBUG("ZmqServer::messageHandlerEventLoop: kQueryReconfiguration received message ("
-                              << queryReconfigurationPlan << ") on channel (" << payloadHeader.getChannelId() << ").");
-                    exchangeProtocol.onQueryReconfiguration(payloadHeader.getChannelId(), queryReconfigurationPlan);
-                    break;
-                }
                 default: {
                     NES_ERROR("ZmqServer: received unknown message type");
                 }

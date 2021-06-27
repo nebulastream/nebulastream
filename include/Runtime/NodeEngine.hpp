@@ -283,11 +283,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void onChannelError(Network::Messages::ErrorMessage) override;
 
-    /**
-    * @brief this callback is called once an reconfiguration is triggered
-    */
-    void onQueryReconfiguration(Network::ChannelId channelId, QueryReconfigurationPlanPtr queryReconfigurationPlan) override;
-
     // TODO we should get rid of the following method
     /**
      * @brief Set the physical stream config
@@ -310,6 +305,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return Executable Plan if compilation successful else nullopt
      */
     std::optional<Execution::ExecutableQueryPlanPtr> compileQuery(QueryPlanPtr queryPlan);
+
     bool registerQueryExecutionPlanInQueryManagerForSources(Execution::ExecutableQueryPlanPtr& queryExecutionPlan,
                                                             const std::vector<DataSourcePtr>& sources);
 
@@ -332,9 +328,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerPipeline;
-    void reconfigurationStartSequence(QueryReconfigurationPlanPtr queryReconfigurationPlan,
-                                      Network::NesPartition& partition,
-                                      QuerySubPlanId querySubPlanId);
+    bool reconfigureDataSource(const std::shared_ptr<Execution::ExecutableQueryPlan>& oldQep,
+                               std::shared_ptr<Execution::ExecutableQueryPlan>& newQep);
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

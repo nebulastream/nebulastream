@@ -84,11 +84,6 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
     }
 }
 
-void ExchangeProtocol::onQueryReconfiguration(ChannelId channelId, QueryReconfigurationPlanPtr queryReconfigurationPlan) {
-    std::unique_lock lock(reconfigurationMutex);
-    protocolListener->onQueryReconfiguration(channelId, queryReconfigurationPlan);
-}
-
 std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const { return partitionManager; }
 
 }// namespace NES::Network

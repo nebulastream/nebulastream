@@ -294,81 +294,109 @@ bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReco
     }
     std::set<QuerySubPlanId> reconfiguredSubPlans;
     // At source only replace QEP for stopping at source, use stop query endpoint
-    std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace =
-        queryReconfigurationPlan->getQuerySubPlanIdsToReplace();
-    for (auto querySubPlanId : querySubPlanIds) {
-        if (querySubPlanIdsToReplace.find(querySubPlanId) != querySubPlanIdsToReplace.end()) {
-            auto oldQep = deployedQEPs[querySubPlanId];
-            auto newQep = reconfigurationQEPs[querySubPlanIdsToReplace[querySubPlanId]];
 
-            std::vector<DataSourcePtr> oldSources = oldQep->getSources();
-            std::unordered_map<OperatorId, DataSourcePtr> logicalOperatorIdSourceMapping;
-            NES_ASSERT2_FMT(oldSources.size() == newQep->getSources().size(),
-                            "NodeEngine::startQueryReconfiguration: Failed to replace qep: "
-                                << oldQep->getQuerySubPlanId() << " with qep:" << newQep->getQuerySubPlanId()
-                                << " as number of sources are different");
-            for (auto oldSource : oldSources) {
-                logicalOperatorIdSourceMapping[oldSource->getLogicalSourceOperatorId()] = oldSource;
-            }
+    if (deployedQEPs.find(queryReconfigurationPlan->getOldQuerySubPlanId()) == deployedQEPs.end()) {
+        NES_ERROR("NodeEngine::startQueryReconfiguration: Reconfiguration failed. SubQuery ID does not exists in deployedQEPs:  "
+                  << queryReconfigurationPlan->getOldQuerySubPlanId());
+        return false;
+    }
+    if (reconfigurationQEPs.find(queryReconfigurationPlan->getNewQuerySubPlanId()) == reconfigurationQEPs.end()) {
+        NES_ERROR("NodeEngine::startQueryReconfiguration: Reconfiguration failed. SubQuery ID does not exists in "
+                  "reconfigurationQEPs:  "
+                  << queryReconfigurationPlan->getNewQuerySubPlanId());
+        return false;
+    }
+    auto oldQep = deployedQEPs[queryReconfigurationPlan->getOldQuerySubPlanId()];
+    auto newQep = reconfigurationQEPs[queryReconfigurationPlan->getNewQuerySubPlanId()];
 
-            std::vector<ReconfigurationMessage> replaceDataEmitterMessages;
-            std::vector<std::vector<Execution::SuccessorExecutablePipeline>> oldPipelineSuccessors;
+    if (queryReconfigurationPlan->getReconfigurationType() == DATA_SOURCE) {
+        return reconfigureDataSource(oldQep, newQep);
+    }
+    return false;
+}
 
-            for (auto newSource : newQep->getSources()) {
-                OperatorId logicalSourceOperatorId = newSource->getLogicalSourceOperatorId();
-                if (logicalOperatorIdSourceMapping.find(logicalSourceOperatorId) == logicalOperatorIdSourceMapping.end()) {
-                    NES_ERROR("NodeEngine::startQueryReconfiguration: Source with logicalOperatorId: "
-                              << logicalSourceOperatorId << " not found in oldQep: " << oldQep->getQuerySubPlanId());
-                }
-                DataSourcePtr oldSource = logicalOperatorIdSourceMapping[logicalSourceOperatorId];
-                auto updatedSuccessors = newSource->getExecutableSuccessors();
-                auto updatedSuccessorPipeline =
-                    std::make_any<std::vector<Execution::SuccessorExecutablePipeline>>(updatedSuccessors);
-                replaceDataEmitterMessages.emplace_back(ReconfigurationMessage(newQep->getQueryId(),
-                                                                               ReplaceDataEmitter,
-                                                                               oldSource,
-                                                                               std::move(updatedSuccessorPipeline)));
-                oldPipelineSuccessors.emplace_back(oldSource->getExecutableSuccessors());
-            }
-
-            // Replace sources in new QEP with sources in old QEP
-            newQep->setSources(std::move(oldQep->getSources()));
-            // Register source mapping in Query Manager
-            registerQueryInNodeEngine(newQep, false);
-
-            // No need to start the sources but we need to start new QEP and setup sinks
-            queryManager->startQueryForSources(newQep, stateManager, std::vector<DataSourcePtr>{});
-
-            queryManager->propagateQueryReconfigurationPlan(newQep, queryReconfigurationPlan);
-            for (auto replaceDataEmitterMessage : replaceDataEmitterMessages) {
-                queryManager->addReconfigurationMessage(newQep->getQueryId(), replaceDataEmitterMessage, false);
-            }
-            for (auto oldPipelineSuccessor : oldPipelineSuccessors) {
-                queryManager->propagateViaSuccessorPipelines(
-                    StopViaReconfiguration,
-                    [queryReconfigurationPlan](Execution::ExecutableQueryPlanPtr qepToStop) {
-                        auto weakQep = std::weak_ptr<Execution::ExecutableQueryPlan>(qepToStop);
-                        StopQueryMessagePtr data = std::make_unique<StopQueryMessage>(weakQep, queryReconfigurationPlan);
-                        return std::make_any<StopQueryMessagePtr>(data);
-                    },
-                    oldQep,
-                    oldPipelineSuccessor);
-            }
-            reconfigurationQEPs.erase(newQep->getQuerySubPlanId());
-            deployedQEPs.erase(oldQep->getQuerySubPlanId());
-            reconfiguredSubPlans.insert(oldQep->getQuerySubPlanId());
+bool NodeEngine::reconfigureDataSource(const std::shared_ptr<Execution::ExecutableQueryPlan>& oldQep,
+                                       std::shared_ptr<Execution::ExecutableQueryPlan>& newQep) {
+    // If qep has data sinks, sink reconfiguration, else if data source source reconfiguration
+    // Ensure new data sources are not added
+    std::unordered_map<OperatorId, DataSourcePtr> oldQepDataSourceMapping;
+    std::unordered_map<OperatorId, DataSourcePtr> newQepDataSourceMapping;
+    for (const auto& source : oldQep->getSources()) {
+        if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
+            continue;
+        }
+        oldQepDataSourceMapping[source->getLogicalSourceOperatorId()] = source;
+    }
+    for (const auto& source : newQep->getSources()) {
+        if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
+            newQepDataSourceMapping[source->getLogicalSourceOperatorId()] = source;
         }
     }
-    auto originalSubQueryPlans = queryIdToQuerySubPlanIds.find(queryId);
-    originalSubQueryPlans->second.erase(std::remove_if(originalSubQueryPlans->second.begin(),
-                                                       originalSubQueryPlans->second.end(),
-                                                       [reconfiguredSubPlans](QuerySubPlanId subPlanId) {
-                                                           return reconfiguredSubPlans.contains(subPlanId);
-                                                       }),
-                                        originalSubQueryPlans->second.end());
-    if (queryIdToQuerySubPlanIds[queryId].empty()) {
-        queryIdToQuerySubPlanIds.erase(queryId);
+    NES_ASSERT2_FMT(oldQepDataSourceMapping.size() == newQepDataSourceMapping.size(),
+                    "NodeEngine::reconfigureDataSource: Failed to replace qep: " << oldQep->getQuerySubPlanId()
+                                                                                 << " with qep:" << newQep->getQuerySubPlanId()
+                                                                                 << " as number of sources are different");
+    // check if no new data sources are added
+    for (auto newQepDatasource : newQepDataSourceMapping) {
+        if (oldQepDataSourceMapping.find(newQepDatasource.first) == oldQepDataSourceMapping.end()) {
+            NES_ERROR("NodeEngine::reconfigureDataSource: Reconfiguration failed. New QEP can't have new source: "
+                      << newQepDatasource.first);
+            return false;
+        }
     }
+
+    std::vector<DataSourcePtr> oldSources = oldQep->getSources();
+    std::unordered_map<OperatorId, DataSourcePtr> logicalOperatorIdSourceMapping;
+
+    std::vector<ReconfigurationMessage> replaceDataEmitterMessages;
+    std::vector<std::vector<Execution::SuccessorExecutablePipeline>> oldPipelineSuccessors;
+
+    for (auto newSource : newQep->getSources()) {
+        OperatorId logicalSourceOperatorId = newSource->getLogicalSourceOperatorId();
+        if (oldQepDataSourceMapping.find(logicalSourceOperatorId) == oldQepDataSourceMapping.end()) {
+            NES_ERROR("NodeEngine::reconfigureDataSource: Source with logicalOperatorId: "
+                      << logicalSourceOperatorId << " not found in oldQep: " << oldQep->getQuerySubPlanId());
+        }
+        DataSourcePtr oldSource = oldQepDataSourceMapping[logicalSourceOperatorId];
+        auto updatedSuccessors = newSource->getExecutableSuccessors();
+        auto updatedSuccessorPipeline = std::make_any<std::vector<Execution::SuccessorExecutablePipeline>>(updatedSuccessors);
+        replaceDataEmitterMessages.emplace_back(
+            ReconfigurationMessage(newQep->getQueryId(), ReplaceDataEmitter, oldSource, std::move(updatedSuccessorPipeline)));
+        oldPipelineSuccessors.emplace_back(oldSource->getExecutableSuccessors());
+    }
+
+    // Replace sources in new QEP with sources in old QEP
+    newQep->setSources(std::move(oldQep->getSources()));
+    // Register source mapping in Query Manager
+    registerQueryInNodeEngine(newQep, false);
+
+    // No need to start the sources but we need to start new QEP and setup sinks
+    queryManager->startQueryForSources(newQep, stateManager, std::vector<DataSourcePtr>{});
+
+    for (auto replaceDataEmitterMessage : replaceDataEmitterMessages) {
+        queryManager->addReconfigurationMessage(newQep->getQueryId(), replaceDataEmitterMessage, false);
+    }
+
+    for (auto oldPipelineSuccessor : oldPipelineSuccessors) {
+        queryManager->propagateViaSuccessorPipelines(
+            SoftEndOfStream,
+            [](Execution::ExecutableQueryPlanPtr executableQueryPlan) {
+                return std::make_any<std::weak_ptr<Execution::ExecutableQueryPlan>>(executableQueryPlan);
+            },
+            oldQep,
+            oldPipelineSuccessor);
+    }
+
+    reconfigurationQEPs.erase(newQep->getQuerySubPlanId());
+    deployedQEPs.erase(oldQep->getQuerySubPlanId());
+
+    std::vector<QuerySubPlanId>& subPlanIds = queryIdToQuerySubPlanIds[oldQep->getQueryId()];
+    subPlanIds.erase(std::remove_if(subPlanIds.begin(),
+                                    subPlanIds.end(),
+                                    [oldQep](const int& x) {
+                                        return x == oldQep->getQuerySubPlanId();
+                                    }),
+                     subPlanIds.end());
     return true;
 }
 
@@ -449,7 +477,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
 
 bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime:stopQuery for qep" << queryId);
+    NES_DEBUG("Runtime::stopQuery for Query: " << queryId);
     auto it = queryIdToQuerySubPlanIds.find(queryId);
     if (it != queryIdToQuerySubPlanIds.end()) {
         std::vector<QuerySubPlanId> querySubPlanIds = it->second;
@@ -594,93 +622,6 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
     queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
-}
-
-void NodeEngine::onQueryReconfiguration(Network::ChannelId channelId, QueryReconfigurationPlanPtr queryReconfigurationPlan) {
-    NES_DEBUG("NodeEngine::onQueryReconfiguration: Handling reconfiguration trigger from " << channelId);
-    std::unique_lock lock(engineMutex);
-    auto partition = channelId.getNesPartition();
-
-    for (auto replacementMapping : queryReconfigurationPlan->getQuerySubPlanIdsToReplace()) {
-        if (deployedQEPs.find(replacementMapping.first) != deployedQEPs.end()) {
-            if (reconfigurationQEPs.find(replacementMapping.second) != reconfigurationQEPs.end()) {
-                auto oldQep = deployedQEPs[replacementMapping.first];
-                auto newQep = reconfigurationQEPs[replacementMapping.second];
-                NES_DEBUG("NodeEngine::onQueryReconfiguration: Trigger replacement of QuerySubPlan "
-                          << oldQep->getQuerySubPlanId() << " with " << newQep->getQuerySubPlanId());
-                uint64_t announcedProducers = 0;
-                if (queryManager->isSourceAssociatedWithQep(partition.getOperatorId(), oldQep->getQuerySubPlanId())) {
-                    announcedProducers = partitionManager->getSubpartitionCounter(partition);
-                    partitionManager->removePartition(partition);
-                    queryManager->triggerQepStopReconfiguration(partition.getOperatorId(), oldQep, queryReconfigurationPlan);
-                }
-                reconfigurationStartSequence(queryReconfigurationPlan, partition, newQep->getQuerySubPlanId());
-                for (uint64_t i = 0; i < announcedProducers; i++) {
-                    partitionManager->pinSubpartition(partition);
-                }
-            }
-        }
-        reconfigurationStartSequence(queryReconfigurationPlan, partition, replacementMapping.second);
-    }
-
-    for (auto querySubPlanId : queryReconfigurationPlan->getQuerySubPlanIdsToStart()) {
-        reconfigurationStartSequence(queryReconfigurationPlan, partition, querySubPlanId);
-    }
-
-    for (auto querySubPlanId : queryReconfigurationPlan->getQuerySubPlanIdsToStop()) {
-        if (deployedQEPs.find(querySubPlanId) != deployedQEPs.end()) {
-            auto qepToStop = deployedQEPs[querySubPlanId];
-            if (partitionManager->isRegistered(partition)) {
-                if (partitionManager->unregisterSubpartition(partition)) {
-                    NES_DEBUG("NodeEngine::onQueryReconfiguration: Stop Query reconfiguration received for "
-                              << querySubPlanId << " on " << channelId.toString() << " and no active subpartitions. Triggering ");
-                    queryManager->triggerQepStopReconfiguration(0, qepToStop, queryReconfigurationPlan);
-                } else {
-                    NES_DEBUG("NodeEngine::onQueryReconfiguration: Stop Query reconfiguration received for "
-                              << querySubPlanId << " on " << channelId.toString()
-                              << " but there is still some active subpartition: "
-                              << partitionManager->getSubpartitionCounter(partition));
-                }
-            } else {
-                NES_DEBUG("NodeEngine::onQueryReconfiguration: unregister of source partition "
-                          << partition << " failed as it's not registered.");
-            }
-            if (!queryManager->allSourcesMappedToQep(qepToStop)) {
-                deployedQEPs.erase(qepToStop->getQuerySubPlanId());
-            }
-        }
-    }
-}
-
-void NodeEngine::reconfigurationStartSequence(QueryReconfigurationPlanPtr queryReconfigurationPlan,
-                                              Network::NesPartition& partition,
-                                              QuerySubPlanId querySubPlanId) {
-    std::unique_lock lock(engineMutex);
-    if (reconfigurationQEPs.find(querySubPlanId) != reconfigurationQEPs.end()) {
-        // start qepToStart
-        auto qepToStart = reconfigurationQEPs[querySubPlanId];
-        if (deployedQEPs.find(qepToStart->getQuerySubPlanId()) == deployedQEPs.end()) {
-            if (!registerQueryInNodeEngine(qepToStart, true)) {
-                NES_DEBUG("NodeEngine::onQueryReconfiguration: register of QEP " << querySubPlanId << " failed!");
-            }
-        }
-        if (!queryManager->isSourceAssociatedWithQep(partition.getOperatorId(), qepToStart->getQuerySubPlanId())) {
-            // Will register partition
-            queryManager->triggerQepStartReconfiguration(partition.getOperatorId(),
-                                                         qepToStart,
-                                                         stateManager,
-                                                         queryReconfigurationPlan);
-            if (pendingPartitionPinning.find(partition) != pendingPartitionPinning.end()) {
-                auto announcedProducers = pendingPartitionPinning[partition].fetch_add(1);
-                for (uint64_t i = 0; i < announcedProducers; i++) {
-                    partitionManager->pinSubpartition(partition);
-                }
-            }
-        }
-        if (queryManager->allSourcesMappedToQep(qepToStart)) {
-            reconfigurationQEPs.erase(qepToStart->getQuerySubPlanId());
-        }
-    }
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {

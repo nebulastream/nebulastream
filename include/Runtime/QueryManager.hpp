@@ -161,28 +161,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool startQuery(const Execution::ExecutableQueryPlanPtr& qep, StateManagerPtr stateManager);
 
     /**
-     * Start query via reconfiguration process for particular source
-     * @param newQep: QEP to start
-     * @param stateManager
-     * @param queryReconfigurationPlan: Messages received from network
-     * @return if true start of query for source via reconfiguration is successful
-     */
-    bool triggerQepStartReconfiguration(OperatorId sourceOperatorId,
-                                        Execution::ExecutableQueryPlanPtr newQep,
-                                        StateManagerPtr stateManager,
-                                        QueryReconfigurationPlanPtr queryReconfigurationPlan);
-
-    /**
-     * Trigger stop of QEP via reconfiguration process
-     * @param qepToStop: QEP to stop
-     * @param queryReconfigurationPlan: Messages received from network
-     * @return if true stop of query for source via reconfiguration is successful
-     */
-    bool triggerQepStopReconfiguration(OperatorId sourceOperatorId,
-                                       Execution::ExecutableQueryPlanPtr qepToStop,
-                                       QueryReconfigurationPlanPtr queryReconfigurationPlan);
-
-    /**
      * @brief method to start a query
      * @param qep of the query to start
      * @param graceful stop the query gracefully or not
@@ -283,9 +261,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     ExecutionResult terminateLoop(WorkerContext&);
 
-    bool addSoftStop(const OperatorId sourceId,
-                     const ReconfigurationType type,
-                     const std::function<std::any(Execution::ExecutableQueryPlanPtr)>& userdataSupplier);
     bool addHardEndOfStream(OperatorId sourceId);
 
   private:
@@ -321,8 +296,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::atomic<QueryManagerStatus> queryManagerStatus{Created};
     bool isSourceAssociatedWithQep(OperatorId sourceOperatorId, QuerySubPlanId querySubPlanId);
     bool allSourcesMappedToQep(Execution::ExecutableQueryPlanPtr qep);
-    void propagateQueryReconfigurationPlan(const Execution::ExecutableQueryPlanPtr qep,
-                                           const QueryReconfigurationPlanPtr queryReconfigurationPlan);
+
     void propagateViaSuccessorPipelines(const ReconfigurationType type,
                                         const std::function<std::any(Execution::ExecutableQueryPlanPtr)>& userdataSupplier,
                                         const Execution::ExecutableQueryPlanPtr executableQueryPlan,
