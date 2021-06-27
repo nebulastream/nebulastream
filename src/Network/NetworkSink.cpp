@@ -22,7 +22,8 @@
 
 namespace NES::Network {
 
-NetworkSink::NetworkSink(const SchemaPtr& schema,
+NetworkSink::NetworkSink(OperatorId logicalSourceOperatorId,
+                         const SchemaPtr& schema,
                          QuerySubPlanId parentPlanId,
                          NetworkManagerPtr networkManager,
                          const NodeLocation& nodeLocation,
@@ -31,9 +32,10 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          Runtime::QueryManagerPtr queryManager,
                          std::chrono::seconds waitTime,
                          uint8_t retryTimes)
-    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),
-      queryManager(std::move(queryManager)), nodeLocation(nodeLocation), nesPartition(nesPartition), waitTime(waitTime),
-      retryTimes(retryTimes), outputChannelKey(OutputChannelKey(parentPlanId, nesPartition.getOperatorId())) {
+    : SinkMedium(logicalSourceOperatorId, std::make_shared<NesFormat>(schema, bufferManager), parentPlanId),
+      networkManager(std::move(networkManager)),queryManager(std::move(queryManager)), nodeLocation(nodeLocation), nesPartition(nesPartition),
+       waitTime(waitTime), retryTimes(retryTimes),
+      outputChannelKey(OutputChannelKey(parentPlanId, nesPartition.getOperatorId())) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << nodeLocation.createZmqURI());
 }

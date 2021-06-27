@@ -22,11 +22,13 @@ namespace NES::QueryCompilation {
 DataSinkProviderPtr DataSinkProvider::create() { return std::make_shared<DataSinkProvider>(); }
 
 DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
+                                    OperatorId logicalSourceOperatorId,
                                     SinkDescriptorPtr sinkDescriptor,
                                     SchemaPtr schema,
                                     Runtime::NodeEnginePtr nodeEngine,
                                     QuerySubPlanId querySubPlanId) {
     return ConvertLogicalToPhysicalSink::createDataSink(sinkId,
+                                                        logicalSourceOperatorId,
                                                         std::move(sinkDescriptor),
                                                         std::move(schema),
                                                         std::move(nodeEngine),

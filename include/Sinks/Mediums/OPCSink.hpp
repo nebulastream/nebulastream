@@ -42,11 +42,12 @@ class OPCSink : public SinkMedium {
      * @param user name to access the server
      * @param password to access the server
      */
-    explicit OPCSink(SinkFormatPtr format,
-                     const std::string& url,
-                     UA_NodeId nodeId,
-                     std::string user,
-                     std::string password,
+    explicit OPCSink(OperatorId logicalSourceOperatorId,
+            SinkFormatPtr format,
+           const std::string& url,
+            UA_NodeId nodeId,
+            std::string user,
+            std::string password,
                      QuerySubPlanId parentPlanId);
 
     /**

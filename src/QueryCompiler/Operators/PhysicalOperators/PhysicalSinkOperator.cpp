@@ -19,30 +19,34 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalSinkOperator::PhysicalSinkOperator(OperatorId id,
+                                           OperatorId logicalOperatorId,
                                            SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
                                            SinkDescriptorPtr sinkDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : OperatorNode(id), logicalSourceOperatorId(logicalOperatorId), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       sinkDescriptor(std::move(sinkDescriptor)) {}
 
-PhysicalOperatorPtr
-PhysicalSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(),
-                  std::move(inputSchema),
+PhysicalOperatorPtr PhysicalSinkOperator::create(OperatorId logicalSourceOperatorId,
+                                                 SchemaPtr inputSchema,
+                                                 SchemaPtr outputSchema,
+                                                 SinkDescriptorPtr sinkDescriptor) {
+    return create(UtilityFunctions::getNextOperatorId(), logicalSourceOperatorId, std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(sinkDescriptor));
 }
 
 PhysicalOperatorPtr PhysicalSinkOperator::create(OperatorId id,
+                                                 OperatorId logicalSourceOperatorId,
                                                  const SchemaPtr& inputSchema,
                                                  const SchemaPtr& outputSchema,
                                                  const SinkDescriptorPtr& sinkDescriptor) {
-    return std::make_shared<PhysicalSinkOperator>(id, inputSchema, outputSchema, sinkDescriptor);
+    return std::make_shared<PhysicalSinkOperator>(id, logicalSourceOperatorId, inputSchema, outputSchema, sinkDescriptor);
 }
 
 SinkDescriptorPtr PhysicalSinkOperator::getSinkDescriptor() { return sinkDescriptor; }
 
 std::string PhysicalSinkOperator::toString() const { return "PhysicalSinkOperator"; }
+OperatorId PhysicalSinkOperator::getLogicalOperatorId() { return logicalSourceOperatorId; }
 
 OperatorNodePtr PhysicalSinkOperator::copy() { return create(id, inputSchema, outputSchema, sinkDescriptor); }
 
