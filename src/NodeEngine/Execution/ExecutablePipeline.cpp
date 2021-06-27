@@ -19,7 +19,6 @@
 #include <NodeEngine/Execution/OperatorHandler.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
-#include <NodeEngine/StopQueryMessage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <functional>

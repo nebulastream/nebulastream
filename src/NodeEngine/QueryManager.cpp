@@ -203,12 +203,13 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep, const st
 }
 
 bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep, StateManagerPtr stateManager) {
-    return startQueryForSources(qep, stateManager, qep->getSources());
+    return startQuery(qep, stateManager, qep->getSources(), qep->getSinks());
 }
 
-bool QueryManager::startQueryForSources(Execution::ExecutableQueryPlanPtr& qep,
-                                        StateManagerPtr stateManager,
-                                        const std::vector<DataSourcePtr>& sources) {
+bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr& qep,
+                              StateManagerPtr stateManager,
+                              const std::vector<DataSourcePtr>& sources,
+                              const std::vector<DataSinkPtr>& sinks) {
     NES_DEBUG("QueryManager::startQuery: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "QueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
@@ -224,7 +225,7 @@ bool QueryManager::startQueryForSources(Execution::ExecutableQueryPlanPtr& qep,
     }
 
     // 2. start net sinks
-    for (const auto& sink : qep->getSinks()) {
+    for (const auto& sink : sinks) {
         if (std::dynamic_pointer_cast<Network::NetworkSink>(sink)) {
             NES_DEBUG("QueryManager: start network sink " << sink);
             sink->setup();
@@ -244,7 +245,7 @@ bool QueryManager::startQueryForSources(Execution::ExecutableQueryPlanPtr& qep,
     }
 
     // 4. start data sinks
-    for (const auto& sink : qep->getSinks()) {
+    for (const auto& sink : sinks) {
         if (std::dynamic_pointer_cast<Network::NetworkSink>(sink)) {
             continue;
         }
