@@ -178,6 +178,39 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     return true;
 }
 
+/*
+ *                         if (logicalStreamName.empty()){
+                            //BDAPRO handle what happens if logical Stream name does not exist
+                            NES_ERROR("No logicalStreamName was found");
+                        }else if (physicalStreamName.empty()){
+                            //BDAPRO handle what happens if physical Stream name does not exist
+                            NES_ERROR("No phyiscalStreamName was found");
+                        }*/
+// check if names are empty BDAPRO
+// check if already contained
+// add new entry in vector of mapping elements.second
+bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string physicalStreamName, std::string logicalStreamName){
+    if (logicalStreamName.empty()){
+        NES_ERROR("StreamCatalog: addPhysicalStreamToLogicalStream - logicalStreamName is empty.");
+        return false;
+    } else if (physicalStreamName.empty()){
+        NES_ERROR("StreamCatalog: addPhysicalStreamToLogicalStream - physicalStreamName is empty.");
+        return false;
+    } else {
+        std::map<std::string, std::vector<std::string>>::iterator itr;
+        itr = logicalToPhysicalStreamMapping.find(logicalStreamName);
+        // BDAPRO not sure if that really works or nopos needed
+        if (itr == logicalToPhysicalStreamMapping.end()){
+            NES_ERROR("StreamCatalog: addPhysicalStreamToLogicalStream - logicalStreamName is not existent" << logicalStreamName);
+            return false;
+        }else {
+            itr->second.push_back(physicalStreamName);
+            return true;
+        }
+    }
+}
+
+
 
 // BDAPRO ADD LABEL MISCONFIGURED - needs to checked because stream can be present in other log stream
 // this would be rather optional for this issue but should be done for failure handling // state object?

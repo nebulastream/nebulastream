@@ -79,6 +79,13 @@ class StreamCatalog {
        */
     bool addPhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr entry);
 
+        /**
+    * @brief method to add a physical stream to a logical stream
+     * @param physicalStreamName and logicalStreamName
+    * @return bool indicating success of insert stream
+    */
+    bool addPhysicalStreamToLogicalStream(std::string physicalStreamName, std::string logicalStreamName);
+
     /**
    * @brief method to remove a physical stream from its logical streams
    * @param name of the logical stream

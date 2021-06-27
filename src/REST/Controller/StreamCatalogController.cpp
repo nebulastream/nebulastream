@@ -209,11 +209,45 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 }
             })
             .wait();
-    } else if (path[1] == "addPhysicalStream") {
+    } else if (path[1] == "addPhysicalToLogicalStream") {
         // BDAPRO check if logicalStream name given or not. Depending oon that configure one with default log. stream name => define that somewhere
         // if log. stream name provided just add it using the stream catalog method
-
-
+        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: REST received request to add a Physical Stream to a Logical Stream "
+                          << message.to_string());
+        message.extract_string(true)
+                .then([this, message](utility::string_t body) {
+                    try {
+                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Start trying to add new physical stream");
+                        //Prepare Input query from user string
+                        std::string payload(body.begin(), body.end());
+                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: userRequest: " << payload);
+                        json::value req = json::value::parse(payload);
+                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Json Parse Value: " << req);
+                        std::string logicalStreamName = req.at("logicalStreamName").as_string();
+                        std::string physicalStreamName = req.at("physicalStreamName").as_string();
+                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Try to add  Physical Stream to a Logical Stream"
+                                          << logicalStreamName);
+                        bool added = streamCatalog->addPhysicalStreamToLogicalStream(physicalStreamName, logicalStreamName);
+                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Successfully added  Physical Stream to logical Stream?"
+                                          << added);
+                        //Prepare the response
+                        json::value result{};
+                        result["Success"] = json::value::boolean(added);
+                        successMessageImpl(message, result);
+                        return;
+                    } catch (const std::exception& exc) {
+                        NES_ERROR("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Exception occurred while trying to add  "
+                                  "physical stream to logical stream"
+                                          << exc.what());
+                        handleException(message, exc);
+                        return;
+                    } catch (...) {
+                        RuntimeUtils::printStackTrace();
+                        internalServerErrorImpl(message);
+                        return;
+                    }
+                })
+                .wait();
     } else {
         resourceNotFoundImpl(message);
     }
