@@ -25,38 +25,40 @@ SerializableQueryReconfigurationPlan* QueryReconfigurationPlanSerializationUtil:
     auto serializableQueryReconfigurationPlan = new SerializableQueryReconfigurationPlan();
     serializableQueryReconfigurationPlan->set_id(queryReconfigurationPlan->getId());
     serializableQueryReconfigurationPlan->set_queryid(queryReconfigurationPlan->getQueryId());
-    for (auto querySubPlanId : queryReconfigurationPlan->getQuerySubPlanIdsToStart()) {
-        serializableQueryReconfigurationPlan->add_querysubplanidstostart(querySubPlanId);
+
+    SerializableQueryReconfigurationPlan_QueryReconfigurationType reconfigurationType;
+
+    if (queryReconfigurationPlan->getReconfigurationType() == QueryReconfigurationTypes::DATA_SINK) {
+        reconfigurationType = SerializableQueryReconfigurationPlan_QueryReconfigurationType::
+            SerializableQueryReconfigurationPlan_QueryReconfigurationType_DATA_SINK;
+    } else {
+        reconfigurationType = SerializableQueryReconfigurationPlan_QueryReconfigurationType::
+            SerializableQueryReconfigurationPlan_QueryReconfigurationType_DATA_SOURCE;
     }
-    for (auto querySubPlanId : queryReconfigurationPlan->getQuerySubPlanIdsToStop()) {
-        serializableQueryReconfigurationPlan->add_querysubplanidstostop(querySubPlanId);
-    }
-    for (auto querySubPlanPair : queryReconfigurationPlan->getQuerySubPlanIdsToReplace()) {
-        auto mapping = serializableQueryReconfigurationPlan->add_querysubplanidstoreplace();
-        mapping->set_oldquerysubplanid(querySubPlanPair.first);
-        mapping->set_newquerysubplanid(querySubPlanPair.second);
-    }
+
+    serializableQueryReconfigurationPlan->set_queryreconfigurationtype(reconfigurationType);
+    serializableQueryReconfigurationPlan->set_oldquerysubplanid(queryReconfigurationPlan->getOldQuerySubPlanId());
+    serializableQueryReconfigurationPlan->set_newquerysubplanid(queryReconfigurationPlan->getNewQuerySubPlanId());
     return serializableQueryReconfigurationPlan;
 }
 
 QueryReconfigurationPlanPtr QueryReconfigurationPlanSerializationUtil::deserializeQueryReconfigurationPlan(
     SerializableQueryReconfigurationPlan* serializedQueryReconfigurationPlan) {
-    std::vector<QuerySubPlanId> subPlansToStart;
-    std::vector<QuerySubPlanId> subPlansToStop;
-    std::unordered_map<QuerySubPlanId, QuerySubPlanId> subPlansToReplace;
-    for (auto subPlanId : serializedQueryReconfigurationPlan->querysubplanidstostart()) {
-        subPlansToStart.emplace_back(subPlanId);
+
+    QueryReconfigurationTypes reconfigurationType;
+
+    if (serializedQueryReconfigurationPlan->queryreconfigurationtype()
+        == SerializableQueryReconfigurationPlan_QueryReconfigurationType::
+            SerializableQueryReconfigurationPlan_QueryReconfigurationType_DATA_SINK) {
+        reconfigurationType = QueryReconfigurationTypes::DATA_SINK;
+    } else {
+        reconfigurationType = QueryReconfigurationTypes::DATA_SOURCE;
     }
-    for (auto subPlanId : serializedQueryReconfigurationPlan->querysubplanidstostop()) {
-        subPlansToStop.emplace_back(subPlanId);
-    }
-    for (auto mapping : serializedQueryReconfigurationPlan->querysubplanidstoreplace()) {
-        subPlansToReplace.insert(
-            std::pair<QuerySubPlanId, QuerySubPlanId>(mapping.oldquerysubplanid(), mapping.newquerysubplanid()));
-    }
-    auto queryReconfigurationPlan = QueryReconfigurationPlan::create(subPlansToStart, subPlansToStop, subPlansToReplace);
-    queryReconfigurationPlan->setId(serializedQueryReconfigurationPlan->id());
-    queryReconfigurationPlan->setQueryId(serializedQueryReconfigurationPlan->queryid());
-    return queryReconfigurationPlan;
+
+    return std::make_shared<QueryReconfigurationPlan>(serializedQueryReconfigurationPlan->id(),
+                                                      serializedQueryReconfigurationPlan->queryid(),
+                                                      reconfigurationType,
+                                                      serializedQueryReconfigurationPlan->oldquerysubplanid(),
+                                                      serializedQueryReconfigurationPlan->newquerysubplanid());
 }
 }// namespace NES

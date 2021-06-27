@@ -43,7 +43,7 @@ class OutputChannel {
     /**
      * @brief close the output channel and release resources
      */
-    ~OutputChannel() { close(true); }
+    ~OutputChannel() { close(); }
 
     OutputChannel(const OutputChannel&) = delete;
 
@@ -77,12 +77,6 @@ class OutputChannel {
     bool sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSizeInBytes);
 
     /**
-     * @brief Send reconfiguration message
-     * @param queryReconfigurationPlan
-     */
-    void sendReconfigurationMessage(QueryReconfigurationPlanPtr queryReconfigurationPlan);
-
-    /**
      * @brief Method to handle the error
      * @param the error message
      */
@@ -92,7 +86,7 @@ class OutputChannel {
      * Close the outchannel and send EndOfStream message to consumer
      * @param notifyRelease: if true, sends EndOfStreamMessage
      */
-    void close(bool notifyRelease);
+    void close();
 
   private:
     const std::string socketAddr;

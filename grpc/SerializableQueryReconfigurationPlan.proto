@@ -23,14 +23,14 @@ The serializable wrapper QueryReconfigurationPlan
  */
 message SerializableQueryReconfigurationPlan {
 
-  message QuerySubPlanIdsToReplace {
-    uint64 oldQuerySubPlanId = 1;
-    uint64 newQuerySubPlanId = 2;
+  enum QueryReconfigurationType {
+    DATA_SOURCE = 0;
+    DATA_SINK = 1;
   }
 
-  uint64 queryId = 1;
-  uint64 id = 2;
-  repeated uint64 querySubPlanIdsToStart = 3;
-  repeated uint64 querySubPlanIdsToStop = 4;
-  repeated QuerySubPlanIdsToReplace querySubPlanIdsToReplace = 5;
+  uint64 id = 1;
+  uint64 queryId = 2;
+  QueryReconfigurationType queryReconfigurationType = 3;
+  uint64 oldQuerySubPlanId = 4;
+  uint64 newQuerySubPlanId = 5;
 }

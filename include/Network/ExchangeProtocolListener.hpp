@@ -54,11 +54,6 @@ class ExchangeProtocolListener {
      * @brief This is called on the channel side as soon as an error is raised
      */
     virtual void onChannelError(Messages::ErrorMessage) = 0;
-
-    /**
-    * @brief This is called on the channel side as soon as an query reconfiguration message is received
-    */
-    virtual void onQueryReconfiguration(ChannelId, QueryReconfigurationPlanPtr) = 0;
 };
 }// namespace Network
 }// namespace NES
