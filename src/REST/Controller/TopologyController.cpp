@@ -63,7 +63,6 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
                         NES_DEBUG("TopologyController: handlePost -createTopologyNode: Try to add new topology node "
                                           << ipAddress << " and" << grpcPort << " and " << dataPort << " and " << resources);
                         TopologyPtr topology = Topology::create();
-                        // BDAPRO get hashID generator?
                         TopologyNodePtr physicalNode = TopologyNode::create(nodeId, ipAddress, grpcPort, dataPort, resources);
                         NES_DEBUG("TopologyController: handlePost -createTopologyNode: Successfully created new toplogy node with nodeId: "
                                           << physicalNode->getId());

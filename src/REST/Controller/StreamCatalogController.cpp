@@ -176,6 +176,8 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 }
             })
             .wait();
+    } else if (path[1] == "addPhysicalStream") {
+
     } else {
         resourceNotFoundImpl(message);
     }

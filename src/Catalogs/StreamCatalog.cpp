@@ -112,6 +112,7 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
 }
 
 // BDAPRO - discuss why bool is necessary here. i.e. what should be checked here?
+// EDIT THIS FUNCTION FOR STATE HANDLING
 // BDAPRO use new PhysicalStreamState object - remove mapping
 bool StreamCatalog::addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry) {
     // BDAPRO introduce some kind of error status enum
@@ -206,7 +207,6 @@ bool StreamCatalog::removePhysicalStreamFromAllLogicalStreams(std::string physic
     NES_NOT_IMPLEMENTED();
 }
 
-// BDAPRO rename hashID - discuss meaning.
 // BDAPRO needs to be changed: Currently deleted a physicalStream from logicalStream mapping and deleting it from nameToPhysical which is wrong
 // nameToPhysical should stay as it could be important in other logical streams
 // BDAPRO add check for state != normal, then directly delete via deleteMisconfigured
@@ -292,13 +292,11 @@ SchemaPtr StreamCatalog::getSchemaForLogicalStream(std::string logicalStreamName
     return logicalStreamToSchemaMapping[logicalStreamName];
 }
 
-// BDAPRO change to vector function
 LogicalStreamPtr StreamCatalog::getStreamForLogicalStream(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     return std::make_shared<LogicalStream>(logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
 }
 
-// BDAPRO change to vector function
 LogicalStreamPtr StreamCatalog::getStreamForLogicalStreamOrThrowException(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     if (logicalStreamToSchemaMapping.find(logicalStreamName) != logicalStreamToSchemaMapping.end()) {
@@ -327,7 +325,6 @@ std::vector<TopologyNodePtr> StreamCatalog::getSourceNodesForLogicalStream(std::
     //get current physical stream for this logical stream
     std::vector<std::string> physicalStreamNames = logicalToPhysicalStreamMapping[logicalStreamName];
 
-    // BDAPRO loop over vector to get StreamCatalogEntryPtrs - done
     std::vector<StreamCatalogEntryPtr> physicalStreams;
     for (auto name : physicalStreamNames){
         physicalStreams.push_back(nameToPhysicalStream[name]);
@@ -355,7 +352,6 @@ bool StreamCatalog::reset() {
     return true;
 }
 
-// BDAPRO test this function
 std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     std::unique_lock lock(catalogMutex);
     std::stringstream ss;
@@ -369,7 +365,6 @@ std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     return ss.str();
 }
 
-// BDAPRO test this function - done in stream-catalog-remote-test
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string logicalStreamName) {
     std::vector<std::string> physicalStreamsNames = logicalToPhysicalStreamMapping[logicalStreamName];
     std::vector<StreamCatalogEntryPtr> physicalStreams;

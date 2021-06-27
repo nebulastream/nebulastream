@@ -50,7 +50,6 @@ class UpdateTopologyRemoteTest : public testing::Test {
 
     static void TearDownTestCase() { std::cout << "Tear down UpdateTopologyRemoteTest test class." << std::endl; }
 };
-
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
