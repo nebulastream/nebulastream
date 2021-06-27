@@ -33,6 +33,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
     auto parameters = getParameters(request);
 
     if (path[1] == "allLogicalStream") {
+        // BDAPRO: weiterer Parameter für nen gewissen physischenStream kein error wenn phy stream name leer.
         const std::map<std::string, std::string>& allLogicalStreamAsString = streamCatalog->getAllLogicalStreamAsString();
 
         json::value result{};
@@ -50,7 +51,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
     } else if (path[1] == "allPhysicalStream") {
         // BDAPRO adjust to find all physical streams even when they are not mapped to a logical stream
         //Check if the path contains the query id
-        auto param = parameters.find("logicalStreamName");
+        auto param = parameters.find("logicalStreamName"); // den mit physicalStreamname benutzen
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
             json::value errorResponse{};
@@ -95,6 +96,8 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
     }
 }
 // BDAPRO add endpoint to handle update of physical-logical stream mappings
+// BDAPRO: Add logical stream for specific physical stream
+// BDAPRO: Add physical Stream for specific logical stream
 void StreamCatalogController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
 
     if (path[1] == "addLogicalStream") {
