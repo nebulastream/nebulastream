@@ -171,6 +171,19 @@ class StreamCatalog {
    */
     std::map<std::string, SchemaPtr> getAllLogicalStream();
 
+    /**
+    * @brief Return a list of logical stream names registered at catalog for a specific physicalStream
+    * @return map containing stream name as key and schema object as value
+    */
+    std::map<std::string, SchemaPtr> getAllLogicalStreamForPhysicalStream(std::string physicalStreamName);
+
+    /**
+    * @brief Return a list of logical stream names registered at catalog for a specific physicalStream as strings
+    * @return map containing stream name as key and schema as string
+    */
+    std::map<std::string, std::string> getAllLogicalStreamForPhysicalStreamAsString(std::string physicalStreamName);
+
+
     std::map<std::string, std::string> getAllLogicalStreamAsString();
 
     /**

@@ -21,6 +21,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <assert.h>
+#include <algorithm>
 
 namespace NES {
 
@@ -377,6 +378,36 @@ std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string
 }
 
 std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStream() { return logicalStreamToSchemaMapping; }
+
+std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStreamForPhysicalStream(std::string physicalStreamName) {
+    std::vector<std::string> logicalStreamNames;
+    // iterate over map and add first to logicalStreamNames where it.second == phyStreamname
+    for (auto entry : logicalToPhysicalStreamMapping) {
+        // returned a list of phyiscalStreamNames
+        if (std::find(entry.second.begin(), entry.second.end(), physicalStreamName) != entry.second.end()){
+            logicalStreamNames.push_back(entry.first);
+        }
+    }
+    std::map<std::string, std::string> allLogicalStreamAsString;
+    const std::map<std::string, SchemaPtr> allLogicalStream = getAllLogicalStream();
+    // filter this now according to logicalStreamNames
+    std::map<std::string, SchemaPtr> allLogicalStreamForPhysicalStream;
+    for (auto name : logicalStreamNames) {
+        allLogicalStreamForPhysicalStream.insert(allLogicalStream.begin(), allLogicalStream.find(name));
+    }
+    return allLogicalStreamForPhysicalStream;
+}
+
+// BDAPRO converts getAllLogicalStreamForPhysicalStream from schemaPtr to strings
+std::map<std::string, std::string> StreamCatalog::getAllLogicalStreamForPhysicalStreamAsString(std::string physicalStreamName) {
+    std::map<std::string, SchemaPtr> allLogicalStreamForPhysicalStream = getAllLogicalStreamForPhysicalStream(physicalStreamName);
+    std::map<std::string, std::string> allLogicalStreamForPhysicalStreamAsString;
+    for (auto const& [key, val] : allLogicalStreamForPhysicalStream) {
+        allLogicalStreamForPhysicalStreamAsString[key] = val->toString();
+    }
+    return allLogicalStreamForPhysicalStreamAsString;
+    }
+
 
 std::map<std::string, std::string> StreamCatalog::getAllLogicalStreamAsString() {
     std::unique_lock lock(catalogMutex);
