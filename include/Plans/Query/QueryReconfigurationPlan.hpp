@@ -30,33 +30,34 @@ namespace NES {
 class QueryReconfigurationPlan;
 typedef std::shared_ptr<QueryReconfigurationPlan> QueryReconfigurationPlanPtr;
 
+enum QueryReconfigurationTypes { DATA_SOURCE, DATA_SINK };
+
 class QueryReconfigurationPlan {
   public:
-    QueryReconfigurationPlan(const std::vector<QuerySubPlanId> querySubPlanIdsToStart,
-                             const std::vector<QuerySubPlanId> querySubPlanIdsToStop,
-                             const std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace);
+    QueryReconfigurationPlan(const QueryReconfigurationId reconfigurationId,
+                             const QueryId queryId,
+                             const QueryReconfigurationTypes reconfigurationType,
+                             const QuerySubPlanId oldQuerySubPlanId,
+                             const QuerySubPlanId newQuerySubPlanId);
 
-    static QueryReconfigurationPlanPtr create(const std::vector<QuerySubPlanId> querySubPlanIdsToStart,
-                                              const std::vector<QuerySubPlanId> querySubPlanIdsToStop,
-                                              const std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace);
-
-    /**
-     * @brief Get vector of QuerySubPlans to stop
-     * @return vector of QuerySubPlans to stop
-     */
-    const std::vector<QuerySubPlanId> getQuerySubPlanIdsToStop() const;
+    static QueryReconfigurationPlanPtr create(const QueryId queryId,
+                                              const QueryReconfigurationTypes reconfigurationType,
+                                              const QuerySubPlanId oldQuerySubPlanId,
+                                              const QuerySubPlanId newQuerySubPlanId);
 
     /**
-     * @brief Get vector of QuerySubPlans to start
-     * @return vector of QuerySubPlans to start
+     * @brief Get QuerySubPlanId to replace
+     * @return QuerySubPlanId
      */
-    const std::vector<QuerySubPlanId> getQuerySubPlanIdsToStart() const;
+    const QuerySubPlanId getOldQuerySubPlanId() const;
 
     /**
-     * @brief Get Map of QuerySubPlans to replace, Key is old plan ID, value is new plan ID
-     * @return Map of QuerySubPlans to replace
+     * @brief Get QuerySubPlanId to replace by
+     * @return QuerySubPlanId
      */
-    const std::unordered_map<QuerySubPlanId, QuerySubPlanId> getQuerySubPlanIdsToReplace() const;
+    const QuerySubPlanId getNewQuerySubPlanId() const;
+
+    QueryReconfigurationTypes getReconfigurationType() const;
 
     /**
      * Get query ID targeted via reconfiguration
@@ -70,59 +71,14 @@ class QueryReconfigurationPlan {
      */
     QueryReconfigurationId getId() const;
 
-    /**
-     * Converts to string to transfer over network, could not use protobuf as header is not included during query compilation.
-     * @return: String representation of QueryReconfigurationPlan
-     */
-    const std::string serializeToString();
-
-    /**
-     * Set unique ID for reconfiguration
-     * @param reconfigurationId
-     */
-    void setId(QueryReconfigurationId reconfigurationId);
-
-    /**
-     * Set vector of QuerySubPlans to stop
-     * @param querySubPlanIdsToStop
-     */
-    void setQuerySubPlanIdsToStop(const std::vector<QuerySubPlanId> querySubPlanIdsToStop);
-
-    /**
-     * Set vector of QuerySubPlans to start
-     * @param querySubPlanIdsToStart
-     */
-    void setQuerySubPlanIdsToStart(const std::vector<QuerySubPlanId> querySubPlanIdsToStart);
-
-    /**
-     * Set map of querySubPlanIdsToReplace
-     * @param querySubPlanIdsToReplace
-     */
-    void setQuerySubPlanIdsToReplace(const std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace);
-
-    /**
-     * Set queryId
-     * @param queryId
-     */
-    void setQueryId(QueryId queryId);
-
-    /**
-     * Construct QueryReconfigurationPlan from string
-     * @param queryReconfigurationPlanStr: String representation of QueryReconfigurationPlan
-     * @returns queryReconfigurationPlanPtr
-     */
-    static QueryReconfigurationPlanPtr deserializeFromString(const std::string queryReconfigurationPlanStr);
-
-    QueryReconfigurationPlan();
-
     std::string toString();
 
   private:
     QueryReconfigurationId id;
     QueryId queryId;
-    std::vector<QuerySubPlanId> querySubPlanIdsToStop;
-    std::vector<QuerySubPlanId> querySubPlanIdsToStart;
-    std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace;
+    QueryReconfigurationTypes reconfigurationType;
+    QuerySubPlanId oldQuerySubPlanId;
+    QuerySubPlanId newQuerySubPlanId;
 };
 }// namespace NES
 #endif//NES_INCLUDE_PLANS_QUERYRECONFIGURATIONPLAN_HPP_

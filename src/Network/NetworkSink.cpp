@@ -83,20 +83,9 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
             break;
         }
         case NodeEngine::Destroy: {
-            auto notifyRelease = task.getUserData<bool>();
-            workerContext.releaseChannel(outputChannelKey, notifyRelease);
+            workerContext.releaseChannel(outputChannelKey);
             NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
                                                                         << NodeEngine::NesThread::getId());
-            break;
-        }
-        case NodeEngine::QueryReconfiguration: {
-            auto queryReconfigurationPlan = task.getUserData<QueryReconfigurationPlanPtr>();
-            NES_DEBUG("NetworkSink: reconfigure() query reconfiguration " << nesPartition.toString()
-                                                                          << ". Plan:  " << queryReconfigurationPlan);
-            auto* channel = workerContext.getChannel(outputChannelKey);
-            channel->sendReconfigurationMessage(queryReconfigurationPlan);
-            NES_DEBUG("NetworkSink: reconfigure() sent query reconfiguration  " << nesPartition.toString() << " Thread "
-                                                                                << NodeEngine::NesThread::getId());
             break;
         }
         default: {
@@ -111,29 +100,10 @@ void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage
     switch (task.getType()) {
         case NodeEngine::HardEndOfStream:
         case NodeEngine::SoftEndOfStream: {
-            auto triggerEoSMsg = std::make_any<bool>(true);
-            auto destroyMsg = NodeEngine::ReconfigurationMessage(parentPlanId,
-                                                                 NodeEngine::Destroy,
-                                                                 shared_from_this(),
-                                                                 std::move(triggerEoSMsg));
-            queryManager->addReconfigurationMessage(parentPlanId, destroyMsg, false);
-            break;
-        }
-        case NodeEngine::StopViaReconfiguration: {
-            auto stopMessage = task.getUserData<NodeEngine::StopQueryMessagePtr>();
-            auto reconfigurationPlan = std::make_any<QueryReconfigurationPlanPtr>(stopMessage->getQueryReconfigurationPlan());
-
-            auto reconfigurationMessage = NodeEngine::ReconfigurationMessage(parentPlanId,
-                                                                             NodeEngine::QueryReconfiguration,
-                                                                             shared_from_this(),
-                                                                             std::move(reconfigurationPlan));
-            queryManager->addReconfigurationMessage(parentPlanId, reconfigurationMessage, false);
-            auto triggerEoSMsg = std::make_any<bool>(true);
-            auto destroyMsg = NodeEngine::ReconfigurationMessage(parentPlanId,
-                                                                 NodeEngine::Destroy,
-                                                                 shared_from_this(),
-                                                                 std::move(triggerEoSMsg));
-            queryManager->addReconfigurationMessage(parentPlanId, destroyMsg, false);
+            queryManager->addReconfigurationMessage(
+                parentPlanId,
+                NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Destroy, shared_from_this()),
+                false);
             break;
         }
         default: {

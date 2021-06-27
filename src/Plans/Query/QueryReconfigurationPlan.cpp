@@ -22,118 +22,33 @@
 
 namespace NES {
 
-QueryReconfigurationPlan::QueryReconfigurationPlan(
-    const std::vector<QuerySubPlanId> querySubPlanIdsToStart,
-    const std::vector<QuerySubPlanId> querySubPlanIdsToStop,
-    const std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace)
-    : id(PlanIdGenerator::getNextQueryReconfigurationPlanId()), queryId(INVALID_QUERY_ID),
-      querySubPlanIdsToStop(querySubPlanIdsToStop), querySubPlanIdsToStart(querySubPlanIdsToStart),
-      querySubPlanIdsToReplace(querySubPlanIdsToReplace) {}
+QueryReconfigurationPlan::QueryReconfigurationPlan(const QueryReconfigurationId reconfigurationId,
+                                                   const QueryId queryId,
+                                                   const QueryReconfigurationTypes reconfigurationType,
+                                                   const QuerySubPlanId oldQuerySubPlanId,
+                                                   const QuerySubPlanId newQuerySubPlanId)
+    : id(reconfigurationId), queryId(queryId), reconfigurationType(reconfigurationType), oldQuerySubPlanId(oldQuerySubPlanId),
+      newQuerySubPlanId(newQuerySubPlanId) {}
 
-const std::vector<QuerySubPlanId> QueryReconfigurationPlan::getQuerySubPlanIdsToStop() const { return querySubPlanIdsToStop; }
-const std::vector<QuerySubPlanId> QueryReconfigurationPlan::getQuerySubPlanIdsToStart() const { return querySubPlanIdsToStart; }
-const std::unordered_map<QuerySubPlanId, QuerySubPlanId> QueryReconfigurationPlan::getQuerySubPlanIdsToReplace() const {
-    return querySubPlanIdsToReplace;
-}
-
-QueryReconfigurationPlanPtr
-QueryReconfigurationPlan::create(const std::vector<QuerySubPlanId> querySubPlanIdsToStart,
-                                 const std::vector<QuerySubPlanId> querySubPlanIdsToStop,
-                                 const std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace) {
-    return std::make_shared<QueryReconfigurationPlan>(querySubPlanIdsToStart, querySubPlanIdsToStop, querySubPlanIdsToReplace);
-}
-
-const std::string QueryReconfigurationPlan::serializeToString() {
-    std::stringstream ss;
-    ss << "reconfigurationId:" << id << "|";
-    ss << "queryId:" << queryId << "|";
-    ss << "querySubPlanIdsToStart:";
-    for (auto querySubPlanIdToStart : querySubPlanIdsToStart) {
-        ss << querySubPlanIdToStart << " ";
-    }
-    ss << "|";
-    ss << "querySubPlanIdsToStop:";
-    for (auto querySubPlanIdToStop : querySubPlanIdsToStop) {
-        ss << querySubPlanIdToStop << " ";
-    }
-    ss << "|";
-    ss << "querySubPlanIdsToReplace:";
-    for (auto querySubPlanIdToReplace : querySubPlanIdsToReplace) {
-        ss << querySubPlanIdToReplace.first << " " << querySubPlanIdToReplace.second << " ";
-    }
-    ss << "|";
-    return ss.str();
+QueryReconfigurationPlanPtr QueryReconfigurationPlan::create(const QueryId queryId,
+                                                             const QueryReconfigurationTypes reconfigurationType,
+                                                             const QuerySubPlanId oldQuerySubPlanId,
+                                                             const QuerySubPlanId newQuerySubPlanId) {
+    return std::make_shared<QueryReconfigurationPlan>(PlanIdGenerator::getNextQueryReconfigurationPlanId(),
+                                                      queryId,
+                                                      reconfigurationType,
+                                                      oldQuerySubPlanId,
+                                                      newQuerySubPlanId);
 }
 
 QueryReconfigurationId QueryReconfigurationPlan::getId() const { return id; }
 
-void QueryReconfigurationPlan::setId(QueryReconfigurationId reconfigurationId) { id = reconfigurationId; }
-
-std::vector<QuerySubPlanId> lineToValues(std::string& line) {
-    std::string valueDelimiter = " ";
-    std::vector<QuerySubPlanId> values;
-    for (auto valueToken : UtilityFunctions::splitWithStringDelimiter(line, valueDelimiter)) {
-        if (!valueToken.empty()) {
-            values.push_back(std::stoull(valueToken));
-        }
-    }
-    return values;
-}
-
-void parseFields(QueryReconfigurationPlanPtr queryReconfigurationPlan, std::string line) {
-    std::string fieldDelimiter = ":";
-    size_t pos;
-    if ((pos = line.find(fieldDelimiter)) != std::string::npos) {
-        auto field = line.substr(0, pos);
-        line.erase(0, pos + fieldDelimiter.length());
-        if (field == "reconfigurationId") {
-            queryReconfigurationPlan->setId(std::stoull(line));
-        } else if (field == "queryId") {
-            queryReconfigurationPlan->setQueryId(std::stoull(line));
-        } else if (field == "querySubPlanIdsToStart") {
-            queryReconfigurationPlan->setQuerySubPlanIdsToStart(lineToValues(line));
-        } else if (field == "querySubPlanIdsToStop") {
-            queryReconfigurationPlan->setQuerySubPlanIdsToStop(lineToValues(line));
-        } else if (field == "querySubPlanIdsToReplace") {
-            std::unordered_map<uint64_t, uint64_t> querySubPlanIdsToReplace;
-            std::vector<uint64_t> pairs = lineToValues(line);
-
-            NES_ASSERT2_FMT(pairs.size() % 2 == 0, "Invalid configuration for QuerySubPlan replacement mapping.");
-
-            for (int i = 0; i < pairs.size(); i += 2) {
-                querySubPlanIdsToReplace.insert(std::pair<uint64_t, uint64_t>(pairs[i], pairs[i + 1]));
-            }
-            queryReconfigurationPlan->setQuerySubPlanIdsToReplace(querySubPlanIdsToReplace);
-        } else {
-            NES_ERROR("Encountered unknown field: " << field);
-        }
-    }
-}
-
-QueryReconfigurationPlanPtr QueryReconfigurationPlan::deserializeFromString(std::string serializedString) {
-    auto queryReconfigurationPlan = std::make_shared<QueryReconfigurationPlan>();
-    std::string lineDelimiter = "|";
-    for (auto line : UtilityFunctions::splitWithStringDelimiter(serializedString, lineDelimiter)) {
-        parseFields(queryReconfigurationPlan, line);
-    }
-    return queryReconfigurationPlan;
-}
-
-void QueryReconfigurationPlan::setQuerySubPlanIdsToStop(const std::vector<QuerySubPlanId> querySubPlanIdsToStop) {
-    QueryReconfigurationPlan::querySubPlanIdsToStop = querySubPlanIdsToStop;
-}
-void QueryReconfigurationPlan::setQuerySubPlanIdsToStart(const std::vector<QuerySubPlanId> querySubPlanIdsToStart) {
-    QueryReconfigurationPlan::querySubPlanIdsToStart = querySubPlanIdsToStart;
-}
-void QueryReconfigurationPlan::setQuerySubPlanIdsToReplace(
-    const std::unordered_map<QuerySubPlanId, QuerySubPlanId> querySubPlanIdsToReplace) {
-    QueryReconfigurationPlan::querySubPlanIdsToReplace = querySubPlanIdsToReplace;
-}
-
-QueryReconfigurationPlan::QueryReconfigurationPlan() {}
 QueryId QueryReconfigurationPlan::getQueryId() const { return queryId; }
-void QueryReconfigurationPlan::setQueryId(QueryId queryId) { QueryReconfigurationPlan::queryId = queryId; }
 
-std::string QueryReconfigurationPlan::toString() { return serializeToString(); }
+QueryReconfigurationTypes QueryReconfigurationPlan::getReconfigurationType() const { return reconfigurationType; }
+
+const QuerySubPlanId QueryReconfigurationPlan::getNewQuerySubPlanId() const { return newQuerySubPlanId; }
+
+const QuerySubPlanId QueryReconfigurationPlan::getOldQuerySubPlanId() const { return oldQuerySubPlanId; }
 
 }// namespace NES
