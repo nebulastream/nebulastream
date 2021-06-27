@@ -25,8 +25,13 @@ using namespace std::chrono_literals;
 
 namespace NES {
 
-KafkaSink::KafkaSink(SchemaPtr schema, const std::string& brokers, const std::string& topic, const uint64_t kafkaProducerTimeout)
-    : DataSink(schema), brokers(brokers), topic(topic),
+KafkaSink::KafkaSink(OperatorId logicalSourceOperatorId,
+                     SinkFormatPtr format,
+                     QuerySubPlanId parentPlanId,
+                     const std::string& brokers,
+                     const std::string& topic,
+                     const uint64_t kafkaProducerTimeout)
+    : SinkMedium(logicalOperatorId, std::move(format), parentPlanId), brokers(brokers), topic(topic),
       kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
 
     config = {{"metadata.broker.list", brokers.c_str()}};

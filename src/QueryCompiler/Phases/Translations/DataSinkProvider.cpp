@@ -22,11 +22,17 @@ namespace QueryCompilation {
 DataSinkProviderPtr DataSinkProvider::create() { return std::make_shared<DataSinkProvider>(); }
 
 DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
+                                    OperatorId logicalSourceOperatorId,
                                     SinkDescriptorPtr sinkDescriptor,
                                     SchemaPtr schema,
                                     NodeEngine::NodeEnginePtr nodeEngine,
                                     QuerySubPlanId querySubPlanId) {
-    return ConvertLogicalToPhysicalSink::createDataSink(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlanId);
+    return ConvertLogicalToPhysicalSink::createDataSink(sinkId,
+                                                        logicalSourceOperatorId,
+                                                        sinkDescriptor,
+                                                        schema,
+                                                        nodeEngine,
+                                                        querySubPlanId);
 }
 
 }// namespace QueryCompilation

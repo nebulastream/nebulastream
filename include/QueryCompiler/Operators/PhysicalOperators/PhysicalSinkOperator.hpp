@@ -29,16 +29,27 @@ namespace PhysicalOperators {
  */
 class PhysicalSinkOperator : public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator {
   public:
-    PhysicalSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
+    PhysicalSinkOperator(OperatorId id,
+                         OperatorId logicalOperatorId,
+                         SchemaPtr inputSchema,
+                         SchemaPtr outputSchema,
+                         SinkDescriptorPtr sinkDescriptor);
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      OperatorId logicalSourceOperatorId,
+                                      SchemaPtr inputSchema,
+                                      SchemaPtr outputSchema,
+                                      SinkDescriptorPtr sinkDescriptor);
     static PhysicalOperatorPtr
-    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
+    create(OperatorId logicalSourceOperatorId, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
     SinkDescriptorPtr getSinkDescriptor();
+
+    OperatorId getLogicalOperatorId();
 
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
+    OperatorId logicalSourceOperatorId;
     SinkDescriptorPtr sinkDescriptor;
 };
 }// namespace PhysicalOperators

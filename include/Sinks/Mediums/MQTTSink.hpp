@@ -45,7 +45,8 @@ class MQTTSink : public SinkMedium {
      * @return MQTT sink
      */
     // TODO change MSGS to Messages
-    MQTTSink(SinkFormatPtr sinkFormat,
+    MQTTSink(OperatorId logicalSourceOperatorId,
+             SinkFormatPtr sinkFormat,
              QuerySubPlanId parentPlanId,
              const std::string address,
              const std::string clientId,

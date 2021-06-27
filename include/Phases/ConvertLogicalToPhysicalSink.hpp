@@ -41,6 +41,7 @@ class ConvertLogicalToPhysicalSink {
      * @return Data sink pointer representing the physical sink
      */
     static DataSinkPtr createDataSink(OperatorId operatorId,
+                                      OperatorId logicalSourceOperatorId,
                                       SinkDescriptorPtr sinkDescriptor,
                                       SchemaPtr schema,
                                       NodeEngine::NodeEnginePtr nodeEngine,

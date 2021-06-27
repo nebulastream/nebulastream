@@ -83,7 +83,7 @@ class TestSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
     TestSink(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0){};
+        : SinkMedium(0, std::make_shared<NesFormat>(schema, bufferManager), 0){};
 
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override {
         std::unique_lock lock(m);
@@ -809,7 +809,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             ASSERT_FALSE(pManager->isRegistered(nesPartition));
         });
 
-        auto networkSink = std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition, bMgr, nullptr);
+        auto networkSink = std::make_shared<NetworkSink>(nesPartition.getOperatorId(), schema, 0, netManager, nodeLocation, nesPartition, bMgr, nullptr);
 
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
@@ -887,7 +887,8 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
                                                          64);
     EXPECT_TRUE(networkSource->start());
 
-    auto networkSink = std::make_shared<NetworkSink>(schema,
+    auto networkSink = std::make_shared<NetworkSink>(nesPartition.getOperatorId(),
+                                                     schema,
                                                      0,
                                                      nodeEngine->getNetworkManager(),
                                                      nodeLocation,
@@ -1024,7 +1025,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             EXPECT_TRUE(source->stop());
         });
 
-        auto networkSink = std::make_shared<NetworkSink>(schema,
+        auto networkSink = std::make_shared<NetworkSink>(nesPartition.getOperatorId(),
+                                                         schema,
                                                          0,
                                                          netManager,
                                                          nodeLocation,
@@ -1127,7 +1129,8 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                                  successors);
         });
 
-    auto networkSink = std::make_shared<NetworkSink>(schema,
+    auto networkSink = std::make_shared<NetworkSink>(nesPartition.getOperatorId(),
+                                                     schema,
                                                      1,
                                                      netManager,
                                                      nodeLocation,

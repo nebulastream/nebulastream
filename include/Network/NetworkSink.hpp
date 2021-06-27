@@ -38,7 +38,8 @@ class NetworkSink : public SinkMedium {
      * @param nodeLocation
      * @param nesPartition
      */
-    explicit NetworkSink(SchemaPtr schema,
+    explicit NetworkSink(OperatorId logicalSourceOperatorId,
+                         SchemaPtr schema,
                          QuerySubPlanId parentPlanId,
                          NetworkManagerPtr networkManager,
                          const NodeLocation nodeLocation,

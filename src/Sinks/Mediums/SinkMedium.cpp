@@ -22,9 +22,9 @@
 
 namespace NES {
 
-SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId)
-    : sinkFormat(std::move(sinkFormat)), parentPlanId(parentPlanId), sentBuffer(0), sentTuples(0), schemaWritten(false),
-      append(false), writeMutex() {
+SinkMedium::SinkMedium(OperatorId logicalOperatorId, SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId)
+    : sinkFormat(std::move(sinkFormat)), logicalOperatorId(logicalOperatorId), parentPlanId(parentPlanId), numOfProducers(1),
+      sentBuffer(0), sentTuples(0), schemaWritten(false), append(false), writeMutex() {
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 
@@ -38,6 +38,8 @@ uint64_t SinkMedium::getNumberOfWrittenOutTuples() {
 }
 
 SinkMedium::~SinkMedium() { NES_DEBUG("Destroy Data Sink  " << this); }
+
+void SinkMedium::addNewProducer() { numOfProducers.fetch_add(1); }
 
 SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); }
 
@@ -61,8 +63,10 @@ void SinkMedium::postReconfigurationCallback(NodeEngine::ReconfigurationMessage&
         case NodeEngine::SoftEndOfStream:
         case NodeEngine::HardEndOfStream:
         case NodeEngine::StopViaReconfiguration: {
-            shutdown();
-            break;
+            if (numOfProducers.fetch_sub(1) == 1) {
+                shutdown();
+                break;
+            }
         }
         default: {
             break;
