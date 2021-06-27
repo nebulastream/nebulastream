@@ -330,6 +330,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersPerPipeline;
     bool reconfigureDataSource(const std::shared_ptr<Execution::ExecutableQueryPlan>& oldQep,
                                std::shared_ptr<Execution::ExecutableQueryPlan>& newQep);
+    bool reconfigureDataSink(const std::shared_ptr<Execution::ExecutableQueryPlan>& toDelete,
+                             std::shared_ptr<Execution::ExecutableQueryPlan>& newQep);
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

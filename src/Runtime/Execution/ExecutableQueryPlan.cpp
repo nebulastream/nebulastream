@@ -59,6 +59,8 @@ void ExecutableQueryPlan::setSources(std::vector<DataSourcePtr> newSources) {
     numOfProducers = newSources.size();
 }
 
+void ExecutableQueryPlan::setSinks(std::vector<DataSinkPtr> newSinks) { sinks = newSinks; }
+
 void ExecutableQueryPlan::incrementProducerCount() { numOfProducers++; }
 
 QueryId ExecutableQueryPlan::getQueryId() const { return queryId; }

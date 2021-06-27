@@ -71,6 +71,12 @@ class SinkMedium : public Runtime::Reconfigurable {
     QuerySubPlanId getParentPlanId() const { return parentPlanId; }
 
     /**
+     * @brief get the id of logical operator
+     * @return the id
+     */
+    OperatorId getLogicalOperatorId() { return logicalOperatorId; }
+
+    /**
      * @brief debug function for testing to get number of written buffers
      * @return number of sent buffer
      */
@@ -85,7 +91,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**
      * @brief increments number of sub query plans that can write to this sink
      */
-     void addNewProducer();
+    void addNewProducer();
 
     /**
      * @brief virtual function to get a string describing the particular sink

@@ -255,9 +255,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     void completedWork(Task& task, WorkerContext& workerContext);
 
-    bool startQueryForSources(Execution::ExecutableQueryPlanPtr& qep,
-                              StateManagerPtr stateManager,
-                              const std::vector<DataSourcePtr>& sources);
+    bool startQuery(Execution::ExecutableQueryPlanPtr& qep,
+                    StateManagerPtr stateManager,
+                    const std::vector<DataSourcePtr>& sources,
+                    const std::vector<DataSinkPtr>& sinks);
 
     ExecutionResult terminateLoop(WorkerContext&);
 

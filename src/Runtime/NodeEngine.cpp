@@ -315,8 +315,69 @@ bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReco
 
     if (queryReconfigurationPlan->getReconfigurationType() == DATA_SOURCE) {
         return reconfigureDataSource(oldQep, newQep);
+    } else if (queryReconfigurationPlan->getReconfigurationType() == DATA_SINK) {
+        return reconfigureDataSink(oldQep, newQep);
+    } else {
+        NES_ERROR("NodeEngine::startQueryReconfiguration: Reconfiguration failed. Unknown reconfiguration type: "
+                  << queryReconfigurationPlan->getReconfigurationType());
+        return false;
     }
-    return false;
+}
+
+bool NodeEngine::reconfigureDataSink(const std::shared_ptr<Execution::ExecutableQueryPlan>& oldQep,
+                                     std::shared_ptr<Execution::ExecutableQueryPlan>& newQep) {
+    std::unordered_map<OperatorId, DataSinkPtr> oldSinkLogicalMapping;
+    std::unordered_map<OperatorId, DataSinkPtr> newSinkLogicalMapping;
+
+    for (auto& sink : oldQep->getSinks()) {
+        oldSinkLogicalMapping[sink->getLogicalOperatorId()] = sink;
+    }
+
+    for (auto& sink : newQep->getSinks()) {
+        newSinkLogicalMapping[sink->getLogicalOperatorId()] = sink;
+    }
+
+    std::vector<DataSinkPtr> sinksToDelete;
+    std::vector<DataSinkPtr> sinksToAdd;
+
+    for (auto& newSink : newSinkLogicalMapping) {
+        if (!oldSinkLogicalMapping.contains(newSink.first)) {
+            sinksToAdd.emplace_back(newSink.second);
+        }
+    }
+
+    for (auto& oldSink : oldSinkLogicalMapping) {
+        if (!newSinkLogicalMapping.contains(oldSink.first)) {
+            sinksToDelete.emplace_back(oldSink.second);
+        }
+    }
+
+    auto oldSinks = oldQep->getSinks();
+    auto updatedSinks = std::vector(oldSinks.begin(), oldSinks.end());
+    updatedSinks.erase(std::remove_if(updatedSinks.begin(),
+                                      updatedSinks.end(),
+                                      [sinksToDelete](const DataSinkPtr& sink) {
+                                          return std::find_if(sinksToDelete.begin(),
+                                                              sinksToDelete.end(),
+                                                              [sink](const DataSinkPtr& toDelete) {
+                                                                  return toDelete->getLogicalOperatorId()
+                                                                      == sink->getLogicalOperatorId();
+                                                              })
+                                              != sinksToDelete.end();
+                                      }),
+                       updatedSinks.end());
+
+    std::for_each(updatedSinks.begin(), updatedSinks.end(), [](const DataSinkPtr& sink) {
+        sink->addNewProducer();
+    });
+    updatedSinks.insert(updatedSinks.end(), sinksToAdd.begin(), sinksToAdd.end());
+
+    newQep->setSinks(updatedSinks);
+
+    // increment producer counts for old sinks
+    queryManager->startQuery(newQep, stateManager, newQep->getSources(), sinksToAdd);
+
+    return true;
 }
 
 bool NodeEngine::reconfigureDataSource(const std::shared_ptr<Execution::ExecutableQueryPlan>& oldQep,
@@ -375,7 +436,7 @@ bool NodeEngine::reconfigureDataSource(const std::shared_ptr<Execution::Executab
     registerQueryInNodeEngine(newQep, false);
 
     // No need to start the sources but we need to start new QEP and setup sinks
-    queryManager->startQueryForSources(newQep, stateManager, std::vector<DataSourcePtr>{});
+    queryManager->startQuery(newQep, stateManager, std::vector<DataSourcePtr>{}, newQep->getSinks());
 
     for (auto replaceDataEmitterMessage : replaceDataEmitterMessages) {
         queryManager->addReconfigurationMessage(newQep->getQueryId(), replaceDataEmitterMessage, false);
