@@ -200,6 +200,12 @@ class StreamCatalog {
     std::vector<StreamCatalogEntryPtr> getPhysicalStreams(std::string logicalStreamName);
 
     /**
+    * @brief get all physical streams
+    * @return std::vector containing all StreamCatalogEntryPtr
+    */
+    std::vector<StreamCatalogEntryPtr> getPhysicalStreams();
+
+    /**
      * @brief update an existing stream
      * @param streamName
      * @param streamSchema

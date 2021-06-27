@@ -67,16 +67,28 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             return;
         }
     } else if (path[1] == "allPhysicalStream") {
-        // BDAPRO adjust to find all physical streams even when they are not mapped to a logical stream
         //Check if the path contains the query id
         auto param = parameters.find("logicalStreamName");
         if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
-            badRequestImpl(request, errorResponse);
-        }
-
+            // BDAPRO instead of an error return all physical Streams
+            NES_DEBUG("QueryController: No logicalStreamName was specified, returning all physical streams");
+            json::value result{};
+            const std::vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams();
+            if (allPhysicalStream.empty()) {
+                NES_DEBUG("No Physical Stream Found");
+                resourceNotFoundImpl(request);
+                return;
+            } else {
+                std::vector<json::value> allStream = {};
+                for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
+                    allStream.push_back(json::value::string(physicalStream->toString()));
+                }
+                result["Physical Streams"] = json::value::array(allStream);
+                successMessageImpl(request, result);
+                return;
+            }
+        } else {
+            // logical stream name specified
         try {
             //Prepare Input query from user string
             std::string logicalStreamName = param->second;
@@ -108,7 +120,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             RuntimeUtils::printStackTrace();
             internalServerErrorImpl(request);
             return;
-        }
+        }}
     } else {
         resourceNotFoundImpl(request);
     }
@@ -198,6 +210,9 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
             })
             .wait();
     } else if (path[1] == "addPhysicalStream") {
+        // BDAPRO check if logicalStream name given or not. Depending oon that configure one with default log. stream name => define that somewhere
+        // if log. stream name provided just add it using the stream catalog method
+
 
     } else {
         resourceNotFoundImpl(message);

@@ -377,6 +377,16 @@ std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string
     return physicalStreams;
 }
 
+std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(){
+    std::vector<StreamCatalogEntryPtr> physicalStreams;
+    for (auto entry : nameToPhysicalStream) {
+        // returned a list of phyiscalStreamNames
+        physicalStreams.push_back(entry.second);
+    }
+    return physicalStreams;
+}
+
+
 std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStream() { return logicalStreamToSchemaMapping; }
 
 std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStreamForPhysicalStream(std::string physicalStreamName) {
