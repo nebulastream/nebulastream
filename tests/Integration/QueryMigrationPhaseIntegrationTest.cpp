@@ -18,20 +18,21 @@
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Phases/QueryMigrationPhase.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Services/MaintenanceService.hpp>
-#include <Services/QueryService.hpp>
 #include <Services/NESRequestProcessorService.hpp>
+#include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <iostream>
 
 //
 // Created by balint on 19.04.21.
@@ -58,7 +59,7 @@ class QueryMigrationPhaseIntegrationTest : public testing::Test {
     void TearDown() { NES_DEBUG("TearDown QueryMigrationPhaseIntegrationTest class."); }
 
     bool compareDataToBaseline(std::string pathToFile, std::vector<uint64_t>& ids){
-        //only applicable for data of the form in testDataBalint.csv
+        //only applicable for data of the form in test_balint.csv
         //uses unique int identifier for each row. Uses to check if data was lost or duplicated
         std::vector<uint64_t> idsAfterMaintenance {};
         std::ifstream file;
@@ -531,7 +532,8 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
     wrk4->registerLogicalStream("testStream", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/testDataBalint.csv");
+    ASSERT_TRUE(std::filesystem::exists("../tests/test_data/test_balint.csv"));
+    srcConf->setSourceConfig("../tests/test_data/test_balint.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("testStream");
@@ -653,7 +655,8 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTes
     wrk4->registerLogicalStream("testStream", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/testDataBalint.csv");
+    ASSERT_TRUE(std::filesystem::exists("../tests/test_data/test_balint.csv"));
+    srcConf->setSourceConfig("../tests/test_data/test_balint.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("testStream");

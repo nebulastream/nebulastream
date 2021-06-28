@@ -591,7 +591,7 @@ TEST_F(EngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
 
     testOutput("qep3.txt", joinedExpectedOutput);
 }
-TEST_F(EngineTest, testPassingLogicalOpreratorIdToPhysicalSink) {
+TEST_F(EngineTest, DISABLED_testPassingLogicalOpreratorIdToPhysicalSink) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::create("127.0.0.1", 31337, streamConf);
 
