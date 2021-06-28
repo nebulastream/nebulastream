@@ -24,18 +24,23 @@
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
+#include <z3++.h>
 
 using namespace NES;
 using namespace web;
@@ -216,6 +221,72 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
             for (auto children : actualRootOperator->getChildren()) {
                 EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
             }
+        }
+    }
+}
+
+TEST_F(QueryPlacementTest, multiSinkPlacement) {
+
+    setupTopologyAndStreamCatalog();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
+
+    Query query1 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    Query query2 =
+        Query::from("car").filter(Attribute("id") < 45).map(Attribute("myValue") = 10).sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    queryPlan1->setQueryId(PlanIdGenerator::getNextQueryId());
+
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan1 = queryReWritePhase->execute(queryPlan1);
+    queryPlan2 = queryReWritePhase->execute(queryPlan2);
+
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(queryPlan1);
+    topologySpecificQueryRewrite->execute(queryPlan2);
+
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    signatureInferencePhase->execute(queryPlan1);
+    signatureInferencePhase->execute(queryPlan2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    std::vector<SharedQueryMetaDataPtr> sharedQP = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto queryPlanToPlace = sharedQP[0]->getQueryPlan();
+    std::cout << "Query Plan To Place: " << std::endl;
+    std::cout << queryPlanToPlace->toString() << std::endl;
+    placementStrategy->updateGlobalExecutionPlan(queryPlanToPlace);
+    std::vector<ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getExecutionNodesByQueryId(queryPlanToPlace->getQueryId());
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3);
+    for (auto executionNode : executionNodes) {
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryPlanToPlace->getQueryId());
+        for (auto qsp : querySubPlans) {
+            std::cout << "QSP ID: " << qsp->getQuerySubPlanId() << std::endl << qsp->toString() << std::endl;
         }
     }
 }

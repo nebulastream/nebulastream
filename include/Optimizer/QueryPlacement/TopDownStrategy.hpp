@@ -29,6 +29,8 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
 
+    bool partialGlobalExecutionPlan(QueryPlanPtr queryPlan);
+
     static std::unique_ptr<TopDownStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                    TopologyPtr topology,
                                                    TypeInferencePhasePtr typeInferencePhase,
