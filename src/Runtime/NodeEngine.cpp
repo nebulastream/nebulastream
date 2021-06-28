@@ -23,7 +23,6 @@
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
-#include <NodeEngine/StopQueryMessage.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -352,29 +351,18 @@ bool NodeEngine::reconfigureDataSink(const std::shared_ptr<Execution::Executable
         }
     }
 
-    auto oldSinks = oldQep->getSinks();
-    auto updatedSinks = std::vector(oldSinks.begin(), oldSinks.end());
-    updatedSinks.erase(std::remove_if(updatedSinks.begin(),
-                                      updatedSinks.end(),
-                                      [sinksToDelete](const DataSinkPtr& sink) {
-                                          return std::find_if(sinksToDelete.begin(),
-                                                              sinksToDelete.end(),
-                                                              [sink](const DataSinkPtr& toDelete) {
-                                                                  return toDelete->getLogicalOperatorId()
-                                                                      == sink->getLogicalOperatorId();
-                                                              })
-                                              != sinksToDelete.end();
-                                      }),
-                       updatedSinks.end());
-
-    std::for_each(updatedSinks.begin(), updatedSinks.end(), [](const DataSinkPtr& sink) {
-        sink->addNewProducer();
-    });
-    updatedSinks.insert(updatedSinks.end(), sinksToAdd.begin(), sinksToAdd.end());
-
-    newQep->setSinks(updatedSinks);
-
     // increment producer counts for old sinks
+    for (auto sink : newQep->getSinks()) {
+        if (oldSinkLogicalMapping.contains(sink->getLogicalOperatorId())) {
+            sink->addNewProducer();
+        }
+    }
+
+    for (auto sinkToDelete : sinksToDelete) {
+        sinkOperatorCache.erase(sinkToDelete->getLogicalOperatorId());
+    }
+
+    registerQueryInNodeEngine(newQep, false);
     queryManager->startQuery(newQep, stateManager, newQep->getSources(), sinksToAdd);
 
     return true;
@@ -465,6 +453,8 @@ bool NodeEngine::reconfigureDataSource(const std::shared_ptr<Execution::Executab
     return true;
 }
 
+std::map<OperatorId, DataSinkPtr>& NodeEngine::getSinkOperatorCache() { return sinkOperatorCache; }
+
 bool NodeEngine::startQuery(QueryId queryId) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("Runtime: startQuery=" << queryId);
@@ -552,7 +542,11 @@ bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
         }
 
         for (auto querySubPlanId : querySubPlanIds) {
-            if (queryManager->stopQuery(deployedQEPs[querySubPlanId], graceful)) {
+            std::shared_ptr<Execution::ExecutableQueryPlan>& qep = deployedQEPs[querySubPlanId];
+            for (auto sink : qep->getSinks()) {
+                sinkOperatorCache.erase(sink->getLogicalOperatorId());
+            }
+            if (queryManager->stopQuery(qep, graceful)) {
                 NES_DEBUG("Runtime: stop of QEP " << querySubPlanId << " succeeded");
             } else {
                 NES_ERROR("Runtime: stop of QEP " << querySubPlanId << " failed");
@@ -624,6 +618,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     // release components
     // TODO do not touch the sequence here as it will lead to errors in the shutdown sequence
     deployedQEPs.clear();
+    sinkOperatorCache.clear();
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
     networkManager->destroy();

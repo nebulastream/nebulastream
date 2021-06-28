@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NodeEngine/NodeEngine.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <utility>
@@ -22,17 +23,25 @@ namespace NES::QueryCompilation {
 DataSinkProviderPtr DataSinkProvider::create() { return std::make_shared<DataSinkProvider>(); }
 
 DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
-                                    OperatorId logicalSourceOperatorId,
+                                    OperatorId logicalSinkOperatorId,
                                     SinkDescriptorPtr sinkDescriptor,
                                     SchemaPtr schema,
                                     Runtime::NodeEnginePtr nodeEngine,
                                     QuerySubPlanId querySubPlanId) {
-    return ConvertLogicalToPhysicalSink::createDataSink(sinkId,
-                                                        logicalSourceOperatorId,
-                                                        std::move(sinkDescriptor),
-                                                        std::move(schema),
-                                                        std::move(nodeEngine),
-                                                        querySubPlanId);
+    std::map<OperatorId, DataSinkPtr>& operatorCache = nodeEngine->getSinkOperatorCache();
+    if (operatorCache.find(logicalSinkOperatorId) != operatorCache.end()) {
+        return operatorCache[logicalSinkOperatorId];
+    }
+    const DataSinkPtr& sinkPtr = ConvertLogicalToPhysicalSink::createDataSink(sinkId,
+                                                                              logicalSinkOperatorId,
+                                                                              std::move(sinkDescriptor),
+                                                                              std::move(schema),
+                                                                              std::move(nodeEngine),
+                                                                              querySubPlanId);
+    if (!std::dynamic_pointer_cast<Network::NetworkSink>(sinkPtr)) {
+        operatorCache[logicalSinkOperatorId] = sinkPtr;
+    }
+    return sinkPtr;
 }
 
 }// namespace NES::QueryCompilation

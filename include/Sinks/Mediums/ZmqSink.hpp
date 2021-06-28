@@ -30,7 +30,7 @@ class ZmqSink : public SinkMedium {
 
   public:
     //TODO: remove internal flag once the new network stack is in place
-    ZmqSink(OperatorId logicalSourceOperatorId,
+    ZmqSink(OperatorId logicalOperatorId,
             SinkFormatPtr format,
             const std::string& host,
             uint16_t port,

@@ -16,13 +16,12 @@
 
 #include <Network/NetworkSink.hpp>
 #include <Network/OutputChannelKey.hpp>
-#include <NodeEngine/StopQueryMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 
 namespace NES::Network {
 
-NetworkSink::NetworkSink(OperatorId logicalSourceOperatorId,
+NetworkSink::NetworkSink(OperatorId logicalOperatorId,
                          const SchemaPtr& schema,
                          QuerySubPlanId parentPlanId,
                          NetworkManagerPtr networkManager,
@@ -32,7 +31,7 @@ NetworkSink::NetworkSink(OperatorId logicalSourceOperatorId,
                          Runtime::QueryManagerPtr queryManager,
                          std::chrono::seconds waitTime,
                          uint8_t retryTimes)
-    : SinkMedium(logicalSourceOperatorId, std::make_shared<NesFormat>(schema, bufferManager), parentPlanId),
+    : SinkMedium(logicalOperatorId, std::make_shared<NesFormat>(schema, bufferManager), parentPlanId),
       networkManager(std::move(networkManager)),queryManager(std::move(queryManager)), nodeLocation(nodeLocation), nesPartition(nesPartition),
        waitTime(waitTime), retryTimes(retryTimes),
       outputChannelKey(OutputChannelKey(parentPlanId, nesPartition.getOperatorId())) {

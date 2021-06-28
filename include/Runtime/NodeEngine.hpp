@@ -298,6 +298,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     SourceDescriptorPtr createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor);
 
+    /**
+     * @brief Maintain mapping between logical operatorIds and instances for stateful operators
+     */
+    std::map<OperatorId, DataSinkPtr>& getSinkOperatorCache();
+
   private:
     /**
      * Compile Query Plan into executable query plan
@@ -312,6 +317,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
+    std::map<OperatorId, DataSinkPtr> sinkOperatorCache;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> reconfigurationQEPs;
