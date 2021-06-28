@@ -76,9 +76,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     struct subprocess_s coordinatorProc;
 
     int result = subprocess_create(cmdCoord, 0, &coordinatorProc);
-    NES_INFO("id of coordinator: " + coordinatorProc.child);
+    NES_INFO("id of coordinator: " << coordinatorProc.child);
     EXPECT_TRUE(result == 0);
-    NES_INFO("result : " + result);
+    NES_INFO("result : " << result);
 
 
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
