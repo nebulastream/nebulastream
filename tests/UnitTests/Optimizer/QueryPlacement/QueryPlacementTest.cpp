@@ -81,13 +81,17 @@ class QueryPlacementTest : public testing::Test {
         SourceConfigPtr sourceConfig = SourceConfig::create();
         sourceConfig->setSourceFrequency(0);
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfig->setPhysicalStreamName("test2");
+        sourceConfig->setPhysicalStreamName("test2_1");
         sourceConfig->setLogicalStreamName("car");
 
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+        sourceConfig->setPhysicalStreamName("test2_1");
+        PhysicalStreamConfigPtr conf1 = PhysicalStreamConfig::create(sourceConfig);
 
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode1);
-        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode2);
+        sourceConfig->setPhysicalStreamName("test2_2");
+        PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(sourceConfig);
+
+        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode1);
+        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf2, sourceNode2);
 
         std::vector<std::string> logicalStreamNames{"car"};
 

@@ -121,7 +121,6 @@ bool StreamCatalog::addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr
 }
 
 bool StreamCatalog::addPhysicalToLogicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry){
-    std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: logical stream " << logicalStreamName << " exists try to add physical stream "
                                                << newEntry->getPhysicalName());
     //get current physicalStreamNames for this logicalStream
@@ -167,6 +166,7 @@ bool StreamCatalog::addPhysicalToLogicalStream(std::string logicalStreamName, St
 }
 
 bool StreamCatalog::addPhysicalStream(std::vector<std::string> logicalStreamNames, StreamCatalogEntryPtr newEntry) {
+    std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical streams in addPhysicalStream() " << UtilityFunctions::combineStringsWithDelimiter(logicalStreamNames, ","));
 
     // check if logical stream schemas exist
