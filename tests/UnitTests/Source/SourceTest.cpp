@@ -144,6 +144,8 @@ struct __attribute__((packed)) IngestionRecord {
 };
 
 using ::testing::Return;
+using ::testing::AnyNumber;
+using ::testing::InvokeWithoutArgs;
 using ::testing::_;
 
 // testing w/ original running routine
@@ -188,7 +190,7 @@ class MockDataSourceWithRunningRoutine : public DataSource {
 };
 
 // proxy friendly to test class, exposing protected members
-class DataSourceProxy : public DataSource {
+class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
   public:
     DataSourceProxy(const SchemaPtr& schema,
                     Runtime::BufferManagerPtr bufferManager,
@@ -205,10 +207,21 @@ class DataSourceProxy : public DataSource {
     MOCK_METHOD(SourceType, getType, (), (const));
     MOCK_METHOD(void, emitWork, (Runtime::TupleBuffer& buffer));
     MOCK_METHOD(void, emitWorkFromSource, (Runtime::TupleBuffer& buffer));
+    MOCK_METHOD(void, recycleUnpooledBuffer, (Runtime::detail::MemorySegment* buffer));
+
+    Runtime::TupleBuffer getRecyclableBuffer() {
+        auto* p = new uint8_t[5];
+        auto fakeBuffer = Runtime::TupleBuffer::wrapMemory(p, sizeof(uint8_t) * 5, this);
+        return fakeBuffer;
+    }
+
+    void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) {
+        delete buffer;
+    }
 
   private:
-    FRIEND_TEST(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue);
-    FRIEND_TEST(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue);
+    FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
+    FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
 };
 using DataSourceProxyPtr = std::shared_ptr<DataSourceProxy>;
@@ -566,7 +579,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
     mDataSource.runningRoutine();
 }
 
-TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
+TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
@@ -583,12 +596,13 @@ TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
-    mDataSource->wasGracefullyStopped = false;
-    auto buf = this->GetBufferWithValue();
+    mDataSource->wasGracefullyStopped = true;
+    auto fakeBuf = mDataSource->getRecyclableBuffer();
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
-    ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(buf));
+    ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
     ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    ON_CALL(*mDataSource, recycleUnpooledBuffer(_)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
                                                      this->queryId,
                                                      {mDataSource},
@@ -599,14 +613,14 @@ TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
     EXPECT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
     EXPECT_TRUE(this->nodeEngine->startQuery(this->queryId));
     EXPECT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    mDataSource->runningRoutine();
     EXPECT_CALL(*mDataSource, receiveData()).Times(1);
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(1);
+    mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->isRunning());
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
 }
 
-TEST_F(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue) {
+TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
@@ -623,12 +637,12 @@ TEST_F(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue) {
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
-    mDataSource->wasGracefullyStopped = false;
-    auto buf = this->GetBufferWithValue();
+    mDataSource->wasGracefullyStopped = true;
+    mDataSource->gatheringIngestionRate = 1;
+    auto fakeBuf = mDataSource->getRecyclableBuffer();
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
-    ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(buf));
-    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
                                                                          this->queryId,
                                                                          {mDataSource},
@@ -639,9 +653,13 @@ TEST_F(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue) {
     EXPECT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
     EXPECT_TRUE(this->nodeEngine->startQuery(this->queryId));
     EXPECT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    mDataSource->runningRoutine();
     EXPECT_CALL(*mDataSource, receiveData()).Times(1);
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(1);
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(222).WillOnce(InvokeWithoutArgs([&](){
+      mDataSource->running = false;
+      return;
+    }));
+    mDataSource->runningRoutine();
+
     EXPECT_FALSE(mDataSource->isRunning());
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
 }
@@ -1017,7 +1035,6 @@ TEST_F(SourceTest, testDefaultSourceReceiveData) {
                                      this->numSourceLocalBuffersDefault,
                                      {});
     // open starts the bufferManager, otherwise receiveData will fail
-    // TODO: issue to open automatically before receiveData in DefaultSource
     defDataSource.open();
     auto buf = defDataSource.receiveData();
     EXPECT_TRUE(buf.has_value());
