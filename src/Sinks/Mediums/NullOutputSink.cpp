@@ -22,8 +22,8 @@
 #include <string>
 
 namespace NES {
-NullOutputSink::NullOutputSink(OperatorId logicalSourceOperatorId, QuerySubPlanId parentPlanId)
-    : SinkMedium(logicalSourceOperatorId, nullptr, parentPlanId) {}
+NullOutputSink::NullOutputSink(OperatorId logicalOperatorId, QuerySubPlanId parentPlanId)
+    : SinkMedium(logicalOperatorId, nullptr, parentPlanId) {}
 
 NullOutputSink::~NullOutputSink() = default;
 

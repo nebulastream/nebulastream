@@ -32,8 +32,8 @@ namespace NES {
 
 SinkMediumTypes ZmqSink::getSinkMediumType() { return ZMQ_SINK; }
 
-ZmqSink::ZmqSink(OperatorId logicalSourceOperatorId, SinkFormatPtr format, const std::string& host, uint16_t port, bool internal, QuerySubPlanId parentPlanId)
-    : SinkMedium(logicalSourceOperatorId, std::move(format), parentPlanId), host(host.substr(0, host.find(':'))), port(port), internal(internal),
+ZmqSink::ZmqSink(OperatorId logicalOperatorId, SinkFormatPtr format, const std::string& host, uint16_t port, bool internal, QuerySubPlanId parentPlanId)
+    : SinkMedium(logicalOperatorId, std::move(format), parentPlanId), host(host.substr(0, host.find(':'))), port(port), internal(internal),
       context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
 }

@@ -30,15 +30,15 @@ class DataSourceProvider {
     static DataSourceProviderPtr create(const QueryCompilerOptionsPtr& compilerOptions);
     /**
      * @brief Lowers a source descriptor to a executable data source.
-     * @param sourceId id of the data source
-     * @param logicalSourceId id of the operator in logical query plan this source is created from
+     * @param operatorId id of the data source
+     * @param logicalOperatorId id of the operator in logical query plan this source is created from
      * @param sourceDescriptor
      * @param nodeEngine
      * @param successors
      * @return DataSourcePtr
      */
     virtual DataSourcePtr lower(OperatorId operatorId,
-                                OperatorId logicalSourceId,
+                                OperatorId logicalOperatorId,
                                 SourceDescriptorPtr sourceDescriptor,
                                 Runtime::NodeEnginePtr nodeEngine,
                                 std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
