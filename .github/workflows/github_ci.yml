@@ -120,7 +120,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Repository Dispatch
-        if: ${{ success() }} && {{ steps.findPr.outputs.number }}
         uses: peter-evans/repository-dispatch@v1
         with:
           token: ${{ secrets.CI_PERSONAL_TOKEN }}
