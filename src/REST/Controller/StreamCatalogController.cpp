@@ -210,8 +210,6 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
             })
             .wait();
     } else if (path[1] == "addPhysicalToLogicalStream") {
-        // BDAPRO check if logicalStream name given or not. Depending oon that configure one with default log. stream name => define that somewhere
-        // if log. stream name provided just add it using the stream catalog method
         NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: REST received request to add a Physical Stream to a Logical Stream "
                           << message.to_string());
         message.extract_string(true)
@@ -248,7 +246,9 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                     }
                 })
                 .wait();
-    } else {
+    } else if (path[1] == "addLogicalToPhysicalStream") {
+        // BDAPRO adjust to use new function
+    }else {
         resourceNotFoundImpl(message);
     }
 }

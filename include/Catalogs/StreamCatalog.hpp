@@ -160,6 +160,13 @@ class StreamCatalog {
     bool testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::string logicalStreamName);
 
     /**
+    * @brief test if physical stream with this name exists in nameToPhysicalMapping
+    * @param name of the physical stream to test
+    * @return bool indicating if stream exists
+    */
+    bool testIfPhysicalStreamWithNameExists(std::string physicalStreamName);
+
+    /**
    * @brief return all physical nodes that contribute to this logical stream
    * @param name of logical stream
    * @return list of physical nodes as pointers into the topology

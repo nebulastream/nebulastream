@@ -116,7 +116,8 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
 // EDIT THIS FUNCTION FOR STATE HANDLING
 // BDAPRO use new PhysicalStreamState object - remove mapping
 bool StreamCatalog::addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry) {
-    // BDAPRO introduce some kind of error status enum
+        std::unique_lock lock(catalogMutex);
+        // BDAPRO introduce some kind of error status enum
     misconfiguredPhysicalStreams[newEntry->getPhysicalName()] = "Missing logical stream name";
     nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
     return true;
@@ -178,19 +179,9 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     return true;
 }
 
-/*
- *                         if (logicalStreamName.empty()){
-                            //BDAPRO handle what happens if logical Stream name does not exist
-                            NES_ERROR("No logicalStreamName was found");
-                        }else if (physicalStreamName.empty()){
-                            //BDAPRO handle what happens if physical Stream name does not exist
-                            NES_ERROR("No phyiscalStreamName was found");
-                        }*/
-// check if names are empty BDAPRO
-// check if already contained
-// add new entry in vector of mapping elements.second
 bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string physicalStreamName, std::string logicalStreamName){
-    if (logicalStreamName.empty()){
+        std::unique_lock lock(catalogMutex);
+        if (logicalStreamName.empty()){
         NES_ERROR("StreamCatalog: addPhysicalStreamToLogicalStream - logicalStreamName is empty.");
         return false;
     } else if (physicalStreamName.empty()){
@@ -209,8 +200,6 @@ bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string physicalStreamN
         }
     }
 }
-
-
 
 // BDAPRO ADD LABEL MISCONFIGURED - needs to checked because stream can be present in other log stream
 // this would be rather optional for this issue but should be done for failure handling // state object?
@@ -352,6 +341,13 @@ bool StreamCatalog::testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::str
         != logicalToPhysicalStreamMapping.end();
 }
 
+// checks if the corresponding physical stream exists in nameToPhysicalStream Mapping.
+bool StreamCatalog::testIfPhysicalStreamWithNameExists(std::string physicalStreamName){
+    std::unique_lock lock(catalogMutex);
+    // find in mapping entry.first == physicalStreamName
+
+}
+
 std::vector<TopologyNodePtr> StreamCatalog::getSourceNodesForLogicalStream(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     std::vector<TopologyNodePtr> listOfSourceNodes;
@@ -400,6 +396,7 @@ std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
 }
 
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string logicalStreamName) {
+    std::unique_lock lock(catalogMutex);
     std::vector<std::string> physicalStreamsNames = logicalToPhysicalStreamMapping[logicalStreamName];
     std::vector<StreamCatalogEntryPtr> physicalStreams;
 
@@ -411,6 +408,7 @@ std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string
 }
 
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(){
+    std::unique_lock lock(catalogMutex);
     std::vector<StreamCatalogEntryPtr> physicalStreams;
     for (auto entry : nameToPhysicalStream) {
         // returned a list of phyiscalStreamNames
@@ -423,6 +421,7 @@ std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(){
 std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStream() { return logicalStreamToSchemaMapping; }
 
 std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStreamForPhysicalStream(std::string physicalStreamName) {
+    std::unique_lock lock(catalogMutex);
     std::vector<std::string> logicalStreamNames;
     // iterate over map and add first to logicalStreamNames where it.second == phyStreamname
     for (auto entry : logicalToPhysicalStreamMapping) {
@@ -443,7 +442,8 @@ std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStreamForPhysicalSt
 
 // BDAPRO converts getAllLogicalStreamForPhysicalStream from schemaPtr to strings
 std::map<std::string, std::string> StreamCatalog::getAllLogicalStreamForPhysicalStreamAsString(std::string physicalStreamName) {
-    std::map<std::string, SchemaPtr> allLogicalStreamForPhysicalStream = getAllLogicalStreamForPhysicalStream(physicalStreamName);
+        std::unique_lock lock(catalogMutex);
+        std::map<std::string, SchemaPtr> allLogicalStreamForPhysicalStream = getAllLogicalStreamForPhysicalStream(physicalStreamName);
     std::map<std::string, std::string> allLogicalStreamForPhysicalStreamAsString;
     for (auto const& [key, val] : allLogicalStreamForPhysicalStream) {
         allLogicalStreamForPhysicalStreamAsString[key] = val->toString();
