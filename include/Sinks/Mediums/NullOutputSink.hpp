@@ -36,7 +36,7 @@ class NullOutputSink : public SinkMedium {
      * @brief Default constructor
      * @Note the default output will be written to cout
      */
-    NullOutputSink(OperatorId logicalSourceOperatorId, QuerySubPlanId parentPlanId);
+    NullOutputSink(OperatorId logicalOperatorId, QuerySubPlanId parentPlanId);
 
     /**
      * @brief destructor

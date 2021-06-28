@@ -72,7 +72,7 @@ class TestSinkDescriptor : public SinkDescriptor {
 class TestSinkProvider : public QueryCompilation::DataSinkProvider {
   public:
     DataSinkPtr lower(OperatorId operatorId,
-                      OperatorId logicalSourceOperatorId,
+                      OperatorId logicalSinkOperatorId,
                       SinkDescriptorPtr sinkDescriptor,
                       SchemaPtr schema,
                       NodeEngine::NodeEnginePtr nodeEngine,
@@ -81,7 +81,7 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
             auto testSinkDescriptor = sinkDescriptor->as<TestSinkDescriptor>();
             return testSinkDescriptor->getSink();
         } else {
-            return DataSinkProvider::lower(operatorId, logicalSourceOperatorId, sinkDescriptor, schema, nodeEngine, querySubPlanId);
+            return DataSinkProvider::lower(operatorId, logicalSinkOperatorId, sinkDescriptor, schema, nodeEngine, querySubPlanId);
         }
     }
 };

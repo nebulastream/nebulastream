@@ -25,7 +25,7 @@ using namespace std::chrono_literals;
 
 namespace NES {
 
-KafkaSink::KafkaSink(OperatorId logicalSourceOperatorId,
+KafkaSink::KafkaSink(OperatorId logicalOperatorId,
                      SinkFormatPtr format,
                      QuerySubPlanId parentPlanId,
                      const std::string& brokers,

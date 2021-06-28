@@ -31,13 +31,13 @@ namespace NES {
 
 SinkMediumTypes ZmqSink::getSinkMediumType() { return ZMQ_SINK; }
 
-ZmqSink::ZmqSink(OperatorId logicalSourceOperatorId,
+ZmqSink::ZmqSink(OperatorId logicalOperatorId,
                  SinkFormatPtr format,
                  const std::string& host,
                  uint16_t port,
                  bool internal,
                  QuerySubPlanId parentPlanId)
-    : SinkMedium(logicalSourceOperatorId, format, parentPlanId), host(host.substr(0, host.find(":"))), port(port),
+    : SinkMedium(logicalOperatorId, format, parentPlanId), host(host.substr(0, host.find(":"))), port(port),
       connected(false), internal(internal), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
 }

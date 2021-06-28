@@ -35,14 +35,14 @@
 
 namespace NES {
 
-OPCSink::OPCSink(OperatorId logicalSourceOperatorId,
+OPCSink::OPCSink(OperatorId logicalOperatorId,
                  QuerySubPlanId parentPlanId,
                  SinkFormatPtr format,
                  std::string url,
                  UA_NodeId nodeId,
                  std::string user,
                  std::string password)
-    : SinkMedium(logicalSourceOperatorId, std::move(format), parentPlanId), url(url), nodeId(nodeId), retval(UA_STATUSCODE_GOOD),
+    : SinkMedium(logicalOperatorId, std::move(format), parentPlanId), url(url), nodeId(nodeId), retval(UA_STATUSCODE_GOOD),
       client(UA_Client_new()), connected(false), user(user), password(password) {
     NES_DEBUG("OPCSINK  " << this << ": Init OPC Sink to " << url << " .");
 }

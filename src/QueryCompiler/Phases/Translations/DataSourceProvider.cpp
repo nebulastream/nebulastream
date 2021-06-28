@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NodeEngine/NodeEngine.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
@@ -28,12 +29,12 @@ DataSourceProviderPtr QueryCompilation::DataSourceProvider::create(QueryCompiler
 }
 
 DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
-                                        OperatorId logicalSourceId,
+                                        OperatorId logicalOperatorId,
                                         SourceDescriptorPtr sourceDescriptor,
                                         NodeEngine::NodeEnginePtr nodeEngine,
                                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
     return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
-                                                            logicalSourceId,
+                                                            logicalOperatorId,
                                                             sourceDescriptor,
                                                             nodeEngine,
                                                             compilerOptions->getNumSourceLocalBuffers(),

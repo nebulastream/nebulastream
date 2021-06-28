@@ -16,7 +16,9 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONREQUEST_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONREQUEST_HPP_
 
+#include <Operators/OperatorId.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <unordered_map>
 
 namespace NES {
 namespace QueryCompilation {

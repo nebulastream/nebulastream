@@ -32,7 +32,7 @@ class KafkaSink : public SinkMedium {
 
   public:
     KafkaSink();
-    KafkaSink(OperatorId logicalSourceOperatorId,
+    KafkaSink(OperatorId logicalOperatorId,
               SchemaPtr schema,
               const std::string& brokers,
               const std::string& topic,

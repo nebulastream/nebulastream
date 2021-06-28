@@ -22,11 +22,11 @@
 #include <string>
 
 namespace NES {
-PrintSink::PrintSink(OperatorId logicalSourceOperatorId,
+PrintSink::PrintSink(OperatorId logicalOperatorId,
                      SinkFormatPtr format,
                      QuerySubPlanId parentPlanId,
                      std::ostream& pOutputStream)
-    : SinkMedium(logicalSourceOperatorId, format, parentPlanId), outputStream(pOutputStream) {}
+    : SinkMedium(logicalOperatorId, format, parentPlanId), outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() {}
 

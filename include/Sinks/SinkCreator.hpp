@@ -50,7 +50,7 @@ const DataSinkPtr createTestSink();
  * @return a data sink pointer
  */
 
-const DataSinkPtr createCSVFileSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createCSVFileSink(OperatorId logicalOperatorId,
                                     SchemaPtr schema,
                                     QuerySubPlanId parentPlanId,
                                     NodeEngine::NodeEnginePtr nodeEngine,
@@ -65,7 +65,7 @@ const DataSinkPtr createCSVFileSink(OperatorId logicalSourceOperatorId,
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createTextFileSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createTextFileSink(OperatorId logicalOperatorId,
                                      SchemaPtr schema,
                                      QuerySubPlanId parentPlanId,
                                      NodeEngine::NodeEnginePtr nodeEngine,
@@ -80,7 +80,7 @@ const DataSinkPtr createTextFileSink(OperatorId logicalSourceOperatorId,
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryNESFileSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createBinaryNESFileSink(OperatorId logicalOperatorId,
                                           SchemaPtr schema,
                                           QuerySubPlanId parentPlanId,
                                           NodeEngine::NodeEnginePtr nodeEngine,
@@ -95,7 +95,7 @@ const DataSinkPtr createBinaryNESFileSink(OperatorId logicalSourceOperatorId,
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createJSONFileSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createJSONFileSink(OperatorId logicalOperatorId,
                                      SchemaPtr schema,
                                      QuerySubPlanId parentPlanId,
                                      NodeEngine::NodeEnginePtr nodeEngine,
@@ -111,7 +111,7 @@ const DataSinkPtr createJSONFileSink(OperatorId logicalSourceOperatorId,
  * @param internal refers to the usage of this zmq sink as a fwd operator such that we dont have to send the schema, only the data
  * @return a data sink pointer
  */
-const DataSinkPtr createTextZmqSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createTextZmqSink(OperatorId logicalOperatorId,
                                     SchemaPtr schema,
                                     QuerySubPlanId parentPlanId,
                                     NodeEngine::NodeEnginePtr nodeEngine,
@@ -128,7 +128,7 @@ const DataSinkPtr createTextZmqSink(OperatorId logicalSourceOperatorId,
  * @param password as string to log in to the OPC server
  * @return a data sink pointer
  */
-const DataSinkPtr createOPCSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createOPCSink(OperatorId logicalOperatorId,
                                 SchemaPtr schema,
                                 QuerySubPlanId parentPlanId,
                                 NodeEngine::NodeEnginePtr nodeEngine,
@@ -145,7 +145,7 @@ const DataSinkPtr createOPCSink(OperatorId logicalSourceOperatorId,
  * @param port at uint16
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVZmqSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createCSVZmqSink(OperatorId logicalOperatorId,
                                    SchemaPtr schema,
                                    QuerySubPlanId parentPlanId,
                                    NodeEngine::NodeEnginePtr nodeEngine,
@@ -160,7 +160,7 @@ const DataSinkPtr createCSVZmqSink(OperatorId logicalSourceOperatorId,
  * @param port at uint16
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryZmqSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createBinaryZmqSink(OperatorId logicalOperatorId,
                                       SchemaPtr schema,
                                       QuerySubPlanId parentPlanId,
                                       NodeEngine::NodeEnginePtr nodeEngine,
@@ -175,7 +175,7 @@ const DataSinkPtr createBinaryZmqSink(OperatorId logicalSourceOperatorId,
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createTextPrintSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createTextPrintSink(OperatorId logicalOperatorId,
                                       SchemaPtr schema,
                                       QuerySubPlanId parentPlanId,
                                       NodeEngine::NodeEnginePtr nodeEngine,
@@ -185,7 +185,7 @@ const DataSinkPtr createTextPrintSink(OperatorId logicalSourceOperatorId,
  * @brief create a print that does not output something
  * @return a data sink pointer
  */
-const DataSinkPtr createNullOutputSink(OperatorId logicalSourceOperatorId, QuerySubPlanId parentPlanId);
+const DataSinkPtr createNullOutputSink(OperatorId logicalOperatorId, QuerySubPlanId parentPlanId);
 
 /**
  * @brief create a print test sink with a schema
@@ -195,7 +195,7 @@ const DataSinkPtr createNullOutputSink(OperatorId logicalSourceOperatorId, Query
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVPrintSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createCSVPrintSink(OperatorId logicalOperatorId,
                                      SchemaPtr schema,
                                      QuerySubPlanId parentPlanId,
                                      NodeEngine::NodeEnginePtr nodeEngine,
@@ -211,7 +211,7 @@ const DataSinkPtr createCSVPrintSink(OperatorId logicalSourceOperatorId,
  * @param retryTimes
  * @return a data sink pointer
  */
-const DataSinkPtr createNetworkSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createNetworkSink(OperatorId logicalOperatorId,
                                     SchemaPtr schema,
                                     QuerySubPlanId parentPlanId,
                                     Network::NodeLocation nodeLocation,
@@ -230,7 +230,7 @@ const DataSinkPtr createNetworkSink(OperatorId logicalSourceOperatorId,
  * @return a data sink pointer
  */
 const DataSinkPtr
-createKafkaSinkWithSchema(OperatorId logicalSourceOperatorId, SchemaPtr schema, const std::string& brokers, const std::string& topic, uint64_t kafkaProducerTimeout);
+createKafkaSinkWithSchema(OperatorId logicalOperatorId, SchemaPtr schema, const std::string& brokers, const std::string& topic, uint64_t kafkaProducerTimeout);
 #endif
 
 #ifdef ENABLE_MQTT_BUILD
@@ -249,7 +249,7 @@ createKafkaSinkWithSchema(OperatorId logicalSourceOperatorId, SchemaPtr schema, 
  * @param asynchronousClient: 1 if client should be asynchronous, else 0
  * @return a data sink pointer
  */
-const DataSinkPtr createMQTTSink(OperatorId logicalSourceOperatorId,
+const DataSinkPtr createMQTTSink(OperatorId logicalOperatorId,
                                  SchemaPtr schema,
                                  QuerySubPlanId parentPlanId,
                                  NodeEngine::NodeEnginePtr nodeEngine,
