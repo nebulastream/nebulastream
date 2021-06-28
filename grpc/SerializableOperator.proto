@@ -28,6 +28,15 @@ message SerializableSchema{
 }
 
 /**
+The serializable wrapper for a schema object and its name
+ */
+message SerializableNamedSchema{
+
+  string streamName = 1;
+  SerializableSchema schema = 2;
+}
+
+/**
 The serializable wrapper for the nes partition object
  */
 message NesPartition {

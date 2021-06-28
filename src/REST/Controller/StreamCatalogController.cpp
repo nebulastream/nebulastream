@@ -19,6 +19,8 @@
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
+#include "GRPC/Serialization/SchemaSerializationUtil.hpp"
+#include <SerializableOperator.pb.h>
 
 using namespace web;
 using namespace http;
@@ -135,6 +137,57 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 }
             })
             .wait();
+}
+    else if(path[1] == "addLogicalStream-ex") {
+
+        NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: REST received request to add new Logical Stream "
+                  << message.to_string());
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try {
+                    // decode string into protobuf message
+                    std::shared_ptr<SerializableNamedSchema> protobufMessage = std::make_shared<SerializableNamedSchema>();
+
+                    if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
+                        json::value errorResponse{};
+                        errorResponse["detail"] = json::value::string("Invalid Protobuf message");
+                        badRequestImpl(message, errorResponse);
+                        return;
+                    }
+
+                    NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Start trying to add new logical stream");
+
+                    SerializableSchema* schema = protobufMessage->mutable_schema();
+                    SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(schema);
+
+                    std::string* streamName = protobufMessage->mutable_streamname();
+
+                    bool added = streamCatalog->addLogicalStream(*streamName, deserializedSchema);
+
+                    NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Successfully added new logical Stream ?"
+                              << added);
+
+                    json::value result{};
+                    result["Success"] = json::value::boolean(added);
+                    successMessageImpl(message, result);
+                    return;
+
+                } catch (const std::exception& exc) {
+                    NES_ERROR("StreamCatalogController: handlePost -addLogicalStream: Exception occurred while trying to add new "
+                              "logical stream"
+                              << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                    return;
+                }
+            })
+            .wait();
+
+
+
     } else if (path[1] == "updateLogicalStream") {
         NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: REST received request to update Logical Stream "
                   << message.to_string());
