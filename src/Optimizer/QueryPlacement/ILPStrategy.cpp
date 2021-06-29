@@ -73,6 +73,41 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
     return mileageMap;
 }
 
+void ILPStrategy::assignOperatorPropertiesRecursive(OperatorNodePtr operatorNode, double input){
+    int cost = 1;
+    double dmf = 1;
+
+    /*if(operatorNode->instanceOf<SinkLogicalOperatorNode>()){
+        dmf = 0;
+        cost = 0;
+    } else if(operatorNode->instanceOf<MapLogicalOperatorNode>()){
+        cost = 2;
+    } */
+    double output = input * dmf;
+    operatorNode->addProperty("output", output);
+    operatorNode->addProperty("cost", cost);
+
+    for(const auto& parent : operatorNode->getParents()) {
+        assignOperatorPropertiesRecursive(parent->as<OperatorNode>(), output);
+    }
+
+}
+
+void ILPStrategy::applyOperatorHeuristics(QueryPlanPtr queryPlan){
+    std::map<std::string, double> mileageMap; // (operatorid, M)
+    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+
+    for (const auto& sourceNode : sourceOperators) {
+        double datarate = 100; // ingestion rate * tuplesize; TODO use actual values
+        int operatorcost = 0;
+        sourceNode->addProperty("output", datarate);
+        sourceNode->addProperty("cost", operatorcost);
+        for(const auto& parent : sourceNode->getParents()) {
+            assignOperatorPropertiesRecursive(parent->as<OperatorNode>(), datarate);
+        }
+    }
+}
+
 void ILPStrategy::addPath(context& c,
                           optimize& opt,
                           std::vector<NodePtr>& operatorPath,
@@ -158,6 +193,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     std::map<std::string, expr> positions;                  // operatorID
     std::map<std::string, expr> utilizations;               // topologyID
     std::map<std::string, double> milages = computeDistanceHeuristic(queryPlan);
+    //applyOperatorHeuristics(queryPlan);
 
     for (const auto& sourceNode : sourceOperators) {
         std::string streamName = sourceNode->getSourceDescriptor()->getStreamName();
