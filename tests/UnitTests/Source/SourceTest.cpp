@@ -219,6 +219,8 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
         delete buffer;
     }
 
+    ~DataSourceProxy() = default;
+
   private:
     FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
