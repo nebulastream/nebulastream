@@ -30,7 +30,7 @@ class PhysicalIterationCEPOperator : public PhysicalUnaryOperator {
     PhysicalIterationCEPOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 
     /**
