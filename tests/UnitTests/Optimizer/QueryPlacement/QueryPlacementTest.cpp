@@ -1468,3 +1468,141 @@ TEST_F(ILPPlacementTestTreeTopology, testPlacingQueryMultipleSources) {
         }
     }
 }
+
+class ILPPlacementBenchmark : public testing::Test {
+  public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() { std::cout << "Setup ILPPlacementTest test class." << std::endl; }
+
+    /* Will be called before a test is executed. */
+    void SetUp() {
+        NES::setupLogging("ILPPlacementTest.log", NES::LOG_DEBUG);
+        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+        std::cout << "Setup ILPPlacementTest test case." << std::endl;
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() { std::cout << "Setup ILPPlacementTest test case." << std::endl; }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { std::cout << "Tear down ILPPlacementTest test class." << std::endl; }
+
+    int setupTopologyAndStreamCatalogForILP() {
+
+        topologyForILP = Topology::create();
+
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 100);
+        rootNode->addNodeProperty("slots", 100);
+        topologyForILP->setAsRoot(rootNode);
+        streamCatalogForILP = std::make_shared<StreamCatalog>();
+
+        int n = 100;
+        for(int i = 0; i < n; i++) {
+            int baseID = i * 10;
+            TopologyNodePtr middleNode = TopologyNode::create(baseID + 2, "localhost", 123, 124, 10);
+            middleNode->addNodeProperty("slots", 10);
+            topologyForILP->addNewPhysicalNodeAsChild(rootNode, middleNode);
+
+            TopologyNodePtr sourceNode = TopologyNode::create(baseID + 3, "localhost", 123, 124, 1);
+            sourceNode->addNodeProperty("slots", 1);
+            topologyForILP->addNewPhysicalNodeAsChild(middleNode, sourceNode);
+
+            LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+
+            sourceNode->addLinkProperty(middleNode, linkProperty);
+            middleNode->addLinkProperty(sourceNode, linkProperty);
+            middleNode->addLinkProperty(rootNode, linkProperty);
+            rootNode->addLinkProperty(middleNode, linkProperty);
+
+            std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                                 "->addField(\"value\", BasicType::UINT64);";
+            std::string streamName = "car" + std::to_string(i);
+
+            streamCatalogForILP->addLogicalStream(streamName, schema);
+
+            SourceConfigPtr sourceConfig = SourceConfig::create();
+            sourceConfig->setSourceFrequency(0);
+            sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+            sourceConfig->setPhysicalStreamName(streamName + "_source_1");
+            sourceConfig->setLogicalStreamName(streamName);
+
+            PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+
+            StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode);
+
+            streamCatalogForILP->addPhysicalStream(streamName, streamCatalogEntry1);
+        }
+        return n;
+    }
+
+    StreamCatalogPtr streamCatalogForILP;
+    TopologyPtr topologyForILP;
+};
+
+
+/* Test query placement with ILP strategy  */
+TEST_F(ILPPlacementBenchmark, testPlacingQueryWithILPStrategy) {
+
+    int n = setupTopologyAndStreamCatalogForILP();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("ILP",
+                                                                              globalExecutionPlan,
+                                                                              topologyForILP,
+                                                                              typeInferencePhase,
+                                                                              streamCatalogForILP);
+
+    std::vector<Query> subquerries;
+
+    for (int i = 0; i < n; i++) {
+        Query subquerry = Query::from("car" + std::to_string(i))
+                              .filter(Attribute("id") < 45)
+                              .map(Attribute("c") = Attribute("id") + Attribute("value"));
+        //.sink(PrintSinkDescriptor::create());
+        subquerries.push_back(subquerry);
+    }
+
+    Query query = subquerries[0];
+    for (int i = 1; i < subquerries.size(); i++) {
+        query.unionWith(&subquerries[i]);
+    }
+    query = query.sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    /*auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
+    queryPlan = topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+    */
+
+    std::vector<std::map<std::string, std::any>> properties;
+
+    // adding property of the source
+    std::map<std::string, std::any> Prop;
+    double out = 100.0;
+    Prop.insert(std::make_pair("output", out));
+    Prop.insert(std::make_pair("slots", 1));
+
+    // push properties for each node
+    auto queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto node : queryPlanIterator) {
+        properties.push_back(Prop);
+    }
+    ASSERT_TRUE(UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties));
+
+    auto start = std::chrono::high_resolution_clock::now();
+    ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(queryPlan));
+    auto stop = std::chrono::high_resolution_clock::now();
+    NES_INFO("Solved Placement for " << properties.size() << " Operators, " << n << " Sources and " << n * 2 + 1
+                                     << " Topology nodes");
+    NES_INFO("Found Soluition in " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << "ms");
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+}

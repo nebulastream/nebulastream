@@ -201,7 +201,7 @@ void ILPStrategy::addPath(context& c,
 }
 
 bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
-    const QueryId queryId = queryPlan->getQueryId();
+    //const QueryId queryId = queryPlan->getQueryId();
 
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
 
@@ -274,11 +274,13 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
         for(auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap){
             NES_INFO("Operator " << operatorNode->toString() <<" is executed on Topology Node " << topologyNode->toString());
         }
+        return true;
     } else {
         NES_INFO("ILPStrategy: Solver failed.");
+        return false;
     }
 
-    try {
+    /*try {
         NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
         NES_INFO("ILPStrategy: And query plan \n" << queryPlan->toString());
         NES_INFO("ILPStrategy: And topology plan \n" << topology->toString());
@@ -306,7 +308,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     } catch (Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
-
+    */
     return true;
 }
 
