@@ -52,7 +52,7 @@ class ILPStrategy : public BasePlacementStrategy {
     void computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileageMap);
     std::map<std::string, double> computeDistanceHeuristic(QueryPlanPtr queryPlan);
     void applyOperatorHeuristics(QueryPlanPtr queryPlan);
-    void assignOperatorPropertiesRecursive(OperatorNodePtr operatorNode, double input);
+    void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode, double input);
 };
 }// namespace NES::Optimizer
 
