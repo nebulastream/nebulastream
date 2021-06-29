@@ -143,9 +143,11 @@ struct __attribute__((packed)) IngestionRecord {
     }
 };
 
-using ::testing::Return;
 using ::testing::AnyNumber;
+using ::testing::Exactly;
 using ::testing::InvokeWithoutArgs;
+using ::testing::Mock;
+using ::testing::Return;
 using ::testing::_;
 
 // testing w/ original running routine
@@ -567,7 +569,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineFrequency) {
                                this->numSourceLocalBuffersDefault,
                                DataSource::GatheringMode::FREQUENCY_MODE, {});
     ON_CALL(mDataSource, runningRoutineWithFrequency()).WillByDefault(Return());
-    EXPECT_CALL(mDataSource, runningRoutineWithFrequency()).Times(1);
+    EXPECT_CALL(mDataSource, runningRoutineWithFrequency()).Times(Exactly(1));
     mDataSource.runningRoutine();
 }
 
@@ -577,7 +579,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
                                this->numSourceLocalBuffersDefault,
                                DataSource::GatheringMode::INGESTION_RATE_MODE, {});
     ON_CALL(mDataSource, runningRoutineWithIngestionRate()).WillByDefault(Return());
-    EXPECT_CALL(mDataSource, runningRoutineWithIngestionRate()).Times(1);
+    EXPECT_CALL(mDataSource, runningRoutineWithIngestionRate()).Times(Exactly(1));
     mDataSource.runningRoutine();
 }
 
@@ -604,7 +606,6 @@ TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
     ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
     ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
-    ON_CALL(*mDataSource, recycleUnpooledBuffer(_)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
                                                      this->queryId,
                                                      {mDataSource},
@@ -615,11 +616,12 @@ TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
     EXPECT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
     EXPECT_TRUE(this->nodeEngine->startQuery(this->queryId));
     EXPECT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    EXPECT_CALL(*mDataSource, receiveData()).Times(1);
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(1);
+    EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1));
     mDataSource->runningRoutine();
-    EXPECT_FALSE(mDataSource->isRunning());
+    EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
 TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
@@ -643,8 +645,9 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     mDataSource->gatheringIngestionRate = 1;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
-    ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
+    ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
     ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
+    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
                                                                          this->queryId,
                                                                          {mDataSource},
@@ -655,15 +658,15 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     EXPECT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
     EXPECT_TRUE(this->nodeEngine->startQuery(this->queryId));
     EXPECT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    EXPECT_CALL(*mDataSource, receiveData()).Times(1);
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(1).WillOnce(InvokeWithoutArgs([&](){
+    EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&](){
       mDataSource->running = false;
       return;
     }));
     mDataSource->runningRoutine();
-
-    EXPECT_FALSE(mDataSource->isRunning());
+    EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
 TEST_F(SourceTest, testDataSourceOpen) {
