@@ -179,15 +179,18 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     return true;
 }
 
-bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string physicalStreamName, std::string logicalStreamName){
-        std::unique_lock lock(catalogMutex);
-        if (logicalStreamName.empty()){
+bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string physicalStreamName, std::string logicalStreamName) {
+    std::unique_lock lock(catalogMutex);
+    if (logicalStreamName.empty()) {
         NES_ERROR("StreamCatalog: addPhysicalStreamToLogicalStream - logicalStreamName is empty.");
         return false;
-    } else if (physicalStreamName.empty()){
+    } else if (physicalStreamName.empty()) {
         NES_ERROR("StreamCatalog: addPhysicalStreamToLogicalStream - physicalStreamName is empty.");
         return false;
-    } else {
+    } else if (!testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalStreamName)) {
+        NES_ERROR("StreamCatalog: addPhysicalStreamToLogicalStream - logicalStreamName" << logicalStreamName << " does not exist in logical to physical mapping");
+        return false;
+    }else {
         std::map<std::string, std::vector<std::string>>::iterator itr;
         itr = logicalToPhysicalStreamMapping.find(logicalStreamName);
         // BDAPRO not sure if that really works or nopos needed
@@ -344,7 +347,7 @@ bool StreamCatalog::testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::str
 // checks if the corresponding physical stream exists in nameToPhysicalStream Mapping.
 bool StreamCatalog::testIfPhysicalStreamWithNameExists(std::string physicalStreamName){
     std::unique_lock lock(catalogMutex);
-    // find in mapping entry.first == physicalStreamName
+    return nameToPhysicalStream.find(physicalStreamName) != nameToPhysicalStream.end();
 
 }
 
@@ -440,16 +443,19 @@ std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStreamForPhysicalSt
     return allLogicalStreamForPhysicalStream;
 }
 
-// BDAPRO converts getAllLogicalStreamForPhysicalStream from schemaPtr to strings
+// BDAPRO add error handling if physicalStreamName doesn't exist in mapping
 std::map<std::string, std::string> StreamCatalog::getAllLogicalStreamForPhysicalStreamAsString(std::string physicalStreamName) {
-        std::unique_lock lock(catalogMutex);
-        std::map<std::string, SchemaPtr> allLogicalStreamForPhysicalStream = getAllLogicalStreamForPhysicalStream(physicalStreamName);
+    std::unique_lock lock(catalogMutex);
+    if (!testIfPhysicalStreamWithNameExists(physicalStreamName)) {
+        NES_ERROR("StreamCatalog: Unable to find physical stream " << physicalStreamName << " to return logical streams for. Returning empty list");
+    }
+    std::map<std::string, SchemaPtr> allLogicalStreamForPhysicalStream = getAllLogicalStreamForPhysicalStream(physicalStreamName);
     std::map<std::string, std::string> allLogicalStreamForPhysicalStreamAsString;
     for (auto const& [key, val] : allLogicalStreamForPhysicalStream) {
         allLogicalStreamForPhysicalStreamAsString[key] = val->toString();
     }
     return allLogicalStreamForPhysicalStreamAsString;
-    }
+}
 
 
 std::map<std::string, std::string> StreamCatalog::getAllLogicalStreamAsString() {

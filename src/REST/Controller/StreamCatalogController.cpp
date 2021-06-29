@@ -43,8 +43,6 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             resourceNotFoundImpl(request);
             return;
         } else if (param != parameters.end()) {
-            // BDAPRO handle return of only logicalStreams associated with specific physical Stream
-            // BDAPRO check if this if branch is always called or is not called if param is empty. e.g. no such parameter physicalStreamName found.
             try {
                 std::string physicalStreamName = param->second;
                 const std::map <std::string, std::string> &allLogicalStreamForPhysicalStream = streamCatalog->getAllLogicalStreamForPhysicalStreamAsString(
@@ -70,7 +68,6 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
         //Check if the path contains the query id
         auto param = parameters.find("logicalStreamName");
         if (param == parameters.end()) {
-            // BDAPRO instead of an error return all physical Streams
             NES_DEBUG("QueryController: No logicalStreamName was specified, returning all physical streams");
             json::value result{};
             const std::vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams();
@@ -125,9 +122,6 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
         resourceNotFoundImpl(request);
     }
 }
-// BDAPRO add endpoint to handle update of physical-logical stream mappings
-// BDAPRO: Add logical stream for specific physical stream
-// BDAPRO: Add physical Stream for specific logical stream
 void StreamCatalogController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
 
     if (path[1] == "addLogicalStream") {
@@ -246,8 +240,6 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                     }
                 })
                 .wait();
-    } else if (path[1] == "addLogicalToPhysicalStream") {
-        // BDAPRO adjust to use new function
     }else {
         resourceNotFoundImpl(message);
     }
