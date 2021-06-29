@@ -50,7 +50,7 @@ class ConstantValueExpressionNode : public ExpressionNode {
      * @brief Creates a string of the value and the type.
      * @return
      */
-    std::string toString() const override;
+    const std::string toString() const override;
 
     /**
      * @brief Compares if another node is equal to this constant value expression.
