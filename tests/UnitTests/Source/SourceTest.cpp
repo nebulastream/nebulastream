@@ -656,7 +656,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     EXPECT_TRUE(this->nodeEngine->startQuery(this->queryId));
     EXPECT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(1);
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(222).WillOnce(InvokeWithoutArgs([&](){
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(1).WillOnce(InvokeWithoutArgs([&](){
       mDataSource->running = false;
       return;
     }));
