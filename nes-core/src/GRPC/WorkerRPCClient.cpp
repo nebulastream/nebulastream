@@ -382,43 +382,6 @@ bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, c
     }
     return false;
 }
-bool WorkerRPCClient::sendModel(const std::string& address, std::string model) {
-    std::cout << address;
-    std::cout << model;
-
-    MlModelFileUploadRequest mlModelFileUploadRequest;
-    MlModelFileUploadResponse mlModelFileUploadResponse;
-
-    std::ifstream input(model, std::ios::binary);
-
-    std::string bytes(
-        (std::istreambuf_iterator<char>(input)),
-        (std::istreambuf_iterator<char>()));
-
-    input.close();
-
-    mlModelFileUploadRequest.set_content(bytes.c_str());
-
-    RegisterQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
-    workerStub->UploadMlModel(&context, mlModelFileUploadRequest, &mlModelFileUploadResponse);
-
-//    if (status.ok()) {
-//        NES_DEBUG("WorkerRPCClient::registerQuery: status ok return success=" << reply.success());
-//        return reply.success();
-//    }
-//    NES_DEBUG(" WorkerRPCClient::registerQuery "
-//              "error="
-//                  << status.error_code() << ": " << status.error_message());
-//    throw Exception("Error while WorkerRPCClient::registerQuery");
-
-    return true;
-
-}
 
 bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
     NES_DEBUG("WorkerRPCClient::buffering Data on address=" << address);

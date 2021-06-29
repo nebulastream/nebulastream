@@ -519,7 +519,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
    * @return true if successful
    */
 [[nodiscard]] bool
-checkIfFIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0) {
+checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0) {
     std::chrono::seconds timeoutInSec;
     if (customTimeout == 0) {
         timeoutInSec = std::chrono::seconds(defaultTimeout);

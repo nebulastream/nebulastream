@@ -956,14 +956,18 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
         ->addField("valueChar", DataTypeFactory::createChar())
         ->addField("text", DataTypeFactory::createFixedChar(12));
 
+    auto valF = std::make_shared<ExpressionItem>(Attribute("valueFloat"));
+    auto i0 = std::make_shared<ExpressionItem>(Attribute("iris0"));
+    auto i1 = std::make_shared<ExpressionItem>(Attribute("iris1"));
+    auto i2 = std::make_shared<ExpressionItem>(Attribute("iris2"));
     auto op = LogicalOperatorFactory::createInferModelOperator("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite",
-                                                     {Attribute("valueFloat"), Attribute("valueFloat"), Attribute("valueFloat"), Attribute("valueFloat")},
-                                                     {Attribute("iris0"), Attribute("iris1"), Attribute("iris2")});
+                                                     {valF, valF, valF, valF},
+                                                     {i0, i1, i2});
     auto imop = op->as<InferModelLogicalOperatorNode>();
 
     codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
 //    codeGenerator->generateInferModelSetup(context);
-    codeGenerator->generateCodeForInferModel(context, imop->getModel(), imop->getInputFieldsAsPtr(), imop->getOutputFieldsAsPtr());
+    codeGenerator->generateCodeForInferModel(context, imop->getInputFieldsAsPtr(), imop->getOutputFieldsAsPtr());
 
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(outputSchema, context);
