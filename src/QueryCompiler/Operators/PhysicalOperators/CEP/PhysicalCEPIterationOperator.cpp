@@ -36,7 +36,7 @@ PhysicalOperatorPtr PhysicalIterationCEPOperator::create(SchemaPtr inputSchema, 
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, minIterations, maxIterations);
 }
 
-const std::string PhysicalIterationCEPOperator::toString() const { return "PhysicalIterationCEPOperator"; }
+std::string PhysicalIterationCEPOperator::toString() const { return "PhysicalIterationCEPOperator"; }
 
 OperatorNodePtr PhysicalIterationCEPOperator::copy() { return create(id, inputSchema, outputSchema, getMinIterations(), getMaxIterations()); }
 
