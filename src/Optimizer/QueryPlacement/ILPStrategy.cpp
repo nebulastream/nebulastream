@@ -15,6 +15,14 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Nodes/Util/DumpContext.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Util/Logger.hpp>
 
 using namespace z3;
@@ -73,24 +81,37 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
     return mileageMap;
 }
 
-void ILPStrategy::assignOperatorPropertiesRecursive(OperatorNodePtr operatorNode, double input){
+void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode, double input){
     int cost = 1;
     double dmf = 1;
 
-    /*if(operatorNode->instanceOf<SinkLogicalOperatorNode>()){
+    NodePtr nodePtr = operatorNode->as<Node>();
+    if(operatorNode->instanceOf<SinkLogicalOperatorNode>()){
         dmf = 0;
         cost = 0;
+    } else if(operatorNode->instanceOf<FilterLogicalOperatorNode>()){
+        dmf = 0.5;
+        cost = 1;
     } else if(operatorNode->instanceOf<MapLogicalOperatorNode>()){
+        dmf = 2;
         cost = 2;
-    } */
+    } else if(operatorNode->instanceOf<JoinLogicalOperatorNode>()){
+        cost = 2;
+    } else if(operatorNode->instanceOf<UnionLogicalOperatorNode>()){
+        cost = 2;
+    } else if(operatorNode->instanceOf<ProjectionLogicalOperatorNode>()){
+        cost = 1;
+    }else if(operatorNode->instanceOf<SourceLogicalOperatorNode>()){
+        cost = 0;
+    }
+
     double output = input * dmf;
     operatorNode->addProperty("output", output);
     operatorNode->addProperty("cost", cost);
 
     for(const auto& parent : operatorNode->getParents()) {
-        assignOperatorPropertiesRecursive(parent->as<OperatorNode>(), output);
+        assignOperatorPropertiesRecursive(parent->as<LogicalOperatorNode>(), output);
     }
-
 }
 
 void ILPStrategy::applyOperatorHeuristics(QueryPlanPtr queryPlan){
@@ -103,7 +124,7 @@ void ILPStrategy::applyOperatorHeuristics(QueryPlanPtr queryPlan){
         sourceNode->addProperty("output", datarate);
         sourceNode->addProperty("cost", operatorcost);
         for(const auto& parent : sourceNode->getParents()) {
-            assignOperatorPropertiesRecursive(parent->as<OperatorNode>(), datarate);
+            assignOperatorPropertiesRecursive(parent->as<LogicalOperatorNode>(), datarate);
         }
     }
 }
@@ -193,7 +214,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     std::map<std::string, expr> positions;                  // operatorID
     std::map<std::string, expr> utilizations;               // topologyID
     std::map<std::string, double> milages = computeDistanceHeuristic(queryPlan);
-    //applyOperatorHeuristics(queryPlan);
+    applyOperatorHeuristics(queryPlan);
 
     for (const auto& sourceNode : sourceOperators) {
         std::string streamName = sourceNode->getSourceDescriptor()->getStreamName();
@@ -295,29 +316,5 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
 void ILPStrategy::placeOperators() {
 
 }
-
-/**
- * assigns the output property to the operators
- * formula: output(operator) = output(parent)*dmf(operator)
- */
-//void ILPStrategy::assignOperatorOutput(){}
-
-/**
- * calculates the mileage property for a node
- * mileage: distance to the root node
- * assumes distance of 1 between each node
- * future improvement: consider link capacity
- */
-//void ILPStrategy::assignNodeMilage(){}
-
-/**
- * retrieves a property of a given operator
- */
-//long ILPStrategy::getOperatorProperty(std::string property){}
-
-/**
- * retrieves a property of a given node
- */
-//long ILPStrategy::getNodeProperty(std::string property){}
 
 }// namespace NES::Optimizer
