@@ -878,7 +878,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("default_logical").inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite",
+    // /home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite
+    string query = R"(Query::from("default_logical").inferModel("/home/sumegim/Documents/tub/thesis/test_file.txt",
                         {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
                         {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                         .sink(FileSinkDescriptor::create(")"
