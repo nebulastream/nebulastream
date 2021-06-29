@@ -90,7 +90,7 @@ class CodeGenerator {
      * @brief Code generation for an infer model operator
      * @return flag if the generation was successful.
      */
-    virtual bool generateCodeForInferModel(PipelineContextPtr context, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) = 0;
+    virtual bool generateCodeForInferModel(PipelineContextPtr context, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) = 0;
 
     /**
      * @brief Code generation for a map operator, which depends on a particular map predicate.
