@@ -41,7 +41,6 @@ service WorkerRPCService {
   rpc UploadMlModel(MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
   rpc UploadMlModelClientStream(stream MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
   rpc UploadMlModelServerStream(MlModelFileUploadRequest) returns(stream MlModelFileUploadResponse) {}
-
 }
 
 message DeployQueryRequest {
@@ -145,6 +144,7 @@ message GetLocationRequest {
 message GetLocationReply {
   Coordinates coord = 1;
 }
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 message GetReconnectScheduleRequest {
@@ -174,3 +174,5 @@ message MlModelFileUploadResponse {
   MlModelFileUploadStatus status = 2;
 >>>>>>> #1779 integration test, infer model operator handler and serialization
 }
+=======
+>>>>>>> #1779 cleanup

@@ -19,12 +19,6 @@
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 
-#define TFLITE_MINIMAL_CHECK(x)                              \
-  if (!(x)) {                                                \
-    fprintf(stderr, "Error at %s:%d\n", __FILE__, __LINE__); \
-    exit(1);                                                 \
-  }
-
 namespace NES {
 
 InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, OperatorId id)
@@ -134,20 +128,11 @@ void InferModelLogicalOperatorNode::inferStringSignature() {
     setStringSignature(signatureStream.str());
 }
 const std::string& InferModelLogicalOperatorNode::getModel() const { return model; }
-//const std::vector<ExpressionItem>& InferModelLogicalOperatorNode::getInputFields() const { return inputFields; }
-//const std::vector<ExpressionItem>& InferModelLogicalOperatorNode::getOutputFields() const { return outputFields; }
+
 const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFieldsAsPtr() {
-//    for(auto f : inputFields){
-//        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
-//        inputFieldsPtr.push_back(fp);
-//    }
     return inputFieldsPtr;
 }
 const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFieldsAsPtr() {
-//    for(auto f : outputFields){
-//        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
-//        outputFieldsPtr.push_back(fp);
-//    }
     return outputFieldsPtr;
 }
 }// namespace NES

@@ -69,7 +69,7 @@ class CCodeGenerator : public CodeGenerator {
      * @brief Code generation for an infer model operator
      * @return flag if the generation was successful.
      */
-    bool generateCodeForInferModel(PipelineContextPtr context, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) override;
+    bool generateCodeForInferModel(PipelineContextPtr context, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) override;
 
     /**
     * @brief Code generation for a (branchless) predicated filter operator.

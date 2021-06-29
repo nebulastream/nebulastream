@@ -54,7 +54,7 @@ void GeneratableInferModelOperator::generateOpen(CodeGeneratorPtr codegen, Pipel
 }
 
 void GeneratableInferModelOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateCodeForInferModel(context, model, inputFields, outputFields);
+    codegen->generateCodeForInferModel(context, inputFields, outputFields);
 }
 
 std::string GeneratableInferModelOperator::toString() const { return "GeneratableInferModelOperator"; }
