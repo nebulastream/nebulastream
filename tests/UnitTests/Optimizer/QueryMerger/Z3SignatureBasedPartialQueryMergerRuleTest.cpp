@@ -19,20 +19,19 @@
 // clang-format on
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <z3++.h>
@@ -64,6 +63,22 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
         streamCatalog->addLogicalStream("car", schema);
         streamCatalog->addLogicalStream("bike", schema);
         streamCatalog->addLogicalStream("truck", schema);
+
+        SourceConfigPtr sourceConfig = SourceConfig::create();
+        sourceConfig->setSourceFrequency(0);
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+        sourceConfig->setPhysicalStreamName("test2");
+        sourceConfig->setLogicalStreamName("car");
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
+
+        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode1);
+        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode2);
+
+        streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+        streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
     }
 
     /* Will be called before a test is executed. */
@@ -77,6 +92,10 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
  * @brief Test applying SignatureBasedPartialQueryMergerRuleTest on Global query plan with same queries
  */
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
+
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+
+
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
@@ -111,6 +130,9 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
+
+    queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
+    queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
