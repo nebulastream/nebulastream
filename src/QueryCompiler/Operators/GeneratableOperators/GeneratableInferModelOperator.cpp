@@ -30,12 +30,13 @@ GeneratableInferModelOperator::GeneratableInferModelOperator(OperatorId id,
                                                SchemaPtr outputSchema,
                                                std::string model,
                                                std::vector<ExpressionItemPtr> inputFields,
-                                               std::vector<ExpressionItemPtr> outputFields)
-    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields), outputFields(outputFields) {}
+                                               std::vector<ExpressionItemPtr> outputFields,
+                                               Join::InferModelOperatorHandlerPtr operatorHandler)
+    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields), outputFields(outputFields), operatorHandler(operatorHandler) {}
 
 GeneratableOperatorPtr
-GeneratableInferModelOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields);
+GeneratableInferModelOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler);
 }
 
 GeneratableOperatorPtr GeneratableInferModelOperator::create(OperatorId id,
@@ -43,8 +44,13 @@ GeneratableOperatorPtr GeneratableInferModelOperator::create(OperatorId id,
                                                       SchemaPtr outputSchema,
                                                       std::string model,
                                                       std::vector<ExpressionItemPtr> inputFields,
-                                                      std::vector<ExpressionItemPtr> outputFields) {
-    return std::make_shared<GeneratableInferModelOperator>(GeneratableInferModelOperator(id, inputSchema, outputSchema, model, inputFields, outputFields));
+                                                      std::vector<ExpressionItemPtr> outputFields,
+                                                      Join::InferModelOperatorHandlerPtr operatorHandler) {
+    return std::make_shared<GeneratableInferModelOperator>(GeneratableInferModelOperator(id, inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler));
+}
+
+void GeneratableInferModelOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    codegen->generateInferModelSetup(context, operatorHandler);
 }
 
 void GeneratableInferModelOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
@@ -53,7 +59,7 @@ void GeneratableInferModelOperator::generateExecute(CodeGeneratorPtr codegen, Pi
 
 std::string GeneratableInferModelOperator::toString() const { return "GeneratableInferModelOperator"; }
 
-OperatorNodePtr GeneratableInferModelOperator::copy() { return create(id, inputSchema, outputSchema, model, inputFields, outputFields); }
+OperatorNodePtr GeneratableInferModelOperator::copy() { return create(id, inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler); }
 
 }// namespace GeneratableOperators
 

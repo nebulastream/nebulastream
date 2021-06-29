@@ -72,6 +72,7 @@
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
@@ -389,14 +390,29 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
     auto code = context->code;
     auto tf = getTypeFactory();
     auto recordHandler = context->getRecordHandler();
+    auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
+    int64_t inferModelOperatorHandlerIndex = 0;
+
+    auto inferModelOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "inferModelOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Join::InferModelOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(inferModelOperatorHandlerIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+
+    auto windowOperatorStatement =
+        VarDeclStatement(inferModelOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    code->variableInitStmts.push_back(windowOperatorStatement.copy());
 
     auto tensorflowDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "tensorflowAdapter");
-    auto tensorflowCreateCall = call("TensorflowAdapter::create");
-    auto tensorflowDeclStatement = VarDeclStatement(tensorflowDeclaration).assign(tensorflowCreateCall);
+//    auto tensorflowCreateCall = call("TensorflowAdapter::create");
+    auto tensorflowDeclStatement = VarDeclStatement(tensorflowDeclaration).assign(call("inferModelOperatorHandler->getTensorflowAdapter"));
     code->variableInitStmts.push_back(tensorflowDeclStatement.copy());
 
-    auto generateTensorFlowInitCall = call("tensorflowAdapter->initializeModel(\"" + model +"\"); \n tensorflowAdapter->pass");
-    code->variableInitStmts.push_back(generateTensorFlowInitCall);
+//    auto generateTensorFlowInitCall = call("tensorflowAdapter->initializeModel(\"" + model +"\"); \n tensorflowAdapter->pass");
+//    code->variableInitStmts.push_back(generateTensorFlowInitCall);
+    if(model == ""){
+
+    }
 
     auto generateTensorFlowInferCall = call("tensorflowAdapter->infer");
     generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
@@ -4093,6 +4109,33 @@ uint64_t CCodeGenerator::generateGlobalThreadLocalPreAggregationSetup(
     setupWindowHandler->addParameter(VarRef(context->code->varDeclarationExecutionContext));
     setupWindowHandler->addParameter(constantValueSize);
     setupScope->addStatement(VarRef(windowOperatorHandlerDeclaration).accessPtr(setupWindowHandler).createCopy());
+    return 0;
+}
+
+uint64_t CCodeGenerator::generateInferModelSetup(PipelineContextPtr context, Join::InferModelOperatorHandlerPtr operatorHandler){
+
+    context->registerOperatorHandler(operatorHandler);
+    //    auto tf = getTypeFactory();
+//    auto setupScope = context->createSetupScope();
+//    auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
+//    auto handlers = context->getOperatorHandlers();
+//    NES_ASSERT(handlers.size() == 1, "invalid size");
+//    int64_t inferModelOperatorHandlerIndex = 0;
+//    Join::InferModelOperatorHandlerPtr inferModelOperatorHandler = std::dynamic_pointer_cast<Join::InferModelOperatorHandler>(handlers[0]);
+//    NES_ASSERT(inferModelOperatorHandler != nullptr, "invalid join handler");
+//
+////    auto inferModelOperatorHandler = Join::InferModelOperatorHandler::create(model);
+////    auto inferModelOperatorIndex = context->registerOperatorHandler(inferModelOperatorHandler);
+//
+//    auto inferModelOperatorHandlerDeclaration =
+//        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "inferModelOperatorHandler");
+//    auto getOperatorHandlerCall = call("getOperatorHandler<Join::InferModelOperatorHandler>");
+//    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(inferModelOperatorHandlerIndex)));
+//    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+//
+//    auto windowOperatorStatement =
+//        VarDeclStatement(inferModelOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+//    setupScope->addStatement(windowOperatorStatement.copy());
     return 0;
 }
 

@@ -17,6 +17,7 @@
 
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Operators/OriginId.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -82,8 +83,8 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createInferModelOperator(std::string model,
-                                                                std::vector<ExpressionItem> inputFields,
-                                                                std::vector<ExpressionItem> outputFields,
+                                                                std::vector<ExpressionItemPtr> inputFields,
+                                                                std::vector<ExpressionItemPtr> outputFields,
                                                                 OperatorId id = UtilityFunctions::getNextOperatorId());
     /**
      * @brief Create a new source operator with source descriptor.

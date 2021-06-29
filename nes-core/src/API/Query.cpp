@@ -477,8 +477,18 @@ Query& Query::inferModel(const std::string model, const std::initializer_list<Ex
     NES_DEBUG("Query: add map inferModel to query");
     auto inputFieldVector = std::vector(inputFields);
     auto outputFieldVector = std::vector(outputFields);
+    std::vector<ExpressionItemPtr> inputFieldsPtr;
+    std::vector<ExpressionItemPtr> outputFieldsPtr;
+    for(auto f : inputFieldVector){
+        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
+        inputFieldsPtr.push_back(fp);
+    }
+    for(auto f : outputFieldVector){
+        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
+        outputFieldsPtr.push_back(fp);
+    }
 
-    OperatorNodePtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldVector, outputFieldVector);
+    OperatorNodePtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
     std::cout << op->toString() << std::endl;
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;

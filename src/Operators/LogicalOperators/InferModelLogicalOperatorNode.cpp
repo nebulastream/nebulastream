@@ -27,29 +27,29 @@
 
 namespace NES {
 
-InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItem> inputFields, std::vector<ExpressionItem> outputFields, OperatorId id)
+InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id) {
     this->model = model;
-    this->inputFields = inputFields;
-    this->outputFields = outputFields;
+    this->inputFieldsPtr = inputFields;
+    this->outputFieldsPtr = outputFields;
 }
 
 std::string InferModelLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "Model: " << model << std::endl;
     ss << "input fields:" << std::endl;
-    for (auto v : inputFields){
-        ss << "    " << v.getExpressionNode()->toString() << std::endl;
+    for (auto v : inputFieldsPtr){
+        ss << "    " << v->getExpressionNode()->toString() << std::endl;
     }
     ss << "output fields:" << std::endl;
-    for (auto v : outputFields){
-        ss << "    " << v.getExpressionNode()->toString() << std::endl;
+    for (auto v : outputFieldsPtr){
+        ss << "    " << v->getExpressionNode()->toString() << std::endl;
     }
     return ss.str();
 }
 
 OperatorNodePtr InferModelLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createInferModelOperator(model, inputFields, outputFields, id);
+    auto copy = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setStringSignature(stringSignature);
@@ -92,16 +92,16 @@ bool InferModelLogicalOperatorNode::inferSchema() {
 
     auto inputSchema = getInputSchema();
 
-    for (auto inputField : inputFields){
-        auto inputExpression = inputField.getExpressionNode()->as<FieldAccessExpressionNode>();
+    for (auto inputField : inputFieldsPtr){
+        auto inputExpression = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(inputExpression);
         inputExpression->inferStamp(inputSchema);
         auto fieldName = inputExpression->getFieldName();
         inputSchema->replaceField(fieldName, inputExpression->getStamp());
     }
 
-    for (auto outputField : outputFields){
-        auto outputExpression = outputField.getExpressionNode()->as<FieldAccessExpressionNode>();
+    for (auto outputField : outputFieldsPtr){
+        auto outputExpression = outputField->getExpressionNode()->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(outputExpression);
         auto fieldName = outputExpression->getFieldName();
         if (outputSchema->hasFieldName(fieldName)) {
@@ -134,20 +134,20 @@ void InferModelLogicalOperatorNode::inferStringSignature() {
     setStringSignature(signatureStream.str());
 }
 const std::string& InferModelLogicalOperatorNode::getModel() const { return model; }
-const std::vector<ExpressionItem>& InferModelLogicalOperatorNode::getInputFields() const { return inputFields; }
-const std::vector<ExpressionItem>& InferModelLogicalOperatorNode::getOutputFields() const { return outputFields; }
+//const std::vector<ExpressionItem>& InferModelLogicalOperatorNode::getInputFields() const { return inputFields; }
+//const std::vector<ExpressionItem>& InferModelLogicalOperatorNode::getOutputFields() const { return outputFields; }
 const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFieldsAsPtr() {
-    for(auto f : inputFields){
-        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
-        inputFieldsPtr.push_back(fp);
-    }
+//    for(auto f : inputFields){
+//        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
+//        inputFieldsPtr.push_back(fp);
+//    }
     return inputFieldsPtr;
 }
 const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFieldsAsPtr() {
-    for(auto f : outputFields){
-        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
-        outputFieldsPtr.push_back(fp);
-    }
+//    for(auto f : outputFields){
+//        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
+//        outputFieldsPtr.push_back(fp);
+//    }
     return outputFieldsPtr;
 }
 }// namespace NES
