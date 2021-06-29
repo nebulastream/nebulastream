@@ -18,7 +18,7 @@ rpcPort: 3000
 dataPort: 3001
 
 # Set number of computing slots in NES Worker
-numberOfSlots: UINT16_MAX
+numberOfSlots: 65535
 
 # Set the number of worker threads
 numWorkerThreads: 1

@@ -19,7 +19,7 @@ dataPort: 3001
 
 # ~~ Processing Configurations ~~
 # Set the number of computing slots in NES Coordinator
-numberOfSlots: UINT16_MAX
+numberOfSlots: 65535
 
 # Enable Query Merging Feature
 enableQueryMerging: false
