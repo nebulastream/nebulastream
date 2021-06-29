@@ -18,6 +18,7 @@
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -28,17 +29,19 @@ namespace GeneratableOperators {
  */
 class GeneratableInferModelOperator : public GeneratableOperator {
   public:
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler);
+    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+    void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableInferModelOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
+    GeneratableInferModelOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler);
     const std::string model;
     const std::vector<ExpressionItemPtr> inputFields;
     const std::vector<ExpressionItemPtr> outputFields;
+    Join::InferModelOperatorHandlerPtr operatorHandler;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

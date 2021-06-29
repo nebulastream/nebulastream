@@ -416,6 +416,11 @@ class CodeGenerator {
                                              std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) = 0;
 
     /**
+    * @brief Code generation the setup method for inferModel operators.
+    */
+    virtual uint64_t generateInferModelSetup(PipelineContextPtr context, Join::InferModelOperatorHandlerPtr operatorHandler) = 0;
+
+    /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.
     * @param join The join definition, which contains all properties of the window.
     * @param context The context of the current pipeline.

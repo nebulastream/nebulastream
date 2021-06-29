@@ -847,7 +847,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerFileOutputWithInferModel) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -888,17 +888,17 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerFileOutputWithInferModel
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER,default_logical$iris0:(Float),default_logical$iris1:(Float),default_logical$iris2:(Float)\n"
+                             "1,1,42.000000,42.000000,42.000000\n"
+                             "1,1,42.000000,42.000000,42.000000\n"
+                             "1,1,42.000000,42.000000,42.000000\n"
+                             "1,1,42.000000,42.000000,42.000000\n"
+                             "1,1,42.000000,42.000000,42.000000\n"
+                             "1,1,42.000000,42.000000,42.000000\n"
+                             "1,1,42.000000,42.000000,42.000000\n"
+                             "1,1,42.000000,42.000000,42.000000\n"
+                             "1,1,42.000000,42.000000,42.000000\n"
+                             "1,1,42.000000,42.000000,42.000000\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 

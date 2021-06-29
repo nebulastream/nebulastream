@@ -71,6 +71,7 @@
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
@@ -934,6 +935,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
+    auto inferModelOperatorHandler = Join::InferModelOperatorHandler::create("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite");
+    context->registerOperatorHandler(inferModelOperatorHandler);
+
     auto inputSchema = source->getSchema();
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
     auto iris0 = AttributeField::create("iris0", DataTypeFactory::createFloat());
@@ -958,7 +962,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto imop = op->as<InferModelLogicalOperatorNode>();
 
     codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
-
+//    codeGenerator->generateInferModelSetup(context);
     codeGenerator->generateCodeForInferModel(context, imop->getModel(), imop->getInputFieldsAsPtr(), imop->getOutputFieldsAsPtr());
 
     /* generate code for writing result tuples to output buffer */
@@ -976,10 +980,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        nodeEngine->getBufferManager(),
-                                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+                                                                       inferModelOperatorHandler);
 
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());
+    context->getOperatorHandlers()[0]->start(queryContext, nodeEngine->getStateManager(), 0);
     stage->execute(inputBuffer, *queryContext.get(), wctx);
 
     /* printing results */

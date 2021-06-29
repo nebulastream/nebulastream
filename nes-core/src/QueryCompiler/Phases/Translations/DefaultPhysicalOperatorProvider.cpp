@@ -77,6 +77,7 @@
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -208,11 +209,13 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
 
 void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto inferModelOperator = operatorNode->as<InferModelLogicalOperatorNode>();
+    auto inferModelOperatorHandler = Join::InferModelOperatorHandler::create(inferModelOperator->getModel());
     auto physicalInferModelOperator = PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
                                                                                             inferModelOperator->getOutputSchema(),
                                                                                             inferModelOperator->getModel(),
                                                                                             inferModelOperator->getInputFieldsAsPtr(),
-                                                                                            inferModelOperator->getOutputFieldsAsPtr());
+                                                                                            inferModelOperator->getOutputFieldsAsPtr(),
+                                                                                            inferModelOperatorHandler);
     operatorNode->replace(physicalInferModelOperator);
 }
 
