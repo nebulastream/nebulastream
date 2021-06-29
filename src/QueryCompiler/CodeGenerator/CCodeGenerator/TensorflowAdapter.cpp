@@ -19,9 +19,10 @@
 //#include "tensorflow/lite/kernels/register.h"
 //#include "tensorflow/lite/model.h"
 //#include "tensorflow/lite/optional_debug_tools.h"
+#include <fstream>
 #include <iostream>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #define TFLITE_MINIMAL_CHECK(x)                              \
   if (!(x)) {                                                \
@@ -33,6 +34,16 @@ NES::TensorflowAdapter::TensorflowAdapter() {}
 
 void NES::TensorflowAdapter::initializeModel(std::string model){
     std::cout << "INITIALIZING MODEL: " << model << std::endl;
+
+    std::ifstream input(model, std::ios::in | std::ios::binary);
+
+    std::string bytes(
+            (std::istreambuf_iterator<char>(input)),
+            (std::istreambuf_iterator<char>()));
+
+    input.close();
+    std::cout << "MODEL CONTENT: " << std::endl;
+    std::cout << bytes.c_str();
 
 //    std::unique_ptr<tflite::FlatBufferModel> ml_model =
 //        tflite::FlatBufferModel::BuildFromFile(model.c_str());

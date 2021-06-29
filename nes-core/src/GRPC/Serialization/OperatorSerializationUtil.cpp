@@ -161,10 +161,19 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
             ExpressionSerializationUtil::serializeExpression(exp->getExpressionNode(), mutableOutputFields);
         }
         inferModelDetails.set_mlfilename(inferModelOperator->getModel());
-        inferModelDetails.set_mlfilecontent("###_file_content_###");
 
-        //        std::cout << inferModelDetails.mlfilename()
+        std::ifstream input(inferModelOperator->getModel(), std::ios::binary);
+
+        std::string bytes(
+            (std::istreambuf_iterator<char>(input)),
+            (std::istreambuf_iterator<char>()));
+
+        input.close();
+
+        inferModelDetails.set_mlfilecontent(bytes.c_str());
+
         serializedOperator.mutable_details()->PackFrom(inferModelDetails);
+
     }
     else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         // serialize CEPIteration operator
@@ -361,6 +370,12 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         }
 
         operatorNode = LogicalOperatorFactory::createInferModelOperator(serializedInferModelOperator.mlfilename(), inputFields, outputFields);
+
+        auto content = serializedInferModelOperator.mlfilecontent();
+        std::ofstream output(serializedInferModelOperator.mlfilename(), std::ios::binary);
+        output << content;
+        output.close();
+
 
     } else if (details.Is<SerializableOperator_WindowDetails>()) {
         // de-serialize window operator
