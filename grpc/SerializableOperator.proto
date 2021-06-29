@@ -398,6 +398,16 @@ message SerializableOperator{
   }
 
   /**
+ InferModelDetails contains the model file for the inference
+ */
+  message InferModelDetails {
+    repeated SerializableExpression inputFields = 1;
+    repeated SerializableExpression outputFields = 2;
+    string mlFileName = 3;
+    bytes mlFileContent = 4;
+  }
+
+  /**
     Window Details contains properties for the window operator
   */
   message WindowDetails {

@@ -17,6 +17,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALINFER_MODELOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -32,21 +33,24 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator {
                         SchemaPtr outputSchema,
                         std::string model,
                         std::vector<ExpressionItemPtr> inputFields,
-                        std::vector<ExpressionItemPtr> outputFields);
+                        std::vector<ExpressionItemPtr> outputFields,
+                        Join::InferModelOperatorHandlerPtr operatorHandler);
     static PhysicalOperatorPtr
-    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler);
     static PhysicalOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler);
     std::string toString() const override;
     OperatorNodePtr copy() override;
     const std::string& getModel() const;
     const std::vector<ExpressionItemPtr>& getInputFields() const;
     const std::vector<ExpressionItemPtr>& getOutputFields() const;
+    Join::InferModelOperatorHandlerPtr getInferModelHandler();
 
   protected:
     const std::string model;
     const std::vector<ExpressionItemPtr> inputFields;
     const std::vector<ExpressionItemPtr> outputFields;
+    Join::InferModelOperatorHandlerPtr operatorHandler;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

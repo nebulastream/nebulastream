@@ -65,10 +65,11 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createMapOperator(const Fiel
 }
 
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createInferModelOperator(std::string model,
-                                                                             std::vector<ExpressionItem> inputFields,
-                                                                             std::vector<ExpressionItem> outputFields,
+                                                                             std::vector<ExpressionItemPtr> inputFieldsPtr,
+                                                                             std::vector<ExpressionItemPtr> outputFieldsPtr,
                                                                              OperatorId id) {
-    return std::make_shared<InferModelLogicalOperatorNode>(model, inputFields, outputFields, id);
+
+    return std::make_shared<InferModelLogicalOperatorNode>(model, inputFieldsPtr, outputFieldsPtr, id);
 }
 
 LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createUnionOperator(OperatorId id) {

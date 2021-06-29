@@ -224,7 +224,8 @@ void DefaultGeneratableOperatorProvider::lowerInferModel(QueryPlanPtr queryPlan,
                                                                     physicalInferModelOperator->getOutputSchema(),
                                                                     physicalInferModelOperator->getModel(),
                                                                     physicalInferModelOperator->getInputFields(),
-                                                                   physicalInferModelOperator->getOutputFields());
+                                                                   physicalInferModelOperator->getOutputFields(),
+                                                                    physicalInferModelOperator->getInferModelHandler());
     queryPlan->replaceOperator(physicalInferModelOperator, generatableInferModelOperator);
 }
 

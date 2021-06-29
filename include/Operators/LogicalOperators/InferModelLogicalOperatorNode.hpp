@@ -28,7 +28,7 @@ namespace NES {
  */
 class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItem> inputFields, std::vector<ExpressionItem> outputFields, OperatorId id);
+    InferModelLogicalOperatorNode(std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, OperatorId id);
     std::string toString() const override;
     OperatorNodePtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -36,15 +36,11 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
     bool inferSchema() override;
     void inferStringSignature() override;
     const std::string& getModel() const;
-    const std::vector<ExpressionItem>& getInputFields() const;
-    const std::vector<ExpressionItem>& getOutputFields() const;
     const std::vector<ExpressionItemPtr>& getInputFieldsAsPtr();
     const std::vector<ExpressionItemPtr>& getOutputFieldsAsPtr();
 
   private:
     std::string model;
-    std::vector<ExpressionItem> inputFields;
-    std::vector<ExpressionItem> outputFields;
     std::vector<ExpressionItemPtr> inputFieldsPtr;
     std::vector<ExpressionItemPtr> outputFieldsPtr;
     void updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field);

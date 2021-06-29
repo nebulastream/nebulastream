@@ -281,6 +281,11 @@ class CCodeGenerator : public CodeGenerator {
         uint64_t windowOperatorIndex) override;
 
     /**
+    * @brief Code generation the setup method for inferModel operators.
+    */
+    uint64_t generateInferModelSetup(PipelineContextPtr context, Join::InferModelOperatorHandlerPtr operatorHandler) override;
+
+    /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.
     * @param join The join definition, which contains all properties of the window.
     * @param context The context of the current pipeline.

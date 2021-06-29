@@ -125,6 +125,9 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress);
 
+
+//        workerRPCClient->sendModel(rpcAddress, "/home/sumegim/Documents/tub/thesis/test_file.txt");
+
         for (auto& querySubPlan : querySubPlans) {
             //enable this for sync calls
             //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
