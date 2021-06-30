@@ -87,6 +87,9 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
+    // manually add default logical stream and register worker for it (as default initialization removed from Node registration)
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     std::string query =
         R"(Pattern::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");

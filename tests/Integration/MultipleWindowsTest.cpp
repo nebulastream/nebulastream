@@ -191,6 +191,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
+
+    srcConf->setPhysicalStreamName("test_stream_2");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -385,6 +388,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
+
+    srcConf->setPhysicalStreamName("test_stream_2");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(conf);
 
     std::string outputFilePath = "outputLog.out";
@@ -596,6 +602,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
+
+    srcConf->setPhysicalStreamName("test_stream_2");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -864,6 +873,9 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     wrk2->registerPhysicalStream(windowStream);
+
+    srcConf->setPhysicalStreamName("test_stream_2");
+    windowStream = PhysicalStreamConfig::create(srcConf);
     wrk3->registerPhysicalStream(windowStream);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -1030,6 +1042,9 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     wrk2->registerPhysicalStream(windowStream);
+
+    srcConf->setPhysicalStreamName("test_stream_2");
+    windowStream = PhysicalStreamConfig::create(srcConf);
     wrk3->registerPhysicalStream(windowStream);
 
     QueryServicePtr queryService = crd->getQueryService();

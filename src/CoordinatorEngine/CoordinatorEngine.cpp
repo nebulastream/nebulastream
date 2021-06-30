@@ -19,13 +19,9 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <CoordinatorRPCService.pb.h>
-#include <NodeStats.pb.h>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include<tuple>
-#include <string>
 
 namespace NES {
 
@@ -68,7 +64,8 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
             return 0;
         }
 
-
+        // completely removed default logical and physical stream
+        /*
         //add default logical
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
@@ -98,7 +95,7 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
                                                                           << " could not be added to catalog");
             throw Exception("CoordinatorEngine::registerNode: physical stream " + streamConf->getPhysicalStreamName()
                             + " could not be added to catalog");
-        }
+        }*/
 
     } else if (type == NodeType::Worker) {
         NES_DEBUG("CoordinatorEngine::registerNode: register worker node");
@@ -152,7 +149,7 @@ bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
     bool successTopology = topology->removePhysicalNode(physicalNode);
     NES_DEBUG("CoordinatorEngine::UnregisterNode: success in topology is " << successTopology);
 
-    return successCatalog && successTopology;
+    return successTopology;
 }
 
 // BDAPRO adjust to StreamCatalogEntry and allow registration without empty (or null) logicalStreamName

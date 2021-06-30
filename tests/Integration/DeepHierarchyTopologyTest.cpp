@@ -84,6 +84,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
 
     TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
     ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
@@ -96,6 +97,10 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
+
+    srcConf->setPhysicalStreamName("default_physical_2");
+    wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
@@ -106,6 +111,10 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
+
+    srcConf->setPhysicalStreamName("default_physical_3");
+    wrk3->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
@@ -116,6 +125,10 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
+
+    srcConf->setPhysicalStreamName("default_physical_4");
+    wrk4->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk4->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
@@ -126,6 +139,10 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
+
+    srcConf->setPhysicalStreamName("default_physical_5");
+    wrk5->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk5->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
@@ -270,6 +287,9 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
+
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
     TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
@@ -284,6 +304,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
+
+    srcConf->setPhysicalStreamName("default_physical_2");
+    wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
@@ -295,6 +319,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
+
+    srcConf->setPhysicalStreamName("default_physical_3");
+    wrk3->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
@@ -306,6 +334,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
+
+    srcConf->setPhysicalStreamName("default_physical_4");
+    wrk4->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
     TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
@@ -319,6 +351,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
+
+    srcConf->setPhysicalStreamName("default_physical_5");
+    wrk5->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
@@ -330,6 +366,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
+
+
+    srcConf->setPhysicalStreamName("default_physical_6");
+    wrk6->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
@@ -490,6 +531,8 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
     ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
@@ -501,6 +544,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
+
     wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
@@ -511,6 +555,10 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
+
+    srcConf->setPhysicalStreamName("default_physical_3");
+    wrk3->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
@@ -521,6 +569,10 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
+
+    srcConf->setPhysicalStreamName("default_physical_4");
+    wrk4->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk4->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
@@ -531,6 +583,10 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
+
+    srcConf->setPhysicalStreamName("default_physical_5");
+    wrk5->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk5->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
@@ -667,6 +723,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
     ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
@@ -678,6 +736,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
+
+    srcConf->setPhysicalStreamName("default_physical_2");
+    wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
@@ -688,6 +750,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
+
+    srcConf->setPhysicalStreamName("default_physical_3");
+    wrk3->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
@@ -698,6 +764,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
     TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
@@ -710,6 +777,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
+
+    srcConf->setPhysicalStreamName("default_physical_5");
+    wrk5->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
@@ -720,6 +791,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
+
+    srcConf->setPhysicalStreamName("default_physical_6");
+    wrk6->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
@@ -877,6 +952,9 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
+
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
     TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
@@ -891,6 +969,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
+
     wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
@@ -905,6 +984,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
+
     wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
@@ -920,6 +1000,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
     TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
@@ -933,6 +1014,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
+
     wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
@@ -947,6 +1029,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
+
     wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
@@ -964,6 +1047,10 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NesWorkerPtr wrk7 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart7);
+
+    srcConf->setPhysicalStreamName("default_physical_7");
+    wrk7->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk7->replaceParent(crdTopologyNodeId, wrk5TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 7 started successfully");
 
@@ -975,6 +1062,10 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NesWorkerPtr wrk8 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart8);
+
+    srcConf->setPhysicalStreamName("default_physical_8");
+    wrk8->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk8->replaceParent(crdTopologyNodeId, wrk6TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 8 started successfully");
 
@@ -986,6 +1077,10 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NesWorkerPtr wrk9 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart9 = wrk9->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart9);
+
+    srcConf->setPhysicalStreamName("default_physical_9");
+    wrk9->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk9->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
 
@@ -997,6 +1092,10 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NesWorkerPtr wrk10 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart10);
+
+    srcConf->setPhysicalStreamName("default_physical_10");
+    wrk10->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
     wrk10->replaceParent(crdTopologyNodeId, wrk3TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
 
@@ -1304,8 +1403,14 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
 
     wrk7->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream_2");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk8->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream_3");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk9->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream_4");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk10->registerPhysicalStream(conf);
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
@@ -1566,13 +1671,19 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     srcConf->setSourceConfig("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(3);
-    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
+    srcConf->setPhysicalStreamName("test_stream_7");
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
 
     wrk7->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream_8");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk8->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream_9");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk9->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream_10");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk10->registerPhysicalStream(conf);
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
@@ -2068,12 +2179,18 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     srcConf->setSourceConfig("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(5);
     srcConf->setNumberOfBuffersToProduce(3);
-    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
+    srcConf->setPhysicalStreamName("test_stream_2");
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream_3");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk3->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream_5");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk5->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream_6");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk6->registerPhysicalStream(conf);
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());

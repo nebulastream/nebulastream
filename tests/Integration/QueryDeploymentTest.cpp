@@ -414,6 +414,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -482,6 +484,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -547,6 +551,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     NES_INFO("QueryDeploymentTest: Start worker 2");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
@@ -555,6 +561,9 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+
+    srcConf->setPhysicalStreamName("default_physical_2");
+    wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -634,6 +643,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     NES_INFO("QueryDeploymentTest: Start worker 2");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
@@ -642,6 +653,9 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+
+    srcConf->setPhysicalStreamName("default_physical_2");
+    wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -725,6 +739,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     std::string outputFilePath = "test.out";
@@ -791,6 +807,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1097,6 +1115,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     std::string outputFilePath = "test.out";
@@ -1164,6 +1184,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -1219,6 +1241,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1287,6 +1311,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     NES_INFO("QueryDeploymentTest: Start worker 2");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
@@ -1295,6 +1321,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+
+    srcConf->setPhysicalStreamName("default_physical_2");
+    wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1379,6 +1408,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     NES_INFO("QueryDeploymentTest: Start worker 2");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
@@ -1387,6 +1418,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+
+    srcConf->setPhysicalStreamName("default_physical_2");
+    wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1488,6 +1522,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     NES_INFO("QueryDeploymentTest: Start worker 2");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
@@ -1496,6 +1532,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+
+    srcConf->setPhysicalStreamName("default_physical_2");
+    wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1594,6 +1633,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+
     NES_INFO("QueryDeploymentTest: Start worker 2");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
@@ -1628,15 +1668,17 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     srcConf->setSourceConfig("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(2);
-    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     srcConf->setSkipHeader(true);
-    //register physical stream
-    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
+    srcConf->setPhysicalStreamName("test_stream");
 
+    //register physical stream
+
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
     srcConf->setLogicalStreamName("window2");
+    srcConf->setPhysicalStreamName("test_stream2");
     //register physical stream
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 

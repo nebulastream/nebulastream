@@ -595,6 +595,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
 
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
@@ -711,10 +712,12 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window3");
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
@@ -856,10 +859,12 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window3");
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
@@ -1017,6 +1022,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
 
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);

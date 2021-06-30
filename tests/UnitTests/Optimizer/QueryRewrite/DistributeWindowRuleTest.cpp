@@ -68,13 +68,16 @@ void setupSensorNodeAndStreamCatalogTwoNodes(StreamCatalogPtr streamCatalog) {
     sourceConfig->setSourceConfig("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
+    sourceConfig->setLogicalStreamName("default_logical");
 
+    sourceConfig->setPhysicalStreamName("test2_1");
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceConfig);
-
     StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
+
+    sourceConfig->setPhysicalStreamName("test2_2");
+    streamConf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
+
     std::vector<std::string> logicalStreamNames{"default_logical"};
     streamCatalog->addPhysicalStream(logicalStreamNames, sce1);
     streamCatalog->addPhysicalStream(logicalStreamNames, sce2);
@@ -96,15 +99,26 @@ void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
     sourceConfig->setSourceConfig("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
+    sourceConfig->setLogicalStreamName("default_logical");
 
+    sourceConfig->setPhysicalStreamName("test2_1");
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceConfig);
-
     StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
+
+    sourceConfig->setPhysicalStreamName("test2_2");
+    streamConf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
+
+    sourceConfig->setPhysicalStreamName("test2_3");
+    streamConf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce3 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode3);
+
+    sourceConfig->setPhysicalStreamName("test2_4");
+    streamConf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce4 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode4);
+
+    sourceConfig->setPhysicalStreamName("test2_5");
+    streamConf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce5 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode5);
 
     std::vector<std::string> logicalStreamNames{"default_logical"};

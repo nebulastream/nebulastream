@@ -627,6 +627,9 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
+
+    sourceConfig->setPhysicalStreamName("test_stream2");
+    conf = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -728,6 +731,9 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
+
+    sourceConfig->setPhysicalStreamName("test_stream2");
+    conf = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -826,6 +832,9 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
+
+    sourceConfig->setPhysicalStreamName("test_stream_2");
+    conf70 = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(conf70);
 
     std::string outputFilePath = "outputLog.out";
@@ -1126,6 +1135,9 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(windowStream);
+
+    sourceConfig->setPhysicalStreamName("test_stream_2");
+    windowStream = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(windowStream);
 
     std::string outputFilePath = "testGlobalTumblingWindow.out";
@@ -1231,6 +1243,9 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
+
+    sourceConfig->setPhysicalStreamName("test_stream_2");
+    conf70 = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(conf70);
 
     std::string outputFilePath = "outputLog.out";
@@ -1579,6 +1594,9 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(windowStream);
+
+    sourceConfig->setPhysicalStreamName("test_stream_2");
+    windowStream = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(windowStream);
 
     std::string outputFilePath = "testGlobalTumblingWindow.out";
@@ -1702,14 +1720,23 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
+    sourceConfig->setPhysicalStreamName("test_stream_2");
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(conf);
+
+    sourceConfig->setPhysicalStreamName("test_stream_3");
+    conf = PhysicalStreamConfig::create(sourceConfig);
     wrk3->registerPhysicalStream(conf);
+
+    sourceConfig->setPhysicalStreamName("test_stream_4");
+    conf = PhysicalStreamConfig::create(sourceConfig);
     wrk4->registerPhysicalStream(conf);
+
+    sourceConfig->setPhysicalStreamName("test_stream_5");
+    conf = PhysicalStreamConfig::create(sourceConfig);
     wrk5->registerPhysicalStream(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -1846,15 +1873,23 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
+    sourceConfig->setPhysicalStreamName("test_stream_2");
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    //    wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
+
+    sourceConfig->setPhysicalStreamName("test_stream_3");
+    conf = PhysicalStreamConfig::create(sourceConfig);
     wrk3->registerPhysicalStream(conf);
+
+    sourceConfig->setPhysicalStreamName("test_stream_4");
+    conf = PhysicalStreamConfig::create(sourceConfig);
     wrk4->registerPhysicalStream(conf);
+
+    sourceConfig->setPhysicalStreamName("test_stream_5");
+    conf = PhysicalStreamConfig::create(sourceConfig);
     wrk5->registerPhysicalStream(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");

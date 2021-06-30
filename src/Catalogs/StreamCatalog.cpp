@@ -138,11 +138,8 @@ bool StreamCatalog::addPhysicalToLogicalStream(std::string logicalStreamName, St
         NES_DEBUG("test node id=" << entry->getNode()->getId() << " phyStr=" << entry->getPhysicalName());
         NES_DEBUG("test to be inserted id=" << newEntry->getNode()->getId() << " phyStr=" << newEntry->getPhysicalName());
         if (entry->getPhysicalName() == newEntry->getPhysicalName()) {
-            if (entry->getNode()->getId() == newEntry->getNode()->getId()) {
-                NES_ERROR("StreamCatalog: node with id=" << newEntry->getNode()->getId()
-                                                         << " name=" << newEntry->getPhysicalName() << " already exists");
-                return false;
-            }
+            NES_ERROR("StreamCatalog: physicalStream with name=" << newEntry->getPhysicalName() << " already exists");
+            return false;
         }
     }
     NES_DEBUG("StreamCatalog: physical stream " << newEntry->getPhysicalName() << " does not exist, try to add");

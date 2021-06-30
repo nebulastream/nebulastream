@@ -216,6 +216,7 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
 
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
@@ -336,6 +337,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
 
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
@@ -457,6 +459,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
 
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
@@ -578,6 +581,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setSourceConfig("../tests/test_data/window3.csv");
 
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
@@ -700,6 +704,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
     srcConf->setSourceFrequency(1);
     srcConf->setNumberOfTuplesToProducePerBuffer(2);
@@ -837,14 +842,18 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    srcConf->setLogicalStreamName("window2");
-    srcConf->setSourceConfig("../tests/test_data/window2.csv");
-
+    srcConf->setPhysicalStreamName("test_stream2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
+    srcConf->setLogicalStreamName("window2");
+    srcConf->setPhysicalStreamName("test_stream3");
+    srcConf->setSourceConfig("../tests/test_data/window2.csv");
+
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+
     wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream);
-    wrk3->registerPhysicalStream(windowStream2);
+    wrk2->registerPhysicalStream(windowStream2);
+    wrk3->registerPhysicalStream(windowStream3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -992,15 +1001,20 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
+    wrk1->registerPhysicalStream(windowStream);
 
+    srcConf->setPhysicalStreamName("test_stream2");
+    windowStream = PhysicalStreamConfig::create(srcConf);
+    wrk2->registerPhysicalStream(windowStream);
+
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window2");
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
-
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
-
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream);
     wrk3->registerPhysicalStream(windowStream2);
+
+    srcConf->setPhysicalStreamName("test_stream4");
+    windowStream2 = PhysicalStreamConfig::create(srcConf);
     wrk4->registerPhysicalStream(windowStream2);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -1142,6 +1156,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
 
@@ -1268,6 +1283,7 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     srcConf->setSourceConfig("../tests/test_data/window3.csv");
 
@@ -1427,7 +1443,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
     wrk2->registerLogicalStream("input2", testSchemaFileName);
     std::vector<std::string> logicalStreamNames2{"input2"};
     NES::AbstractPhysicalStreamConfigPtr conf2 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", logicalStreamNames2, func2, 10, 1, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2_2", logicalStreamNames2, func2, 10, 1, "frequency");
 
     wrk2->registerPhysicalStream(conf2);
 

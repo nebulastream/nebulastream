@@ -74,6 +74,10 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     EXPECT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");
 
+    // as default physical no longer automatically registered, call manually
+    // so that it is in the streamCatalog
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -371,6 +375,10 @@ TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    // as default physical no longer automatically registered, call manually
+    // so that it is in the streamCatalog
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

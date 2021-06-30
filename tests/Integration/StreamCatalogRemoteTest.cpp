@@ -222,6 +222,10 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
+    // as default physical no longer automatically registered, call manually
+    // so that it is in the streamCatalog
+    wrk->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     bool success = wrk->unregisterLogicalStream("default_logical");
     EXPECT_TRUE(!success);
 
@@ -268,6 +272,9 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     sourceConfig->setLogicalStreamName(logStreamNames);
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
+    // as default physical no longer automatically registered, call manually
+    // so that it is in the streamCatalog
+    wrk->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
     bool success = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success);
 
@@ -370,6 +377,10 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
+    // as default physical no longer automatically registered, call manually
+    // so that it is in the streamCatalog
+    wrk->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     bool success = wrk->unregisterPhysicalStream("default_logical", "default_physical");
     EXPECT_TRUE(success);
 
@@ -409,6 +420,10 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
+
+    // as default physical no longer automatically registered, call manually
+    // so that it is in the streamCatalog
+    wrk->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
 
     bool success = wrk->unregisterPhysicalStream("default_logical2", "default_physical");
     EXPECT_TRUE(!success);

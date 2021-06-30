@@ -64,13 +64,16 @@ void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     sourceConfig->setSourceConfig("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setPhysicalStreamName("test2_1");
     sourceConfig->setLogicalStreamName("test_stream");
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalStreamConfigPtr streamConf1 = PhysicalStreamConfig::create(sourceConfig);
 
-    StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
-    StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
+    sourceConfig->setPhysicalStreamName("test2_2");
+    PhysicalStreamConfigPtr streamConf2 = PhysicalStreamConfig::create(sourceConfig);
+
+    StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf1, physicalNode1);
+    StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf2, physicalNode2);
 
     std::vector<std::string> logicalStreamName{"default_logical"};
     streamCatalog->addPhysicalStream(logicalStreamName, sce1);

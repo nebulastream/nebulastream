@@ -76,6 +76,8 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -153,6 +155,8 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
+
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -235,6 +239,8 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
 
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -300,6 +306,8 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
+
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

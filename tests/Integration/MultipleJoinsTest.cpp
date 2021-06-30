@@ -133,10 +133,12 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window3");
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
@@ -301,10 +303,12 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window3");
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
@@ -471,14 +475,17 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window3");
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window4");
+    srcConf->setPhysicalStreamName("test_stream4");
     PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
@@ -647,14 +654,17 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window3");
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window4");
+    srcConf->setPhysicalStreamName("test_stream4");
     PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
@@ -812,10 +822,12 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window3");
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
@@ -989,10 +1001,12 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window3");
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
@@ -1168,13 +1182,16 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window3");
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
+    srcConf->setPhysicalStreamName("test_stream4");
     srcConf->setLogicalStreamName("window4");
     PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf);
 
@@ -1365,13 +1382,16 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setPhysicalStreamName("test_stream2");
     srcConf->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setPhysicalStreamName("test_stream3");
     srcConf->setLogicalStreamName("window3");
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
+    srcConf->setPhysicalStreamName("test_stream4");
     srcConf->setLogicalStreamName("window4");
     PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf);
 

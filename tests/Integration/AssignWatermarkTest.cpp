@@ -229,7 +229,11 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     // window-out-of-order.csv contains 12 rows
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream2");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(conf);
+    srcConf->setPhysicalStreamName("test_stream3");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk3->registerPhysicalStream(conf);
 
     // The query contains a watermark assignment with 50 ms allowed lateness
@@ -447,7 +451,13 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     // window-out-of-order.csv contains 12 rows
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf);
+
+    srcConf->setPhysicalStreamName("test_stream2");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(conf);
+
+    srcConf->setPhysicalStreamName("test_stream3");
+    conf = PhysicalStreamConfig::create(srcConf);
     wrk3->registerPhysicalStream(conf);
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("AssignWatermarkTest: Submit query");
