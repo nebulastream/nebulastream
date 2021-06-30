@@ -95,6 +95,8 @@ class BasePlacementStrategy {
      */
     virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) = 0;
 
+    virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan, std::vector<TopologyNodePtr> sourceNodes, TopologyNodePtr rootNode) = 0;
+
   protected:
     /**
      * @brief Map the logical source name to the physical source nodes in the topology used for placing the operators
@@ -102,6 +104,15 @@ class BasePlacementStrategy {
      * @param sourceOperators: the source operators in the query
      */
     void mapPinnedOperatorToTopologyNodes(QueryId queryId, const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators);
+
+    /**
+     * @brief used for partial placement, where location of source and sink operators are known beforehand
+     * @param queryId
+     * @param sourceOperators
+     * @param sourceNodes
+     * @param rootNode
+     */
+    void mapPinnedOperatorToTopologyNodes(QueryId queryId, QueryPlanPtr queryPlan, std::vector<TopologyNodePtr> sourceNodes, TopologyNodePtr rootNode);
 
     /**
      * @brief Get Execution node for the input topology node

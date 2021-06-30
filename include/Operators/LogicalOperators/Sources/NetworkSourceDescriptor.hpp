@@ -57,12 +57,18 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      */
     NesPartition getNesPartition() const;
 
+    /**
+     *
+     * @return the topology node from which this source recieves data
+     */
+    uint64_t getSinkTopologyNode();
+
   private:
     explicit NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition, uint64_t sinkTopologyNodeId);
 
     NesPartition nesPartition;
 
-    [[maybe_unused]] uint64_t sinkTopologyNodeId;
+    uint64_t sinkTopologyNodeId;
 };
 
 using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;

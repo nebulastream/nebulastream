@@ -39,6 +39,18 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
+    /**
+     * This function overload is responsible for partial placement of a query.
+     * The QueryPlan supplied must have NetworkSource Operators as its leaf operators and NetworkSink Operators as its root operators.
+     * NetworkSource Operators can be located on arbitrary topology nodes. All NetworkSink operators must be located on same topology node.
+     * Only one root node is currently allowed.
+     * @param queryPlan
+     * @param sourceNodes
+     * @param rootNode
+     * @return
+     */
+    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan, std::vector<TopologyNodePtr> sourceNodes, TopologyNodePtr rootNode);
+
     static std::unique_ptr<BottomUpStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                     TopologyPtr topology,
                                                     TypeInferencePhasePtr typeInferencePhase,
@@ -55,7 +67,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param queryPlan: query plan to place
      * @throws exception if the operator can't be placed.
      */
-    void placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan);
+    void placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan, bool partialPlacement = false);
 
     /**
      * @brief Try to place input operator on the input topology node
@@ -63,7 +75,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void placeOperatorOnTopologyNode(QueryId queryId, const OperatorNodePtr& operatorNode, TopologyNodePtr candidateTopologyNode);
+    void placeOperatorOnTopologyNode(QueryId queryId, const OperatorNodePtr& operatorNode, TopologyNodePtr candidateTopologyNode, bool partialPlacement = false);
 
     /**
      * @brief Get topology node where all children operators of the input operator are placed

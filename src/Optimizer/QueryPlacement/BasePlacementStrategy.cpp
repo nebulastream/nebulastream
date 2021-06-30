@@ -149,6 +149,45 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
     }
 }
 
+void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, QueryPlanPtr queryPlan, std::vector<TopologyNodePtr> sourceNodes, TopologyNodePtr rootNode){
+
+    NES_DEBUG("BasePlacementStrategy: Performing partial placement on QueryPlan: " << queryId);
+    NES_DEBUG("BasePlacementStrategy: Prepare a map of source to physical nodes");
+    NES_TRACE("BasePlacementStrategy: Clear the previous pinned operator mapping");
+    pinnedOperatorLocationMap.clear();
+
+    NES_TRACE("BasePlacementStrategy: Find the topology sub graph for the source nodes.");
+    std::vector<TopologyNodePtr> topoSubGraphSourceNodes = this->topology->findPathBetween(sourceNodes, {rootNode});
+
+    if(topoSubGraphSourceNodes.empty()){
+        throw Exception("BasePlacementStrategy: unable to path between source and sink nodes ");
+    }
+
+    NES_TRACE("BasePlacementStrategy: Adding location for sink operator.");
+    TopologyNodePtr root = topoSubGraphSourceNodes[0]->getAllRootNodes()[0]->as<TopologyNode>();
+    std::vector<OperatorNodePtr> sinkOperators = queryPlan->getRootOperators();
+    for (const auto& sinkOperator : sinkOperators) {
+        pinnedOperatorLocationMap[sinkOperator->getId()] = root;
+    }
+    for(auto sourceOperator : queryPlan->getSourceOperators()){
+        auto candidateTopologyNodeId = sourceOperator->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getSinkTopologyNode();
+        auto found = std::find_if(topoSubGraphSourceNodes.begin(),
+                                         topoSubGraphSourceNodes.end(),
+                                          [&](const TopologyNodePtr & topNode) {
+                                            return topNode->getId() == candidateTopologyNodeId;
+                                          });
+                if (found == sourceNodes.end()) {
+                        NES_DEBUG("BasePlacementStrategy: candidateTopologyNode for Source Operator was not found in list of sourceNodes");
+                        throw Exception("BasePlacementStrategy: candidateTopologyNode for Source Operator was not found in list of sourceNodes");
+
+                }
+                pinnedOperatorLocationMap[sourceOperator->getId()] = (*found);
+
+    }
+
+}
+
+
 ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& candidateTopologyNode) {
 
     ExecutionNodePtr candidateExecutionNode;
