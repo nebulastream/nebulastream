@@ -335,6 +335,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
 
     NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator.DebugString() << " to "
                                                           << operatorNode->toString());
+    operatorNode->setId(serializedOperator->operatorid());
     return operatorNode;
 }
 
