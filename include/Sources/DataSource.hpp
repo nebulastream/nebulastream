@@ -222,17 +222,17 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     }
 
     /**
+     * @brief final reconfigure callback called upon a reconfiguration
+     * @param task the reconfig descriptor
+     */
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override;
+
+    /**
      * @brief reconfigure callback called upon a reconfiguration
      * @param task the reconfig descriptor
      * @param context the worker context
     */
-    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override;
-
-    /**
-     * @brief final reconfigure callback called upon a reconfiguration
-     * @param task the reconfig descriptor
-     */
-    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override;
+    void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) override;
 
   protected:
     Runtime::QueryManagerPtr queryManager;

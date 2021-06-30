@@ -18,13 +18,12 @@
 #define NES_OUTPUTCHANNELKEY_HPP
 
 #include <Network/NetworkMessage.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <iostream>
 #include <memory>
 #include <zmq.hpp>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 class OutputChannelKey {
   public:
@@ -40,7 +39,6 @@ class OutputChannelKey {
     Network::OperatorId operatorId;
 };
 
-}// namespace Network
 }// namespace NES
 namespace std {
 template<>

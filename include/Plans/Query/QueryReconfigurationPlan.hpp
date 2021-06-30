@@ -49,13 +49,13 @@ class QueryReconfigurationPlan {
      * @brief Get QuerySubPlanId to replace
      * @return QuerySubPlanId
      */
-    const QuerySubPlanId getOldQuerySubPlanId() const;
+    QuerySubPlanId getOldQuerySubPlanId() const;
 
     /**
      * @brief Get QuerySubPlanId to replace by
      * @return QuerySubPlanId
      */
-    const QuerySubPlanId getNewQuerySubPlanId() const;
+    QuerySubPlanId getNewQuerySubPlanId() const;
 
     QueryReconfigurationTypes getReconfigurationType() const;
 

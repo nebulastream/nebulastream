@@ -23,14 +23,16 @@ PhysicalSinkOperator::PhysicalSinkOperator(OperatorId id,
                                            SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
                                            SinkDescriptorPtr sinkDescriptor)
-    : OperatorNode(id), logicalSourceOperatorId(logicalOperatorId), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
-      sinkDescriptor(std::move(sinkDescriptor)) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      logicalSourceOperatorId(logicalOperatorId), sinkDescriptor(std::move(sinkDescriptor)) {}
 
 PhysicalOperatorPtr PhysicalSinkOperator::create(OperatorId logicalSourceOperatorId,
                                                  SchemaPtr inputSchema,
                                                  SchemaPtr outputSchema,
                                                  SinkDescriptorPtr sinkDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), logicalSourceOperatorId, std::move(inputSchema),
+    return create(UtilityFunctions::getNextOperatorId(),
+                  logicalSourceOperatorId,
+                  std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(sinkDescriptor));
 }

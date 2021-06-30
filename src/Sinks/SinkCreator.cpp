@@ -137,7 +137,8 @@ DataSinkPtr createNetworkSink(OperatorId logicalSourceOperatorId,
                               Runtime::NodeEnginePtr const& nodeEngine,
                               std::chrono::seconds waitTime,
                               uint8_t retryTimes) {
-    return std::make_shared<Network::NetworkSink>(schema,
+    return std::make_shared<Network::NetworkSink>(logicalSourceOperatorId,
+                                                  schema,
                                                   parentPlanId,
                                                   nodeEngine->getNetworkManager(),
                                                   nodeLocation,
@@ -149,8 +150,12 @@ DataSinkPtr createNetworkSink(OperatorId logicalSourceOperatorId,
 }
 
 #ifdef ENABLE_KAFKA_BUILD
-DataSinkPtr
-createKafkaSinkWithSchema(OperatorId logicalOperatorId, SchemaPtr schema, QuerySubPlanId parentPlanId, const std::string& brokers, const std::string& topic, uint64_t kafkaProducerTimeout) {
+DataSinkPtr createKafkaSinkWithSchema(OperatorId logicalOperatorId,
+                                      SchemaPtr schema,
+                                      QuerySubPlanId parentPlanId,
+                                      const std::string& brokers,
+                                      const std::string& topic,
+                                      uint64_t kafkaProducerTimeout) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<KafkaSink>(logicalOperatorId, format, parentPlanId, brokers, topic, kafkaProducerTimeout);
 }
@@ -158,7 +163,7 @@ createKafkaSinkWithSchema(OperatorId logicalOperatorId, SchemaPtr schema, QueryS
 
 #ifdef ENABLE_OPC_BUILD
 DataSinkPtr createOPCSink(OperatorId logicalOperatorId,
-                                SchemaPtr schema,
+                          SchemaPtr schema,
                           QuerySubPlanId parentPlanId,
                           Runtime::NodeEnginePtr nodeEngine,
                           std::string url,

@@ -203,7 +203,7 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep, Stat
     return startQuery(qep, stateManager, qep->getSources(), qep->getSinks());
 }
 
-bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr& qep,
+bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep,
                               StateManagerPtr stateManager,
                               const std::vector<DataSourcePtr>& sources,
                               const std::vector<DataSinkPtr>& sinks) {

@@ -13,11 +13,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NodeEngine/NodeEngine.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {

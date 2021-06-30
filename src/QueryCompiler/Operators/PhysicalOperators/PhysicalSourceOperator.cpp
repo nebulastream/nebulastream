@@ -23,22 +23,24 @@ PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                SourceDescriptorPtr sourceDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), logicalSourceOperatorId(logicalSourceOperatorId),
-      sourceDescriptor(std::move(sourceDescriptor)) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      logicalSourceOperatorId(logicalSourceOperatorId), sourceDescriptor(std::move(sourceDescriptor)) {}
 
 PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id,
                                                    OperatorId logicalSourceOperatorId,
                                                    const SchemaPtr& inputSchema,
                                                    const SchemaPtr& outputSchema,
                                                    const SourceDescriptorPtr& sourceDescriptor) {
-    return std::make_shared<PhysicalSourceOperator>(id, inputSchema, outputSchema, sourceDescriptor);
+    return std::make_shared<PhysicalSourceOperator>(id, logicalSourceOperatorId, inputSchema, outputSchema, sourceDescriptor);
 }
 
 PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId logicalSourceOperatorId,
                                                    SchemaPtr inputSchema,
                                                    SchemaPtr outputSchema,
                                                    SourceDescriptorPtr sourceDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), logicalSourceOperatorId, std::move(inputSchema),
+    return create(UtilityFunctions::getNextOperatorId(),
+                  logicalSourceOperatorId,
+                  std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(sourceDescriptor));
 }

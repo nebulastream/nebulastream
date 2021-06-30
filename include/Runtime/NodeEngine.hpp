@@ -159,7 +159,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param queryPlan: query sub plan to be registered
      * @return true if succeeded, else false
      */
-    bool registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryPlan);
+    bool registerQueryForReconfigurationInNodeEngine(const QueryPlanPtr& queryPlan);
 
     /**
      * Method to start reconfiguration Process
@@ -262,13 +262,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void onDataBuffer(Network::NesPartition, TupleBuffer&) override;
 
     /**
-     * @brief this callback is called once a client announcement message arrives at network manager
-     * When partition is registered and not in pendingRegistration then increment producer. otherwise if present in pendingPartitionPinning then
-     * partition will be registered lazily after channel is established. Otherwise error.
-     */
-    bool onClientAnnouncement(Network::Messages::ClientAnnounceMessage msg) override;
-
-    /**
      * @brief this callback is called once an end of stream message arrives
      */
     void onEndOfStream(Network::Messages::EndOfStreamMessage) override;
@@ -309,9 +302,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param queryPlan to compile to Executable Query Plan
      * @return Executable Plan if compilation successful else nullopt
      */
-    std::optional<Execution::ExecutableQueryPlanPtr> compileQuery(QueryPlanPtr queryPlan);
+    std::optional<Execution::ExecutableQueryPlanPtr> compileQuery(const QueryPlanPtr& queryPlan);
 
-    bool registerQueryExecutionPlanInQueryManagerForSources(Execution::ExecutableQueryPlanPtr& queryExecutionPlan,
+    bool registerQueryExecutionPlanInQueryManagerForSources(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan,
                                                             const std::vector<DataSourcePtr>& sources);
 
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
@@ -321,7 +314,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> reconfigurationQEPs;
-    std::unordered_map<Network::NesPartition, std::atomic<uint64_t>> pendingPartitionPinning;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;

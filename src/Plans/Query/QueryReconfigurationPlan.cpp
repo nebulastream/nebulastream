@@ -47,8 +47,8 @@ QueryId QueryReconfigurationPlan::getQueryId() const { return queryId; }
 
 QueryReconfigurationTypes QueryReconfigurationPlan::getReconfigurationType() const { return reconfigurationType; }
 
-const QuerySubPlanId QueryReconfigurationPlan::getNewQuerySubPlanId() const { return newQuerySubPlanId; }
+QuerySubPlanId QueryReconfigurationPlan::getNewQuerySubPlanId() const { return newQuerySubPlanId; }
 
-const QuerySubPlanId QueryReconfigurationPlan::getOldQuerySubPlanId() const { return oldQuerySubPlanId; }
+QuerySubPlanId QueryReconfigurationPlan::getOldQuerySubPlanId() const { return oldQuerySubPlanId; }
 
 }// namespace NES
