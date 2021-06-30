@@ -34,6 +34,8 @@ class LowerLogicalToPhysicalOperators {
 
   private:
     PhysicalOperatorProviderPtr provider;
+    // Store mapping between operatorId at coordinator level and worker level
+    std::unordered_map<OperatorId, OperatorId> globalOperatorIdToWorkerOperatorIdMapping;
 };
 }// namespace QueryCompilation
 }// namespace NES

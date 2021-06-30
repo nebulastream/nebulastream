@@ -34,6 +34,14 @@ LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(PhysicalOperato
 QueryPlanPtr LowerLogicalToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
     std::vector<NodePtr> nodes = QueryPlanIterator(queryPlan).snapshot();
     for (const auto& node : nodes) {
+        auto logicalOperatorNode = node->as<LogicalOperatorNode>();
+        if (!globalOperatorIdToWorkerOperatorIdMapping.contains(logicalOperatorNode->getId())) {
+            globalOperatorIdToWorkerOperatorIdMapping[logicalOperatorNode->getId()] = UtilityFunctions::getNextOperatorId();
+        }
+        logicalOperatorNode->setId(globalOperatorIdToWorkerOperatorIdMapping[logicalOperatorNode->getId()]);
+    }
+
+    for (auto node : nodes) {
         provider->lower(queryPlan, node->as<LogicalOperatorNode>());
     }
     return queryPlan;
