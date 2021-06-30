@@ -342,7 +342,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
     EXPECT_TRUE(rootOperators1.size() == 1);
 
     auto root1Children = rootOperators1[0]->getChildren();
-    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children.size() == 2);
     EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
 
     auto rootOperators2 = sharedQueryPlan2->getRootOperators();
