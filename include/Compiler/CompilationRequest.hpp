@@ -22,11 +22,13 @@ namespace NES::Compiler {
 class CompilationRequest {
   public:
     CompilationRequest(std::unique_ptr<SourceCode> sourceCode,
+                       std::string name,
                        bool profileCompilation,
                        bool profileExecution,
                        bool optimizeCompilation,
                        bool debug);
     std::unique_ptr<CompilationRequest> create(std::unique_ptr<SourceCode> sourceCode,
+                                               std::string name,
                                                bool profileCompilation,
                                                bool profileExecution,
                                                bool optimizeCompilation,
@@ -37,9 +39,11 @@ class CompilationRequest {
     [[nodiscard]] bool enableOptimizations() const;
     [[nodiscard]] bool enableCompilationProfiling() const;
     [[nodiscard]] bool enableExecutionProfiling() const;
+    [[nodiscard]] std::string getName() const;
 
   private:
     const std::shared_ptr<SourceCode> sourceCode;
+    const std::string name;
     const bool profileCompilation;
     const bool profileExecution;
     const bool optimizeCompilation;

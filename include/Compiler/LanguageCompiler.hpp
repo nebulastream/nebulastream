@@ -8,7 +8,7 @@ class LanguageCompiler {
     [[nodiscard]] virtual std::unique_ptr<const CompilationResult>
     compile(std::unique_ptr<const CompilationRequest> request) const = 0;
     [[nodiscard]] virtual Language getLanguage() const = 0;
-    virtual ~LanguageCompiler() = 0;
+    virtual ~LanguageCompiler() = default;
 };
 
 }// namespace NES::Compiler

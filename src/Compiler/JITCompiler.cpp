@@ -22,7 +22,7 @@ std::future<const CompilationResult> JITCompiler::compile(std::unique_ptr<const 
     }
 
     auto compilationResult = languageCompiler->second->compile(std::move(request));
-    result.set_value(compilationResult);
+   // result.set_value(compilationResult);
     return result.get_future();
 }
 

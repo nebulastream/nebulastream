@@ -13,7 +13,5 @@
 # limitations under the License.
 
 add_source_nes(
-        CPPCompiler.cpp
-        CPPCompilerFlags.cpp
-        SharedLibrary.cpp
+        CompilerException.cpp
 )

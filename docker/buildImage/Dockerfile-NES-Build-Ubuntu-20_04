@@ -1,0 +1,42 @@
+FROM ubuntu:20.04
+
+RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
+  libdwarf-dev \
+  libdwarf1 \
+  binutils-dev \
+  libdw-dev \
+  libssl-dev \
+  build-essential \
+  clang-format \
+  libmbedtls-dev \
+  libjemalloc-dev \
+  git \
+  wget \
+  python3.8 \
+  libsodium-dev \
+  tar \
+  p7zip \
+  doxygen \
+  graphviz \
+  software-properties-common \
+  && apt-get clean -qq
+
+RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
+    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
+    && apt update && apt install -y kitware-archive-keyring && rm /etc/apt/trusted.gpg.d/kitware.gpg && apt update && apt install -y cmake
+
+ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
+
+# docker buildx, TARGETARCH,TARGETOS available in the intermediate container during build time
+# We store new env variables for use during runtime/entrypoint
+# more info: https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
+ARG TARGETARCH
+ARG TARGETOS
+# Docker's architectures do not map to the Debian ones (amd64=x86_64, arm64=aarch64)
+# These are needed for defining lib paths later on CMake
+RUN [ "$TARGETARCH" = "amd64" ] && echo "x86_64-linux-gnu" > /debian-triple || echo "aarch64-linux-gnu" > /debian-triple
+ENV ACTUAL_TRIPLE='cat /debian-triple'
+
+ADD ./entrypoint-nes-build.sh /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

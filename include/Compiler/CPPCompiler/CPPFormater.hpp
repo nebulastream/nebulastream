@@ -1,10 +1,9 @@
 #ifndef NES_INCLUDE_COMPILER_CPPCOMPILER_CPPFORMATER_HPP_
 #define NES_INCLUDE_COMPILER_CPPCOMPILER_CPPFORMATER_HPP_
-
+#include <memory>
 namespace NES::Compiler{
 
 class CPPFormat{
-
   public:
     void format(){
         int ret = system("which clang-format > /dev/null");
