@@ -57,43 +57,59 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
             auto targetSharedQueryMetaData = allSharedQueryMetaData[i];
             auto hostSharedQueryMetaData = allSharedQueryMetaData[j];
 
+            //Skip if both target and host Shared Query Plans are same
             if (targetSharedQueryMetaData->getSharedQueryId() == hostSharedQueryMetaData->getSharedQueryId()) {
                 continue;
             }
+
+            //Fetch target and host query plan to merge
             auto targetQueryPlan = targetSharedQueryMetaData->getQueryPlan();
-
             auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
-            std::map<OperatorNodePtr, OperatorNodePtr> matchedTargetToHostOperatorMap;
 
+            //Initialized the target and host matched pair
+            std::map<OperatorNodePtr, OperatorNodePtr> matchedTargetToHostOperatorMap;
+            //Initialized the vector containing iterated matched host operator
             std::vector<NodePtr> matchedHostOperators;
 
             //Iterate over the target query plan and compare the operator signatures with the host query plan
             //When a match is found then store the matching operators in the matchedTargetToHostOperatorMap
             for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
+                //Iterate the target query plan in DFS order.
                 auto targetChildren = targetRootOperator->getChildren();
                 std::deque<NodePtr> targetOperators = {targetChildren.begin(), targetChildren.end()};
+                //Iterate till target operators are remaining to be matched
                 while (!targetOperators.empty()) {
 
+                    //Extract the front of the queue and check if there is a matching operator in the
+                    // host query plan
                     bool foundMatch = false;
                     auto targetOperator = targetOperators.front()->as<LogicalOperatorNode>();
                     targetOperators.pop_front();
 
+                    //Skip if the target operator is already matched
                     if (matchedTargetToHostOperatorMap.find(targetOperator) != matchedTargetToHostOperatorMap.end()) {
                         continue;
                     }
 
+                    //Initialize the visited host operator list
                     std::vector<NodePtr> visitedHostOperators;
 
+                    //Iterate the host query plan in BFS order and check if an operator with matching signature with the target operator
+                    // exists.
                     for (const auto& hostRootOperator : hostQueryPlan->getRootOperators()) {
+                        //Initialize the host operators to traverse
                         std::deque<NodePtr> hostOperators;
-
                         for(const auto& hostChildren:  hostRootOperator->getChildren()){
+                            //Only add the host operators which were not traversed earlier
                             if(std::find(visitedHostOperators.begin(), visitedHostOperators.end(), hostChildren) == visitedHostOperators.end()){
                                 hostOperators.push_back(hostChildren);
                             }
                         }
 
+                        //Iterate till a matching host operator is not found or till the host operators are available to
+                        // perform matching
                         while (!hostOperators.empty()) {
+                            //Take out the front of the queue and add the host operator to the visited list
                             auto hostOperator = hostOperators.front()->as<LogicalOperatorNode>();
                             visitedHostOperators.emplace_back(hostOperator);
                             hostOperators.pop_front();
@@ -104,9 +120,12 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                                 continue;
                             }
 
+                            //Match the target and host operator signatures to see if a match is present
                             if (signatureEqualityUtil->checkEquality(targetOperator->getZ3Signature(),
                                                                      hostOperator->getZ3Signature())) {
+                                //Add the matched host operator to the map
                                 matchedTargetToHostOperatorMap[targetOperator] = hostOperator;
+                                //Mark the host operator as matched
                                 matchedHostOperators.emplace_back(hostOperator);
                                 foundMatch = true;
                                 break;
@@ -114,6 +133,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
 
                             //Check for the children operators if a host operator with matching is found on the host
                             for (const auto& hostChild : hostOperator->getChildren()) {
+                                //Only add the host operators in the back of the queue which were not traversed earlier
                                 if(std::find(visitedHostOperators.begin(), visitedHostOperators.end(), hostChild) == visitedHostOperators.end()){
                                     hostOperators.push_back(hostChild);
                                 }
@@ -121,6 +141,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                         }
                     }
 
+                    //If a match is found then no need to look for a matching downstream operator chain
                     if (foundMatch) {
                         continue;
                     }
@@ -131,30 +152,6 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                     }
                 }
             }
-
-            /*while (*targetQueryPlanItr) {
-                bool foundMatch = false;
-                auto targetOperator = (*targetQueryPlanItr)->as<LogicalOperatorNode>();
-                if (!targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
-                    auto hostQueryPlanItr = QueryPlanIterator(hostQueryPlan).begin();
-                    while (*hostQueryPlanItr) {
-                        auto hostOperator = (*hostQueryPlanItr)->as<LogicalOperatorNode>();
-                        if (!hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
-                            if (signatureEqualityUtil->checkEquality(targetOperator->getZ3Signature(),
-                                                                     hostOperator->getZ3Signature())) {
-                                matchedTargetToHostOperatorMap[targetOperator] = hostOperator;
-                                foundMatch = true;
-                                break;
-                            }
-                        }
-                        ++hostQueryPlanItr;
-                    }
-                }
-                if (foundMatch) {
-                    break;
-                }
-                ++targetQueryPlanItr;
-            }*/
 
             //Not all sinks found an equivalent entry in the target shared query metadata
             if (matchedTargetToHostOperatorMap.empty()) {
