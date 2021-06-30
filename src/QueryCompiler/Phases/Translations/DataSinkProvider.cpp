@@ -13,9 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NodeEngine/NodeEngine.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {

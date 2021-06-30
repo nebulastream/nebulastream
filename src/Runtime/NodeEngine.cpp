@@ -18,11 +18,6 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Network/NetworkSource.hpp>
-#include <NodeEngine/ErrorListener.hpp>
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/NodeStatsProvider.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -203,7 +198,7 @@ std::optional<Execution::ExecutableQueryPlanPtr> NodeEngine::compileQuery(const 
     }
 }
 
-bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
+bool NodeEngine::registerQueryInNodeEngine(const QueryPlanPtr& queryPlan) {
     std::unique_lock lock(engineMutex);
     auto maybeQep = compileQuery(queryPlan);
     if (!maybeQep) {
@@ -238,7 +233,7 @@ bool NodeEngine::registerQueryInNodeEngine(const Execution::ExecutableQueryPlanP
     return true;
 }
 
-bool NodeEngine::registerQueryExecutionPlanInQueryManagerForSources(Execution::ExecutableQueryPlanPtr& queryExecutionPlan,
+bool NodeEngine::registerQueryExecutionPlanInQueryManagerForSources(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan,
                                                                     const std::vector<DataSourcePtr>& sources) {
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
     if (queryManager->registerQuery(queryExecutionPlan, sources)) {
@@ -251,7 +246,7 @@ bool NodeEngine::registerQueryExecutionPlanInQueryManagerForSources(Execution::E
     }
 }
 
-bool NodeEngine::registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryPlan) {
+bool NodeEngine::registerQueryForReconfigurationInNodeEngine(const QueryPlanPtr& queryPlan) {
     std::unique_lock lock(engineMutex);
     NES_INFO("NodeEngine::registerQueryForReconfigurationInNodeEngine: Received request for registering qep with querySubPlanId: "
              << queryPlan->getQuerySubPlanId());
@@ -267,14 +262,6 @@ bool NodeEngine::registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryP
     auto qep = *maybeQep;
     NES_DEBUG("NodeEngine::registerQueryForReconfigurationInNodeEngine: adding qep with querySubPlanId: "
               << qep->getQuerySubPlanId() << " into QEP pending reconfiguration.");
-
-    for (const auto& source : qep->getSources()) {
-        if (auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
-            if (!partitionManager->isRegistered(networkSource->getNesPartition())) {
-                pendingPartitionPinning[networkSource->getNesPartition()] = std::atomic<uint32_t>(std::uint64_t(0));
-            }
-        }
-    }
     reconfigurationQEPs[qep->getQuerySubPlanId()] = qep;
     return true;
 }
@@ -446,7 +433,7 @@ bool NodeEngine::reconfigureDataSource(const std::shared_ptr<Execution::Executab
     std::vector<QuerySubPlanId>& subPlanIds = queryIdToQuerySubPlanIds[oldQep->getQueryId()];
     subPlanIds.erase(std::remove_if(subPlanIds.begin(),
                                     subPlanIds.end(),
-                                    [oldQep](const int& x) {
+                                    [oldQep](QuerySubPlanId x) {
                                         return x == oldQep->getQuerySubPlanId();
                                     }),
                      subPlanIds.end());
@@ -656,26 +643,6 @@ Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId)
 
 void NodeEngine::onDataBuffer(Network::NesPartition, TupleBuffer&) {
     // nop :: kept as legacy
-}
-
-bool NodeEngine::onClientAnnouncement(Network::Messages::ClientAnnounceMessage msg) {
-    std::unique_lock lock(engineMutex);
-    auto nesPartition = msg.getChannelId().getNesPartition();
-    if (partitionManager->isRegistered(nesPartition)) {
-        // increment the counter
-        partitionManager->pinSubpartition(nesPartition);
-        NES_DEBUG("NodeEngine::onClientAnnouncement: received for " << msg.getChannelId().toString() << " REGISTERED");
-        // send response back to the client based on the identity
-        return true;
-    } else if (pendingPartitionPinning.find(nesPartition) != pendingPartitionPinning.end()) {
-        NES_DEBUG("NodeEngine::onClientAnnouncement: received for " << msg.getChannelId().toString()
-                                                                    << " REGISTERED in PendingPartitionForPinning.");
-        pendingPartitionPinning[nesPartition].fetch_add(1);
-        return true;
-    }
-    NES_DEBUG("NodeEngine::onClientAnnouncement: received for " << msg.getChannelId().toString()
-                                                                << " but partition not registered.");
-    return false;
 }
 
 void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {

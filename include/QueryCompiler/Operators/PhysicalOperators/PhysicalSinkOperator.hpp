@@ -34,15 +34,13 @@ class PhysicalSinkOperator : public PhysicalUnaryOperator, public AbstractEmitOp
                          SchemaPtr inputSchema,
                          SchemaPtr outputSchema,
                          SinkDescriptorPtr sinkDescriptor);
+    static PhysicalOperatorPtr
+    create(OperatorId logicalSourceOperatorId, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
     static PhysicalOperatorPtr create(OperatorId id,
                                       OperatorId logicalSourceOperatorId,
-                                      SchemaPtr inputSchema,
-                                      SchemaPtr outputSchema,
-                                      SinkDescriptorPtr sinkDescriptor);
-    static PhysicalOperatorPtr
-    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const SinkDescriptorPtr& sinkDescriptor);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
-    create(OperatorId logicalSourceOperatorId, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
+                                      const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const SinkDescriptorPtr& sinkDescriptor);
     SinkDescriptorPtr getSinkDescriptor();
 
     std::string toString() const override;

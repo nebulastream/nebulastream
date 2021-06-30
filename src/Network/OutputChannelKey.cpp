@@ -14,18 +14,11 @@
     limitations under the License.
 */
 
-#include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkMessage.hpp>
-#include <Network/OutputChannel.hpp>
 #include <Network/OutputChannelKey.hpp>
-#include <Network/ZmqUtils.hpp>
-#include <NodeEngine/NesThread.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 Network::OutputChannelKey::OutputChannelKey(QuerySubPlanId querySubPlanId, Network::OperatorId operatorId)
     : querySubPlanId(querySubPlanId), operatorId(operatorId) {}
@@ -40,5 +33,4 @@ std::ostream& operator<<(std::ostream& os, const OutputChannelKey& key) {
     os << "querySubPlanId: " << key.querySubPlanId << " operatorId: " << key.operatorId;
     return os;
 }
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network

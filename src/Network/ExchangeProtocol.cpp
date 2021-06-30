@@ -26,26 +26,24 @@ namespace NES::Network {
 
 ExchangeProtocol::ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
                                    std::shared_ptr<ExchangeProtocolListener> protocolListener)
-    : partitionManager(std::move(partitionManager)), protocolListener(std::move(protocolListener)), reconfigurationMutex() {
+    : partitionManager(std::move(partitionManager)), protocolListener(std::move(protocolListener)) {
     NES_ASSERT(this->partitionManager, "Wrong parameter partitionManager is null");
     NES_ASSERT(this->protocolListener, "Wrong parameter ExchangeProtocolListener is null");
     NES_DEBUG("ExchangeProtocol: Initializing ExchangeProtocol()");
-}
-
-ExchangeProtocol::~ExchangeProtocol() {}
-
-ExchangeProtocol::ExchangeProtocol(ExchangeProtocol const& other) {
-    std::unique_lock lock(other.reconfigurationMutex);
-    this->partitionManager = other.partitionManager;
-    this->protocolListener = other.protocolListener;
 }
 
 Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
     // check if the partition is registered via the partition manager or wait until this is not done
     // if all good, send message back
     NES_INFO("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString());
-    if (protocolListener->onClientAnnouncement(msg)) {
-        NES_DEBUG("ExchangeProtocol::onClientAnnouncement: Sending ServerReadyMessage on: " << msg.getChannelId());
+    auto nesPartition = msg.getChannelId().getNesPartition();
+
+    // check if identity is registered
+    if (partitionManager->isRegistered(nesPartition)) {
+        // increment the counter
+        partitionManager->pinSubpartition(nesPartition);
+        NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " REGISTERED");
+        // send response back to the client based on the identity
         return Messages::ServerReadyMessage(msg.getChannelId());
     }
     NES_WARNING("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " NOT REGISTERED");
@@ -54,7 +52,6 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
 }
 
 void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer) {
-    std::unique_lock lock(reconfigurationMutex);
     if (partitionManager->isRegistered(nesPartition)) {
         protocolListener->onDataBuffer(nesPartition, buffer);
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);

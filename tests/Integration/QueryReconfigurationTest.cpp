@@ -76,10 +76,10 @@ void stopWorker(NesWorkerPtr wrk, uint16_t workerId) {
     NES_INFO("QueryReconfigurationTest: Stopped worker " << workerId);
 }
 
-std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generatorLambda(uint64_t origin,
-                                                                                                            uint64_t sleepTime) {
+std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generatorLambda(uint64_t origin,
+                                                                                                         uint64_t sleepTime) {
     uint64_t counter = 0;
-    return [origin, sleepTime, counter](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) mutable {
+    return [origin, sleepTime, counter](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) mutable {
         struct Record {
             uint64_t id;
             uint64_t value;
@@ -293,7 +293,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationAtSourceNode) {
     wrk1->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlan);
 
     while (wrk1->getNodeEngine()->getQueryManager()->getQepStatus(tqsp3->getQuerySubPlanId())
-           != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
+           != Runtime::Execution::ExecutableQueryPlanStatus::Running) {
         NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 3 to be in running mode.");
         sleep(1);
     }
@@ -430,7 +430,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationAtSinkNode) {
     wrk1->getNodeEngine()->startQueryReconfiguration(queryReconfigurationPlanSource);
 
     while (wrk1->getNodeEngine()->getQueryManager()->getQepStatus(tqsp3->getQuerySubPlanId())
-           != NodeEngine::Execution::ExecutableQueryPlanStatus::Running) {
+           != Runtime::Execution::ExecutableQueryPlanStatus::Running) {
         NES_DEBUG("QueryReconfigurationTest: Waiting for QEP 3 to be in running mode.");
         sleep(1);
     }
@@ -498,7 +498,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     auto phase = Optimizer::TypeInferencePhase::create(crd->getStreamCatalog());
 
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
+    EXPECT_NE(port, 0UL);
     NES_INFO("QueryReconfigurationTest: Coordinator started successfully");
 
     NesWorkerPtr wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Sensor, true);

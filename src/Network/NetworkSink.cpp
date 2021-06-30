@@ -32,9 +32,9 @@ NetworkSink::NetworkSink(OperatorId logicalOperatorId,
                          std::chrono::seconds waitTime,
                          uint8_t retryTimes)
     : SinkMedium(logicalOperatorId, std::make_shared<NesFormat>(schema, bufferManager), parentPlanId),
-      networkManager(std::move(networkManager)),queryManager(std::move(queryManager)), nodeLocation(nodeLocation), nesPartition(nesPartition),
-       waitTime(waitTime), retryTimes(retryTimes),
-      outputChannelKey(OutputChannelKey(parentPlanId, nesPartition.getOperatorId())) {
+      networkManager(std::move(networkManager)), queryManager(std::move(queryManager)), nodeLocation(nodeLocation),
+      nesPartition(nesPartition), outputChannelKey(OutputChannelKey(parentPlanId, nesPartition.getOperatorId())),
+      waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << nodeLocation.createZmqURI());
 }
@@ -99,7 +99,7 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
         case Runtime::SoftEndOfStream: {
             queryManager->addReconfigurationMessage(
                 parentPlanId,
-                Runtime::ReconfigurationMessage(parentPlanId, NodeEngine::Destroy, shared_from_this()),
+                Runtime::ReconfigurationMessage(parentPlanId, Runtime::Destroy, shared_from_this()),
                 false);
         }
         default: {

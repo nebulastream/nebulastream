@@ -58,7 +58,9 @@ DataSource::DataSource(const SchemaPtr& pSchema,
                        GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : queryManager(std::move(queryManager)), globalBufferManager(std::move(bufferManager)),
-      executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), logicalSourceOperatorId(logicalSourceOperatorId), schema(pSchema),  numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
+      executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
+      logicalSourceOperatorId(logicalSourceOperatorId), schema(pSchema), numSourceLocalBuffers(numSourceLocalBuffers),
+      gatheringMode(gatheringMode) {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->globalBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -374,15 +376,15 @@ uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess
 std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
 uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
 
-void DataSource::reconfigure(NodeEngine::ReconfigurationMessage& message, NodeEngine::WorkerContext& context) {
+void DataSource::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(message, context);
 }
 
-void DataSource::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& message) {
+void DataSource::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);
     switch (message.getType()) {
-        case NodeEngine::ReplaceDataEmitter: {
-            executableSuccessors = message.getUserData<std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>>();
+        case Runtime::ReplaceDataEmitter: {
+            executableSuccessors = message.getUserData<std::vector<Runtime::Execution::SuccessorExecutablePipeline>>();
             break;
         }
         default: {
@@ -390,16 +392,5 @@ void DataSource::postReconfigurationCallback(NodeEngine::ReconfigurationMessage&
         }
     }
 }
-
-// debugging
-uint64_t DataSource::getNumberOfGeneratedTuples() { return generatedTuples; };
-uint64_t DataSource::getNumberOfGeneratedBuffers() { return generatedBuffers; };
-
-std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
-
-uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess; }
-
-std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
-uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
 
 }// namespace NES

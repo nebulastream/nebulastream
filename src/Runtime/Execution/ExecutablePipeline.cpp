@@ -218,28 +218,11 @@ void ExecutablePipeline::handleSoftStop(ReconfigurationMessage& task,
                       << querySubPlanId << " stage id: " << pipelineId << " got " << taskType << " on last pipeline");
         }
 
-                pipelineContext.reset();
-            } else {
-                NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: "
-                          << querySubPlanId << " stage id: " << pipelineId << " but refCount was " << (prevProducerCounter)
-                          << " and now is " << (prevProducerCounter - 1));
-            }
-            break;
-        }
-        case HardEndOfStream: {
-            NES_DEBUG("Going to reconfigure pipeline belonging to subplanId: " << querySubPlanId << " stage id: " << pipelineId
-                                                                               << " got HardEndOfStream");
-            for (auto successorPipeline : successorPipelines) {
-                if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
-                    (*pipe)->postReconfigurationCallback(task);
-                }
-            }
-            pipelineContext.reset();
-            break;
-        }
-        default: {
-            break;
-        }
+        pipelineContext.reset();
+    } else {
+        NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: "
+                  << querySubPlanId << " stage id: " << pipelineId << " but refCount was " << (prevProducerCounter)
+                  << " and now is " << (prevProducerCounter - 1));
     }
 }
 
