@@ -18,6 +18,9 @@ add_source_nes(
         CompilationRequest.cpp
         CompilationResult.cpp
         SourceCode.cpp
+        File.cpp
 )
 
 add_subdirectory(CPPCompiler)
+add_subdirectory(Exceptions)
+add_subdirectory(Util)
