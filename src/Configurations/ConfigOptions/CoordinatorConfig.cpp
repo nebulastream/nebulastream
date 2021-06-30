@@ -82,7 +82,8 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             if (!config["numberOfSlots"].As<std::string>().empty() && config["numberOfSlots"].As<std::string>() != "\n") {
                 setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
             }
-            if (!config["enableQueryMerging"].As<std::string>().empty() && config["enableQueryMerging"].As<std::string>() != "\n") {
+            if (!config["enableQueryMerging"].As<std::string>().empty()
+                && config["enableQueryMerging"].As<std::string>() != "\n") {
                 setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
             }
             if (!config["logLevel"].As<std::string>().empty() && config["logLevel"].As<std::string>() != "\n") {
@@ -91,13 +92,16 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             if (!config["queryBatchSize"].As<std::string>().empty() && config["queryBatchSize"].As<std::string>() != "\n") {
                 setQueryBatchSize(config["queryBatchSize"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty() && config["numberOfBuffersInGlobalBufferManager"].As<std::string>() != "\n") {
+            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty()
+                && config["numberOfBuffersInGlobalBufferManager"].As<std::string>() != "\n") {
                 setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty() && config["numberOfBuffersPerPipeline"].As<std::string>() != "\n") {
+            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty()
+                && config["numberOfBuffersPerPipeline"].As<std::string>() != "\n") {
                 setNumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty() && config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>() != "\n") {
+            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()
+                && config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>() != "\n") {
                 setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             }
             if (!config["bufferSizeInBytes"].As<std::string>().empty() && config["bufferSizeInBytes"].As<std::string>() != "\n") {
@@ -109,10 +113,11 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             if (!config["queryMergerRule"].As<std::string>().empty() && config["queryMergerRule"].As<std::string>() != "\n") {
                 setQueryMergerRule(config["queryMergerRule"].As<std::string>());
             }
-            if (!config["enableSemanticQueryValidation"].As<std::string>().empty() && config["enableSemanticQueryValidation"].As<std::string>() != "\n") {
+            if (!config["enableSemanticQueryValidation"].As<std::string>().empty()
+                && config["enableSemanticQueryValidation"].As<std::string>() != "\n") {
                 setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
             }
-            if(!config["numWorkerThreads"].As<std::string>().empty() && config["numWorkerThreads"].As<std::string>() != "\n"){
+            if (!config["numWorkerThreads"].As<std::string>().empty() && config["numWorkerThreads"].As<std::string>() != "\n") {
                 setNumWorkerThreads(config["numWorkerThreads"].As<uint32_t>());
             }
         } catch (std::exception& e) {
@@ -151,9 +156,9 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setNumberOfBuffersPerPipeline(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool" && !it->second.empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
-            } else if (it->first == "--bufferSizeInBytes" && !it->second.empty()){
+            } else if (it->first == "--bufferSizeInBytes" && !it->second.empty()) {
                 setBufferSizeInBytes(stoi(it->second));
-            } else if (it->first == "--numWorkerThreads" && !it->second.empty()){
+            } else if (it->first == "--numWorkerThreads" && !it->second.empty()) {
                 setNumWorkerThreads(stoi(it->second));
             } else if (it->first == "--queryBatchSize" && !it->second.empty()) {
                 setQueryBatchSize(stoi(it->second));

@@ -162,7 +162,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
     EXPECT_NE(workerConfigPtr->getNumWorkerThreads()->getValue(), workerConfigPtr->getNumWorkerThreads()->getDefaultValue());
 }
 
-
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
     WorkerConfigPtr workerConfigPtr = WorkerConfig::create();
@@ -211,14 +210,14 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
     EXPECT_NE(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceConfig()->getValue(), sourceConfigPtr->getSourceConfig()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(), sourceConfigPtr->getNumberOfBuffersToProduce()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue(), sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(),
+              sourceConfigPtr->getNumberOfBuffersToProduce()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue(),
+              sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getPhysicalStreamName()->getValue(), sourceConfigPtr->getPhysicalStreamName()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr->getLogicalStreamName()->getValue(), sourceConfigPtr->getLogicalStreamName()->getDefaultValue());
-    EXPECT_NE(sourceConfigPtr->getSkipHeader()->getValue(),
-              sourceConfigPtr->getSkipHeader()->getDefaultValue());
+    EXPECT_NE(sourceConfigPtr->getSkipHeader()->getValue(), sourceConfigPtr->getSkipHeader()->getDefaultValue());
 }
-
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
@@ -243,12 +242,13 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
     EXPECT_NE(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceConfig()->getValue(), sourceConfigPtr->getSourceConfig()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(), sourceConfigPtr->getNumberOfBuffersToProduce()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue(), sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(),
+              sourceConfigPtr->getNumberOfBuffersToProduce()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue(),
+              sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getPhysicalStreamName()->getValue(), sourceConfigPtr->getPhysicalStreamName()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr->getLogicalStreamName()->getValue(), sourceConfigPtr->getLogicalStreamName()->getDefaultValue());
-    EXPECT_NE(sourceConfigPtr->getSkipHeader()->getValue(),
-              sourceConfigPtr->getSkipHeader()->getDefaultValue());
+    EXPECT_NE(sourceConfigPtr->getSkipHeader()->getValue(), sourceConfigPtr->getSkipHeader()->getDefaultValue());
 }
 
 }// namespace NES

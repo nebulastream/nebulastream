@@ -62,13 +62,16 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             if (!config["sourceFrequency"].As<std::string>().empty() && config["sourceFrequency"].As<std::string>() != "\n") {
                 setSourceFrequency(config["sourceFrequency"].As<uint16_t>());
             }
-            if (!config["numberOfBuffersToProduce"].As<std::string>().empty() && config["numberOfBuffersToProduce"].As<std::string>() != "\n") {
+            if (!config["numberOfBuffersToProduce"].As<std::string>().empty()
+                && config["numberOfBuffersToProduce"].As<std::string>() != "\n") {
                 setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint64_t>());
             }
-            if (!config["numberOfTuplesToProducePerBuffer"].As<std::string>().empty() && config["numberOfTuplesToProducePerBuffer"].As<std::string>() != "\n") {
+            if (!config["numberOfTuplesToProducePerBuffer"].As<std::string>().empty()
+                && config["numberOfTuplesToProducePerBuffer"].As<std::string>() != "\n") {
                 setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].As<uint16_t>());
             }
-            if (!config["physicalStreamName"].As<std::string>().empty() && config["physicalStreamName"].As<std::string>() != "\n") {
+            if (!config["physicalStreamName"].As<std::string>().empty()
+                && config["physicalStreamName"].As<std::string>() != "\n") {
                 setPhysicalStreamName(config["physicalStreamName"].As<std::string>());
             }
             if (!config["logicalStreamName"].As<std::string>().empty() && config["logicalStreamName"].As<std::string>() != "\n") {

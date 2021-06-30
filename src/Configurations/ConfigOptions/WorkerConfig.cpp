@@ -93,13 +93,16 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             if (!config["logLevel"].As<std::string>().empty() && config["logLevel"].As<std::string>() != "\n") {
                 setLogLevel(config["logLevel"].As<std::string>());
             }
-            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty() && config["numberOfBuffersInGlobalBufferManager"].As<std::string>() != "\n") {
+            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty()
+                && config["numberOfBuffersInGlobalBufferManager"].As<std::string>() != "\n") {
                 setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty() && config["numberOfBuffersPerPipeline"].As<std::string>() != "\n") {
+            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty()
+                && config["numberOfBuffersPerPipeline"].As<std::string>() != "\n") {
                 setNumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty() && config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>() != "\n") {
+            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()
+                && config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>() != "\n") {
                 setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             }
         } catch (std::exception& e) {
