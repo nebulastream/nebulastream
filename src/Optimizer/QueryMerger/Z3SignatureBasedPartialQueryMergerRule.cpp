@@ -60,14 +60,79 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
             if (targetSharedQueryMetaData->getSharedQueryId() == hostSharedQueryMetaData->getSharedQueryId()) {
                 continue;
             }
-
             auto targetQueryPlan = targetSharedQueryMetaData->getQueryPlan();
-            auto targetQueryPlanItr = QueryPlanIterator(targetQueryPlan).begin();
 
             auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
+            std::map<OperatorNodePtr, OperatorNodePtr> matchedTargetToHostOperatorMap;
 
-            std::map<OperatorNodePtr, OperatorNodePtr> targetToHostOperatorMap;
-            while (*targetQueryPlanItr) {
+            std::vector<NodePtr> matchedHostOperators;
+
+            //Iterate over the target query plan and compare the operator signatures with the host query plan
+            //When a match is found then store the matching operators in the matchedTargetToHostOperatorMap
+            for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
+                auto targetChildren = targetRootOperator->getChildren();
+                std::deque<NodePtr> targetOperators = {targetChildren.begin(), targetChildren.end()};
+                while (!targetOperators.empty()) {
+
+                    bool foundMatch = false;
+                    auto targetOperator = targetOperators.front()->as<LogicalOperatorNode>();
+                    targetOperators.pop_front();
+
+                    if (matchedTargetToHostOperatorMap.find(targetOperator) != matchedTargetToHostOperatorMap.end()) {
+                        continue;
+                    }
+
+                    std::vector<NodePtr> visitedHostOperators;
+
+                    for (const auto& hostRootOperator : hostQueryPlan->getRootOperators()) {
+                        std::deque<NodePtr> hostOperators;
+
+                        for(const auto& hostChildren:  hostRootOperator->getChildren()){
+                            if(std::find(visitedHostOperators.begin(), visitedHostOperators.end(), hostChildren) == visitedHostOperators.end()){
+                                hostOperators.push_back(hostChildren);
+                            }
+                        }
+
+                        while (!hostOperators.empty()) {
+                            auto hostOperator = hostOperators.front()->as<LogicalOperatorNode>();
+                            visitedHostOperators.emplace_back(hostOperator);
+                            hostOperators.pop_front();
+
+                            //Skip matching if the host operator is already matched
+                            if (std::find(matchedHostOperators.begin(), matchedHostOperators.end(), hostOperator)
+                                != matchedHostOperators.end()) {
+                                continue;
+                            }
+
+                            if (signatureEqualityUtil->checkEquality(targetOperator->getZ3Signature(),
+                                                                     hostOperator->getZ3Signature())) {
+                                matchedTargetToHostOperatorMap[targetOperator] = hostOperator;
+                                matchedHostOperators.emplace_back(hostOperator);
+                                foundMatch = true;
+                                break;
+                            }
+
+                            //Check for the children operators if a host operator with matching is found on the host
+                            for (const auto& hostChild : hostOperator->getChildren()) {
+                                if(std::find(visitedHostOperators.begin(), visitedHostOperators.end(), hostChild) == visitedHostOperators.end()){
+                                    hostOperators.push_back(hostChild);
+                                }
+                            }
+                        }
+                    }
+
+                    if (foundMatch) {
+                        continue;
+                    }
+
+                    //Check for the children operators if a host operator with matching is found on the host
+                    for (const auto& targetChild : targetOperator->getChildren()) {
+                        targetOperators.push_front(targetChild);
+                    }
+                }
+            }
+
+            /*while (*targetQueryPlanItr) {
                 bool foundMatch = false;
                 auto targetOperator = (*targetQueryPlanItr)->as<LogicalOperatorNode>();
                 if (!targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
@@ -77,7 +142,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                         if (!hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
                             if (signatureEqualityUtil->checkEquality(targetOperator->getZ3Signature(),
                                                                      hostOperator->getZ3Signature())) {
-                                targetToHostOperatorMap[targetOperator] = hostOperator;
+                                matchedTargetToHostOperatorMap[targetOperator] = hostOperator;
                                 foundMatch = true;
                                 break;
                             }
@@ -89,10 +154,10 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                     break;
                 }
                 ++targetQueryPlanItr;
-            }
+            }*/
 
             //Not all sinks found an equivalent entry in the target shared query metadata
-            if (targetToHostOperatorMap.empty()) {
+            if (matchedTargetToHostOperatorMap.empty()) {
                 NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Target and Host Shared Query MetaData are not equal");
                 continue;
             }
@@ -100,7 +165,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
             NES_TRACE("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
 
             //Iterate over all matched pairs of operators and merge the query plan
-            for (auto [targetOperator, hostOperator] : targetToHostOperatorMap) {
+            for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
                 for (const auto& targetParent : targetOperator->getParents()) {
                     bool addedNewParent = hostOperator->addParent(targetParent);
                     if (!addedNewParent) {
