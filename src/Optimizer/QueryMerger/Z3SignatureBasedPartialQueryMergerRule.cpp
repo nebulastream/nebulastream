@@ -40,28 +40,21 @@ Z3SignatureBasedPartialQueryMergerRulePtr Z3SignatureBasedPartialQueryMergerRule
 bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("Z3SignatureBasedPartialQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
-    std::vector<SharedQueryPlanPtr> allSharedQueryMetaData = globalQueryPlan->getAllSharedQueryPlans();
-    if (allSharedQueryMetaData.size() == 1) {
+    std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
+    if (queryPlansToAdd.empty()) {
         NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Found only a single query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
+    std::vector<SharedQueryPlanPtr> allSharedQueryPlans = globalQueryPlan->getAllSharedQueryPlans();
     NES_DEBUG("Z3SignatureBasedPartialQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
-    for (uint16_t i = 0; i < allSharedQueryMetaData.size() - 1; i++) {
-        for (uint16_t j = i + 1; j < allSharedQueryMetaData.size(); j++) {
+    for (const auto& targetQueryPlan : queryPlansToAdd) {
+        bool matched = false;
+        for (const auto& hostSharedQueryMetaData : allSharedQueryPlans) {
 
-            auto targetSharedQueryMetaData = allSharedQueryMetaData[i];
-            auto hostSharedQueryMetaData = allSharedQueryMetaData[j];
-
-            //Skip if both target and host Shared Query Plans are same
-            if (targetSharedQueryMetaData->getSharedQueryId() == hostSharedQueryMetaData->getSharedQueryId()) {
-                continue;
-            }
-
-            //Fetch target and host query plan to merge
-            auto targetQueryPlan = targetSharedQueryMetaData->getQueryPlan();
+            //Fetch the host query plan to merge
             auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
 
             //Initialized the target and host matched pair
@@ -161,6 +154,8 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
 
             NES_TRACE("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
 
+            hostSharedQueryMetaData->addQueryIdAndSinkOperators(targetQueryPlan);
+
             //Iterate over all matched pairs of operators and merge the query plan
             for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
                 for (const auto& targetParent : targetOperator->getParents()) {
@@ -177,13 +172,16 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                 hostQueryPlan->addRootOperator(targetRootOperator);
             }
 
-            hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
-            //Clear the target shared query metadata
-            targetSharedQueryMetaData->clear();
             //Update the shared query meta data
             globalQueryPlan->updateSharedQueryPlan(hostSharedQueryMetaData);
             // exit the for loop as we found a matching address shared query meta data
+            matched = true;
             break;
+        }
+
+        if (!matched) {
+            NES_DEBUG("Z3SignatureBasedPartialQueryMergerRule: computing a new Shared Query Plan");
+            globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }
     //Remove all empty shared query metadata
