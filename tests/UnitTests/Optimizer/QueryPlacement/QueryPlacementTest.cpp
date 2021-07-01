@@ -525,13 +525,68 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
     planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
     planToDeploy->setQueryId(1);
 
-    auto mergedPlacementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
-                                                                                    globalExecutionPlan,
-                                                                                    topology,
-                                                                                    typeInferencePhase,
-                                                                                    streamCatalog);
+    placementStrategy->partiallyUpdateGlobalExecutionPlan(planToDeploy);
+}
 
-    mergedPlacementStrategy->partiallyUpdateGlobalExecutionPlan(planToDeploy);
+TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
+
+    setupTopologyAndStreamCatalog();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
+    auto globalQueryPlan = GlobalQueryPlan::create();
+
+    auto queryPlan1 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create()).getQueryPlan();
+    queryPlan1->setQueryId(1);
+
+    queryPlan1 = queryReWritePhase->execute(queryPlan1);
+    queryPlan1 = typeInferencePhase->execute(queryPlan1);
+    queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
+    queryPlan1 = typeInferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan1);
+
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+
+    std::shared_ptr<QueryPlan> planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
+    placementStrategy->updateGlobalExecutionPlan(planToDeploy);
+
+    // new Query
+    auto queryPlan2 = Query::from("car")
+                          .filter(Attribute("id") < 45)
+                          .map(Attribute("newId") = 2)
+                          .sink(PrintSinkDescriptor::create())
+                          .getQueryPlan();
+    queryPlan2->setQueryId(2);
+
+    queryPlan2 = queryReWritePhase->execute(queryPlan2);
+    queryPlan2 = typeInferencePhase->execute(queryPlan2);
+    queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
+    queryPlan2 = typeInferencePhase->execute(queryPlan2);
+    z3InferencePhase->execute(queryPlan2);
+
+    globalQueryPlan->addQueryPlan(queryPlan2);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+
+    planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
+    planToDeploy->setQueryId(1);
+
+    placementStrategy->partiallyUpdateGlobalExecutionPlan(planToDeploy);
 }
 
 /* Test query placement of query with multiple sinks and multiple source operators with Top Down strategy  */

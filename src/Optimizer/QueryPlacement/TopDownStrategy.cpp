@@ -104,7 +104,8 @@ bool TopDownStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& que
             for (const auto& querySubPlan : nodeWithQueryDeployed->getQuerySubPlans(queryId)) {
                 auto nodes = QueryPlanIterator(querySubPlan).snapshot();
                 for (const auto& node : nodes) {
-                    operatorToExecutionNodeMap[node->as<LogicalOperatorNode>()->getId()] = nodeWithQueryDeployed;
+                    const std::shared_ptr<LogicalOperatorNode>& asLogicalOperator = node->as<LogicalOperatorNode>();
+                    operatorToExecutionNodeMap[asLogicalOperator->getId()] = nodeWithQueryDeployed;
                 }
             }
         }
