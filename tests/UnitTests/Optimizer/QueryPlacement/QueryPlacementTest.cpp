@@ -494,18 +494,18 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
 }
 
 /* Test query placement of query with multiple sinks with TopDown strategy  */
-TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
+TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithBottomUpStrategy) {
 
     setupTopologyAndStreamCatalog();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-
                                                                               streamCatalog);
+
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     z3::ContextPtr context = std::make_shared<z3::context>();
@@ -552,9 +552,13 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
     planToDeploy->setQueryId(1);
 
-    placementStrategy->updateGlobalExecutionPlan(planToDeploy);
+    auto mergedPlacementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
+                                                                                    globalExecutionPlan,
+                                                                                    topology,
+                                                                                    typeInferencePhase,
+                                                                                    streamCatalog);
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(planToDeploy->getQueryId());
+    mergedPlacementStrategy->partiallyUpdateGlobalExecutionPlan(planToDeploy);
 }
 
 /* Test query placement of query with multiple sinks and multiple source operators with Top Down strategy  */

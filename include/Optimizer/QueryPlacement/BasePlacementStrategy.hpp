@@ -95,6 +95,8 @@ class BasePlacementStrategy {
      */
     virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) = 0;
 
+    virtual bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) = 0;
+
   protected:
     /**
      * @brief Map the logical source name to the physical source nodes in the topology used for placing the operators
@@ -102,6 +104,11 @@ class BasePlacementStrategy {
      * @param sourceOperators: the source operators in the query
      */
     void mapPinnedOperatorToTopologyNodes(QueryId queryId, const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators);
+
+    void pinSinkOperator(QueryId queryId,
+                         const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators,
+                         std::map<std::string, std::vector<TopologyNodePtr>>& mapOfSourceToTopologyNodes,
+                         std::vector<TopologyNodePtr>& mergedGraphSourceNodes);
 
     /**
      * @brief Get Execution node for the input topology node
