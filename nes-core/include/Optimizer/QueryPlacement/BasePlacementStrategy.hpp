@@ -23,6 +23,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace NES {
@@ -62,6 +63,9 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+
+class NetworkSinkDescriptor;
+using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -157,10 +161,9 @@ class BasePlacementStrategy {
     SourceCatalogPtr streamCatalog;
     std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
-
-  private:
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
 
+  private:
     /**
      * @brief create a new network sink operator
      * @param queryId : the query id to which the sink belongs to
@@ -196,6 +199,7 @@ class BasePlacementStrategy {
      * @param executionNode
      */
     void addExecutionNodeAsRoot(ExecutionNodePtr& executionNode);
+    bool operatorAndParentConnected(const OperatorNodePtr& source, const OperatorNodePtr& destination);
 };
 }// namespace NES::Optimizer
 #endif  // NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

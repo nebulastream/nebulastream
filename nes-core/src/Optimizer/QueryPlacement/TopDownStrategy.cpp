@@ -114,7 +114,8 @@ bool TopDownStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& que
             for (const auto& querySubPlan : nodeWithQueryDeployed->getQuerySubPlans(queryId)) {
                 auto nodes = QueryPlanIterator(querySubPlan).snapshot();
                 for (const auto& node : nodes) {
-                    operatorToExecutionNodeMap[node->as<LogicalOperatorNode>()->getId()] = nodeWithQueryDeployed;
+                    const std::shared_ptr<LogicalOperatorNode>& asLogicalOperator = node->as<LogicalOperatorNode>();
+                    operatorToExecutionNodeMap[asLogicalOperator->getId()] = nodeWithQueryDeployed;
                 }
             }
         }
@@ -148,7 +149,7 @@ bool TopDownStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& que
 
         NES_DEBUG("TopDownStrategy::partiallyUpdateGlobalExecutionPlan: Update Global Execution Plan : \n"
                   << globalExecutionPlan->getAsString());
-        return runTypeInferencePhase(queryId);
+        return runTypeInferencePhase(queryId, queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
     } catch (Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
