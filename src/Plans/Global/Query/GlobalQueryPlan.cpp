@@ -156,5 +156,11 @@ bool GlobalQueryPlan::createNewSharedQueryPlan(const QueryPlanPtr& queryPlan) {
     return true;
 }
 
-const std::deque<QueryPlanPtr>& GlobalQueryPlan::getQueryPlansToAdd() const { return queryPlansToAdd; }
+const std::vector<QueryPlanPtr>& GlobalQueryPlan::getQueryPlansToAdd() const { return queryPlansToAdd; }
+
+bool GlobalQueryPlan::clearQueryPlansToAdd() {
+    queryPlansToAdd.clear();
+    return true;
+}
+
 }// namespace NES

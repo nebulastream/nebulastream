@@ -83,7 +83,6 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
                                                          streamCatalog,
                                                          workerRpcClient,
                                                          queryRequestQueue,
-                                                         coordinatorConfig->getEnableQueryMerging()->getValue(),
                                                          found->second);
     } else {
         NES_FATAL_ERROR("Unrecognized Query Merger Rule Detected " << queryMergerRuleName);

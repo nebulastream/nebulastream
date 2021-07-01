@@ -26,7 +26,6 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include <deque>
 
 namespace NES {
 
@@ -115,7 +114,13 @@ class GlobalQueryPlan {
      */
     bool updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQueryPlan);
 
-    const std::deque<QueryPlanPtr>& getQueryPlansToAdd() const;
+    /**
+     * Get query plans to add in the Global query plan
+     * @return vector of query plans to add
+     */
+    const std::vector<QueryPlanPtr>& getQueryPlansToAdd() const;
+
+    bool clearQueryPlansToAdd();
 
     std::vector<SharedQueryPlanPtr> getAllNewSharedQueryPlans();
     std::vector<SharedQueryPlanPtr> getAllOldSharedQueryPlans();
@@ -123,7 +128,7 @@ class GlobalQueryPlan {
   private:
     GlobalQueryPlan();
 
-    std::deque<QueryPlanPtr> queryPlansToAdd;
+    std::vector<QueryPlanPtr> queryPlansToAdd;
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
     std::map<SharedQueryId, SharedQueryPlanPtr> sharedQueryIdToPlanMap;
     std::map<std::string, SharedQueryPlanPtr> sourceNamesToSharedQueryPlanMap;

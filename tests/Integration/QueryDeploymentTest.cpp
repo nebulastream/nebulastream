@@ -1473,7 +1473,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
 
-    crdConf->setEnableQueryMerging(true);
+    crdConf->setQueryMergerRule("Z3SignatureBasedCompleteQueryMergerRule");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);

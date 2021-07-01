@@ -130,18 +130,6 @@ class CoordinatorConfig {
     void setNumberOfSlots(uint16_t numberOfSlots);
 
     /**
-     * @brief gets a ConfigOption object with enable query merging
-     * @param Config option for query merging
-     */
-    BoolConfigOption getEnableQueryMerging();
-
-    /**
-     * @brief set the value for enableQueryMerging with the appropriate data format
-     * @param enableQueryMerging: enable or disable query merging
-     */
-    void setEnableQueryMerging(bool enableQueryMerging);
-
-    /**
      * @brief gets a ConfigOption object with log level
      * @return Config option for Log level for coordinator
      */
@@ -254,7 +242,6 @@ class CoordinatorConfig {
     IntConfigOption numberOfBuffersPerPipeline;
     IntConfigOption numberOfBuffersInSourceLocalBufferPool;
     IntConfigOption bufferSizeInBytes;
-    BoolConfigOption enableQueryMerging;
     IntConfigOption numWorkerThreads;
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;

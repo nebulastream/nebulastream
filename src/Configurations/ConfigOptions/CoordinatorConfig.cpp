@@ -34,7 +34,6 @@ CoordinatorConfig::CoordinatorConfig() {
     restPort = ConfigOption<uint32_t>::create("restPort", 8081, "Port exposed for rest endpoints");
     dataPort = ConfigOption<uint32_t>::create("dataPort", 3001, "NES data server port");
     numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", UINT16_MAX, "Number of computing slots for NES Coordinator");
-    enableQueryMerging = ConfigOption<bool>::create("enableQueryMerging", false, "Enable Query Merging Feature");
     logLevel = ConfigOption<std::string>::create("logLevel",
                                                  "LOG_DEBUG",
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
@@ -50,7 +49,7 @@ CoordinatorConfig::CoordinatorConfig() {
     queryBatchSize = ConfigOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
 
     queryMergerRule = ConfigOption<std::string>::create("queryMergerRule",
-                                                        "SyntaxBasedCompleteQueryMergerRule",
+                                                        "DefaultQueryMergerRule",
                                                         "The rule to be used for performing query merging");
 
     enableSemanticQueryValidation =
@@ -81,10 +80,6 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             }
             if (!config["numberOfSlots"].As<std::string>().empty() && config["numberOfSlots"].As<std::string>() != "\n") {
                 setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
-            }
-            if (!config["enableQueryMerging"].As<std::string>().empty()
-                && config["enableQueryMerging"].As<std::string>() != "\n") {
-                setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
             }
             if (!config["logLevel"].As<std::string>().empty() && config["logLevel"].As<std::string>() != "\n") {
                 setLogLevel(config["logLevel"].As<std::string>());
@@ -146,8 +141,6 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setDataPort(stoi(it->second));
             } else if (it->first == "--numberOfSlots" && !it->second.empty()) {
                 setNumberOfSlots(stoi(it->second));
-            } else if (it->first == "--enableQueryMerging" && !it->second.empty()) {
-                setEnableQueryMerging((it->second == "true"));
             } else if (it->first == "--logLevel" && !it->second.empty()) {
                 setLogLevel(it->second);
             } else if (it->first == "--numberOfBuffersInGlobalBufferManager" && !it->second.empty()) {
@@ -184,7 +177,6 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setRestIp(restIp->getDefaultValue());
     setCoordinatorIp(coordinatorIp->getDefaultValue());
     setNumberOfSlots(numberOfSlots->getDefaultValue());
-    setEnableQueryMerging(enableQueryMerging->getDefaultValue());
     setLogLevel(logLevel->getDefaultValue());
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
     setNumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
@@ -225,12 +217,6 @@ void CoordinatorConfig::setNumberOfSlots(uint16_t numberOfSlotsValue) { numberOf
 void CoordinatorConfig::setNumWorkerThreads(uint16_t numWorkerThreadsValue) { numWorkerThreads->setValue(numWorkerThreadsValue); }
 
 IntConfigOption CoordinatorConfig::getNumWorkerThreads() { return numWorkerThreads; }
-
-BoolConfigOption CoordinatorConfig::getEnableQueryMerging() { return enableQueryMerging; }
-
-void CoordinatorConfig::setEnableQueryMerging(bool enableQueryMergingValue) {
-    CoordinatorConfig::enableQueryMerging->setValue(enableQueryMergingValue);
-}
 
 StringConfigOption CoordinatorConfig::getLogLevel() { return logLevel; }
 

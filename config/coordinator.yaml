@@ -21,9 +21,6 @@ dataPort: 3001
 # Set the number of computing slots in NES Coordinator
 numberOfSlots: 65535
 
-# Enable Query Merging Feature
-enableQueryMerging: false
-
 # The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
 logLevel: LOG_DEBUG
 
@@ -46,7 +43,7 @@ numWorkerThreads: 1
 queryBatchSize: 1
 
 # The rule to be used for performing query merging
-queryMergerRule: SyntaxBasedCompleteQueryMergerRule
+queryMergerRule: DefaultQueryMergerRule
 
 # Semantic Query Validation Feature
 enableSemanticQueryValidation: false

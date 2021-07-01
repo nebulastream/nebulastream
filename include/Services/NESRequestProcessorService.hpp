@@ -80,7 +80,6 @@ class NESRequestProcessorService {
                                         const StreamCatalogPtr& streamCatalog,
                                         const WorkerRPCClientPtr& workerRpcClient,
                                         NESRequestQueuePtr queryRequestQueue,
-                                        bool enableQueryMerging,
                                         Optimizer::QueryMergerRule queryMergerRule);
 
     ~NESRequestProcessorService();

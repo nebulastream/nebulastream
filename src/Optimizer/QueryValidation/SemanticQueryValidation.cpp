@@ -43,7 +43,8 @@ void SemanticQueryValidation::checkSatisfiability(const QueryPtr& inputQuery) {
 
     auto queryPlan = inputQuery->getQueryPlan();
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
 
     // Checking if the stream source can be found in the stream catalog
     sourceValidityCheck(queryPlan, streamCatalog);

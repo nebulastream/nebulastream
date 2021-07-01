@@ -63,7 +63,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator1) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -87,7 +88,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator2) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -114,7 +116,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator3) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -140,7 +143,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator4) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -166,7 +170,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator5) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -192,7 +197,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator6) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -219,7 +225,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator7) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -246,7 +253,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator8) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -272,7 +280,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator9) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -298,7 +307,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator10) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -324,7 +334,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator11) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -350,7 +361,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator12) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -376,7 +388,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator13) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -402,7 +415,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator14) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -425,7 +439,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator15) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -449,7 +464,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator16) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -474,7 +490,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator17) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -499,7 +516,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleFilterOperator1) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -524,7 +542,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator2) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -549,7 +568,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator3) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -574,7 +594,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator4) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -599,7 +620,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator5) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
@@ -624,7 +646,8 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator6) {
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
