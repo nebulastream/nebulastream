@@ -18,6 +18,7 @@
 #define NES_STATEID_HPP
 
 #include <functional>
+#include <cstdint>
 
 namespace NES {
 /**
