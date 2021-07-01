@@ -318,4 +318,9 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr queryPlan,
     }
 }
 
+bool IFCOPStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) {
+    NES_NOT_IMPLEMENTED();
+    return false;
+}
+
 }// namespace NES::Optimizer

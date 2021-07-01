@@ -336,4 +336,9 @@ void ILPStrategy::setOverUtilizationWeight(double weight) { this->overUtilizatio
 
 void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight = weight; }
 
+bool ILPStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) {
+    NES_NOT_IMPLEMENTED();
+    return false;
+}
+
 }// namespace NES::Optimizer
