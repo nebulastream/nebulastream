@@ -96,13 +96,6 @@ class SharedQueryPlan {
     static SharedQueryPlanPtr create(QueryPlanPtr queryPlan);
 
     /**
-     * @brief Add a global query metadata into this
-     * @param queryMetaData :  the input query metadata
-     * @return true if successful else false
-     */
-    bool addSharedQueryMetaData(const SharedQueryPlanPtr& queryMetaData);
-
-    /**
      * @brief Remove a Query Id and associated Global Query Node with sink operators and clear the sink global query node lists
      * @param queryId : the original query Id
      * @return true if successful
@@ -178,6 +171,20 @@ class SharedQueryPlan {
      * An Old metadata is deployed at least once in his life time.
      */
     void setAsOld();
+
+    /**
+     * @brief Add a global query metadata into this
+     * @param queryMetaData :  the input query metadata
+     * @return true if successful else false
+     */
+    bool addSharedQueryMetaData(const SharedQueryPlanPtr& queryMetaData);
+
+    /**
+     * @brief Add the query id and sink operators from the query plan to the Shared Query Plan
+     * @param queryPlan: the source query plan
+     * @return true if successful else false
+     */
+    bool addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan);
 
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);

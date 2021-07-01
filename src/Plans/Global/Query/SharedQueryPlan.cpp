@@ -46,8 +46,7 @@ SharedQueryPlanPtr SharedQueryPlan::create(QueryPlanPtr queryPlan) {
 }
 
 bool SharedQueryPlan::removeQueryId(QueryId queryId) {
-    NES_DEBUG("SharedQueryPlan: Remove the Query Id " << queryId
-                                                          << " and associated Global Query Nodes with sink operators.");
+    NES_DEBUG("SharedQueryPlan: Remove the Query Id " << queryId << " and associated Global Query Nodes with sink operators.");
     if (queryIdToSinkOperatorMap.find(queryId) == queryIdToSinkOperatorMap.end()) {
         NES_ERROR("SharedQueryPlan: query id " << queryId << " is not present in metadata information.");
         return false;
@@ -116,6 +115,7 @@ std::map<QueryId, std::vector<OperatorNodePtr>> SharedQueryPlan::getQueryIdToSin
 SharedQueryId SharedQueryPlan::getSharedQueryId() const { return sharedQueryId; }
 
 void SharedQueryPlan::clear() {
+
     NES_DEBUG("SharedQueryPlan: clearing all metadata information.");
     queryIdToSinkOperatorMap.clear();
     sinkOperators.clear();
@@ -126,7 +126,6 @@ void SharedQueryPlan::clear() {
 bool SharedQueryPlan::addSharedQueryMetaData(const SharedQueryPlanPtr& queryMetaData) {
 
     NES_DEBUG("SharedQueryPlan: Adding query metadata to this");
-
     auto newQueryIds = queryMetaData->getQueryIds();
     queryIds.insert(queryIds.end(), newQueryIds.begin(), newQueryIds.end());
     auto newSinkOperators = queryMetaData->getSinkOperators();
@@ -141,4 +140,16 @@ bool SharedQueryPlan::addSharedQueryMetaData(const SharedQueryPlanPtr& queryMeta
 std::vector<QueryId> SharedQueryPlan::getQueryIds() { return queryIds; }
 
 QueryPlanPtr SharedQueryPlan::getQueryPlan() { return queryPlan; }
+
+bool SharedQueryPlan::addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan) {
+    auto queryId = queryPlan->getQueryId();
+    queryIds.emplace_back(queryId);
+    for (const auto& sinkOperator : queryPlan->getRootOperators()) {
+        sinkOperators.emplace_back(sinkOperator);
+        queryIdToSinkOperatorMap[queryId] = queryPlan->getRootOperators();
+    }
+    //Mark the meta data as updated but not deployed
+    markAsNotDeployed();
+    return false;
+}
 }// namespace NES
