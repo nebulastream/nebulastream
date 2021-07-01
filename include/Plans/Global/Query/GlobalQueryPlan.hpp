@@ -26,6 +26,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <deque>
 
 namespace NES {
 
@@ -57,11 +58,18 @@ class GlobalQueryPlan {
     static GlobalQueryPlanPtr create();
 
     /**
-     * @brief Add query plan to the global query plan
-     * @param queryPlan : new query plan to be added.
+     * @brief Add query plan to the collection of query plans to be merged
+     * @param queryPlan : new query plan to be merged.
      * @return: true if successful else false
      */
     bool addQueryPlan(const QueryPlanPtr& queryPlan);
+
+    /**
+     * @brief Create a new shared query plan using the input query plan
+     * @param queryPlan : query plan to construct shared query plan.
+     * @return: true if successful else false
+     */
+    bool createNewSharedQueryPlan(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief remove the operators belonging to the query with input query Id from the global query plan
@@ -70,51 +78,55 @@ class GlobalQueryPlan {
     void removeQuery(QueryId queryId);
 
     /**
-     * @brief This method will remove all deployed empty metadata information
+     * @brief This method will remove all empty shared query plans that are deployed
      */
-    void removeEmptySharedQueryMetaData();
+    void removeEmptySharedQueryPlans();
 
     /**
      * @brief Get the all the Query Meta Data to be deployed
      * @return vector of global query meta data to be deployed
      */
-    std::vector<SharedQueryPlanPtr> getSharedQueryMetaDataToDeploy();
+    std::vector<SharedQueryPlanPtr> getSharedQueryPlansToDeploy();
 
     /**
-     * @brief Get all global query metadata information
-     * @return vector of global query meta data
+     * @brief Get all shared query plans in the global query plan
+     * @return vector of shared query plans
      */
-    std::vector<SharedQueryPlanPtr> getAllSharedQueryMetaData();
+    std::vector<SharedQueryPlanPtr> getAllSharedQueryPlans();
 
     /**
      * @brief Get the global query id for the query
      * @param queryId: the original query id
      * @return the corresponding global query id
      */
-    SharedQueryId getSharedQueryIdForQuery(QueryId queryId);
+    SharedQueryId getSharedQueryId(QueryId queryId);
 
     /**
      * @brief Get the shared query metadata information for given shared query id
      * @param sharedQueryId : the shared query id
      * @return SharedQueryPlan or nullptr
      */
-    SharedQueryPlanPtr getSharedQueryMetaData(SharedQueryId sharedQueryId);
+    SharedQueryPlanPtr getSharedQueryPlan(SharedQueryId sharedQueryId);
 
     /**
      * @brief Update the global query meta data information
-     * @param sharedQueryMetaData: the global query metadata to be updated
+     * @param sharedQueryPlan: the global query metadata to be updated
      * @return true if successful
      */
-    bool updateSharedQueryMetadata(const SharedQueryPlanPtr& sharedQueryMetaData);
-    std::vector<SharedQueryPlanPtr> getAllNewSharedQueryMetaData();
-    std::vector<SharedQueryPlanPtr> getAllOldSharedQueryMetaData();
+    bool updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQueryPlan);
+
+    const std::deque<QueryPlanPtr>& getQueryPlansToAdd() const;
+
+    std::vector<SharedQueryPlanPtr> getAllNewSharedQueryPlans();
+    std::vector<SharedQueryPlanPtr> getAllOldSharedQueryPlans();
 
   private:
     GlobalQueryPlan();
 
-    [[maybe_unused]] uint64_t freeSharedQueryId{0};
+    std::deque<QueryPlanPtr> queryPlansToAdd;
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
-    std::map<SharedQueryId, SharedQueryPlanPtr> sharedQueryIdToMetaDataMap;
+    std::map<SharedQueryId, SharedQueryPlanPtr> sharedQueryIdToPlanMap;
+    std::map<std::string, SharedQueryPlanPtr> sourceNamesToSharedQueryPlanMap;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP

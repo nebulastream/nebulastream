@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -24,7 +23,6 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 #include <z3++.h>
@@ -42,7 +40,7 @@ Z3SignatureBasedPartialQueryMergerRulePtr Z3SignatureBasedPartialQueryMergerRule
 bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("Z3SignatureBasedPartialQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
-    std::vector<SharedQueryPlanPtr> allSharedQueryMetaData = globalQueryPlan->getAllSharedQueryMetaData();
+    std::vector<SharedQueryPlanPtr> allSharedQueryMetaData = globalQueryPlan->getAllSharedQueryPlans();
     if (allSharedQueryMetaData.size() == 1) {
         NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Found only a single query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
@@ -183,13 +181,13 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
             //Clear the target shared query metadata
             targetSharedQueryMetaData->clear();
             //Update the shared query meta data
-            globalQueryPlan->updateSharedQueryMetadata(hostSharedQueryMetaData);
+            globalQueryPlan->updateSharedQueryPlan(hostSharedQueryMetaData);
             // exit the for loop as we found a matching address shared query meta data
             break;
         }
     }
     //Remove all empty shared query metadata
-    globalQueryPlan->removeEmptySharedQueryMetaData();
+    globalQueryPlan->removeEmptySharedQueryPlans();
     return true;
 }
 }// namespace NES::Optimizer

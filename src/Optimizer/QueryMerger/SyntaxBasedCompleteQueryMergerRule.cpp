@@ -32,14 +32,14 @@ SyntaxBasedCompleteQueryMergerRulePtr SyntaxBasedCompleteQueryMergerRule::create
 bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("SyntaxBasedCompleteQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
-    std::vector<SharedQueryPlanPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();
+    std::vector<SharedQueryPlanPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryPlans();
     if (allNewSharedQueryMetaData.empty()) {
         NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Syntax Based Equal Query Merger Rule.");
         return true;
     }
 
-    std::vector<SharedQueryPlanPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryMetaData();
+    std::vector<SharedQueryPlanPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryPlans();
     NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
     for (auto& targetSharedQueryMetaData : allNewSharedQueryMetaData) {
         bool merged = false;
@@ -93,7 +93,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                 //Clear the target shared query metadata
                 targetSharedQueryMetaData->clear();
                 //Update the shared query meta data
-                globalQueryPlan->updateSharedQueryMetadata(hostSharedQueryMetaData);
+                globalQueryPlan->updateSharedQueryPlan(hostSharedQueryMetaData);
                 // exit the for loop as we found a matching address shared query meta data
                 merged = true;
                 break;
@@ -104,7 +104,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
         }
     }
     //Remove all empty shared query metadata
-    globalQueryPlan->removeEmptySharedQueryMetaData();
+    globalQueryPlan->removeEmptySharedQueryPlans();
     return true;
 }
 

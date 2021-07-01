@@ -292,7 +292,7 @@ class TestUtils {
                                        const GlobalQueryPlanPtr& globalQueryPlan,
                                        uint64_t expectedResult) {
 
-        SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
+        SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             NES_ERROR("Unable to find global query Id for user query id " << queryId);
             return false;
@@ -342,7 +342,7 @@ class TestUtils {
                                        QueryId queryId,
                                        const GlobalQueryPlanPtr& globalQueryPlan,
                                        uint64_t expectedResult) {
-        SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
+        SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             NES_ERROR("Unable to find global query Id for user query id " << queryId);
             return false;

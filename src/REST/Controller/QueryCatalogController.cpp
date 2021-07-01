@@ -128,7 +128,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
             NES_DEBUG("getNumberOfProducedBuffers called");
             //Prepare Input query from user string
             std::string queryId = param->second;
-            SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(std::stoi(queryId));
+            SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(std::stoi(queryId));
 
             //Prepare the response
             json::value result{};
