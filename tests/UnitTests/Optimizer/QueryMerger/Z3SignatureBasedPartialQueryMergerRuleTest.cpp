@@ -140,28 +140,6 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
-
-    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
-    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
-
-    //assert that the up-stream operator of sink has only one down-stream operator
-    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(rootOperators1.size() == 1);
-
-    auto root1Children = rootOperators1[0]->getChildren();
-    EXPECT_TRUE(root1Children.size() == 2);
-    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
-
-    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(rootOperators2.size() == 1);
-
-    auto root2Children = rootOperators2[0]->getChildren();
-    EXPECT_TRUE(root2Children.size() == 2);
-    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
-
     //execute
     auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
@@ -240,28 +218,6 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
-
-    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
-    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
-
-    //assert that the up-stream operator of sink has only one down-stream operator
-    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(rootOperators1.size() == 1);
-
-    auto root1Children = rootOperators1[0]->getChildren();
-    EXPECT_TRUE(root1Children.size() == 2);
-    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
-
-    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(rootOperators2.size() == 1);
-
-    auto root2Children = rootOperators2[0]->getChildren();
-    EXPECT_TRUE(root2Children.size() == 2);
-    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
-
     //execute
     auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
@@ -333,28 +289,6 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
-
-    //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
-
-    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
-    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
-
-    //assert that the up-stream operator of sink has only one down-stream operator
-    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(rootOperators1.size() == 1);
-
-    auto root1Children = rootOperators1[0]->getChildren();
-    EXPECT_TRUE(root1Children.size() == 2);
-    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
-
-    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(rootOperators2.size() == 1);
-
-    auto root2Children = rootOperators2[0]->getChildren();
-    EXPECT_TRUE(root2Children.size() == 1);
-    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
     auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);

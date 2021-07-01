@@ -47,11 +47,11 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
         return true;
     }
 
-    std::vector<SharedQueryPlanPtr> allSharedQueryPlans = globalQueryPlan->getAllSharedQueryPlans();
     NES_DEBUG("Z3SignatureBasedPartialQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
+        std::vector<SharedQueryPlanPtr> allSharedQueryPlans = globalQueryPlan->getAllSharedQueryPlans();
         for (const auto& hostSharedQueryMetaData : allSharedQueryPlans) {
 
             //Fetch the host query plan to merge
@@ -186,6 +186,6 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
     }
     //Remove all empty shared query metadata
     globalQueryPlan->removeEmptySharedQueryPlans();
-    return true;
+    return globalQueryPlan->clearQueryPlansToAdd();
 }
 }// namespace NES::Optimizer
