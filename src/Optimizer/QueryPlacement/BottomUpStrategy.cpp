@@ -102,7 +102,8 @@ bool BottomUpStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& qu
             for (const auto& querySubPlan : nodeWithQueryDeployed->getQuerySubPlans(queryId)) {
                 auto nodes = QueryPlanIterator(querySubPlan).snapshot();
                 for (const auto& node : nodes) {
-                    operatorToExecutionNodeMap[node->as<LogicalOperatorNode>()->getId()] = nodeWithQueryDeployed;
+                    const std::shared_ptr<LogicalOperatorNode>& asOperatorNode = node->as<LogicalOperatorNode>();
+                    operatorToExecutionNodeMap[asOperatorNode->getId()] = nodeWithQueryDeployed;
                 }
             }
         }
@@ -124,10 +125,20 @@ bool BottomUpStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& qu
         }
 
         placeQueryPlanOnTopology(queryPlan);
+
+        for (const auto& executionNode : globalExecutionPlan->getExecutionNodesByQueryId(queryId)) {
+            for (const auto& querySubPlan : executionNode->getQuerySubPlans(queryId)) {
+                NES_DEBUG("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan:\nQuerySubPlanId: "
+                          << querySubPlan->getQuerySubPlanId() << "\n"
+                          << querySubPlan->toString());
+            }
+        }
+
         addNetworkSourceAndSinkOperators(queryPlan);
 
         operatorToExecutionNodeMap.clear();
         pinnedOperatorLocationMap.clear();
+
         NES_DEBUG("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan: Run type inference phase for query plans in global "
                   "execution plan for query with id : "
                   << queryId);
