@@ -32,25 +32,21 @@ SyntaxBasedCompleteQueryMergerRulePtr SyntaxBasedCompleteQueryMergerRule::create
 bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("SyntaxBasedCompleteQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
-    std::vector<SharedQueryPlanPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryPlans();
-    if (allNewSharedQueryMetaData.empty()) {
+    std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
+    if (queryPlansToAdd.empty()) {
         NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Syntax Based Equal Query Merger Rule.");
         return true;
     }
 
-    std::vector<SharedQueryPlanPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryPlans();
     NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
-    for (auto& targetSharedQueryMetaData : allNewSharedQueryMetaData) {
+    for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
-        for (auto& hostSharedQueryMetaData : allOldSharedQueryMetaData) {
-            if (targetSharedQueryMetaData->getSharedQueryId() == hostSharedQueryMetaData->getSharedQueryId()) {
-                continue;
-            }
+        std::vector<SharedQueryPlanPtr> allSharedQueryPlans = globalQueryPlan->getAllSharedQueryPlans();
+        for (auto& hostSharedQueryPlan : allSharedQueryPlans) {
 
             //TODO: we need to check how this will pan out when we will have more than 1 sink
-            auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
-            auto targetQueryPlan = targetSharedQueryMetaData->getQueryPlan();
+            auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
 
             //create a map of matching target to address operator id map
             std::map<uint64_t, uint64_t> targetToHostSinkOperatorMap;
@@ -58,10 +54,14 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan, targetToHostSinkOperatorMap)) {
 
-                std::vector<OperatorNodePtr> hostSinkOperators = hostSharedQueryMetaData->getSinkOperators();
+
+                NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
+                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
+
+                std::vector<OperatorNodePtr> hostSinkOperators = hostSharedQueryPlan->getSinkOperators();
                 //Iterate over all target sink global query nodes and try to identify a matching address global query node
                 // using the target address operator map
-                for (auto& targetSinkOperator : targetSharedQueryMetaData->getSinkOperators()) {
+                for (auto& targetSinkOperator : targetQueryPlan->getSinkOperators()) {
                     uint64_t hostSinkOperatorId = targetToHostSinkOperatorMap[targetSinkOperator->getId()];
 
                     auto hostSinkOperator = std::find_if(hostSinkOperators.begin(),
@@ -88,24 +88,21 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                     }
                     hostQueryPlan->addRootOperator(targetSinkOperator);
                 }
-                NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
-                hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
-                //Clear the target shared query metadata
-                targetSharedQueryMetaData->clear();
                 //Update the shared query meta data
-                globalQueryPlan->updateSharedQueryPlan(hostSharedQueryMetaData);
+                globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data
                 merged = true;
                 break;
             }
         }
         if (!merged) {
-            allOldSharedQueryMetaData.push_back(targetSharedQueryMetaData);
+            NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
+            globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }
     //Remove all empty shared query metadata
     globalQueryPlan->removeEmptySharedQueryPlans();
-    return true;
+    return globalQueryPlan->clearQueryPlansToAdd();
 }
 
 bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,

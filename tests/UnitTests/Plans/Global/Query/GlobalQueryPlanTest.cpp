@@ -86,7 +86,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndGetAllNewGlobalQueryNodesWi
     auto query = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     plan->setQueryId(1);
-    globalQueryPlan->addQueryPlan(plan);
+    globalQueryPlan->createNewSharedQueryPlan(plan);
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: A global query node containing operator of type SinkLogicalOperatorNode should be returned");
@@ -105,9 +105,9 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanByAddingSameQueryPlanTwice) {
     auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     auto plan = query.getQueryPlan();
     plan->setQueryId(1);
-    globalQueryPlan->addQueryPlan(plan);
+    globalQueryPlan->createNewSharedQueryPlan(plan);
     //Assert
-    EXPECT_THROW(globalQueryPlan->addQueryPlan(plan), Exception);
+    EXPECT_THROW(globalQueryPlan->createNewSharedQueryPlan(plan), Exception);
 }
 
 /**
@@ -123,7 +123,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddMultipleQueries) {
     auto query1 = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
     plan1->setQueryId(1);
-    globalQueryPlan->addQueryPlan(plan1);
+    globalQueryPlan->createNewSharedQueryPlan(plan1);
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: should return 1 global query node with logical sink operator");
@@ -134,7 +134,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddMultipleQueries) {
     auto query2 = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
     plan2->setQueryId(2);
-    globalQueryPlan->addQueryPlan(plan2);
+    globalQueryPlan->createNewSharedQueryPlan(plan2);
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: should return 2 global query node with logical sink");
@@ -154,7 +154,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
     auto query = Query::from("default_logical").filter(lessExpression).sink(PrintSinkDescriptor::create());
     auto plan = query.getQueryPlan();
     plan->setQueryId(1);
-    globalQueryPlan->addQueryPlan(plan);
+    globalQueryPlan->createNewSharedQueryPlan(plan);
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: should 1 global query node with logical sink");
@@ -185,14 +185,14 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     auto plan1 = query1.getQueryPlan();
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     plan1->setQueryId(queryId1);
-    globalQueryPlan->addQueryPlan(plan1);
+    globalQueryPlan->createNewSharedQueryPlan(plan1);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the global query plan");
     auto query2 = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     plan2->setQueryId(queryId2);
-    globalQueryPlan->addQueryPlan(plan2);
+    globalQueryPlan->createNewSharedQueryPlan(plan2);
 
     //Assert To check if Global Query Plan is created properly
     //Get MetaData information
@@ -209,9 +209,9 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 }
 
 /**
- * @brief This test is for updating Meta Data information after applying L0 merging
+ * @brief This test is for updating Meta Data information after applying syntax based query merging
  */
-TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMultipleQueriesAfterL0Merge) {
+TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMultipleQueriesAfterSyntaxBAsedQuaeryMerge) {
 
     NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
     GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
@@ -233,8 +233,8 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert To check if Global Query Plan is created properly
     NES_DEBUG("GlobalQueryPlanTest: should return 2 global query node with logical sink");
-    auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(listOfGQMsToDeploy.size() == 2);
+    auto listOfQueryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
+    EXPECT_TRUE(listOfQueryPlansToAdd.size() == 2);
 
     //Apply L0 query merger rule
     auto syntaxBasedCompleteQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
@@ -282,8 +282,8 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert To check if Global Query Plan is created properly
     NES_DEBUG("GlobalQueryPlanTest: should return 3 global query metadata");
-    auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(listOfGQMsToDeploy.size() == 3);
+    auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
+    EXPECT_TRUE(queryPlansToAdd.size() == 3);
 
     //Apply Syntax Based Equal Query Merger rule
     auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
