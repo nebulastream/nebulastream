@@ -17,8 +17,8 @@
 #ifndef NES_STATEID_HPP
 #define NES_STATEID_HPP
 
-#include <functional>
 #include <cstdint>
+#include <functional>
 
 namespace NES {
 /**
