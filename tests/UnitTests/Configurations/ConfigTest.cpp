@@ -90,7 +90,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
 
     CoordinatorConfigPtr coordinatorConfigPtr = CoordinatorConfig::create();
-    char* argv[9] = {"--restIp=localhost",
+    std::string argv[] = {"--restIp=localhost",
                      "--coordinatorIp=",
                      "--dataPort=",
                      "--numberOfSlots=10",
@@ -161,7 +161,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
     WorkerConfigPtr workerConfigPtr = WorkerConfig::create();
-    char* argv[8] = {"--localWorkerIp=localhost",
+    std::string argv[] = {"--localWorkerIp=localhost",
                      "--coordinatorIp=",
                      "--coordinatorPort=5000",
                      "--numberOfSlots=",
@@ -218,7 +218,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
     SourceConfigPtr sourceConfigPtr = SourceConfig::create();
-    char* argv[5] = {"--sourceType=YSBSource",
+    std::string argv[] = {"--sourceType=YSBSource",
                      "--sourceConfig=",
                      "--skipHeader=true",
                      "--physicalStreamName=",
