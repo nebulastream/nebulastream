@@ -13,8 +13,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 #include <Runtime/QueryManager.hpp>
 #include <cstring>
@@ -48,6 +46,9 @@
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
 #include <Util/TestUtils.hpp>
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 namespace NES {
 
@@ -189,6 +190,10 @@ class MockDataSourceWithRunningRoutine : public DataSource {
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
     MOCK_METHOD(std::string, toString, (), (const));
     MOCK_METHOD(SourceType, getType, (), (const));
+
+  private:
+    FRIEND_TEST(SourceTest, testDataSourceHardStopSideEffect);
+    FRIEND_TEST(SourceTest, testDataSourceGracefulStopSideEffect);
 };
 
 // proxy friendly to test class, exposing protected members
@@ -224,6 +229,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
   private:
     // DISABLED since they pass only with AllowLeak
     // TODO: create issue for fix without using AllowLeak
+    // Issue on https://github.com/nebulastream/nebulastream/issues/2035
     FRIEND_TEST(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue);
     FRIEND_TEST(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
@@ -538,6 +544,34 @@ TEST_F(SourceTest, testDataSourceStopSideEffect) {
     EXPECT_TRUE(mDataSource.isRunning());
     EXPECT_TRUE(mDataSource.stop(false));
     EXPECT_FALSE(mDataSource.isRunning()); // the publicly visible side-effect
+}
+
+TEST_F(SourceTest, testDataSourceHardStopSideEffect) {
+    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(), this->operatorId,
+                                                 this->numSourceLocalBuffersDefault,
+                                                 DataSource::GatheringMode::FREQUENCY_MODE, {});
+    ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
+    EXPECT_TRUE(mDataSource.start());
+    EXPECT_TRUE(mDataSource.isRunning());
+    EXPECT_TRUE(mDataSource.wasGracefullyStopped);
+    EXPECT_TRUE(mDataSource.stop(true));
+    EXPECT_FALSE(mDataSource.isRunning());
+    EXPECT_TRUE(mDataSource.wasGracefullyStopped); // private side-effect, use FRIEND_TEST
+}
+
+TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
+    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(), this->operatorId,
+                                                 this->numSourceLocalBuffersDefault,
+                                                 DataSource::GatheringMode::FREQUENCY_MODE, {});
+    ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
+    EXPECT_TRUE(mDataSource.start());
+    EXPECT_TRUE(mDataSource.isRunning());
+    EXPECT_TRUE(mDataSource.wasGracefullyStopped);
+    EXPECT_TRUE(mDataSource.stop(false));
+    EXPECT_FALSE(mDataSource.isRunning());
+    EXPECT_FALSE(mDataSource.wasGracefullyStopped); // private side-effect, use FRIEND_TEST
 }
 
 TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {

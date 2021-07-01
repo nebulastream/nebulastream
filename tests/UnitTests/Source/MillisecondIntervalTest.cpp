@@ -111,6 +111,8 @@ class MillisecondIntervalTest : public testing::Test {
         srcConf->setPhysicalStreamName("physical_test");
         srcConf->setLogicalStreamName("testStream");
 
+        path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
+
         NES_INFO("Setup MillisecondIntervalTest class.");
     }
 
@@ -121,6 +123,7 @@ class MillisecondIntervalTest : public testing::Test {
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
+    std::string path_to_file;
 };// MillisecondIntervalTest
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
@@ -163,9 +166,9 @@ class MockedExecutablePipeline : public ExecutablePipelineStage {
 };
 
 TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
-    std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
+    // Related to https://github.com/nebulastream/nebulastream/issues/2035
     auto queryId = 1;
-    const std::string& del = ",";
+    const std::string del = ",";
     double frequency = 550;
     SchemaPtr schema = Schema::create()
         ->addField("user_id", DataTypeFactory::createFixedChar(16))
@@ -189,7 +192,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                                executableStage, 1,
                                                {sink});
     auto source = createCSVFileSource(schema, this->nodeEngine->getBufferManager(),
-                                      this->nodeEngine->getQueryManager(), path_to_file,
+                                      this->nodeEngine->getQueryManager(), this->path_to_file,
                                       del, numberOfTuplesToProcess, numberOfBuffers,
                                       frequency, false, 1,
                                       12, {pipeline});
@@ -209,7 +212,6 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
 TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSecond) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
-    std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     const std::string& del = ",";
     double frequency = 550;
@@ -230,7 +232,7 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     const DataSourcePtr source = createCSVFileSource(schema,
                                                      nodeEngine->getBufferManager(),
                                                      nodeEngine->getQueryManager(),
-                                                     path_to_file,
+                                                     this->path_to_file,
                                                      del,
                                                      numberOfTuplesToProcess,
                                                      numberOfBuffers,
