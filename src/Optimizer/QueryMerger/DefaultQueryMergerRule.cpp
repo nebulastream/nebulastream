@@ -28,7 +28,7 @@ bool DefaultQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     for (auto queryPlan : queryPlansToAdd) {
         globalQueryPlan->createNewSharedQueryPlan(queryPlan);
     }
-    return true;
+    return globalQueryPlan->clearQueryPlansToAdd();
 }
 
 }// namespace NES::Optimizer

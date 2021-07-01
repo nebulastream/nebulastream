@@ -68,7 +68,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
                                                                streamCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               true,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule);
     auto catalogEntry1 = QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), Scheduling);
     auto request = RunQueryRequest::create(catalogEntry1.getQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
@@ -96,7 +95,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
                                                                streamCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               true,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule);
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto request = RunQueryRequest::create(catalogEntry1->getQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
@@ -128,7 +126,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForDuplicateValidQ
                                                                streamCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               true,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
@@ -160,7 +157,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
                                                                streamCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               true,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
@@ -197,7 +193,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
                                                                streamCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               true,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
@@ -229,7 +224,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
                                                                streamCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               true,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
@@ -282,7 +276,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
                                                       streamCatalog,
                                                       globalQueryPlan,
                                                       context,
-                                                      true,
                                                       Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert
@@ -346,7 +339,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
                                                       streamCatalog,
                                                       globalQueryPlan,
                                                       context,
-                                                      true,
                                                       Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
 
     auto resultPlan = phase->execute(batchOfNesRequests);

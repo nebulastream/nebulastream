@@ -23,28 +23,32 @@
 
 namespace NES::Optimizer {
 
-SignatureInferencePhase::SignatureInferencePhase(z3::ContextPtr context, bool computeStringSignature)
-    : context(std::move(context)), computeStringSignature(computeStringSignature) {
+SignatureInferencePhase::SignatureInferencePhase(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule)
+    : context(std::move(context)), queryMergerRule(queryMergerRule) {
     NES_DEBUG("SignatureInferencePhase()");
 }
 
-SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr context, bool computeStringSignature) {
-    return std::make_shared<SignatureInferencePhase>(SignatureInferencePhase(std::move(context), computeStringSignature));
+SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule) {
+    return std::make_shared<SignatureInferencePhase>(SignatureInferencePhase(std::move(context), queryMergerRule));
 }
 
 void SignatureInferencePhase::execute(const QueryPlanPtr& queryPlan) {
-    if (computeStringSignature) {
+    if (queryMergerRule == QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule
+        || queryMergerRule == QueryMergerRule::StringSignatureBasedPartialQueryMergerRule) {
         NES_INFO("SignatureInferencePhase: computing String based signature for the query " << queryPlan->getQueryId());
         auto sinkOperators = queryPlan->getRootOperators();
         for (auto& sinkOperator : sinkOperators) {
             sinkOperator->as<LogicalOperatorNode>()->inferStringSignature();
         }
-    } else {
+    } else if (queryMergerRule == QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
+               || queryMergerRule == QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule) {
         NES_INFO("SignatureInferencePhase: computing Z3 based signature for the query " << queryPlan->getQueryId());
         auto sinkOperators = queryPlan->getRootOperators();
         for (auto& sinkOperator : sinkOperators) {
             sinkOperator->as<LogicalOperatorNode>()->inferZ3Signature(context);
         }
+    } else {
+        NES_INFO("Skipping signature creation");
     }
 }
 

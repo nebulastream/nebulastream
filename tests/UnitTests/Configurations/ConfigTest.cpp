@@ -68,8 +68,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
     EXPECT_NE(coordinatorConfigPtr->getRestIp()->getValue(), coordinatorConfigPtr->getRestIp()->getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->getCoordinatorIp()->getValue(), coordinatorConfigPtr->getCoordinatorIp()->getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->getNumberOfSlots()->getValue(), coordinatorConfigPtr->getNumberOfSlots()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getEnableQueryMerging()->getValue(),
-              coordinatorConfigPtr->getEnableQueryMerging()->getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->getLogLevel()->getValue(), coordinatorConfigPtr->getLogLevel()->getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
               coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
@@ -119,8 +117,6 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
     EXPECT_NE(coordinatorConfigPtr->getRestIp()->getValue(), coordinatorConfigPtr->getRestIp()->getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->getCoordinatorIp()->getValue(), coordinatorConfigPtr->getCoordinatorIp()->getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->getNumberOfSlots()->getValue(), coordinatorConfigPtr->getNumberOfSlots()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getEnableQueryMerging()->getValue(),
-              coordinatorConfigPtr->getEnableQueryMerging()->getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->getLogLevel()->getValue(), coordinatorConfigPtr->getLogLevel()->getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
               coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());

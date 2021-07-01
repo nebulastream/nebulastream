@@ -17,6 +17,7 @@
 #ifndef NES_SIGNATUREINFERENCEPHASE_HPP
 #define NES_SIGNATUREINFERENCEPHASE_HPP
 
+#include "QueryMergerPhase.hpp"
 #include <memory>
 
 namespace z3 {
@@ -43,10 +44,10 @@ class SignatureInferencePhase {
     /**
      * @brief Create instance of SignatureInferencePhase class
      * @param context : the z3 context
-     * @param computeStringSignature : bool flag indicating that string based signature need to be computed
+     * @param queryMergerRule: query merger rule type
      * @return pointer to the signature inference phase
      */
-    static SignatureInferencePhasePtr create(z3::ContextPtr context, bool computeStringSignature = false);
+    static SignatureInferencePhasePtr create(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule);
 
     /**
      * @brief this method will compute the Z3 expression for all operators of the input query plan
@@ -64,11 +65,11 @@ class SignatureInferencePhase {
     /**
      * @brief Create instance of SignatureInferencePhase class
      * @param context : the z3 context
-     * @param computeStringSignature : bool flag indicating that string based signature need to be computed
+     * @param queryMergerRule : query merger rule type
      */
-    explicit SignatureInferencePhase(z3::ContextPtr context, bool computeStringSignature = false);
+    explicit SignatureInferencePhase(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule);
     z3::ContextPtr context;
-    bool computeStringSignature;
+    Optimizer::QueryMergerRule queryMergerRule;
 };
 }// namespace NES::Optimizer
 

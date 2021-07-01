@@ -108,7 +108,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries)
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -200,7 +202,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesW
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -279,7 +283,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -367,7 +373,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -452,7 +460,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -524,7 +534,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -603,7 +615,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -681,7 +695,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -760,7 +776,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -839,7 +857,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -935,7 +955,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1031,7 +1053,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1127,7 +1151,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1224,7 +1250,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1296,7 +1324,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1385,7 +1415,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1457,7 +1489,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1547,7 +1581,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1641,7 +1677,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1732,7 +1770,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1828,7 +1868,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -1919,7 +1961,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -2016,7 +2060,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -2110,7 +2156,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -2191,7 +2239,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -2271,7 +2321,9 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 

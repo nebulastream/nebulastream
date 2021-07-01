@@ -80,7 +80,6 @@ class GlobalQueryPlanUpdatePhase {
                                                 StreamCatalogPtr streamCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
-                                                bool enableQueryMerging,
                                                 Optimizer::QueryMergerRule queryMergerRule);
 
     /**
@@ -95,10 +94,8 @@ class GlobalQueryPlanUpdatePhase {
                                         const StreamCatalogPtr& streamCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
-                                        bool enableQueryMerging,
                                         Optimizer::QueryMergerRule queryMergerRule);
 
-    bool enableQueryMerging;
     QueryCatalogPtr queryCatalog;
     GlobalQueryPlanPtr globalQueryPlan;
     TypeInferencePhasePtr typeInferencePhase;

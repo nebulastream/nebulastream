@@ -53,7 +53,6 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
                                                        const StreamCatalogPtr& streamCatalog,
                                                        const WorkerRPCClientPtr& workerRpcClient,
                                                        NESRequestQueuePtr queryRequestQueue,
-                                                       bool enableQueryMerging,
                                                        Optimizer::QueryMergerRule queryMergerRule)
     : queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(std::move(queryRequestQueue)),
       globalQueryPlan(globalQueryPlan) {
@@ -69,7 +68,6 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
                                                                                streamCatalog,
                                                                                globalQueryPlan,
                                                                                z3Context,
-                                                                               enableQueryMerging,
                                                                                queryMergerRule);
 }
 

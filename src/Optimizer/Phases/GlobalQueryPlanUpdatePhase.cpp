@@ -37,10 +37,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
                                                        const StreamCatalogPtr& streamCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
-                                                       bool enableQueryMerging,
                                                        Optimizer::QueryMergerRule queryMergerRule)
-    : enableQueryMerging(enableQueryMerging), queryCatalog(std::move(queryCatalog)), globalQueryPlan(std::move(globalQueryPlan)),
-      z3Context(std::move(z3Context)) {
+    : queryCatalog(std::move(queryCatalog)), globalQueryPlan(std::move(globalQueryPlan)), z3Context(std::move(z3Context)) {
     queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     bool applyRulesImprovingSharingIdentification = false;
@@ -53,26 +51,18 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     }
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog);
-
-    //IF String based signatures are used for query merging then signature need to be computed
-    bool computeStringSignature =
-        (queryMergerRule == Optimizer::QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
-         || queryMergerRule == Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
-
-    signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context, computeStringSignature);
+    signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context, queryMergerRule);
 }
 
 GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
                                                                  StreamCatalogPtr streamCatalog,
                                                                  GlobalQueryPlanPtr globalQueryPlan,
                                                                  z3::ContextPtr z3Context,
-                                                                 bool enableQueryMerging,
                                                                  Optimizer::QueryMergerRule queryMergerRule) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(queryCatalog),
                                                                                    std::move(streamCatalog),
                                                                                    std::move(globalQueryPlan),
                                                                                    std::move(z3Context),
-                                                                                   enableQueryMerging,
                                                                                    queryMergerRule));
 }
 
@@ -103,10 +93,9 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                                     + std::to_string(queryId));
                 }
 
-                if (enableQueryMerging) {
-                    NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
-                    signatureInferencePhase->execute(queryPlan);
-                }
+                NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
+                signatureInferencePhase->execute(queryPlan);
+
                 NES_INFO("Before " << queryPlan->toString());
                 queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
                 if (!queryPlan) {
@@ -127,10 +116,10 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 continue;
             }
         }
-        if (enableQueryMerging) {
-            NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
-            queryMergerPhase->execute(globalQueryPlan);
-        }
+
+        NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
+        queryMergerPhase->execute(globalQueryPlan);
+
         NES_DEBUG("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;
     } catch (std::exception& ex) {
