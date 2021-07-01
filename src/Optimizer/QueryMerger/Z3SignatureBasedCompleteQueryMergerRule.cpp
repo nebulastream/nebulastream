@@ -112,7 +112,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
             break;
         }
 
-        if(!matched){
+        if (!matched) {
             NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
