@@ -117,7 +117,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries)
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -143,7 +143,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries)
     stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -209,7 +209,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesW
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -235,7 +235,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesW
     stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -288,7 +288,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -314,7 +314,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -376,7 +376,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -402,7 +402,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -461,7 +461,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -487,7 +487,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 }
 
@@ -533,7 +533,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -559,7 +559,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -612,7 +612,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -638,7 +638,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -690,7 +690,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -716,7 +716,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -769,7 +769,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -795,7 +795,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -848,7 +848,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -874,7 +874,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -944,7 +944,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -970,7 +970,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -1040,7 +1040,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1066,7 +1066,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -1136,7 +1136,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1162,7 +1162,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -1233,7 +1233,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1259,7 +1259,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 }
 
@@ -1305,7 +1305,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1331,7 +1331,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -1394,7 +1394,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1420,7 +1420,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 }
 
@@ -1466,7 +1466,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1492,7 +1492,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -1556,7 +1556,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1582,7 +1582,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSa
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -1650,7 +1650,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1676,7 +1676,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDi
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -1741,7 +1741,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1767,7 +1767,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -1837,7 +1837,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1863,7 +1863,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -1928,7 +1928,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -1954,7 +1954,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -2025,7 +2025,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -2051,7 +2051,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -2119,7 +2119,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -2145,7 +2145,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 }
 
@@ -2200,7 +2200,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -2226,7 +2226,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 }
 
@@ -2280,7 +2280,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -2306,7 +2306,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJo
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();

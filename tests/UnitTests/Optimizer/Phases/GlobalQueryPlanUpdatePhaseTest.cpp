@@ -105,7 +105,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
 
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
-    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQueryMetadataToDeploy.size() == 1);
 }
 
@@ -172,7 +172,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
 
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
-    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQueryMetadataToDeploy.size() == 1);
 }
 
@@ -243,11 +243,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
 
     std::vector<NESRequestPtr> batchOfQueryRequests = {nesRequest1, nesRequest2, nesRequest3};
     auto resultPlan = phase->execute(batchOfQueryRequests);
-    resultPlan->removeEmptySharedQueryMetaData();
+    resultPlan->removeEmptySharedQueryPlans();
 
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
-    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryPlansToDeploy();
     ASSERT_EQ(sharedQueryMetadataToDeploy.size(), 1u);
 }
 
@@ -287,8 +287,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
     auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
-    globalQueryPlan->removeEmptySharedQueryMetaData();
-    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    globalQueryPlan->removeEmptySharedQueryPlans();
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQueryMetadataToDeploy.size() == 1);
 }
 
@@ -352,8 +352,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
-    globalQueryPlan->removeEmptySharedQueryMetaData();
-    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    globalQueryPlan->removeEmptySharedQueryPlans();
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQueryMetadataToDeploy.size() == 1);
 }
 }// namespace NES

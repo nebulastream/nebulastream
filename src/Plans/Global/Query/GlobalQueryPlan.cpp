@@ -32,22 +32,14 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     if (inputQueryPlanId == INVALID_QUERY_ID) {
         throw Exception("GlobalQueryPlan: Can not add query plan with invalid id.");
     }
-
-    if (queryIdToSharedQueryIdMap.find(inputQueryPlanId) != queryIdToSharedQueryIdMap.end()) {
-        throw Exception("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId) + " already present.");
-    }
-
-    auto sharedQueryMetadata = SharedQueryPlan::create(queryPlan);
-    SharedQueryId sharedQueryId = sharedQueryMetadata->getSharedQueryId();
-    queryIdToSharedQueryIdMap[inputQueryPlanId] = sharedQueryId;
-    sharedQueryIdToMetaDataMap[sharedQueryId] = sharedQueryMetadata;
+    queryPlansToAdd.emplace_back(queryPlan);
     return true;
 }
 
 void GlobalQueryPlan::removeQuery(QueryId queryId) {
     NES_DEBUG("GlobalQueryPlan: Removing query information from the meta data");
     SharedQueryId sharedQueryId = queryIdToSharedQueryIdMap[queryId];
-    SharedQueryPlanPtr sharedQueryMetaData = sharedQueryIdToMetaDataMap[sharedQueryId];
+    SharedQueryPlanPtr sharedQueryMetaData = sharedQueryIdToPlanMap[sharedQueryId];
     if (!sharedQueryMetaData->removeQueryId(queryId)) {
         throw Exception("GlobalQueryPlan: Unable to remove query with id " + std::to_string(queryId)
                         + " from shared query plan with id " + std::to_string(sharedQueryId));
@@ -55,11 +47,11 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
     queryIdToSharedQueryIdMap.erase(queryId);
 }
 
-std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryMetaDataToDeploy() {
+std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansToDeploy() {
     NES_DEBUG("GlobalQueryPlan: Get the Global MetaData to be deployed.");
     std::vector<SharedQueryPlanPtr> sharedQueryMetaDataToDeploy;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map with global query metadata.");
-    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToMetaDataMap) {
+    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToPlanMap) {
         if (sharedQueryMetaData->isDeployed()) {
             NES_TRACE("GlobalQueryPlan: Skipping! found already deployed query meta data.");
             continue;
@@ -70,7 +62,7 @@ std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryMetaDataToDeploy(
     return sharedQueryMetaDataToDeploy;
 }
 
-SharedQueryId GlobalQueryPlan::getSharedQueryIdForQuery(QueryId queryId) {
+SharedQueryId GlobalQueryPlan::getSharedQueryId(QueryId queryId) {
     NES_DEBUG("GlobalQueryPlan: Get the Global Query Id for the query " << queryId);
     if (queryIdToSharedQueryIdMap.find(queryId) != queryIdToSharedQueryIdMap.end()) {
         return queryIdToSharedQueryIdMap[queryId];
@@ -79,47 +71,47 @@ SharedQueryId GlobalQueryPlan::getSharedQueryIdForQuery(QueryId queryId) {
     return INVALID_SHARED_QUERY_ID;
 }
 
-bool GlobalQueryPlan::updateSharedQueryMetadata(const SharedQueryPlanPtr& sharedQueryMetaData) {
+bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_INFO("GlobalQueryPlan: updating the shared query metadata information");
-    auto sharedQueryId = sharedQueryMetaData->getSharedQueryId();
-    sharedQueryIdToMetaDataMap[sharedQueryId] = sharedQueryMetaData;
+    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
     NES_TRACE("GlobalQueryPlan: Updating the Query Id to Shared Query Id map");
-    for (auto queryId : sharedQueryMetaData->getQueryIds()) {
+    for (auto queryId : sharedQueryPlan->getQueryIds()) {
         queryIdToSharedQueryIdMap[queryId] = sharedQueryId;
     }
     return true;
 }
 
-void GlobalQueryPlan::removeEmptySharedQueryMetaData() {
+void GlobalQueryPlan::removeEmptySharedQueryPlans() {
     NES_INFO("GlobalQueryPlan: remove empty metadata information.");
     //Following associative-container erase idiom
-    for (auto itr = sharedQueryIdToMetaDataMap.begin(); itr != sharedQueryIdToMetaDataMap.end();) {
+    for (auto itr = sharedQueryIdToPlanMap.begin(); itr != sharedQueryIdToPlanMap.end();) {
         auto sharedQueryMetaData = itr->second;
         if ((sharedQueryMetaData->isDeployed() || sharedQueryMetaData->isNew()) && sharedQueryMetaData->isEmpty()) {
             NES_TRACE("GlobalQueryPlan: Removing! found an empty query meta data.");
-            sharedQueryIdToMetaDataMap.erase(itr++);
+            sharedQueryIdToPlanMap.erase(itr++);
             continue;
         }
         itr++;
     }
 }
 
-std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllSharedQueryMetaData() {
+std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllSharedQueryPlans() {
     NES_INFO("GlobalQueryPlan: Get all metadata information");
     std::vector<SharedQueryPlanPtr> sharedQueryMetaDataToDeploy;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
-    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToMetaDataMap) {
+    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToPlanMap) {
         sharedQueryMetaDataToDeploy.emplace_back(sharedQueryMetaData);
     }
     NES_TRACE("GlobalQueryPlan: Found " << sharedQueryMetaDataToDeploy.size() << "  Shared Query MetaData.");
     return sharedQueryMetaDataToDeploy;
 }
 
-std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllNewSharedQueryMetaData() {
+std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllNewSharedQueryPlans() {
     NES_INFO("GlobalQueryPlan: Get all metadata information");
     std::vector<SharedQueryPlanPtr> newSharedQueryMetaData;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
-    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToMetaDataMap) {
+    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToPlanMap) {
         if (sharedQueryMetaData->isNew()) {
             newSharedQueryMetaData.emplace_back(sharedQueryMetaData);
         }
@@ -128,11 +120,11 @@ std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllNewSharedQueryMetaData() 
     return newSharedQueryMetaData;
 }
 
-std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllOldSharedQueryMetaData() {
+std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllOldSharedQueryPlans() {
     NES_INFO("GlobalQueryPlan: Get all metadata information");
     std::vector<SharedQueryPlanPtr> oldSharedQueryMetaData;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
-    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToMetaDataMap) {
+    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToPlanMap) {
         if (!sharedQueryMetaData->isNew()) {
             oldSharedQueryMetaData.emplace_back(sharedQueryMetaData);
         }
@@ -141,11 +133,28 @@ std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllOldSharedQueryMetaData() 
     return oldSharedQueryMetaData;
 }
 
-SharedQueryPlanPtr GlobalQueryPlan::getSharedQueryMetaData(SharedQueryId sharedQueryId) {
-    auto found = sharedQueryIdToMetaDataMap.find(sharedQueryId);
-    if (found == sharedQueryIdToMetaDataMap.end()) {
+SharedQueryPlanPtr GlobalQueryPlan::getSharedQueryPlan(SharedQueryId sharedQueryId) {
+    auto found = sharedQueryIdToPlanMap.find(sharedQueryId);
+    if (found == sharedQueryIdToPlanMap.end()) {
         return nullptr;
     }
     return found->second;
 }
+
+bool GlobalQueryPlan::createNewSharedQueryPlan(const QueryPlanPtr& queryPlan) {
+
+    QueryId inputQueryPlanId = queryPlan->getQueryId();
+
+    if (queryIdToSharedQueryIdMap.find(inputQueryPlanId) != queryIdToSharedQueryIdMap.end()) {
+        throw Exception("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId) + " already present.");
+    }
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    queryIdToSharedQueryIdMap[inputQueryPlanId] = sharedQueryId;
+    sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
+    return true;
+}
+
+const std::deque<QueryPlanPtr>& GlobalQueryPlan::getQueryPlansToAdd() const { return queryPlansToAdd; }
 }// namespace NES

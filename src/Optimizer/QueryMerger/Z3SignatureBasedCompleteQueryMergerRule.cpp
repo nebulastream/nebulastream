@@ -39,14 +39,14 @@ Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRu
 bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     NES_INFO(
         "Z3SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
-    std::vector<SharedQueryPlanPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();
+    std::vector<SharedQueryPlanPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryPlans();
     if (allNewSharedQueryMetaData.empty()) {
         NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    std::vector<SharedQueryPlanPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryMetaData();
+    std::vector<SharedQueryPlanPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryPlans();
     NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (auto& targetSharedQueryMetaData : allNewSharedQueryMetaData) {
@@ -113,7 +113,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
             //Clear the target shared query metadata
             targetSharedQueryMetaData->clear();
             //Update the shared query meta data
-            globalQueryPlan->updateSharedQueryMetadata(hostSharedQueryMetaData);
+            globalQueryPlan->updateSharedQueryPlan(hostSharedQueryMetaData);
             // exit the for loop as we found a matching address shared query meta data
             merged = true;
             break;
@@ -123,7 +123,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
         }
     }
     //Remove all empty shared query metadata
-    globalQueryPlan->removeEmptySharedQueryMetaData();
+    globalQueryPlan->removeEmptySharedQueryPlans();
     return true;
 }
 

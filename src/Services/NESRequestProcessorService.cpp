@@ -95,7 +95,7 @@ void NESRequestProcessorService::start() {
                 NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
                 globalQueryPlanUpdatePhase->execute(nesRequests);
 
-                auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+                auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
                 for (const auto& sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
                     SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
@@ -149,7 +149,7 @@ void NESRequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId);
-                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
+                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 }
@@ -158,7 +158,7 @@ void NESRequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId);
-                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
+                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
                     queryCatalog->setQueryFailureReason(queryId, ex.what());
                 }

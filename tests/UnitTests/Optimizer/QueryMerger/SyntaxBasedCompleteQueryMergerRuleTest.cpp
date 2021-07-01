@@ -87,7 +87,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -113,7 +113,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -169,7 +169,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesWithMultip
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -195,7 +195,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesWithMultip
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -239,7 +239,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentSo
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -265,7 +265,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentSo
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -318,7 +318,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperat
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -344,7 +344,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperat
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -394,7 +394,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -420,7 +420,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -470,7 +470,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -496,7 +496,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -540,7 +540,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -566,7 +566,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFi
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -609,7 +609,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -635,7 +635,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFi
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -679,7 +679,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMa
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -705,7 +705,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMa
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
@@ -749,7 +749,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMa
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //assert
-    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
     auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
@@ -775,7 +775,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMa
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
