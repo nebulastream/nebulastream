@@ -44,6 +44,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             return;
         } else if (param != parameters.end()) {
             try {
+                // /streamCatalog/allLogicalStream?physicalStreamName=ICE2201
                 std::string physicalStreamName = param->second;
                 const std::map <std::string, std::string> &allLogicalStreamForPhysicalStream = streamCatalog->getAllLogicalStreamForPhysicalStreamAsString(
                         physicalStreamName);
@@ -86,6 +87,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             }
         } else {
             // logical stream name specified
+            // BDAPRO some logic needed here.
         try {
             //Prepare Input query from user string
             std::string logicalStreamName = param->second;
