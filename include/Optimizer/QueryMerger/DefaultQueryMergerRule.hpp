@@ -34,7 +34,10 @@ class DefaultQueryMergerRule final : public BaseQueryMergerRule {
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-    ~DefaultQueryMergerRule() final = default;
+    ~DefaultQueryMergerRule() noexcept override = default;
+
+  private:
+    DefaultQueryMergerRule() noexcept = default;
 };
 }// namespace NES::Optimizer
 

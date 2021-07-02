@@ -19,7 +19,9 @@
 
 namespace NES::Optimizer {
 
-DefaultQueryMergerRulePtr DefaultQueryMergerRule::create() { return std::make_shared<DefaultQueryMergerRule>(); }
+DefaultQueryMergerRulePtr DefaultQueryMergerRule::create() {
+    return std::make_shared<DefaultQueryMergerRule>(DefaultQueryMergerRule());
+}
 
 bool DefaultQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 

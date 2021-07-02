@@ -26,7 +26,6 @@ ENV restIp="0.0.0.0"
 ENV restPort=8081
 ENV coordinatorIp="127.0.0.1"
 ENV coordinatorPort="12346"
-ENV enableQueryMerging=false
 ENV enableSemanticQueryValidation=false
 ENV sourceType="CSVSource"
 ENV sourceConfig="/opt/local/nebula-stream/exdra.csv"
