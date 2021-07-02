@@ -53,21 +53,19 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
         NES_ERROR("SharedQueryPlan: query id " << queryId << " is not present in metadata information.");
         return false;
     }
-
     NES_TRACE("SharedQueryPlan: Remove the Global Query Nodes with sink operators for query " << queryId);
     std::vector<OperatorNodePtr> sinkOperatorsToRemove = queryIdToSinkOperatorMap[queryId];
-
     // Iterate over all sink global query nodes for the input query and remove the corresponding exclusive upstream operator chains
     for (const auto& sinkOperator : sinkOperatorsToRemove) {
-
         //Remove sink operator and associated operators from query plan
-        if (!queryPlan->removeRootOperatorFromPlan(sinkOperator)) {
-            NES_ERROR("SharedQueryPlan: ");
+        if (!removeOperator(sinkOperator)) {
+            NES_ERROR("SharedQueryPlan: unable to remove Root operator from the shared query plan " << sharedQueryId);
             return false;
         }
         //Remove the sink operator from the collection of sink operators in the global query metadata
         sinkOperators.erase(std::remove(sinkOperators.begin(), sinkOperators.end(), sinkOperator), sinkOperators.end());
     }
+
     queryIdToSinkOperatorMap.erase(queryId);
     //Mark the meta data as updated but not deployed
     markAsNotDeployed();
@@ -117,7 +115,6 @@ std::map<QueryId, std::vector<OperatorNodePtr>> SharedQueryPlan::getQueryIdToSin
 SharedQueryId SharedQueryPlan::getSharedQueryId() const { return sharedQueryId; }
 
 void SharedQueryPlan::clear() {
-
     NES_DEBUG("SharedQueryPlan: clearing all metadata information.");
     queryIdToSinkOperatorMap.clear();
     sinkOperators.clear();
@@ -143,6 +140,23 @@ bool SharedQueryPlan::addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan) 
 
 void SharedQueryPlan::addAdditionToChangeLog(const OperatorNodePtr& upstreamOperator, const OperatorNodePtr& newOperator) {
     changeLog->addAddition(upstreamOperator, newOperator->getId());
+}
+
+bool SharedQueryPlan::removeOperator(const OperatorNodePtr& operatorToRemove) {
+
+    for (const auto& child : operatorToRemove->getChildren()) {
+        auto childOperator = child->as<OperatorNode>();
+        if (child->getParents().size() > 1) {
+            changeLog->addRemoval(childOperator, operatorToRemove->getId());
+        }
+        childOperator->removeParent(operatorToRemove);
+        if (!removeOperator(childOperator)) {
+            NES_ERROR("QueryPlan: unable to remove operator " << childOperator->toString() << " from shared query plan "
+                                                              << sharedQueryId);
+            return false;
+        }
+    }
+    return true;
 }
 
 }// namespace NES
