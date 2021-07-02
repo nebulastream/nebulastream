@@ -55,7 +55,7 @@ CSVSource::CSVSource(SchemaPtr schema,
       skipHeader(skipHeader) {
     this->numBuffersToProcess = numberOfBuffersToProcess;
     this->gatheringInterval = std::chrono::milliseconds(frequency);
-    tupleSize = schema->getSchemaSizeInBytes();
+    this->tupleSize = schema->getSchemaSizeInBytes();
 
     char* path = realpath(filePath.c_str(), nullptr);
     NES_DEBUG("CSVSource: Opening path " << path);
@@ -67,12 +67,12 @@ CSVSource::CSVSource(SchemaPtr schema,
         NES_ERROR("CSVSource::CSVSource File " + filePath + " is corrupted");
         //        NES_ASSERT2_FMT(false, "CSVSource::CSVSource File " + filePath + " is corrupted");
     } else {
-        fileSize = static_cast<decltype(fileSize)>(reportedFileSize);
+        this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
     }
 
-    loopOnFile = numberOfBuffersToProcess == 0;
+    this->loopOnFile = numberOfBuffersToProcess == 0;
 
-    NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval.count() << "ms"
+    NES_DEBUG("CSVSource: tupleSize=" << this->tupleSize << " freq=" << this->gatheringInterval.count() << "ms"
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
                                       << this->numberOfTuplesToProducePerBuffer << "loopOnFile=" << this->loopOnFile);
 
@@ -101,7 +101,7 @@ std::string CSVSource::toString() const {
 
 void CSVSource::fillBuffer(Runtime::TupleBuffer& buf) {
     NES_DEBUG("CSVSource::fillBuffer: start at pos=" << currentPosInFile << " fileSize=" << fileSize);
-    if (fileEnded) {
+    if (this->fileEnded) {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");
         buf.setNumberOfTuples(0);
         return;
@@ -138,12 +138,12 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buf) {
             NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
             input.clear();
             input.seekg(0, std::ifstream::beg);
-            if (!loopOnFile) {
+            if (!this->loopOnFile) {
                 NES_DEBUG("CSVSource::fillBuffer: break because file ended");
-                fileEnded = true;
+                this->fileEnded = true;
                 break;
             }
-            if (skipHeader) {
+            if (this->skipHeader) {
                 NES_DEBUG("CSVSource: Skipping header");
                 std::getline(input, line);
                 currentPosInFile = input.tellg();
