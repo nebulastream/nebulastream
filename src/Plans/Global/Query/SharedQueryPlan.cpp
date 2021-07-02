@@ -144,7 +144,8 @@ void SharedQueryPlan::addAdditionToChangeLog(const OperatorNodePtr& upstreamOper
 
 bool SharedQueryPlan::removeOperator(const OperatorNodePtr& operatorToRemove) {
 
-    for (const auto& child : operatorToRemove->getChildren()) {
+    auto children = operatorToRemove->getChildren();
+    for (const auto& child : children) {
         auto childOperator = child->as<OperatorNode>();
         if (child->getParents().size() > 1) {
             changeLog->addRemoval(childOperator, operatorToRemove->getId());
