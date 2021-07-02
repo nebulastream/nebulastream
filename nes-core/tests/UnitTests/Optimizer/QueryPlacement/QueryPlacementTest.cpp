@@ -23,6 +23,8 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
@@ -75,18 +77,18 @@ class QueryPlacementTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down QueryPlacementTest test class." << std::endl; }
 
-    void setupTopologyAndStreamCatalog() {
+    void setupTopologyAndStreamCatalog(std::vector<uint16_t> resources = {4, 4, 4}) {
 
         topology = Topology::create();
 
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 4);
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0]);
         topology->setAsRoot(rootNode);
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
-        topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1]);
+        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode1);
 
-        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
-        topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2]);
+        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode2);
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                              "->addField(\"value\", BasicType::UINT64);";
@@ -558,9 +560,131 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
                                                                                     topology,
                                                                                     typeInferencePhase,
                                                                                     streamCatalog);
+    placementStrategy->partiallyUpdateGlobalExecutionPlan(planToDeploy);
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(planToDeploy->getQueryId());
+    ASSERT_EQ(executionNodes.size(), 3UL);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(planToDeploy->getQueryId());
+            ASSERT_EQ(querySubPlans.size(), 2UL);
+            for (const auto& querySubPlan : querySubPlans) {
+                std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 1UL);
+                auto actualRootOperator = actualRootOperators[0];
+                auto expectedRootOperators = planToDeploy->getRootOperators();
+                auto found = std::find_if(expectedRootOperators.begin(),
+                                          expectedRootOperators.end(),
+                                          [&](const OperatorNodePtr& expectedRootOperator) {
+                                              return expectedRootOperator->getId() == actualRootOperator->getId();
+                                          });
+                EXPECT_TRUE(found != expectedRootOperators.end());
+                ASSERT_EQ(actualRootOperator->getChildren().size(), 2UL);
+            }
+        } else {
+            EXPECT_TRUE(executionNode->getId() == 2ULL || executionNode->getId() == 3ULL);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(planToDeploy->getQueryId());
+            // map merged into querySubPlan with filter
+            ASSERT_EQ(querySubPlans.size(), 1UL);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 2UL);
+            for (const auto& rootOperator : actualRootOperators) {
+                EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                EXPECT_TRUE(rootOperator->as<SinkLogicalOperatorNode>()
+                                ->getSinkDescriptor()
+                                ->instanceOf<Network::NetworkSinkDescriptor>());
+            }
+            for (const auto& sourceOperator : querySubPlan->getSourceOperators()) {
+                EXPECT_TRUE(sourceOperator->getParents().size() == 1);
+                auto sourceParent = sourceOperator->getParents()[0];
+                EXPECT_TRUE(sourceParent->instanceOf<FilterLogicalOperatorNode>());
+                auto filterParents = sourceParent->getParents();
+                EXPECT_TRUE(filterParents.size() == 2);
+                uint8_t distinctParents = 0;
+                for (const auto& filterParent : filterParents) {
+                    if (filterParent->instanceOf<MapLogicalOperatorNode>()) {
+                        EXPECT_TRUE(filterParent->getParents()[0]->instanceOf<SinkLogicalOperatorNode>());
+                        distinctParents += 1;
+                    } else {
+                        EXPECT_TRUE(filterParent->instanceOf<SinkLogicalOperatorNode>());
+                        distinctParents += 2;
+                    }
+                }
+                ASSERT_EQ(distinctParents, 3);
+            }
+        }
+    }
+}
+
+TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
+
+    setupTopologyAndStreamCatalog({8, 4, 4});
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
+
+    mergedPlacementStrategy->partiallyUpdateGlobalExecutionPlan(planToDeploy);
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
+    auto globalQueryPlan = GlobalQueryPlan::create();
+
+    auto queryPlan1 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create()).getQueryPlan();
+    queryPlan1->setQueryId(1);
+
+    queryPlan1 = queryReWritePhase->execute(queryPlan1);
+    queryPlan1 = typeInferencePhase->execute(queryPlan1);
+    queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
+    queryPlan1 = typeInferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan1);
+
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+
+    std::shared_ptr<QueryPlan> planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
+    placementStrategy->updateGlobalExecutionPlan(planToDeploy);
+
+    // new Query
+    auto queryPlan2 = Query::from("car")
+                          .filter(Attribute("id") < 45)
+                          .map(Attribute("newId") = 2)
+                          .sink(PrintSinkDescriptor::create())
+                          .getQueryPlan();
+    queryPlan2->setQueryId(2);
+
+    queryPlan2 = queryReWritePhase->execute(queryPlan2);
+    queryPlan2 = typeInferencePhase->execute(queryPlan2);
+    queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
+    queryPlan2 = typeInferencePhase->execute(queryPlan2);
+    z3InferencePhase->execute(queryPlan2);
+
+    globalQueryPlan->addQueryPlan(queryPlan2);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+
+    planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
+    planToDeploy->setQueryId(1);
+
+    auto mergedPlacementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+                                                                                    globalExecutionPlan,
+                                                                                    topology,
+                                                                                    typeInferencePhase,
+                                                                                    streamCatalog);
 
     mergedPlacementStrategy->partiallyUpdateGlobalExecutionPlan(planToDeploy);
 }
+
 
 /* Test query placement of query with multiple sinks and multiple source operators with Top Down strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperatorsWithTopDownStrategy) {

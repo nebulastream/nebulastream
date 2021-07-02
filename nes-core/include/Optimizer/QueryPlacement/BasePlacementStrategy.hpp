@@ -159,6 +159,8 @@ class BasePlacementStrategy {
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
 
   private:
+    std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
+
     /**
      * @brief create a new network sink operator
      * @param queryId : the query id to which the sink belongs to
