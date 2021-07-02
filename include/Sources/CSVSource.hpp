@@ -105,7 +105,7 @@ class CSVSource : public DataSource {
     uint64_t numberOfTuplesToProducePerBuffer;
     std::string delimiter;
     uint64_t currentPosInFile{0};
-    uint64_t fileSize;
+    size_t fileSize;
     bool skipHeader;
 };
 
