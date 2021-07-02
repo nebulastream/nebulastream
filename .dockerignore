@@ -1,0 +1,23 @@
+# IDE specific Files
+.idea
+.settings
+.vscode
+.csv
+.log
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+.debs
+
+# Build files
+build
+cmake-build*
+debug*
+
+# Deb file
+docker/executableImage/resources/NebulaStream*.deb
+.Rproj.user
+
+# Python virtual environment
+venv
