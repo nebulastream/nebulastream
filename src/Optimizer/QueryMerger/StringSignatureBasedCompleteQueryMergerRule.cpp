@@ -46,8 +46,8 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
         auto allSharedQueryPlans = globalQueryPlan->getAllSharedQueryPlans();
-        for (auto& hostSharedQueryMetaData : allSharedQueryPlans) {
-            auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
+        for (auto& hostSharedQueryPlan : allSharedQueryPlans) {
+            auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
             std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
@@ -83,22 +83,23 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
                 auto hostSinkChildren = hostSinkOperator->getChildren();
                 //Iterate over target children operators and migrate their parents to the host children operators.
                 // Once done, remove the target parent from the target children.
-                for (auto& childToMerge : targetSinkChildren) {
+                for (auto& targetSinkChild : targetSinkChildren) {
                     for (auto& hostChild : hostSinkChildren) {
                         bool addedNewParent = hostChild->addParent(targetSinkOperator);
                         if (!addedNewParent) {
                             NES_WARNING("SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
                         }
+                        hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSinkOperator);
                     }
-                    childToMerge->removeParent(targetSinkOperator);
+                    targetSinkChild->removeParent(targetSinkOperator);
                 }
                 //Add target sink operator as root to the host query plan.
                 hostQueryPlan->addRootOperator(targetSinkOperator);
             }
 
-            hostSharedQueryMetaData->addQueryIdAndSinkOperators(targetQueryPlan);
+            hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
             //Update the shared query meta data
-            globalQueryPlan->updateSharedQueryPlan(hostSharedQueryMetaData);
+            globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
             // exit the for loop as we found a matching address shared query meta data
             merged = true;
             break;

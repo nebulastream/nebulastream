@@ -92,14 +92,15 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
                 auto hostSinkChildren = hostSinkOperator->getChildren();
                 //Iterate over target children operators and migrate their parents to the host children operators.
                 // Once done, remove the target parent from the target children.
-                for (auto& childToMerge : targetSinkChildren) {
+                for (auto& targetSinkChild : targetSinkChildren) {
                     for (auto& hostChild : hostSinkChildren) {
                         bool addedNewParent = hostChild->addParent(targetSinkOperator);
                         if (!addedNewParent) {
                             NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
                         }
+                        hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSinkOperator);
                     }
-                    childToMerge->removeParent(targetSinkOperator);
+                    targetSinkChild->removeParent(targetSinkOperator);
                 }
                 //Add target sink operator as root to the host query plan.
                 hostQueryPlan->addRootOperator(targetSinkOperator);

@@ -52,10 +52,10 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
         std::vector<SharedQueryPlanPtr> allSharedQueryPlans = globalQueryPlan->getAllSharedQueryPlans();
-        for (const auto& hostSharedQueryMetaData : allSharedQueryPlans) {
+        for (const auto& hostSharedQueryPlan : allSharedQueryPlans) {
 
             //Fetch the host query plan to merge
-            auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
+            auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
 
             //Initialized the target and host matched pair
             std::map<OperatorNodePtr, OperatorNodePtr> matchedTargetToHostOperatorMap;
@@ -154,7 +154,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
 
             NES_TRACE("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
 
-            hostSharedQueryMetaData->addQueryIdAndSinkOperators(targetQueryPlan);
+            hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
             //Iterate over all matched pairs of operators and merge the query plan
             for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
@@ -163,6 +163,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                     if (!addedNewParent) {
                         NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
                     }
+                    hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
                     targetOperator->removeParent(targetParent);
                 }
             }
@@ -173,7 +174,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
             }
 
             //Update the shared query meta data
-            globalQueryPlan->updateSharedQueryPlan(hostSharedQueryMetaData);
+            globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
             // exit the for loop as we found a matching address shared query meta data
             matched = true;
             break;
