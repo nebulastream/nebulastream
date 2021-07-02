@@ -77,14 +77,15 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                     //Remove all children of target sink global query node
                     auto targetSinkChildren = targetSinkOperator->getChildren();
                     auto hostSinkChildren = (*hostSinkOperator)->getChildren();
-                    for (auto& childToMerge : targetSinkChildren) {
-                        for (auto& hostChild : hostSinkChildren) {
-                            bool addedNewParent = hostChild->addParent(targetSinkOperator);
+                    for (auto& targetSinkChild : targetSinkChildren) {
+                        for (auto& hostSinkChild : hostSinkChildren) {
+                            bool addedNewParent = hostSinkChild->addParent(targetSinkOperator);
                             if (!addedNewParent) {
                                 NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Failed to add new parent");
                             }
+                            hostSharedQueryPlan->addAdditionToChangeLog(hostSinkChild->as<OperatorNode>(), targetSinkOperator);
                         }
-                        childToMerge->removeParent(targetSinkOperator);
+                        targetSinkChild->removeParent(targetSinkOperator);
                     }
                     hostQueryPlan->addRootOperator(targetSinkOperator);
                 }
