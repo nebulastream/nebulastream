@@ -53,8 +53,6 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
 
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan, targetToHostSinkOperatorMap)) {
-
-
                 NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
