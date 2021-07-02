@@ -126,7 +126,11 @@ bool TopDownStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& que
                 operatorToExecutionNodeMap[sourceOperator->getId()]->getTopologyNode();
         }
 
+        NES_DEBUG("TopDownStrategy::partiallyUpdateGlobalExecutionPlan: place query plan with id : " << queryId);
         placeQueryPlan(queryPlan);
+        NES_DEBUG("TopDownStrategy::partiallyUpdateGlobalExecutionPlan: Add system generated operators for query with id : "
+                  << queryId);
+        addNetworkSourceAndSinkOperators(queryPlan);
         operatorToExecutionNodeMap.clear();
         pinnedOperatorLocationMap.clear();
         NES_DEBUG("TopDownStrategy::partiallyUpdateGlobalExecutionPlan: Run type inference phase for query plans in global "
@@ -139,7 +143,6 @@ bool TopDownStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& que
     } catch (Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
-    return true;
 }
 
 void TopDownStrategy::placeQueryPlan(const QueryPlanPtr& queryPlan) {
@@ -357,16 +360,31 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForParentOperators
 }
 
 std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators(const OperatorNodePtr& candidateOperator) {
-    NES_TRACE("TopDownStrategy: Get the pinned topology nodes for the source operators of the input operator.");
-    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = candidateOperator->getNodesByType<SourceLogicalOperatorNode>();
-    if (sourceOperators.empty()) {
-        NES_ERROR("TopDownStrategy: Unable to find the source operators to the candidate operator");
-        throw Exception("TopDownStrategy: Unable to find the source operators to the candidate operator");
-    }
     std::vector<TopologyNodePtr> childNodes;
-    childNodes.reserve(sourceOperators.size());
-    for (auto& sourceOperator : sourceOperators) {
-        childNodes.push_back(getTopologyNodeForPinnedOperator(sourceOperator->getId()));
+
+    NES_TRACE("TopDownStrategy::getTopologyNodesForSourceOperators: Get the pinned or closest placed sources nodes for the the "
+              "input operator.");
+
+    std::vector<NodePtr> sources = {candidateOperator->as<Node>()};
+
+    while (!sources.empty()) {
+        auto childOp = sources.back()->as<OperatorNode>();
+        sources.pop_back();
+        if (childOp->instanceOf<SourceLogicalOperatorNode>()) {
+            childNodes.push_back(getTopologyNodeForPinnedOperator(childOp->getId()));
+            continue;
+        }
+        if (operatorToExecutionNodeMap.contains(childOp->getId())) {
+            childNodes.push_back(operatorToExecutionNodeMap[childOp->getId()]->getTopologyNode());
+            continue;
+        }
+        sources.insert(sources.end(), childOp->getChildren().begin(), childOp->getChildren().end());
+    }
+    if (childNodes.empty()) {
+        NES_ERROR("TopDownStrategy::getTopologyNodesForSourceOperators: Unable to find the sources operators to the candidate "
+                  "operator");
+        throw Exception("TopDownStrategy::getTopologyNodesForSourceOperators: Unable to find the sources operators to the "
+                        "candidate operator");
     }
     return childNodes;
 }
