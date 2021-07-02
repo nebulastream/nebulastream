@@ -104,14 +104,14 @@ struct __attribute__((packed)) everyBooleanTypeRecord {
 
 struct __attribute__((packed)) IngestionRecord {
     IngestionRecord(uint64_t userId,
-           uint64_t pageId,
-           uint64_t campaignId,
-           uint64_t adType,
-           uint64_t eventType,
-           uint64_t currentMs,
-           uint64_t ip)
-        : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
-          currentMs(currentMs), ip(ip) {}
+                    uint64_t pageId,
+                    uint64_t campaignId,
+                    uint64_t adType,
+                    uint64_t eventType,
+                    uint64_t currentMs,
+                    uint64_t ip)
+        : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs),
+          ip(ip) {}
 
     uint64_t userId;
     uint64_t pageId;
@@ -138,18 +138,18 @@ struct __attribute__((packed)) IngestionRecord {
     }
 
     [[nodiscard]] std::string toString() const {
-        return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
-               + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
-               + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
+        return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId) + ", campaignId="
+            + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType=" + std::to_string(eventType)
+            + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
     }
 };
 
+using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::Exactly;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Mock;
 using ::testing::Return;
-using ::testing::_;
 
 // testing w/ original running routine
 class MockDataSource : public DataSource {
@@ -161,10 +161,9 @@ class MockDataSource : public DataSource {
                    size_t numSourceLocalBuffers,
                    GatheringMode gatheringMode,
                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
-        : DataSource(schema, bufferManager, queryManager, operatorId,
-                     numSourceLocalBuffers, gatheringMode, executableSuccessors) {
-        // nop
-    };
+        : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors){
+            // nop
+        };
     MOCK_METHOD(void, runningRoutineWithFrequency, ());
     MOCK_METHOD(void, runningRoutineWithIngestionRate, ());
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
@@ -176,16 +175,15 @@ class MockDataSource : public DataSource {
 class MockDataSourceWithRunningRoutine : public DataSource {
   public:
     MockDataSourceWithRunningRoutine(const SchemaPtr& schema,
-                   Runtime::BufferManagerPtr bufferManager,
-                   Runtime::QueryManagerPtr queryManager,
-                   OperatorId operatorId,
-                   size_t numSourceLocalBuffers,
-                   GatheringMode gatheringMode,
-                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
-        : DataSource(schema, bufferManager, queryManager, operatorId,
-                     numSourceLocalBuffers, gatheringMode, executableSuccessors) {
-        // nop
-    };
+                                     Runtime::BufferManagerPtr bufferManager,
+                                     Runtime::QueryManagerPtr queryManager,
+                                     OperatorId operatorId,
+                                     size_t numSourceLocalBuffers,
+                                     GatheringMode gatheringMode,
+                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
+        : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors){
+            // nop
+        };
     MOCK_METHOD(void, runningRoutine, ());
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
     MOCK_METHOD(std::string, toString, (), (const));
@@ -202,19 +200,24 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     DataSourceProxy(const SchemaPtr& schema,
                     Runtime::BufferManagerPtr bufferManager,
                     Runtime::QueryManagerPtr queryManager,
-                   OperatorId operatorId,
-                   size_t numSourceLocalBuffers,
-                   GatheringMode gatheringMode,
-                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
-        : DataSource(schema, bufferManager, queryManager, operatorId,
-                     numSourceLocalBuffers, gatheringMode, executableSuccessors) {};
+                    OperatorId operatorId,
+                    size_t numSourceLocalBuffers,
+                    GatheringMode gatheringMode,
+                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
+        : DataSource(schema,
+                     bufferManager,
+                     queryManager,
+                     operatorId,
+                     numSourceLocalBuffers,
+                     gatheringMode,
+                     executableSuccessors){};
 
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
     MOCK_METHOD(std::string, toString, (), (const));
     MOCK_METHOD(SourceType, getType, (), (const));
-    MOCK_METHOD(void, emitWork, (Runtime::TupleBuffer& buffer));
-    MOCK_METHOD(void, emitWorkFromSource, (Runtime::TupleBuffer& buffer));
-    MOCK_METHOD(void, recycleUnpooledBuffer, (Runtime::detail::MemorySegment* buffer));
+    MOCK_METHOD(void, emitWork, (Runtime::TupleBuffer & buffer));
+    MOCK_METHOD(void, emitWorkFromSource, (Runtime::TupleBuffer & buffer));
+    MOCK_METHOD(void, recycleUnpooledBuffer, (Runtime::detail::MemorySegment * buffer));
 
     Runtime::TupleBuffer getRecyclableBuffer() {
         auto* p = new uint8_t[5];
@@ -222,9 +225,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
         return fakeBuffer;
     }
 
-    void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) {
-        delete buffer;
-    }
+    void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) { delete buffer; }
 
   private:
     // DISABLED since they pass only with AllowLeak
@@ -245,8 +246,14 @@ class BinarySourceProxy : public BinarySource {
                       OperatorId operatorId,
                       size_t numSourceLocalBuffers,
                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-        : BinarySource(schema, bufferManager, queryManager, file_path, operatorId,
-                       numSourceLocalBuffers, DataSource::FREQUENCY_MODE, successors) {};
+        : BinarySource(schema,
+                       bufferManager,
+                       queryManager,
+                       file_path,
+                       operatorId,
+                       numSourceLocalBuffers,
+                       DataSource::FREQUENCY_MODE,
+                       successors){};
 
   private:
     FRIEND_TEST(SourceTest, testBinarySourceGetType);
@@ -271,10 +278,20 @@ class CSVSourceProxy : public CSVSource {
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-        : CSVSource(schema, bufferManager, queryManager,
-                    filePath, delimiter, numberOfTuplesToProducePerBuffer,
-                    numBuffersToProcess, frequency, skipHeader, operatorId,
-                    numSourceLocalBuffers, DataSource::FREQUENCY_MODE, successors) {};
+        : CSVSource(schema,
+                    bufferManager,
+                    queryManager,
+                    filePath,
+                    delimiter,
+                    numberOfTuplesToProducePerBuffer,
+                    numBuffersToProcess,
+                    frequency,
+                    skipHeader,
+                    operatorId,
+                    numSourceLocalBuffers,
+                    DataSource::FREQUENCY_MODE,
+                    successors){};
+
   private:
     FRIEND_TEST(SourceTest, testCSVSourceGetType);
     FRIEND_TEST(SourceTest, testCSVSourceWrongFilePath);
@@ -294,8 +311,14 @@ class GeneratorSourceProxy : public GeneratorSource {
                          size_t numSourceLocalBuffers,
                          GatheringMode gatheringMode,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-        : GeneratorSource(schema, bufferManager, queryManager, numbersOfBufferToProduce,
-                          operatorId, numSourceLocalBuffers, gatheringMode, successors) {};
+        : GeneratorSource(schema,
+                          bufferManager,
+                          queryManager,
+                          numbersOfBufferToProduce,
+                          operatorId,
+                          numSourceLocalBuffers,
+                          gatheringMode,
+                          successors){};
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
 };
 
@@ -309,10 +332,14 @@ class DefaultSourceProxy : public DefaultSource {
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-        : DefaultSource(schema, bufferManager, queryManager,
-                        numbersOfBufferToProduce, frequency, operatorId,
+        : DefaultSource(schema,
+                        bufferManager,
+                        queryManager,
+                        numbersOfBufferToProduce,
+                        frequency,
+                        operatorId,
                         numSourceLocalBuffers,
-                        successors) {};
+                        successors){};
 };
 
 class LambdaSourceProxy : public LambdaSource {
@@ -328,9 +355,16 @@ class LambdaSourceProxy : public LambdaSource {
         size_t numSourceLocalBuffers,
         GatheringMode gatheringMode,
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-        : LambdaSource(schema, bufferManager, queryManager,
-                       numbersOfBufferToProduce, gatheringValue, std::move(generationFunction),
-                       operatorId, numSourceLocalBuffers, gatheringMode, successors) {};
+        : LambdaSource(schema,
+                       bufferManager,
+                       queryManager,
+                       numbersOfBufferToProduce,
+                       gatheringValue,
+                       std::move(generationFunction),
+                       operatorId,
+                       numSourceLocalBuffers,
+                       gatheringMode,
+                       successors){};
 
   private:
     FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeFrequency);
@@ -348,9 +382,15 @@ class MonitoringSourceProxy : public MonitoringSource {
                           OperatorId operatorId,
                           size_t numSourceLocalBuffers,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-        : MonitoringSource(monitoringPlan, metricCatalog, bufferManager,
-                           queryManager, numbersOfBufferToProduce, frequency,
-                           operatorId, numSourceLocalBuffers, successors) {};
+        : MonitoringSource(monitoringPlan,
+                           metricCatalog,
+                           bufferManager,
+                           queryManager,
+                           numbersOfBufferToProduce,
+                           frequency,
+                           operatorId,
+                           numSourceLocalBuffers,
+                           successors){};
 };
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
@@ -358,14 +398,17 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
     MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
                                    Runtime::BufferManagerPtr bufferManager,
                                    DataSinkPtr sink)
-        : PipelineExecutionContext(0,
-        std::move(queryManager), std::move(bufferManager),
-        [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
-          sink->writeData(buffer, worker);
-        },
-        [sink](Runtime::TupleBuffer&) {},
-        std::vector<Runtime::Execution::OperatorHandlerPtr>(),
-        12) {};
+        : PipelineExecutionContext(
+            0,
+            std::move(queryManager),
+            std::move(bufferManager),
+            [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
+                sink->writeData(buffer, worker);
+            },
+            [sink](Runtime::TupleBuffer&) {
+            },
+            std::vector<Runtime::Execution::OperatorHandlerPtr>(),
+            12){};
 };
 
 class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineStage {
@@ -373,10 +416,9 @@ class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineSt
     std::atomic<uint64_t> count = 0;
     std::promise<bool> completedPromise;
 
-    ExecutionResult
-    execute(Runtime::TupleBuffer& inputTupleBuffer,
-            Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-            Runtime::WorkerContext& wctx) override {
+    ExecutionResult execute(Runtime::TupleBuffer& inputTupleBuffer,
+                            Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+                            Runtime::WorkerContext& wctx) override {
         count += inputTupleBuffer.getNumberOfTuples();
 
         Runtime::TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
@@ -398,25 +440,25 @@ class SourceTest : public testing::Test {
         this->path_to_file_head = "../tests/test_data/ysb-tuples-100-campaign-100-head.csv";
         this->path_to_bin_file = "../tests/test_data/ysb-tuples-100-campaign-100.bin";
         this->schema = Schema::create()
-            ->addField("user_id", DataTypeFactory::createFixedChar(16))
-            ->addField("page_id", DataTypeFactory::createFixedChar(16))
-            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
-            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
-            ->addField("event_type", DataTypeFactory::createFixedChar(9))
-            ->addField("current_ms", UINT64)
-            ->addField("ip", INT32);
+                           ->addField("user_id", DataTypeFactory::createFixedChar(16))
+                           ->addField("page_id", DataTypeFactory::createFixedChar(16))
+                           ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+                           ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+                           ->addField("event_type", DataTypeFactory::createFixedChar(9))
+                           ->addField("current_ms", UINT64)
+                           ->addField("ip", INT32);
         this->lambdaSchema = Schema::create()
-            ->addField("user_id", UINT64)
-            ->addField("page_id", UINT64)
-            ->addField("campaign_id", UINT64)
-            ->addField("ad_type", UINT64)
-            ->addField("event_type", UINT64)
-            ->addField("current_ms", UINT64)
-            ->addField("ip", UINT64)
-            ->addField("d1", UINT64)
-            ->addField("d2", UINT64)
-            ->addField("d3", UINT32)
-            ->addField("d4", UINT16);
+                                 ->addField("user_id", UINT64)
+                                 ->addField("page_id", UINT64)
+                                 ->addField("campaign_id", UINT64)
+                                 ->addField("ad_type", UINT64)
+                                 ->addField("event_type", UINT64)
+                                 ->addField("current_ms", UINT64)
+                                 ->addField("ip", UINT64)
+                                 ->addField("d1", UINT64)
+                                 ->addField("d2", UINT64)
+                                 ->addField("d3", UINT32)
+                                 ->addField("d4", UINT16);
         this->tuple_size = this->schema->getSchemaSizeInBytes();
         this->buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
         this->numberOfBuffers = 1;
@@ -441,9 +483,7 @@ class SourceTest : public testing::Test {
         nodeEngine = nullptr;
     }
 
-    std::optional<Runtime::TupleBuffer> GetEmptyBuffer() {
-        return this->nodeEngine->getBufferManager()->getBufferNoBlocking();
-    }
+    std::optional<Runtime::TupleBuffer> GetEmptyBuffer() { return this->nodeEngine->getBufferManager()->getBufferNoBlocking(); }
 
     DataSourceProxyPtr createDataSourceProxy(const SchemaPtr& schema,
                                              Runtime::BufferManagerPtr bufferManager,
@@ -452,154 +492,184 @@ class SourceTest : public testing::Test {
                                              size_t numSourceLocalBuffers,
                                              DataSource::GatheringMode gatheringMode,
                                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors) {
-        return std::make_shared<DataSourceProxy>(schema, bufferManager, queryManager,
-                                                 operatorId, numSourceLocalBuffers,
-                                                 gatheringMode, executableSuccessors);
+        return std::make_shared<DataSourceProxy>(schema,
+                                                 bufferManager,
+                                                 queryManager,
+                                                 operatorId,
+                                                 numSourceLocalBuffers,
+                                                 gatheringMode,
+                                                 executableSuccessors);
     }
 
     std::shared_ptr<Runtime::Execution::ExecutablePipeline>
-    createExecutablePipeline(std::shared_ptr<MockedExecutablePipeline> executableStage,
-                             std::shared_ptr<SinkMedium> sink) {
-        auto context =
-            std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(),
+    createExecutablePipeline(std::shared_ptr<MockedExecutablePipeline> executableStage, std::shared_ptr<SinkMedium> sink) {
+        auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(),
                                                                         this->nodeEngine->getBufferManager(),
                                                                         sink);
-        return Runtime::Execution::ExecutablePipeline::create(0,
-                                                           this->queryId,
-                                                           context,
-                                                           executableStage,
-                                                           1,
-                                                           {sink});
+        return Runtime::Execution::ExecutablePipeline::create(0, this->queryId, context, executableStage, 1, {sink});
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
     std::string path_to_file, path_to_bin_file, delimiter, wrong_filepath, path_to_file_head;
     SchemaPtr schema, lambdaSchema;
-    uint64_t tuple_size, buffer_size, numberOfBuffers,
-        numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault, frequency, queryId;
+    uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault,
+        frequency, queryId;
 };
 
 TEST_F(SourceTest, testDataSourceGetOperatorId) {
-    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(
-        this->schema, this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        this->operatorId, this->numSourceLocalBuffersDefault, {});
+    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(this->schema,
+                                                                               this->nodeEngine->getBufferManager(),
+                                                                               this->nodeEngine->getQueryManager(),
+                                                                               this->operatorId,
+                                                                               this->numSourceLocalBuffersDefault,
+                                                                               {});
     ASSERT_EQ(source->getOperatorId(), this->operatorId);
 }
 
 TEST_F(SourceTest, testDataSourceGetSchema) {
-    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(
-        this->schema, this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        this->operatorId, this->numSourceLocalBuffersDefault, {});
+    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(this->schema,
+                                                                               this->nodeEngine->getBufferManager(),
+                                                                               this->nodeEngine->getQueryManager(),
+                                                                               this->operatorId,
+                                                                               this->numSourceLocalBuffersDefault,
+                                                                               {});
     ASSERT_EQ(source->getSchema(), this->schema);
 }
 
 TEST_F(SourceTest, testDataSourceRunningImmediately) {
-    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(), this->operatorId,
-                               this->numSourceLocalBuffersDefault,
-                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 this->operatorId,
+                                                 this->numSourceLocalBuffersDefault,
+                                                 DataSource::GatheringMode::FREQUENCY_MODE,
+                                                 {});
     ASSERT_FALSE(mDataSource.isRunning());
 }
 
 TEST_F(SourceTest, testDataSourceStartSideEffectRunningTrue) {
-    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                                         this->nodeEngine->getQueryManager(), this->operatorId,
-                                         this->numSourceLocalBuffersDefault,
-                                         DataSource::GatheringMode::FREQUENCY_MODE, {});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 this->operatorId,
+                                                 this->numSourceLocalBuffersDefault,
+                                                 DataSource::GatheringMode::FREQUENCY_MODE,
+                                                 {});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
-    EXPECT_TRUE(mDataSource.isRunning()); // the publicly visible side-effect
+    EXPECT_TRUE(mDataSource.isRunning());// the publicly visible side-effect
     EXPECT_TRUE(mDataSource.stop(false));
 }
 
 TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
-    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(), this->operatorId,
-                               this->numSourceLocalBuffersDefault,
-                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 this->operatorId,
+                                                 this->numSourceLocalBuffersDefault,
+                                                 DataSource::GatheringMode::FREQUENCY_MODE,
+                                                 {});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_FALSE(mDataSource.start());
-    EXPECT_TRUE(mDataSource.isRunning()); // the publicly visible side-effect
+    EXPECT_TRUE(mDataSource.isRunning());// the publicly visible side-effect
     EXPECT_TRUE(mDataSource.stop(false));
 }
 
 TEST_F(SourceTest, testDataSourceStopImmediately) {
-    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(), this->operatorId,
-                               this->numSourceLocalBuffersDefault,
-                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 this->operatorId,
+                                                 this->numSourceLocalBuffersDefault,
+                                                 DataSource::GatheringMode::FREQUENCY_MODE,
+                                                 {});
     ASSERT_FALSE(mDataSource.stop(false));
 }
 
 TEST_F(SourceTest, testDataSourceStopSideEffect) {
-    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(), this->operatorId,
-                               this->numSourceLocalBuffersDefault,
-                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 this->operatorId,
+                                                 this->numSourceLocalBuffersDefault,
+                                                 DataSource::GatheringMode::FREQUENCY_MODE,
+                                                 {});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());
     EXPECT_TRUE(mDataSource.stop(false));
-    EXPECT_FALSE(mDataSource.isRunning()); // the publicly visible side-effect
+    EXPECT_FALSE(mDataSource.isRunning());// the publicly visible side-effect
 }
 
 TEST_F(SourceTest, testDataSourceHardStopSideEffect) {
-    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                                                 this->nodeEngine->getQueryManager(), this->operatorId,
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 DataSource::GatheringMode::FREQUENCY_MODE, {});
+                                                 DataSource::GatheringMode::FREQUENCY_MODE,
+                                                 {});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());
     EXPECT_TRUE(mDataSource.wasGracefullyStopped);
     EXPECT_TRUE(mDataSource.stop(true));
     EXPECT_FALSE(mDataSource.isRunning());
-    EXPECT_TRUE(mDataSource.wasGracefullyStopped); // private side-effect, use FRIEND_TEST
+    EXPECT_TRUE(mDataSource.wasGracefullyStopped);// private side-effect, use FRIEND_TEST
 }
 
 TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
-    MockDataSourceWithRunningRoutine mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                                                 this->nodeEngine->getQueryManager(), this->operatorId,
+    MockDataSourceWithRunningRoutine mDataSource(this->schema,
+                                                 this->nodeEngine->getBufferManager(),
+                                                 this->nodeEngine->getQueryManager(),
+                                                 this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 DataSource::GatheringMode::FREQUENCY_MODE, {});
+                                                 DataSource::GatheringMode::FREQUENCY_MODE,
+                                                 {});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());
     EXPECT_TRUE(mDataSource.wasGracefullyStopped);
     EXPECT_TRUE(mDataSource.stop(false));
     EXPECT_FALSE(mDataSource.isRunning());
-    EXPECT_FALSE(mDataSource.wasGracefullyStopped); // private side-effect, use FRIEND_TEST
+    EXPECT_FALSE(mDataSource.wasGracefullyStopped);// private side-effect, use FRIEND_TEST
 }
 
 TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
     // create a DefaultSource instead of raw DataSource
-    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(
-        this->schema, this->nodeEngine->getBufferManager(),
-        this->nodeEngine->getQueryManager(),
-        this->operatorId, this->numSourceLocalBuffersDefault, {});
+    const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(this->schema,
+                                                                               this->nodeEngine->getBufferManager(),
+                                                                               this->nodeEngine->getQueryManager(),
+                                                                               this->operatorId,
+                                                                               this->numSourceLocalBuffersDefault,
+                                                                               {});
     ASSERT_EQ(source->getGatheringModeFromString("frequency"), source->GatheringMode::FREQUENCY_MODE);
     ASSERT_EQ(source->getGatheringModeFromString("ingestionrate"), source->GatheringMode::INGESTION_RATE_MODE);
     EXPECT_ANY_THROW(source->getGatheringModeFromString("clearly_an_erroneous_string"));
 }
 
 TEST_F(SourceTest, testDataSourceRunningRoutineFrequency) {
-    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(), this->operatorId,
+    MockDataSource mDataSource(this->schema,
+                               this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(),
+                               this->operatorId,
                                this->numSourceLocalBuffersDefault,
-                               DataSource::GatheringMode::FREQUENCY_MODE, {});
+                               DataSource::GatheringMode::FREQUENCY_MODE,
+                               {});
     ON_CALL(mDataSource, runningRoutineWithFrequency()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineWithFrequency()).Times(Exactly(1));
     mDataSource.runningRoutine();
 }
 
 TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
-    MockDataSource mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(), this->operatorId,
+    MockDataSource mDataSource(this->schema,
+                               this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(),
+                               this->operatorId,
                                this->numSourceLocalBuffersDefault,
-                               DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+                               DataSource::GatheringMode::INGESTION_RATE_MODE,
+                               {});
     ON_CALL(mDataSource, runningRoutineWithIngestionRate()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineWithIngestionRate()).Times(Exactly(1));
     mDataSource.runningRoutine();
@@ -615,10 +685,10 @@ TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
     // mock query manager for passing addEndOfStream
     DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema,
                                                            this->nodeEngine->getBufferManager(),
-                                               this->nodeEngine->getQueryManager(),
+                                                           this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                              DataSource::GatheringMode::FREQUENCY_MODE,
+                                                           DataSource::GatheringMode::FREQUENCY_MODE,
                                                            {pipeline});
     Mock::AllowLeak(mDataSource.get());
     mDataSource->numBuffersToProcess = 1;
@@ -630,12 +700,12 @@ TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
     ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
     ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
-                                                     this->queryId,
-                                                     {mDataSource},
-                                                     {sink},
-                                                     {pipeline},
-                                                     this->nodeEngine->getQueryManager(),
-                                                     this->nodeEngine->getBufferManager());
+                                                                         this->queryId,
+                                                                         {mDataSource},
+                                                                         {sink},
+                                                                         {pipeline},
+                                                                         this->nodeEngine->getQueryManager(),
+                                                                         this->nodeEngine->getBufferManager());
     ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -683,9 +753,9 @@ TEST_F(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue) {
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&](){
-      mDataSource->running = false;
-      return;
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
+        mDataSource->running = false;
+        return;
     }));
     mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->running);
@@ -694,10 +764,13 @@ TEST_F(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue) {
 }
 
 TEST_F(SourceTest, testDataSourceOpen) {
-    DataSourceProxy mDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(), this->operatorId,
-                               this->numSourceLocalBuffersDefault,
-                               DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+    DataSourceProxy mDataSource(this->schema,
+                                this->nodeEngine->getBufferManager(),
+                                this->nodeEngine->getQueryManager(),
+                                this->operatorId,
+                                this->numSourceLocalBuffersDefault,
+                                DataSource::GatheringMode::INGESTION_RATE_MODE,
+                                {});
     // EXPECT_ANY_THROW(mDataSource.bufferManager->getAvailableBuffers()); currently not possible w/ Error: success :)
     mDataSource.open();
     auto size = mDataSource.bufferManager->getAvailableBuffers();
@@ -705,33 +778,49 @@ TEST_F(SourceTest, testDataSourceOpen) {
 }
 
 TEST_F(SourceTest, testBinarySourceGetType) {
-    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                                  this->nodeEngine->getQueryManager(), this->path_to_bin_file,
-                                  this->operatorId, this->numSourceLocalBuffersDefault, {});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->path_to_bin_file,
+                                  this->operatorId,
+                                  this->numSourceLocalBuffersDefault,
+                                  {});
     ASSERT_EQ(bDataSource.getType(), NES::SourceType::BINARY_SOURCE);
 }
 
 TEST_F(SourceTest, testBinarySourceWrongPath) {
-    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                             this->nodeEngine->getQueryManager(), this->wrong_filepath,
-                             this->operatorId, this->numSourceLocalBuffersDefault, {});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->wrong_filepath,
+                                  this->operatorId,
+                                  this->numSourceLocalBuffersDefault,
+                                  {});
     ASSERT_FALSE(bDataSource.input.is_open());
 }
 
 TEST_F(SourceTest, testBinarySourceCorrectPath) {
-    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                                  this->nodeEngine->getQueryManager(), this->path_to_bin_file,
-                                  this->operatorId, this->numSourceLocalBuffersDefault, {});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->path_to_bin_file,
+                                  this->operatorId,
+                                  this->numSourceLocalBuffersDefault,
+                                  {});
     ASSERT_TRUE(bDataSource.input.is_open());
 }
 
 TEST_F(SourceTest, testBinarySourceFillBuffer) {
-    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                                  this->nodeEngine->getQueryManager(), this->path_to_bin_file,
-                                  this->operatorId, this->numSourceLocalBuffersDefault, {});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->path_to_bin_file,
+                                  this->operatorId,
+                                  this->numSourceLocalBuffersDefault,
+                                  {});
     uint64_t tuple_size = this->schema->getSchemaSizeInBytes();
     uint64_t buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
-    uint64_t numberOfBuffers = 1; // increased by 1 every fillBuffer()
+    uint64_t numberOfBuffers = 1;// increased by 1 every fillBuffer()
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
     auto buf = this->GetEmptyBuffer();
     ASSERT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0);
@@ -743,12 +832,16 @@ TEST_F(SourceTest, testBinarySourceFillBuffer) {
 }
 
 TEST_F(SourceTest, testBinarySourceFillBufferRandomTimes) {
-    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                                  this->nodeEngine->getQueryManager(), this->path_to_bin_file,
-                                  this->operatorId, this->numSourceLocalBuffersDefault, {});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->path_to_bin_file,
+                                  this->operatorId,
+                                  this->numSourceLocalBuffersDefault,
+                                  {});
     uint64_t tuple_size = this->schema->getSchemaSizeInBytes();
     uint64_t buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
-    uint64_t numberOfBuffers = 1; // increased by 1 every fillBuffer()
+    uint64_t numberOfBuffers = 1;// increased by 1 every fillBuffer()
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
     auto buf = this->GetEmptyBuffer();
     auto iterations = rand() % 5;
@@ -756,17 +849,21 @@ TEST_F(SourceTest, testBinarySourceFillBufferRandomTimes) {
     ASSERT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0);
     for (int i = 0; i < iterations; ++i) {
         bDataSource.fillBuffer(*buf);
-        EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), (i+1) * numberOfTuplesToProcess);
-        EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), (i+1) * numberOfBuffers);
+        EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), (i + 1) * numberOfTuplesToProcess);
+        EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), (i + 1) * numberOfBuffers);
     }
     EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), iterations * numberOfTuplesToProcess);
     EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), iterations * numberOfBuffers);
 }
 
 TEST_F(SourceTest, testBinarySourceFillBufferContents) {
-    BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                                  this->nodeEngine->getQueryManager(), this->path_to_bin_file,
-                                  this->operatorId, this->numSourceLocalBuffersDefault, {});
+    BinarySourceProxy bDataSource(this->schema,
+                                  this->nodeEngine->getBufferManager(),
+                                  this->nodeEngine->getQueryManager(),
+                                  this->path_to_bin_file,
+                                  this->operatorId,
+                                  this->numSourceLocalBuffersDefault,
+                                  {});
     auto buf = this->GetEmptyBuffer();
     bDataSource.fillBuffer(*buf);
     auto content = buf->getBuffer<ysbRecord>();
@@ -776,38 +873,66 @@ TEST_F(SourceTest, testBinarySourceFillBufferContents) {
 }
 
 TEST_F(SourceTest, testCSVSourceGetType) {
-    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), this->path_to_file,
-                                 this->delimiter, 0, 0,
-                                 this->frequency, false, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 this->path_to_file,
+                                 this->delimiter,
+                                 0,
+                                 0,
+                                 this->frequency,
+                                 false,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
     ASSERT_EQ(csvDataSource.getType(), NES::SourceType::CSV_SOURCE);
 }
 
 TEST_F(SourceTest, testCSVSourceWrongFilePath) {
-    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), this->wrong_filepath,
-                                 this->delimiter, 0, 0,
-                                 this->frequency, false, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 this->wrong_filepath,
+                                 this->delimiter,
+                                 0,
+                                 0,
+                                 this->frequency,
+                                 false,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
     ASSERT_FALSE(csvDataSource.input.is_open());
 }
 
 TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
-    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), this->path_to_file,
-                                 this->delimiter, 0, 0,
-                                 this->frequency, false, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 this->path_to_file,
+                                 this->delimiter,
+                                 0,
+                                 0,
+                                 this->frequency,
+                                 false,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
     ASSERT_TRUE(csvDataSource.input.is_open());
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
-    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), this->path_to_file,
-                                 this->delimiter, 0, 0,
-                                 this->frequency, false, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 this->path_to_file,
+                                 this->delimiter,
+                                 0,
+                                 0,
+                                 this->frequency,
+                                 false,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
     csvDataSource.fileEnded = true;
     auto buf = this->GetEmptyBuffer();
     csvDataSource.fillBuffer(*buf);
@@ -815,11 +940,18 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
-    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), this->path_to_file,
-                                 this->delimiter, 1, 1,
-                                 this->frequency,true, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 this->path_to_file,
+                                 this->delimiter,
+                                 1,
+                                 1,
+                                 this->frequency,
+                                 true,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
     auto buf = this->GetEmptyBuffer();
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0);
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0);
@@ -830,32 +962,45 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
     // read actual header, get error from casting input to schema
-    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), this->path_to_file_head,
-                                 this->delimiter, 1, 1,
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 this->path_to_file_head,
+                                 this->delimiter,
+                                 1,
+                                 1,
                                  this->frequency,
-                                 false, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+                                 false,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
     auto buf = this->GetEmptyBuffer();
     try {
         csvDataSource.fillBuffer(*buf);
-    } catch (std::invalid_argument const & err) { // 1/2 throwables from stoull
+    } catch (std::invalid_argument const& err) {// 1/2 throwables from stoull
         // TODO: is the "overwrite" of the message a good thing?
         // EXPECT_EQ(err.what(),std::string("Invalid argument"));
-        EXPECT_EQ(err.what(),std::string("stoull"));
-    } catch (std::out_of_range const & err) { // 2/2 throwables from stoull
-        EXPECT_EQ(err.what(),std::string("Out of range"));
+        EXPECT_EQ(err.what(), std::string("stoull"));
+    } catch (std::out_of_range const& err) {// 2/2 throwables from stoull
+        EXPECT_EQ(err.what(), std::string("Out of range"));
     } catch (...) {
         FAIL() << "Uncaught exception in test for file with headers!" << std::endl;
     }
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
-    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), this->path_to_file_head,
-                                 this->delimiter, 1, 1,
-                                 this->frequency,true, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 this->path_to_file_head,
+                                 this->delimiter,
+                                 1,
+                                 1,
+                                 this->frequency,
+                                 true,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
     auto buf = this->GetEmptyBuffer();
     csvDataSource.fillBuffer(*buf);
     auto content = buf->getBuffer<ysbRecord>();
@@ -869,24 +1014,29 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
     // expectedNumberOfBuffers in c-tor, no looping
     uint64_t expectedNumberOfTuples = 100;
     uint64_t expectedNumberOfBuffers = 2;
-    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), this->path_to_file,
-                                 this->delimiter, 0,
-                                 expectedNumberOfBuffers, // file is not going to loop
-                                 this->frequency, false, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 this->path_to_file,
+                                 this->delimiter,
+                                 0,
+                                 expectedNumberOfBuffers,// file is not going to loop
+                                 this->frequency,
+                                 false,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
     ASSERT_FALSE(csvDataSource.fileEnded);
     ASSERT_FALSE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
-    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) { // relative to file size
+    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
         csvDataSource.fillBuffer(*buf);
         EXPECT_NE(buf->getNumberOfTuples(), 0);
         EXPECT_TRUE(buf.has_value());
         for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
             auto tuple = buf->getBuffer<ysbRecord>();
             EXPECT_STREQ(tuple->ad_type, "banner78");
-            EXPECT_TRUE((!strcmp(tuple->event_type, "view")
-                         || !strcmp(tuple->event_type, "click")
+            EXPECT_TRUE((!strcmp(tuple->event_type, "view") || !strcmp(tuple->event_type, "click")
                          || !strcmp(tuple->event_type, "purchase")));
         }
     }
@@ -902,11 +1052,18 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
     // expectedNumberOfBuffers set 0 in c-tor, looping
     uint64_t expectedNumberOfTuples = 104;
     uint64_t expectedNumberOfBuffers = 2;
-    CSVSourceProxy csvDataSource(this->schema,this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), this->path_to_file,
-                                 this->delimiter, 0, 0,
-                                 this->frequency, false, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 this->path_to_file,
+                                 this->delimiter,
+                                 0,
+                                 0,
+                                 this->frequency,
+                                 false,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
     ASSERT_FALSE(csvDataSource.fileEnded);
     ASSERT_TRUE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
@@ -922,23 +1079,29 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
 TEST_F(SourceTest, testCSVSourceIntTypes) {
     // use custom schema and file, read once
     SchemaPtr int_schema = Schema::create()
-        ->addField("uint64", UINT64)
-        ->addField("int64", INT64)
-        ->addField("uint32", UINT32)
-        ->addField("int32", INT32)
-        ->addField("uint16", UINT16)
-        ->addField("int16", INT16)
-        ->addField("uint8", UINT8)
-        ->addField("int8", INT8);
+                               ->addField("uint64", UINT64)
+                               ->addField("int64", INT64)
+                               ->addField("uint32", UINT32)
+                               ->addField("int32", INT32)
+                               ->addField("uint16", UINT16)
+                               ->addField("int16", INT16)
+                               ->addField("uint8", UINT8)
+                               ->addField("int8", INT8);
 
     std::string path_to_int_file = "../tests/test_data/every-int.csv";
 
-    CSVSourceProxy csvDataSource(int_schema, this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), path_to_int_file,
-                                 this->delimiter, 1,
-                                 1, // file is not going to loop
-                                 this->frequency, false, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(int_schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 path_to_int_file,
+                                 this->delimiter,
+                                 1,
+                                 1,// file is not going to loop
+                                 this->frequency,
+                                 false,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
 
     auto buf = this->GetEmptyBuffer();
     csvDataSource.fillBuffer(*buf);
@@ -983,18 +1146,22 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 
 TEST_F(SourceTest, testCSVSourceFloatTypes) {
     // use custom schema and file, read once
-    SchemaPtr float_schema = Schema::create()
-                           ->addField("float64", FLOAT64)
-                           ->addField("float32", FLOAT32);
+    SchemaPtr float_schema = Schema::create()->addField("float64", FLOAT64)->addField("float32", FLOAT32);
 
     std::string path_to_float_file = "../tests/test_data/every-float.csv";
 
-    CSVSourceProxy csvDataSource(float_schema,this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), path_to_float_file,
-                                 this->delimiter, 1,
-                                 1, // file is not going to loop
-                                 this->frequency, false, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(float_schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 path_to_float_file,
+                                 this->delimiter,
+                                 1,
+                                 1,// file is not going to loop
+                                 this->frequency,
+                                 false,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
 
     auto buf = this->GetEmptyBuffer();
     csvDataSource.fillBuffer(*buf);
@@ -1011,19 +1178,25 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     // use custom schema and file, read once
     SchemaPtr bool_schema = Schema::create()
-        ->addField("false", BOOLEAN)
-        ->addField("true", BOOLEAN)
-        ->addField("falsey", BOOLEAN)
-        ->addField("truthy", BOOLEAN);
+                                ->addField("false", BOOLEAN)
+                                ->addField("true", BOOLEAN)
+                                ->addField("falsey", BOOLEAN)
+                                ->addField("truthy", BOOLEAN);
 
     std::string path_to_bool_file = "../tests/test_data/every-boolean.csv";
 
-    CSVSourceProxy csvDataSource(bool_schema, this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(), path_to_bool_file,
-                                 this->delimiter, 1,
-                                 1, // file is not going to loop
-                                 this->frequency, false, this->operatorId,
-                                 this->numSourceLocalBuffersDefault, {});
+    CSVSourceProxy csvDataSource(bool_schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 path_to_bool_file,
+                                 this->delimiter,
+                                 1,
+                                 1,// file is not going to loop
+                                 this->frequency,
+                                 false,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
 
     auto buf = this->GetEmptyBuffer();
     csvDataSource.fillBuffer(*buf);
@@ -1035,10 +1208,14 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 }
 
 TEST_F(SourceTest, testGeneratorSourceGetType) {
-    GeneratorSourceProxy genDataSource(this->schema, this->nodeEngine->getBufferManager(),
-                                       this->nodeEngine->getQueryManager(), 1, this->operatorId,
+    GeneratorSourceProxy genDataSource(this->schema,
+                                       this->nodeEngine->getBufferManager(),
+                                       this->nodeEngine->getQueryManager(),
+                                       1,
+                                       this->operatorId,
                                        this->numSourceLocalBuffersDefault,
-                                       DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+                                       DataSource::GatheringMode::INGESTION_RATE_MODE,
+                                       {});
     ASSERT_EQ(genDataSource.getType(), SourceType::TEST_SOURCE);
 }
 
@@ -1046,7 +1223,8 @@ TEST_F(SourceTest, testDefaultSourceGetType) {
     DefaultSourceProxy defDataSource(this->schema,
                                      this->nodeEngine->getBufferManager(),
                                      this->nodeEngine->getQueryManager(),
-                                     1, 1000,
+                                     1,
+                                     1000,
                                      this->operatorId,
                                      this->numSourceLocalBuffersDefault,
                                      {});
@@ -1059,7 +1237,8 @@ TEST_F(SourceTest, testDefaultSourceReceiveData) {
     DefaultSourceProxy defDataSource(this->schema,
                                      this->nodeEngine->getBufferManager(),
                                      this->nodeEngine->getQueryManager(),
-                                     1, 1000,
+                                     1,
+                                     1000,
                                      this->operatorId,
                                      this->numSourceLocalBuffersDefault,
                                      {});
@@ -1073,26 +1252,28 @@ TEST_F(SourceTest, testDefaultSourceReceiveData) {
 TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
     uint64_t numBuffers = 2;
     auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-      uint64_t currentEventType = 0;
-      auto* ysbRecords = buffer.getBuffer<IngestionRecord>();
-      for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
-          ysbRecords[i].userId = i;
-          ysbRecords[i].pageId = 0;
-          ysbRecords[i].adType = 0;
-          ysbRecords[i].campaignId = rand() % 10000;
-          ysbRecords[i].eventType = (currentEventType++) % 3;
-          ysbRecords[i].currentMs = time(nullptr);
-          ysbRecords[i].ip = 0x01020304;
-          std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(IngestionRecord)
-                    << " addr=" << &ysbRecords[i] << std::endl;
-      }
+        uint64_t currentEventType = 0;
+        auto* ysbRecords = buffer.getBuffer<IngestionRecord>();
+        for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+            ysbRecords[i].userId = i;
+            ysbRecords[i].pageId = 0;
+            ysbRecords[i].adType = 0;
+            ysbRecords[i].campaignId = rand() % 10000;
+            ysbRecords[i].eventType = (currentEventType++) % 3;
+            ysbRecords[i].currentMs = time(nullptr);
+            ysbRecords[i].ip = 0x01020304;
+            std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(IngestionRecord)
+                      << " addr=" << &ysbRecords[i] << std::endl;
+        }
     };
 
     LambdaSourceProxy lambdaDataSource(lambdaSchema,
                                        this->nodeEngine->getBufferManager(),
                                        this->nodeEngine->getQueryManager(),
-                                       numBuffers, 0,
-                                       func, this->operatorId,
+                                       numBuffers,
+                                       0,
+                                       func,
+                                       this->operatorId,
                                        12,
                                        DataSource::GatheringMode::FREQUENCY_MODE,
                                        {});
@@ -1120,26 +1301,28 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
 TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
     uint64_t numBuffers = 2;
     auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-      uint64_t currentEventType = 0;
-      auto* ysbRecords = buffer.getBuffer<IngestionRecord>();
-      for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
-          ysbRecords[i].userId = i;
-          ysbRecords[i].pageId = 0;
-          ysbRecords[i].adType = 0;
-          ysbRecords[i].campaignId = rand() % 10000;
-          ysbRecords[i].eventType = (currentEventType++) % 3;
-          ysbRecords[i].currentMs = time(nullptr);
-          ysbRecords[i].ip = 0x01020304;
-          std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(IngestionRecord)
-                    << " addr=" << &ysbRecords[i] << std::endl;
-      }
+        uint64_t currentEventType = 0;
+        auto* ysbRecords = buffer.getBuffer<IngestionRecord>();
+        for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+            ysbRecords[i].userId = i;
+            ysbRecords[i].pageId = 0;
+            ysbRecords[i].adType = 0;
+            ysbRecords[i].campaignId = rand() % 10000;
+            ysbRecords[i].eventType = (currentEventType++) % 3;
+            ysbRecords[i].currentMs = time(nullptr);
+            ysbRecords[i].ip = 0x01020304;
+            std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(IngestionRecord)
+                      << " addr=" << &ysbRecords[i] << std::endl;
+        }
     };
 
     LambdaSourceProxy lambdaDataSource(lambdaSchema,
                                        this->nodeEngine->getBufferManager(),
                                        this->nodeEngine->getQueryManager(),
-                                       numBuffers, 1,
-                                       func, this->operatorId,
+                                       numBuffers,
+                                       1,
+                                       func,
+                                       this->operatorId,
                                        12,
                                        DataSource::GatheringMode::INGESTION_RATE_MODE,
                                        {});
@@ -1274,8 +1457,11 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
                                                MetricCatalog::NesMetrics(),
                                                this->nodeEngine->getBufferManager(),
                                                this->nodeEngine->getQueryManager(),
-                                               numBuffers, 1, this->operatorId,
-                                               this->numSourceLocalBuffersDefault, {});
+                                               numBuffers,
+                                               1,
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {});
     ASSERT_EQ(monitoringDataSource.getType(), SourceType::MONITORING_SOURCE);
 }
 
@@ -1289,8 +1475,11 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
                                                MetricCatalog::NesMetrics(),
                                                this->nodeEngine->getBufferManager(),
                                                this->nodeEngine->getQueryManager(),
-                                               numBuffers, 1, this->operatorId,
-                                               this->numSourceLocalBuffersDefault, {});
+                                               numBuffers,
+                                               1,
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {});
     // open starts the bufferManager, otherwise receiveData will fail
     monitoringDataSource.open();
     auto buf = monitoringDataSource.receiveData();
@@ -1314,8 +1503,11 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
                                                MetricCatalog::NesMetrics(),
                                                this->nodeEngine->getBufferManager(),
                                                this->nodeEngine->getQueryManager(),
-                                               numBuffers, 1, this->operatorId,
-                                               this->numSourceLocalBuffersDefault, {});
+                                               numBuffers,
+                                               1,
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {});
     // open starts the bufferManager, otherwise receiveData will fail
     monitoringDataSource.open();
     while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {

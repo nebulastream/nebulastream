@@ -132,18 +132,18 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
                                    Runtime::BufferManagerPtr bufferManager,
                                    DataSinkPtr sink)
         : PipelineExecutionContext(
-        0,
-        std::move(queryManager),
-        std::move(bufferManager),
-        [sink](TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
-          sink->writeData(buffer, worker);
-        },
-        [sink](TupleBuffer&) {
-        },
-        std::vector<Runtime::Execution::OperatorHandlerPtr>(),
-        12){
-        // nop
-    };
+            0,
+            std::move(queryManager),
+            std::move(bufferManager),
+            [sink](TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
+                sink->writeData(buffer, worker);
+            },
+            [sink](TupleBuffer&) {
+            },
+            std::vector<Runtime::Execution::OperatorHandlerPtr>(),
+            12){
+            // nop
+        };
 };
 
 class MockedExecutablePipeline : public ExecutablePipelineStage {
@@ -171,13 +171,13 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
     const std::string del = ",";
     double frequency = 550;
     SchemaPtr schema = Schema::create()
-        ->addField("user_id", DataTypeFactory::createFixedChar(16))
-        ->addField("page_id", DataTypeFactory::createFixedChar(16))
-        ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
-        ->addField("ad_type", DataTypeFactory::createFixedChar(9))
-        ->addField("event_type", DataTypeFactory::createFixedChar(9))
-        ->addField("current_ms", UINT64)
-        ->addField("ip", INT32);
+                           ->addField("user_id", DataTypeFactory::createFixedChar(16))
+                           ->addField("page_id", DataTypeFactory::createFixedChar(16))
+                           ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+                           ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+                           ->addField("event_type", DataTypeFactory::createFixedChar(9))
+                           ->addField("current_ms", UINT64)
+                           ->addField("ip", INT32);
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     uint64_t numberOfBuffers = 1;
@@ -188,14 +188,19 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                                                     this->nodeEngine->getBufferManager(),
                                                                     sink);
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
-    auto pipeline = ExecutablePipeline::create(0, queryId, context,
-                                               executableStage, 1,
-                                               {sink});
-    auto source = createCSVFileSource(schema, this->nodeEngine->getBufferManager(),
-                                      this->nodeEngine->getQueryManager(), this->path_to_file,
-                                      del, numberOfTuplesToProcess, numberOfBuffers,
-                                      frequency, false, 1,
-                                      12, {pipeline});
+    auto pipeline = ExecutablePipeline::create(0, queryId, context, executableStage, 1, {sink});
+    auto source = createCSVFileSource(schema,
+                                      this->nodeEngine->getBufferManager(),
+                                      this->nodeEngine->getQueryManager(),
+                                      this->path_to_file,
+                                      del,
+                                      numberOfTuplesToProcess,
+                                      numberOfBuffers,
+                                      frequency,
+                                      false,
+                                      1,
+                                      12,
+                                      {pipeline});
     auto executionPlan = ExecutableQueryPlan::create(queryId,
                                                      queryId,
                                                      {source},
