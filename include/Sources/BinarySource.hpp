@@ -69,7 +69,7 @@ class BinarySource : public DataSource {
   private:
     std::string file_path;
 
-    int file_size;
+    size_t file_size;
     uint64_t tuple_size;
 };
 
