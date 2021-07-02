@@ -484,7 +484,7 @@ TEST_F(SourceTest, testDataSourceGetOperatorId) {
         this->schema, this->nodeEngine->getBufferManager(),
         this->nodeEngine->getQueryManager(),
         this->operatorId, this->numSourceLocalBuffersDefault, {});
-    EXPECT_EQ(source->getOperatorId(), this->operatorId);
+    ASSERT_EQ(source->getOperatorId(), this->operatorId);
 }
 
 TEST_F(SourceTest, testDataSourceGetSchema) {
@@ -492,7 +492,7 @@ TEST_F(SourceTest, testDataSourceGetSchema) {
         this->schema, this->nodeEngine->getBufferManager(),
         this->nodeEngine->getQueryManager(),
         this->operatorId, this->numSourceLocalBuffersDefault, {});
-    EXPECT_EQ(source->getSchema(), this->schema);
+    ASSERT_EQ(source->getSchema(), this->schema);
 }
 
 TEST_F(SourceTest, testDataSourceRunningImmediately) {
@@ -500,7 +500,7 @@ TEST_F(SourceTest, testDataSourceRunningImmediately) {
                                this->nodeEngine->getQueryManager(), this->operatorId,
                                this->numSourceLocalBuffersDefault,
                                DataSource::GatheringMode::FREQUENCY_MODE, {});
-    EXPECT_FALSE(mDataSource.isRunning());
+    ASSERT_FALSE(mDataSource.isRunning());
 }
 
 TEST_F(SourceTest, testDataSourceStartSideEffectRunningTrue) {
@@ -531,7 +531,7 @@ TEST_F(SourceTest, testDataSourceStopImmediately) {
                                this->nodeEngine->getQueryManager(), this->operatorId,
                                this->numSourceLocalBuffersDefault,
                                DataSource::GatheringMode::FREQUENCY_MODE, {});
-    EXPECT_FALSE(mDataSource.stop(false));
+    ASSERT_FALSE(mDataSource.stop(false));
 }
 
 TEST_F(SourceTest, testDataSourceStopSideEffect) {
@@ -580,8 +580,8 @@ TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
         this->schema, this->nodeEngine->getBufferManager(),
         this->nodeEngine->getQueryManager(),
         this->operatorId, this->numSourceLocalBuffersDefault, {});
-    EXPECT_EQ(source->getGatheringModeFromString("frequency"), source->GatheringMode::FREQUENCY_MODE);
-    EXPECT_EQ(source->getGatheringModeFromString("ingestionrate"), source->GatheringMode::INGESTION_RATE_MODE);
+    ASSERT_EQ(source->getGatheringModeFromString("frequency"), source->GatheringMode::FREQUENCY_MODE);
+    ASSERT_EQ(source->getGatheringModeFromString("ingestionrate"), source->GatheringMode::INGESTION_RATE_MODE);
     EXPECT_ANY_THROW(source->getGatheringModeFromString("clearly_an_erroneous_string"));
 }
 
@@ -636,9 +636,9 @@ TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
                                                      {pipeline},
                                                      this->nodeEngine->getQueryManager(),
                                                      this->nodeEngine->getBufferManager());
-    EXPECT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
-    EXPECT_TRUE(this->nodeEngine->startQuery(this->queryId));
-    EXPECT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1));
     mDataSource->runningRoutine();
@@ -679,9 +679,9 @@ TEST_F(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    EXPECT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
-    EXPECT_TRUE(this->nodeEngine->startQuery(this->queryId));
-    EXPECT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&](){
       mDataSource->running = false;
@@ -708,21 +708,21 @@ TEST_F(SourceTest, testBinarySourceGetType) {
     BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
                                   this->nodeEngine->getQueryManager(), this->path_to_bin_file,
                                   this->operatorId, this->numSourceLocalBuffersDefault, {});
-    EXPECT_EQ(bDataSource.getType(), NES::SourceType::BINARY_SOURCE);
+    ASSERT_EQ(bDataSource.getType(), NES::SourceType::BINARY_SOURCE);
 }
 
 TEST_F(SourceTest, testBinarySourceWrongPath) {
     BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
                              this->nodeEngine->getQueryManager(), this->wrong_filepath,
                              this->operatorId, this->numSourceLocalBuffersDefault, {});
-    EXPECT_FALSE(bDataSource.input.is_open());
+    ASSERT_FALSE(bDataSource.input.is_open());
 }
 
 TEST_F(SourceTest, testBinarySourceCorrectPath) {
     BinarySourceProxy bDataSource(this->schema, this->nodeEngine->getBufferManager(),
                                   this->nodeEngine->getQueryManager(), this->path_to_bin_file,
                                   this->operatorId, this->numSourceLocalBuffersDefault, {});
-    EXPECT_TRUE(bDataSource.input.is_open());
+    ASSERT_TRUE(bDataSource.input.is_open());
 }
 
 TEST_F(SourceTest, testBinarySourceFillBuffer) {
@@ -734,8 +734,8 @@ TEST_F(SourceTest, testBinarySourceFillBuffer) {
     uint64_t numberOfBuffers = 1; // increased by 1 every fillBuffer()
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
     auto buf = this->GetEmptyBuffer();
-    EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0);
-    EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0);
+    ASSERT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0);
+    ASSERT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0);
     bDataSource.fillBuffer(*buf);
     EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), numberOfTuplesToProcess);
     EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), numberOfBuffers);
@@ -752,8 +752,8 @@ TEST_F(SourceTest, testBinarySourceFillBufferRandomTimes) {
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
     auto buf = this->GetEmptyBuffer();
     auto iterations = rand() % 5;
-    EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0);
-    EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0);
+    ASSERT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0);
+    ASSERT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0);
     for (int i = 0; i < iterations; ++i) {
         bDataSource.fillBuffer(*buf);
         EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), (i+1) * numberOfTuplesToProcess);
@@ -781,7 +781,7 @@ TEST_F(SourceTest, testCSVSourceGetType) {
                                  this->delimiter, 0, 0,
                                  this->frequency, false, this->operatorId,
                                  this->numSourceLocalBuffersDefault, {});
-    EXPECT_EQ(csvDataSource.getType(), NES::SourceType::CSV_SOURCE);
+    ASSERT_EQ(csvDataSource.getType(), NES::SourceType::CSV_SOURCE);
 }
 
 TEST_F(SourceTest, testCSVSourceWrongFilePath) {
@@ -790,7 +790,7 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
                                  this->delimiter, 0, 0,
                                  this->frequency, false, this->operatorId,
                                  this->numSourceLocalBuffersDefault, {});
-    EXPECT_FALSE(csvDataSource.input.is_open());
+    ASSERT_FALSE(csvDataSource.input.is_open());
 }
 
 TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
@@ -799,7 +799,7 @@ TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
                                  this->delimiter, 0, 0,
                                  this->frequency, false, this->operatorId,
                                  this->numSourceLocalBuffersDefault, {});
-    EXPECT_TRUE(csvDataSource.input.is_open());
+    ASSERT_TRUE(csvDataSource.input.is_open());
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
@@ -821,8 +821,8 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
                                  this->frequency,true, this->operatorId,
                                  this->numSourceLocalBuffersDefault, {});
     auto buf = this->GetEmptyBuffer();
-    EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0);
-    EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0);
+    ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0);
+    ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0);
     csvDataSource.fillBuffer(*buf);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 1);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 1);
@@ -875,8 +875,8 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
                                  expectedNumberOfBuffers, // file is not going to loop
                                  this->frequency, false, this->operatorId,
                                  this->numSourceLocalBuffersDefault, {});
-    EXPECT_FALSE(csvDataSource.fileEnded);
-    EXPECT_FALSE(csvDataSource.loopOnFile);
+    ASSERT_FALSE(csvDataSource.fileEnded);
+    ASSERT_FALSE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
     while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) { // relative to file size
         csvDataSource.fillBuffer(*buf);
@@ -907,8 +907,8 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
                                  this->delimiter, 0, 0,
                                  this->frequency, false, this->operatorId,
                                  this->numSourceLocalBuffersDefault, {});
-    EXPECT_FALSE(csvDataSource.fileEnded);
-    EXPECT_TRUE(csvDataSource.loopOnFile);
+    ASSERT_FALSE(csvDataSource.fileEnded);
+    ASSERT_TRUE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
     while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {
         csvDataSource.fillBuffer(*buf);
@@ -1039,7 +1039,7 @@ TEST_F(SourceTest, testGeneratorSourceGetType) {
                                        this->nodeEngine->getQueryManager(), 1, this->operatorId,
                                        this->numSourceLocalBuffersDefault,
                                        DataSource::GatheringMode::INGESTION_RATE_MODE, {});
-    EXPECT_EQ(genDataSource.getType(), SourceType::TEST_SOURCE);
+    ASSERT_EQ(genDataSource.getType(), SourceType::TEST_SOURCE);
 }
 
 TEST_F(SourceTest, testDefaultSourceGetType) {
@@ -1050,7 +1050,7 @@ TEST_F(SourceTest, testDefaultSourceGetType) {
                                      this->operatorId,
                                      this->numSourceLocalBuffersDefault,
                                      {});
-    EXPECT_EQ(defDataSource.getType(), SourceType::DEFAULT_SOURCE);
+    ASSERT_EQ(defDataSource.getType(), SourceType::DEFAULT_SOURCE);
 }
 
 TEST_F(SourceTest, testDefaultSourceReceiveData) {
@@ -1096,9 +1096,9 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
                                        12,
                                        DataSource::GatheringMode::FREQUENCY_MODE,
                                        {});
-    EXPECT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
-    EXPECT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0);
-    EXPECT_EQ(lambdaDataSource.numberOfTuplesToProduce, 52);
+    ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
+    ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0);
+    ASSERT_EQ(lambdaDataSource.numberOfTuplesToProduce, 52);
 
     // open is not needed here, since there's no local buff mgr to init
     while (lambdaDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
@@ -1143,8 +1143,8 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
                                        12,
                                        DataSource::GatheringMode::INGESTION_RATE_MODE,
                                        {});
-    EXPECT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
-    EXPECT_EQ(lambdaDataSource.gatheringIngestionRate, 1);
+    ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
+    ASSERT_EQ(lambdaDataSource.gatheringIngestionRate, 1);
 
     // open is not needed here, since there's no local buff mgr to init
     while (lambdaDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
@@ -1276,7 +1276,7 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
                                                this->nodeEngine->getQueryManager(),
                                                numBuffers, 1, this->operatorId,
                                                this->numSourceLocalBuffersDefault, {});
-    EXPECT_EQ(monitoringDataSource.getType(), SourceType::MONITORING_SOURCE);
+    ASSERT_EQ(monitoringDataSource.getType(), SourceType::MONITORING_SOURCE);
 }
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
@@ -1292,14 +1292,12 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
                                                numBuffers, 1, this->operatorId,
                                                this->numSourceLocalBuffersDefault, {});
     // open starts the bufferManager, otherwise receiveData will fail
-    // TODO: issue to open automatically before receiveData in DefaultSource
     monitoringDataSource.open();
-    // TODO: monitoring source could follow fillBuffer instead of metricGroup->getSample
     auto buf = monitoringDataSource.receiveData();
-    EXPECT_TRUE(buf.has_value());
-    EXPECT_EQ(buf->getNumberOfTuples(), 1);
-    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1);
-    EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1);
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(buf->getNumberOfTuples(), 1);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1);
     GroupedValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), buf.value());
     EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
     EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
@@ -1319,9 +1317,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
                                                numBuffers, 1, this->operatorId,
                                                this->numSourceLocalBuffersDefault, {});
     // open starts the bufferManager, otherwise receiveData will fail
-    // TODO: issue to open automatically before receiveData in DefaultSource
     monitoringDataSource.open();
-    // TODO: monitoring source could follow fillBuffer instead of metricGroup->getSample
     while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = monitoringDataSource.receiveData();
         GroupedValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), optBuf.value());
