@@ -192,6 +192,13 @@ class SharedQueryPlan {
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
+    /**
+     * @brief Recursively remove the operator and all its children operators that have no other downstream operator
+     * @param operatorToRemove : the operator to remove
+     * @return true if successful else false
+     */
+    bool removeOperator(const OperatorNodePtr& operatorToRemove);
+
     SharedQueryId sharedQueryId;
     QueryPlanPtr queryPlan;
     std::map<QueryId, std::vector<OperatorNodePtr>> queryIdToSinkOperatorMap;

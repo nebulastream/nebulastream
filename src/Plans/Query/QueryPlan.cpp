@@ -260,35 +260,4 @@ QueryPlanPtr QueryPlan::copy() {
     operatorIdToOperatorMap.clear();
     return QueryPlan::create(queryId, INVALID_QUERY_ID, duplicateRootOperators);
 }
-
-bool QueryPlan::removeRootOperatorFromPlan(OperatorNodePtr rootOperatorToRemove) {
-
-    auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](const OperatorNodePtr& rootOperator) {
-        return rootOperator->getId() == rootOperatorToRemove->getId();
-    });
-
-    if (found == rootOperators.end()) {
-        NES_ERROR("QueryPlan: Unable to locate input root operator to be removed in the query plan. "
-                  + rootOperatorToRemove->toString());
-        return false;
-    }
-    removeOperatorFromPlan(rootOperatorToRemove);
-    rootOperators.erase(found);
-    return true;
-}
-
-bool QueryPlan::removeOperatorFromPlan(const OperatorNodePtr& operatorToRemove) {
-    auto children = operatorToRemove->getChildren();
-    for (auto& child : children) {
-        if (child->getParents().size() == 1) {
-            if (!removeOperatorFromPlan(child->as<OperatorNode>())) {
-                NES_ERROR("QueryPlan: unable to remove operator " + child->toString());
-                return false;
-            }
-        }
-        operatorToRemove->removeChild(child);
-    }
-    return true;
-}
-
 }// namespace NES

@@ -214,13 +214,6 @@ class QueryPlan {
     void setQuerySubPlanId(uint64_t querySubPlanId);
 
     /**
-     * @brief Remove dependent up-stream and down-stream operators from the query plan
-     * @param rootOperatorToRemove : the operator to remove
-     * @return true if successful else false
-     */
-    bool removeRootOperatorFromPlan(OperatorNodePtr rootOperatorToRemove);
-
-    /**
      * @brief Create copy of the query plan
      * @return copy of the query plan
      */
@@ -245,13 +238,6 @@ class QueryPlan {
      * @brief initialize an empty query plan
      */
     QueryPlan();
-
-    /**
-     * @brief Recursively remove the operator and all its children operators that have no other down-stream operator
-     * @param operatorToRemove:
-     * @return true if successful else false
-     */
-    bool removeOperatorFromPlan(const OperatorNodePtr& operatorToRemove);
 
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
