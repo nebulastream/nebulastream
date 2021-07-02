@@ -9,8 +9,8 @@
 **/.DS_Store
 **/._.DS_Store
 .debs
-.git
-.github
+.git/
+.github/
 
 # Build files
 build
