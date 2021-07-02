@@ -79,7 +79,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
     string path2 =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort;
+        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort
+        +" --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "+
+        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc(path2.c_str());
     uint64_t coordinatorPid = coordinatorProc.id();
     uint64_t workerPid = workerProc.id();
@@ -121,7 +123,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
     string path2 =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort;
+        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort+
+        " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "+
+        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t coordinatorPid = coordinatorProc.id();
@@ -192,7 +196,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
     string path2 =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort;
+        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort+
+        " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "+
+        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";;
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t coordinatorPid = coordinatorProc.id();

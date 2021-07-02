@@ -80,14 +80,18 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidUserQueryWithFi
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
     string cmdWrk1 =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort;
+        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort +
+        " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "+
+        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
     string worker2RPCPort = std::to_string(rpcPort + 6);
     string worker2DataPort = std::to_string(dataPort + 2);
     string cmdWrk2 =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort + " --dataPort=" + worker2DataPort;
+        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort + " --dataPort=" + worker2DataPort +
+        " --logicalStreamName=default_logical --physicalStreamName=test_stream2 --sourceType=DefaultSource "+
+        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";;
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 

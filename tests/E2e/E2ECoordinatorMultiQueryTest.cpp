@@ -86,7 +86,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
     string cmdWrk = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
-        + " --dataPort=" + worker1DataPort + " --numberOfSlots=8";
+        + " --dataPort=" + worker1DataPort + " --numberOfSlots=8"+
+        " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "+
+        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc(cmdWrk.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
 
@@ -180,7 +182,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
     string cmdWrk =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort;
+        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort+
+        " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "+
+        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc(cmdWrk.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
 
