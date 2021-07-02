@@ -34,6 +34,9 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
+class SharedQueryPlanChangeLog;
+using SharedQueryPlanChangeLogPtr = std::unique_ptr<SharedQueryPlanChangeLog>;
+
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
@@ -96,11 +99,18 @@ class SharedQueryPlan {
     static SharedQueryPlanPtr create(QueryPlanPtr queryPlan);
 
     /**
-     * @brief Remove a Query Id and associated Global Query Node with sink operators and clear the sink global query node lists
+     * @brief Remove a Query, the associated exclusive operators, and clear sink and query id vectors
      * @param queryId : the original query Id
      * @return true if successful
      */
-    bool removeQueryId(QueryId queryId);
+    bool removeQuery(QueryId queryId);
+
+    /**
+     * Add the addition information to the change log
+     * @param upstreamOperator: the upstream operator to which operator needs to be added
+     * @param newOperator : the newly added operator
+     */
+    void addAdditionToChangeLog(const OperatorNodePtr& upstreamOperator, const OperatorNodePtr& newOperator);
 
     /**
      * @brief Clear all MetaData information
@@ -173,13 +183,6 @@ class SharedQueryPlan {
     void setAsOld();
 
     /**
-     * @brief Add a global query metadata into this
-     * @param queryMetaData :  the input query metadata
-     * @return true if successful else false
-     */
-    bool addSharedQueryMetaData(const SharedQueryPlanPtr& queryMetaData);
-
-    /**
      * @brief Add the query id and sink operators from the query plan to the Shared Query Plan
      * @param queryPlan: the source query plan
      * @return true if successful else false
@@ -194,6 +197,7 @@ class SharedQueryPlan {
     std::map<QueryId, std::vector<OperatorNodePtr>> queryIdToSinkOperatorMap;
     std::vector<QueryId> queryIds;
     std::vector<OperatorNodePtr> sinkOperators;
+    SharedQueryPlanChangeLogPtr changeLog;
     bool deployed;
     bool newMetaData;
 };

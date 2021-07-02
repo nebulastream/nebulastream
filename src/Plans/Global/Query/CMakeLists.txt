@@ -16,4 +16,5 @@ add_source_nes(
         GlobalQueryPlan.cpp
         GlobalQueryNode.cpp
         SharedQueryPlan.cpp
+        SharedQueryPlanChangeLog.cpp
 )

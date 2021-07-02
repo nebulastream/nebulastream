@@ -48,7 +48,7 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
         //Fetch the shared query plan id and remove the query and associated operators
         SharedQueryId sharedQueryId = queryIdToSharedQueryIdMap[queryId];
         SharedQueryPlanPtr sharedQueryPlan = sharedQueryIdToPlanMap[sharedQueryId];
-        if (!sharedQueryPlan->removeQueryId(queryId)) {
+        if (!sharedQueryPlan->removeQuery(queryId)) {
             throw Exception("GlobalQueryPlan: Unable to remove query with id " + std::to_string(queryId)
                             + " from shared query plan with id " + std::to_string(sharedQueryId));
         }

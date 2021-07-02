@@ -18,6 +18,7 @@
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <algorithm>
@@ -37,6 +38,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     }
     this->queryPlan->setQueryId(sharedQueryId);
     queryIdToSinkOperatorMap[queryId] = rootOperators;
+    changeLog = SharedQueryPlanChangeLog::create();
     sinkOperators = rootOperators;
     queryIds.push_back(queryId);
 }
@@ -45,7 +47,7 @@ SharedQueryPlanPtr SharedQueryPlan::create(QueryPlanPtr queryPlan) {
     return std::make_shared<SharedQueryPlan>(SharedQueryPlan(std::move(queryPlan)));
 }
 
-bool SharedQueryPlan::removeQueryId(QueryId queryId) {
+bool SharedQueryPlan::removeQuery(QueryId queryId) {
     NES_DEBUG("SharedQueryPlan: Remove the Query Id " << queryId << " and associated Global Query Nodes with sink operators.");
     if (queryIdToSinkOperatorMap.find(queryId) == queryIdToSinkOperatorMap.end()) {
         NES_ERROR("SharedQueryPlan: query id " << queryId << " is not present in metadata information.");
@@ -123,20 +125,6 @@ void SharedQueryPlan::clear() {
     markAsNotDeployed();
 }
 
-bool SharedQueryPlan::addSharedQueryMetaData(const SharedQueryPlanPtr& queryMetaData) {
-
-    NES_DEBUG("SharedQueryPlan: Adding query metadata to this");
-    auto newQueryIds = queryMetaData->getQueryIds();
-    queryIds.insert(queryIds.end(), newQueryIds.begin(), newQueryIds.end());
-    auto newSinkOperators = queryMetaData->getSinkOperators();
-    sinkOperators.insert(sinkOperators.end(), newSinkOperators.begin(), newSinkOperators.end());
-    auto newQueryIdToSinkOperatorMap = queryMetaData->getQueryIdToSinkOperatorMap();
-    queryIdToSinkOperatorMap.insert(newQueryIdToSinkOperatorMap.begin(), newQueryIdToSinkOperatorMap.end());
-    //Mark the meta data as updated but not deployed
-    markAsNotDeployed();
-    return true;
-}
-
 std::vector<QueryId> SharedQueryPlan::getQueryIds() { return queryIds; }
 
 QueryPlanPtr SharedQueryPlan::getQueryPlan() { return queryPlan; }
@@ -152,4 +140,9 @@ bool SharedQueryPlan::addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan) 
     markAsNotDeployed();
     return false;
 }
+
+void SharedQueryPlan::addAdditionToChangeLog(const OperatorNodePtr& upstreamOperator, const OperatorNodePtr& newOperator) {
+    changeLog->addAddition(upstreamOperator, newOperator->getId());
+}
+
 }// namespace NES
