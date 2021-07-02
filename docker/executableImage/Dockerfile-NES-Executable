@@ -1,5 +1,5 @@
 FROM nebulastream/nes-build-image:latest AS buildimg
-ARG WORKDIR
+
 COPY ./ /nebulastream
 
 RUN mkdir -p /nebulastream/build && \
