@@ -34,27 +34,20 @@ StringSignatureBasedCompleteQueryMergerRulePtr StringSignatureBasedCompleteQuery
 bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
-    std::vector<SharedQueryPlanPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryPlans();
-    if (allNewSharedQueryMetaData.empty()) {
+    auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
+    if (queryPlansToAdd.empty()) {
         NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    std::vector<SharedQueryPlanPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryPlans();
     NES_DEBUG("SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
-    for (auto& targetSharedQueryMetaData : allNewSharedQueryMetaData) {
+    for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
-        for (auto& hostSharedQueryMetaData : allOldSharedQueryMetaData) {
-
-            if (targetSharedQueryMetaData->getSharedQueryId() == hostSharedQueryMetaData->getSharedQueryId()) {
-                continue;
-            }
-
+        auto allSharedQueryPlans = globalQueryPlan->getAllSharedQueryPlans();
+        for (auto& hostSharedQueryMetaData : allSharedQueryPlans) {
             auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
-            auto targetQueryPlan = targetSharedQueryMetaData->getQueryPlan();
-
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
             std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
@@ -103,9 +96,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
                 hostQueryPlan->addRootOperator(targetSinkOperator);
             }
 
-            hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
-            //Clear the target shared query metadata
-            targetSharedQueryMetaData->clear();
+            hostSharedQueryMetaData->addQueryIdAndSinkOperators(targetQueryPlan);
             //Update the shared query meta data
             globalQueryPlan->updateSharedQueryPlan(hostSharedQueryMetaData);
             // exit the for loop as we found a matching address shared query meta data
@@ -113,7 +104,8 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
             break;
         }
         if (!merged) {
-            allOldSharedQueryMetaData.emplace_back(targetSharedQueryMetaData);
+            NES_DEBUG("SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
+            globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }
     //Remove all empty shared query metadata
