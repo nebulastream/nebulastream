@@ -107,7 +107,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanByAddingSameQueryPlanTwice) {
     plan->setQueryId(1);
     globalQueryPlan->createNewSharedQueryPlan(plan);
     //Assert
-    EXPECT_THROW(globalQueryPlan->createNewSharedQueryPlan(plan), Exception);
+    EXPECT_THROW(globalQueryPlan->addQueryPlan(plan), Exception);
 }
 
 /**
