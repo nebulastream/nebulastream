@@ -1,6 +1,6 @@
 FROM nebulastream/nes-build-image:latest AS buildimg
 ARG WORKDIR
-COPY $WORKDIR /nebulastream
+COPY ./$WORKDIR /nebulastream
 
 RUN mkdir -p /nebulastream/build && \
     cd /nebulastream/build && \
