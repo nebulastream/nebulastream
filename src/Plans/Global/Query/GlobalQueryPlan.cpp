@@ -56,9 +56,10 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
         queryIdToSharedQueryIdMap.erase(queryId);
     } else {
         // Check if the query is in the list of query plans and remove it
-        queryPlansToAdd.erase(std::find_if(queryPlansToAdd.begin(), queryPlansToAdd.end(), [&queryId](const QueryPlanPtr& queryPlan) {
-            return queryPlan->getQueryId() == queryId;
-        }));
+        queryPlansToAdd.erase(
+            std::find_if(queryPlansToAdd.begin(), queryPlansToAdd.end(), [&queryId](const QueryPlanPtr& queryPlan) {
+                return queryPlan->getQueryId() == queryId;
+            }));
     }
 }
 
