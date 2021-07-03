@@ -61,6 +61,7 @@ jobs:
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
+          fetch-depth: '0'
       - name: Fetch git history
         run: |
           git fetch --prune --tags
