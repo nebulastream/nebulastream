@@ -613,7 +613,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
 
 TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
 
-    setupTopologyAndStreamCatalog({8, 4, 4});
+    setupTopologyAndStreamCatalog({10, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -645,6 +645,8 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
 
     std::shared_ptr<QueryPlan> planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
+    planToDeploy->setQueryId(queryPlan1->getQueryId());
+
     placementStrategy->updateGlobalExecutionPlan(planToDeploy);
 
     // new Query
@@ -664,10 +666,28 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     globalQueryPlan->addQueryPlan(queryPlan2);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
+    // new query
+    auto queryPlan3 = Query::from("car")
+                          .filter(Attribute("id") < 45)
+                          .map(Attribute("newId") = 2)
+                          .map(Attribute("newNewId") = 4)
+                          .sink(PrintSinkDescriptor::create())
+                          .getQueryPlan();
+    queryPlan3->setQueryId(3);
+
+    queryPlan3 = queryReWritePhase->execute(queryPlan3);
+    queryPlan3 = typeInferencePhase->execute(queryPlan3);
+    queryPlan3 = topologySpecificReWrite->execute(queryPlan3);
+    queryPlan3 = typeInferencePhase->execute(queryPlan3);
+    z3InferencePhase->execute(queryPlan3);
+
+    globalQueryPlan->addQueryPlan(queryPlan3);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
     updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
 
     planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
-    planToDeploy->setQueryId(1);
+    planToDeploy->setQueryId(queryPlan1->getQueryId());
 
     auto mergedPlacementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
                                                                                     globalExecutionPlan,
