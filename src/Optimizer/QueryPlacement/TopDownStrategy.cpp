@@ -77,6 +77,15 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
         NES_DEBUG("TopDownStrategy: place query plan with id : " << queryId);
         placeQueryPlan(queryPlan);
+
+        for (const auto& executionNode : globalExecutionPlan->getExecutionNodesByQueryId(queryId)) {
+            for (const auto& querySubPlan : executionNode->getQuerySubPlans(queryId)) {
+                NES_DEBUG("TopDownStrategy::partiallyUpdateGlobalExecutionPlan:\nQuerySubPlanId: "
+                          << querySubPlan->getQuerySubPlanId() << "\n"
+                          << querySubPlan->toString());
+            }
+        }
+
         NES_DEBUG("TopDownStrategy: Add system generated operators for query with id : " << queryId);
         addNetworkSourceAndSinkOperators(queryPlan);
         NES_DEBUG("TopDownStrategy: clear the temporary map : " << queryId);
