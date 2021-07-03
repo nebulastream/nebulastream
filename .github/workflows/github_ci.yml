@@ -63,7 +63,7 @@ jobs:
           ssh-strict: 'false'
       - name: Fetch git history
         run: |
-          git fetch --prune --unshallow --tags
+          git fetch --prune --tags
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
