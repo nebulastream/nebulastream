@@ -284,6 +284,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
         ExecutionNodePtr parentExecutionNode = operatorToExecutionNodeMap[parentOperator->getId()];
         bool allChildrenPlaced = true;
         if (executionNode->getId() != parentExecutionNode->getId()) {
+        if (executionNode->getId() != parentExecutionNode->getId() && !operatorAndParentConnected(operatorNode, parentOperator)) {
 
             NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Parent and its child operator are placed on different "
                       "physical node.");
@@ -390,6 +391,44 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                 // Add the parent-child relation
                 if (previousParent) {
                     globalExecutionPlan->addExecutionNodeAsParentTo(previousParent->getId(), candidateExecutionNode);
+                }
+            }
+        }
+        if (executionNode->getId() == parentExecutionNode->getId()) {
+            auto childPlan = operatorToSubPlan[operatorNode->getId()];
+            auto parentPlan = operatorToSubPlan[parentOperator->getId()];
+            auto parentOperatorInSubPlan = parentPlan->getOperatorWithId(parentOperator->getId());
+            if (childPlan->getQuerySubPlanId() != parentPlan->getQuerySubPlanId()
+                && parentOperatorInSubPlan->getChildren().empty()) {
+                NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Combining parent and child as they are in different "
+                          "plans but same execution plan.");
+                auto parentCopy = parentOperator->copy();
+                for (const auto& child : parentOperator->getChildren()) {
+                    const std::shared_ptr<OperatorNode>& childOp = child->as<OperatorNode>();
+                    if (childPlan->hasOperatorWithId(childOp->getId())) {
+                        const OperatorNodePtr& childOpInSubPlan = childPlan->getOperatorWithId(childOp->getId());
+                        childOpInSubPlan->addParent(parentCopy);
+                        childPlan->removeAsRootOperator(childOpInSubPlan);
+                    }
+                }
+                childPlan->addRootOperator(parentCopy);
+                operatorToSubPlan[parentCopy->getId()] = childPlan;
+                parentOperatorInSubPlan->removeAllParent();
+                if (parentOperatorInSubPlan->getChildren().empty()) {
+                    parentPlan->removeAsRootOperator(parentOperator);
+                }
+                if (parentPlan->getRootOperators().empty()) {
+                    auto parentExecutionPlans = parentExecutionNode->getQuerySubPlans(queryId);
+                    auto parentRef = std::find_if(parentExecutionPlans.begin(),
+                                                  parentExecutionPlans.end(),
+                                                  [parentPlan](const QueryPlanPtr& querySubPlan) {
+                                                      return parentPlan->getQuerySubPlanId() == querySubPlan->getQuerySubPlanId();
+                                                  });
+                    if (parentRef == parentExecutionPlans.end()) {
+                        throw Exception("BasePlacementStrategy::placeNetworkOperator: Parent plan not found in execution node.");
+                    }
+                    parentExecutionPlans.erase(parentRef);
+                    parentExecutionNode->updateQuerySubPlans(queryId, parentExecutionPlans);
                 }
             }
         }
@@ -531,6 +570,39 @@ bool BasePlacementStrategy::assignMappingToTopology(const NES::TopologyPtr topol
         ++mappingIterator;
     }
     return true;
+}
+
+bool BasePlacementStrategy::operatorAndParentConnected(const OperatorNodePtr& source, const OperatorNodePtr& destination) {
+    auto sourceNode = operatorToExecutionNodeMap[source->getId()];
+    auto targetNode = operatorToExecutionNodeMap[destination->getId()];
+    auto sourceSubPlan = operatorToSubPlan[source->getId()];
+    auto destinationSubPlan = operatorToSubPlan[destination->getId()];
+
+    auto sourceSinks = sourceSubPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto destinationSources = destinationSubPlan->getSourceOperators();
+
+    if (sourceSinks.empty() || destinationSources.empty()) {
+        return false;
+    }
+    std::vector<SinkLogicalOperatorNodePtr> sinks =
+        std::vector<SinkLogicalOperatorNodePtr>{sourceSinks.begin(), sourceSinks.end()};
+
+    while (!sinks.empty()) {
+        auto sink = sinks.back();
+        sinks.pop_back();
+        if (sink->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+            auto networkSinkDescriptor = sink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>();
+            auto nextDestinationPlan = operatorToSubPlan[networkSinkDescriptor->getNesPartition().getOperatorId()];
+            if (nextDestinationPlan->hasOperatorWithId(destination->getId())) {
+                return true;
+            }
+            auto destinationSinks = nextDestinationPlan->getOperatorByType<SinkLogicalOperatorNode>();
+            for (const auto& destinationSink : destinationSinks) {
+                sinks.emplace_back(destinationSink);
+            }
+        }
+    }
+    return false;
 }
 
 }// namespace NES::Optimizer
