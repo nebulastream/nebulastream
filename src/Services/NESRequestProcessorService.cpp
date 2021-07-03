@@ -64,11 +64,8 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     z3Context = std::make_shared<z3::context>();
-    globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
-                                                                               streamCatalog,
-                                                                               globalQueryPlan,
-                                                                               z3Context,
-                                                                               queryMergerRule);
+    globalQueryPlanUpdatePhase =
+        Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, z3Context, queryMergerRule);
 }
 
 NESRequestProcessorService::~NESRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
