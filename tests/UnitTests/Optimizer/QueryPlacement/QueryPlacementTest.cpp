@@ -39,7 +39,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryMetaData.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -511,7 +511,9 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    auto z3InferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   NES::Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
     auto globalQueryPlan = GlobalQueryPlan::create();
 
@@ -527,7 +529,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
     globalQueryPlan->addQueryPlan(queryPlan1);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 
     std::shared_ptr<QueryPlan> planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
     placementStrategy->updateGlobalExecutionPlan(planToDeploy);
@@ -549,7 +551,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
     globalQueryPlan->addQueryPlan(queryPlan2);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 
     planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
     planToDeploy->setQueryId(1);
@@ -626,7 +628,9 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    auto z3InferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   NES::Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
     auto globalQueryPlan = GlobalQueryPlan::create();
 
@@ -642,7 +646,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     globalQueryPlan->addQueryPlan(queryPlan1);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 
     std::shared_ptr<QueryPlan> planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
     planToDeploy->setQueryId(queryPlan1->getQueryId());
@@ -684,7 +688,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     globalQueryPlan->addQueryPlan(queryPlan3);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 
     planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
     planToDeploy->setQueryId(queryPlan1->getQueryId());

@@ -161,7 +161,14 @@ class MockDataSource : public DataSource {
                    size_t numSourceLocalBuffers,
                    GatheringMode gatheringMode,
                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
-        : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors){
+        : DataSource(schema,
+                     bufferManager,
+                     queryManager,
+                     operatorId,
+                     operatorId,
+                     numSourceLocalBuffers,
+                     gatheringMode,
+                     executableSuccessors){
             // nop
         };
     MOCK_METHOD(void, runningRoutineWithFrequency, ());
@@ -181,7 +188,14 @@ class MockDataSourceWithRunningRoutine : public DataSource {
                                      size_t numSourceLocalBuffers,
                                      GatheringMode gatheringMode,
                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
-        : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors){
+        : DataSource(schema,
+                     bufferManager,
+                     queryManager,
+                     operatorId,
+                     operatorId,
+                     numSourceLocalBuffers,
+                     gatheringMode,
+                     executableSuccessors){
             // nop
         };
     MOCK_METHOD(void, runningRoutine, ());
@@ -207,6 +221,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
         : DataSource(schema,
                      bufferManager,
                      queryManager,
+                     operatorId,
                      operatorId,
                      numSourceLocalBuffers,
                      gatheringMode,
@@ -251,6 +266,7 @@ class BinarySourceProxy : public BinarySource {
                        queryManager,
                        file_path,
                        operatorId,
+                       operatorId,
                        numSourceLocalBuffers,
                        DataSource::FREQUENCY_MODE,
                        successors){};
@@ -288,6 +304,7 @@ class CSVSourceProxy : public CSVSource {
                     frequency,
                     skipHeader,
                     operatorId,
+                    operatorId,
                     numSourceLocalBuffers,
                     DataSource::FREQUENCY_MODE,
                     successors){};
@@ -316,6 +333,7 @@ class GeneratorSourceProxy : public GeneratorSource {
                           queryManager,
                           numbersOfBufferToProduce,
                           operatorId,
+                          operatorId,
                           numSourceLocalBuffers,
                           gatheringMode,
                           successors){};
@@ -337,6 +355,7 @@ class DefaultSourceProxy : public DefaultSource {
                         queryManager,
                         numbersOfBufferToProduce,
                         frequency,
+                        operatorId,
                         operatorId,
                         numSourceLocalBuffers,
                         successors){};
@@ -361,6 +380,7 @@ class LambdaSourceProxy : public LambdaSource {
                        numbersOfBufferToProduce,
                        gatheringValue,
                        std::move(generationFunction),
+                       operatorId,
                        operatorId,
                        numSourceLocalBuffers,
                        gatheringMode,
@@ -388,6 +408,7 @@ class MonitoringSourceProxy : public MonitoringSource {
                            queryManager,
                            numbersOfBufferToProduce,
                            frequency,
+                           operatorId,
                            operatorId,
                            numSourceLocalBuffers,
                            successors){};
@@ -521,6 +542,7 @@ TEST_F(SourceTest, testDataSourceGetOperatorId) {
                                                                                this->nodeEngine->getBufferManager(),
                                                                                this->nodeEngine->getQueryManager(),
                                                                                this->operatorId,
+                                                                               this->operatorId,
                                                                                this->numSourceLocalBuffersDefault,
                                                                                {});
     ASSERT_EQ(source->getOperatorId(), this->operatorId);
@@ -530,6 +552,7 @@ TEST_F(SourceTest, testDataSourceGetSchema) {
     const DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(this->schema,
                                                                                this->nodeEngine->getBufferManager(),
                                                                                this->nodeEngine->getQueryManager(),
+                                                                               this->operatorId,
                                                                                this->operatorId,
                                                                                this->numSourceLocalBuffersDefault,
                                                                                {});
@@ -642,6 +665,7 @@ TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
                                                                                this->nodeEngine->getBufferManager(),
                                                                                this->nodeEngine->getQueryManager(),
                                                                                this->operatorId,
+                                                                               this->operatorId,
                                                                                this->numSourceLocalBuffersDefault,
                                                                                {});
     ASSERT_EQ(source->getGatheringModeFromString("frequency"), source->GatheringMode::FREQUENCY_MODE);
@@ -679,7 +703,12 @@ TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-freq-routine.csv", false);
+    auto sink = createCSVFileSink(UtilityFunctions::getNextOperatorId(),
+                                  this->schema,
+                                  0,
+                                  this->nodeEngine,
+                                  "source-test-freq-routine.csv",
+                                  false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -721,7 +750,12 @@ TEST_F(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-ingest-routine.csv", false);
+    auto sink = createCSVFileSink(UtilityFunctions::getNextOperatorId(),
+                                  this->schema,
+                                  0,
+                                  this->nodeEngine,
+                                  "source-test-ingest-routine.csv",
+                                  false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -1274,10 +1308,9 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
                                        0,
                                        func,
                                        this->operatorId,
-                                       1,
-                                                    12,
-                                                    DataSource::GatheringMode::FREQUENCY_MODE,
-                                                    {});
+                                       12,
+                                       DataSource::GatheringMode::FREQUENCY_MODE,
+                                       {});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0u);
     ASSERT_EQ(lambdaDataSource.numberOfTuplesToProduce, 52u);
@@ -1324,10 +1357,9 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
                                        1,
                                        func,
                                        this->operatorId,
-                                       1,
-                                                    12,
-                                                    DataSource::GatheringMode::INGESTION_RATE_MODE,
-                                                    {});
+                                       12,
+                                       DataSource::GatheringMode::INGESTION_RATE_MODE,
+                                       {});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.gatheringIngestionRate, 1u);
     lambdaDataSource.open();
