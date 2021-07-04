@@ -136,7 +136,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan, std::ve
                       << queryId);
 
         NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
-        return runTypeInferencePhase(queryId);
+        return true;
     } catch (Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }

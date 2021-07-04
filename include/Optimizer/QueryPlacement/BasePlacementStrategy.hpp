@@ -132,7 +132,7 @@ class BasePlacementStrategy {
      * @brief Add network source and sinks between query sub plans allocated on different execution nodes
      * @param queryPlan: the original query plan
      */
-    void addNetworkSourceAndSinkOperators(const QueryPlanPtr& queryPlan);
+    void addNetworkSourceAndSinkOperators(const QueryPlanPtr& queryPlan, bool partialPlacement = false);
 
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id
@@ -182,7 +182,8 @@ class BasePlacementStrategy {
      * @param queryId : the id of the query
      * @param operatorNode : the logical operator to which source or sink operator need to be attached
      */
-    void placeNetworkOperator(QueryId queryId, const OperatorNodePtr& operatorNode);
+    void placeNetworkOperator(QueryId queryId, const OperatorNodePtr& operatorNode, bool partialPlacement);
+
 
     /**
      * @brief Add an execution node as root
