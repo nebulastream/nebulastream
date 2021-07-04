@@ -19,8 +19,10 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <CoordinatorRPCService.pb.h>
+#include <NodeStats.pb.h>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 namespace NES {
@@ -30,7 +32,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr
       addRemovePhysicalStream() {
     NES_DEBUG("CoordinatorEngine()");
 }
-CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); }
+CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
 
 uint64_t CoordinatorEngine::registerNode(std::string address,
                                          int64_t grpcPort,

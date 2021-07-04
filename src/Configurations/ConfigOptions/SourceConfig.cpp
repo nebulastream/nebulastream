@@ -24,8 +24,6 @@
 
 namespace NES {
 
-//TODO: check what crashed by changing the three main function to work with vectors
-
 SourceConfigPtr SourceConfig::create() { return std::make_shared<SourceConfig>(SourceConfig()); }
 
 SourceConfig::SourceConfig() {
@@ -116,7 +114,6 @@ void SourceConfig::resetSourceOptions() {
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
     setPhysicalStreamName(physicalStreamName->getDefaultValue());
-    // BDAPRO still don't know where the default values come from
     setLogicalStreamName(logicalStreamName->getDefaultValue());
     setSkipHeader(skipHeader->getDefaultValue());
 }
@@ -154,6 +151,7 @@ void SourceConfig::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesTo
 void SourceConfig::setPhysicalStreamName(std::string physicalStreamNameValue) {
     physicalStreamName->setValue(physicalStreamNameValue);
 }
+
 void SourceConfig::setLogicalStreamName(std::vector<std::string> logicalStreamNameValue) {
     logicalStreamName->setValue(logicalStreamNameValue);
 }

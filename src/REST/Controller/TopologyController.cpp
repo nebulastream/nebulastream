@@ -19,6 +19,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <vector>
+#include <REST/runtime_utils.hpp>
 using namespace web;
 using namespace http;
 
@@ -38,5 +39,4 @@ void TopologyController::handleGet(std::vector<utility::string_t> paths, http_re
     resourceNotFoundImpl(message);
     return;
 }
-
 }// namespace NES

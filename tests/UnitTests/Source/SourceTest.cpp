@@ -1168,11 +1168,9 @@ TEST_F(SourceTest, DISABLED_testTwoLambdaSourcesMultiThread) {
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();
     auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    sleep(10);
-
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
-   // sleep(2);
+    sleep(2);
     std::cout << "E2EBase: Remove query" << std::endl;
     NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no valid stop quest");
     std::cout << "E2EBase: wait for stop" << std::endl;

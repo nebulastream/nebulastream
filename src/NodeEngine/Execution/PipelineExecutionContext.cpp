@@ -35,7 +35,7 @@ PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId,
       emitFunctionHandler(std::move(emitFunction)),
       emitToQueryManagerFunctionHandler(std::move(emitToQueryManagerFunctionHandler)),
       operatorHandlers(std::move(operatorHandlers)) {
-//  NES_DEBUG("Created PipelineExecutionContext() " << toString());
+    NES_DEBUG("Created PipelineExecutionContext() " << toString());
 }
 
 PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId,

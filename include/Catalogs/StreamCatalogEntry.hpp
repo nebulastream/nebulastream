@@ -18,6 +18,7 @@
 #define INCLUDE_CATALOGS_STREAMCATALOGENTRY_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/PhysicalStreamState.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -92,6 +93,12 @@ class StreamCatalogEntry {
      */
     std::vector<std::string> getLogicalName();
 
+    /**
+     * @brief get PhysicalStreamState which contains count (#logicalstreams for that physicalStream) and state (e.g. misconfigured, regular)
+     * @return PhysicalStreamState object
+     */
+    PhysicalStreamState getPhysicalStreamState();
+
     std::string toString();
 
   private:
@@ -99,6 +106,7 @@ class StreamCatalogEntry {
     std::string physicalStreamName;
     std::vector<std::string> logicalStreamName;
     TopologyNodePtr node;
+    PhysicalStreamState physicalStreamState;
 };
 
 }// namespace NES

@@ -16,10 +16,13 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/Logger.hpp>
+#include <sstream>
 namespace NES {
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::create(SourceConfigPtr sourceConfig) {
