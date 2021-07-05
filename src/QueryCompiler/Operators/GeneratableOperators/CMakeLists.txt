@@ -24,4 +24,5 @@ add_source_nes(
 
 add_subdirectory(Windowing)
 add_subdirectory(Joining)
+add_subdirectory(CEP)
 

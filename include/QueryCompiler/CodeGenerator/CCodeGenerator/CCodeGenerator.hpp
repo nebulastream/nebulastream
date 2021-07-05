@@ -130,6 +130,18 @@ class CCodeGenerator : public CodeGenerator {
         uint64_t windowOperatorId) override;
 
     /**
+    * generates code for CEP Iterations
+    * @param minIteration - defined minimal occurence of the event
+    * @param maxIteration - defined maximal occurence of the event
+    * @param context - includes the context of the used fields
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForCEPIteration(
+        uint64_t minIteration,
+        uint64_t maxIteration,
+        PipelineContextPtr context) override;
+
+    /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
     * @param generatableWindowAggregation window aggregation.
@@ -203,6 +215,9 @@ class CCodeGenerator : public CodeGenerator {
     static BinaryOperatorStatement getBuffer(const VariableDeclaration& tupleBufferVariable);
     VariableDeclaration
     getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
+    // COMMENT
+    VariableDeclaration
+    getCEPOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
     static BinaryOperatorStatement getWatermark(const VariableDeclaration& tupleBufferVariable);
     static BinaryOperatorStatement getOriginId(const VariableDeclaration& tupleBufferVariable);
     BinaryOperatorStatement getSequenceNumber(VariableDeclaration tupleBufferVariable);

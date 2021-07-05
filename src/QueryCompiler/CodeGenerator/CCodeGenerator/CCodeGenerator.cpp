@@ -49,6 +49,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -798,6 +799,47 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
     generateCodeForWatermarkUpdaterWindow(context, windowHandlerVariableDeclration);
+    return true;
+}
+
+bool CCodeGenerator::generateCodeForCEPIteration(uint64_t minIteration, uint64_t maxIteration, PipelineContextPtr context) {
+
+    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: start generating code for CEPITerations");
+    auto tf = getTypeFactory();
+    auto handler = CEP::CEPOperatorHandler::create();
+    auto index = context->registerOperatorHandler(handler);
+    auto recordHandler = context->getRecordHandler();
+
+    auto CEPOperatorHandlerDeclaration =
+        getCEPOperatorHandler(context, context->code->varDeclarationExecutionContext, index);
+    auto CEPHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "CEPOperatorHandler");
+    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: get CEP OperatorHandler created CEPHandlerVariableDeclaration");
+    context->code->variableInitStmts.emplace_back(
+        VarDeclStatement(CEPHandlerVariableDeclaration).assign(VarRef(CEPHandlerVariableDeclaration)).copy());
+
+    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: start generating code for CounterStatement");
+    //check counter, get parameter and call countercheck funtion
+    auto CounterCheck = VariableDeclaration::create(tf->createAnonymusDataType("bool"), "counter");
+    auto counterCheckCall = call("CEP::CEPOperatorHandler::CounterCheck");
+    auto constantMinIteration =
+        Constant(tf->createValueType(DataTypeFactory::createBasicValue(minIteration)));
+    auto constantMaxIteration =
+        Constant(tf->createValueType(DataTypeFactory::createBasicValue(maxIteration)));
+    auto constantCounter =
+        Constant(tf->createValueType(DataTypeFactory::createBasicValue(handler->getCounter())));
+    counterCheckCall->addParameter(constantMinIteration);
+    counterCheckCall->addParameter(constantMaxIteration);
+    counterCheckCall->addParameter(constantCounter);
+
+    auto CounterStatement = VarDeclStatement(CounterCheck).assign(counterCheckCall);
+    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: created CounterStatement");
+    auto ifCounterStatement = IF(CounterStatement);
+
+    // first, add the head and brackets of the if-Counter statement
+    context->code->currentCodeInsertionPoint->addStatement(ifCounterStatement.createCopy());
+    // second, move insertion point. the rest of the pipeline will be generated within the brackets of the if-statement
+    context->code->currentCodeInsertionPoint = ifCounterStatement.getCompoundStatement();
+
     return true;
 }
 
@@ -2196,6 +2238,24 @@ VariableDeclaration CCodeGenerator::getWindowOperatorHandler(const PipelineConte
     context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
 
     return windowOperatorHandlerDeclaration;
+}
+
+VariableDeclaration CCodeGenerator::getCEPOperatorHandler(const PipelineContextPtr& context,
+                                                             const VariableDeclaration& tupleBufferVariable,
+                                                             uint64_t CEPOperatorIndex) {
+    auto tf = getTypeFactory();
+    auto executionContextRef = VarRefStatement(tupleBufferVariable);
+    auto CEPOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "CEPOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<CEP::CEPOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(CEPOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+    // auto windowOperatorHandler = executionContext.getOperatorHandler<Windowing::WindowOperatorHandler>(windowOperatorIndex)
+    auto windowOperatorStatement =
+        VarDeclStatement(CEPOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+
+    return CEPOperatorHandlerDeclaration;
 }
 
 VariableDeclaration CCodeGenerator::getJoinOperatorHandler(const PipelineContextPtr& context,
