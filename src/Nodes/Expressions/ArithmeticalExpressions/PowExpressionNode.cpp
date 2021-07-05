@@ -42,7 +42,8 @@ void PowExpressionNode::inferStamp(SchemaPtr schema) {
         NES_TRACE("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to Int64.");
     } else if (stamp->isFloat()) {
         stamp = DataTypeFactory::createDouble();
-        NES_TRACE("PowExpressionNode: Update Float stamp (assigned in ArithmeticalBinaryExpressionNode) to Double: " << toString());
+        NES_TRACE(
+            "PowExpressionNode: Update Float stamp (assigned in ArithmeticalBinaryExpressionNode) to Double: " << toString());
     }
 }
 

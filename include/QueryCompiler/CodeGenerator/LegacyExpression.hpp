@@ -69,9 +69,7 @@ class Predicate : public LegacyExpression {
 
 class UnaryPredicate : public LegacyExpression {
   public:
-    UnaryPredicate(UnaryOperatorType const& op,
-              LegacyExpressionPtr const& child,
-              bool bracket = true);
+    UnaryPredicate(UnaryOperatorType const& op, LegacyExpressionPtr const& child, bool bracket = true);
 
     ExpressionStatementPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     [[nodiscard]] std::string toString() const override;

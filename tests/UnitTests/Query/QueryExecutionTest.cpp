@@ -456,31 +456,31 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                             ->addField("result_mod_float", BasicType::FLOAT64)
                             ->addField("result_ceil", BasicType::FLOAT64)
                             ->addField("result_exp", BasicType::FLOAT64)
-                            ->addField("result_batch_test", BasicType::BOOLEAN)
-            ;
+                            ->addField("result_batch_test", BasicType::BOOLEAN);
 
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor)
-                    .filter(Attribute("id") < 6)
-                    .map(Attribute("result_pow_int") = POWER(2, Attribute("one") + Attribute("id")))        // int
-                    .map(Attribute("result_pow_float") = POWER(2.0, Attribute("one") + Attribute("id")))    // float
-                    .map(Attribute("result_mod_int") = 20 % (Attribute("id") + 1))                                               // int
-                    .map(Attribute("result_mod_float") = MOD(-20.0, Attribute("id") + Attribute("one")))    // float
-                    .map(Attribute("result_ceil") = ABS(ROUND(FLOOR(CEIL((Attribute("id")) / 2.0)))))  // more detailed tests below
-                    .map(Attribute("result_exp") = EXP(Attribute("result_ceil")))
-                    .map(Attribute("result_batch_test") = // batch test of many arithmetic operators, should always be 1/TRUE:
-                            // test functionality of many functions at once through combination with their inverse function:
-                            Attribute("result_ceil") == LOG(EXP(Attribute("result_ceil")))
-                            && Attribute("result_ceil") == SQRT(POWER(Attribute("result_ceil"), 2))
-                            && Attribute("result_ceil") == LOG10(POWER(10,Attribute("result_ceil")))
-                            // test FLOOR, ROUND, CEIL, ABS
-                            && FLOOR(Attribute("id") / 2.0) <= Attribute("id") / 2.0 && Attribute("id") / 2.0 <= CEIL(Attribute("id") / 2.0)
-                            && FLOOR(Attribute("id") / 2.0) <= ROUND(Attribute("id") / 2.0) && ROUND(Attribute("id") / 2.0) <= CEIL(Attribute("id") / 2.0)
-                            && ABS(1 - Attribute("id")) == ABS(Attribute("id") - 1)
-                            )
-                    .sink(testSinkDescriptor);
+                     .filter(Attribute("id") < 6)
+                     .map(Attribute("result_pow_int") = POWER(2, Attribute("one") + Attribute("id")))    // int
+                     .map(Attribute("result_pow_float") = POWER(2.0, Attribute("one") + Attribute("id")))// float
+                     .map(Attribute("result_mod_int") = 20 % (Attribute("id") + 1))                      // int
+                     .map(Attribute("result_mod_float") = MOD(-20.0, Attribute("id") + Attribute("one")))// float
+                     .map(Attribute("result_ceil") = ABS(ROUND(FLOOR(CEIL((Attribute("id")) / 2.0)))))// more detailed tests below
+                     .map(Attribute("result_exp") = EXP(Attribute("result_ceil")))
+                     .map(Attribute("result_batch_test") =// batch test of many arithmetic operators, should always be 1/TRUE:
+                          // test functionality of many functions at once through combination with their inverse function:
+                          Attribute("result_ceil") == LOG(EXP(Attribute("result_ceil")))
+                              && Attribute("result_ceil") == SQRT(POWER(Attribute("result_ceil"), 2))
+                              && Attribute("result_ceil") == LOG10(POWER(10, Attribute("result_ceil")))
+                              // test FLOOR, ROUND, CEIL, ABS
+                              && FLOOR(Attribute("id") / 2.0) <= Attribute("id") / 2.0
+                              && Attribute("id") / 2.0 <= CEIL(Attribute("id") / 2.0)
+                              && FLOOR(Attribute("id") / 2.0) <= ROUND(Attribute("id") / 2.0)
+                              && ROUND(Attribute("id") / 2.0) <= CEIL(Attribute("id") / 2.0)
+                              && ABS(1 - Attribute("id")) == ABS(Attribute("id") - 1))
+                     .sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -506,16 +506,17 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1U);
 
     std::string expectedContent =
-            "+----------------------------------------------------+\n"
-            "|id:INT64|one:INT64|value:INT64|result_pow_int:INT64|result_pow_float:FLOAT64|result_mod_int:INT64|result_mod_float:FLOAT64|result_ceil:FLOAT64|result_exp:FLOAT64|result_batch_test:BOOLEAN|\n"
-            "+----------------------------------------------------+\n"
-            "|0|1|0|2|2.000000|0|-0.000000|0.000000|1.000000|1|\n"
-            "|1|1|1|4|4.000000|0|-0.000000|1.000000|2.718282|1|\n"
-            "|2|1|0|8|8.000000|2|-2.000000|1.000000|2.718282|1|\n"
-            "|3|1|1|16|16.000000|0|-0.000000|2.000000|7.389056|1|\n"
-            "|4|1|0|32|32.000000|0|-0.000000|2.000000|7.389056|1|\n"
-            "|5|1|1|64|64.000000|2|-2.000000|3.000000|20.085537|1|\n"
-            "+----------------------------------------------------+";
+        "+----------------------------------------------------+\n"
+        "|id:INT64|one:INT64|value:INT64|result_pow_int:INT64|result_pow_float:FLOAT64|result_mod_int:INT64|result_mod_float:"
+        "FLOAT64|result_ceil:FLOAT64|result_exp:FLOAT64|result_batch_test:BOOLEAN|\n"
+        "+----------------------------------------------------+\n"
+        "|0|1|0|2|2.000000|0|-0.000000|0.000000|1.000000|1|\n"
+        "|1|1|1|4|4.000000|0|-0.000000|1.000000|2.718282|1|\n"
+        "|2|1|0|8|8.000000|2|-2.000000|1.000000|2.718282|1|\n"
+        "|3|1|1|16|16.000000|0|-0.000000|2.000000|7.389056|1|\n"
+        "|4|1|0|32|32.000000|0|-0.000000|2.000000|7.389056|1|\n"
+        "|5|1|1|64|64.000000|2|-2.000000|3.000000|20.085537|1|\n"
+        "+----------------------------------------------------+";
 
     auto resultBuffer = testSink->get(0);
 
