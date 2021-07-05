@@ -128,23 +128,16 @@ LegacyExpressionPtr Predicate::getLeft() const { return left; }
 
 LegacyExpressionPtr Predicate::getRight() const { return right; }
 
-UnaryPredicate::UnaryPredicate(const UnaryOperatorType& op,
-                     const LegacyExpressionPtr& child,
-                     bool bracket)
+UnaryPredicate::UnaryPredicate(const UnaryOperatorType& op, const LegacyExpressionPtr& child, bool bracket)
     : op(op), child(child), bracket(bracket) {}
 
 LegacyExpressionPtr UnaryPredicate::copy() const { return std::make_shared<UnaryPredicate>(*this); }
 
 ExpressionStatementPtr UnaryPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
     if (bracket) {
-        return UnaryOperatorStatement(*(child->generateCode(code, recordHandler)),
-                                       op,
-                                       BRACKETS)
-            .copy();
+        return UnaryOperatorStatement(*(child->generateCode(code, recordHandler)), op, BRACKETS).copy();
     }
-    return UnaryOperatorStatement(*(child->generateCode(code, recordHandler)),
-                                   op)
-        .copy();
+    return UnaryOperatorStatement(*(child->generateCode(code, recordHandler)), op).copy();
 }
 
 std::string UnaryPredicate::toString() const {
@@ -152,7 +145,7 @@ std::string UnaryPredicate::toString() const {
     if (bracket) {
         stream << "(";
     }
-    stream << toCodeExpression(op)->code_ << " " << child->toString(); // todo this isnt right yet
+    stream << toCodeExpression(op)->code_ << " " << child->toString();// todo this isnt right yet
     if (bracket) {
         stream << ")";
     }

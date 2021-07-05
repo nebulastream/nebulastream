@@ -34,8 +34,8 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <utility>
 namespace NES {
-    
-// calls of binary operators with two ExpressionNodes 
+
+// calls of binary operators with two ExpressionNodes
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
     return AddExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
@@ -63,37 +63,21 @@ ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
 }
 
 // calls of unary operators with ExpressionNode
-ExpressionNodePtr ABS(const ExpressionNodePtr& exp) {
-    return AbsExpressionNode::create(exp);
-}
+ExpressionNodePtr ABS(const ExpressionNodePtr& exp) { return AbsExpressionNode::create(exp); }
 
-ExpressionNodePtr SQRT(const ExpressionNodePtr& exp) {
-    return SqrtExpressionNode::create(exp);
-}
+ExpressionNodePtr SQRT(const ExpressionNodePtr& exp) { return SqrtExpressionNode::create(exp); }
 
-ExpressionNodePtr EXP(const ExpressionNodePtr& exp) {
-    return ExpExpressionNode::create(exp);
-}
+ExpressionNodePtr EXP(const ExpressionNodePtr& exp) { return ExpExpressionNode::create(exp); }
 
-ExpressionNodePtr LOG(const ExpressionNodePtr& exp) {
-    return LogExpressionNode::create(exp);
-}
+ExpressionNodePtr LOG(const ExpressionNodePtr& exp) { return LogExpressionNode::create(exp); }
 
-ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) {
-    return Log10ExpressionNode::create(exp);
-}
+ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) { return Log10ExpressionNode::create(exp); }
 
-ExpressionNodePtr ROUND(const ExpressionNodePtr& exp) {
-    return RoundExpressionNode::create(exp);
-}
+ExpressionNodePtr ROUND(const ExpressionNodePtr& exp) { return RoundExpressionNode::create(exp); }
 
-ExpressionNodePtr CEIL(const ExpressionNodePtr& exp) {
-    return CeilExpressionNode::create(exp);
-}
+ExpressionNodePtr CEIL(const ExpressionNodePtr& exp) { return CeilExpressionNode::create(exp); }
 
-ExpressionNodePtr FLOOR(const ExpressionNodePtr& exp) {
-    return FloorExpressionNode::create(exp);
-}
+ExpressionNodePtr FLOOR(const ExpressionNodePtr& exp) { return FloorExpressionNode::create(exp); }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp) {
     return std::move(leftExp)

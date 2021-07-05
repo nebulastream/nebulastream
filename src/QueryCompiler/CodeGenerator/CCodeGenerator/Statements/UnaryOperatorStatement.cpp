@@ -44,7 +44,8 @@ std::string toString(const UnaryOperatorType& type) {
 }
 
 CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type) {
-    const char* const names[] = {"abs", "&", "~", "ceil", "*", "exp", "floor", "log", "log10", "!", "++", "--", "++", "--", "round", "sizeof", "sqrt"};
+    const char* const names[] =
+        {"abs", "&", "~", "ceil", "*", "exp", "floor", "log", "log10", "!", "++", "--", "++", "--", "round", "sizeof", "sqrt"};
     return std::make_shared<CodeExpression>(names[type]);
 }
 
@@ -61,7 +62,8 @@ CodeExpressionPtr UnaryOperatorStatement::getCode() const {
     if (POSTFIX_INCREMENT_OP == op || POSTFIX_DECREMENT_OP == op) {
         /* postfix operators */
         code = combine(expr_->getCode(), toCodeExpression(op));
-    } else if (ABSOLUTE_VALUE_OF_OP == op || ROUND_OP == op || CEIL_OP == op || EXP_OP == op || FLOOR_OP == op || LOG_OP == op || LOG10_OP == op || SIZE_OF_TYPE_OP == op || SQRT_OP == op) {
+    } else if (ABSOLUTE_VALUE_OF_OP == op || ROUND_OP == op || CEIL_OP == op || EXP_OP == op || FLOOR_OP == op || LOG_OP == op
+               || LOG10_OP == op || SIZE_OF_TYPE_OP == op || SQRT_OP == op) {
         code = combine(toCodeExpression(op), std::make_shared<CodeExpression>("("));
         code = combine(code, expr_->getCode());
         code = combine(code, std::make_shared<CodeExpression>(")"));
