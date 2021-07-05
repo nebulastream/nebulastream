@@ -24,9 +24,14 @@ NES::Optimizer::RandomSearchStrategy::RandomSearchStrategy(NES::GlobalExecutionP
                             std::move(typeInferencePhase),
                             std::move(streamCatalog)) {}
 
+// TODO: maybe mock this class instead
 bool NES::Optimizer::RandomSearchStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
 
-    std::vector<std::vector<bool>> placementMatrix = {{true, false, false}, {false, true, false}, {false, false, true}};
+//    // basic case: one operator per node
+//    std::vector<std::vector<bool>> placementMatrix = {{true, false, false}, {false, true, false}, {false, false, true}};
+
+    // allowing multiple operators per node
+    std::vector<std::vector<bool>> placementMatrix = {{true, false, false}, {false, false, false}, {false, true, true}};
 
     assignMappingToTopology(topology, queryPlan, placementMatrix);
 
