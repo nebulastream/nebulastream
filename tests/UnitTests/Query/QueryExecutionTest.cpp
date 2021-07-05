@@ -450,13 +450,13 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                             ->addField("id", BasicType::INT64)
                             ->addField("one", BasicType::INT64)
                             ->addField("value", BasicType::INT64)
-                            ->addField("result_pow_int", BasicType::UINT32)
+                            ->addField("result_pow_int", BasicType::INT64)
                             ->addField("result_pow_float", BasicType::FLOAT64)
                             ->addField("result_mod_int", BasicType::INT64)
                             ->addField("result_mod_float", BasicType::FLOAT64)
-                            ->addField("result_floor", BasicType::FLOAT64)
+                            ->addField("result_ceil", BasicType::FLOAT64)
                             ->addField("result_exp", BasicType::FLOAT64)
-                            ->addField("result_equality", BasicType::BOOLEAN)
+                            ->addField("result_batch_test", BasicType::BOOLEAN)
             ;
 
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
@@ -468,12 +468,17 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                     .map(Attribute("result_pow_float") = POWER(2.0, Attribute("one") + Attribute("id")))    // float
                     .map(Attribute("result_mod_int") = 20 % (Attribute("id") + 1))                                               // int
                     .map(Attribute("result_mod_float") = MOD(-20.0, Attribute("id") + Attribute("one")))    // float
-                    .map(Attribute("result_floor") = ABS(ROUND(FLOOR(CEIL((Attribute("id")) / 2.0)))))
-                    .map(Attribute("result_exp") = EXP(Attribute("result_floor")))
-                    .map(Attribute("result_equality") = // tests functionality of many functions at once through combination with their inverse function. Should always be 1/TRUE.
-                            Attribute("result_floor") == LOG(EXP(Attribute("result_floor")))
-                            && Attribute("result_floor") == SQRT(POWER(Attribute("result_floor"), 2))
-                            && Attribute("result_floor") == LOG10(POWER(10,Attribute("result_floor")))
+                    .map(Attribute("result_ceil") = ABS(ROUND(FLOOR(CEIL((Attribute("id")) / 2.0)))))  // more detailed tests below
+                    .map(Attribute("result_exp") = EXP(Attribute("result_ceil")))
+                    .map(Attribute("result_batch_test") = // batch test of many arithmetic operators, should always be 1/TRUE:
+                            // test functionality of many functions at once through combination with their inverse function:
+                            Attribute("result_ceil") == LOG(EXP(Attribute("result_ceil")))
+                            && Attribute("result_ceil") == SQRT(POWER(Attribute("result_ceil"), 2))
+                            && Attribute("result_ceil") == LOG10(POWER(10,Attribute("result_ceil")))
+                            // test FLOOR, ROUND, CEIL, ABS
+                            && FLOOR(Attribute("id") / 2.0) <= Attribute("id") / 2.0 && Attribute("id") / 2.0 <= CEIL(Attribute("id") / 2.0)
+                            && FLOOR(Attribute("id") / 2.0) <= ROUND(Attribute("id") / 2.0) && ROUND(Attribute("id") / 2.0) <= CEIL(Attribute("id") / 2.0)
+                            && ABS(1 - Attribute("id")) == ABS(Attribute("id") - 1)
                             )
                     .sink(testSinkDescriptor);
 
@@ -502,7 +507,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
 
     std::string expectedContent =
             "+----------------------------------------------------+\n"
-            "|id:INT64|one:INT64|value:INT64|result_pow_int:UINT32|result_pow_float:FLOAT64|result_mod_int:INT64|result_mod_float:FLOAT64|result_floor:FLOAT64|result_exp:FLOAT64|result_equality:BOOLEAN|\n"
+            "|id:INT64|one:INT64|value:INT64|result_pow_int:INT64|result_pow_float:FLOAT64|result_mod_int:INT64|result_mod_float:FLOAT64|result_ceil:FLOAT64|result_exp:FLOAT64|result_batch_test:BOOLEAN|\n"
             "+----------------------------------------------------+\n"
             "|0|1|0|2|2.000000|0|-0.000000|0.000000|1.000000|1|\n"
             "|1|1|1|4|4.000000|0|-0.000000|1.000000|2.718282|1|\n"

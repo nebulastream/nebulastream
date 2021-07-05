@@ -362,8 +362,8 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
 
     EXPECT_TRUE(f1->getDataType()->isEquals(DataTypeFactory::createInt32()));
     EXPECT_TRUE(f2->getDataType()->isEquals(DataTypeFactory::createDouble()));
-    EXPECT_TRUE(powIntInt->getDataType()->isEquals(DataTypeFactory::createUInt32()));
-    EXPECT_TRUE(powFloatInt->getDataType()->isEquals(DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max())));
+    EXPECT_TRUE(powIntInt->getDataType()->isEquals(DataTypeFactory::createInt64()));
+    EXPECT_TRUE(powFloatInt->getDataType()->isEquals(DataTypeFactory::createDouble()));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 4);
