@@ -13,7 +13,5 @@
 # limitations under the License.
 
 add_source_nes(
-        PhysicalCEPIterationOperator.cpp
+        CEPOperatorHandler.cpp
 )
-
-add_subdirectory(CEPOperatorHandler)

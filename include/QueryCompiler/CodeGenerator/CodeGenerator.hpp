@@ -144,6 +144,19 @@ class CodeGenerator {
         uint64_t windowOperatorIndex) = 0;
 
     /**
+    * generates code for CEP Iterations
+    * @param minIteration - defined minimal occurence of the event
+    * @param maxIteration - defined maximal occurence of the event
+    * @param context - includes the context of the used fields
+    * @return flag if the generation was successful.
+    */
+
+    virtual bool generateCodeForCEPIteration(
+        uint64_t minIteration,
+        uint64_t maxIeration,
+        PipelineContextPtr context) = 0;
+
+    /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
     * @param context The context of the current pipeline.

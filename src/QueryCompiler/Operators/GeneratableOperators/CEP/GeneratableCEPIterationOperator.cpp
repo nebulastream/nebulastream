@@ -45,16 +45,12 @@ GeneratableOperatorPtr GeneratableCEPIterationOperator::create(OperatorId id,
 }
 
 void GeneratableCEPIterationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto field = mapExpression->getField();
-    auto assignment = mapExpression->getAssignment();
-    // todo remove if code gen can handle expressions
-    auto legacyMapExpression = TranslateToLegacyExpression::create()->transformExpression(assignment);
-    codegen->generateCodeForMap(AttributeField::create(field->getFieldName(), field->getStamp()), legacyMapExpression, context);
+
+    codegen->generateCodeForCEPIteration(minIteration, maxIteration, context);
 }
 
-const std::string GeneratableCEPIterationOperator::toString() const { return "GeneratableCEPIterationOperator"; }
-
 OperatorNodePtr GeneratableCEPIterationOperator::copy() { return create(id, inputSchema, outputSchema, minIteration, maxIteration); }
+std::string GeneratableCEPIterationOperator::toString() const { return "GeneratableCEPIterationOperator"; }
 
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
