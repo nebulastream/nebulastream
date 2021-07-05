@@ -16,6 +16,7 @@ add_source_nes(
         BasePlacementStrategy.cpp
         BottomUpStrategy.cpp
         TopDownStrategy.cpp
+        RandomSearchStrategy.cpp
         PlacementStrategyFactory.cpp
 #        LowLatencyStrategy.cpp
 #        HighAvailabilityStrategy.cpp
