@@ -1377,4 +1377,53 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5UL);
 }
 
+/**
+ * @brief This test generates a predicate with string comparision
+ */
+TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOP) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
+
+    /* prepare objects for test */
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = QueryCompilation::CCodeGenerator::create();
+    auto context = QueryCompilation::PipelineContext::create();
+    context->pipelineName = "1";
+    auto inputSchema = source->getSchema();
+    codeGenerator->generateCodeForScan(inputSchema, inputSchema, context);
+
+    //define number of iterations
+    codeGenerator->generateCodeForCEPIteration(2,4,context);
+
+    /* generate code for writing result tuples to output buffer */
+    codeGenerator->generateCodeForEmit(inputSchema, context);
+
+    /* compile code to pipeline stage */
+    auto stage = codeGenerator->compile(context);
+
+    /* prepare input tuple buffer */
+    source->open();
+    auto optVal = source->receiveData();
+    NES_ASSERT(optVal.has_value(), "invalid buffer");
+    auto inputBuffer = *optVal;
+
+    /* execute Stage */
+
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                       nodeEngine->getBufferManager(),
+                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
+    cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
+    Runtime::WorkerContext wctx{0};
+    stage->setup(*queryContext);
+    stage->start(*queryContext);
+    stage->execute(inputBuffer, *queryContext, wctx);
+
+    auto resultBuffer = queryContext->buffers[0];
+
+    /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), false);
+
+    NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, inputSchema));
+}
+
 }// namespace NES
