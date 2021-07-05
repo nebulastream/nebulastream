@@ -116,7 +116,7 @@ ExpressionNodePtr operator--(ExpressionNodePtr leftExp, int) {
 }
 
 // calls of Binary operators with one or two ExpressionItems
-// l: item, r: node
+// leftExp: item, rightExp: node
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
     return leftExp.getExpressionNode() + std::move(rightExp);
 }
@@ -145,7 +145,7 @@ ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
     return POWER(leftExp.getExpressionNode(), std::move(rightExp));
 }
 
-// l: node, r: item
+// leftExp: node, rightExp: item
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
     return std::move(leftExp) + rightExp.getExpressionNode();
 }
@@ -174,7 +174,7 @@ ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
     return POWER(std::move(leftExp), rightExp.getExpressionNode());
 }
 
-// l: item, r: item
+// leftExp: item, rightWxp: item
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionItem rightExp) {
     return leftExp.getExpressionNode() + rightExp.getExpressionNode();
 }

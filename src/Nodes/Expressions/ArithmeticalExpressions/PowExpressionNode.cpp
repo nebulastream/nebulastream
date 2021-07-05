@@ -36,14 +36,13 @@ void PowExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalBinaryExpressionNode::inferStamp(schema);
 
-    // Output of POW is always positive:
+    // Extend range for POW operation:
     if (stamp->isInteger()) {
-        stamp = DataTypeFactory::createUInt32();
-        NES_TRACE("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to UINT32.");
+        stamp = DataTypeFactory::createInt64();
+        NES_TRACE("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to Int64.");
     } else if (stamp->isFloat()) {
-        // change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are always positive and become high quickly
-        stamp = DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max());
-        NES_TRACE("PowExpressionNode: Update bounds of float (assigned in ArithmeticalBinaryExpressionNode) stamp to bounds [0, DOUBLE_MAX]: " << toString());
+        stamp = DataTypeFactory::createDouble();
+        NES_TRACE("PowExpressionNode: Update Float stamp (assigned in ArithmeticalBinaryExpressionNode) to Double: " << toString());
     }
 }
 
