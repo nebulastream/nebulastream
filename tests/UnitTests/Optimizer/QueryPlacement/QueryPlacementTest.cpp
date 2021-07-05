@@ -538,3 +538,76 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
         }
     }
 }
+
+TEST_F(QueryPlacementTest, testRandomSearchPlacement) {
+    // Setup the topology
+    // We are using a linear topology of three nodes:
+    // srcNode -> midNode -> sinkNode
+    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4);
+    auto midNode = TopologyNode::create(1, "localhost", 4001, 5001, 4);
+    auto srcNode = TopologyNode::create(2, "localhost", 4002, 5002, 4);
+
+    TopologyPtr topology = Topology::create();
+    topology->setAsRoot(sinkNode);
+
+    topology->addNewPhysicalNodeAsChild(sinkNode, midNode);
+    topology->addNewPhysicalNodeAsChild(midNode, srcNode);
+
+    ASSERT_TRUE(sinkNode->containAsChild(midNode));
+    ASSERT_TRUE(midNode->containAsChild(srcNode));
+
+    // Prepare the source and schema
+    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                         "->addField(\"value\", BasicType::UINT64);";
+    const std::string streamName = "car";
+
+    streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addLogicalStream(streamName, schema);
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("car");
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, srcNode);
+
+    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+
+    // Prepare the query
+    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+
+    sinkOperator->addChild(filterOperator);
+    filterOperator->addChild(sourceOperator);
+
+    QueryPlanPtr testQueryPlan = QueryPlan::create();
+    testQueryPlan->addRootOperator(sinkOperator);
+
+    // Prepare the placement
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("RandomSearch",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
+
+    // Execute optimization phases prior to placement
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    testQueryPlan = queryReWritePhase->execute(testQueryPlan);
+    typeInferencePhase->execute(testQueryPlan);
+
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(testQueryPlan);
+    typeInferencePhase->execute(testQueryPlan);
+
+    // Execute the placement
+    placementStrategy->updateGlobalExecutionPlan(testQueryPlan);
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
+
+    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
+}

@@ -16,6 +16,7 @@
 
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
@@ -25,6 +26,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -342,6 +344,47 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
         for (const auto& querySubPlan : querySubPlans) {
             typeInferencePhase->execute(querySubPlan);
         }
+    }
+    return true;
+}
+bool BasePlacementStrategy::assignMappingToTopology(const NES::TopologyPtr topologyPtr,
+                                                    const NES::QueryPlanPtr queryPlan,
+                                                    const std::vector<std::vector<bool>> mapping) {
+
+    auto topologyIterator = NES::DepthFirstNodeIterator(topologyPtr->getRoot()).begin();
+    auto mappingIterator = mapping.begin();
+
+    while (topologyIterator != DepthFirstNodeIterator::end()) {
+        // get the ExecutionNode for the current topology Node
+        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+        auto currentExecutionNode = BasePlacementStrategy::getExecutionNode(currentTopologyNode);
+
+        // create an empty query sub plan
+        auto candidateQueryPlan = QueryPlan::create();
+
+        // get operators to place in the current topology nodes
+        auto queryMappingIterator = mappingIterator->begin();
+
+        // iterate to all operator in current query plan
+        auto queryPlanIterator = NES::QueryPlanIterator(queryPlan);
+        for (auto&& op : queryPlanIterator) {
+            if (*queryMappingIterator) {
+                // place the operator in the current node
+                candidateQueryPlan = QueryPlan::create();
+                candidateQueryPlan->setQueryId(queryPlan->getQueryId());
+                candidateQueryPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());
+                candidateQueryPlan->addRootOperator(op->as<OperatorNode>()->copy());
+
+                currentExecutionNode->addNewQuerySubPlan(queryPlan->getQueryId(), candidateQueryPlan);
+
+                globalExecutionPlan->addExecutionNode(currentExecutionNode);
+
+                operatorToExecutionNodeMap[op->as<OperatorNode>()->getId()] = currentExecutionNode;
+            }
+            ++queryMappingIterator;
+        }
+        ++topologyIterator;
+        ++mappingIterator;
     }
     return true;
 }
