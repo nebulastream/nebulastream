@@ -266,7 +266,7 @@ bool NodeEngine::registerQueryForReconfigurationInNodeEngine(const QueryPlanPtr&
     return true;
 }
 
-bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReconfigurationPlan) {
+bool NodeEngine::startQueryReconfiguration(const QueryReconfigurationPlanPtr& queryReconfigurationPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryReconfigurationPlan->getQueryId();
     NES_DEBUG("NodeEngine::startQueryReconfiguration: Received Reconfiguration Plan: " << queryReconfigurationPlan->getId()
@@ -301,13 +301,14 @@ bool NodeEngine::startQueryReconfiguration(QueryReconfigurationPlanPtr queryReco
 
     if (queryReconfigurationPlan->getReconfigurationType() == DATA_SOURCE) {
         return reconfigureDataSource(oldQep, newQep);
-    } else if (queryReconfigurationPlan->getReconfigurationType() == DATA_SINK) {
-        return reconfigureDataSink(oldQep, newQep);
-    } else {
-        NES_ERROR("NodeEngine::startQueryReconfiguration: Reconfiguration failed. Unknown reconfiguration type: "
-                  << queryReconfigurationPlan->getReconfigurationType());
-        return false;
     }
+    if (queryReconfigurationPlan->getReconfigurationType() == DATA_SINK) {
+        return reconfigureDataSink(oldQep, newQep);
+    }
+    
+    NES_ERROR("NodeEngine::startQueryReconfiguration: Reconfiguration failed. Unknown reconfiguration type: "
+              << queryReconfigurationPlan->getReconfigurationType());
+    return false;
 }
 
 bool NodeEngine::reconfigureDataSink(const std::shared_ptr<Execution::ExecutableQueryPlan>& oldQep,
@@ -377,7 +378,7 @@ bool NodeEngine::reconfigureDataSource(const std::shared_ptr<Execution::Executab
                                                                                  << " with qep:" << newQep->getQuerySubPlanId()
                                                                                  << " as number of sources are different");
     // check if no new data sources are added
-    for (auto newQepDatasource : newQepDataSourceMapping) {
+    for (const auto& newQepDatasource : newQepDataSourceMapping) {
         if (oldQepDataSourceMapping.find(newQepDatasource.first) == oldQepDataSourceMapping.end()) {
             NES_ERROR("NodeEngine::reconfigureDataSource: Reconfiguration failed. New QEP can't have new source: "
                       << newQepDatasource.first);
@@ -391,7 +392,7 @@ bool NodeEngine::reconfigureDataSource(const std::shared_ptr<Execution::Executab
     std::vector<ReconfigurationMessage> replaceDataEmitterMessages;
     std::vector<std::vector<Execution::SuccessorExecutablePipeline>> oldPipelineSuccessors;
 
-    for (auto newSource : newQep->getSources()) {
+    for (const auto& newSource : newQep->getSources()) {
         OperatorId logicalSourceOperatorId = newSource->getLogicalSourceOperatorId();
         if (oldQepDataSourceMapping.find(logicalSourceOperatorId) == oldQepDataSourceMapping.end()) {
             NES_ERROR("NodeEngine::reconfigureDataSource: Source with logicalOperatorId: "
@@ -406,21 +407,21 @@ bool NodeEngine::reconfigureDataSource(const std::shared_ptr<Execution::Executab
     }
 
     // Replace sources in new QEP with sources in old QEP
-    newQep->setSources(std::move(oldQep->getSources()));
+    newQep->setSources(oldQep->getSources());
     // Register source mapping in Query Manager
     registerQueryInNodeEngine(newQep, false);
 
     // No need to start the sources but we need to start new QEP and setup sinks
     queryManager->startQuery(newQep, stateManager, std::vector<DataSourcePtr>{}, newQep->getSinks());
 
-    for (auto replaceDataEmitterMessage : replaceDataEmitterMessages) {
+    for (const auto& replaceDataEmitterMessage : replaceDataEmitterMessages) {
         queryManager->addReconfigurationMessage(newQep->getQueryId(), replaceDataEmitterMessage, false);
     }
 
     for (auto oldPipelineSuccessor : oldPipelineSuccessors) {
         queryManager->propagateViaSuccessorPipelines(
             SoftEndOfStream,
-            [](Execution::ExecutableQueryPlanPtr executableQueryPlan) {
+            [](const Execution::ExecutableQueryPlanPtr& executableQueryPlan) {
                 return std::make_any<std::weak_ptr<Execution::ExecutableQueryPlan>>(executableQueryPlan);
             },
             oldQep,

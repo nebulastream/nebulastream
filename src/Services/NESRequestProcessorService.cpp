@@ -97,7 +97,7 @@ void NESRequestProcessorService::start() {
                     SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
-                    if (!queryReconfiguration) {
+                    if (!queryReconfiguration || sharedQueryMetaData->isNew()) {
                         if (!sharedQueryPlan->isNew()) {
                             NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
                             bool successful = queryUndeploymentPhase->execute(sharedQueryId);
