@@ -159,7 +159,7 @@ class SelectionDataGenSource : public GeneratorSource {
             for (int j = 0; j < 11; ++j) {
                 tuples[i].text[j] = ((j + i) % (255 - 'a')) + 'a';
             }
-            tuples[i].text[12] = '\0';
+            tuples[i].text[11] = '\0';
         }
 
         //buf.setBufferSizeInBytes(sizeof(InputTuple));
