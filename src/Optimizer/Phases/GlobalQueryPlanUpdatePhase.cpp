@@ -31,7 +31,7 @@
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <utility>
-#include <Plans/Global/Query/SharedQueryMetaData.hpp>
+#include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 
 
 namespace NES::Optimizer {
@@ -82,9 +82,9 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 globalQueryPlan->removeQuery(queryId);
             }
             else if(nesRequest->instanceOf<RestartQueryRequest>()){
-                    auto sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
-                    auto sharedQueryMetadata = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
-                    sharedQueryMetadata->markAsNotDeployed();
+//                    auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
+//                    auto sharedQueryChangeLog = globalQueryPlan->//getSharedQueryMetaData(sharedQueryId);
+//                    sharedQueryMetadata->markAsNotDeployed();
             }
             else if (nesRequest->instanceOf<RunQueryRequest>()) {
 

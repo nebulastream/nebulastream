@@ -316,5 +316,10 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators
     }
     return childNodes;
 }
+std::unordered_set<ExecutionNodePtr> TopDownStrategy::updateGlobalExecutionPlanPartial(QueryPlanPtr queryPlan) {
+    NES_DEBUG("TopDownStrategy: partial placement for TopDownStrategy is currently not impplemented " << queryPlan->getQueryId());
+    //currently unused
+    return std::unordered_set<ExecutionNodePtr>();
+}
 
 }// namespace NES::Optimizer

@@ -39,4 +39,6 @@ std::string NetworkSourceDescriptor::toString() { return "NetworkSourceDescripto
 
 NesPartition NetworkSourceDescriptor::getNesPartition() const { return nesPartition; }
 
+uint64_t NetworkSourceDescriptor::getSinkTopologyNode() { return sinkTopologyNodeId; }
+
 }// namespace NES::Network
