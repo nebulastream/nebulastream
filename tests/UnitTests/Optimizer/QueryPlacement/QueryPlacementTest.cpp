@@ -27,7 +27,7 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
-#include <Optimizer/QueryPlacement/ManualSpecificationStrategy.hpp>
+#include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -540,7 +540,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     }
 }
 
-TEST_F(QueryPlacementTest, testManualSpecificationPlacement) {
+TEST_F(QueryPlacementTest, testManualPlacement) {
     // Setup the topology
     // We are using a linear topology of three nodes:
     // srcNode -> midNode -> sinkNode
@@ -591,13 +591,13 @@ TEST_F(QueryPlacementTest, testManualSpecificationPlacement) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
-    auto manualSpecificationStrategy =
-        Optimizer::ManualSpecificationStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto manualPlacementStrategy =
+        Optimizer::ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
     // basic case: one operator per node
     std::vector<std::vector<bool>> mapping = {{true, false, false}, {false, true, false}, {false, false, true}};
 
-    manualSpecificationStrategy->setBinaryMapping(mapping);
+    manualPlacementStrategy->setBinaryMapping(mapping);
 
     // Execute optimization phases prior to placement
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
@@ -609,7 +609,7 @@ TEST_F(QueryPlacementTest, testManualSpecificationPlacement) {
     typeInferencePhase->execute(testQueryPlan);
 
     // Execute the placement
-    manualSpecificationStrategy->updateGlobalExecutionPlan(testQueryPlan);
+    manualPlacementStrategy->updateGlobalExecutionPlan(testQueryPlan);
     NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
@@ -644,7 +644,7 @@ TEST_F(QueryPlacementTest, testManualSpecificationPlacement) {
     }
 }
 
-TEST_F(QueryPlacementTest, testManualSpecificationPlacementMultipleOperatorInANode) {
+TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
     // Setup the topology
     // We are using a linear topology of three nodes:
     // srcNode -> midNode -> sinkNode
@@ -695,13 +695,13 @@ TEST_F(QueryPlacementTest, testManualSpecificationPlacementMultipleOperatorInANo
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
-    auto manualSpecificationStrategy =
-        Optimizer::ManualSpecificationStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto manualPlacementStrategy =
+        Optimizer::ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
     // case: allowing more than one operators per node
     std::vector<std::vector<bool>> mapping = {{true, true, false}, {false, false, false}, {false, false, true}};
 
-    manualSpecificationStrategy->setBinaryMapping(mapping);
+    manualPlacementStrategy->setBinaryMapping(mapping);
 
     // Execute optimization phases prior to placement
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
@@ -713,7 +713,7 @@ TEST_F(QueryPlacementTest, testManualSpecificationPlacementMultipleOperatorInANo
     typeInferencePhase->execute(testQueryPlan);
 
     // Execute the placement
-    manualSpecificationStrategy->updateGlobalExecutionPlan(testQueryPlan);
+    manualPlacementStrategy->updateGlobalExecutionPlan(testQueryPlan);
     NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());

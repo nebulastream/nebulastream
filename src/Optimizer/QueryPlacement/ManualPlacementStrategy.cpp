@@ -14,24 +14,24 @@
     limitations under the License.
 */
 
-#include <Optimizer/QueryPlacement/ManualSpecificationStrategy.hpp>
+#include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
 
-std::unique_ptr<ManualSpecificationStrategy>
-NES::Optimizer::ManualSpecificationStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
+std::unique_ptr<ManualPlacementStrategy>
+ManualPlacementStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                     NES::TopologyPtr topology,
                                                     NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
                                                     NES::StreamCatalogPtr streamCatalog) {
-    return std::make_unique<ManualSpecificationStrategy>(ManualSpecificationStrategy(std::move(globalExecutionPlan),
+    return std::make_unique<ManualPlacementStrategy>(ManualPlacementStrategy(std::move(globalExecutionPlan),
                                                                                      std::move(topology),
                                                                                      std::move(typeInferencePhase),
                                                                                      std::move(streamCatalog)));
 }
 
-NES::Optimizer::ManualSpecificationStrategy::ManualSpecificationStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
+ManualPlacementStrategy::ManualPlacementStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                                          NES::TopologyPtr topology,
                                                                          NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
                                                                          NES::StreamCatalogPtr streamCatalog)
@@ -40,21 +40,20 @@ NES::Optimizer::ManualSpecificationStrategy::ManualSpecificationStrategy(NES::Gl
                             std::move(typeInferencePhase),
                             std::move(streamCatalog)) {}
 
-bool NES::Optimizer::ManualSpecificationStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
+bool ManualPlacementStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // check if user has specify binary mapping for placement
     if (binaryMapping.empty()) {
-        NES_ERROR("ManualSpecificationStrategy::updateGlobalExecutionPlan: binary mapping is not set");
+        NES_ERROR("ManualPlacementStrategy::updateGlobalExecutionPlan: binary mapping is not set");
         return false;
     }
 
     // apply the placement from the specified binary mapping
     assignMappingToTopology(topology, queryPlan, this->binaryMapping);
     addNetworkSourceAndSinkOperators(queryPlan);
-    runTypeInferencePhase(queryPlan->getQueryId());
-
-    return true;
+    return runTypeInferencePhase(queryPlan->getQueryId());
 }
-void ManualSpecificationStrategy::setBinaryMapping(std::vector<std::vector<bool>> userDefinedBinaryMapping) {
+
+void ManualPlacementStrategy::setBinaryMapping(std::vector<std::vector<bool>> userDefinedBinaryMapping) {
     this->binaryMapping = std::move(userDefinedBinaryMapping);
 }
 
