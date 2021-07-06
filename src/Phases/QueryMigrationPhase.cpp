@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Phases/QueryMigrationPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -33,14 +34,15 @@
 namespace NES {
 
 QueryMigrationPhase::QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                         WorkerRPCClientPtr workerRPCClient) : workerRPCClient(workerRPCClient),topology(topology),
-                                                                               globalExecutionPlan(globalExecutionPlan){
+                                         WorkerRPCClientPtr workerRPCClient, Optimizer::QueryPlacementPhasePtr queryPlacementPhase) : workerRPCClient(workerRPCClient),topology(topology),
+                                                                               globalExecutionPlan(globalExecutionPlan),queryPlacementPhase(queryPlacementPhase)
+                                                                                {
                                                                                    NES_DEBUG("QueryMigrationPhase()");
-}
+                                                                                }
 
 QueryMigrationPhasePtr QueryMigrationPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,TopologyPtr topology,
-                                                     WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<QueryMigrationPhase>(QueryMigrationPhase(globalExecutionPlan, topology, workerRpcClient));
+                                                     WorkerRPCClientPtr workerRpcClient, Optimizer::QueryPlacementPhasePtr queryPlacementPhase) {
+    return std::make_shared<QueryMigrationPhase>(QueryMigrationPhase(globalExecutionPlan, topology, workerRpcClient, queryPlacementPhase));
 }
 
 
@@ -58,6 +60,11 @@ bool QueryMigrationPhase::execute(MigrateQueryRequestPtr req) {
 
     // Step 2. Build all necessary execution nodes
     auto subqueries = globalExecutionPlan->getExecutionNodeByNodeId(markedTopNodeId)->getQuerySubPlans(queryId);
+
+    std::vector<ExecutionNodePtr> executionNodes;
+    for(auto subquery : subqueries){
+        queryPlacementPhase->executePartialPlacement("BottomUp", subquery);
+    }
     auto execNodes = buildExecutionNodes(path,subqueries);
     auto addresses = getAddresses(findChildExecutionNodesAsTopologyNodes(queryId,markedTopNodeId));
 

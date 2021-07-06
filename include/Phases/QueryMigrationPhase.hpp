@@ -20,10 +20,11 @@
 #ifndef NES_QUERYMIGRATIONPHASE_HPP
 #define NES_QUERYMIGRATIONPHASE_HPP
 
+#include <Network/NodeLocation.hpp>
+#include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/StrategyType.hpp>
 #include <Topology/TopologyNodeId.hpp>
-#include <Network/NodeLocation.hpp>
 #include <memory>
 #include <vector>
 
@@ -37,6 +38,9 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class QueryMigrationPhase;
 typedef std::shared_ptr<QueryMigrationPhase> QueryMigrationPhasePtr;
+
+class QueryPlacementPhase;
+typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
 
 class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
@@ -65,7 +69,7 @@ class QueryMigrationPhase{
      * @param workerRpcClient : rpc client to communicate with workers
      * @return shared pointer to the instance of QueryMigrationPhase
      */
-    static QueryMigrationPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRPCClient);
+    static QueryMigrationPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRPCClient, Optimizer::QueryPlacementPhasePtr queryPlacementPhase);
 
     /**
      * @brief method for executing a query migration.
@@ -106,7 +110,7 @@ class QueryMigrationPhase{
 
     bool executeMigrationWithoutBuffer(const std::vector<TopologyNodePtr>& path, const std::vector<ExecutionNodePtr>& execNodes,const std::map<TopologyNodeId ,std::string>& addresses, QueryId queryId, TopologyNodeId topId);
 
-    explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient);
+    explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient, Optimizer::QueryPlacementPhasePtr queryPlacementPhase);
 
 /**
     * @brief method send query to nodes
@@ -146,6 +150,7 @@ class QueryMigrationPhase{
     WorkerRPCClientPtr  workerRPCClient;
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
 
 
 };
