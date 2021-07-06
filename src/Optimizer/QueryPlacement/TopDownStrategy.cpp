@@ -54,6 +54,9 @@ TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     const QueryId queryId = queryPlan->getQueryId();
+    if (!globalExecutionPlan->getExecutionNodesByQueryId(queryId).empty()) {
+        return partiallyUpdateGlobalExecutionPlan(queryPlan);
+    }
     try {
         NES_INFO("TopDownStrategy: Performing placement of the input query plan with id " << queryId);
         NES_INFO("TopDownStrategy: And query plan \n" << queryPlan->toString());

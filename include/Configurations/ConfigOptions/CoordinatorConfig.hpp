@@ -227,6 +227,18 @@ class CoordinatorConfig {
      */
     void setEnableSemanticQueryValidation(bool enableSemanticQueryValidation);
 
+    /**
+     * @brief Get the value for enabling QueryReconfiguration
+     * @return semantic validation config option
+     */
+    BoolConfigOption getQueryReconfiguration();
+
+    /**
+     * @brief Set the value for enabling SemanticQueryValidation
+     * @param enableSemanticQueryValidation: enable or disable query reconfiguration
+     */
+    void setQueryReconfiguration(bool queryReconfigurationState);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -246,6 +258,7 @@ class CoordinatorConfig {
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;
     StringConfigOption queryMergerRule;
+    BoolConfigOption queryReconfiguration;
 
     // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;
