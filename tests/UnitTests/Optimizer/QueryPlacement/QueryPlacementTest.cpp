@@ -591,7 +591,7 @@ TEST_F(QueryPlacementTest, testManualSpecificationPlacement) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
-    auto manualSpecificationStrategy=
+    auto manualSpecificationStrategy =
         Optimizer::ManualSpecificationStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
     // basic case: one operator per node
@@ -610,8 +610,36 @@ TEST_F(QueryPlacementTest, testManualSpecificationPlacement) {
 
     // Execute the placement
     manualSpecificationStrategy->updateGlobalExecutionPlan(testQueryPlan);
+    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
 
-    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
+    EXPECT_EQ(executionNodes.size(), 3UL);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 0U) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
+            EXPECT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            EXPECT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+        } else if (executionNode->getId() == 1U) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
+            EXPECT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            EXPECT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
+        } else if (executionNode->getId() == 1U) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
+            EXPECT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            EXPECT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        }
+    }
 }
