@@ -53,9 +53,10 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
                                                        const StreamCatalogPtr& streamCatalog,
                                                        const WorkerRPCClientPtr& workerRpcClient,
                                                        NESRequestQueuePtr queryRequestQueue,
-                                                       Optimizer::QueryMergerRule queryMergerRule)
-    : queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(std::move(queryRequestQueue)),
-      globalQueryPlan(globalQueryPlan) {
+                                                       Optimizer::QueryMergerRule queryMergerRule,
+                                                       bool queryReconfiguration)
+    : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalog(queryCatalog),
+      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -66,6 +67,7 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
     z3Context = std::make_shared<z3::context>();
     globalQueryPlanUpdatePhase =
         Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, z3Context, queryMergerRule);
+    queryReconfigurationPhase = QueryReconfigurationPhase::create(globalExecutionPlan, workerRpcClient);
 }
 
 NESRequestProcessorService::~NESRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
@@ -95,33 +97,67 @@ void NESRequestProcessorService::start() {
                     SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
-                    if (!sharedQueryMetaData->isNew()) {
-                        NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
-                        bool successful = queryUndeploymentPhase->execute(sharedQueryId);
-                        if (!successful) {
-                            throw QueryUndeploymentException("Unable to stop Global QueryId " + std::to_string(sharedQueryId));
-                        }
-                    }
-
-                    if (!sharedQueryMetaData->isEmpty()) {
-                        auto queryPlan = sharedQueryMetaData->getQueryPlan();
-                        NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query with shared query id : "
-                                  << sharedQueryId);
-
-                        bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
-                        if (!placementSuccessful) {
-                            throw QueryPlacementException(sharedQueryId,
-                                                          "QueryProcessingService: Failed to perform query placement for "
-                                                          "query plan with shared query id: "
-                                                              + std::to_string(sharedQueryId));
+                    if (!queryReconfiguration) {
+                        if (!sharedQueryMetaData->isNew()) {
+                            NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
+                            bool successful = queryUndeploymentPhase->execute(sharedQueryId);
+                            if (!successful) {
+                                throw QueryUndeploymentException("Unable to stop Global QueryId "
+                                                                 + std::to_string(sharedQueryId));
+                            }
                         }
 
-                        bool successful = queryDeploymentPhase->execute(sharedQueryId);
-                        if (!successful) {
-                            throw QueryDeploymentException(
-                                sharedQueryId,
-                                "QueryRequestProcessingService: Failed to deploy query with global query Id "
-                                    + std::to_string(sharedQueryId));
+                        if (!sharedQueryMetaData->isEmpty()) {
+                            auto queryPlan = sharedQueryMetaData->getQueryPlan();
+                            NES_DEBUG(
+                                "QueryProcessingService: Performing Query Operator placement for query with shared query id : "
+                                << sharedQueryId);
+
+                            bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+                            if (!placementSuccessful) {
+                                throw QueryPlacementException(sharedQueryId,
+                                                              "QueryProcessingService: Failed to perform query placement for "
+                                                              "query plan with shared query id: "
+                                                                  + std::to_string(sharedQueryId));
+                            }
+
+                            bool successful = queryDeploymentPhase->execute(sharedQueryId);
+                            if (!successful) {
+                                throw QueryDeploymentException(
+                                    sharedQueryId,
+                                    "QueryRequestProcessingService: Failed to deploy query with global query Id "
+                                        + std::to_string(sharedQueryId));
+                            }
+                        }
+                    } else {
+                        if (sharedQueryMetaData->isEmpty()) {
+                            NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
+                            bool successful = queryUndeploymentPhase->execute(sharedQueryId);
+                            if (!successful) {
+                                throw QueryUndeploymentException("Unable to stop Global QueryId "
+                                                                 + std::to_string(sharedQueryId));
+                            }
+                        } else {
+                            auto queryPlan = sharedQueryMetaData->getQueryPlan();
+                            NES_DEBUG(
+                                "QueryProcessingService: Performing Query Operator placement for query with shared query id : "
+                                << sharedQueryId);
+
+                            bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+                            if (!placementSuccessful) {
+                                throw QueryPlacementException(sharedQueryId,
+                                                              "QueryProcessingService: Failed to perform query placement for "
+                                                              "query plan with shared query id: "
+                                                                  + std::to_string(sharedQueryId));
+                            }
+
+                            bool successful = queryReconfigurationPhase->execute(sharedQueryMetaData);
+                            if (!successful) {
+                                throw QueryDeploymentException(
+                                    sharedQueryId,
+                                    "QueryRequestProcessingService: Failed to reconfigure query with global query Id "
+                                        + std::to_string(sharedQueryId));
+                            }
                         }
                     }
                     //Mark the meta data as deployed

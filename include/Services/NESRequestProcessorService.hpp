@@ -18,6 +18,7 @@
 #define NES_NESREQUESTPROCESSORSERVICE_HPP
 
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
+#include <Phases/QueryReconfigurationPhase.hpp>
 #include <memory>
 
 namespace z3 {
@@ -80,7 +81,8 @@ class NESRequestProcessorService {
                                         const StreamCatalogPtr& streamCatalog,
                                         const WorkerRPCClientPtr& workerRpcClient,
                                         NESRequestQueuePtr queryRequestQueue,
-                                        Optimizer::QueryMergerRule queryMergerRule);
+                                        Optimizer::QueryMergerRule queryMergerRule,
+                                        bool queryReconfiguration);
 
     ~NESRequestProcessorService();
     /**
@@ -102,10 +104,12 @@ class NESRequestProcessorService {
   private:
     std::mutex queryProcessorStatusLock;
     bool queryProcessorRunning;
+    bool queryReconfiguration;
     QueryCatalogPtr queryCatalog;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
+    QueryReconfigurationPhasePtr queryReconfigurationPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;

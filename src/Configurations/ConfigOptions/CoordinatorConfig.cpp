@@ -54,6 +54,9 @@ CoordinatorConfig::CoordinatorConfig() {
 
     enableSemanticQueryValidation =
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
+
+    queryReconfiguration =
+        ConfigOption<bool>::create("queryReconfiguration", false, "Toggles query reconfiguration functionality after merging");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -112,6 +115,10 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
                 && config["enableSemanticQueryValidation"].As<std::string>() != "\n") {
                 setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
             }
+            if (!config["queryReconfiguration"].As<std::string>().empty()
+                && config["queryReconfiguration"].As<std::string>() != "\n") {
+                setQueryReconfiguration(config["enableSemanticQueryValidation"].As<bool>());
+            }
             if (!config["numWorkerThreads"].As<std::string>().empty() && config["numWorkerThreads"].As<std::string>() != "\n") {
                 setNumWorkerThreads(config["numWorkerThreads"].As<uint32_t>());
             }
@@ -159,6 +166,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setQueryMergerRule(it->second);
             } else if (it->first == "--enableSemanticQueryValidation" && !it->second.empty()) {
                 setEnableSemanticQueryValidation((it->second == "true"));
+            } else if (it->first == "--queryReconfiguration" && !it->second.empty()) {
+                setQueryReconfiguration((it->second == "true"));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -252,6 +261,11 @@ BoolConfigOption CoordinatorConfig::getEnableSemanticQueryValidation() { return 
 
 void CoordinatorConfig::setEnableSemanticQueryValidation(bool enableSemanticQueryValidation) {
     CoordinatorConfig::enableSemanticQueryValidation->setValue(enableSemanticQueryValidation);
+}
+BoolConfigOption CoordinatorConfig::getQueryReconfiguration() { return queryReconfiguration; }
+
+void CoordinatorConfig::setQueryReconfiguration(bool queryReconfigurationState) {
+    CoordinatorConfig::queryReconfiguration->setValue(queryReconfigurationState);
 }
 
 }// namespace NES
