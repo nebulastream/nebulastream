@@ -128,6 +128,8 @@ std::vector<QueryId> SharedQueryPlan::getQueryIds() { return queryIds; }
 
 QueryPlanPtr SharedQueryPlan::getQueryPlan() { return queryPlan; }
 
+SharedQueryPlanChangeLogPtr SharedQueryPlan::getChangeLog() { return changeLog; }
+
 bool SharedQueryPlan::addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan) {
     auto queryId = queryPlan->getQueryId();
     queryIds.emplace_back(queryId);

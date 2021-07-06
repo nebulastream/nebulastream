@@ -20,9 +20,11 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
+#include <GRPC/Serialization/QueryReconfigurationPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Query/QueryReconfigurationPlan.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
 
@@ -102,6 +104,89 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
     return true;
 }
 
+bool WorkerRPCClient::registerQueryForReconfigurationAsync(const std::string& address,
+                                                           const QueryPlanPtr& queryPlan,
+                                                           const CompletionQueuePtr& cq) {
+    QueryId queryId = queryPlan->getQueryId();
+    QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
+    NES_DEBUG("WorkerRPCClient::registerQueryForReconfigurationAsync: address=" << address << " queryId=" << queryId
+                                                                                << " querySubPlanId = " << querySubPlanId);
+
+    // wrap the query id and the query operators in the protobuf register query request object.
+    RegisterQueryRequest request;
+    // serialize query plan.
+    auto* serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    request.set_allocated_queryplan(serializedQueryPlan);
+
+    NES_TRACE("WorkerRPCClient:registerQueryForReconfigurationAsync -> " << request.DebugString());
+    RegisterQueryReply reply;
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> channel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(channel);
+
+    // Call object to store rpc data
+    auto* call = new AsyncClientCall<RegisterQueryReply>;
+
+    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
+    // an instance to store in "call" but does not actually start the RPC
+    // Because we are using the asynchronous API, we need to hold on to
+    // the "call" instance in order to get updates on the ongoing RPC.
+    call->responseReader = workerStub->PrepareAsyncRegisterQueryForReconfiguration(&call->context, request, cq.get());
+
+    // StartCall initiates the RPC call
+    call->responseReader->StartCall();
+
+    // Request that, upon completion of the RPC, "reply" be updated with the
+    // server's response; "status" with the indication of whether the operation
+    // was successful. Tag the request with the memory address of the call object.
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+
+    return true;
+}
+
+bool WorkerRPCClient::triggerReconfigurationAsync(const std::string& address,
+                                                  const QueryReconfigurationPlanPtr reconfigurationPlan,
+                                                  const CompletionQueuePtr& cq) {
+    QueryId queryId = reconfigurationPlan->getQueryId();
+    auto reconfigurationId = reconfigurationPlan->getId();
+    NES_DEBUG("WorkerRPCClient::triggerReconfigurationAsync: address=" << address << " queryId=" << queryId
+                                                                       << " reconfigurationId = " << reconfigurationId);
+
+    // wrap the query id and the query operators in the protobuf register query request object.
+    StartQueryReconfigurationRequest request;
+    // serialize query plan.
+    auto* serializedReconfigurationQueryPlan =
+        QueryReconfigurationPlanSerializationUtil::serializeQueryReconfigurationPlan(reconfigurationPlan);
+    request.set_allocated_reconfigurationplan(serializedReconfigurationQueryPlan);
+
+    NES_TRACE("WorkerRPCClient:triggerReconfigurationAsync -> " << request.DebugString());
+
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> channel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(channel);
+
+    // Call object to store rpc data
+    auto* call = new AsyncClientCall<StartQueryReconfigurationReply>;
+
+    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
+    // an instance to store in "call" but does not actually start the RPC
+    // Because we are using the asynchronous API, we need to hold on to
+    // the "call" instance in order to get updates on the ongoing RPC.
+    call->responseReader = workerStub->PrepareAsyncStartQueryReconfiguration(&call->context, request, cq.get());
+
+    // StartCall initiates the RPC call
+    call->responseReader->StartCall();
+
+    // Request that, upon completion of the RPC, "reply" be updated with the
+    // server's response; "status" with the indication of whether the operation
+    // was successful. Tag the request with the memory address of the call object.
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+
+    return true;
+}
+
 bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
     NES_DEBUG("start checkAsyncResult for mode=" << mode << " for " << queues.size() << " queues");
     bool result = true;
@@ -114,7 +199,7 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
         while (cnt != queue.second && queue.first->Next(&got_tag, &ok)) {
             // The tag in this example is the memory location of the call object
             bool status = false;
-            if (mode == Register) {
+            if (mode == Register || mode == RegisterForReconfiguration) {
                 auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
                 status = call->status.ok();
                 delete call;
@@ -128,6 +213,10 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
                 delete call;
             } else if (mode == Stop) {
                 auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
+                status = call->status.ok();
+                delete call;
+            } else if (mode == TriggerReconfiguration) {
+                auto* call = static_cast<AsyncClientCall<StartQueryReconfigurationReply>*>(got_tag);
                 status = call->status.ok();
                 delete call;
             } else {

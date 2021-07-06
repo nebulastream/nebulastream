@@ -68,7 +68,7 @@ bool QueryDeploymentPhase::execute(QueryId queryId) {
 }
 
 bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
-    NES_DEBUG("QueryDeploymentPhase::deployQuery queryId=" << queryId);
+    NES_DEBUG("QueryDeploymentPhase::registerForReconfiguration queryId=" << queryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const ExecutionNodePtr& executionNode : executionNodes) {
         NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id=" << executionNode->getId());
@@ -84,16 +84,16 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress);
+        NES_DEBUG("QueryDeploymentPhase:registerForReconfiguration: " << queryId << " to " << rpcAddress);
 
         for (auto& querySubPlan : querySubPlans) {
             //enable this for sync calls
             //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
             bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
             if (success) {
-                NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << " successful");
+                NES_DEBUG("QueryDeploymentPhase:registerForReconfiguration: " << queryId << " to " << rpcAddress << " successful");
             } else {
-                NES_ERROR("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << "  failed");
+                NES_ERROR("QueryDeploymentPhase:registerForReconfiguration: " << queryId << " to " << rpcAddress << "  failed");
                 return false;
             }
         }

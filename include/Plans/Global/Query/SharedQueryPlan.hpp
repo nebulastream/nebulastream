@@ -189,6 +189,9 @@ class SharedQueryPlan {
      */
     bool addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan);
 
+    /**
+     * @brief Returns changelog associated with shared plan
+     */
     SharedQueryPlanChangeLogPtr getChangeLog();
 
   private:
