@@ -24,6 +24,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <unordered_set>
 
 namespace NES {
 
@@ -95,7 +96,8 @@ class BasePlacementStrategy {
      */
     virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) = 0;
 
-    virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan, std::vector<TopologyNodePtr> sourceNodes, TopologyNodePtr rootNode) = 0;
+    virtual std::unordered_set<ExecutionNodePtr> updateGlobalExecutionPlanPartial(QueryPlanPtr queryPlan) = 0;
+
 
   protected:
     /**
@@ -156,6 +158,7 @@ class BasePlacementStrategy {
     StreamCatalogPtr streamCatalog;
     std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
+    std::unordered_set<ExecutionNodePtr> executionNodesCreatedDuringPartialPlacement;
 
   private:
     /**

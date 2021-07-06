@@ -402,6 +402,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                     NES_TRACE("BasePlacementStrategy: add query plan to execution node and update the global execution plan");
                     candidateExecutionNode->addNewQuerySubPlan(queryId, querySubPlan);
                     globalExecutionPlan->addExecutionNode(candidateExecutionNode);
+                    if(partialPlacement)
+                        executionNodesCreatedDuringPartialPlacement.insert(candidateExecutionNode);
                 }
                 // Add the parent-child relation
                 globalExecutionPlan->addExecutionNodeAsParentTo(nodesBetween[i - 1]->getId(), candidateExecutionNode);
