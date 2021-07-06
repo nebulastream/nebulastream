@@ -113,15 +113,16 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     bool performOnlySourceOperatorExpansion = this->coordinatorConfiguration->getPerformOnlySourceOperatorExpansion()->getValue();
     if (found != Optimizer::stringToMergerRuleEnum.end()) {
         queryRequestProcessorService = std::make_shared<RequestProcessorService>(globalExecutionPlan,
-                                                                                 topology,
-                                                                                 queryCatalog,
-                                                                                 globalQueryPlan,
-                                                                                 streamCatalog,
-                                                                                 workerRpcClient,
-                                                                                 queryRequestQueue,
-                                                                                 found->second,
-                                                                                 memoryLayoutPolicy,
-                                                                                 performOnlySourceOperatorExpansion);
+                                                                                    topology,
+                                                                                    queryCatalog,
+                                                                                    globalQueryPlan,
+                                                                                    streamCatalog,
+                                                                                    workerRpcClient,
+                                                                                    queryRequestQueue,
+                                                                                    found->second,
+                                                                                    memoryLayoutPolicy,
+                                                                                    performOnlySourceOperatorExpansion,
+                                                                                    this->coordinatorConfiguration->getQueryReconfiguration()->getValue());
     } else {
         NES_FATAL_ERROR("Unrecognized Query Merger Rule Detected " << queryMergerRuleName);
     }

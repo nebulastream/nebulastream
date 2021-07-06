@@ -269,6 +269,18 @@ class CoordinatorConfiguration {
     void setPerformOnlySourceOperatorExpansion(bool performOnlySourceOperatorExpansion);
 
     /**
+     * @brief Get the value for enabling QueryReconfiguration
+     * @return semantic validation config option
+     */
+    BoolConfigOption getQueryReconfiguration();
+
+    /**
+     * @brief Set the value for enabling SemanticQueryValidation
+     * @param enableSemanticQueryValidation: enable or disable query reconfiguration
+     */
+    void setQueryReconfiguration(bool queryReconfigurationState);
+
+    /**
      * @deprecated: This is only here for benchmarking purpose. Avoid using this function.
      * Get all logical sources defined in the configuration.
      * @return vector of logical sources
@@ -311,6 +323,7 @@ class CoordinatorConfiguration {
     BoolConfigOption enableMonitoring;
     StringConfigOption memoryLayoutPolicy;
     BoolConfigOption performOnlySourceOperatorExpansion;
+    BoolConfigOption queryReconfiguration;
     //NOTE: This is added to support single node benchmarks. Please avoid using it while implementing
     // new functionality.
     std::vector<LogicalSourcePtr> logicalSources;

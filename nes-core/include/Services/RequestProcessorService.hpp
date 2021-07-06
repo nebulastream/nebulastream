@@ -82,6 +82,8 @@ class RequestProcessorService {
                                         Optimizer::QueryMergerRule queryMergerRule,
                                         Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
                                         bool performOnlySourceOperatorExpansion);
+                                        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
+                                        bool queryReconfiguration);
 
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
@@ -102,6 +104,7 @@ class RequestProcessorService {
   private:
     std::mutex queryProcessorStatusLock;
     bool queryProcessorRunning;
+    bool queryReconfiguration;
     QueryCatalogPtr queryCatalog;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;

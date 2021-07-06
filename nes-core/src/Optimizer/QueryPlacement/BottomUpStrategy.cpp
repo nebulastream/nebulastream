@@ -50,6 +50,9 @@ BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     const QueryId queryId = queryPlan->getQueryId();
+    if (!globalExecutionPlan->getExecutionNodesByQueryId(queryId).empty()) {
+        return partiallyUpdateGlobalExecutionPlan(queryPlan);
+    }
     try {
         NES_INFO("BottomUpStrategy: Performing placement of the input query plan with id " << queryId);
         NES_INFO("BottomUpStrategy: And query plan \n" << queryPlan->toString());
