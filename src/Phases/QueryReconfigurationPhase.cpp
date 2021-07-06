@@ -149,9 +149,10 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
 
     NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
 
+    deployQuery(queryId);
     registerForReconfiguration(queryId);
-    startQuery(queryId);
     triggerReconfigurationOfType(queryId, DATA_SINK);
+    startQuery(queryId);
     triggerReconfigurationOfType(queryId, DATA_SOURCE);
 
     operatorToSubPlan.clear();
