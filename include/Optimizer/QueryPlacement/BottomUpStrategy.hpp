@@ -40,16 +40,16 @@ class BottomUpStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
     /**
-     * This function overload is responsible for partial placement of a query.
-     * The QueryPlan supplied must have NetworkSource Operators as its leaf operators and NetworkSink Operators as its root operators.
-     * NetworkSource Operators can be located on arbitrary topology nodes. All NetworkSink operators must be located on same topology node.
-     * Only one root node is currently allowed.
-     * @param queryPlan
-     * @param sourceNodes
-     * @param rootNode
-     * @return
-     */
-    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan, std::vector<TopologyNodePtr> sourceNodes, TopologyNodePtr rootNode);
+  * This function is responsible for partial placement of a query.
+  * The QueryPlan supplied must have NetworkSource Operators as its leaf operators and NetworkSink Operators as its root operators.
+  * NetworkSource Operators can be located on arbitrary topology nodes. All NetworkSink operators must be located on same topology node.
+  * Only one root node is currently allowed.
+  * @param queryPlan
+  * @param sourceNodes
+  * @param rootNode
+  * @return
+  */
+    std::unordered_set<ExecutionNodePtr> updateGlobalExecutionPlanPartial(QueryPlanPtr queryPlan) override;
 
     static std::unique_ptr<BottomUpStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                     TopologyPtr topology,
