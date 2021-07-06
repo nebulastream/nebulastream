@@ -18,6 +18,8 @@
 #define NES_INCLUDE_OPTIMIZER_PHASES_QUERY_PLACEMENT_PHASE_HPP_
 
 #include <memory>
+#include <vector>
+#include <unordered_set>
 
 namespace z3 {
 class context;
@@ -37,6 +39,9 @@ using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class ExecutionNode;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -75,6 +80,9 @@ class QueryPlacementPhase {
      * @throws QueryPlacementException
      */
     bool execute(const std::string& placementStrategy, QueryPlanPtr queryPlan);
+
+    std::unordered_set<ExecutionNodePtr> executePartialPlacement(const std::string& placementStrategy, QueryPlanPtr queryPlan);
+
 
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
