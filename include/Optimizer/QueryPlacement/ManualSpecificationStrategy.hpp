@@ -14,31 +14,35 @@
     limitations under the License.
 */
 
-#ifndef NES_RANDOMSEARCHSTRATEGY_HPP
-#define NES_RANDOMSEARCHSTRATEGY_HPP
+#ifndef NES_MANUALSPECIFICATIONSTRATEGY_HPP
+#define NES_MANUALSPECIFICATIONSTRATEGY_HPP
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 
 namespace NES::Optimizer {
-
-class RandomSearchStrategy : public BasePlacementStrategy {
+// TODO: 2022 docs
+class ManualSpecificationStrategy : public BasePlacementStrategy {
   public:
-    ~RandomSearchStrategy() override = default;
+    ~ManualSpecificationStrategy() override = default;
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
-    static std::unique_ptr<RandomSearchStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
+    static std::unique_ptr<ManualSpecificationStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                         TopologyPtr topology,
                                                         TypeInferencePhasePtr typeInferencePhase,
                                                         StreamCatalogPtr streamCatalog);
 
+    void setBinaryMapping(std::vector<std::vector<bool>> userDefinedBinaryMapping);
+
   private:
-    explicit RandomSearchStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
+    explicit ManualSpecificationStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                               TopologyPtr topology,
                               TypeInferencePhasePtr typeInferencePhase,
                               StreamCatalogPtr streamCatalog);
+
+    std::vector<std::vector<bool>> binaryMapping;
 };
 
 }// namespace NES::Optimizer
 
-#endif//NES_RANDOMSEARCHSTRATEGY_HPP
+#endif//NES_MANUALSPECIFICATIONSTRATEGY_HPP
