@@ -698,7 +698,7 @@ TEST_F(QueryPlacementTest, testManualSpecificationPlacementMultipleOperatorInANo
     auto manualSpecificationStrategy =
         Optimizer::ManualSpecificationStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
-    // basic case: one operator per node
+    // case: allowing more than one operators per node
     std::vector<std::vector<bool>> mapping = {{true, true, false}, {false, false, false}, {false, false, true}};
 
     manualSpecificationStrategy->setBinaryMapping(mapping);

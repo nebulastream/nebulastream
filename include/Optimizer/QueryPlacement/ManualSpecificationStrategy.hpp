@@ -20,7 +20,10 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 
 namespace NES::Optimizer {
-// TODO: 2022 docs
+
+/**
+ * @brief A placement strategy where users specify manually where to place operators in the topology
+ */
 class ManualSpecificationStrategy : public BasePlacementStrategy {
   public:
     ~ManualSpecificationStrategy() override = default;
@@ -32,6 +35,10 @@ class ManualSpecificationStrategy : public BasePlacementStrategy {
                                                         TypeInferencePhasePtr typeInferencePhase,
                                                         StreamCatalogPtr streamCatalog);
 
+    /**
+     * @brief set the binary mapping of the current strategy
+     * @param userDefinedBinaryMapping binary mapping to set
+     */
     void setBinaryMapping(std::vector<std::vector<bool>> userDefinedBinaryMapping);
 
   private:
@@ -40,6 +47,7 @@ class ManualSpecificationStrategy : public BasePlacementStrategy {
                               TypeInferencePhasePtr typeInferencePhase,
                               StreamCatalogPtr streamCatalog);
 
+    // A vector of i X j that store decision whether to place operator j in node i
     std::vector<std::vector<bool>> binaryMapping;
 };
 
