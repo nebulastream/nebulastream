@@ -37,7 +37,6 @@ namespace NES::Optimizer {
 enum NESPlacementStrategyType {
     TopDown,
     BottomUp,
-    ManualSpecification,
     // FIXME: enable them with issue #755
     LowLatency,
     HighThroughput,
@@ -49,7 +48,6 @@ enum NESPlacementStrategyType {
 static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategyType{
     {"BottomUp", BottomUp},
     {"TopDown", TopDown},
-    {"ManualSpecification", ManualSpecification},
     // FIXME: enable them with issue #755
     //    {"Latency", LowLatency},
     //    {"HighThroughput", HighThroughput},
