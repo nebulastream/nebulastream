@@ -27,6 +27,7 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacement/ManualSpecificationStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -539,7 +540,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     }
 }
 
-TEST_F(QueryPlacementTest, testRandomSearchPlacement) {
+TEST_F(QueryPlacementTest, testManualSpecificationPlacement) {
     // Setup the topology
     // We are using a linear topology of three nodes:
     // srcNode -> midNode -> sinkNode
@@ -589,11 +590,14 @@ TEST_F(QueryPlacementTest, testRandomSearchPlacement) {
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("RandomSearch",
-                                                                              globalExecutionPlan,
-                                                                              topology,
-                                                                              typeInferencePhase,
-                                                                              streamCatalog);
+
+    auto manualSpecificationStrategy=
+        Optimizer::ManualSpecificationStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+
+    // basic case: one operator per node
+    std::vector<std::vector<bool>> mapping = {{true, false, false}, {false, true, false}, {false, false, true}};
+
+    manualSpecificationStrategy->setBinaryMapping(mapping);
 
     // Execute optimization phases prior to placement
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
@@ -605,7 +609,7 @@ TEST_F(QueryPlacementTest, testRandomSearchPlacement) {
     typeInferencePhase->execute(testQueryPlan);
 
     // Execute the placement
-    placementStrategy->updateGlobalExecutionPlan(testQueryPlan);
+    manualSpecificationStrategy->updateGlobalExecutionPlan(testQueryPlan);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
 
