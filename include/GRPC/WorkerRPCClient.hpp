@@ -46,9 +46,12 @@ using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
+class QueryReconfigurationPlan;
+using QueryReconfigurationPlanPtr = std::shared_ptr<QueryReconfigurationPlan>;
+
 using CompletionQueuePtr = std::shared_ptr<CompletionQueue>;
 
-enum RpcClientModes { Register, Unregister, Start, Stop };
+enum RpcClientModes { Register, Unregister, Start, Stop, RegisterForReconfiguration, TriggerReconfiguration };
 
 class WorkerRPCClient {
   public:
@@ -87,6 +90,25 @@ class WorkerRPCClient {
     * @return true if succeeded, else false
     */
     static bool registerQueryAsync(const std::string& address, const QueryPlanPtr& queryPlan, const CompletionQueuePtr& cq);
+
+    /**
+    * @brief register a query asynchronously for reconfiguration
+    * @param address: address of node where query plan need to be registered
+    * @param query plan to register for reconfiguration
+    * @return true if succeeded, else false
+    */
+    static bool
+    registerQueryForReconfigurationAsync(const std::string& address, const QueryPlanPtr& queryPlan, const CompletionQueuePtr& cq);
+
+    /**
+    * @brief trigger reconfiguration asynchronously
+    * @param address: address of node where query plan need to be registered
+    * @param reconfigurationPlan plan to trigger
+    * @return true if succeeded, else false
+    */
+    static bool triggerReconfigurationAsync(const std::string& address,
+                                            const QueryReconfigurationPlanPtr reconfigurationPlan,
+                                            const CompletionQueuePtr& cq);
 
     /**
      * @brief ungregisters a query

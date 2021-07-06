@@ -49,7 +49,7 @@ class PlanIdGenerator {
     static QueryId getNextQueryId();
 
     /**
-     * @brief Returns the next free QueryReconfiguration id
+     * @brief Returns the next free TriggerReconfiguration id
      * @return queryReconfigurationId
      */
     static QueryReconfigurationId getNextQueryReconfigurationPlanId();

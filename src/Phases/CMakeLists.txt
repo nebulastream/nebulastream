@@ -18,5 +18,6 @@ add_source_nes(
         ConvertPhysicalToLogicalSource.cpp
         ConvertPhysicalToLogicalSink.cpp
         QueryDeploymentPhase.cpp
+        QueryReconfigurationPhase.cpp
         QueryUndeploymentPhase.cpp
 )
