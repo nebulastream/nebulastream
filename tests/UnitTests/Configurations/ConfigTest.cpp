@@ -91,14 +91,14 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
 
     CoordinatorConfigPtr coordinatorConfigPtr = CoordinatorConfig::create();
     std::string argv[] = {"--restIp=localhost",
-                     "--coordinatorIp=",
-                     "--dataPort=",
-                     "--numberOfSlots=10",
-                     "--enableQueryMerging=",
-                     "--numberOfBuffersInGlobalBufferManager=",
-                     "--numberOfBuffersPerPipeline=",
-                     "--numberOfBuffersInSourceLocalBufferPool=128",
-                     "--bufferSizeInBytes=1024"};
+                          "--coordinatorIp=",
+                          "--dataPort=",
+                          "--numberOfSlots=10",
+                          "--enableQueryMerging=",
+                          "--numberOfBuffersInGlobalBufferManager=",
+                          "--numberOfBuffersPerPipeline=",
+                          "--numberOfBuffersInSourceLocalBufferPool=128",
+                          "--bufferSizeInBytes=1024"};
     int argc = 9;
 
     std::map<string, string> commandLineParams;
@@ -162,13 +162,13 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
     WorkerConfigPtr workerConfigPtr = WorkerConfig::create();
     std::string argv[] = {"--localWorkerIp=localhost",
-                     "--coordinatorIp=",
-                     "--coordinatorPort=5000",
-                     "--numberOfSlots=",
-                     "--numWorkerThreads=5",
-                     "--numberOfBuffersInGlobalBufferManager=2048",
-                     "--numberOfBuffersPerPipeline=",
-                     "--numberOfBuffersInSourceLocalBufferPool=128"};
+                          "--coordinatorIp=",
+                          "--coordinatorPort=5000",
+                          "--numberOfSlots=",
+                          "--numWorkerThreads=5",
+                          "--numberOfBuffersInGlobalBufferManager=2048",
+                          "--numberOfBuffersPerPipeline=",
+                          "--numberOfBuffersInSourceLocalBufferPool=128"};
     int argc = 8;
 
     std::map<string, string> commandLineParams;
@@ -219,10 +219,10 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
     SourceConfigPtr sourceConfigPtr = SourceConfig::create();
     std::string argv[] = {"--sourceType=YSBSource",
-                     "--sourceConfig=",
-                     "--skipHeader=true",
-                     "--physicalStreamName=",
-                     "--logicalStreamName=default"};
+                          "--sourceConfig=",
+                          "--skipHeader=true",
+                          "--physicalStreamName=",
+                          "--logicalStreamName=default"};
     int argc = 5;
 
     std::map<string, string> commandLineParams;
