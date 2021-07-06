@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MANUALSPECIFICATIONSTRATEGY_HPP
-#define NES_MANUALSPECIFICATIONSTRATEGY_HPP
+#ifndef NES_MANUALPLACEMENTSTRATEGY_HPP
+#define NES_MANUALPLACEMENTSTRATEGY_HPP
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 
@@ -24,13 +24,13 @@ namespace NES::Optimizer {
 /**
  * @brief A placement strategy where users specify manually where to place operators in the topology
  */
-class ManualSpecificationStrategy : public BasePlacementStrategy {
+class ManualPlacementStrategy : public BasePlacementStrategy {
   public:
-    ~ManualSpecificationStrategy() override = default;
+    ~ManualPlacementStrategy() override = default;
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
-    static std::unique_ptr<ManualSpecificationStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
+    static std::unique_ptr<ManualPlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                         TopologyPtr topology,
                                                         TypeInferencePhasePtr typeInferencePhase,
                                                         StreamCatalogPtr streamCatalog);
@@ -42,7 +42,7 @@ class ManualSpecificationStrategy : public BasePlacementStrategy {
     void setBinaryMapping(std::vector<std::vector<bool>> userDefinedBinaryMapping);
 
   private:
-    explicit ManualSpecificationStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
+    explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                               TopologyPtr topology,
                               TypeInferencePhasePtr typeInferencePhase,
                               StreamCatalogPtr streamCatalog);
@@ -53,4 +53,4 @@ class ManualSpecificationStrategy : public BasePlacementStrategy {
 
 }// namespace NES::Optimizer
 
-#endif//NES_MANUALSPECIFICATIONSTRATEGY_HPP
+#endif//NES_MANUALPLACEMENTSTRATEGY_HPP

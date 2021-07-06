@@ -433,11 +433,8 @@ bool BasePlacementStrategy::assignMappingToTopology(const NES::TopologyPtr topol
                         candidateQueryPlan->addRootOperator(op->as<OperatorNode>()->copy());
                     }
                 }
-
                 currentExecutionNode->addNewQuerySubPlan(queryPlan->getQueryId(), candidateQueryPlan);
-
                 globalExecutionPlan->addExecutionNode(currentExecutionNode);
-
                 operatorToExecutionNodeMap[op->as<OperatorNode>()->getId()] = currentExecutionNode;
             }
             ++queryMappingIterator;
