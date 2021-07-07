@@ -19,6 +19,7 @@
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
+#include <Sources/MemorySource.hpp>
 
 namespace NES {
 /**
@@ -37,7 +38,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
                                     size_t memoryAreaSize,
                                     uint64_t numBuffersToProcess,
                                     uint64_t gatheringValue,
-                                    DataSource::GatheringMode gatheringMode);
+                                    DataSource::GatheringMode gatheringMode,
+                                    MemorySource::SourceMode sourceMode);
 
     /**
      * @brief Factory method to create a MemorySourceDescriptor object
@@ -51,7 +53,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
                                                           size_t memoryAreaSize,
                                                           uint64_t numBuffersToProcess,
                                                           uint64_t gatheringValue,
-                                                          DataSource::GatheringMode gatheringMode);
+                                                          DataSource::GatheringMode gatheringMode,
+                                                          MemorySource::SourceMode sourceMode);
 
     /**
      * @brief Provides the string representation of the memory source
@@ -91,6 +94,12 @@ class MemorySourceDescriptor : public SourceDescriptor {
     DataSource::GatheringMode getGatheringMode() const;
 
     /**
+    * @brief return the source mode
+    * @return
+    */
+    MemorySource::SourceMode getSourceMode() const;
+
+    /**
      * @brief return the gathering value
      * @return
      */
@@ -102,6 +111,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
     DataSource::GatheringMode gatheringMode;
+    MemorySource::SourceMode sourceMode;
+
 };
 }// namespace NES
 

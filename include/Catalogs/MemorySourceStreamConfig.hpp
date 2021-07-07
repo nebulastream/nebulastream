@@ -18,6 +18,7 @@
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Sources/MemorySource.hpp>
 
 namespace NES {
 
@@ -41,7 +42,8 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
                                       size_t memoryAreaSize,
                                       uint64_t numBuffersToProcess,
                                       uint64_t gatheringValue,
-                                      std::string gatheringMode);
+                                      const std::string& gatheringMode,
+                                      const std::string& sourceMode);
 
     ~MemorySourceStreamConfig() noexcept override = default;
 
@@ -92,7 +94,8 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
                                                   size_t memoryAreaSize,
                                                   uint64_t numBuffersToProcess,
                                                   uint64_t gatheringValue,
-                                                  const std::string& gatheringMode);
+                                                  const std::string& gatheringMode,
+                                                  const std::string& sourceMode);
 
   private:
     std::string sourceType;
@@ -100,6 +103,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
     const size_t memoryAreaSize;
     uint64_t gatheringValue;
     DataSource::GatheringMode gatheringMode;
+    MemorySource::SourceMode sourceMode;
 };
 
 }// namespace NES

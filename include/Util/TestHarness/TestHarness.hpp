@@ -308,7 +308,8 @@ class TestHarness {
                                                      memAreaSize,
                                                      /** numberOfBuffers*/ memSrcNumBuffToProcess,
                                                      /** frequency*/ memSrcFrequency,
-                                                     "frequency");
+                                                     "frequency",
+                                                     "copyBuffer");
                 worker.wrk->registerPhysicalStream(conf);
             }
         }

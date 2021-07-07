@@ -20,6 +20,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <Sources/MemorySource.hpp>
 #include <chrono>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -207,6 +208,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  OperatorId operatorId,
                                  size_t numSourceLocalBuffers,
                                  DataSource::GatheringMode gatheringMode,
+                                 MemorySource::SourceMode sourceMode,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**

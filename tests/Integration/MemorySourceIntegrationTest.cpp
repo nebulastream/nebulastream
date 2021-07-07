@@ -110,7 +110,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
                                                                             memAreaSize,
                                                                             buffersToExpect,
                                                                             0,
-                                                                            "frequency");
+                                                                            "frequency",
+                                                                            "copyBuffer");
     wrk1->registerPhysicalStream(conf);
 
     // local fs
@@ -220,7 +221,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
                                                                             memAreaSize,
                                                                             1,
                                                                             0,
-                                                                            "frequency");
+                                                                            "frequency",
+                                                                            "copyBuffer");
     wrk1->registerPhysicalStream(conf);
 
     // local fs
@@ -332,7 +334,8 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
                                                                             memAreaSize,
                                                                             buffersToExpect + 1,
                                                                             0,
-                                                                            "frequency");
+                                                                            "frequency",
+                                                                            "copyBuffer");
     wrk1->registerPhysicalStream(conf);
 
     // local fs

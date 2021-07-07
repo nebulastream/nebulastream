@@ -35,7 +35,8 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
                                                    size_t memoryAreaSize,
                                                    uint64_t numBuffersToProcess,
                                                    uint64_t gatheringValue,
-                                                   std::string gatheringMode)
+                                                   const std::string& gatheringMode,
+                                                   const std::string& sourceMode)
     : PhysicalStreamConfig(SourceConfig::create()), sourceType(std::move(sourceType)),
       memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize) {
     // nop
@@ -43,6 +44,7 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
     this->logicalStreamName = std::move(logicalStreamName);
     this->numberOfBuffersToProduce = numBuffersToProcess;
     this->gatheringMode = DataSource::getGatheringModeFromString(std::move(gatheringMode));
+    this->sourceMode = MemorySource::getSourceModeFromString(std::move(sourceMode));
     this->gatheringValue = gatheringValue;
 }
 
@@ -60,7 +62,8 @@ SourceDescriptorPtr MemorySourceStreamConfig::build(SchemaPtr ptr) {
                                                     memoryAreaSize,
                                                     this->numberOfBuffersToProduce,
                                                     this->gatheringValue,
-                                                    this->gatheringMode);
+                                                    this->gatheringMode,
+                                                    this->sourceMode);
 }
 
 AbstractPhysicalStreamConfigPtr MemorySourceStreamConfig::create(const std::string& sourceType,
@@ -70,7 +73,8 @@ AbstractPhysicalStreamConfigPtr MemorySourceStreamConfig::create(const std::stri
                                                                  size_t memoryAreaSize,
                                                                  uint64_t numBuffersToProcess,
                                                                  uint64_t gatheringValue,
-                                                                 const std::string& gatheringMode) {
+                                                                 const std::string& gatheringMode,
+                                                                 const std::string& sourceMode) {
     NES_ASSERT(memoryArea, "invalid memory area");
     return std::make_shared<MemorySourceStreamConfig>(sourceType,
                                                       physicalStreamName,
@@ -79,7 +83,8 @@ AbstractPhysicalStreamConfigPtr MemorySourceStreamConfig::create(const std::stri
                                                       memoryAreaSize,
                                                       numBuffersToProcess,
                                                       gatheringValue,
-                                                      gatheringMode);
+                                                      gatheringMode,
+                                                      sourceMode);
 }
 
 }// namespace NES
