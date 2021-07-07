@@ -185,13 +185,20 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
 }
 
 /**
-* called by applyOperatorHeuristics
+* called by applyOperatorHeuristics, (if not provided) estimates output and computing-cost of an
 * @param operatorNode
-* @param input is the data rate for the first node, other nodes get as input the output of their parent node
 */
-void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode, double input) {
+void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode) {
     int cost = 1;
     double dmf = 1;
+    double input = 0;
+
+    for (const auto& child : operatorNode->getChildren()) {
+        LogicalOperatorNodePtr op = child->as<LogicalOperatorNode>();
+        assignOperatorPropertiesRecursive(op);
+        std::any output = op->getProperty("output");
+        input += std::any_cast<double>(output);
+    }
 
     NodePtr nodePtr = operatorNode->as<Node>();
     if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
@@ -211,15 +218,12 @@ void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr opera
         cost = 1;
     } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         cost = 0;
+        input = 100;
     }
 
     double output = input * dmf;
     operatorNode->addProperty("output", output);
     operatorNode->addProperty("cost", cost);
-
-    for (const auto& parent : operatorNode->getParents()) {
-        assignOperatorPropertiesRecursive(parent->as<LogicalOperatorNode>(), output);
-    }
 }
 
 /**
@@ -227,17 +231,8 @@ void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr opera
  * @param queryPlan
  */
 void ILPStrategy::applyOperatorHeuristics(QueryPlanPtr queryPlan) {
-    std::map<std::string, double> mileageMap; // (operatorid, M)
-    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
-
-    for (const auto& sourceNode : sourceOperators) {
-        double datarate = 100; // ingestion rate * tuplesize; TODO use actual values
-        int operatorcost = 0;
-        sourceNode->addProperty("output", datarate);
-        sourceNode->addProperty("cost", operatorcost);
-        for (const auto& parent : sourceNode->getParents()) {
-            assignOperatorPropertiesRecursive(parent->as<LogicalOperatorNode>(), datarate);
-        }
+    for (const auto& sink : queryPlan->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 }
 
@@ -306,7 +301,7 @@ void ILPStrategy::addPath(context& c,
             sum_i = sum_i + P_IJ;
 
             // add to node utilization
-            std::any prop = operatorNode->getProperty("slots");
+            std::any prop = operatorNode->getProperty("cost");
             auto slots = std::any_cast<int>(prop);
             auto iterator = utilizations.find(topologyID);
             if (iterator != utilizations.end()) {
