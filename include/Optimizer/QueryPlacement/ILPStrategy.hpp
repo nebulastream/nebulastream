@@ -38,7 +38,26 @@ class ILPStrategy : public BasePlacementStrategy {
                               StreamCatalogPtr streamCatalog);
 
     void placeOperators();
+
+    /**
+    * @param sourceNode source operator or source topology node
+    * @returns array containing all nodes on path from source to sink or parent topology node
+    */
     std::vector<NodePtr> findPathToRoot(NodePtr sourceNode);
+
+    /**
+    * creates the placement variables and adds constraints to the optimizer
+    * @param c Z3 context
+    * @param opt
+    * @param operatorPath
+    * @param topologyPath
+    * @param operatorNodes
+    * @param topologyNodes
+    * @param placementVariables
+    * @param positions
+    * @param utilizations
+    * @param mileages
+    */
     void addPath(z3::context& c,
                  z3::optimize& opt,
                  std::vector<NodePtr>& operatorPath,
@@ -49,9 +68,33 @@ class ILPStrategy : public BasePlacementStrategy {
                  std::map<std::string, z3::expr>& distances,
                  std::map<std::string, z3::expr>& utilizations,
                  std::map<std::string, double>& mileages);
+
+    /**
+    * calculates the mileage property for a node
+    * mileage: distance to the root node, takes into account the bandwidth of the links
+    * @param node topology node for which mileage is calculated
+    * @mileageMap map of mileages
+    */
     void computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileageMap);
+
+    /**
+    * computes heuristics for distance
+    * @param queryPlan
+    * @return the map of mileage parameters
+    */
     std::map<std::string, double> computeDistanceHeuristic(QueryPlanPtr queryPlan);
+
+    /**
+     * assigns the output and cost properties to each operator
+     * @param queryPlan
+     */
     void applyOperatorHeuristics(QueryPlanPtr queryPlan);
+
+    /**
+    * called by applyOperatorHeuristics
+    * @param operatorNode
+    * @param input is the data rate for the first node, other nodes get as input the output of their parent node
+    */
     void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode, double input);
 };
 }// namespace NES::Optimizer
