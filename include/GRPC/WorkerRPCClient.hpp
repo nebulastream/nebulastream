@@ -107,7 +107,7 @@ class WorkerRPCClient {
     * @return true if succeeded, else false
     */
     static bool triggerReconfigurationAsync(const std::string& address,
-                                            const QueryReconfigurationPlanPtr reconfigurationPlan,
+                                            const QueryReconfigurationPlanPtr& reconfigurationPlan,
                                             const CompletionQueuePtr& cq);
 
     /**

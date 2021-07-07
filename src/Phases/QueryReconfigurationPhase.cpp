@@ -18,6 +18,7 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/QueryReconfigurationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -159,17 +160,24 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
                     auto oldNetSrcOperatorId = oldNesPartition.getOperatorId();
                     auto netSrcSubPlan = operatorToSubPlan[oldNetSrcOperatorId];
                     auto newNetSrcOperatorId = UtilityFunctions::getNextOperatorId();
-                    netSrcSubPlan->getOperatorWithId(oldNetSrcOperatorId)->setId(newNetSrcOperatorId);
-                    auto newSinkDesc =
-                        Network::NetworkSinkDescriptor::create(oldNetSinkDesc->getNodeLocation(),
-                                                               Network::NesPartition(oldNesPartition.getQueryId(),
-                                                                                     newNetSrcOperatorId,
-                                                                                     oldNesPartition.getPartitionId(),
-                                                                                     oldNesPartition.getSubpartitionId()),
-                                                               oldNetSinkDesc->getWaitTime(),
-                                                               oldNetSinkDesc->getRetryTimes());
+                    const SourceLogicalOperatorNodePtr srcNetOperator =
+                        netSrcSubPlan->getOperatorWithId(oldNetSrcOperatorId)->as<SourceLogicalOperatorNode>();
+                    auto oldSrcDescriptor = srcNetOperator->getSourceDescriptor();
+                    srcNetOperator->setId(newNetSrcOperatorId);
+                    const Network::NesPartition& newPartition = Network::NesPartition(oldNesPartition.getQueryId(),
+                                                                                      newNetSrcOperatorId,
+                                                                                      oldNesPartition.getPartitionId(),
+                                                                                      oldNesPartition.getSubpartitionId());
+                    srcNetOperator->as<SourceLogicalOperatorNode>()->setSourceDescriptor(
+                        Network::NetworkSourceDescriptor::create(oldSrcDescriptor->getSchema(), newPartition));
+                    auto newSinkDesc = Network::NetworkSinkDescriptor::create(oldNetSinkDesc->getNodeLocation(),
+                                                                              newPartition,
+                                                                              oldNetSinkDesc->getWaitTime(),
+                                                                              oldNetSinkDesc->getRetryTimes());
                     sink->setSinkDescriptor(newSinkDesc);
+                    sink->setId(UtilityFunctions::getNextOperatorId());
                     operatorToSubPlan[newNetSrcOperatorId] = netSrcSubPlan;
+                    operatorToSubPlan[sink->getId()] = shadowSubPlan;
                     shadowSubPlans.insert(netSrcSubPlan);
                 }
             }
@@ -185,6 +193,10 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
         if (shadowSubPlans.contains(sinkSubPlan)) {
             populateReconfigurationPlan(queryId, sink, DATA_SINK);
         }
+    }
+
+    for (const auto& subPlan : reconfigurationShadowPlans) {
+        newQuerySubPlans.erase(subPlan);
     }
 
     for (const auto& shadowSubPlan : shadowSubPlans) {
@@ -254,7 +266,7 @@ bool QueryReconfigurationPhase::registerForReconfiguration(QueryId queryId) {
 }
 
 bool QueryReconfigurationPhase::triggerReconfigurationOfType(QueryId queryId, QueryReconfigurationTypes reconfigurationType) {
-    std::map<CompletionQueuePtr, uint64_t> sinkReconfigurationCompletionQueues;
+    std::map<CompletionQueuePtr, uint64_t> reconfigurationCompletionQueues;
     for (const auto& reconfiguration : executionNodeToReconfigurationPlans) {
         auto reconfigurationPlans = reconfiguration.second;
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
@@ -262,6 +274,7 @@ bool QueryReconfigurationPhase::triggerReconfigurationOfType(QueryId queryId, Qu
         auto plansReconfigured = 0;
         for (const auto& reconfigurationPlan : reconfigurationPlans) {
             if (reconfigurationPlan->getReconfigurationType() == reconfigurationType) {
+                plansReconfigured++;
                 bool success =
                     workerRPCClient->triggerReconfigurationAsync(rpcAddress, reconfigurationPlan, queueForExecutionNode);
                 if (success) {
@@ -275,14 +288,15 @@ bool QueryReconfigurationPhase::triggerReconfigurationOfType(QueryId queryId, Qu
             }
         }
         if (plansReconfigured > 0) {
-            sinkReconfigurationCompletionQueues[queueForExecutionNode] = plansReconfigured;
+            reconfigurationCompletionQueues[queueForExecutionNode] = plansReconfigured;
         }
     }
 
-    bool result = workerRPCClient->checkAsyncResult(sinkReconfigurationCompletionQueues, RegisterForReconfiguration);
+    bool result = workerRPCClient->checkAsyncResult(reconfigurationCompletionQueues, TriggerReconfiguration);
 
-    NES_DEBUG("QueryReconfigurationPhase::registerForReconfiguration: Finished deploying execution plan for query with Id "
-              << queryId << " success=" << result);
+    NES_DEBUG(
+        "QueryReconfigurationPhase::triggerReconfigurationOfType: Finished triggering reconfiguration for for query with Id "
+        << queryId << " success=" << result);
     return result;
 }
 
