@@ -34,6 +34,7 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 
 using namespace std;
 
@@ -57,20 +58,25 @@ class QueryReconfigurationTest : public testing::Test {
     void TearDown() { NES_INFO("Tear down QueryReconfigurationTest class."); }
 };
 
-NesWorkerPtr
-startWorker(WorkerConfigPtr wrkConf, uint16_t coordinatorPort, uint16_t workerId, NesNodeType nesNodeType, bool connect) {
+NesWorkerPtr startWorker(const WorkerConfigPtr& wrkConf,
+                         uint16_t coordinatorPort,
+                         uint16_t workerId,
+                         NesNodeType nesNodeType,
+                         bool connect,
+                         uint16_t slots = 65353UL) {
     NES_INFO("QueryReconfigurationTest: Start worker: " << workerId);
     wrkConf->setCoordinatorPort(coordinatorPort);
     wrkConf->setRpcPort(coordinatorPort + 10 * workerId);
     wrkConf->setDataPort(coordinatorPort + (10 * workerId) + 1);
     wrkConf->setNumWorkerThreads(2);
+    wrkConf->setNumberOfSlots(slots);
     NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf, nesNodeType);
     EXPECT_TRUE(wrk->start(/**blocking**/ false, /**withConnect**/ connect));
     NES_INFO("QueryReconfigurationTest: Worker: " << workerId << " started successfully");
     return wrk;
 }
 
-void stopWorker(NesWorkerPtr wrk, uint16_t workerId) {
+void stopWorker(const NesWorkerPtr& wrk, uint16_t workerId) {
     NES_INFO("QueryReconfigurationTest: Stop worker " << workerId);
     EXPECT_TRUE(wrk->stop(true));
     NES_INFO("QueryReconfigurationTest: Stopped worker " << workerId);
@@ -89,7 +95,7 @@ std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToP
         std::this_thread::sleep_for(std::chrono::seconds{sleepTime});
         NES_DEBUG("generatorLambda: invoked on threadId: " << std::this_thread::get_id() << " originId: " << origin
                                                            << " customCounter: " << counter);
-        auto records = buffer.getBuffer<Record>();
+        auto* records = buffer.getBuffer<Record>();
         for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
             records[u].id = counter++;
             records[u].value = u % 10;
@@ -104,7 +110,7 @@ std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr> getDummyNetworkSrcSchema(
                                                                                 Network::NesPartition nesPartition) {
     auto streamCatalog = std::make_shared<StreamCatalog>();
     const char* logicalStreamName = "default";
-    streamCatalog->addLogicalStream(logicalStreamName, schema);
+    streamCatalog->addLogicalStream(logicalStreamName, std::move(schema));
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName),
                                                             UtilityFunctions::getNextOperatorId());
@@ -119,8 +125,8 @@ std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr> getDummyNetworkSrcSchema(
 }
 
 std::function<bool(std::vector<std::vector<std::string>>)>
-distinctColumnValuesValidator(uint8_t colId, std::unordered_set<std::string> requiredValues) {
-    return [colId, requiredValues](std::vector<std::vector<std::string>> rows) {
+distinctColumnValuesValidator(uint8_t colId, const std::unordered_set<std::string>& requiredValues) {
+    return [colId, requiredValues](const std::vector<std::vector<std::string>>& rows) {
         auto colPos = colId - 1;
         std::unordered_set<std::string> actualValues;
         for (auto row : rows) {
@@ -135,12 +141,13 @@ distinctColumnValuesValidator(uint8_t colId, std::unordered_set<std::string> req
 
 std::function<bool(std::vector<std::vector<std::string>>)> noMissingValuesForIntRange(uint8_t colId,
                                                                                       uint64_t minimumNumberOfRows) {
-    return [=](std::vector<std::vector<std::string>> rows) {
+    return [=](const std::vector<std::vector<std::string>>& rows) {
         auto colPos = colId - 1;
         if (rows.size() < minimumNumberOfRows) {
             return false;
         }
         std::vector<uint64_t> intValues;
+        intValues.reserve(rows.size());
         for (auto row : rows) {
             intValues.emplace_back(std::stoull(row[colPos]));
         }
@@ -767,7 +774,7 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Test finished");
 }
 
-TEST_F(QueryReconfigurationTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingReconfiguration) {
+TEST_F(QueryReconfigurationTest, reconfigurationTotalMergingBottomUp) {
 
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
@@ -779,8 +786,11 @@ TEST_F(QueryReconfigurationTest, testDeployUndeployMultipleQueriesOnTwoWorkerFil
 
     wrkConf->setCoordinatorPort(rpcPort);
 
-    remove("test1.out");
-    remove("test2.out");
+    std::string outputFilePath1 = "reconfigurationTotalMergingBottomUp1.out";
+    std::string outputFilePath2 = "reconfigurationTotalMergingBottomUp2.out";
+
+    remove(outputFilePath1.c_str());
+    remove(outputFilePath2.c_str());
 
     NES_INFO("QueryReconfigurationTest: Start coordinator");
 
@@ -832,9 +842,6 @@ TEST_F(QueryReconfigurationTest, testDeployUndeployMultipleQueriesOnTwoWorkerFil
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath1 = "test1.out";
-    std::string outputFilePath2 = "test2.out";
-
     NES_INFO("QueryReconfigurationTest: Submit query");
     string query1 =
         R"(Query::from("car").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -870,14 +877,14 @@ TEST_F(QueryReconfigurationTest, testDeployUndeployMultipleQueriesOnTwoWorkerFil
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryReconfigurationTest: Test finished");
 
-    int response1 = remove("test1.out");
+    int response1 = remove(outputFilePath1.c_str());
     EXPECT_EQ(response1, 0);
 
-    int response2 = remove("test2.out");
+    int response2 = remove(outputFilePath2.c_str());
     EXPECT_EQ(response2, 0);
 }
 
-TEST_F(QueryReconfigurationTest, testDeployUndeployMultipleQueriesOnTwoWorkerTopDownFileOutputWithQueryMergingReconfiguration) {
+TEST_F(QueryReconfigurationTest, reconfigurationPartialMergingTopDown) {
 
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
@@ -889,10 +896,8 @@ TEST_F(QueryReconfigurationTest, testDeployUndeployMultipleQueriesOnTwoWorkerTop
 
     wrkConf->setCoordinatorPort(rpcPort);
 
-    std::string outputFilePath1 =
-        "testDeployUndeployMultipleQueriesOnTwoWorkerTopDownFileOutputWithQueryMergingReconfiguration1.out";
-    std::string outputFilePath2 =
-        "testDeployUndeployMultipleQueriesOnTwoWorkerTopDownFileOutputWithQueryMergingReconfiguration2.out";
+    std::string outputFilePath1 = "reconfigurationPartialMergingTopDown1.out";
+    std::string outputFilePath2 = "reconfigurationPartialMergingTopDown2.out";
 
     remove(outputFilePath1.c_str());
     remove(outputFilePath2.c_str());
@@ -905,23 +910,10 @@ TEST_F(QueryReconfigurationTest, testDeployUndeployMultipleQueriesOnTwoWorkerTop
     EXPECT_NE(port, 0UL);
     NES_INFO("QueryReconfigurationTest: Coordinator started successfully");
 
-    NES_INFO("QueryReconfigurationTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryReconfigurationTest: Worker1 started successfully");
-
-    NES_INFO("QueryReconfigurationTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("QueryReconfigurationTest: Worker2 started successfully");
+    auto wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Sensor, true);
+    auto wrk2 = startWorker(wrkConf, port, 2, NesNodeType::Sensor, true);
+    auto wrk3 = startWorker(wrkConf, port, 3, NesNodeType::Worker, true);
+    auto wrk4 = startWorker(wrkConf, port, 4, NesNodeType::Worker, true);
 
     std::string testSchema =
         "Schema::create()->addField(\"id\", BasicType::UINT64)->addField(\"value\", "
@@ -933,6 +925,12 @@ TEST_F(QueryReconfigurationTest, testDeployUndeployMultipleQueriesOnTwoWorkerTop
 
     wrk1->registerLogicalStream("car", testSchemaFileName);
     wrk2->registerLogicalStream("car", testSchemaFileName);
+
+    wrk1->addParent(wrk3->getWorkerId());
+    wrk2->addParent(wrk4->getWorkerId());
+
+    wrk1->removeParent(crd->getNesWorker()->getWorkerId());
+    wrk2->removeParent(crd->getNesWorker()->getWorkerId());
 
     //register physical stream - wrk1
     NES::AbstractPhysicalStreamConfigPtr confCar1 =
@@ -948,7 +946,7 @@ TEST_F(QueryReconfigurationTest, testDeployUndeployMultipleQueriesOnTwoWorkerTop
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryReconfigurationTest: Submit query");
-    //    Query::from("car").filter(MOD(Attribute("id"), 2) = 0)
+
     string query1 = R"(Query::from("car").filter(Attribute("value") / 5 > 0).sink(FileSinkDescriptor::create(")" + outputFilePath1
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "TopDown");
@@ -971,13 +969,116 @@ TEST_F(QueryReconfigurationTest, testDeployUndeployMultipleQueriesOnTwoWorkerTop
     queryService->validateAndQueueStopRequest(queryId2);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
-    NES_INFO("QueryReconfigurationTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
+    stopWorker(wrk1, 1);
+    stopWorker(wrk2, 2);
+    stopWorker(wrk3, 3);
+    stopWorker(wrk4, 4);
 
-    NES_INFO("QueryReconfigurationTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
+    NES_INFO("QueryReconfigurationTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryReconfigurationTest: Test finished");
+
+    int response1 = remove(outputFilePath1.c_str());
+    EXPECT_EQ(response1, 0);
+
+    int response2 = remove(outputFilePath2.c_str());
+    EXPECT_EQ(response2, 0);
+}
+
+TEST_F(QueryReconfigurationTest, reconfigurationPartialMergingBottomUp) {
+
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setQueryReconfiguration(true);
+    crdConf->setRestPort(restPort);
+
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    std::string outputFilePath1 = "reconfigurationPartialMergingBottomUp1.out";
+    std::string outputFilePath2 = "reconfigurationPartialMergingBottomUp2.out";
+
+    remove(outputFilePath1.c_str());
+    remove(outputFilePath2.c_str());
+
+    NES_INFO("QueryReconfigurationTest: Start coordinator");
+
+    crdConf->setQueryMergerRule("Z3SignatureBasedPartialQueryMergerRule");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("QueryReconfigurationTest: Coordinator started successfully");
+
+    crd->getTopology()->toString();
+
+    auto wrk1 = startWorker(wrkConf, port, 1, NesNodeType::Sensor, true, 1);
+    auto wrk2 = startWorker(wrkConf, port, 2, NesNodeType::Sensor, true, 1);
+    auto wrk3 = startWorker(wrkConf, port, 3, NesNodeType::Worker, true);
+    auto wrk4 = startWorker(wrkConf, port, 4, NesNodeType::Worker, true);
+
+    std::string testSchema =
+        "Schema::create()->addField(\"id\", BasicType::UINT64)->addField(\"value\", "
+        "BasicType::UINT64)->addField(\"timestamp\", BasicType::UINT64)->addField(\"originId\", BasicType::UINT64);";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+
+    wrk1->registerLogicalStream("car", testSchemaFileName);
+    wrk2->registerLogicalStream("car", testSchemaFileName);
+
+    wrk1->addParent(wrk3->getWorkerId());
+    wrk2->addParent(wrk4->getWorkerId());
+
+    wrk1->removeParent(crd->getNesWorker()->getWorkerId());
+    wrk2->removeParent(crd->getNesWorker()->getWorkerId());
+
+    NES_INFO("Topology: \n" << crd->getTopology()->toString());
+
+    //register physical stream - wrk1
+    NES::AbstractPhysicalStreamConfigPtr confCar1 =
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 2), 0, 5, "frequency");
+    wrk1->registerPhysicalStream(confCar1);
+
+    //register physical stream - wrk2
+    NES::AbstractPhysicalStreamConfigPtr confCar2 =
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car2", "car", generatorLambda(2, 4), 0, 5, "frequency");
+    wrk2->registerPhysicalStream(confCar2);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    NES_INFO("QueryReconfigurationTest: Submit query");
+
+    string query1 = R"(Query::from("car").filter(Attribute("value") / 5 > 0).sink(FileSinkDescriptor::create(")" + outputFilePath1
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
+    string query2 =
+        R"(Query::from("car").filter(Attribute("value") / 5 > 0).map(Attribute("newQueryId") = 2).sink(FileSinkDescriptor::create(")"
+        + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
+
+    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath1));
+    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath2));
+
+    NES_INFO("QueryReconfigurationTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId1);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
+
+    NES_INFO("QueryReconfigurationTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId2);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
+
+    stopWorker(wrk1, 1);
+    stopWorker(wrk2, 2);
+    stopWorker(wrk3, 3);
+    stopWorker(wrk4, 4);
 
     NES_INFO("QueryReconfigurationTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);

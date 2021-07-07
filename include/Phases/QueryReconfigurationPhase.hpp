@@ -97,11 +97,15 @@ class QueryReconfigurationPhase {
     std::set<QueryPlanPtr> shadowSubPlans;
     std::set<QueryPlanPtr> reconfigurationShadowPlans;
     std::map<ExecutionNodePtr, std::vector<QueryReconfigurationPlanPtr>> executionNodeToReconfigurationPlans;
+    std::map<SourceLogicalOperatorNodePtr, std::set<SinkLogicalOperatorNodePtr>> networkSourcesToSinks;
+
     void populateReconfigurationPlan(QueryId queryId,
                                      const OperatorNodePtr& operatorNode,
                                      QueryReconfigurationTypes reconfigurationType);
     std::string getRpcAddress(const ExecutionNodePtr& executionNode);
     bool triggerReconfigurationOfType(QueryId queryId, QueryReconfigurationTypes reconfigurationType);
+    void mapOperatorToSubPlan(QueryId queryId);
+    void mapNetworkSourcesToSinks();
 };
 }// namespace NES
 #endif//NES_QUERYRECONFIGURATIONPHASE_HPP

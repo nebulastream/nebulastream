@@ -55,43 +55,17 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
 
     SharedQueryPlanChangeLogPtr changeLog = sharedPlan->getChangeLog();
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    mapOperatorToSubPlan(queryId);
 
-    for (const auto& executionNode : executionNodes) {
-        for (const auto& subPlan : executionNode->getQuerySubPlans(queryId)) {
-            auto nodes = QueryPlanIterator(subPlan).snapshot();
-            for (const auto& node : nodes) {
-                operatorToSubPlan[node->as<OperatorNode>()->getId()] = subPlan;
-            }
-            subPlanToExecutionNode[subPlan] = executionNode;
-        }
-    }
-
-    std::map<SourceLogicalOperatorNodePtr, std::set<SinkLogicalOperatorNodePtr>> networkSourcesToSinks;
-
-    for (const auto& entry : subPlanToExecutionNode) {
-        auto querySubPlan = entry.first;
-        for (const auto& sink : querySubPlan->getSinkOperators()) {
-            if (sink->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
-                auto desc = sink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>();
-                auto netSrcOperatorId = desc->getNesPartition().getOperatorId();
-                auto netSrcSubPlan = operatorToSubPlan[netSrcOperatorId];
-                auto netSrcOperator = netSrcSubPlan->getOperatorWithId(netSrcOperatorId)->as<SourceLogicalOperatorNode>();
-                auto found = networkSourcesToSinks.find(netSrcOperator);
-                if (found == networkSourcesToSinks.end()) {
-                    networkSourcesToSinks[netSrcOperator] = {sink};
-                } else {
-                    (*found).second.insert(sink);
-                }
-            }
-        }
-    }
+    mapNetworkSourcesToSinks();
 
     std::set<SinkLogicalOperatorNodePtr> newlyAddedQuerySinks;
-    std::set<OperatorId> mergePoints;
+    std::set<QueryPlanPtr> subPlansContainingMergePoints;
+
+    // Identify newly added sinks
 
     for (const auto& addition : changeLog->getAddition()) {
-        mergePoints.insert(addition.first->getId());
+        subPlansContainingMergePoints.insert(operatorToSubPlan[addition.first->getId()]);
         for (auto newOperatorId : addition.second) {
             auto newOperator = queryPlan->getOperatorWithId(newOperatorId);
             for (const auto& rootOp : newOperator->getAllRootNodes()) {
@@ -116,18 +90,14 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
                 auto sinksWritingToSource = networkSourcesToSinks[source];
                 for (const auto& sinkWritingToSource : sinksWritingToSource) {
                     auto sinkPlan = operatorToSubPlan[sinkWritingToSource->getId()];
+                    if (subPlansContainingMergePoints.contains(sinkPlan)) {
+                        continue;
+                    }
                     newQuerySubPlans.insert(sinkPlan);
                     auto sinkSources = sinkPlan->getSourceOperators();
                     sources.insert(sources.end(), sinkSources.begin(), sinkSources.end());
                 }
             }
-        }
-    }
-
-    for (auto mergePoint : mergePoints) {
-        auto mergePointSubPlan = operatorToSubPlan[mergePoint];
-        if (newQuerySubPlans.contains(mergePointSubPlan)) {
-            newQuerySubPlans.erase(mergePointSubPlan);
         }
     }
 
@@ -142,44 +112,38 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
         }
     }
 
-    // reassign network operator Ids
+    // reassign network operator Ids for plans below plan containing operator with modification
     for (const auto& shadowSubPlan : shadowSubPlans) {
-        auto handlingSubPlanWithModification = false;
-        for (const auto& addition : changeLog->getAddition()) {
-            if (operatorToSubPlan[addition.first->getId()] == shadowSubPlan) {
-                handlingSubPlanWithModification = true;
-                break;
-            }
+        if (subPlansContainingMergePoints.contains(shadowSubPlan)) {
+            continue;
         }
-        if (!handlingSubPlanWithModification) {
-            for (const auto& sink : shadowSubPlan->getSinkOperators()) {
-                const SinkDescriptorPtr& sinkDesc = sink->getSinkDescriptor();
-                if (sinkDesc->instanceOf<Network::NetworkSinkDescriptor>()) {
-                    auto oldNetSinkDesc = sinkDesc->as<Network::NetworkSinkDescriptor>();
-                    auto oldNesPartition = oldNetSinkDesc->getNesPartition();
-                    auto oldNetSrcOperatorId = oldNesPartition.getOperatorId();
-                    auto netSrcSubPlan = operatorToSubPlan[oldNetSrcOperatorId];
-                    auto newNetSrcOperatorId = UtilityFunctions::getNextOperatorId();
-                    const SourceLogicalOperatorNodePtr srcNetOperator =
-                        netSrcSubPlan->getOperatorWithId(oldNetSrcOperatorId)->as<SourceLogicalOperatorNode>();
-                    auto oldSrcDescriptor = srcNetOperator->getSourceDescriptor();
-                    srcNetOperator->setId(newNetSrcOperatorId);
-                    const Network::NesPartition& newPartition = Network::NesPartition(oldNesPartition.getQueryId(),
-                                                                                      newNetSrcOperatorId,
-                                                                                      oldNesPartition.getPartitionId(),
-                                                                                      oldNesPartition.getSubpartitionId());
-                    srcNetOperator->as<SourceLogicalOperatorNode>()->setSourceDescriptor(
-                        Network::NetworkSourceDescriptor::create(oldSrcDescriptor->getSchema(), newPartition));
-                    auto newSinkDesc = Network::NetworkSinkDescriptor::create(oldNetSinkDesc->getNodeLocation(),
-                                                                              newPartition,
-                                                                              oldNetSinkDesc->getWaitTime(),
-                                                                              oldNetSinkDesc->getRetryTimes());
-                    sink->setSinkDescriptor(newSinkDesc);
-                    sink->setId(UtilityFunctions::getNextOperatorId());
-                    operatorToSubPlan[newNetSrcOperatorId] = netSrcSubPlan;
-                    operatorToSubPlan[sink->getId()] = shadowSubPlan;
-                    shadowSubPlans.insert(netSrcSubPlan);
-                }
+        for (const auto& sink : shadowSubPlan->getSinkOperators()) {
+            const SinkDescriptorPtr& sinkDesc = sink->getSinkDescriptor();
+            if (sinkDesc->instanceOf<Network::NetworkSinkDescriptor>()) {
+                auto oldNetSinkDesc = sinkDesc->as<Network::NetworkSinkDescriptor>();
+                auto oldNesPartition = oldNetSinkDesc->getNesPartition();
+                auto oldNetSrcOperatorId = oldNesPartition.getOperatorId();
+                auto netSrcSubPlan = operatorToSubPlan[oldNetSrcOperatorId];
+                auto newNetSrcOperatorId = UtilityFunctions::getNextOperatorId();
+                const SourceLogicalOperatorNodePtr srcNetOperator =
+                    netSrcSubPlan->getOperatorWithId(oldNetSrcOperatorId)->as<SourceLogicalOperatorNode>();
+                auto oldSrcDescriptor = srcNetOperator->getSourceDescriptor();
+                srcNetOperator->setId(newNetSrcOperatorId);
+                const Network::NesPartition& newPartition = Network::NesPartition(oldNesPartition.getQueryId(),
+                                                                                  newNetSrcOperatorId,
+                                                                                  oldNesPartition.getPartitionId(),
+                                                                                  oldNesPartition.getSubpartitionId());
+                srcNetOperator->as<SourceLogicalOperatorNode>()->setSourceDescriptor(
+                    Network::NetworkSourceDescriptor::create(oldSrcDescriptor->getSchema(), newPartition));
+                auto newSinkDesc = Network::NetworkSinkDescriptor::create(oldNetSinkDesc->getNodeLocation(),
+                                                                          newPartition,
+                                                                          oldNetSinkDesc->getWaitTime(),
+                                                                          oldNetSinkDesc->getRetryTimes());
+                sink->setSinkDescriptor(newSinkDesc);
+                sink->setId(UtilityFunctions::getNextOperatorId());
+                operatorToSubPlan[newNetSrcOperatorId] = netSrcSubPlan;
+                operatorToSubPlan[sink->getId()] = shadowSubPlan;
+                shadowSubPlans.insert(netSrcSubPlan);
             }
         }
     }
@@ -188,9 +152,9 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
         populateReconfigurationPlan(queryId, source, DATA_SOURCE);
     }
 
-    for (const auto& sink : queryPlan->getSinkOperators()) {
+    for (const auto& sink : newlyAddedQuerySinks) {
         auto sinkSubPlan = operatorToSubPlan[sink->getId()];
-        if (shadowSubPlans.contains(sinkSubPlan)) {
+        if (subPlansContainingMergePoints.contains(sinkSubPlan)) {
             populateReconfigurationPlan(queryId, sink, DATA_SINK);
         }
     }
@@ -205,12 +169,13 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
 
     NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
 
-    deployQuery(queryId, newQuerySubPlans);
-    startQuery(queryId, newQuerySubPlans);
-    deployQuery(queryId, shadowSubPlans);
+    std::set<QueryPlanPtr> querySubPlansToStart{newQuerySubPlans};
+    querySubPlansToStart.insert(shadowSubPlans.begin(), shadowSubPlans.end());
+
+    deployQuery(queryId, querySubPlansToStart);
     registerForReconfiguration(queryId);
     triggerReconfigurationOfType(queryId, DATA_SINK);
-    startQuery(queryId, shadowSubPlans);
+    startQuery(queryId, querySubPlansToStart);
     triggerReconfigurationOfType(queryId, DATA_SOURCE);
 
     operatorToSubPlan.clear();
@@ -218,8 +183,42 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
     shadowSubPlans.clear();
     reconfigurationShadowPlans.clear();
     executionNodeToReconfigurationPlans.clear();
+    networkSourcesToSinks.clear();
 
     return true;
+}
+
+void QueryReconfigurationPhase::mapNetworkSourcesToSinks() {
+    for (const auto& entry : subPlanToExecutionNode) {
+        auto querySubPlan = entry.first;
+        for (const auto& sink : querySubPlan->getSinkOperators()) {
+            if (sink->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+                auto desc = sink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>();
+                auto netSrcOperatorId = desc->getNesPartition().getOperatorId();
+                auto netSrcSubPlan = operatorToSubPlan[netSrcOperatorId];
+                auto netSrcOperator = netSrcSubPlan->getOperatorWithId(netSrcOperatorId)->as<SourceLogicalOperatorNode>();
+                auto found = networkSourcesToSinks.find(netSrcOperator);
+                if (found == networkSourcesToSinks.end()) {
+                    networkSourcesToSinks[netSrcOperator] = {sink};
+                } else {
+                    (*found).second.insert(sink);
+                }
+            }
+        }
+    }
+}
+void QueryReconfigurationPhase::mapOperatorToSubPlan(QueryId queryId) {
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    for (const auto& executionNode : executionNodes) {
+        for (const auto& subPlan : executionNode->getQuerySubPlans(queryId)) {
+            auto nodes = QueryPlanIterator(subPlan).snapshot();
+            for (const auto& node : nodes) {
+                operatorToSubPlan[node->as<OperatorNode>()->getId()] = subPlan;
+            }
+            subPlanToExecutionNode[subPlan] = executionNode;
+        }
+    }
 }
 
 void QueryReconfigurationPhase::populateReconfigurationPlan(QueryId queryId,
