@@ -37,6 +37,7 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
 
     /**
      * @brief set the binary mapping of the current strategy
+     * a binary mapping is a 2D vector of i X j that store decision whether to place operator j in node i
      * @param userDefinedBinaryMapping binary mapping to set
      */
     void setBinaryMapping(std::vector<std::vector<bool>> userDefinedBinaryMapping);
@@ -47,7 +48,7 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
                               TypeInferencePhasePtr typeInferencePhase,
                               StreamCatalogPtr streamCatalog);
 
-    // A vector of i X j that store decision whether to place operator j in node i
+    // stores the binary mapping  of the current strategy
     std::vector<std::vector<bool>> binaryMapping;
 };
 
