@@ -68,7 +68,7 @@ void BinarySource::fillBuffer(Runtime::TupleBuffer& buf) {
      */
 
     // 'std::streamoff' (aka 'long') and 'size_t' (aka 'unsigned long')
-    if (input.tellg() > 0 && (unsigned) input.tellg() == fileSize){
+    if (input.tellg() > 0 && (unsigned) input.tellg() == fileSize) {
         input.seekg(0, std::ifstream::beg);
     }
     uint64_t uint64_to_read = buf.getBufferSize() < (uint64_t) fileSize ? buf.getBufferSize() : fileSize;
