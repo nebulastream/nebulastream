@@ -1105,6 +1105,7 @@ class ILPPlacementTest : public testing::Test {
     TopologyPtr topologyForILP;
 };
 
+/* First test of formulas with Z3 solver */
 TEST_F(ILPPlacementTest, Z3Test) {
     context c;
     optimize opt(c);
@@ -1184,7 +1185,164 @@ TEST_F(ILPPlacementTest, Z3Test) {
     }
 }
 
-/* Test query placement with ILP strategy  */
+/* Test query placement with ILP strategy - simple filter query */
+TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
+
+    setupTopologyAndStreamCatalogForILP();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("ILP",
+                                                                              globalExecutionPlan,
+                                                                              topologyForILP,
+                                                                              typeInferencePhase,
+                                                                              streamCatalogForILP);
+
+    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+
+    std::vector<std::map<std::string, std::any>> properties;
+
+
+    // adding property of the source
+    std::map<std::string, std::any> srcProp;
+    double srcout = 100.0;
+    srcProp.insert(std::make_pair("output", srcout));
+    srcProp.insert(std::make_pair("slots", 1));
+
+    // push properties for each node
+    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan());
+    for (auto node : queryPlanIterator) {
+        properties.push_back(srcProp);
+    }
+    ASSERT_TRUE(UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties));
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    //auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    //queryPlan = queryReWritePhase->execute(queryPlan);
+    //typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    placementStrategy->updateGlobalExecutionPlan(queryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3);
+    for (auto executionNode : executionNodes) {
+        if (executionNode->getId() == 1) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
+            for (auto children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+            }
+        } else {
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            //EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            for (auto children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+            }
+        }
+    }
+}
+
+/* Test query placement with ILP strategy - simple map query */
+TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
+
+    setupTopologyAndStreamCatalogForILP();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("ILP",
+                                                                              globalExecutionPlan,
+                                                                              topologyForILP,
+                                                                              typeInferencePhase,
+                                                                              streamCatalogForILP);
+
+    Query query = Query::from("car")
+                        .map(Attribute("c") = Attribute("value") + 2)
+                        .map(Attribute("d") = Attribute("value") * 2)
+                        .sink(PrintSinkDescriptor::create());
+
+    std::vector<std::map<std::string, std::any>> properties;
+
+
+    // adding property of the source
+    std::map<std::string, std::any> srcProp;
+    double srcout = 100.0;
+    srcProp.insert(std::make_pair("output", srcout));
+    srcProp.insert(std::make_pair("slots", 1));
+
+    // push properties for each node
+    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan());
+    for (auto node : queryPlanIterator) {
+        properties.push_back(srcProp);
+    }
+    ASSERT_TRUE(UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties));
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    //auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    //queryPlan = queryReWritePhase->execute(queryPlan);
+    //typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    placementStrategy->updateGlobalExecutionPlan(queryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3);
+    for (auto executionNode : executionNodes) {
+        if (executionNode->getId() == 1) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
+            /*for (auto children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+            }*/
+        } else {
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            //EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            for (auto children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+            }
+        }
+    }
+}
+
+/* Test query placement with ILP strategy - simple query of source - filter - map - sink */
 TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
 
     setupTopologyAndStreamCatalogForILP();
@@ -1197,7 +1355,10 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
                                                                               typeInferencePhase,
                                                                               streamCatalogForILP);
 
-    Query query = Query::from("car").filter(Attribute("id") < 45).map(Attribute("c") = Attribute("id") + Attribute("value")).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car")
+                      .filter(Attribute("id") < 45)
+                      .map(Attribute("c") = Attribute("value") * 2)
+                      .sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::any>> properties;
 
@@ -1208,7 +1369,7 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     srcProp.insert(std::make_pair("output", srcout));
     srcProp.insert(std::make_pair("slots", 1));
 
-    // adding property of the filter
+    /*// adding property of the filter
     std::map<std::string, std::any> filterProp;
     double filterdmf = 0.5;
     double filterout = srcout * filterdmf;
@@ -1226,13 +1387,19 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     std::map<std::string, std::any> sinkProp;
     double snkout = mapout;
     sinkProp.insert(std::make_pair("output", snkout));
-    sinkProp.insert(std::make_pair("slots", 1));
+    sinkProp.insert(std::make_pair("slots", 1));*/
 
     // add properties in reverse order; Why?
-    properties.push_back(sinkProp);
-    properties.push_back(mapProp);
-    properties.push_back(filterProp);
-    properties.push_back(srcProp);
+    //properties.push_back(sinkProp);
+    //properties.push_back(mapProp);
+    //properties.push_back(filterProp);
+    //properties.push_back(srcProp);
+
+    // push properties for each node
+    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan());
+    for (auto node : queryPlanIterator) {
+        properties.push_back(srcProp);
+    }
     ASSERT_TRUE(UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties));
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -1354,7 +1521,7 @@ class ILPPlacementTestTreeTopology : public testing::Test {
     TopologyPtr topologyForILP;
 };
 
-/* Test query placement with ILP strategy  */
+/* Test query placement with ILP strategy on Tree Topology with multiple sources */
 TEST_F(ILPPlacementTestTreeTopology, testPlacingQueryMultipleSources) {
 
     setupTopologyAndStreamCatalogForILP();
@@ -1540,7 +1707,7 @@ class ILPPlacementBenchmark : public testing::Test {
 };
 
 
-/* Test query placement with ILP strategy  */
+/* Benchmark for ILP Strategy */
 TEST_F(ILPPlacementBenchmark, testPlacingQueryWithILPStrategy) {
 
     int n = setupTopologyAndStreamCatalogForILP();
