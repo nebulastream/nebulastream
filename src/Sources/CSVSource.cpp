@@ -135,7 +135,7 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buf) {
 
     while (tupCnt < generatedTuplesThisPass) {
         if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1) {
-            NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
+            NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " fileSize=" << fileSize);
             input.clear();
             input.seekg(0, std::ifstream::beg);
             if (!this->loopOnFile) {
