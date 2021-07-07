@@ -51,11 +51,14 @@
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
+#include <QueryCompiler/GeneratableTypes/PointerDataType.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -82,7 +85,20 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
     NES_DEBUG("Define Struct : " << structName);
 
     for (uint64_t i = 0; i < schema->getSize(); ++i) {
-        structDeclarationTuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->getName()));
+
+        if (schema->layoutType == Schema::ROW_LAYOUT) {
+            structDeclarationTuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(),
+                                                                        schema->get(i)->getName()));
+        } else if (schema->layoutType == Schema::COL_LAYOUT) {
+            auto tf = getTypeFactory();
+            auto val = GeneratableTypesFactory::createPointer(tf->createDataType(schema->get(i)->getDataType()));
+            auto varDeclPointer = VariableDeclaration::create(val, schema->get(i)->getName());
+
+            structDeclarationTuple.addField(varDeclPointer);
+        } else {
+            NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        }
+
         NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->getName());
     }
     return structDeclarationTuple;
@@ -112,19 +128,20 @@ bool CCodeGenerator::generateCodeForScanSetup(PipelineContextPtr context) {
     return true;
 }
 
-bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) {
-
+bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context,
+                                         Runtime::DynamicMemoryLayout::DynamicMemoryLayoutPtr inputMemoryLayout) {
+    NES_DEBUG("CCodeGenerator: Generating code for scan with inputSchema " << inputSchema->toString());
     context->inputSchema = outputSchema->copy();
     auto code = context->code;
     switch (context->arity) {
         case PipelineContext::Unary: {
             // it is assumed that the input item is the first element!
             // so place to front
-            // todo remove this assumtion
+            // todo remove this assumption
             code->structDeclarationInputTuples.insert(code->structDeclarationInputTuples.begin(),
                                                       getStructDeclarationFromSchema("InputTuple", inputSchema));
             NES_DEBUG("arity unary generate scan for input=" << inputSchema->toString()
-                                                             << " output=" << outputSchema->toString());
+                          << " output=" << outputSchema->toString());
             break;
         }
         case PipelineContext::BinaryLeft: {
@@ -193,9 +210,29 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             .assign(getTypedBuffer(code->varDeclarationInputBuffer, code->structDeclarationInputTuples[0]))
             .copy());
 
+    // Setting the start of all fields for col layout
+
+    // TODO this has to be implemented as multiple statements
+    if (inputSchema->layoutType == Schema::COL_LAYOUT) {
+        auto* layout = dynamic_cast<Runtime::DynamicMemoryLayout::DynamicColumnLayout*>(inputMemoryLayout.get());
+
+        code->variableInitStmts.push_back(VarDeclStatement());
+
+        uint64_t offsetCounter = 0;
+        uint64_t capacity = inputTupleBuffer.getNumberOfTuples() / inputMemoryLayout->getRecordSize();
+        for (const auto& fieldSize : layout->getFieldSizes()) {
+            offsetCounter += fieldSize * capacity;
+
+        }
+    }
+
+    code->variableInitStmts.push_back(VarDeclStatement());
+
+
     /* for (uint64_t recordIndex = 0; recordIndex < tuple_buffer_1->num_tuples; ++id) */
     // input_buffer.getNumberOfTuples()
-    auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
+//    auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
+    auto numberOfRecords = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(1L)));
     code->forLoopStmt = std::make_shared<FOR>(code->varDeclarationRecordIndex,
                                               (VarRef(code->varDeclarationRecordIndex) < (numberOfRecords)).copy(),
                                               (++VarRef(code->varDeclarationRecordIndex)).copy());
@@ -208,12 +245,20 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     auto recordHandler = context->getRecordHandler();
     for (const AttributeFieldPtr& field : inputSchema->fields) {
         auto variable = getVariableDeclarationForField(code->structDeclarationInputTuples[0], field);
+        if (inputSchema->layoutType == Schema::ROW_LAYOUT) {
+            auto fieldRefStatement =
+                VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                    VarRef(variable));
 
-        auto fieldRefStatement =
-            VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                VarRef(variable));
+            recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
+        } else if (inputSchema->layoutType == Schema::COL_LAYOUT) {
+            auto fieldRefStatement = VarRef(context->code->varDeclarationInputTuples).accessPtr(
+                VarRef(variable))[VarRef(context->code->varDeclarationRecordIndex)];
 
-        recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
+            recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
+        } else {
+            NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        }
     }
 
     code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
@@ -338,13 +383,26 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
         // Get current field from record handler.
         auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
 
-        // use regular assing for types which are not arrays, as fixed char arrays support
-        // assignment by operator.
-        auto const copyFieldStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)]
-                                            .accessRef(VarRef(resultRecordFieldVariableDeclaration))
-                                            .assign(currentFieldVariableReference);
+        if (sinkSchema->layoutType == Schema::ROW_LAYOUT) {
 
-        code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
+            // use regular assing for types which are not arrays, as fixed char arrays support
+            // assignment by operator.
+            auto const copyFieldStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)]
+                .accessRef(VarRef(resultRecordFieldVariableDeclaration))
+                .assign(currentFieldVariableReference);
+
+            code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
+
+        } else if (sinkSchema->layoutType == Schema::COL_LAYOUT) {
+            auto const copyFieldStatement = VarRef(varDeclResultTuple)
+                .accessPtr(VarRef(resultRecordFieldVariableDeclaration))[VarRef(code->varDeclarationNumberOfResultTuples)]
+                .assign(currentFieldVariableReference);
+
+            code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
+
+        } else {
+            NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        }
     }
 
     // increment number of tuples in buffer -> ++numberOfResultTuples;

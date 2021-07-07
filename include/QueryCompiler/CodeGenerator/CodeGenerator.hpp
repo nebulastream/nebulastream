@@ -50,7 +50,8 @@ class CodeGenerator {
      * @param context The context of the current pipeline.
      * @return flag if the generation was successful.
      */
-    virtual bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context,
+                                     Runtime::DynamicMemoryLayout::DynamicMemoryLayout inputMemoryLayout) = 0;
 
     /**
      * @brief Code generation for a scan, which depends on a particular input schema.

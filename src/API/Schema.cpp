@@ -28,9 +28,9 @@
 
 namespace NES {
 
-Schema::Schema() = default;
+Schema::Schema(ROW_OR_COL layoutType) : layoutType(layoutType) {};
 
-SchemaPtr Schema::create() { return std::make_shared<Schema>(); }
+SchemaPtr Schema::create(ROW_OR_COL layoutType) { return std::make_shared<Schema>(layoutType); }
 
 uint64_t Schema::getSize() const { return fields.size(); }
 
@@ -157,6 +157,8 @@ std::string Schema::toString() const {
     for (const auto& f : fields) {
         ss << f->toString() << " ";
     }
+
+    ss << "layoutType = " << layoutType;
     return ss.str();
 }
 

@@ -33,7 +33,7 @@ class Schema {
   public:
     enum ROW_OR_COL {ROW_LAYOUT = 0, COL_LAYOUT = 1};
 
-    Schema();
+    Schema(ROW_OR_COL layoutType = ROW_LAYOUT);
     Schema(SchemaPtr const& query, ROW_OR_COL layoutType = ROW_LAYOUT);
 
     /**
@@ -45,7 +45,7 @@ class Schema {
      * @brief Factory method to create a new SchemaPtr.
      * @return SchemaPtr
      */
-    static SchemaPtr create();
+    static SchemaPtr create(ROW_OR_COL layoutType = ROW_LAYOUT);
 
     /**
      * @brief Creates a copy of this schema.

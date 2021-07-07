@@ -18,6 +18,7 @@
 #define NES_DYNAMICCOLUMNLAYOUTFIELD_HPP
 
 #include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES::Runtime::DynamicMemoryLayout {
