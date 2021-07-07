@@ -33,6 +33,12 @@ class MemorySegment;
  */
 class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
+    enum SourceMode{
+        emptyBuffer,
+        wrapBuffer,
+        copyBuffer
+    };
+
     /**
      * @brief The constructor of a MemorySource
      * @param schema the schema of the source
@@ -53,6 +59,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
                           OperatorId operatorId,
                           size_t numSourceLocalBuffers,
                           GatheringMode gatheringMode,
+                          SourceMode sourceMode,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
@@ -72,19 +79,22 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      */
     SourceType getType() const override;
 
-    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*){};
+    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override{};
 
     /**
      * @brief Interface method for unpooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*){};
+    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override {};
+
+    static SourceMode getSourceModeFromString(const std::string& mode);
 
   private:
     uint64_t numberOfTuplesToProduce;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t currentPositionInBytes;
+    SourceMode sourceMode;
 };
 
 using MemorySourcePtr = std::shared_ptr<MemorySource>;

@@ -172,6 +172,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   operatorId,
                                   numSourceLocalBuffers,
                                   memorySourceDescriptor->getGatheringMode(),
+                                  memorySourceDescriptor->getSourceMode(),
                                   successors);
     } else if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating lambda source");

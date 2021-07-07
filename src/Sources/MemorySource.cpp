@@ -20,6 +20,7 @@
 #include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <cmath>
 #include <utility>
 namespace NES {
@@ -34,6 +35,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                            OperatorId operatorId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
+                           SourceMode sourceMode,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -43,7 +45,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                       numSourceLocalBuffers,
                       gatheringMode,
                       std::move(successors)),
-      memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0) {
+      memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), sourceMode(sourceMode) {
     this->numBuffersToProcess = numBuffersToProcess;
     if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
@@ -74,7 +76,6 @@ MemorySource::MemorySource(SchemaPtr schema,
 
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
-//    auto buffer = this->bufferManager->getBufferTimeout(NES::NodeEngine::DEFAULT_BUFFER_TIMEOUT);
 
     auto bufferSize = globalBufferManager->getBufferSize();
     if (memoryAreaSize > bufferSize) {
@@ -92,18 +93,25 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= bufferSize,
                     "value to write is larger than the buffer");
 
-//    if (!buffer) {
-//        NES_ERROR("Buffer invalid after waiting on timeout");
-//        return std::nullopt;
-//    }
-//    memcpy(buffer->getBuffer(), memoryArea.get() + currentPositionInBytes, buffer->getBufferSize());
-
-    //        TODO: replace copy with inplace add like with the wraparound #1853
-    auto buffer = Runtime::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, bufferSize, this);
+    Runtime::TupleBuffer buffer;
+    switch (sourceMode) {
+        case emptyBuffer: {
+            buffer = globalBufferManager->getBufferBlocking();
+            break;
+        }
+        case wrapBuffer: {
+            buffer = globalBufferManager->getBufferBlocking();
+            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+            break;
+        }
+        case copyBuffer: {
+            buffer = Runtime::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, bufferSize, this);
+            break;
+        }
+    }
 
     if (memoryAreaSize > bufferSize) {
-        NES_DEBUG("MemorySource::receiveData: add offset=" << bufferSize
-                                                           << " to currentpos=" << currentPositionInBytes);
+        NES_DEBUG("MemorySource::receiveData: add offset=" << bufferSize << " to currentpos=" << currentPositionInBytes);
         currentPositionInBytes += bufferSize;
     }
 
@@ -118,6 +126,23 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     }
     return buffer;
 }
+
+MemorySource::SourceMode MemorySource::getSourceModeFromString(const std::string& mode) {
+    UtilityFunctions::trim(mode);
+    if (mode == "emptyBuffer") {
+        return SourceMode::emptyBuffer;
+    }
+    else if (mode == "wrapBuffer") {
+        return SourceMode::wrapBuffer;
+    }
+    else if (mode == "copyBuffer") {
+        return SourceMode::copyBuffer;
+    } else {
+        NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
+    }
+}
+
+
 
 std::string MemorySource::toString() const { return "MemorySource"; }
 
