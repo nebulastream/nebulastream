@@ -81,14 +81,14 @@ class QueryReconfigurationPhase {
      * @param queryId
      * @return bool indicating success
      */
-    bool deployQuery(QueryId queryId);
+    bool deployQuery(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans);
 
     /**
      * @brief method to start a already deployed query
      * @param queryId
      * @return bool indicating success
      */
-    bool startQuery(QueryId queryId);
+    bool startQuery(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans);
 
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;

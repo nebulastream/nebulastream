@@ -69,4 +69,9 @@ const std::vector<uint64_t>& SharedQueryPlanChangeLog::getRemovedSinks() const {
 void SharedQueryPlanChangeLog::registerNewlyAddedSink(uint64_t sinkOperatorId) { addedSinks.emplace_back(sinkOperatorId); }
 
 void SharedQueryPlanChangeLog::registerRemovedSink(uint64_t sinkOperatorId) { removedSinks.emplace_back(sinkOperatorId); }
+
+void SharedQueryPlanChangeLog::reset() {
+    clearAdditionLog();
+    clearRemovalLog();
+}
 }// namespace NES

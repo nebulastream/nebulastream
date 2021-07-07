@@ -52,9 +52,6 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
 
     NES_DEBUG("QueryReconfigurationPhase: deploy the query");
 
-    std::set<QueryPlanPtr> querySubPlansToStart;
-    std::set<QueryPlanPtr> sourceReconfiguration;
-
     SharedQueryPlanChangeLogPtr changeLog = sharedPlan->getChangeLog();
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -69,20 +66,67 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
         }
     }
 
-    for (const auto& addition : changeLog->getAddition()) {
-        auto sourceSubPlan = operatorToSubPlan[addition.first->getId()];
-        for (auto newOperator : addition.second) {
-            std::vector<NodePtr> operatorChain{queryPlan->getOperatorWithId(newOperator)};
-            while (!operatorChain.empty()) {
-                auto op = operatorChain.back()->as<OperatorNode>();
-                operatorChain.pop_back();
-                std::shared_ptr<QueryPlan>& subPlanContainingOperator = operatorToSubPlan[op->getId()];
-                if (subPlanContainingOperator->getQuerySubPlanId() != sourceSubPlan->getQuerySubPlanId()) {
-                    querySubPlansToStart.insert(subPlanContainingOperator);
+    std::map<SourceLogicalOperatorNodePtr, std::set<SinkLogicalOperatorNodePtr>> networkSourcesToSinks;
+
+    for (const auto& entry : subPlanToExecutionNode) {
+        auto querySubPlan = entry.first;
+        for (const auto& sink : querySubPlan->getSinkOperators()) {
+            if (sink->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+                auto desc = sink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>();
+                auto netSrcOperatorId = desc->getNesPartition().getOperatorId();
+                auto netSrcSubPlan = operatorToSubPlan[netSrcOperatorId];
+                auto netSrcOperator = netSrcSubPlan->getOperatorWithId(netSrcOperatorId)->as<SourceLogicalOperatorNode>();
+                auto found = networkSourcesToSinks.find(netSrcOperator);
+                if (found == networkSourcesToSinks.end()) {
+                    networkSourcesToSinks[netSrcOperator] = {sink};
+                } else {
+                    (*found).second.insert(sink);
                 }
-                auto opParents = queryPlan->getOperatorWithId(op->getId())->getParents();
-                operatorChain.insert(operatorChain.end(), opParents.begin(), opParents.end());
             }
+        }
+    }
+
+    std::set<SinkLogicalOperatorNodePtr> newlyAddedQuerySinks;
+    std::set<OperatorId> mergePoints;
+
+    for (const auto& addition : changeLog->getAddition()) {
+        mergePoints.insert(addition.first->getId());
+        for (auto newOperatorId : addition.second) {
+            auto newOperator = queryPlan->getOperatorWithId(newOperatorId);
+            for (const auto& rootOp : newOperator->getAllRootNodes()) {
+                if (rootOp->instanceOf<SinkLogicalOperatorNode>()) {
+                    newlyAddedQuerySinks.insert(rootOp->as<SinkLogicalOperatorNode>());
+                }
+            }
+        }
+    }
+
+    std::set<QueryPlanPtr> newQuerySubPlans;
+
+    for (const auto& sink : newlyAddedQuerySinks) {
+        auto subPlanContainingSink = operatorToSubPlan[sink->getId()];
+        auto querySinkPlanSources = subPlanContainingSink->getSourceOperators();
+        std::vector<SourceLogicalOperatorNodePtr> sources{querySinkPlanSources.begin(), querySinkPlanSources.end()};
+        newQuerySubPlans.insert(subPlanContainingSink);
+        while (!sources.empty()) {
+            auto source = sources.back();
+            sources.pop_back();
+            if (networkSourcesToSinks.contains(source)) {
+                auto sinksWritingToSource = networkSourcesToSinks[source];
+                for (const auto& sinkWritingToSource : sinksWritingToSource) {
+                    auto sinkPlan = operatorToSubPlan[sinkWritingToSource->getId()];
+                    newQuerySubPlans.insert(sinkPlan);
+                    auto sinkSources = sinkPlan->getSourceOperators();
+                    sources.insert(sources.end(), sinkSources.begin(), sinkSources.end());
+                }
+            }
+        }
+    }
+
+    for (auto mergePoint : mergePoints) {
+        auto mergePointSubPlan = operatorToSubPlan[mergePoint];
+        if (newQuerySubPlans.contains(mergePointSubPlan)) {
+            newQuerySubPlans.erase(mergePointSubPlan);
         }
     }
 
@@ -149,10 +193,12 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
 
     NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
 
-    deployQuery(queryId);
+    deployQuery(queryId, newQuerySubPlans);
+    startQuery(queryId, newQuerySubPlans);
+    deployQuery(queryId, shadowSubPlans);
     registerForReconfiguration(queryId);
     triggerReconfigurationOfType(queryId, DATA_SINK);
-    startQuery(queryId);
+    startQuery(queryId, shadowSubPlans);
     triggerReconfigurationOfType(queryId, DATA_SOURCE);
 
     operatorToSubPlan.clear();
@@ -240,18 +286,18 @@ bool QueryReconfigurationPhase::triggerReconfigurationOfType(QueryId queryId, Qu
     return result;
 }
 
-bool QueryReconfigurationPhase::deployQuery(QueryId queryId) {
+bool QueryReconfigurationPhase::deployQuery(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans) {
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
-    for (const auto& shadowPlan : shadowSubPlans) {
+    for (const auto& querySubPlan : querySubPlans) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
 
-        std::string rpcAddress = getRpcAddress(subPlanToExecutionNode[shadowPlan]);
-        bool success = workerRPCClient->registerQueryAsync(rpcAddress, shadowPlan, queueForExecutionNode);
+        std::string rpcAddress = getRpcAddress(subPlanToExecutionNode[querySubPlan]);
+        bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
         if (success) {
-            NES_DEBUG("QueryReconfigurationPhase:registerForReconfiguration: " << shadowPlan->getQuerySubPlanId() << " to "
+            NES_DEBUG("QueryReconfigurationPhase:registerForReconfiguration: " << querySubPlan->getQuerySubPlanId() << " to "
                                                                                << rpcAddress << " successful");
         } else {
-            NES_ERROR("QueryReconfigurationPhase:registerForReconfiguration: " << shadowPlan->getQuerySubPlanId() << " to "
+            NES_ERROR("QueryReconfigurationPhase:registerForReconfiguration: " << querySubPlan->getQuerySubPlanId() << " to "
                                                                                << rpcAddress << "  failed");
             return false;
         }
@@ -272,14 +318,14 @@ std::string QueryReconfigurationPhase::getRpcAddress(const ExecutionNodePtr& exe
     return rpcAddress;
 }
 
-bool QueryReconfigurationPhase::startQuery(QueryId queryId) {
+bool QueryReconfigurationPhase::startQuery(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans) {
     NES_DEBUG("QueryReconfigurationPhase::startQuery queryId=" << queryId);
     //TODO: check if one queue can be used among multiple connections
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     std::set<ExecutionNodePtr> executionNodes;
 
-    for (const auto& shadowPlan : shadowSubPlans) {
-        executionNodes.insert(subPlanToExecutionNode[shadowPlan]);
+    for (const auto& subPlan : querySubPlans) {
+        executionNodes.insert(subPlanToExecutionNode[subPlan]);
     }
     for (const auto& executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();

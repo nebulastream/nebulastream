@@ -83,6 +83,7 @@ void SharedQueryPlan::markAsDeployed() {
     NES_TRACE("SharedQueryPlan: Mark the Global Query Metadata as deployed.");
     this->deployed = true;
     this->newMetaData = false;
+    this->changeLog->reset();
 }
 
 bool SharedQueryPlan::isEmpty() {
