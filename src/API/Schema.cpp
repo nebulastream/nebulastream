@@ -34,7 +34,10 @@ SchemaPtr Schema::create() { return std::make_shared<Schema>(); }
 
 uint64_t Schema::getSize() const { return fields.size(); }
 
-Schema::Schema(const SchemaPtr& query) { copyFields(query); }
+Schema::Schema(const SchemaPtr& query, ROW_OR_COL layoutType) {
+    copyFields(query);
+    this->layoutType = layoutType;
+}
 
 SchemaPtr Schema::copy() const { return std::make_shared<Schema>(*this); }
 

@@ -15,6 +15,8 @@
 */
 
 #include <API/Schema.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/ValueTypes/BasicValue.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
@@ -31,6 +33,10 @@ SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& 
         // serialize data type
         DataTypeSerializationUtil::serializeDataType(field->getDataType(), serializedField->mutable_type());
     }
+
+    // Serialize layoutType
+    serializedSchema->set_layouttype(schema->layoutType);
+
     return std::make_shared<SerializableSchema>(*serializedSchema);
 }
 
@@ -44,6 +50,10 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(SerializableSchema* seriali
         auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.mutable_type());
         deserializedSchema->addField(fieldName, type);
     }
+
+    // Deserialize layoutType
+    deserializedSchema->layoutType = (Schema::ROW_OR_COL)(serializedSchema->layouttype());
+
     return deserializedSchema;
 }
 
