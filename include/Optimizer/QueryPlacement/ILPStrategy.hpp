@@ -32,6 +32,9 @@ class ILPStrategy : public BasePlacementStrategy {
                                                     StreamCatalogPtr streamCatalog);
 
   private:
+    double weightOverutilization = 1.0;
+    double weightNetworkCost = 1.0;
+
     explicit ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                               TopologyPtr topology,
                               TypeInferencePhasePtr typeInferencePhase,
@@ -100,6 +103,11 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param operatorNode
     */
     void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode);
+
+    double getOUWeight();
+    double getNetWeight();
+    void setOUWeight(double value);
+    void setNetWeight(double value);
 };
 }// namespace NES::Optimizer
 

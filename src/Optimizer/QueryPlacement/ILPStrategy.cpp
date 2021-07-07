@@ -100,8 +100,10 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         cost_ou = cost_ou + S_j;
     }
 
+    expr weightOU = c.real_val(std::to_string(this->weightOverutilization).c_str());
+    expr weightNet = c.real_val(std::to_string(this->weightNetworkCost).c_str());
     // optimize ILP problem and print solution
-    opt.minimize(1 * cost_net + 1 * cost_ou);
+    opt.minimize(weightNet * cost_net + weightOU * cost_ou);
     if (sat != opt.check()) {
         NES_INFO("ILPStrategy: Solver failed.");
         return false;
@@ -356,5 +358,13 @@ void ILPStrategy::placeOperators(QueryPlanPtr queryPlan, model& m, std::map<std:
     assignMappingToTopology(topology, queryPlan, binaryMapping);
     addNetworkSourceAndSinkOperators(queryPlan);
 }
+
+double ILPStrategy::getOUWeight() { return this->weightOverutilization; }
+
+double ILPStrategy::getNetWeight() { return this->weightNetworkCost; }
+
+void ILPStrategy::setOUWeight(double value) { this->weightOverutilization = value; }
+
+void ILPStrategy::setNetWeight(double value) { this->weightNetworkCost = value; }
 
 }// namespace NES::Optimizer
