@@ -96,11 +96,10 @@ class ILPStrategy : public BasePlacementStrategy {
     void applyOperatorHeuristics(QueryPlanPtr queryPlan);
 
     /**
-    * called by applyOperatorHeuristics
+    * called by applyOperatorHeuristics, (if not provided) estimates output and computing-cost of an
     * @param operatorNode
-    * @param input is the data rate for the first node, other nodes get as input the output of their parent node
     */
-    void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode, double input);
+    void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode);
 };
 }// namespace NES::Optimizer
 

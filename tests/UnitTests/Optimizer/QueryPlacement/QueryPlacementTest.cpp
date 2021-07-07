@@ -1200,21 +1200,6 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
 
-    std::vector<std::map<std::string, std::any>> properties;
-
-
-    // adding property of the source
-    std::map<std::string, std::any> srcProp;
-    double srcout = 100.0;
-    srcProp.insert(std::make_pair("output", srcout));
-    srcProp.insert(std::make_pair("slots", 1));
-
-    // push properties for each node
-    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan());
-    for (auto node : queryPlanIterator) {
-        properties.push_back(srcProp);
-    }
-    ASSERT_TRUE(UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties));
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -1280,21 +1265,6 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
                         .map(Attribute("d") = Attribute("value") * 2)
                         .sink(PrintSinkDescriptor::create());
 
-    std::vector<std::map<std::string, std::any>> properties;
-
-
-    // adding property of the source
-    std::map<std::string, std::any> srcProp;
-    double srcout = 100.0;
-    srcProp.insert(std::make_pair("output", srcout));
-    srcProp.insert(std::make_pair("slots", 1));
-
-    // push properties for each node
-    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan());
-    for (auto node : queryPlanIterator) {
-        properties.push_back(srcProp);
-    }
-    ASSERT_TRUE(UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties));
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -1359,48 +1329,6 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
                       .filter(Attribute("id") < 45)
                       .map(Attribute("c") = Attribute("value") * 2)
                       .sink(PrintSinkDescriptor::create());
-
-    std::vector<std::map<std::string, std::any>> properties;
-
-
-    // adding property of the source
-    std::map<std::string, std::any> srcProp;
-    double srcout = 100.0;
-    srcProp.insert(std::make_pair("output", srcout));
-    srcProp.insert(std::make_pair("slots", 1));
-
-    /*// adding property of the filter
-    std::map<std::string, std::any> filterProp;
-    double filterdmf = 0.5;
-    double filterout = srcout * filterdmf;
-    filterProp.insert(std::make_pair("output", filterout));
-    filterProp.insert(std::make_pair("slots", 1));
-
-    // adding property of the map
-    std::map<std::string, std::any> mapProp;
-    double mapdmf = 4.0;
-    double mapout = filterout * mapdmf;
-    mapProp.insert(std::make_pair("output", mapout));
-    mapProp.insert(std::make_pair("slots", 1));
-
-    // adding property of the sink
-    std::map<std::string, std::any> sinkProp;
-    double snkout = mapout;
-    sinkProp.insert(std::make_pair("output", snkout));
-    sinkProp.insert(std::make_pair("slots", 1));*/
-
-    // add properties in reverse order; Why?
-    //properties.push_back(sinkProp);
-    //properties.push_back(mapProp);
-    //properties.push_back(filterProp);
-    //properties.push_back(srcProp);
-
-    // push properties for each node
-    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan());
-    for (auto node : queryPlanIterator) {
-        properties.push_back(srcProp);
-    }
-    ASSERT_TRUE(UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties));
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -1740,35 +1668,16 @@ TEST_F(ILPPlacementBenchmark, testPlacingQueryWithILPStrategy) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    /*auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    queryPlan = queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
-    queryPlan = topologySpecificQueryRewrite->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-    */
-
-    std::vector<std::map<std::string, std::any>> properties;
-
-    // adding property of the source
-    std::map<std::string, std::any> Prop;
-    double out = 100.0;
-    Prop.insert(std::make_pair("output", out));
-    Prop.insert(std::make_pair("slots", 1));
-
-    // push properties for each node
+    int operators = 0;
     auto queryPlanIterator = QueryPlanIterator(queryPlan);
     for (auto node : queryPlanIterator) {
-        properties.push_back(Prop);
+        operators++;
     }
-    ASSERT_TRUE(UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties));
 
     auto start = std::chrono::high_resolution_clock::now();
     ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(queryPlan));
     auto stop = std::chrono::high_resolution_clock::now();
-    NES_INFO("Solved Placement for " << properties.size() << " Operators, " << n << " Sources and " << n * 2 + 1
-                                     << " Topology nodes");
+    NES_INFO("Solved Placement for " << operators << " Operators, " << n << " Sources and " << n * 2 + 1 << " Topology nodes");
     NES_INFO("Found Soluition in " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << "ms");
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
