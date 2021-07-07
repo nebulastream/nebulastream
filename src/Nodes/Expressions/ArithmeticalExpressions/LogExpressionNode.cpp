@@ -58,7 +58,7 @@ bool LogExpressionNode::equal(NodePtr const& rhs) const {
 
 std::string LogExpressionNode::toString() const {
     std::stringstream ss;
-    ss << "LOG(" << children[0]->toString() << ")";
+    ss << "LOGN(" << children[0]->toString() << ")";
     return ss.str();
 }
 

@@ -69,7 +69,7 @@ ExpressionNodePtr SQRT(const ExpressionNodePtr& exp) { return SqrtExpressionNode
 
 ExpressionNodePtr EXP(const ExpressionNodePtr& exp) { return ExpExpressionNode::create(exp); }
 
-ExpressionNodePtr LOG(const ExpressionNodePtr& exp) { return LogExpressionNode::create(exp); }
+ExpressionNodePtr LOGN(const ExpressionNodePtr& exp) { return LogExpressionNode::create(exp); }
 
 ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) { return Log10ExpressionNode::create(exp); }
 
@@ -194,7 +194,7 @@ ExpressionNodePtr SQRT(ExpressionItem exp) { return SQRT(exp.getExpressionNode()
 
 ExpressionNodePtr EXP(ExpressionItem exp) { return EXP(exp.getExpressionNode()); }
 
-ExpressionNodePtr LOG(ExpressionItem exp) { return LOG(exp.getExpressionNode()); }
+ExpressionNodePtr LOGN(ExpressionItem exp) { return LOGN(exp.getExpressionNode()); }
 
 ExpressionNodePtr LOG10(ExpressionItem exp) { return LOG10(exp.getExpressionNode()); }
 
