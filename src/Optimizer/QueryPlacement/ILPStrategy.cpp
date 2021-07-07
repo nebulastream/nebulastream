@@ -32,20 +32,19 @@ using namespace z3;
 namespace NES::Optimizer {
 
 std::unique_ptr<ILPStrategy> ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                           TopologyPtr topology,
-                                                           TypeInferencePhasePtr typeInferencePhase,
-                                                           StreamCatalogPtr streamCatalog) {
+                                                 TopologyPtr topology,
+                                                 TypeInferencePhasePtr typeInferencePhase,
+                                                 StreamCatalogPtr streamCatalog) {
     return std::make_unique<ILPStrategy>(ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
 }
 
 ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                                   TopologyPtr topology,
-                                   TypeInferencePhasePtr typeInferencePhase,
-                                   StreamCatalogPtr streamCatalog)
+                         TopologyPtr topology,
+                         TypeInferencePhasePtr typeInferencePhase,
+                         StreamCatalogPtr streamCatalog)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog) {}
 
-
-bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
+bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     const QueryId queryId = queryPlan->getQueryId();
     NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
     NES_INFO("ILPStrategy: And query plan \n" << queryPlan->toString());
@@ -55,11 +54,11 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     context c;
     optimize opt(c);
 
-    std::map<std::string, OperatorNodePtr> operatorNodes;   // operatorID
-    std::map<std::string, TopologyNodePtr> topologyNodes;   // topologyID
-    std::map<std::string, expr> placementVariables;         // (operatorID,topologyID)
-    std::map<std::string, expr> positions;                  // operatorID
-    std::map<std::string, expr> utilizations;               // topologyID
+    std::map<std::string, OperatorNodePtr> operatorNodes;// operatorID
+    std::map<std::string, TopologyNodePtr> topologyNodes;// topologyID
+    std::map<std::string, expr> placementVariables;      // (operatorID,topologyID)
+    std::map<std::string, expr> positions;               // operatorID
+    std::map<std::string, expr> utilizations;            // topologyID
     std::map<std::string, double> milages = computeDistanceHeuristic(queryPlan);
     applyOperatorHeuristics(queryPlan);
 
@@ -75,7 +74,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     expr cost_net = c.int_val(0);
     for (auto const& [operatorID, position] : positions) {
         OperatorNodePtr operatorNode = operatorNodes[operatorID]->as<OperatorNode>();
-        if(operatorNode->getParents().empty())
+        if (operatorNode->getParents().empty())
             continue;
         OperatorNodePtr operatorParent = operatorNode->getParents()[0]->as<OperatorNode>();
         std::string operatorParentID = std::to_string(operatorParent->getId());
@@ -97,7 +96,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
         std::any prop = topologyNode->getNodeProperty("slots");
         auto output = std::any_cast<int>(prop);
         opt.add(S_j >= 0);
-        opt.add(utilization - S_j<= output);
+        opt.add(utilization - S_j <= output);
         cost_ou = cost_ou + S_j;
     }
 
@@ -123,53 +122,24 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     }
 
     NES_INFO("Solver found solution with cost: " << m.eval(cost_net).get_decimal_string(4));
-    for(auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap){
-        NES_INFO("Operator " << operatorNode->toString() <<" is executed on Topology Node " << topologyNode->toString());
+    for (auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap) {
+        NES_INFO("Operator " << operatorNode->toString() << " is executed on Topology Node " << topologyNode->toString());
     }
 
-    auto topologyIterator = NES::DepthFirstNodeIterator(topology->getRoot()).begin();
-    std::vector<std::vector<bool>> binaryMapping;
+    placeOperators(queryPlan,m, placementVariables);
 
-    while (topologyIterator != DepthFirstNodeIterator::end()) {
-        // get the ExecutionNode for the current topology Node
-        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-        std::string topologyID = std::to_string(currentTopologyNode->getId());
-
-        std::vector<bool> tmp;
-
-        // iterate to all operator in current query plan
-        auto queryPlanIterator = NES::QueryPlanIterator(queryPlan);
-        for (auto&& op : queryPlanIterator) {
-            OperatorNodePtr operatorNode = op->as<OperatorNode>();
-            std::string operatorID = std::to_string(operatorNode->getId());
-            std::string variableID = operatorID + "," + topologyID;
-            auto iter = placementVariables.find(variableID);
-            if(iter != placementVariables.end()){
-                tmp.push_back(m.eval(iter->second).get_numeral_int() == 1);
-            } else {
-                tmp.push_back(false);
-            }
-        }
-        binaryMapping.push_back(tmp);
-        ++topologyIterator;
-    }
-
-    // apply the placement from the specified binary mapping
-    assignMappingToTopology(topology, queryPlan, binaryMapping);
-    addNetworkSourceAndSinkOperators(queryPlan);
     return runTypeInferencePhase(queryPlan->getQueryId());
-    //return true;
 }
 
 /**
  * @param sourceNode source operator or source topology node
  * @returns array containing all nodes on path from source to sink or parent topology node
  */
-std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode){
+std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode) {
     std::vector<NodePtr> path;
     path.push_back(sourceNode);
-    while (!path.back()->getParents().empty()){
-        path.push_back(path.back()->getParents()[0]); // TODO assuming single parent.
+    while (!path.back()->getParents().empty()) {
+        path.push_back(path.back()->getParents()[0]); // assuming single parent.
     }
     return path;
 }
@@ -180,16 +150,16 @@ std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode){
  * @param node topology node for which mileage is calculated
  * @mileageMap map of mileages
  */
-void ILPStrategy::computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileageMap){
+void ILPStrategy::computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileageMap) {
     std::string topologyID = std::to_string(node->getId());
     auto& parents = node->getParents();
-    if (parents.empty()){
+    if (parents.empty()) {
         mileageMap[topologyID] = 0.0;
         return;
     }
     TopologyNodePtr parent = parents[0]->as<TopologyNode>();
     std::string parentID = std::to_string(parent->getId());
-    if(mileageMap.find(parentID) == mileageMap.end()){
+    if (mileageMap.find(parentID) == mileageMap.end()) {
         computeDistanceRecursive(parent, mileageMap);
     }
     mileageMap[topologyID] = 1.0 / node->getLinkProperty(parent)->bandwidth + mileageMap[parentID];
@@ -200,7 +170,7 @@ void ILPStrategy::computeDistanceRecursive(TopologyNodePtr node, std::map<std::s
  * @param queryPlan
  * @return the map of mileage parameters
  */
-std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr queryPlan){
+std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr queryPlan) {
     std::map<std::string, double> mileageMap; // (operatorid, M)
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
 
@@ -219,27 +189,27 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
 * @param operatorNode
 * @param input is the data rate for the first node, other nodes get as input the output of their parent node
 */
-void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode, double input){
+void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode, double input) {
     int cost = 1;
     double dmf = 1;
 
     NodePtr nodePtr = operatorNode->as<Node>();
-    if(operatorNode->instanceOf<SinkLogicalOperatorNode>()){
+    if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         dmf = 0;
         cost = 0;
-    } else if(operatorNode->instanceOf<FilterLogicalOperatorNode>()){
+    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         dmf = 0.5;
         cost = 1;
-    } else if(operatorNode->instanceOf<MapLogicalOperatorNode>()){
+    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         dmf = 2;
         cost = 2;
-    } else if(operatorNode->instanceOf<JoinLogicalOperatorNode>()){
+    } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         cost = 2;
-    } else if(operatorNode->instanceOf<UnionLogicalOperatorNode>()){
+    } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         cost = 2;
-    } else if(operatorNode->instanceOf<ProjectionLogicalOperatorNode>()){
+    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         cost = 1;
-    }else if(operatorNode->instanceOf<SourceLogicalOperatorNode>()){
+    } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         cost = 0;
     }
 
@@ -247,7 +217,7 @@ void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr opera
     operatorNode->addProperty("output", output);
     operatorNode->addProperty("cost", cost);
 
-    for(const auto& parent : operatorNode->getParents()) {
+    for (const auto& parent : operatorNode->getParents()) {
         assignOperatorPropertiesRecursive(parent->as<LogicalOperatorNode>(), output);
     }
 }
@@ -256,7 +226,7 @@ void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr opera
  * assigns the output and cost properties to each operator in the
  * @param queryPlan
  */
-void ILPStrategy::applyOperatorHeuristics(QueryPlanPtr queryPlan){
+void ILPStrategy::applyOperatorHeuristics(QueryPlanPtr queryPlan) {
     std::map<std::string, double> mileageMap; // (operatorid, M)
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
 
@@ -265,7 +235,7 @@ void ILPStrategy::applyOperatorHeuristics(QueryPlanPtr queryPlan){
         int operatorcost = 0;
         sourceNode->addProperty("output", datarate);
         sourceNode->addProperty("cost", operatorcost);
-        for(const auto& parent : sourceNode->getParents()) {
+        for (const auto& parent : sourceNode->getParents()) {
             assignOperatorPropertiesRecursive(parent->as<LogicalOperatorNode>(), datarate);
         }
     }
@@ -299,7 +269,7 @@ void ILPStrategy::addPath(context& c,
         OperatorNodePtr operatorNode = operatorPath[i]->as<OperatorNode>();
         std::string operatorID = std::to_string(operatorNode->getId());
 
-        if(operatorNodes.find(operatorID) != operatorNodes.end()) {
+        if (operatorNodes.find(operatorID) != operatorNodes.end()) {
             expr path_constraint = c.int_val(0);
             for (int j = 0; j < topologyPath.size(); j++) {
                 TopologyNodePtr topologyNode = topologyPath[j]->as<TopologyNode>();
@@ -308,7 +278,7 @@ void ILPStrategy::addPath(context& c,
 
                 std::string variableID = operatorID + "," + topologyID;
                 auto iter = placementVariables.find(variableID);
-                if(iter != placementVariables.end()) {
+                if (iter != placementVariables.end()) {
                     path_constraint = path_constraint + iter->second;
                 }
             }
@@ -339,18 +309,18 @@ void ILPStrategy::addPath(context& c,
             std::any prop = operatorNode->getProperty("slots");
             auto slots = std::any_cast<int>(prop);
             auto iterator = utilizations.find(topologyID);
-            if(iterator != utilizations.end()){
+            if (iterator != utilizations.end()) {
                 iterator->second = iterator->second + slots * P_IJ;
             } else {
                 // utilization of a node = slots (i.e. computing cost of operator) * placement variable
-                utilizations.insert(std::make_pair(topologyID,slots * P_IJ));
+                utilizations.insert(std::make_pair(topologyID, slots * P_IJ));
             }
 
             // add distance to root (positive part of distance equation)
             double M = mileages[topologyID];
             D_i = D_i + c.real_val(std::to_string(M).c_str()) * P_IJ;
         }
-        positions.insert(std::make_pair(operatorID,D_i));
+        positions.insert(std::make_pair(operatorID, D_i));
         // add constraint that operator is placed exactly once on topology path
         opt.add(sum_i == 1);
     }
@@ -359,8 +329,37 @@ void ILPStrategy::addPath(context& c,
 /**
  * assigns operators to topology nodes based on ILP solution
  */
-void ILPStrategy::placeOperators() {
+void ILPStrategy::placeOperators(QueryPlanPtr queryPlan, model& m, std::map<std::string, expr>& placementVariables) {
+    auto topologyIterator = NES::DepthFirstNodeIterator(topology->getRoot()).begin();
+    std::vector<std::vector<bool>> binaryMapping;
 
+    while (topologyIterator != DepthFirstNodeIterator::end()) {
+        // get the ExecutionNode for the current topology Node
+        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+        std::string topologyID = std::to_string(currentTopologyNode->getId());
+
+        std::vector<bool> tmp;
+
+        // iterate to all operator in current query plan
+        auto queryPlanIterator = NES::QueryPlanIterator(queryPlan);
+        for (auto&& op : queryPlanIterator) {
+            OperatorNodePtr operatorNode = op->as<OperatorNode>();
+            std::string operatorID = std::to_string(operatorNode->getId());
+            std::string variableID = operatorID + "," + topologyID;
+            auto iter = placementVariables.find(variableID);
+            if (iter != placementVariables.end()) {
+                tmp.push_back(m.eval(iter->second).get_numeral_int() == 1);
+            } else {
+                tmp.push_back(false);
+            }
+        }
+        binaryMapping.push_back(tmp);
+        ++topologyIterator;
+    }
+
+    // apply the placement from the specified binary mapping
+    assignMappingToTopology(topology, queryPlan, binaryMapping);
+    addNetworkSourceAndSinkOperators(queryPlan);
 }
 
 }// namespace NES::Optimizer
