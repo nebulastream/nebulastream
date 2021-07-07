@@ -36,8 +36,13 @@ class ILPStrategy : public BasePlacementStrategy {
                               TopologyPtr topology,
                               TypeInferencePhasePtr typeInferencePhase,
                               StreamCatalogPtr streamCatalog);
-
-    void placeOperators();
+    /**
+     * assigns operators to topology nodes based on ILP solution
+     * @param queryPlan
+     * @param m
+     * @param placementVariables
+     */
+    void placeOperators(QueryPlanPtr queryPlan, z3::model& m, std::map<std::string, z3::expr>& placementVariables);
 
     /**
     * @param sourceNode source operator or source topology node
