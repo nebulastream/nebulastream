@@ -20,21 +20,20 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<ManualPlacementStrategy>
-ManualPlacementStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
-                                                    NES::TopologyPtr topology,
-                                                    NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                                    NES::StreamCatalogPtr streamCatalog) {
+std::unique_ptr<ManualPlacementStrategy> ManualPlacementStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
+                                                                         NES::TopologyPtr topology,
+                                                                         NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
+                                                                         NES::StreamCatalogPtr streamCatalog) {
     return std::make_unique<ManualPlacementStrategy>(ManualPlacementStrategy(std::move(globalExecutionPlan),
-                                                                                     std::move(topology),
-                                                                                     std::move(typeInferencePhase),
-                                                                                     std::move(streamCatalog)));
+                                                                             std::move(topology),
+                                                                             std::move(typeInferencePhase),
+                                                                             std::move(streamCatalog)));
 }
 
 ManualPlacementStrategy::ManualPlacementStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
-                                                                         NES::TopologyPtr topology,
-                                                                         NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                                                         NES::StreamCatalogPtr streamCatalog)
+                                                 NES::TopologyPtr topology,
+                                                 NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
+                                                 NES::StreamCatalogPtr streamCatalog)
     : BasePlacementStrategy(std::move(globalExecutionPlan),
                             std::move(topology),
                             std::move(typeInferencePhase),

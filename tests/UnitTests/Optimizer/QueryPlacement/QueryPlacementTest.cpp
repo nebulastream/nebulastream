@@ -736,7 +736,7 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             EXPECT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>()); //system generated source
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());//system generated source
         } else if (executionNode->getId() == 1U) {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
             EXPECT_EQ(querySubPlans.size(), 1U);
@@ -744,7 +744,7 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             EXPECT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>()); // stream source
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());// stream source
         }
     }
 }

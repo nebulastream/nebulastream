@@ -31,9 +31,9 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
     static std::unique_ptr<ManualPlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                        TopologyPtr topology,
-                                                        TypeInferencePhasePtr typeInferencePhase,
-                                                        StreamCatalogPtr streamCatalog);
+                                                           TopologyPtr topology,
+                                                           TypeInferencePhasePtr typeInferencePhase,
+                                                           StreamCatalogPtr streamCatalog);
 
     /**
      * @brief set the binary mapping of the current strategy
@@ -44,9 +44,9 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
 
   private:
     explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                              TopologyPtr topology,
-                              TypeInferencePhasePtr typeInferencePhase,
-                              StreamCatalogPtr streamCatalog);
+                                     TopologyPtr topology,
+                                     TypeInferencePhasePtr typeInferencePhase,
+                                     StreamCatalogPtr streamCatalog);
 
     // stores the binary mapping  of the current strategy
     std::vector<std::vector<bool>> binaryMapping;
