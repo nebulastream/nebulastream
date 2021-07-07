@@ -67,10 +67,10 @@ class BinarySource : public DataSource {
     std::ifstream input;
 
   private:
-    std::string file_path;
+    std::string filePath;
 
-    size_t file_size;
-    uint64_t tuple_size;
+    size_t fileSize;
+    uint64_t tupleSize;
 };
 
 using BinarySourcePtr = std::shared_ptr<BinarySource>;
