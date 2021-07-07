@@ -104,6 +104,11 @@ class SharedQueryPlanChangeLog {
      */
     void clearRemovalLog();
 
+    /**
+     * clear all changelog sets
+     */
+    void reset();
+
   private:
     SharedQueryPlanChangeLog() = default;
     std::map<OperatorNodePtr, std::vector<uint64_t>> addition;
