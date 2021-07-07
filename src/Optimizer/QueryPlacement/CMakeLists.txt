@@ -18,6 +18,7 @@ add_source_nes(
         TopDownStrategy.cpp
         ManualPlacementStrategy.cpp
         IFCOPStrategy.cpp
+		ILPStrategy.cpp
         PlacementStrategyFactory.cpp
 #        LowLatencyStrategy.cpp
 #        HighAvailabilityStrategy.cpp
