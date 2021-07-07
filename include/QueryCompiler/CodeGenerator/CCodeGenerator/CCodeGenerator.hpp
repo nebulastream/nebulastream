@@ -37,9 +37,12 @@ class CCodeGenerator : public CodeGenerator {
      * @param schema The input schema, in which we receive the input buffer.
      * @param schema The out schema, in which we forward to the next operator
      * @param context The context of the current pipeline.
+     * @param inputMemoryLayout The memory layout which is used for the input
+     * @param outputMemoryLayout The memory layout which is used for the output
      * @return flag if the generation was successful.
      */
-    bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) override;
+    bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context,
+                             Runtime::DynamicMemoryLayout::DynamicMemoryLayout inputMemoryLayout) override;
 
     /**
      * @brief Code generation for a setup of a scan, which depends on a particular input schema.

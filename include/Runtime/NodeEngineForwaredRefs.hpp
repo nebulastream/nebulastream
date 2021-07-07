@@ -109,11 +109,11 @@ using DynamicMemoryLayoutPtr = std::shared_ptr<DynamicMemoryLayout>;
 class DynamicColumnLayout;
 using DynamicColumnLayoutPtr = std::shared_ptr<DynamicColumnLayout>;
 
-class DynamicColumnLayoutBuffer;
-using DynamicColumnLayoutBufferPtr = std::shared_ptr<DynamicColumnLayoutBuffer>;
-
 class DynamicRowLayout;
 using DynamicRowLayoutPtr = std::shared_ptr<DynamicRowLayout>;
+
+class DynamicColumnLayoutBuffer;
+using DynamicColumnLayoutBufferPtr = std::shared_ptr<DynamicColumnLayoutBuffer>;
 
 class DynamicRowLayoutBuffer;
 using DynamicRowLayoutBufferPtr = std::shared_ptr<DynamicRowLayoutBuffer>;
