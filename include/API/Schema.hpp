@@ -31,8 +31,10 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 class Schema {
   public:
+    enum ROW_OR_COL {ROW_LAYOUT = 0, COL_LAYOUT = 1};
+
     Schema();
-    Schema(SchemaPtr const& query);
+    Schema(SchemaPtr const& query, ROW_OR_COL layoutType = ROW_LAYOUT);
 
     /**
      * @brief Schema qualifier separator
@@ -181,6 +183,9 @@ class Schema {
      * @brief Remove all fields and qualifying name
      */
     void clear();
+
+
+    ROW_OR_COL layoutType;
 
     std::vector<AttributeFieldPtr> fields;
 };
