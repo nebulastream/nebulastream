@@ -151,7 +151,6 @@ class SelectionDataGenSource : public GeneratorSource {
 
         assert(buf.getBuffer() != nullptr);
 
-        // TODO: @Philipp this is an out-of-bound access, fix that  and add -Werror=array-bounds
         auto* tuples = buf.getBuffer<InputTuple>();
         for (uint32_t i = 0UL; i < tupleCnt; ++i) {
             tuples[i].id = i;
