@@ -318,7 +318,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, testPathIgnoresNodesMarkedForMaintena
     EXPECT_TRUE(mThirdStartNodeParent4->getId() == 1);
     //TODO: move to Unit Tests
 }
-TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologyWithOneQueryFirstStrategyTest) {
+TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_DiamondTopologyWithOneQueryFirstStrategyTest) {
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -571,7 +571,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
     ASSERT_TRUE(wrk2->getNodeEngine()->getDeployedQEP(3));
 
     maintenanceService->submitMaintenanceRequest(2,2);
-    sleep(5);
+    sleep(3000);
 
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
     ASSERT_TRUE(wrk3->getNodeEngine()->getDeployedQEP(3));

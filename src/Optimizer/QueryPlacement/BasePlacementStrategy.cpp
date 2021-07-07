@@ -287,7 +287,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
             bool parentIsSinkLogicalOperator = parent->instanceOf<SinkLogicalOperatorNode>();
             bool partialPlacementAndParentIsNetworkSink = false;
             if(parentIsSinkLogicalOperator && partialPlacement){
-                if(!operatorNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+                if(!parentOperator->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
                     NES_DEBUG("BasePlacementStrategy: During partial placement, SinkLogicalOperatorNodes are expected to be NetworkSinks. However, the current SinkLogicalOperator isnt");
                     throw Exception("BasePlacementStrategy: SinkLogicalOperators isnt a NetworkSink");
                 }
@@ -358,6 +358,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                     continue;
                 }
                 if (i == nodesBetween.size() - 1) {
+                    if(!partialPlacementAndParentIsNetworkSink) {
                         NES_TRACE("BasePlacementStrategy: Find the query plan with parent operator.");
                         std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
                         OperatorNodePtr sourceOperator =
@@ -379,6 +380,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                             throw Exception(
                                 "BasePlacementStrategy: unable to place network source operator for the parent operator");
                         }
+                    }
                 } else {
 
                     NES_TRACE("BasePlacementStrategy: Create a new query plan and add pair of network source and network sink "

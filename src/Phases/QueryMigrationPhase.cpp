@@ -60,10 +60,10 @@ bool QueryMigrationPhase::execute(MigrateQueryRequestPtr req) {
 
     // Step 2. Build all necessary execution nodes
     auto subqueries = globalExecutionPlan->getExecutionNodeByNodeId(markedTopNodeId)->getQuerySubPlans(queryId);
-
-    std::vector<ExecutionNodePtr> executionNodes;
+    std::unordered_set<ExecutionNodePtr> executionNodes;
     for(auto subquery : subqueries){
-        queryPlacementPhase->executePartialPlacement("BottomUp", subquery);
+        auto executionNodesCreatedForSubquery = queryPlacementPhase->executePartialPlacement("BottomUp", subquery);
+        executionNodes.insert(executionNodesCreatedForSubquery.begin(), executionNodesCreatedForSubquery.end());
     }
     auto execNodes = buildExecutionNodes(path,subqueries);
     auto addresses = getAddresses(findChildExecutionNodesAsTopologyNodes(queryId,markedTopNodeId));

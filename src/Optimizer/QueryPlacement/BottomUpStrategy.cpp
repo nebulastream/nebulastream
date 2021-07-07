@@ -147,7 +147,7 @@ std::unordered_set<ExecutionNodePtr> BottomUpStrategy::updateGlobalExecutionPlan
         NES_DEBUG("BottomUpStrategy: place query plan with id : " << queryId);
         placeQueryPlanOnTopology(queryPlan,true);
         NES_DEBUG("BottomUpStrategy: Add system generated operators for query with id : " << queryId);
-        addNetworkSourceAndSinkOperators(queryPlan);
+        addNetworkSourceAndSinkOperators(queryPlan, true);
         NES_DEBUG("BottomUpStrategy: clear the temporary map : " << queryId);
         operatorToExecutionNodeMap.clear();
         pinnedOperatorLocationMap.clear();
