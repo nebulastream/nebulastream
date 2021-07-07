@@ -144,16 +144,18 @@ void SharedQueryPlan::addAdditionToChangeLog(const OperatorNodePtr& upstreamOper
 }
 
 bool SharedQueryPlan::removeOperator(const OperatorNodePtr& operatorToRemove) {
-
+    //Iterate over all child operator
     auto children = operatorToRemove->getChildren();
     for (const auto& child : children) {
         auto childOperator = child->as<OperatorNode>();
-        //If the child is shared by
+        //If the child is shared by multiple parents then remove the parent and add it
+        // in the change log.
         if (child->getParents().size() > 1) {
             changeLog->addRemoval(childOperator, operatorToRemove->getId());
             childOperator->removeParent(operatorToRemove);
             return true;
         }
+        //Remove the parent and call remove operator for children
         childOperator->removeParent(operatorToRemove);
         if (!removeOperator(childOperator)) {
             NES_ERROR("QueryPlan: unable to remove operator " << childOperator->toString() << " from shared query plan "
