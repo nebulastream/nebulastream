@@ -3,26 +3,28 @@
 //
 
 #include "../../../include/Optimizer/QueryPlacement/ILPStrategy.hpp"
-#include"z3++.h"
+#include "z3++.h"
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Nodes/Util/DumpContext.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Nodes/Util/DumpContext.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Util/Logger.hpp>
 
 using namespace z3;
@@ -101,60 +103,62 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
 
     // optimize ILP problem and print solution
     opt.minimize(1 * cost_net + 1 * cost_ou);
-    if (sat == opt.check()) {
-        model m = opt.get_model();
-        NES_INFO("ILPStrategy:\n" << m);
-
-        std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
-        for (auto const& [topologyID, P] : placementVariables) {
-            if (m.eval(P).get_numeral_int() == 1) {
-                int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
-                int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
-                OperatorNodePtr operatorNode = queryPlan->getOperatorWithId(operatorId);
-                TopologyNodePtr topologyNode = topology->findNodeWithId(topologyNodeId);
-                operatorToTopologyNodeMap.insert(std::make_pair(operatorNode, topologyNode));
-            }
-        }
-
-        NES_INFO("Solver found solution with cost: " << m.eval(cost_net).get_decimal_string(4));
-        for(auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap){
-            NES_INFO("Operator " << operatorNode->toString() <<" is executed on Topology Node " << topologyNode->toString());
-        }
-        return true;
-    } else {
+    if (sat != opt.check()) {
         NES_INFO("ILPStrategy: Solver failed.");
         return false;
     }
 
-    /*try {
+    model m = opt.get_model();
+    NES_INFO("ILPStrategy:\n" << m);
 
-        NES_INFO("ILPStrategy: And topology plan \n" << topology->toString());
-
-        std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
-
-        NES_DEBUG("ILPStrategy: map pinned operators to the physical location");
-        mapPinnedOperatorToTopologyNodes(queryId, sourceOperators);
-
-        SourceLogicalOperatorNodePtr sourceOperator = sourceOperators.at(0);
-        NES_INFO("ILPStrategy: Source Node \n" << sourceOperator->toString());
-
-        TopologyNodePtr candidateTopologyNode = getTopologyNodeForPinnedOperator(sourceOperator->getId());
-
-        NES_DEBUG("ILPStrategy: Candidate Node : \n" << candidateTopologyNode->toString());
-
-        ExecutionNodePtr candidateExecutionNode = getExecutionNode(candidateTopologyNode);
-        operatorToExecutionNodeMap[sourceOperator->getId()] = candidateExecutionNode;
-
-        NES_TRACE("ILPStrategy: Update the global execution plan with candidate execution node");
-        globalExecutionPlan->addExecutionNode(candidateExecutionNode);
-
-        NES_DEBUG("ILPStrategy: Updated Global Execution Plan : \n" << globalExecutionPlan->getAsString());
-
-    } catch (Exception& ex) {
-        throw QueryPlacementException(queryId, ex.what());
+    std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
+    for (auto const& [topologyID, P] : placementVariables) {
+        if (m.eval(P).get_numeral_int() == 1) {
+            int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
+            int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
+            OperatorNodePtr operatorNode = queryPlan->getOperatorWithId(operatorId);
+            TopologyNodePtr topologyNode = topology->findNodeWithId(topologyNodeId);
+            operatorToTopologyNodeMap.insert(std::make_pair(operatorNode, topologyNode));
+        }
     }
-    */
-    return true;
+
+    NES_INFO("Solver found solution with cost: " << m.eval(cost_net).get_decimal_string(4));
+    for(auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap){
+        NES_INFO("Operator " << operatorNode->toString() <<" is executed on Topology Node " << topologyNode->toString());
+    }
+
+    auto topologyIterator = NES::DepthFirstNodeIterator(topology->getRoot()).begin();
+    std::vector<std::vector<bool>> binaryMapping;
+
+    while (topologyIterator != DepthFirstNodeIterator::end()) {
+        // get the ExecutionNode for the current topology Node
+        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+        std::string topologyID = std::to_string(currentTopologyNode->getId());
+
+        std::vector<bool> tmp;
+
+        // iterate to all operator in current query plan
+        auto queryPlanIterator = NES::QueryPlanIterator(queryPlan);
+        for (auto&& op : queryPlanIterator) {
+            OperatorNodePtr operatorNode = op->as<OperatorNode>();
+            std::string operatorID = std::to_string(operatorNode->getId());
+            std::string variableID = operatorID + "," + topologyID;
+            auto iter = placementVariables.find(variableID);
+            if(iter != placementVariables.end()){
+                tmp.push_back(m.eval(iter->second).get_numeral_int() == 1);
+            } else {
+                tmp.push_back(false);
+            }
+        }
+        binaryMapping.push_back(tmp);
+        ++topologyIterator;
+    }
+
+    // apply the placement from the specified binary mapping
+    assignMappingToTopology(topology, queryPlan, binaryMapping);
+    addNetworkSourceAndSinkOperators(queryPlan);
+    return runTypeInferencePhase(queryPlan->getQueryId());
+    //return true;
 }
 
 /**
