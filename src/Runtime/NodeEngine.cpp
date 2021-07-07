@@ -301,7 +301,7 @@ bool NodeEngine::startQueryReconfiguration(const QueryReconfigurationPlanPtr& qu
     if (queryReconfigurationPlan->getReconfigurationType() == DATA_SINK) {
         return reconfigureDataSink(oldQep, newQep);
     }
-    
+
     NES_ERROR("NodeEngine::startQueryReconfiguration: Reconfiguration failed. Unknown reconfiguration type: "
               << queryReconfigurationPlan->getReconfigurationType());
     return false;
@@ -309,14 +309,16 @@ bool NodeEngine::startQueryReconfiguration(const QueryReconfigurationPlanPtr& qu
 
 bool NodeEngine::reconfigureDataSink(const std::shared_ptr<Execution::ExecutableQueryPlan>& oldQep,
                                      std::shared_ptr<Execution::ExecutableQueryPlan>& newQep) {
+    NES_DEBUG("NodeEngine::reconfigureDataSink: Triggering data sink reconfiguration with oldQep: "
+              << oldQep->getQuerySubPlanId() << " and newQep: " << newQep->getQuerySubPlanId());
     std::unordered_map<OperatorId, DataSinkPtr> oldSinkLogicalMapping;
     std::unordered_map<OperatorId, DataSinkPtr> newSinkLogicalMapping;
 
-    for (auto& sink : oldQep->getSinks()) {
+    for (const auto& sink : oldQep->getSinks()) {
         oldSinkLogicalMapping[sink->getLogicalOperatorId()] = sink;
     }
 
-    for (auto& sink : newQep->getSinks()) {
+    for (const auto& sink : newQep->getSinks()) {
         newSinkLogicalMapping[sink->getLogicalOperatorId()] = sink;
     }
 
@@ -336,13 +338,13 @@ bool NodeEngine::reconfigureDataSink(const std::shared_ptr<Execution::Executable
     }
 
     // increment producer counts for old sinks
-    for (auto sink : newQep->getSinks()) {
+    for (const auto& sink : newQep->getSinks()) {
         if (oldSinkLogicalMapping.contains(sink->getLogicalOperatorId())) {
             sink->addNewProducer();
         }
     }
 
-    for (auto sinkToDelete : sinksToDelete) {
+    for (const auto& sinkToDelete : sinksToDelete) {
         sinkOperatorCache.erase(sinkToDelete->getLogicalOperatorId());
     }
 

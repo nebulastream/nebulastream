@@ -83,7 +83,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
         for (const auto& executionNode : globalExecutionPlan->getExecutionNodesByQueryId(queryId)) {
             for (const auto& querySubPlan : executionNode->getQuerySubPlans(queryId)) {
-                NES_DEBUG("TopDownStrategy::partiallyUpdateGlobalExecutionPlan:\nQuerySubPlanId: "
+                NES_DEBUG("TopDownStrategy::updateGlobalExecutionPlan:\nQuerySubPlanId: "
                           << querySubPlan->getQuerySubPlanId() << "\n"
                           << querySubPlan->toString());
             }

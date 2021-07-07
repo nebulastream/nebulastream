@@ -146,7 +146,7 @@ bool WorkerRPCClient::registerQueryForReconfigurationAsync(const std::string& ad
 }
 
 bool WorkerRPCClient::triggerReconfigurationAsync(const std::string& address,
-                                                  const QueryReconfigurationPlanPtr reconfigurationPlan,
+                                                  const QueryReconfigurationPlanPtr& reconfigurationPlan,
                                                   const CompletionQueuePtr& cq) {
     QueryId queryId = reconfigurationPlan->getQueryId();
     auto reconfigurationId = reconfigurationPlan->getId();

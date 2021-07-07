@@ -35,7 +35,11 @@ bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return schema->equals(otherNetworkSource->schema) && nesPartition == otherNetworkSource->nesPartition;
 }
 
-std::string NetworkSourceDescriptor::toString() { return "NetworkSourceDescriptor()"; }
+std::string NetworkSourceDescriptor::toString() {
+    std::stringstream ss;
+    ss << "NetworkSourceDescriptor(" << nesPartition.toString() << ")";
+    return ss.str();
+}
 
 NesPartition NetworkSourceDescriptor::getNesPartition() const { return nesPartition; }
 
