@@ -72,6 +72,8 @@ class ArrayPhysicalType final : public PhysicalType {
      */
     std::string convertRawToString(void const* rawData) const noexcept final;
 
+    std::string convertRawToRawString(void const* rawData) const noexcept;
+
     /**
      * @brief Returns the string representation of this physical data type.
      * @return string
@@ -83,6 +85,7 @@ class ArrayPhysicalType final : public PhysicalType {
 
     /// Type
     PhysicalTypePtr const physicalComponentType;
+
 };
 
 }// namespace NES
