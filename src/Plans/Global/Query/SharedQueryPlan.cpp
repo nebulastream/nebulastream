@@ -62,6 +62,7 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
             NES_ERROR("SharedQueryPlan: unable to remove Root operator from the shared query plan " << sharedQueryId);
             return false;
         }
+        queryPlan->removeAsRootOperator(sinkOperator);
         //Remove the sink operator from the collection of sink operators in the global query metadata
         sinkOperators.erase(std::remove(sinkOperators.begin(), sinkOperators.end(), sinkOperator), sinkOperators.end());
     }
@@ -147,8 +148,11 @@ bool SharedQueryPlan::removeOperator(const OperatorNodePtr& operatorToRemove) {
     auto children = operatorToRemove->getChildren();
     for (const auto& child : children) {
         auto childOperator = child->as<OperatorNode>();
+        //If the child is shared by
         if (child->getParents().size() > 1) {
             changeLog->addRemoval(childOperator, operatorToRemove->getId());
+            childOperator->removeParent(operatorToRemove);
+            return true;
         }
         childOperator->removeParent(operatorToRemove);
         if (!removeOperator(childOperator)) {
