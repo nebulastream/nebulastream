@@ -250,7 +250,6 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
     }
 }
 
-//BDAPRO add removePhysicalFromLogicalMapping
 void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, web::http::http_request request) {
 
     //Extract parameters if any

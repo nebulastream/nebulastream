@@ -49,79 +49,6 @@ class RESTEndpointTest : public testing::Test {
 
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
 };
-//streamCatalog/allLogicalStream?physicalStreamName=ICE2201
-    TEST_F(RESTEndpointTest, DISABLED_testGetAllLogicalStreams) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
-
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NES_INFO("RESTEndpointTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
-    NES_INFO("RESTEndpointTest: Coordinator started successfully");
-
-    NES_INFO("RESTEndpointTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("RESTEndpointTest: Worker1 started successfully");
-
-    // BDAPRO: add two logical streams. mb also a physical.
-    //create test schema
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                             "\"value\", BasicType::UINT64);";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-
-    bool success = wrk1->registerLogicalStream("logicalTestStream", testSchemaFileName);
-    EXPECT_TRUE(!success);
-
-    web::http::client::http_client getExecutionPlanClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                          + "/streamCatalog/allLogicalStream");
-    web::json::value getExecutionPlanJsonReturn;
-
-    getExecutionPlanClient.request(web::http::methods::GET)
-    .then([](const web::http::http_response& response) {
-    NES_INFO("get first then");
-    return response.extract_json();
-})
-.then([&getExecutionPlanJsonReturn](const pplx::task<web::json::value>& task) {
-    try {
-    NES_INFO("get execution-plan: set return");
-    getExecutionPlanJsonReturn = task.get();
-    } catch (const web::http::http_exception& e) {
-    NES_ERROR("get execution-plan: error while setting return" << e.what());
-    }
-    })
-    .wait();
-
-    NES_INFO("get execution-plan: try to acc return");
-    NES_DEBUG("getExecutionPlan response: " << getExecutionPlanJsonReturn.serialize());
-    // BDAPRO bis hierhin siehts okay aus.
-    auto expected =
-            R"({"executionNodes":[{"ScheduledQueries":[{"queryId":1,"querySubPlans":[{"operator":"SINK(4)\n  SOURCE(1,default_logical)\n","querySubPlanId":1}]}],"executionNodeId":2,"topologyNodeId":2,"topologyNodeIpAddress":"127.0.0.1"},{"ScheduledQueries":[{"queryId":1,"querySubPlans":[{"operator":"SINK(2)\n  SOURCE(3,)\n","querySubPlanId":2}]}],"executionNodeId":1,"topologyNodeId":1,"topologyNodeIpAddress":"127.0.0.1"}]})";
-    NES_DEBUG("getExecutionPlan response: expected = " << expected);
-    ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), expected);
-
-    NES_INFO("RESTEndpointTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
-}
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
@@ -562,4 +489,63 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
 }
+
+//streamCatalog/allLogicalStream?physicalStreamName=ICE2201
+TEST_F(RESTEndpointTest, testGetAllLogicalStreams) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    //create test schemas
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+
+    bool success = crd->getNesWorker()->registerLogicalStream("testSchema", testSchemaFileName);
+    EXPECT_TRUE(success);
+
+    web::http::client::http_client getAllLogicalStreamsClient("http://127.0.0.1:" + std::to_string(restPort)
+                                                              + "/v1/nes/streamCatalog/allLogicalStream");
+    web::json::value getAllLogicalStreamsJsonReturn;
+
+    getAllLogicalStreamsClient.request(web::http::methods::GET)
+        .then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();})
+        .then([&getAllLogicalStreamsJsonReturn](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("get execution-plan: set return");
+              getAllLogicalStreamsJsonReturn = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_ERROR("get execution-plan: error while setting return" << e.what());
+          }})
+        .wait();
+
+    NES_INFO("getAllLogicalStreams: try to acc return");
+    NES_DEBUG("getAllLogicalStreams response: " << getAllLogicalStreamsJsonReturn.serialize());
+    // expected: default_logical, exdra and here created logical stream
+    auto expected =
+        R"({"default_logical":"id:INTEGER value:INTEGER ","exdra":"id:INTEGER metadata_generated:INTEGER metadata_title:ArrayType metadata_id:ArrayType features_type:ArrayType features_properties_capacity:INTEGER features_properties_efficiency:(Float) features_properties_mag:(Float) features_properties_time:INTEGER features_properties_updated:INTEGER features_properties_type:ArrayType features_geometry_type:ArrayType features_geometry_coordinates_longitude:(Float) features_geometry_coordinates_latitude:(Float) features_eventId :ArrayType ","testSchema":"id:INTEGER value:INTEGER "})";
+    NES_DEBUG("getAllLogicalStreams response: expected = " << expected);
+    ASSERT_EQ(getAllLogicalStreamsJsonReturn.serialize(), expected);
+
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+
 }// namespace NES
