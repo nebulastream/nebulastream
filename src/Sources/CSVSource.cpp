@@ -184,13 +184,10 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buf) {
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_16) {
                     int16_t val = static_cast<int16_t>(std::stol(tokens[j]));
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_16) {
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_8) {
                     uint8_t val = static_cast<uint8_t>(std::stoi(tokens[j]));
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_8) {
-                    int8_t val = static_cast<int8_t>(std::stoi(tokens[j]));
-                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_8) {
                     int8_t val = static_cast<int8_t>(std::stoi(tokens[j]));
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::DOUBLE) {
