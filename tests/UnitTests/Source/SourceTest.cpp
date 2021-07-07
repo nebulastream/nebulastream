@@ -823,8 +823,8 @@ TEST_F(SourceTest, testBinarySourceFillBuffer) {
     uint64_t numberOfBuffers = 1;// increased by 1 every fillBuffer()
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
     auto buf = this->GetEmptyBuffer();
-    ASSERT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0);
-    ASSERT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0);
+    ASSERT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0u);
+    ASSERT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0u);
     bDataSource.fillBuffer(*buf);
     EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), numberOfTuplesToProcess);
     EXPECT_EQ(bDataSource.getNumberOfGeneratedBuffers(), numberOfBuffers);
@@ -845,8 +845,8 @@ TEST_F(SourceTest, testBinarySourceFillBufferRandomTimes) {
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
     auto buf = this->GetEmptyBuffer();
     auto iterations = rand() % 5;
-    ASSERT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0);
-    ASSERT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0);
+    ASSERT_EQ(bDataSource.getNumberOfGeneratedTuples(), 0u);
+    ASSERT_EQ(bDataSource.getNumberOfGeneratedBuffers(), 0u);
     for (int i = 0; i < iterations; ++i) {
         bDataSource.fillBuffer(*buf);
         EXPECT_EQ(bDataSource.getNumberOfGeneratedTuples(), (i + 1) * numberOfTuplesToProcess);
@@ -936,7 +936,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
     csvDataSource.fileEnded = true;
     auto buf = this->GetEmptyBuffer();
     csvDataSource.fillBuffer(*buf);
-    EXPECT_EQ(buf->getNumberOfTuples(), 0);
+    EXPECT_EQ(buf->getNumberOfTuples(), 0u);
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
@@ -953,11 +953,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
                                  this->numSourceLocalBuffersDefault,
                                  {});
     auto buf = this->GetEmptyBuffer();
-    ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0);
-    ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0);
+    ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0u);
+    ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0u);
     csvDataSource.fillBuffer(*buf);
-    EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 1);
-    EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 1);
+    EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 1u);
+    EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 1u);
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
@@ -1031,7 +1031,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
     auto buf = this->GetEmptyBuffer();
     while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
         csvDataSource.fillBuffer(*buf);
-        EXPECT_NE(buf->getNumberOfTuples(), 0);
+        EXPECT_NE(buf->getNumberOfTuples(), 0u);
         EXPECT_TRUE(buf.has_value());
         for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
             auto tuple = buf->getBuffer<ysbRecord>();
@@ -1246,7 +1246,7 @@ TEST_F(SourceTest, testDefaultSourceReceiveData) {
     defDataSource.open();
     auto buf = defDataSource.receiveData();
     EXPECT_TRUE(buf.has_value());
-    EXPECT_EQ(buf->getNumberOfTuples(), 10);
+    EXPECT_EQ(buf->getNumberOfTuples(), 10u);
 }
 
 TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
@@ -1278,8 +1278,8 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
                                        DataSource::GatheringMode::FREQUENCY_MODE,
                                        {});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
-    ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0);
-    ASSERT_EQ(lambdaDataSource.numberOfTuplesToProduce, 52);
+    ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0u);
+    ASSERT_EQ(lambdaDataSource.numberOfTuplesToProduce, 52u);
 
     // open is not needed here, since there's no local buff mgr to init
     while (lambdaDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
@@ -1327,7 +1327,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
                                        DataSource::GatheringMode::INGESTION_RATE_MODE,
                                        {});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
-    ASSERT_EQ(lambdaDataSource.gatheringIngestionRate, 1);
+    ASSERT_EQ(lambdaDataSource.gatheringIngestionRate, 1u);
 
     // open is not needed here, since there's no local buff mgr to init
     while (lambdaDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
@@ -1484,9 +1484,9 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     monitoringDataSource.open();
     auto buf = monitoringDataSource.receiveData();
     ASSERT_TRUE(buf.has_value());
-    ASSERT_EQ(buf->getNumberOfTuples(), 1);
-    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1);
-    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1);
+    ASSERT_EQ(buf->getNumberOfTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
+    ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
     GroupedValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), buf.value());
     EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
     EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
