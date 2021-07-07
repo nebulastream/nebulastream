@@ -94,6 +94,12 @@ class StreamCatalogEntry {
     std::vector<std::string> getLogicalName();
 
     /**
+     * @brief add a logical stream name
+     * @return true if the logicalStreamName was added successfully, false otherwise
+     */
+     bool addLogicalStreamName(std::string newLogicalStreamName);
+
+    /**
      * @brief get PhysicalStreamState which contains count (#logicalstreams for that physicalStream) and state (e.g. misconfigured, regular)
      * @return PhysicalStreamState object
      */

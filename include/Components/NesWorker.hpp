@@ -115,10 +115,10 @@ class NesWorker {
 
     /**
     * @brief method to deregister physical stream with the coordinator
-    * @param logical and physical of the stream
-     * @return bool indicating success
+    * @param physical of the stream
+    * @return bool indicating success
     */
-    bool unregisterPhysicalStream(std::string logicalName, std::string physicalName);
+    bool unregisterPhysicalStream(std::string physicalName);
 
     /**
     * @brief method add new parent to this node

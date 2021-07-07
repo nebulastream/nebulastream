@@ -153,16 +153,16 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
 
     //test unregister not existing physical stream
     bool successUnregisterNotExistingPhysicalStream =
-        coordinatorEngine->unregisterPhysicalStream(nodeId, "asd", logicalStreamName[0]);
+        coordinatorEngine->unregisterPhysicalStream(nodeId, "asd");
     EXPECT_TRUE(!successUnregisterNotExistingPhysicalStream);
 
-    //test unregister not existing local stream
+    //test remove not existing local stream from physical-logical mapping
     bool successUnregisterNotExistingLocicalStream =
-        coordinatorEngine->unregisterPhysicalStream(nodeId, conf->getPhysicalStreamName(), "asd");
+        coordinatorEngine->unregisterLogicalStream("doesNotExist");
     EXPECT_TRUE(!successUnregisterNotExistingLocicalStream);
 
     //test unregister existing node
     bool successUnregisterExistingPhysicalStream =
-        coordinatorEngine->unregisterPhysicalStream(nodeId, conf->getPhysicalStreamName(), logicalStreamName[0]);
+        coordinatorEngine->unregisterPhysicalStream(nodeId, conf->getPhysicalStreamName());
     EXPECT_TRUE(successUnregisterExistingPhysicalStream);
 }

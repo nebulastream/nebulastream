@@ -63,11 +63,11 @@ class CoordinatorRPCClient {
     bool unregisterLogicalStream(std::string streamName);
 
     /**
-     * @brief this method removes a physical stream from a logical stream in the coordinator
-     * @param logical stream to be deleted
+     * @brief this method removes a physical stream from all logical streams in the coordinator
+     * @param physical stream to be deleted
      * @return bool indicating success of the removal
      */
-    bool unregisterPhysicalStream(std::string logicalStreamName, std::string physicalStreamName);
+    bool unregisterPhysicalStream(std::string physicalStreamName);
 
     /**
      * @brief method to add a new parent to an existing node

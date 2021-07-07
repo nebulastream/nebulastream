@@ -381,7 +381,7 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     // so that it is in the streamCatalog
     wrk->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
 
-    bool success = wrk->unregisterPhysicalStream("default_logical", "default_physical");
+    bool success = wrk->unregisterPhysicalStream("default_physical");
     EXPECT_TRUE(success);
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
@@ -424,9 +424,6 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     // as default physical no longer automatically registered, call manually
     // so that it is in the streamCatalog
     wrk->registerPhysicalStream(PhysicalStreamConfig::createEmpty());
-
-    bool success = wrk->unregisterPhysicalStream("default_logical2", "default_physical");
-    EXPECT_TRUE(!success);
 
     SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("default_logical");
     EXPECT_NE(sPtr, nullptr);

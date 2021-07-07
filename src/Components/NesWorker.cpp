@@ -306,8 +306,8 @@ bool NesWorker::unregisterLogicalStream(std::string logicalName) {
     return success;
 }
 
-bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string physicalName) {
-    bool success = coordinatorRpcClient->unregisterPhysicalStream(logicalName, physicalName);
+bool NesWorker::unregisterPhysicalStream(std::string physicalName) {
+    bool success = coordinatorRpcClient->unregisterPhysicalStream(physicalName);
     NES_DEBUG("NesWorker::unregisterPhysicalStream success=" << success);
     return success;
 }

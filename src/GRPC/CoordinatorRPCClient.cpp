@@ -100,13 +100,13 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName, std::st
     }
 }
 
-bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamName, std::string physicalStreamName) {
-    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalStream physical stream" << physicalStreamName << " from logical stream ");
+bool CoordinatorRPCClient::unregisterPhysicalStream(std::string physicalStreamName) {
+    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalStream physical stream" << physicalStreamName << " from all logical streams");
 
     UnregisterPhysicalStreamRequest request;
     request.set_id(workerId);
     request.set_physicalstreamname(physicalStreamName);
-    request.set_logicalstreamname(logicalStreamName);
+    request.set_logicalstreamname("_");
     NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalStreamRequest request=" << request.DebugString());
 
     UnregisterPhysicalStreamReply reply;

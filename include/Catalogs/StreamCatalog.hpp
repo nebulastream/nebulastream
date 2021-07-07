@@ -65,8 +65,7 @@ class StreamCatalog {
     bool removeLogicalStream(std::string logicalStreamName);
 
     /**
-     * @brief method to add a physical stream without a logical stream leading to a misconfigured physicalStream which is
-     * stored in misconfiguredPhysicalStreams
+     * @brief method to add a physical stream without a logical stream leading to a misconfigured physicalStream
      * @param newEntry
      * @return
      */
@@ -96,13 +95,20 @@ class StreamCatalog {
     bool addPhysicalStreamToLogicalStream(std::string physicalStreamName, std::string logicalStreamName);
 
     /**
-   * @brief method to remove a physical stream from its logical streams
-   * @param name of the logical stream
+     * @brief method to remove a physical stream to logical stream mapping
+     * @param physicalStreamName
+     * @param logicalStreamName
+     * @return true if the physical stream was removed from the logical stream successfully, false otherwise
+     */
+    bool removePhysicalStreamFromLogicalStream(std::string physicalStreamName, std::string logicalStreamName);
+
+    /**
+   * @brief method to remove a physical stream from its logical streams and deleting it
    * @param name of the physical stream
    * @param hashId of the actor
    * @return bool indicating success of remove stream
    */
-    bool removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::uint64_t hashId);
+    bool deletePhysicalStream(std::string physicalStreamName, std::uint64_t hashId);
 
     /**
      * @brief method to remove a physical stream from its logical streams
@@ -142,7 +148,6 @@ class StreamCatalog {
     * @return smart pointer to a newly created stream
     * @note the stream will also contain the schema
     */
-    //BDAPRO change this function to indirection function with vector
     LogicalStreamPtr getStreamForLogicalStream(std::string logicalStreamName);
 
     /**
@@ -151,7 +156,6 @@ class StreamCatalog {
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
-    //BDAPRO change this function to indirection function with vector
     LogicalStreamPtr getStreamForLogicalStreamOrThrowException(std::string logicalStreamName);
 
     /**
@@ -257,9 +261,6 @@ class StreamCatalog {
 
     // map physicalStreamName to StreamCatalogEntryPtr
     std::map<std::string, StreamCatalogEntryPtr> nameToPhysicalStream;
-
-    // map physicalStreamName of misconfigured stream
-    std::map<std::string, std::string> misconfiguredPhysicalStreams;
 
     void addDefaultStreams();
 };

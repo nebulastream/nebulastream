@@ -74,11 +74,10 @@ class CoordinatorEngine {
     /**
      * @brief method to unregister a physical stream
      * @param nodeId
-     * @param logicalStreamName
      * @param physicalStreamName
      * @return bool indicating success
      */
-    bool unregisterPhysicalStream(uint64_t nodeId, std::string physicalStreamName, std::string logicalStreamName);
+    bool unregisterPhysicalStream(uint64_t nodeId, std::string physicalStreamName);
 
     /**
      * @brief method to register a logical stream

@@ -65,7 +65,8 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             successMessageImpl(request, result);
             return;
         }
-    } else if (path[1] == "allPhysicalStream") {
+    }
+    else if (path[1] == "allPhysicalStream") {
         //Check if the path contains the query id
         auto param = parameters.find("logicalStreamName");
         if (param == parameters.end()) {
@@ -85,41 +86,41 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                 successMessageImpl(request, result);
                 return;
             }
-        } else {
+        }
+        else {
             // logical stream name specified
-            // BDAPRO some logic needed here.
-        try {
-            //Prepare Input query from user string
-            std::string logicalStreamName = param->second;
+            try {
+                //Prepare Input query from user string
+                std::string logicalStreamName = param->second;
 
-            const std::vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(logicalStreamName);
+                const std::vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(logicalStreamName);
 
-            //Prepare the response
-            json::value result{};
-            if (allPhysicalStream.empty()) {
-                NES_DEBUG("No Physical Stream Found");
-                resourceNotFoundImpl(request);
-                return;
-            } else {
-                std::vector<json::value> allStream = {};
-                for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
-                    allStream.push_back(json::value::string(physicalStream->toString()));
+                //Prepare the response
+                json::value result{};
+                if (allPhysicalStream.empty()) {
+                    NES_DEBUG("No Physical Stream Found");
+                    resourceNotFoundImpl(request);
+                    return;
+                } else {
+                    std::vector<json::value> allStream = {};
+                    for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
+                        allStream.push_back(json::value::string(physicalStream->toString()));
+                    }
+                    result["Physical Streams"] = json::value::array(allStream);
+                    successMessageImpl(request, result);
+                    return;
                 }
-                result["Physical Streams"] = json::value::array(allStream);
-                successMessageImpl(request, result);
+            } catch (const std::exception& exc) {
+                NES_ERROR("StreamCatalogController: handleGet -allPhysicalStream: Exception occurred while building the "
+                          "query plan for user request:"
+                          << exc.what());
+                handleException(request, exc);
                 return;
-            }
-        } catch (const std::exception& exc) {
-            NES_ERROR("StreamCatalogController: handleGet -allPhysicalStream: Exception occurred while building the "
-                      "query plan for user request:"
-                      << exc.what());
-            handleException(request, exc);
-            return;
-        } catch (...) {
-            RuntimeUtils::printStackTrace();
-            internalServerErrorImpl(request);
-            return;
-        }}
+            } catch (...) {
+                RuntimeUtils::printStackTrace();
+                internalServerErrorImpl(request);
+                return;
+            }}
     } else {
         resourceNotFoundImpl(request);
     }
@@ -127,7 +128,6 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
 void StreamCatalogController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
 
     if (path[1] == "addLogicalStream") {
-
         NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: REST received request to add new Logical Stream "
                   << message.to_string());
         message.extract_string(true)
@@ -164,7 +164,8 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 }
             })
             .wait();
-    } else if (path[1] == "updateLogicalStream") {
+    }
+    else if (path[1] == "updateLogicalStream") {
         NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: REST received request to update Logical Stream "
                   << message.to_string());
         message.extract_string(true)
@@ -205,7 +206,8 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 }
             })
             .wait();
-    } else if (path[1] == "addPhysicalToLogicalStream") {
+    }
+    else if (path[1] == "addPhysicalToLogicalStream") {
         NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: REST received request to add a Physical Stream to a Logical Stream "
                           << message.to_string());
         message.extract_string(true)
@@ -242,11 +244,13 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                     }
                 })
                 .wait();
-    }else {
+    }
+    else {
         resourceNotFoundImpl(message);
     }
 }
 
+//BDAPRO add removePhysicalFromLogicalMapping
 void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, web::http::http_request request) {
 
     //Extract parameters if any
@@ -256,7 +260,8 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
         //Check if the path contains the query id
         auto param = parameters.find("streamName");
         if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
+            NES_ERROR("StreamCatalogController: handleDelete -deleteLogicalStream: Exception occurred while trying to remove "
+                      "logical stream");
             json::value errorResponse{};
             errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
@@ -289,7 +294,52 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
             internalServerErrorImpl(request);
             return;
         }
-    } else {
+    }
+    else if(path[1]=="removePhysicalStreamFromLogicalStream"){
+        auto logicalStreamName = parameters.find("logicalStreamName");
+        if (logicalStreamName == parameters.end()) {
+            NES_ERROR("StreamCatalogController: Unable to find parameter logicalStreamName");
+            json::value errorResponse{};
+            errorResponse["detail"] = json::value::string("Parameter logicalStreamName must be provided");
+            badRequestImpl(request, errorResponse);
+        }
+        auto physicalStreamName = parameters.find("physicalStreamName");
+        if (physicalStreamName == parameters.end()) {
+            NES_ERROR("StreamCatalogController: Unable to find parameter physicalStreamName");
+            json::value errorResponse{};
+            errorResponse["detail"] = json::value::string("Parameter physicalStreamName must be provided");
+            badRequestImpl(request, errorResponse);
+        }
+
+        try {
+            std::string streamName = logicalStreamName->second;
+            std::string phyStreamName = physicalStreamName->second;
+
+            bool removed = streamCatalog->removePhysicalStreamFromLogicalStream(phyStreamName,streamName);
+
+            //Prepare the response
+            json::value result{};
+            if (removed) {
+                result["Success"] = json::value::boolean(removed);
+                successMessageImpl(request, result);
+            } else {
+                throw std::invalid_argument("Could not remove physical stream "+phyStreamName+" from logical stream " + streamName);
+            }
+
+            return;
+        } catch (const std::exception& exc) {
+            NES_ERROR("StreamCatalogController: handleDelete -deleteLogicalStream: Exception occurred removing the "
+                      "physical stream from the specified logical stream "
+                          << exc.what());
+            handleException(request, exc);
+            return;
+        } catch (...) {
+            RuntimeUtils::printStackTrace();
+            internalServerErrorImpl(request);
+            return;
+        }
+    }
+    else {
         resourceNotFoundImpl(request);
     }
 }

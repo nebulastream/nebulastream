@@ -89,8 +89,6 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
         }
 
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-
-        // BDAPRO add handling of registration of physical stream if no logicalStreamName exists
         bool success = streamCatalog->addPhysicalStream(logicalStreamNames, sce);
         if (!success) {
             NES_ERROR("CoordinatorEngine::registerNode: physical stream " << streamConf->getPhysicalStreamName()
@@ -154,13 +152,13 @@ bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
     return successTopology;
 }
 
-// BDAPRO adjust to StreamCatalogEntry and allow registration without empty (or null) logicalStreamName
 bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
                                                std::string sourceType,
                                                std::string physicalStreamName,
                                                std::string logicalStreamName) {
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id "
               << nodeId << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);
+
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
@@ -168,16 +166,27 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
         NES_ERROR("CoordinatorEngine::RegisterPhysicalStream node not found");
         return false;
     }
-    auto logicalStreamNameVec = UtilityFunctions::splitWithStringDelimiter(logicalStreamName, ",");
-    StreamCatalogEntryPtr sce =
-        std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamNameVec, physicalNode);
-    bool success = streamCatalog->addPhysicalStream(logicalStreamNameVec, sce);
+    bool success;
+    if(logicalStreamName=="_"){
+        NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: logical stream = "<< logicalStreamName <<", therefore physical stream is registered without logical stream");
+        std::vector<std::string> logicalStreamNameVec{logicalStreamName};
+        StreamCatalogEntryPtr sce =
+            std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamNameVec, physicalNode);
+        success = streamCatalog->addPhysicalStreamWithoutLogicalStreams(sce);
+    }else{
+        NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: register physical stream = " << physicalStreamName << "with logical stream(s)=(" << logicalStreamName<<")");
+        std::vector<std::string> logicalStreamNameVec = UtilityFunctions::splitWithStringDelimiter(logicalStreamName, ",");
+        StreamCatalogEntryPtr sce =
+            std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamNameVec, physicalNode);
+        success = streamCatalog->addPhysicalStream(logicalStreamNameVec, sce);
+    }
     return success;
 }
 
-bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, std::string physicalStreamName, std::string logicalStreamName) {
+
+bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, std::string physicalStreamName) {
     NES_DEBUG("CoordinatorEngine::UnregisterPhysicalStream: try to remove physical stream with name "
-              << physicalStreamName << " logical name " << logicalStreamName << " workerId=" << nodeId);
+              << physicalStreamName << " workerId=" << nodeId);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
@@ -187,7 +196,7 @@ bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, std::string ph
     }
     NES_DEBUG("CoordinatorEngine: node=" << physicalNode->toString());
 
-    bool success = streamCatalog->removePhysicalStream(logicalStreamName, physicalStreamName, nodeId);
+    bool success = streamCatalog->deletePhysicalStream(physicalStreamName, nodeId);
     return success;
 }
 

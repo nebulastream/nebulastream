@@ -52,6 +52,17 @@ std::string StreamCatalogEntry::getPhysicalName() { return physicalStreamName; }
 
 std::vector<std::string> StreamCatalogEntry::getLogicalName() { return logicalStreamName; }
 
+bool StreamCatalogEntry::addLogicalStreamName(std::string newLogicalStreamName){
+    for(std::string name : logicalStreamName){
+        if(name==newLogicalStreamName){
+            NES_ERROR("StreamCatalogEntry::addLogicalStreamName logicalStreamName="<<newLogicalStreamName<<" could not be added to StreamCatalogEntry as it already exists");
+            return false;
+        }
+    }
+    logicalStreamName.push_back(newLogicalStreamName);
+    return true;
+}
+
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
     ss << "physicalName=" << physicalStreamName << " logicalStreamName=(" << UtilityFunctions::combineStringsWithDelimiter(logicalStreamName,",") << ") sourceType=" << sourceType
