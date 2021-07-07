@@ -52,6 +52,11 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryP
     return runTypeInferencePhase(queryPlan->getQueryId());
 }
 
+bool ManualPlacementStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) {
+    NES_NOT_IMPLEMENTED();
+    return false;
+}
+
 void ManualPlacementStrategy::setBinaryMapping(std::vector<std::vector<bool>> userDefinedBinaryMapping) {
     this->binaryMapping = std::move(userDefinedBinaryMapping);
 }
