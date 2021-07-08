@@ -313,7 +313,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
     //assert
     updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQMToDeploy.size(), 1);
+    EXPECT_EQ(updatedSharedQMToDeploy.size(), 1UL);
 
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
@@ -322,22 +322,22 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 3);
-    EXPECT_EQ(updatedSharedQueryPlan1->getSourceOperators().size(), 2);
+    EXPECT_EQ(updatedRootOperators1.size(), 3UL);
+    EXPECT_EQ(updatedSharedQueryPlan1->getSourceOperators().size(), 2UL);
 
     auto changeLog = updatedSharedQMToDeploy[0]->getChangeLog();
-    EXPECT_EQ(changeLog->getAddition().size(), 2);
+    EXPECT_EQ(changeLog->getAddition().size(), 2UL);
 
     for (const auto& addition : changeLog->getAddition()) {
         auto operatorNewBranchAddedTo = updatedSharedQueryPlan1->getOperatorWithId(addition.first->getId());
         EXPECT_TRUE(operatorNewBranchAddedTo->instanceOf<FilterLogicalOperatorNode>());
         // Three different map operators are added
-        EXPECT_TRUE(operatorNewBranchAddedTo->getParents().size() == 3);
+        EXPECT_TRUE(operatorNewBranchAddedTo->getParents().size() == 3UL);
         for (const auto& parent : operatorNewBranchAddedTo->getParents()) {
             EXPECT_TRUE(parent->instanceOf<MapLogicalOperatorNode>());
         }
         // There are two physical sources
-        EXPECT_TRUE(operatorNewBranchAddedTo->getChildren().size() == 1);
+        EXPECT_TRUE(operatorNewBranchAddedTo->getChildren().size() == 1UL);
         for (const auto& child : operatorNewBranchAddedTo->getChildren()) {
             EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
         }

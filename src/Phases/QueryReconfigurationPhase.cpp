@@ -176,6 +176,17 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
         }
     }
 
+    for (const auto& removal : changeLog->getRemoval()) {
+        std::vector<NodePtr> operatorChildChain{queryPlan->getOperatorWithId(removal.first->getId())};
+        while (!operatorChildChain.empty()) {
+            auto op = operatorChildChain.back()->as<OperatorNode>();
+            operatorChildChain.pop_back();
+            shadowSubPlans.insert(operatorToSubPlan[op->getId()]);
+            auto opChildren = op->getChildren();
+            operatorChildChain.insert(operatorChildChain.end(), opChildren.begin(), opChildren.end());
+        }
+    }
+
     // reassign network operator Ids for plans below plan containing operator with modification
     for (const auto& shadowSubPlan : shadowSubPlans) {
         if (subPlansContainingMergePoints.contains(shadowSubPlan)) {
@@ -225,6 +236,7 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
 
     for (const auto& subPlan : reconfigurationShadowPlans) {
         newQuerySubPlans.erase(subPlan);
+        querySubPlansToRemove.erase(subPlan);
     }
 
     for (const auto& shadowSubPlan : shadowSubPlans) {
@@ -236,13 +248,18 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
     std::set<QueryPlanPtr> querySubPlansToStart{newQuerySubPlans};
     querySubPlansToStart.insert(shadowSubPlans.begin(), shadowSubPlans.end());
 
-    stopQuerySubPlan(queryId, querySubPlansToRemove);
-    unregisterQuerySubPlan(queryId, querySubPlansToRemove);
     deployQuery(queryId, querySubPlansToStart);
     registerForReconfiguration(queryId);
     triggerReconfigurationOfType(queryId, DATA_SINK);
     startQuery(queryId, querySubPlansToStart);
     triggerReconfigurationOfType(queryId, DATA_SOURCE);
+    stopQuerySubPlan(queryId, querySubPlansToRemove);
+    unregisterQuerySubPlan(queryId, querySubPlansToRemove);
+
+    if (!querySubPlansToRemove.empty()) {
+        NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan After removing sub plans to stop: \n"
+                  << globalExecutionPlan->getAsString());
+    }
 
     operatorToSubPlan.clear();
     subPlanToExecutionNode.clear();
@@ -366,6 +383,9 @@ bool QueryReconfigurationPhase::triggerReconfigurationOfType(QueryId queryId, Qu
 }
 
 bool QueryReconfigurationPhase::deployQuery(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans) {
+    if (querySubPlans.empty()) {
+        return true;
+    }
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const auto& querySubPlan : querySubPlans) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
@@ -398,13 +418,16 @@ std::string QueryReconfigurationPhase::getRpcAddress(const ExecutionNodePtr& exe
 }
 
 bool QueryReconfigurationPhase::stopQuerySubPlan(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans) {
+    if (querySubPlans.empty()) {
+        return true;
+    }
     NES_DEBUG("QueryReconfigurationPhase::stopQuerySubPlan: queryId=" << queryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const auto& subPlan : querySubPlans) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
         auto executionNode = subPlanToExecutionNode[subPlan];
         std::string rpcAddress = getRpcAddress(executionNode);
-        bool success = workerRPCClient->stopQuerySubPlanAsync(rpcAddress, queryId, queueForExecutionNode);
+        workerRPCClient->stopQuerySubPlanAsync(rpcAddress, subPlan->getQuerySubPlanId(), queueForExecutionNode);
         completionQueues[queueForExecutionNode] = 1;
         executionNode->removeQuerySubPlan(subPlan);
     }
@@ -415,14 +438,17 @@ bool QueryReconfigurationPhase::stopQuerySubPlan(QueryId queryId, const std::set
     return result;
 }
 
-bool QueryReconfigurationPhase::unRegisterQuerySubPlan(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans) {
+bool QueryReconfigurationPhase::unregisterQuerySubPlan(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans) {
+    if (querySubPlans.empty()) {
+        return true;
+    }
     NES_DEBUG("QueryReconfigurationPhase::stopQuerySubPlan: queryId=" << queryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const auto& subPlan : querySubPlans) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
         auto executionNode = subPlanToExecutionNode[subPlan];
         std::string rpcAddress = getRpcAddress(executionNode);
-        bool success = workerRPCClient->unregisterQuerySubPlanAsync(rpcAddress, queryId, queueForExecutionNode);
+        workerRPCClient->unregisterQuerySubPlanAsync(rpcAddress, subPlan->getQuerySubPlanId(), queueForExecutionNode);
         completionQueues[queueForExecutionNode] = 1;
         executionNode->removeQuerySubPlan(subPlan);
     }
@@ -434,6 +460,9 @@ bool QueryReconfigurationPhase::unRegisterQuerySubPlan(QueryId queryId, const st
 }
 
 bool QueryReconfigurationPhase::startQuery(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans) {
+    if (querySubPlans.empty()) {
+        return true;
+    }
     NES_DEBUG("QueryReconfigurationPhase::startQuery queryId=" << queryId);
     //TODO: check if one queue can be used among multiple connections
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
