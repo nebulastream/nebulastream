@@ -59,6 +59,18 @@ class SharedQueryPlanChangeLog {
     void addRemoval(const OperatorNodePtr& upstreamOperator, uint64_t removedOperatorId);
 
     /**
+     * Register newly added sink
+     * @param sinkOperatorId: id of the sink operator
+     */
+    void registerNewlyAddedSink(uint64_t sinkOperatorId);
+
+    /**
+     * Register removed sink
+     * @param sinkOperatorId: id of the sink operator
+     */
+    void registerRemovedSink(uint64_t sinkOperatorId);
+
+    /**
      * Get the addition log
      * @return the map containing all addition changes
      */
@@ -69,6 +81,18 @@ class SharedQueryPlanChangeLog {
      * @return the map containing all removal changes
      */
     [[nodiscard]] const std::map<OperatorNodePtr, std::vector<uint64_t>>& getRemoval() const;
+
+    /**
+     * Get newly added sinks
+     * @return list of sink operator ids
+     */
+    [[nodiscard]] const std::vector<uint64_t>& getAddedSinks() const;
+
+    /**
+     * Get removed sinks
+     * @return list of sink operator ids
+     */
+    [[nodiscard]] const std::vector<uint64_t>& getRemovedSinks() const;
 
     /**
      * clear addition log
@@ -84,6 +108,8 @@ class SharedQueryPlanChangeLog {
     SharedQueryPlanChangeLog() = default;
     std::map<OperatorNodePtr, std::vector<uint64_t>> addition;
     std::map<OperatorNodePtr, std::vector<uint64_t>> removal;
+    std::vector<uint64_t> addedSinks;
+    std::vector<uint64_t> removedSinks;
 };
 }// namespace NES
 

@@ -55,4 +55,12 @@ void SharedQueryPlanChangeLog::clearRemovalLog() { removal.clear(); }
 const std::map<OperatorNodePtr, std::vector<uint64_t>>& SharedQueryPlanChangeLog::getAddition() const { return addition; }
 
 const std::map<OperatorNodePtr, std::vector<uint64_t>>& SharedQueryPlanChangeLog::getRemoval() const { return removal; }
+
+const std::vector<uint64_t>& SharedQueryPlanChangeLog::getAddedSinks() const { return addedSinks; }
+
+const std::vector<uint64_t>& SharedQueryPlanChangeLog::getRemovedSinks() const { return removedSinks; }
+
+void SharedQueryPlanChangeLog::registerNewlyAddedSink(uint64_t sinkOperatorId) { addedSinks.emplace_back(sinkOperatorId); }
+
+void SharedQueryPlanChangeLog::registerRemovedSink(uint64_t sinkOperatorId) { removedSinks.emplace_back(sinkOperatorId); }
 }// namespace NES

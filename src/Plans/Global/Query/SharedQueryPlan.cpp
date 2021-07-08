@@ -63,6 +63,7 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
             return false;
         }
         queryPlan->removeAsRootOperator(sinkOperator);
+        changeLog->registerRemovedSink(sinkOperator->getId());
         //Remove the sink operator from the collection of sink operators in the global query metadata
         sinkOperators.erase(std::remove(sinkOperators.begin(), sinkOperators.end(), sinkOperator), sinkOperators.end());
     }
@@ -132,6 +133,7 @@ bool SharedQueryPlan::addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan) 
     queryIds.emplace_back(queryId);
     for (const auto& sinkOperator : queryPlan->getRootOperators()) {
         sinkOperators.emplace_back(sinkOperator);
+        changeLog->registerNewlyAddedSink(sinkOperator->getId());
         queryIdToSinkOperatorMap[queryId] = queryPlan->getRootOperators();
     }
     //Mark the meta data as updated but not deployed
