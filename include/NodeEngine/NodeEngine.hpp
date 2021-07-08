@@ -22,6 +22,7 @@
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <NodeEngine/ErrorListener.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
@@ -47,6 +48,7 @@ typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 namespace NES::NodeEngine {
 
 NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
+NodeEnginePtr create(const std::string& hostname, uint16_t port, std::vector<PhysicalStreamConfigPtr>& configs);
 
 /**
  * @brief this class represents the interface and entrance point into the
@@ -83,11 +85,47 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                 uint64_t numberOfBuffersInGlobalBufferManager,
                                 uint64_t numberOfBuffersInSourceLocalBufferPool,
                                 uint64_t numberOfBuffersPerPipeline);
+
+    /**
+     * @brief this creates a new NodeEngine
+     * @param hostname the ip address for the network manager
+     * @param port the port for the network manager
+     * @param numThreads the number of worker threads for this nodeEngine
+     * @param bufferSize the buffer size for the buffer manager
+     * @param numBuffers the number of buffers for the buffer manager
+     * @return
+     */
+
+    static NodeEnginePtr create(const std::string& hostname,
+                                uint16_t port,
+                                const std::vector<PhysicalStreamConfigPtr>& configs,
+                                uint16_t numThreads,
+                                uint64_t bufferSize,
+                                uint64_t numberOfBuffersInGlobalBufferManager,
+                                uint64_t numberOfBuffersInSourceLocalBufferPool,
+                                uint64_t numberOfBuffersPerPipeline);
+
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(PhysicalStreamConfigPtr config,
+    explicit NodeEngine(PhysicalStreamConfigPtr&& config,
+                        BufferManagerPtr&&,
+                        QueryManagerPtr&&,
+                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
+                        Network::PartitionManagerPtr&&,
+                        QueryCompilation::QueryCompilerPtr&&,
+                        StateManagerPtr&&,
+                        uint64_t nodeEngineId,
+                        uint64_t numberOfBuffersInGlobalBufferManager,
+                        uint64_t numberOfBuffersInSourceLocalBufferPool,
+                        uint64_t numberOfBuffersPerPipeline);
+
+    /**
+     * @brief Create a node engine and gather node information
+     * and initialize QueryManager, BufferManager and ThreadPool
+     */
+    explicit NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
                         BufferManagerPtr&&,
                         QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
@@ -256,7 +294,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Set the physical stream config
      * @param config : configuration to be set
      */
-    void setConfig(AbstractPhysicalStreamConfigPtr config);
+    void addConfig(AbstractPhysicalStreamConfigPtr config);
 
     /**
      * @brief Creates a logical source descriptor according to a logical source descriptor

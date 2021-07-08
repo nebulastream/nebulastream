@@ -615,7 +615,7 @@ void assertKiller() {
       public:
         using NodeEngine::NodeEngine;
 
-        explicit MockedNodeEngine(PhysicalStreamConfigPtr config,
+        explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config,
                                   BufferManagerPtr&& buffMgr,
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
@@ -625,7 +625,7 @@ void assertKiller() {
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerPipeline)
-            : NodeEngine(config,
+            : NodeEngine(std::move(config),
                          std::move(buffMgr),
                          std::move(queryMgr),
                          std::move(netFuncInit),

@@ -63,6 +63,8 @@ int main(int argc, char** argv) {
     sourceConfig->setSourceType("NoSource");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
 
+    std::vector<SourceConfigPtr> sourceConfigs;
+
     std::map<string, string> commandLineParams;
 
     for (int i = 1; i < argc; ++i) {
@@ -78,12 +80,27 @@ int main(int argc, char** argv) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
     if (sourceConfigPath != commandLineParams.end()) {
-        sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
+        // BDAPRO check this again, this looks a bit clunky, any recommendations?
+        auto sourceConfigPaths = UtilityFunctions::splitWithStringDelimiter(sourceConfigPath->second, ";");
+        if (sourceConfigPaths.size() == 1) {
+            sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
+        } else {
+            for (auto& path : sourceConfigPaths) {
+                SourceConfigPtr curr = SourceConfig::create();
+                curr->overwriteConfigWithYAMLFileInput(path);
+                sourceConfigs.emplace_back(curr);
+            }
+        }
     }
     if (argc >= 1) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
         sourceConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
+
+    if (sourceConfig->getSourceType()->getValue() != "NoSource") {
+        sourceConfigs.emplace_back(sourceConfig);
+    }
+
     NES::setLogLevel(NES::getDebugLevelFromString(workerConfig->getLogLevel()->getValue()));
 
     NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort()->getValue() << " localport="

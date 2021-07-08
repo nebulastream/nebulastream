@@ -51,7 +51,7 @@ NesWorker::NesWorker(WorkerConfigPtr workerConfig, NesNodeType type)
       numberOfBuffersPerPipeline(workerConfig->getnumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
-      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()),
+      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), configs{PhysicalStreamConfig::createEmpty()},
       topologyNodeId(INVALID_TOPOLOGY_NODE_ID), isRunning(false) {
     connected = false;
     withRegisterStream = false;
@@ -68,7 +68,7 @@ NesWorker::~NesWorker() {
 
 bool NesWorker::setWithRegister(PhysicalStreamConfigPtr conf) {
     withRegisterStream = true;
-    this->conf = conf;
+    this->configs.push_back(conf);// was this->configs = configs
     return true;
 }
 
@@ -135,7 +135,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     try {
         nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp,
                                                     localWorkerZmqPort,
-                                                    conf,
+                                                    configs,
                                                     numWorkerThreads,
                                                     bufferSizeInBytes,
                                                     numberOfBuffersInGlobalBufferManager,
@@ -169,9 +169,17 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
     if (withRegisterStream) {
         NES_DEBUG("NesWorker: start with register stream");
-        bool success = registerPhysicalStream(conf);
-        NES_DEBUG("registered= " << success);
-        NES_ASSERT(success, "cannot register");
+        // BDAPRO do bulk registration instead of multiple calls
+        for (auto& config : configs) {
+            if (config->getSourceType() == "DefaultSource") {
+                continue;
+            }
+            bool success = registerPhysicalStream(config);
+
+            NES_DEBUG("registered " << config->getPhysicalStreamName() << "= " << success);
+            // BDAPRO handle registration failure differently
+            NES_ASSERT(success, "cannot register");
+        }
     }
     if (withParent) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
@@ -313,6 +321,7 @@ bool NesWorker::unregisterPhysicalStream(std::string physicalName) {
 }
 
 bool NesWorker::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
+    // BDAPRO maybe register all physical streams at once to reduce RPC calls
     NES_ASSERT(conf, "invalid configuration");
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
@@ -320,7 +329,7 @@ bool NesWorker::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
     bool success = coordinatorRpcClient->registerPhysicalStream(conf);
     NES_ASSERT(success, "failed to register stream");
     // TODO we need to get rid of this
-    nodeEngine->setConfig(conf);
+    nodeEngine->addConfig(conf);
     NES_DEBUG("NesWorker::registerPhysicalStream success=" << success);
     return success;
 }
