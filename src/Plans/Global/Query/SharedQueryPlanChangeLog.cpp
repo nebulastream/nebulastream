@@ -48,9 +48,15 @@ void SharedQueryPlanChangeLog::addRemoval(const OperatorNodePtr& upstreamOperato
     }
 }
 
-void SharedQueryPlanChangeLog::clearAdditionLog() { addition.clear(); }
+void SharedQueryPlanChangeLog::clearAdditionLog() {
+    addition.clear();
+    addedSinks.clear();
+}
 
-void SharedQueryPlanChangeLog::clearRemovalLog() { removal.clear(); }
+void SharedQueryPlanChangeLog::clearRemovalLog() {
+    removal.clear();
+    removedSinks.clear();
+}
 
 const std::map<OperatorNodePtr, std::vector<uint64_t>>& SharedQueryPlanChangeLog::getAddition() const { return addition; }
 
