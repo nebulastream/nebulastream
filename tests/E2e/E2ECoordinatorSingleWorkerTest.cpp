@@ -70,15 +70,66 @@ class E2ECoordinatorSingleWorkerTest : public testing::Test {
     NES_INFO(" start coordinator");
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    // Combination ins cmdCoord caused issues therefore I am combining it before.
-    string coordinatorRPCPortCombined = "--coordinatorPort=" + coordinatorRPCPort;
+    string cmdCoord =
+            "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
+    subprocess::popen coordinatorProc(cmdCoord.c_str(), {});
+    NES_INFO("E2E CoordinatorSingleWorkerTest: Process started with pid:" << coordinatorProc.pid); //PID is private -> do we need that?
+    std::cout << coordinatorProc.
 
-    const char *cmdCoord[] = {"./nesCoordinator", coordinatorRPCPortCombined.c_str(), ("--restPort=" + std::to_string(restPort)).c_str(), NULL};
-    subprocess::popen cmd(cmdCoord, ());
-    std::cout << cmd.stdout().rdbuf();
+    stdout()
 
-    // subprocess::run(cmdCoord);
-    EXPECT_TRUE(1 == 1);
+    .
+
+    rdbuf();
+
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0)
+    );
+
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string path2 =
+            "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" +
+            worker1DataPort;
+    subprocess::popen workerProc(path2.c_str(), {});
+    uint64_t coordinatorPid = coordinatorProc.pid;
+    uint64_t workerPid = workerProc.pid;
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1)
+    );
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << R"("Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());")";
+    ss << R"(,"strategyName" : "BottomUp"})";
+    ss <<
+    endl;
+    NES_INFO("string submit=" << ss.
+
+    str()
+
+    );
+
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    NES_INFO("try to acc return");
+    QueryId queryId = json_return.at("queryId").as_integer();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID
+    );
+
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort))
+    );
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort))
+    );
+
+    NES_INFO("Killing worker process->PID: " << workerPid);
+    workerProc.
+
+    close();
+
+    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
+    coordinatorProc.
+
+    close();
+
 }
 /*
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutput) {

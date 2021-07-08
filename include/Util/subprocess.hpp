@@ -86,8 +86,10 @@ public:
     {
         in_filebuf->close();
     }
-    
-    
+
+    pid_t pid;
+
+
 private:
     
     enum ends_of_pipe { READ = 0, WRITE = 1 };
@@ -152,7 +154,7 @@ private:
         }
     }
 
-    pid_t pid;
+    //pid_t pid;
 
     int in_pipe[2];
     int out_pipe[2];
