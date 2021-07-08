@@ -774,7 +774,26 @@ TEST_F(QueryReconfigurationTest, testReconfigurationNewBranchOnLevel3) {
     NES_INFO("QueryReconfigurationTest: Test finished");
 }
 
-TEST_F(QueryReconfigurationTest, reconfigurationTotalMergingBottomUp) {
+class QueryReconfigurationPlacementParameterizedTest : public ::testing::TestWithParam<const char*> {
+  public:
+    static void SetUpTestCase() {
+        NES::setupLogging("QueryReconfigurationPlacementParameterizedTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup QueryReconfigurationPlacementParameterizedTest test class.");
+    }
+
+    void SetUp() {
+        rpcPort = rpcPort + 30;
+        restPort = restPort + 2;
+    }
+
+    void TearDown() { NES_INFO("Tear down QueryReconfigurationPlacementParameterizedTest class."); }
+};
+
+INSTANTIATE_TEST_SUITE_P(Placement, QueryReconfigurationPlacementParameterizedTest, testing::Values("BottomUp", "TopDown"));
+
+TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationTotalMerging) {
+
+    std::string strategy = GetParam();
 
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
@@ -786,8 +805,8 @@ TEST_F(QueryReconfigurationTest, reconfigurationTotalMergingBottomUp) {
 
     wrkConf->setCoordinatorPort(rpcPort);
 
-    std::string outputFilePath1 = "reconfigurationTotalMergingBottomUp1.out";
-    std::string outputFilePath2 = "reconfigurationTotalMergingBottomUp2.out";
+    std::string outputFilePath1 = "reconfigurationTotalMerging" + strategy + "1.out";
+    std::string outputFilePath2 = "reconfigurationTotalMerging" + strategy + "2.out";
 
     remove(outputFilePath1.c_str());
     remove(outputFilePath2.c_str());
@@ -845,10 +864,10 @@ TEST_F(QueryReconfigurationTest, reconfigurationTotalMergingBottomUp) {
     NES_INFO("QueryReconfigurationTest: Submit query");
     string query1 =
         R"(Query::from("car").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
+    QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, strategy);
     string query2 =
         R"(Query::from("car").sink(FileSinkDescriptor::create(")" + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
+    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, strategy);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));

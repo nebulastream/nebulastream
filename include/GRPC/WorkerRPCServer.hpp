@@ -38,9 +38,16 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status UnregisterQuery(ServerContext* context, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) override;
 
+    Status UnregisterQuerySubPlan(ServerContext* context,
+                                  const UnregisterQuerySubPlanRequest* request,
+                                  UnregisterQuerySubPlanReply* reply) override;
+
     Status StartQuery(ServerContext* context, const StartQueryRequest* request, StartQueryReply* reply) override;
 
     Status StopQuery(ServerContext* context, const StopQueryRequest* request, StopQueryReply* reply) override;
+
+    Status
+    StopQuerySubPlan(ServerContext* context, const StopQuerySubPlanRequest* request, StopQuerySubPlanReply* reply) override;
 
     Status RegisterQueryForReconfiguration(ServerContext* context,
                                            const RegisterQueryRequest* request,

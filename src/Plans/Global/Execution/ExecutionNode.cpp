@@ -64,6 +64,19 @@ bool ExecutionNode::removeQuerySubPlans(QueryId queryId) {
     return false;
 }
 
+bool ExecutionNode::removeQuerySubPlan(const QueryPlanPtr& querySubPlan) {
+    auto queryId = querySubPlan->getQueryId();
+    auto it = mapOfQuerySubPlans.find(queryId);
+    if (it == mapOfQuerySubPlans.end()) {
+        NES_WARNING("ExecutionNode: Not able to remove query sub plan with id : " << querySubPlan->getQuerySubPlanId()
+                                                                                  << ", as query id is not present: " << queryId);
+        return false;
+    }
+    auto querySubPlans = mapOfQuerySubPlans[queryId];
+    querySubPlans.erase(std::remove(querySubPlans.begin(), querySubPlans.end(), querySubPlan), querySubPlans.end());
+    return true;
+}
+
 uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
 
     // In this method we iterate from the root operators to all their child operator within a query sub plan

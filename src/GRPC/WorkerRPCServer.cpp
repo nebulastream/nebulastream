@@ -93,6 +93,34 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     return Status::CANCELLED;
 }
 
+Status WorkerRPCServer::StopQuerySubPlan(ServerContext*, const StopQuerySubPlanRequest* request, StopQuerySubPlanReply* reply) {
+    NES_DEBUG("WorkerRPCServer::StopQuerySubPlan: got request for subPlanId: " << request->querysubplanid());
+    bool success = nodeEngine->stopQuerySubPlan(request->querysubplanid());
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::StopQuerySubPlan: success");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("WorkerRPCServer::StopQuerySubPlan: failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
+Status WorkerRPCServer::UnregisterQuerySubPlan(ServerContext*,
+                                               const UnregisterQuerySubPlanRequest* request,
+                                               UnregisterQuerySubPlanReply* reply) {
+    NES_DEBUG("WorkerRPCServer::UnregisterQuerySubPlan: got request for subPlanId: " << request->querysubplanid());
+    bool success = nodeEngine->unregisterQuerySubPlan(request->querysubplanid());
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::UnregisterQuerySubPlan: success");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("WorkerRPCServer::UnregisterQuerySubPlan: failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
 Status
 WorkerRPCServer::RegisterQueryForReconfiguration(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());

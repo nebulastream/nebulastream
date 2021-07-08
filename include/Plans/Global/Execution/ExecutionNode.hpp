@@ -105,6 +105,12 @@ class ExecutionNode : public Node {
     std::map<QueryId, std::vector<QueryPlanPtr>> getAllQuerySubPlans();
 
     /**
+     * Remove querySubPlan
+     * @return true if successful else false
+     */
+    bool removeQuerySubPlan(const QueryPlanPtr& querySubPlan);
+
+    /**
      * Get the resources occupied by the query sub plans for the input query id.
      * @param queryId : the input query id
      */

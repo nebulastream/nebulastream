@@ -219,6 +219,14 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
                 auto* call = static_cast<AsyncClientCall<StartQueryReconfigurationReply>*>(got_tag);
                 status = call->status.ok();
                 delete call;
+            } else if (mode == StopSubPlan) {
+                auto* call = static_cast<AsyncClientCall<StopQuerySubPlanReply>*>(got_tag);
+                status = call->status.ok();
+                delete call;
+            } else if (mode == UnregisterSubPlan) {
+                auto* call = static_cast<AsyncClientCall<UnregisterQuerySubPlanReply>*>(got_tag);
+                status = call->status.ok();
+                delete call;
             } else {
                 NES_NOT_IMPLEMENTED();
             }
@@ -234,6 +242,34 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
     NES_DEBUG("checkAsyncResult for mode=" << mode << " succeed");
     return result;
 }
+
+bool WorkerRPCClient::unregisterQuerySubPlanAsync(const std::string& address,
+                                                  QuerySubPlanId querySubPlanId,
+                                                  const CompletionQueuePtr& cq) {
+    NES_DEBUG("WorkerRPCClient::unregisterQuerySubPlanAsync address=" << address << " querySubPlanId=" << querySubPlanId);
+
+    UnregisterQuerySubPlanRequest request;
+    request.set_querysubplanid(querySubPlanId);
+
+    UnregisterQuerySubPlanReply reply;
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+    // Call object to store rpc data
+    auto* call = new AsyncClientCall<UnregisterQuerySubPlanReply>;
+
+    call->responseReader = workerStub->PrepareAsyncUnregisterQuerySubPlan(&call->context, request, cq.get());
+
+    // StartCall initiates the RPC call
+    call->responseReader->StartCall();
+
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+
+    return true;
+}
+
 bool WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address=" << address << " queryId=" << queryId);
 
@@ -395,6 +431,31 @@ bool WorkerRPCClient::stopQueryAsync(const std::string& address, QueryId queryId
     // Request that, upon completion of the RPC, "reply" be updated with the
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+
+    return true;
+}
+
+bool WorkerRPCClient::stopQuerySubPlanAsync(const std::string& address,
+                                            QuerySubPlanId querySubPlanId,
+                                            const CompletionQueuePtr& cq) {
+    NES_DEBUG("WorkerRPCClient::stopQuerySubPlanAsync address=" << address << " querySubPlanId=" << querySubPlanId);
+
+    StopQuerySubPlanRequest request;
+    request.set_querysubplanid(querySubPlanId);
+
+    StopQuerySubPlanReply reply;
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+    auto* call = new AsyncClientCall<StopQuerySubPlanReply>;
+
+    call->responseReader = workerStub->PrepareAsyncStopQuerySubPlan(&call->context, request, cq.get());
+
+    call->responseReader->StartCall();
+
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 
     return true;
