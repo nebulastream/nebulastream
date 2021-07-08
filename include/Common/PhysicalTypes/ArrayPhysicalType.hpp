@@ -72,7 +72,14 @@ class ArrayPhysicalType final : public PhysicalType {
      */
     std::string convertRawToString(void const* rawData) const noexcept final;
 
-    std::string convertRawToRawString(void const* rawData) const noexcept;
+    /**
+     * @brief Converts the binary representation of this value to a string without filling
+     * up the difference between the length of the string and the end of the schema definition
+     * with unrelated characters
+     * @param rawData a pointer to the raw value
+     * @return string
+    */
+    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept final;
 
     /**
      * @brief Returns the string representation of this physical data type.
@@ -85,7 +92,6 @@ class ArrayPhysicalType final : public PhysicalType {
 
     /// Type
     PhysicalTypePtr const physicalComponentType;
-
 };
 
 }// namespace NES

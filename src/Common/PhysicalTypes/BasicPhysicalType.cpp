@@ -71,6 +71,32 @@ std::string BasicPhysicalType::convertRawToString(void const* data) const noexce
     }
 }
 
+std::string BasicPhysicalType::convertRawToStringWithoutFill(void const* data) const noexcept {
+
+    if (!data) {
+        return std::string();
+    }
+    switch (nativeType) {
+        case INT_8: return std::to_string(*reinterpret_cast<int8_t const*>(data));
+        case UINT_8: return std::to_string(*reinterpret_cast<uint8_t const*>(data));
+        case INT_16: return std::to_string(*reinterpret_cast<int16_t const*>(data));
+        case UINT_16: return std::to_string(*reinterpret_cast<uint16_t const*>(data));
+        case INT_32: return std::to_string(*reinterpret_cast<int32_t const*>(data));
+        case UINT_32: return std::to_string(*reinterpret_cast<uint32_t const*>(data));
+        case INT_64: return std::to_string(*reinterpret_cast<int64_t const*>(data));
+        case UINT_64: return std::to_string(*reinterpret_cast<uint64_t const*>(data));
+        case FLOAT: return std::to_string(*reinterpret_cast<float const*>(data));
+        case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
+        case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
+        case CHAR:
+            if (size() != 1) {
+                return "invalid char type";
+            }
+            return std::string{*static_cast<char const*>(data)};
+        default: return "invalid native type";
+    }
+}
+
 std::string BasicPhysicalType::toString() const noexcept {
     switch (nativeType) {
         case INT_8: return "INT8";
