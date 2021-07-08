@@ -35,7 +35,7 @@ class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class SharedQueryPlanChangeLog;
-using SharedQueryPlanChangeLogPtr = std::unique_ptr<SharedQueryPlanChangeLog>;
+using SharedQueryPlanChangeLogPtr = std::shared_ptr<SharedQueryPlanChangeLog>;
 
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
@@ -188,6 +188,8 @@ class SharedQueryPlan {
      * @return true if successful else false
      */
     bool addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan);
+
+    SharedQueryPlanChangeLogPtr getChangeLog();
 
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
