@@ -170,7 +170,4 @@ bool SharedQueryPlan::removeOperator(const OperatorNodePtr& operatorToRemove) {
     }
     return true;
 }
-
-SharedQueryPlanChangeLogPtr SharedQueryPlan::getChangeLog() { return changeLog; }
-
 }// namespace NES
