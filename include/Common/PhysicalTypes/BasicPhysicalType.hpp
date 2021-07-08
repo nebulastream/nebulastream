@@ -64,6 +64,13 @@ class BasicPhysicalType final : public PhysicalType {
     std::string convertRawToString(void const* rawData) const noexcept final;
 
     /**
+     * @brief Converts the binary representation of this value to a string.
+     * @param rawData a pointer to the raw value
+     * @return string
+    */
+    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept final;
+
+    /**
      * @brief Returns the string representation of this physical data type.
      * @return string
      */

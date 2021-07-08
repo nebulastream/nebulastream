@@ -100,7 +100,7 @@ class FormatIterator {
                 auto currentFieldOffset = fieldOffsets[currentField];
                 auto currentFieldType = fieldTypes[currentField];
                 auto fieldName = fieldNames[currentField];
-                auto fieldValue = currentFieldType->convertRawToString(&tuplePointer[currentFieldOffset]);
+                auto fieldValue = currentFieldType->convertRawToStringWithoutFill(&tuplePointer[currentFieldOffset]);
                 jsonMessage << R"(")" + fieldName + R"(":)" + R"(")" + fieldValue + R"(")";
                 if (currentField != fieldNames.size() - 1) {
                     jsonMessage << ",";
