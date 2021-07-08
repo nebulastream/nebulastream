@@ -176,6 +176,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool unregisterQuery(QueryId queryId);
 
     /**
+     * @brief ungregisters a query subplan
+     * @param querySubPlanId to unregister query subplan
+     * @return true if succeeded, else false
+     */
+    bool unregisterQuerySubPlan(QuerySubPlanId querySubPlanId);
+
+    /**
      * @brief method to start a already deployed query
      * @note if query is not deploy, false is returned
      * @param queryId to start
@@ -190,6 +197,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return bool indicating success
      */
     bool stopQuery(QueryId queryId, bool graceful = false);
+
+    /**
+     * @brief method to stop a query sub plan
+     * @param querySubPlanId to stop
+     * @param graceful hard or soft termination
+     * @return bool indicating success
+     */
+    bool stopQuerySubPlan(QuerySubPlanId querySubPlanId, bool graceful = false);
 
     /**
      * @brief release all resource of the node engine

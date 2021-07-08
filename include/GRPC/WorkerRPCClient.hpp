@@ -18,6 +18,7 @@
 #define NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
 #include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
@@ -51,7 +52,16 @@ using QueryReconfigurationPlanPtr = std::shared_ptr<QueryReconfigurationPlan>;
 
 using CompletionQueuePtr = std::shared_ptr<CompletionQueue>;
 
-enum RpcClientModes { Register, Unregister, Start, Stop, RegisterForReconfiguration, TriggerReconfiguration };
+enum RpcClientModes {
+    Register,
+    Unregister,
+    UnregisterSubPlan,
+    Start,
+    Stop,
+    StopSubPlan,
+    RegisterForReconfiguration,
+    TriggerReconfiguration
+};
 
 class WorkerRPCClient {
   public:
@@ -125,6 +135,14 @@ class WorkerRPCClient {
     static bool unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
 
     /**
+     * @brief ungregisters a query sub plan asynchronously
+     * @param querySubPlanId to unregister query
+     * @return true if succeeded, else false
+     */
+    static bool
+    unregisterQuerySubPlanAsync(const std::string& address, QuerySubPlanId querySubPlanId, const CompletionQueuePtr& cq);
+
+    /**
      * @brief method to start a already deployed query
      * @note if query is not deploy, false is returned
      * @param queryId to start
@@ -153,6 +171,13 @@ class WorkerRPCClient {
      * @return bool indicating success
      */
     static bool stopQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+
+    /**
+     * @brief method to stop a query sub plan asynchronously
+     * @param querySubPlanId to stop
+     * @return bool indicating success
+     */
+    static bool stopQuerySubPlanAsync(const std::string& address, QuerySubPlanId querySubPlanId, const CompletionQueuePtr& cq);
 
     /**
      * @brief Registers to a remote worker node its monitoring plan.

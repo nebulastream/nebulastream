@@ -84,6 +84,22 @@ class QueryReconfigurationPhase {
     bool deployQuery(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans);
 
     /**
+     * @brief method to stop query sub plans
+     * @param queryId
+     * @param querySubPlans to stop
+     * @return bool indicating success
+     */
+    bool stopQuerySubPlan(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans);
+
+    /**
+     * @brief method to unregister query sub plans
+     * @param queryId
+     * @param querySubPlans to stop
+     * @return bool indicating success
+     */
+    bool unregisterQuerySubPlan(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans);
+
+    /**
      * @brief method to start a already deployed query
      * @param queryId
      * @return bool indicating success

@@ -236,6 +236,8 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
     std::set<QueryPlanPtr> querySubPlansToStart{newQuerySubPlans};
     querySubPlansToStart.insert(shadowSubPlans.begin(), shadowSubPlans.end());
 
+    stopQuerySubPlan(queryId, querySubPlansToRemove);
+    unregisterQuerySubPlan(queryId, querySubPlansToRemove);
     deployQuery(queryId, querySubPlansToStart);
     registerForReconfiguration(queryId);
     triggerReconfigurationOfType(queryId, DATA_SINK);
@@ -393,6 +395,42 @@ std::string QueryReconfigurationPhase::getRpcAddress(const ExecutionNodePtr& exe
     auto grpcPort = nesNode->getGrpcPort();
     std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
     return rpcAddress;
+}
+
+bool QueryReconfigurationPhase::stopQuerySubPlan(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans) {
+    NES_DEBUG("QueryReconfigurationPhase::stopQuerySubPlan: queryId=" << queryId);
+    std::map<CompletionQueuePtr, uint64_t> completionQueues;
+    for (const auto& subPlan : querySubPlans) {
+        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+        auto executionNode = subPlanToExecutionNode[subPlan];
+        std::string rpcAddress = getRpcAddress(executionNode);
+        bool success = workerRPCClient->stopQuerySubPlanAsync(rpcAddress, queryId, queueForExecutionNode);
+        completionQueues[queueForExecutionNode] = 1;
+        executionNode->removeQuerySubPlan(subPlan);
+    }
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, StopSubPlan);
+    if (!result) {
+        NES_ERROR("QueryReconfigurationPhase::stopQuerySubPlan: Failed for Query: " << queryId);
+    }
+    return result;
+}
+
+bool QueryReconfigurationPhase::unRegisterQuerySubPlan(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans) {
+    NES_DEBUG("QueryReconfigurationPhase::stopQuerySubPlan: queryId=" << queryId);
+    std::map<CompletionQueuePtr, uint64_t> completionQueues;
+    for (const auto& subPlan : querySubPlans) {
+        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+        auto executionNode = subPlanToExecutionNode[subPlan];
+        std::string rpcAddress = getRpcAddress(executionNode);
+        bool success = workerRPCClient->unregisterQuerySubPlanAsync(rpcAddress, queryId, queueForExecutionNode);
+        completionQueues[queueForExecutionNode] = 1;
+        executionNode->removeQuerySubPlan(subPlan);
+    }
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, UnregisterSubPlan);
+    if (!result) {
+        NES_ERROR("QueryReconfigurationPhase::unRegisterQuerySubPlan: Failed for Query: " << queryId);
+    }
+    return result;
 }
 
 bool QueryReconfigurationPhase::startQuery(QueryId queryId, const std::set<QueryPlanPtr>& querySubPlans) {

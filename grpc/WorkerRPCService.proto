@@ -26,12 +26,14 @@ service WorkerRPCService {
 
   rpc RegisterQuery (RegisterQueryRequest) returns (RegisterQueryReply) {}
   rpc UnregisterQuery (UnregisterQueryRequest) returns (UnregisterQueryReply) {}
+  rpc UnregisterQuerySubPlan (UnregisterQuerySubPlanRequest) returns (UnregisterQuerySubPlanReply) {}
 
   rpc RegisterQueryForReconfiguration (RegisterQueryRequest) returns (RegisterQueryReply) {}
   rpc StartQueryReconfiguration (StartQueryReconfigurationRequest) returns (StartQueryReconfigurationReply) {}
 
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
+  rpc StopQuerySubPlan (StopQuerySubPlanRequest) returns (StopQuerySubPlanReply) {}
 
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
@@ -74,7 +76,15 @@ message UnregisterQueryRequest {
   uint64 queryId = 1;
 }
 
+message UnregisterQuerySubPlanRequest {
+  uint64 querySubPlanId = 1;
+}
+
 message UnregisterQueryReply {
+  bool success = 1;
+}
+
+message UnregisterQuerySubPlanReply {
   bool success = 1;
 }
 
@@ -90,7 +100,15 @@ message StopQueryRequest {
   uint64 queryId = 1;
 }
 
+message StopQuerySubPlanRequest {
+  uint64 querySubPlanId = 1;
+}
+
 message StopQueryReply {
+  bool success = 1;
+}
+
+message StopQuerySubPlanReply {
   bool success = 1;
 }
 
