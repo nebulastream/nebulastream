@@ -155,7 +155,7 @@ bool SharedQueryPlan::removeOperator(const OperatorNodePtr& operatorToRemove) {
         if (child->getParents().size() > 1) {
             changeLog->addRemoval(childOperator, operatorToRemove->getId());
             childOperator->removeParent(operatorToRemove);
-        } else{
+        } else {
             if (!removeOperator(childOperator)) {
                 NES_ERROR("QueryPlan: unable to remove operator " << childOperator->toString() << " from shared query plan "
                                                                   << sharedQueryId);
