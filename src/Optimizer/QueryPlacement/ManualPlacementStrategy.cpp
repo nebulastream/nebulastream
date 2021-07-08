@@ -55,5 +55,9 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryP
 void ManualPlacementStrategy::setBinaryMapping(PlacementMatrix userDefinedBinaryMapping) {
     this->binaryMapping = std::move(userDefinedBinaryMapping);
 }
+std::unordered_set<ExecutionNodePtr> ManualPlacementStrategy::updateGlobalExecutionPlanPartial(QueryPlanPtr queryPlan) {
+    NES_DEBUG("ManualPlacementStrategy: partial placement currently not implemented for ManualPlacement" << queryPlan->getQueryId());
+    return std::unordered_set<ExecutionNodePtr>();
+}
 
 }// namespace NES::Optimizer

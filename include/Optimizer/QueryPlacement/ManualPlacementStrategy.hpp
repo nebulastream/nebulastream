@@ -30,6 +30,8 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
+    std::unordered_set<ExecutionNodePtr> updateGlobalExecutionPlanPartial(QueryPlanPtr queryPlan) override;
+
     static std::unique_ptr<ManualPlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                            TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
