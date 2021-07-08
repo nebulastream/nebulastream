@@ -73,5 +73,7 @@ void SharedQueryPlanChangeLog::registerRemovedSink(uint64_t sinkOperatorId) { re
 void SharedQueryPlanChangeLog::reset() {
     clearAdditionLog();
     clearRemovalLog();
+    removedSinks.clear();
+    addedSinks.clear();
 }
 }// namespace NES
