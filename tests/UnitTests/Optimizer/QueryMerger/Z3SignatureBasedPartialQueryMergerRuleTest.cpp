@@ -375,7 +375,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
     //assert
     updatedSharedQueryPlansDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlansDeploy.size(), 1u);
+    EXPECT_EQ(updatedSharedQueryPlansDeploy.size(), 1U);
 
     auto updatedSharedQueryPlan1 = updatedSharedQueryPlansDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
@@ -384,26 +384,106 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 3u);
-    EXPECT_EQ(updatedSharedQueryPlan1->getSourceOperators().size(), 2u);
+    EXPECT_EQ(updatedRootOperators1.size(), 3U);
+    EXPECT_EQ(updatedSharedQueryPlan1->getSourceOperators().size(), 2U);
 
     auto changeLog = updatedSharedQueryPlansDeploy[0]->getChangeLog();
-    EXPECT_EQ(changeLog->getAddition().size(), 2u);
+    EXPECT_EQ(changeLog->getAddition().size(), 2U);
 
     for (const auto& addition : changeLog->getAddition()) {
         auto operatorNewBranchAddedTo = updatedSharedQueryPlan1->getOperatorWithId(addition.first->getId());
         EXPECT_TRUE(operatorNewBranchAddedTo->instanceOf<FilterLogicalOperatorNode>());
         // Three different map operators are added
-        EXPECT_TRUE(operatorNewBranchAddedTo->getParents().size() == 3u);
+        EXPECT_TRUE(operatorNewBranchAddedTo->getParents().size() == 3U);
         for (const auto& parent : operatorNewBranchAddedTo->getParents()) {
             EXPECT_TRUE(parent->instanceOf<MapLogicalOperatorNode>());
         }
         // There are one physical sources
-        EXPECT_TRUE(operatorNewBranchAddedTo->getChildren().size() == 1u);
+        EXPECT_TRUE(operatorNewBranchAddedTo->getChildren().size() == 1U);
         for (const auto& child : operatorNewBranchAddedTo->getChildren()) {
             EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
         }
     }
+}
+
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStopChangeLog) {
+
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query1 = Query::from("car").sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    Query query2 = Query::from("car").sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
+    queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase =
+        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
+    z3InferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    //execute
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    NES_INFO(updatedSharedQueryPlan1->toString());
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    // stop query 1
+    globalQueryPlan->removeQuery(queryPlan1->getQueryId());
+
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    auto updatedSharedPlanAfterStopToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedPlanAfterStopToDeploy.size() == 1);
+
+    auto updatedSharedPlanAfterStop = updatedSharedPlanAfterStopToDeploy[0]->getQueryPlan();
+    auto changeLog = updatedSharedPlanAfterStopToDeploy[0]->getChangeLog();
+
+    EXPECT_TRUE(updatedSharedPlanAfterStop);
+    NES_INFO(updatedSharedPlanAfterStop->toString());
+
+    ASSERT_EQ(changeLog->getRemoval().size(), 2UL);
+
+    //assert that the sink operators have same up-stream operator
+    auto rootOperatorsAfterStop = updatedSharedPlanAfterStop->getRootOperators();
+    EXPECT_TRUE(rootOperatorsAfterStop.size() == 1);
+
+    EXPECT_TRUE(updatedSharedPlanAfterStop->getSourceOperators().size() == 2);
+
+    auto operatorsInQueryPlan2 = QueryPlanIterator(queryPlan2).snapshot();
+    auto operatorsInSharedPlanAfterStop = QueryPlanIterator(updatedSharedPlanAfterStop).snapshot();
+
+    EXPECT_TRUE(operatorsInQueryPlan2.size() == operatorsInSharedPlanAfterStop.size());
 }
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStop) {
