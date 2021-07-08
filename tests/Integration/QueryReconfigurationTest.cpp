@@ -870,9 +870,11 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationTotalMergi
     QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, strategy);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath1));
+
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
+
     EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath2));
 
     NES_INFO("QueryReconfigurationTest: Remove query");

@@ -177,10 +177,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief ungregisters a query subplan
-     * @param querySubPlanId to unregister query subplan
+     * @param subPlanId to unregister query subplan
      * @return true if succeeded, else false
      */
-    bool unregisterQuerySubPlan(QuerySubPlanId querySubPlanId);
+    bool unregisterQuerySubPlan(QuerySubPlanId subPlanId);
 
     /**
      * @brief method to start a already deployed query

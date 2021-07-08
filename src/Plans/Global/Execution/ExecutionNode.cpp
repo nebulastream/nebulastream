@@ -64,16 +64,21 @@ bool ExecutionNode::removeQuerySubPlans(QueryId queryId) {
     return false;
 }
 
-bool ExecutionNode::removeQuerySubPlan(const QueryPlanPtr& querySubPlan) {
-    auto queryId = querySubPlan->getQueryId();
+bool ExecutionNode::removeQuerySubPlan(const QueryPlanPtr& querySubPlanToRemove) {
+    auto queryId = querySubPlanToRemove->getQueryId();
     auto it = mapOfQuerySubPlans.find(queryId);
     if (it == mapOfQuerySubPlans.end()) {
-        NES_WARNING("ExecutionNode: Not able to remove query sub plan with id : " << querySubPlan->getQuerySubPlanId()
+        NES_WARNING("ExecutionNode: Not able to remove query sub plan with id : " << querySubPlanToRemove->getQuerySubPlanId()
                                                                                   << ", as query id is not present: " << queryId);
         return false;
     }
-    auto querySubPlans = mapOfQuerySubPlans[queryId];
-    querySubPlans.erase(std::remove(querySubPlans.begin(), querySubPlans.end(), querySubPlan), querySubPlans.end());
+    std::vector<QueryPlanPtr>& querySubPlans = mapOfQuerySubPlans[queryId];
+    querySubPlans.erase(std::remove_if(querySubPlans.begin(),
+                                       querySubPlans.end(),
+                                       [querySubPlanToRemove](const QueryPlanPtr& subPlan) {
+                                           return subPlan->getQuerySubPlanId() == querySubPlanToRemove->getQuerySubPlanId();
+                                       }),
+                        querySubPlans.end());
     return true;
 }
 
