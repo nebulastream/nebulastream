@@ -131,13 +131,6 @@ bool StreamCatalog::addPhysicalToLogicalStream(std::string logicalStreamName, St
         NES_INFO("PUSH BACK");
         entries.push_back(nameToPhysicalStream[physicalStreamName]);
     }
-    //check if physical stream does not exist yet
-    if (nameToPhysicalStream.find(newEntry->getPhysicalName()) != nameToPhysicalStream.end()){
-        NES_ERROR("StreamCatalog: physicalStream with name=" << newEntry->getPhysicalName() << " already exists");
-        return false;
-    }
-
-    NES_DEBUG("StreamCatalog: physical stream " << newEntry->getPhysicalName() << " does not exist, try to add");
 
     //if first one
     if (testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalStreamName)) {
@@ -159,6 +152,15 @@ bool StreamCatalog::addPhysicalToLogicalStream(std::string logicalStreamName, St
 
 bool StreamCatalog::addPhysicalStream(std::vector<std::string> logicalStreamNames, StreamCatalogEntryPtr newEntry) {
     std::unique_lock lock(catalogMutex);
+
+    //check if physical stream does not exist yet
+    if (nameToPhysicalStream.find(newEntry->getPhysicalName()) != nameToPhysicalStream.end()){
+        NES_ERROR("StreamCatalog: physicalStream with name=" << newEntry->getPhysicalName() << " already exists");
+        return false;
+    }
+
+    NES_DEBUG("StreamCatalog: physical stream " << newEntry->getPhysicalName() << " does not exist, try to add");
+
     NES_DEBUG("StreamCatalog: search for logical streams in addPhysicalStream() " << UtilityFunctions::combineStringsWithDelimiter(logicalStreamNames, ","));
 
     // check if logical stream schemas exist
@@ -455,7 +457,7 @@ std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStreamForPhysicalSt
     // filter this now according to logicalStreamNames
     std::map<std::string, SchemaPtr> allLogicalStreamForPhysicalStream;
     for (auto name : logicalStreamNames) {
-        allLogicalStreamForPhysicalStream.insert(allLogicalStream.begin(), allLogicalStream.find(name));
+        allLogicalStreamForPhysicalStream.insert({name, allLogicalStream.find(name)->second});
     }
     return allLogicalStreamForPhysicalStream;
 }

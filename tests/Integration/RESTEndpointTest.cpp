@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 #include "SerializableQueryPlan.pb.h"
+#include "CoordinatorRPCService.pb.h"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
@@ -506,6 +507,15 @@ TEST_F(RESTEndpointTest, testGetAllLogicalStreams) {
     EXPECT_NE(port, 0);
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
     //create test schemas
     std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                              "\"value\", BasicType::UINT64);";
@@ -517,11 +527,16 @@ TEST_F(RESTEndpointTest, testGetAllLogicalStreams) {
     bool success = crd->getNesWorker()->registerLogicalStream("testSchema", testSchemaFileName);
     EXPECT_TRUE(success);
 
+    srcConf->setPhysicalStreamName("test_physical");
+    srcConf->setLogicalStreamName("testSchema,default_logical");
+    success = wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+    EXPECT_TRUE(success);
+
     web::http::client::http_client getAllLogicalStreamsClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                              + "/v1/nes/streamCatalog/allLogicalStream");
+                                                              + "/v1/nes/streamCatalog/allLogicalStream?physicalStreamName=test_physical");
     web::json::value getAllLogicalStreamsJsonReturn;
 
-    getAllLogicalStreamsClient.request(web::http::methods::GET)
+    getAllLogicalStreamsClient.request(web::http::methods::GET, "")
         .then([](const web::http::http_response& response) {
           NES_INFO("get first then");
           return response.extract_json();})
@@ -536,16 +551,110 @@ TEST_F(RESTEndpointTest, testGetAllLogicalStreams) {
 
     NES_INFO("getAllLogicalStreams: try to acc return");
     NES_DEBUG("getAllLogicalStreams response: " << getAllLogicalStreamsJsonReturn.serialize());
-    // expected: default_logical, exdra and here created logical stream
+    // expected: default_logical and here create testSchema
     auto expected =
-        R"({"default_logical":"id:INTEGER value:INTEGER ","exdra":"id:INTEGER metadata_generated:INTEGER metadata_title:ArrayType metadata_id:ArrayType features_type:ArrayType features_properties_capacity:INTEGER features_properties_efficiency:(Float) features_properties_mag:(Float) features_properties_time:INTEGER features_properties_updated:INTEGER features_properties_type:ArrayType features_geometry_type:ArrayType features_geometry_coordinates_longitude:(Float) features_geometry_coordinates_latitude:(Float) features_eventId :ArrayType ","testSchema":"id:INTEGER value:INTEGER "})";
+        R"({"default_logical":"id:INTEGER value:INTEGER ","testSchema":"id:INTEGER value:INTEGER "})";
     NES_DEBUG("getAllLogicalStreams response: expected = " << expected);
     ASSERT_EQ(getAllLogicalStreamsJsonReturn.serialize(), expected);
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
 
     NES_INFO("RESTEndpointTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
 }
+
+TEST_F(RESTEndpointTest, testRemoveLogicalStreamFromPhysicalStream) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    //create two test schemas
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
+    std::string testSchemaFileName1 = "testSchema1.hpp";
+    std::ofstream out1(testSchemaFileName1);
+    out1 << testSchema;
+    out1.close();
+
+    std::string testSchemaFileName2 = "testSchema2.hpp";
+    std::ofstream out2(testSchemaFileName2);
+    out2 << testSchema;
+    out2.close();
+
+    bool success = crd->getNesWorker()->registerLogicalStream("testSchema1", testSchemaFileName1);
+    EXPECT_TRUE(success);
+    success = crd->getNesWorker()->registerLogicalStream("testSchema2", testSchemaFileName2);
+    EXPECT_TRUE(success);
+
+    //create worker with physical stream which registers for both
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    std::vector<std::string> logicalStreamNames{"testSchema1", "testSchema2"};
+    srcConf->setLogicalStreamName(logicalStreamNames);
+    srcConf->setPhysicalStreamName("test_physical");
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
+    // now two logical to physical stream mapping entries should exist
+    auto vec1 = crd->getStreamCatalog()->getPhysicalStreams("testSchema1");
+    auto vec2 = crd->getStreamCatalog()->getPhysicalStreams("testSchema2");
+    EXPECT_TRUE(!vec1.empty() && !vec2.empty());
+
+    web::http::client::http_client removeLogicalFromPhysicalClient("http://127.0.0.1:" + std::to_string(restPort)
+                                                              + "/v1/nes/streamCatalog/removePhysicalStreamFromLogicalStream"
+                                                                     "?logicalStreamName=testSchema1&physicalStreamName=test_physical");
+    web::json::value delJsonReturn;
+    removeLogicalFromPhysicalClient.request(web::http::methods::DEL)
+        .then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
+        .then([&delJsonReturn](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("del remove from physical a logical: set return");
+              delJsonReturn = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_ERROR("del remove from physical a logical: error while setting return" << e.what());
+          }
+        })
+        .wait();
+
+    NES_INFO("removePhysicalStreamFromLogicalStream: try to acc return");
+    NES_DEBUG("removePhysicalStreamFromLogicalStream response: " << delJsonReturn.serialize());
+
+    // expected: testSchema1 deleted -> empty, testSchema2 -> still one entry
+    vec1 = crd->getStreamCatalog()->getPhysicalStreams("testSchema1");
+    vec2 = crd->getStreamCatalog()->getPhysicalStreams("testSchema2");
+    EXPECT_TRUE(vec1.empty() && !vec2.empty());
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+
 
 }// namespace NES
