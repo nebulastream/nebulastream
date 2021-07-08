@@ -17,6 +17,7 @@
 #ifndef NES_QUERYRECONFIGURATIONPHASE_HPP
 #define NES_QUERYRECONFIGURATIONPHASE_HPP
 
+#include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QueryReconfigurationPlan.hpp>
 #include <iostream>
@@ -115,13 +116,14 @@ class QueryReconfigurationPhase {
     std::map<ExecutionNodePtr, std::vector<QueryReconfigurationPlanPtr>> executionNodeToReconfigurationPlans;
     std::map<SourceLogicalOperatorNodePtr, std::set<SinkLogicalOperatorNodePtr>> networkSourcesToSinks;
 
-    void populateReconfigurationPlan(QueryId queryId,
-                                     const OperatorNodePtr& operatorNode,
-                                     QueryReconfigurationTypes reconfigurationType);
+    void populateReconfigurationPlan(QueryId queryId, OperatorId operatorId, QueryReconfigurationTypes reconfigurationType);
     std::string getRpcAddress(const ExecutionNodePtr& executionNode);
     bool triggerReconfigurationOfType(QueryId queryId, QueryReconfigurationTypes reconfigurationType);
     void mapOperatorToSubPlan(QueryId queryId);
     void mapNetworkSourcesToSinks();
+    std::set<QueryPlanPtr> plansAboveMergePoint(const std::vector<uint64_t>& sinkOperatorIds,
+                                                const std::set<QueryPlanPtr>& subPlansContainingMergePoints);
+    void removeDeletedOperators(QueryPlanPtr& queryPlan, const SharedQueryPlanChangeLogPtr& changeLog);
 };
 }// namespace NES
 #endif//NES_QUERYRECONFIGURATIONPHASE_HPP

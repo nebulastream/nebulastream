@@ -106,24 +106,6 @@ std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToP
     };
 }
 
-std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr> getDummyNetworkSrcSchema(SchemaPtr schema,
-                                                                                Network::NesPartition nesPartition) {
-    auto streamCatalog = std::make_shared<StreamCatalog>();
-    const char* logicalStreamName = "default";
-    streamCatalog->addLogicalStream(logicalStreamName, std::move(schema));
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto src = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName),
-                                                            UtilityFunctions::getNextOperatorId());
-    Network::NodeLocation location{1, "localhost", static_cast<uint32_t>(11001)};
-    SinkDescriptorPtr baseSinkDescPtr =
-        Network::NetworkSinkDescriptor::create(location, nesPartition, std::chrono::seconds(60), 2);
-    OperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(baseSinkDescPtr, UtilityFunctions::getNextOperatorId());
-    auto queryPlan = QueryPlan::create(src);
-    queryPlan->appendOperatorAsNewRoot(sink);
-    auto tQueryPlan = typeInferencePhase->execute(queryPlan);
-    return std::pair<SchemaPtr, Optimizer::TypeInferencePhasePtr>(sink->getOutputSchema(), typeInferencePhase);
-}
-
 std::function<bool(std::vector<std::vector<std::string>>)>
 distinctColumnValuesValidator(uint8_t colId, const std::unordered_set<std::string>& requiredValues) {
     return [colId, requiredValues](const std::vector<std::vector<std::string>>& rows) {
@@ -850,12 +832,12 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationTotalMergi
 
     //register physical stream - wrk1
     NES::AbstractPhysicalStreamConfigPtr confCar1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 10), 0, 5, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car1", "car", generatorLambda(1, 1), 0, 5, "frequency");
     wrk1->registerPhysicalStream(confCar1);
 
     //register physical stream - wrk2
     NES::AbstractPhysicalStreamConfigPtr confCar2 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "car2", "car", generatorLambda(2, 20), 0, 5, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "car2", "car", generatorLambda(2, 2), 0, 5, "frequency");
     wrk2->registerPhysicalStream(confCar2);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -865,16 +847,16 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationTotalMergi
     string query1 =
         R"(Query::from("car").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, strategy);
+
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath1));
+
     string query2 =
         R"(Query::from("car").sink(FileSinkDescriptor::create(")" + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, strategy);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
-
-    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath1));
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
-
     EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath2));
 
     NES_INFO("QueryReconfigurationTest: Remove query");

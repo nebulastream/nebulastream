@@ -59,131 +59,43 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
 
     mapNetworkSourcesToSinks();
 
-    std::set<SinkLogicalOperatorNodePtr> newlyAddedQuerySinks;
     std::set<QueryPlanPtr> subPlansContainingMergePoints;
 
-    // Identify newly added sinks
-
-    for (const auto& addition : changeLog->getAddition()) {
-        subPlansContainingMergePoints.insert(operatorToSubPlan[addition.first->getId()]);
-        for (auto newOperatorId : addition.second) {
-            auto newOperator = queryPlan->getOperatorWithId(newOperatorId);
-            for (const auto& rootOp : newOperator->getAllRootNodes()) {
-                if (rootOp->instanceOf<SinkLogicalOperatorNode>()) {
-                    newlyAddedQuerySinks.insert(rootOp->as<SinkLogicalOperatorNode>());
-                }
-            }
-        }
-    }
-
-    std::set<QueryPlanPtr> querySubPlansToRemove;
-    std::set<SinkLogicalOperatorNodePtr> sinksBeingRemoved;
-
     for (const auto& removal : changeLog->getRemoval()) {
-        for (auto operatorToRemove : removal.second) {
-            std::vector<SinkLogicalOperatorNodePtr> sinkParentsChain;
-            bool mergePointEncountered = false;
-            auto subPlanContainingMergeOperator = operatorToSubPlan[removal.first->getId()];
-            auto subPlanWithOperatorBeingRemoved = operatorToSubPlan[operatorToRemove];
-            // if operator being removed and child are in the same sub plan, then modify sub plan
-            if (subPlanContainingMergeOperator == subPlanWithOperatorBeingRemoved) {
-                auto operatorBeingRemoved = subPlanWithOperatorBeingRemoved->getOperatorWithId(operatorToRemove);
-                auto sinksOfOperatorBeingRemoved = operatorBeingRemoved->getNodesByType<SinkLogicalOperatorNode>();
-                operatorBeingRemoved->removeChildren();
-                operatorBeingRemoved->removeAllParent();
-                for (const auto& sinkOfOperatorBeingRemoved : sinksOfOperatorBeingRemoved) {
-                    subPlanWithOperatorBeingRemoved->removeAsRootOperator(sinkOfOperatorBeingRemoved);
-                    sinkParentsChain.insert(sinkParentsChain.end(),
-                                            sinksOfOperatorBeingRemoved.begin(),
-                                            sinksOfOperatorBeingRemoved.end());
-                    mergePointEncountered = true;
-                }
-            } else {
-                querySubPlansToRemove.insert(subPlanWithOperatorBeingRemoved);
-            }
-            // remove all subplans feeding from a plan recursively
-            while (!sinkParentsChain.empty()) {
-                auto sink = sinkParentsChain.back();
-                sinkParentsChain.pop_back();
-                if (sink->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
-                    auto sinkDesc = sink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>();
-                    auto netSrcOperatorId = sinkDesc->getNesPartition().getOperatorId();
-                    auto sourceSinks = operatorToSubPlan[netSrcOperatorId]->getSinkOperators();
-                    sinkParentsChain.insert(sinkParentsChain.end(), sourceSinks.begin(), sourceSinks.end());
-                } else {
-                    sinksBeingRemoved.insert(sink);
-                }
-            }
-            // unlinking point and removed operator are in different nodes, joined by network sources and sinks, have to remove those
-            if (!mergePointEncountered) {
-                std::vector<SourceLogicalOperatorNodePtr> sourcesChildrenChain;
-                auto planSources = subPlanWithOperatorBeingRemoved->getSourceOperators();
-                sourcesChildrenChain.insert(sourcesChildrenChain.end(), planSources.begin(), planSources.end());
-                while (!sourcesChildrenChain.empty()) {
-                    auto source = sourcesChildrenChain.back();
-                    sourcesChildrenChain.pop_back();
-                    for (const auto& netSink : networkSourcesToSinks[source]) {
-                        auto subPlan = operatorToSubPlan[netSink->getId()];
-                        // found sink used by operator to write data to operator being removed
-                        if (subPlanContainingMergeOperator == subPlan) {
-                            const auto& operatorBeingRemoved = netSink;
-                            auto sinksOfOperatorBeingRemoved = operatorBeingRemoved->getNodesByType<SinkLogicalOperatorNode>();
-                            operatorBeingRemoved->removeChildren();
-                            operatorBeingRemoved->removeAllParent();
-                            subPlan->removeAsRootOperator(netSink);
-                        } else {
-                            querySubPlansToRemove.insert(subPlan);
-                        }
-                    }
-                }
-            }
+        OperatorId childIdOfOperatorRemoved = removal.first->getId();
+        if (!queryPlan->hasOperatorWithId(childIdOfOperatorRemoved)) {
+            continue;
         }
-    }
-
-    std::set<QueryPlanPtr> newQuerySubPlans;
-
-    for (const auto& sink : newlyAddedQuerySinks) {
-        auto subPlanContainingSink = operatorToSubPlan[sink->getId()];
-        auto querySinkPlanSources = subPlanContainingSink->getSourceOperators();
-        std::vector<SourceLogicalOperatorNodePtr> sources{querySinkPlanSources.begin(), querySinkPlanSources.end()};
-        newQuerySubPlans.insert(subPlanContainingSink);
-        while (!sources.empty()) {
-            auto source = sources.back();
-            sources.pop_back();
-            if (networkSourcesToSinks.contains(source)) {
-                auto sinksWritingToSource = networkSourcesToSinks[source];
-                for (const auto& sinkWritingToSource : sinksWritingToSource) {
-                    auto sinkPlan = operatorToSubPlan[sinkWritingToSource->getId()];
-                    if (subPlansContainingMergePoints.contains(sinkPlan)) {
-                        continue;
-                    }
-                    newQuerySubPlans.insert(sinkPlan);
-                    auto sinkSources = sinkPlan->getSourceOperators();
-                    sources.insert(sources.end(), sinkSources.begin(), sinkSources.end());
-                }
-            }
-        }
+        subPlansContainingMergePoints.insert(operatorToSubPlan[childIdOfOperatorRemoved]);
     }
 
     for (const auto& addition : changeLog->getAddition()) {
-        std::vector<NodePtr> operatorChildChain{queryPlan->getOperatorWithId(addition.first->getId())};
-        while (!operatorChildChain.empty()) {
-            auto op = operatorChildChain.back()->as<OperatorNode>();
-            operatorChildChain.pop_back();
-            shadowSubPlans.insert(operatorToSubPlan[op->getId()]);
-            auto opChildren = op->getChildren();
-            operatorChildChain.insert(operatorChildChain.end(), opChildren.begin(), opChildren.end());
-        }
+        OperatorId childIdOfOperatorAdded = addition.first->getId();
+        subPlansContainingMergePoints.insert(operatorToSubPlan[childIdOfOperatorAdded]);
     }
 
-    for (const auto& removal : changeLog->getRemoval()) {
-        std::vector<NodePtr> operatorChildChain{queryPlan->getOperatorWithId(removal.first->getId())};
-        while (!operatorChildChain.empty()) {
-            auto op = operatorChildChain.back()->as<OperatorNode>();
-            operatorChildChain.pop_back();
-            shadowSubPlans.insert(operatorToSubPlan[op->getId()]);
-            auto opChildren = op->getChildren();
-            operatorChildChain.insert(operatorChildChain.end(), opChildren.begin(), opChildren.end());
+    std::set<QueryPlanPtr> querySubPlansToStop =
+        plansAboveMergePoint(changeLog->getRemovedSinks(), subPlansContainingMergePoints);
+
+    std::set<QueryPlanPtr> querySubPlansToStart = plansAboveMergePoint(changeLog->getAddedSinks(), subPlansContainingMergePoints);
+
+    // removal of chain from merge point to pointer removed pending (placement after deletion)
+
+    for (const auto& subPlanContainingMergePoint : subPlansContainingMergePoints) {
+        std::vector<QueryPlanPtr> subPlanChains{subPlanContainingMergePoint};
+        while (!subPlanChains.empty()) {
+            auto planToProcess = subPlanChains.back();
+            subPlanChains.pop_back();
+            shadowSubPlans.insert(planToProcess);
+            auto sources = planToProcess->getSourceOperators();
+            for (const auto& source : sources) {
+                const auto& found = networkSourcesToSinks.find(source);
+                if (found != networkSourcesToSinks.end()) {
+                    for (const auto& sinkSendingDataToSource : found->second) {
+                        subPlanChains.emplace_back(operatorToSubPlan[sinkSendingDataToSource->getId()]);
+                    }
+                }
+            }
         }
     }
 
@@ -224,28 +136,30 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
     }
 
     for (const auto& source : queryPlan->getSourceOperators()) {
-        populateReconfigurationPlan(queryId, source, DATA_SOURCE);
+        populateReconfigurationPlan(queryId, source->getId(), DATA_SOURCE);
     }
 
-    for (const auto& sink : newlyAddedQuerySinks) {
-        auto sinkSubPlan = operatorToSubPlan[sink->getId()];
+    for (const auto& newSinkOperatorId : changeLog->getAddedSinks()) {
+        auto sinkSubPlan = operatorToSubPlan[newSinkOperatorId];
         if (subPlansContainingMergePoints.contains(sinkSubPlan)) {
-            populateReconfigurationPlan(queryId, sink, DATA_SINK);
+            populateReconfigurationPlan(queryId, newSinkOperatorId, DATA_SINK);
         }
     }
 
     for (const auto& subPlan : reconfigurationShadowPlans) {
-        newQuerySubPlans.erase(subPlan);
-        querySubPlansToRemove.erase(subPlan);
+        querySubPlansToStart.erase(subPlan);
+        querySubPlansToStop.erase(subPlan);
     }
 
     for (const auto& shadowSubPlan : shadowSubPlans) {
         shadowSubPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());
     }
 
+    // Remove operator in query subplan
+    removeDeletedOperators(queryPlan, changeLog);
+
     NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
 
-    std::set<QueryPlanPtr> querySubPlansToStart{newQuerySubPlans};
     querySubPlansToStart.insert(shadowSubPlans.begin(), shadowSubPlans.end());
 
     deployQuery(queryId, querySubPlansToStart);
@@ -253,10 +167,10 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
     triggerReconfigurationOfType(queryId, DATA_SINK);
     startQuery(queryId, querySubPlansToStart);
     triggerReconfigurationOfType(queryId, DATA_SOURCE);
-    stopQuerySubPlan(queryId, querySubPlansToRemove);
-    unregisterQuerySubPlan(queryId, querySubPlansToRemove);
+    stopQuerySubPlan(queryId, querySubPlansToStop);
+    unregisterQuerySubPlan(queryId, querySubPlansToStop);
 
-    if (!querySubPlansToRemove.empty()) {
+    if (!querySubPlansToStop.empty()) {
         NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan After removing sub plans to stop: \n"
                   << globalExecutionPlan->getAsString());
     }
@@ -269,6 +183,80 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
     networkSourcesToSinks.clear();
 
     return true;
+}
+
+void QueryReconfigurationPhase::removeDeletedOperators(QueryPlanPtr& queryPlan, const SharedQueryPlanChangeLogPtr& changeLog) {
+    for (const auto& removal : changeLog->getRemoval()) {
+        OperatorId childIdOfOperatorRemoved = removal.first->getId();
+        if (!queryPlan->hasOperatorWithId(childIdOfOperatorRemoved)) {
+            continue;
+        }
+        auto subPlanContainingModifiedOperator = operatorToSubPlan[childIdOfOperatorRemoved];
+        for (auto removedOperator : removal.second) {
+            auto subPlanContainingRemovedOperator = operatorToSubPlan[removedOperator];
+            if (subPlanContainingModifiedOperator->getQuerySubPlanId() == subPlanContainingRemovedOperator->getQuerySubPlanId()) {
+                auto removedOperatorInSubPlan = subPlanContainingModifiedOperator->getOperatorWithId(removedOperator);
+                for (const auto& rootNode : removedOperatorInSubPlan->getAllRootNodes()) {
+                    subPlanContainingRemovedOperator->removeAsRootOperator(rootNode->as<LogicalOperatorNode>());
+                }
+                for (const auto& operatorToRemove : removedOperatorInSubPlan->getAndFlattenAllAncestors()) {
+                    operatorToRemove->removeAllParent();
+                    operatorToRemove->removeChildren();
+                }
+            }
+            std::vector<SourceLogicalOperatorNodePtr> sourcesChain{subPlanContainingRemovedOperator->getSourceOperators()};
+            while (!sourcesChain.empty()) {
+                auto sourceOperator = sourcesChain.back();
+                sourcesChain.pop_back();
+                auto found = networkSourcesToSinks.find(sourceOperator);
+                if (found != networkSourcesToSinks.end()) {
+                    for (const auto& sinkWritingToSource : found->second) {
+                        auto planWithSinkWriting = operatorToSubPlan[sinkWritingToSource->getId()];
+                        if (planWithSinkWriting->getQuerySubPlanId() == subPlanContainingModifiedOperator->getQuerySubPlanId()) {
+                            planWithSinkWriting->removeAsRootOperator(sinkWritingToSource);
+                            std::vector<NodePtr> children = sinkWritingToSource->getChildren();
+                            while (!children.empty()) {
+                                auto childOperator = children.back()->as<OperatorNode>();
+                                children.pop_back();
+                                if (childOperator->getId() != childIdOfOperatorRemoved) {
+                                    childOperator->removeAllParent();
+                                    auto grandChildren = childOperator->getChildren();
+                                    children.insert(children.end(), grandChildren.begin(), grandChildren.end());
+                                    childOperator->removeChildren();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+std::set<QueryPlanPtr>
+QueryReconfigurationPhase::plansAboveMergePoint(const std::vector<uint64_t>& sinkOperatorIds,
+                                                const std::set<QueryPlanPtr>& subPlansContainingMergePoints) {
+    std::set<QueryPlanPtr> plansAboveMergePoint;
+    for (auto sinkOperatorIdRemoved : sinkOperatorIds) {
+        std::vector<QueryPlanPtr> subPlanChains{operatorToSubPlan[sinkOperatorIdRemoved]};
+        while (!subPlanChains.empty()) {
+            auto subPlanToProcess = subPlanChains.back();
+            subPlanChains.pop_back();
+            if (!subPlansContainingMergePoints.contains(subPlanToProcess)) {
+                plansAboveMergePoint.insert(subPlanToProcess);
+                auto sources = subPlanToProcess->getSourceOperators();
+                for (const auto& source : sources) {
+                    const auto& found = networkSourcesToSinks.find(source);
+                    if (found != networkSourcesToSinks.end()) {
+                        for (const auto& sinkSendingDataToSource : found->second) {
+                            subPlanChains.emplace_back(operatorToSubPlan[sinkSendingDataToSource->getId()]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return plansAboveMergePoint;
 }
 
 void QueryReconfigurationPhase::mapNetworkSourcesToSinks() {
@@ -305,9 +293,9 @@ void QueryReconfigurationPhase::mapOperatorToSubPlan(QueryId queryId) {
 }
 
 void QueryReconfigurationPhase::populateReconfigurationPlan(QueryId queryId,
-                                                            const OperatorNodePtr& operatorNode,
+                                                            const OperatorId operatorId,
                                                             QueryReconfigurationTypes reconfigurationType) {
-    auto subPlan = operatorToSubPlan[operatorNode->getId()];
+    auto subPlan = operatorToSubPlan[operatorId];
     reconfigurationShadowPlans.insert(subPlan);
     shadowSubPlans.erase(subPlan);
     auto srcExecutionNode = subPlanToExecutionNode[subPlan];
@@ -329,15 +317,9 @@ bool QueryReconfigurationPhase::registerForReconfiguration(QueryId queryId) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
 
         std::string rpcAddress = getRpcAddress(subPlanToExecutionNode[shadowPlan]);
-        bool success = workerRPCClient->registerQueryForReconfigurationAsync(rpcAddress, shadowPlan, queueForExecutionNode);
-        if (success) {
-            NES_DEBUG("QueryReconfigurationPhase:registerForReconfiguration: " << shadowPlan->getQuerySubPlanId() << " to "
-                                                                               << rpcAddress << " successful");
-        } else {
-            NES_ERROR("QueryReconfigurationPhase:registerForReconfiguration: " << shadowPlan->getQuerySubPlanId() << " to "
-                                                                               << rpcAddress << "  failed");
-            return false;
-        }
+        workerRPCClient->registerQueryForReconfigurationAsync(rpcAddress, shadowPlan, queueForExecutionNode);
+        NES_DEBUG("QueryReconfigurationPhase:registerForReconfiguration: Registering querySubPlan"
+                  << shadowPlan->getQuerySubPlanId() << " to node: " << rpcAddress << " ");
         completionQueues[queueForExecutionNode] = 1;
     }
     bool result = workerRPCClient->checkAsyncResult(completionQueues, RegisterForReconfiguration);
@@ -357,16 +339,9 @@ bool QueryReconfigurationPhase::triggerReconfigurationOfType(QueryId queryId, Qu
         for (const auto& reconfigurationPlan : reconfigurationPlans) {
             if (reconfigurationPlan->getReconfigurationType() == reconfigurationType) {
                 plansReconfigured++;
-                bool success =
-                    workerRPCClient->triggerReconfigurationAsync(rpcAddress, reconfigurationPlan, queueForExecutionNode);
-                if (success) {
-                    NES_DEBUG("QueryReconfigurationPhase:triggerReconfiguration: " << reconfigurationPlan->getId() << " to "
-                                                                                   << rpcAddress << " successful");
-                } else {
-                    NES_ERROR("QueryReconfigurationPhase:triggerReconfiguration: " << reconfigurationPlan->getId() << " to "
-                                                                                   << rpcAddress << "  failed");
-                    return false;
-                }
+                workerRPCClient->triggerReconfigurationAsync(rpcAddress, reconfigurationPlan, queueForExecutionNode);
+                NES_DEBUG("QueryReconfigurationPhase:triggerReconfiguration: ReconfigurationId: "
+                          << reconfigurationPlan->getId() << " to node: " << rpcAddress << " successful");
             }
         }
         if (plansReconfigured > 0) {
@@ -376,9 +351,8 @@ bool QueryReconfigurationPhase::triggerReconfigurationOfType(QueryId queryId, Qu
 
     bool result = workerRPCClient->checkAsyncResult(reconfigurationCompletionQueues, TriggerReconfiguration);
 
-    NES_DEBUG(
-        "QueryReconfigurationPhase::triggerReconfigurationOfType: Finished triggering reconfiguration for for query with Id "
-        << queryId << " success=" << result);
+    NES_DEBUG("QueryReconfigurationPhase::triggerReconfigurationOfType: Finished triggering reconfiguration of type: "
+              << reconfigurationType << " for for query with Id " << queryId << " success=" << result);
     return result;
 }
 
@@ -391,20 +365,14 @@ bool QueryReconfigurationPhase::deployQuery(QueryId queryId, const std::set<Quer
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
 
         std::string rpcAddress = getRpcAddress(subPlanToExecutionNode[querySubPlan]);
-        bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
-        if (success) {
-            NES_DEBUG("QueryReconfigurationPhase:registerForReconfiguration: " << querySubPlan->getQuerySubPlanId() << " to "
-                                                                               << rpcAddress << " successful");
-        } else {
-            NES_ERROR("QueryReconfigurationPhase:registerForReconfiguration: " << querySubPlan->getQuerySubPlanId() << " to "
-                                                                               << rpcAddress << "  failed");
-            return false;
-        }
+        workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
+        NES_DEBUG("QueryReconfigurationPhase::deployQuery: Registering  subQueryPlan with Id "
+                  << querySubPlan->getQuerySubPlanId() << " in node: " << rpcAddress);
         completionQueues[queueForExecutionNode] = 1;
     }
     bool result = workerRPCClient->checkAsyncResult(completionQueues, Register);
 
-    NES_DEBUG("QueryReconfigurationPhase::registerForReconfiguration: Finished deploying execution plan for query with Id "
+    NES_DEBUG("QueryReconfigurationPhase::deployQuery: Finished deploying execution plan for query with Id "
               << queryId << " success=" << result);
     return result;
 }
