@@ -323,24 +323,24 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45)
-        .filter(Attribute("id") < 45)
-        .filter(Attribute("id") < 45)
-        .filter(Attribute("id1") < 45)
-        .sink(printSinkDescriptor);
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id1") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("car")
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45)
-        .filter(Attribute("id") < 45)
-        .filter(Attribute("id") < 45)
-        .filter(Attribute("value1") < 45)
-        .sink(printSinkDescriptor);
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("value1") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
