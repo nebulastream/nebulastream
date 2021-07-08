@@ -345,6 +345,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                std::shared_ptr<Execution::ExecutableQueryPlan>& newQep);
     bool reconfigureDataSink(const std::shared_ptr<Execution::ExecutableQueryPlan>& toDelete,
                              std::shared_ptr<Execution::ExecutableQueryPlan>& newQep);
+    bool querySubPlanStopHelper(QuerySubPlanId querySubPlanId, bool graceful);
+    bool unregisterQuerySubPlanHelper(QuerySubPlanId querySubPlanId);
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

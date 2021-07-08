@@ -503,7 +503,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
     std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
     bool success = true;
     for (auto querySubPlanId : querySubPlanIds) {
-        if (unregisterQuerySubPlan(querySubPlanId)) {
+        if (unregisterQuerySubPlanHelper(querySubPlanId)) {
             deployedQEPs.erase(querySubPlanId);
             NES_DEBUG("Runtime: unregister of query " << querySubPlanId << " succeeded");
         } else {
@@ -516,7 +516,11 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
 
 bool NodeEngine::unregisterQuerySubPlan(QuerySubPlanId querySubPlanId) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("NodeEngine::unregisterQuerySubPlan: querySubPlanId=" << querySubPlanId);
+    return unregisterQuerySubPlanHelper(querySubPlanId);
+}
+
+bool NodeEngine::unregisterQuerySubPlanHelper(QuerySubPlanId querySubPlanId) {
+    NES_DEBUG("NodeEngine::unregisterQuerySubPlanHelper: querySubPlanId=" << querySubPlanId);
     std::shared_ptr<Execution::ExecutableQueryPlan>& qep = deployedQEPs[querySubPlanId];
     if (queryManager->deregisterQuery(qep)) {
         std::vector<QuerySubPlanId>& subPlanIds = queryIdToQuerySubPlanIds[qep->getQueryId()];
@@ -547,7 +551,7 @@ bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
     }
     bool success = true;
     for (auto querySubPlanId : querySubPlanIds) {
-        if (!stopQuerySubPlan(querySubPlanId, graceful)) {
+        if (!querySubPlanStopHelper(querySubPlanId, graceful)) {
             NES_ERROR("NodeEngine::stopQuery: qep does not exists. stop failed " << queryId);
             success = false;
         }
@@ -557,6 +561,10 @@ bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
 
 bool NodeEngine::stopQuerySubPlan(QuerySubPlanId querySubPlanId, bool graceful) {
     std::unique_lock lock(engineMutex);
+    return querySubPlanStopHelper(querySubPlanId, graceful);
+}
+
+bool NodeEngine::querySubPlanStopHelper(QuerySubPlanId querySubPlanId, bool graceful) {
     NES_DEBUG("Runtime::stopQuerySubPlan: for Query SubPlanId: " << querySubPlanId);
 
     if (!deployedQEPs.contains(querySubPlanId)) {
