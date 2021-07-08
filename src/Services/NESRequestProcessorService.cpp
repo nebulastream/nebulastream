@@ -34,6 +34,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Services/NESRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
@@ -142,13 +143,15 @@ void NESRequestProcessorService::start() {
                             NES_DEBUG(
                                 "QueryProcessingService: Performing Query Operator placement for query with shared query id : "
                                 << sharedQueryId);
+                            if (!sharedQueryMetaData->getChangeLog()->getAddedSinks().empty()) {
 
-                            bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
-                            if (!placementSuccessful) {
-                                throw QueryPlacementException(sharedQueryId,
-                                                              "QueryProcessingService: Failed to perform query placement for "
-                                                              "query plan with shared query id: "
-                                                                  + std::to_string(sharedQueryId));
+                                bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+                                if (!placementSuccessful) {
+                                    throw QueryPlacementException(sharedQueryId,
+                                                                  "QueryProcessingService: Failed to perform query placement for "
+                                                                  "query plan with shared query id: "
+                                                                      + std::to_string(sharedQueryId));
+                                }
                             }
 
                             bool successful = queryReconfigurationPhase->execute(sharedQueryMetaData);
