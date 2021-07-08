@@ -27,7 +27,7 @@ class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class SharedQueryPlanChangeLog;
-using SharedQueryPlanChangeLogPtr = std::unique_ptr<SharedQueryPlanChangeLog>;
+using SharedQueryPlanChangeLogPtr = std::shared_ptr<SharedQueryPlanChangeLog>;
 
 /**
  * SharedQueryPlanChangeLog records the changes occurred on a shared query plan after its creation.

@@ -132,6 +132,9 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                                 }
                             }
                         }
+                        if (foundMatch) {
+                            break;
+                        }
                     }
 
                     //If a match is found then no need to look for a matching downstream operator chain

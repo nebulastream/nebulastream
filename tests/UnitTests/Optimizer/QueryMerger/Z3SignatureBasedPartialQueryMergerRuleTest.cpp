@@ -19,6 +19,7 @@
 // clang-format on
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -29,7 +30,7 @@
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -419,4 +420,93 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto operatorsInSharedPlanAfterStop = QueryPlanIterator(updatedSharedPlanAfterStop).snapshot();
 
     EXPECT_TRUE(operatorsInQueryPlan2.size() == operatorsInSharedPlanAfterStop.size());
+}
+
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesMoreThanTwoQueries) {
+
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query1 = Query::from("car").filter(Attribute("id") < 45).map(Attribute("queryId") = 1).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    Query query2 = Query::from("car").filter(Attribute("id") < 45).map(Attribute("queryId") = 2).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    Query query3 = Query::from("car").filter(Attribute("id") < 45).map(Attribute("queryId") = 3).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan3 = query3.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator3 = queryPlan3->getSinkOperators()[0];
+    QueryId queryId3 = PlanIdGenerator::getNextQueryId();
+    queryPlan3->setQueryId(queryId3);
+
+    queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
+    queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
+    queryPlan3 = topologySpecificReWrite->execute(queryPlan3);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+    typeInferencePhase->execute(queryPlan3);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase =
+        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
+    z3InferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan2);
+    z3InferencePhase->execute(queryPlan3);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    //execute merging shared query plan 1 and 2
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    auto updatedSharedQueryPlansDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    NES_INFO("Shared Plan After Merging with Query 2\n" << updatedSharedQueryPlansDeploy[0]->getQueryPlan()->toString());
+    updatedSharedQueryPlansDeploy[0]->markAsDeployed();
+
+    // execute merging shared query plan 1 and 3
+    globalQueryPlan->addQueryPlan(queryPlan3);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    updatedSharedQueryPlansDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlansDeploy.size(), 1u);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlansDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    NES_INFO("Shared Plan After Merging with Query 3\n" << updatedSharedQueryPlan1->toString());
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 3u);
+    EXPECT_EQ(updatedSharedQueryPlan1->getSourceOperators().size(), 2u);
+
+    auto changeLog = updatedSharedQueryPlansDeploy[0]->getChangeLog();
+    EXPECT_EQ(changeLog->getAddition().size(), 2u);
+
+    for (const auto& addition : changeLog->getAddition()) {
+        auto operatorNewBranchAddedTo = updatedSharedQueryPlan1->getOperatorWithId(addition.first->getId());
+        EXPECT_TRUE(operatorNewBranchAddedTo->instanceOf<FilterLogicalOperatorNode>());
+        // Three different map operators are added
+        EXPECT_TRUE(operatorNewBranchAddedTo->getParents().size() == 3u);
+        for (const auto& parent : operatorNewBranchAddedTo->getParents()) {
+            EXPECT_TRUE(parent->instanceOf<MapLogicalOperatorNode>());
+        }
+        // There are two physical sources
+        EXPECT_TRUE(operatorNewBranchAddedTo->getChildren().size() == 1u);
+        for (const auto& child : operatorNewBranchAddedTo->getChildren()) {
+            EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
+        }
+    }
 }
