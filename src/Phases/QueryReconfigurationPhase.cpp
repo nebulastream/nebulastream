@@ -76,6 +76,70 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
         }
     }
 
+    std::set<QueryPlanPtr> querySubPlansToRemove;
+    std::set<SinkLogicalOperatorNodePtr> sinksBeingRemoved;
+
+    for (const auto& removal : changeLog->getRemoval()) {
+        for (auto operatorToRemove : removal.second) {
+            std::vector<SinkLogicalOperatorNodePtr> sinkParentsChain;
+            bool mergePointEncountered = false;
+            auto subPlanContainingMergeOperator = operatorToSubPlan[removal.first->getId()];
+            auto subPlanWithOperatorBeingRemoved = operatorToSubPlan[operatorToRemove];
+            // if operator being removed and child are in the same sub plan, then modify sub plan
+            if (subPlanContainingMergeOperator == subPlanWithOperatorBeingRemoved) {
+                auto operatorBeingRemoved = subPlanWithOperatorBeingRemoved->getOperatorWithId(operatorToRemove);
+                auto sinksOfOperatorBeingRemoved = operatorBeingRemoved->getNodesByType<SinkLogicalOperatorNode>();
+                operatorBeingRemoved->removeChildren();
+                operatorBeingRemoved->removeAllParent();
+                for (const auto& sinkOfOperatorBeingRemoved : sinksOfOperatorBeingRemoved) {
+                    subPlanWithOperatorBeingRemoved->removeAsRootOperator(sinkOfOperatorBeingRemoved);
+                    sinkParentsChain.insert(sinkParentsChain.end(),
+                                            sinksOfOperatorBeingRemoved.begin(),
+                                            sinksOfOperatorBeingRemoved.end());
+                    mergePointEncountered = true;
+                }
+            } else {
+                querySubPlansToRemove.insert(subPlanWithOperatorBeingRemoved);
+            }
+            // remove all subplans feeding from a plan recursively
+            while (!sinkParentsChain.empty()) {
+                auto sink = sinkParentsChain.back();
+                sinkParentsChain.pop_back();
+                if (sink->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+                    auto sinkDesc = sink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>();
+                    auto netSrcOperatorId = sinkDesc->getNesPartition().getOperatorId();
+                    auto sourceSinks = operatorToSubPlan[netSrcOperatorId]->getSinkOperators();
+                    sinkParentsChain.insert(sinkParentsChain.end(), sourceSinks.begin(), sourceSinks.end());
+                } else {
+                    sinksBeingRemoved.insert(sink);
+                }
+            }
+            // unlinking point and removed operator are in different nodes, joined by network sources and sinks, have to remove those
+            if (!mergePointEncountered) {
+                std::vector<SourceLogicalOperatorNodePtr> sourcesChildrenChain;
+                auto planSources = subPlanWithOperatorBeingRemoved->getSourceOperators();
+                sourcesChildrenChain.insert(sourcesChildrenChain.end(), planSources.begin(), planSources.end());
+                while (!sourcesChildrenChain.empty()) {
+                    auto source = sourcesChildrenChain.back();
+                    sourcesChildrenChain.pop_back();
+                    for (const auto& netSink : networkSourcesToSinks[source]) {
+                        auto subPlan = operatorToSubPlan[netSink->getId()];
+                        // found sink used by operator to write data to operator being removed
+                        if (subPlanContainingMergeOperator == subPlan) {
+                            const auto& operatorBeingRemoved = netSink;
+                            auto sinksOfOperatorBeingRemoved = operatorBeingRemoved->getNodesByType<SinkLogicalOperatorNode>();
+                            operatorBeingRemoved->removeChildren();
+                            operatorBeingRemoved->removeAllParent();
+                            subPlan->removeAsRootOperator(netSink);
+                        } else {
+                            querySubPlansToRemove.insert(subPlan);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     std::set<QueryPlanPtr> newQuerySubPlans;
 
     for (const auto& sink : newlyAddedQuerySinks) {
