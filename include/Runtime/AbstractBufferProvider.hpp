@@ -18,6 +18,12 @@
 
 #include <cstddef>
 
+/**
+ * This enum reflects the different types of buffer managers in the system
+ * global: overall buffer manager
+ * local: buffer manager that we give to the processing
+ * fixed: buffer manager that we use for sources
+ */
 enum BufferManagerType{
     GLOBAL,
     LOCAL,

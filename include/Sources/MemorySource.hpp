@@ -33,11 +33,7 @@ class MemorySegment;
  */
 class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
-    enum SourceMode{
-        emptyBuffer,
-        wrapBuffer,
-        copyBuffer
-    };
+    enum SourceMode { emptyBuffer, wrapBuffer, copyBuffer };
 
     /**
      * @brief The constructor of a MemorySource
@@ -85,7 +81,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      * @brief Interface method for unpooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override {};
+    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
 
     static SourceMode getSourceModeFromString(const std::string& mode);
 

@@ -154,9 +154,9 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     size_t getAvailableBuffers() const override;
 
     /**
-    * @return Number of available source in the pool
+    * @return Number of available buffers in the fixed size pool
     */
-    size_t getAvailableSourceBuffers() const;
+    size_t getAvailableBuffersInFixedSizePools() const;
 
     /**
      * @brief Create a local buffer manager that is assigned to one pipeline or thread
