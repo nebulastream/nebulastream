@@ -66,31 +66,27 @@ class E2ECoordinatorSingleWorkerTest : public testing::Test {
 
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
 };
+
     TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutput) {
     NES_INFO(" start coordinator");
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord =
-            "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
-    subprocess::popen coordinatorProc(cmdCoord.c_str(), {});
+    string coordinatorRPCPortCombined = "--coordinatorPort=" + coordinatorRPCPort;
+    string restPortCombined = "--restPort=" + std::to_string(restPort);
+
+    subprocess::popen coordinatorProc("./nesCoordinator", {coordinatorRPCPortCombined.c_str(), restPortCombined.c_str()});
     NES_INFO("E2E CoordinatorSingleWorkerTest: Process started with pid:" << coordinatorProc.pid); //PID is private -> do we need that?
-    std::cout << coordinatorProc.
 
-    stdout()
-
-    .
-
-    rdbuf();
-
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0)
-    );
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    NES_INFO("started coordinator with pid = " << coordinatorProc.pid);
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
-    string path2 =
-            "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" +
-            worker1DataPort;
-    subprocess::popen workerProc(path2.c_str(), {});
+
+    string workerRPCPortCombined = "--rpcPort=" + worker1RPCPort;
+    string workerDataPortCombined = "--dataPort=" + worker1DataPort;
+
+    subprocess::popen workerProc( "./nesWorker", {coordinatorRPCPortCombined.c_str(), workerRPCPortCombined.c_str(), workerDataPortCombined.c_str()});
     uint64_t coordinatorPid = coordinatorProc.pid;
     uint64_t workerPid = workerProc.pid;
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1)
@@ -102,11 +98,7 @@ class E2ECoordinatorSingleWorkerTest : public testing::Test {
     ss << R"(,"strategyName" : "BottomUp"})";
     ss <<
     endl;
-    NES_INFO("string submit=" << ss.
-
-    str()
-
-    );
+    NES_INFO("string submit=" << ss.str());
 
     web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
     NES_INFO("try to acc return");
@@ -121,14 +113,13 @@ class E2ECoordinatorSingleWorkerTest : public testing::Test {
     );
 
     NES_INFO("Killing worker process->PID: " << workerPid);
-    workerProc.
-
-    close();
+    workerProc.close();
 
     NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
-    coordinatorProc.
 
-    close();
+    std::cout << coordinatorProc.stdout().rdbuf(); // to read out subprocess log
+    coordinatorProc.close();
+
 
 }
 /*
