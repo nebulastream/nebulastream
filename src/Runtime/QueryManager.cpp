@@ -664,7 +664,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
     NES_ASSERT2_FMT(isSourcePipeline, "invalid source");
     NES_ASSERT2_FMT(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
-                    "Operator id to query map for operator is empty");
+                    "Operator id to query map for operator is empty for operator: " << sourceId);
     if (graceful) {
         auto qep = sourceIdToExecutableQueryPlanMap[sourceId];
         // todo adopt this code for multiple source pipelines
@@ -826,7 +826,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
         } else {
             NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
         }
-    } else if (auto *dataSink = std::get_if<DataSinkPtr>(&executable)) {
+    } else if (auto* dataSink = std::get_if<DataSinkPtr>(&executable)) {
         NES_DEBUG("QueryManager: added Task for next a data sink " << (*dataSink)->toString() << " inputBuffer "
                                                                    << buffer.getOriginId()
                                                                    << " sequence:" << buffer.getSequenceNumber());

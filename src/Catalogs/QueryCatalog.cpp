@@ -108,7 +108,7 @@ QueryCatalogEntryPtr QueryCatalog::stopQuery(QueryId queryId) {
 
 void QueryCatalog::markQueryAs(QueryId queryId, QueryStatus newStatus) {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << newStatus);
+    NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << queryStatusToStringMap[newStatus]);
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
     QueryStatus oldStatus = queryCatalogEntry->getQueryStatus();
     if (oldStatus == QueryStatus::MarkedForStop && newStatus == QueryStatus::Running) {
