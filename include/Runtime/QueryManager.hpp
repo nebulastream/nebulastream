@@ -182,7 +182,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param qep of the particular query
      * @return
      */
-    QueryStatistics getQueryStatistics(QuerySubPlanId qepId);
+    QueryStatisticsPtr getQueryStatistics(QuerySubPlanId qepId);
 
     uint64_t getNodeId() const;
 

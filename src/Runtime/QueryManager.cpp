@@ -870,12 +870,12 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         auto diff = now - creation;
         statistics->incLatencySum(diff);
 
-        long int qSize = taskQueue.size();
+        auto qSize = taskQueue.size();
         statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
 
         statistics->incAvailableGlobalBufferSum(bufferManager->getAvailableBuffers());
 
-        statistics->incAvailableFixedBufferSum(bufferManager->getAvailableSourceBuffers());
+        statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);
@@ -923,12 +923,10 @@ std::string QueryManager::getQueryManagerStatistics() {
     return ss.str();
 }
 
-QueryStatistics QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
+QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
     std::unique_lock lock(statisticsMutex);
     NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qepId);
-    auto stat = queryToStatisticsMap.find(qepId);
-    QueryStatistics s(*stat);
-    return s;
+    return queryToStatisticsMap.find(qepId);
 }
 
 void QueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
