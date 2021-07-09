@@ -572,7 +572,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 void QueryManager::propagateViaSuccessorPipelines(
     const ReconfigurationType type,
     const std::function<std::any(Execution::ExecutableQueryPlanPtr)>& userdataSupplier,
-    const Execution::ExecutableQueryPlanPtr executableQueryPlan,
+    const Execution::ExecutableQueryPlanPtr& executableQueryPlan,
     std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors) {
     for (auto successor : pipelineSuccessors) {
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
@@ -640,7 +640,7 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
             break;// reached a data task
         }
     }
-    for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
+    for (auto i{0UL}; i < threadPool->getNumberOfThreads(); ++i) {
         taskQueue.emplace_front(pipeline, buffer);
     }
     while (!temp.empty()) {
@@ -671,7 +671,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
         auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
         propagateViaSuccessorPipelines(
             SoftEndOfStream,
-            [](Execution::ExecutableQueryPlanPtr executableQueryPlan) {
+            [](const Execution::ExecutableQueryPlanPtr& executableQueryPlan) {
                 return std::make_any<std::weak_ptr<Execution::ExecutableQueryPlan>>(executableQueryPlan);
             },
             qep,
@@ -826,7 +826,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
         } else {
             NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
         }
-    } else if (auto dataSink = std::get_if<DataSinkPtr>(&executable)) {
+    } else if (auto *dataSink = std::get_if<DataSinkPtr>(&executable)) {
         NES_DEBUG("QueryManager: added Task for next a data sink " << (*dataSink)->toString() << " inputBuffer "
                                                                    << buffer.getOriginId()
                                                                    << " sequence:" << buffer.getSequenceNumber());

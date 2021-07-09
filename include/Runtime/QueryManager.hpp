@@ -300,7 +300,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     void propagateViaSuccessorPipelines(const ReconfigurationType type,
                                         const std::function<std::any(Execution::ExecutableQueryPlanPtr)>& userdataSupplier,
-                                        const Execution::ExecutableQueryPlanPtr executableQueryPlan,
+                                        const Execution::ExecutableQueryPlanPtr& executableQueryPlan,
                                         std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors);
 };
 
