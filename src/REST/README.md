@@ -239,6 +239,20 @@ To add a logical stream.
 **Response**:
 {"Success": "true"}
 
+To add a logical stream as a protobuf Object:
+
+**API**: /streamCatalog/addLogicalStream-ex \
+**Verb**: POST\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+A Protobuf encoded stream name and schema.
+
+**Response**:
+{"Success": "true"}
+
 ### Update Logical Stream
 To Update a logical stream.
 
