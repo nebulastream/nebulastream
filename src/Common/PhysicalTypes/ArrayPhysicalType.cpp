@@ -36,7 +36,7 @@ std::string ArrayPhysicalType::convertRawToString(void const* data) const noexce
         const auto* charData = static_cast<char const*>(data);
         // This char is fixed size, so we have to convert it to a fixed size string.
         // Otherwise we would copy all data till the termination character.
-        return std::string(charData,size());
+        return std::string(charData, size());
     }
 
     const auto* const pointer = static_cast<char const*>(data);
@@ -65,7 +65,7 @@ std::string ArrayPhysicalType::convertRawToStringWithoutFill(void const* data) c
         const auto* charData = static_cast<char const*>(data);
         // Only copy the actual content of the char. If the size is larger than the schema definition
         // only copy until the defined size of the schema
-        if (std::string(charData).length() < size()){
+        if (std::string(charData).length() < size()) {
             return std::string(charData);
         } else {
             return std::string(charData, size());
