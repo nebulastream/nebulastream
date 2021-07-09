@@ -308,6 +308,15 @@ endif ()
 set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
 message(STATUS "Using z3: " ${Z3_LIBRARIES})
 
+# Torch
+message(STATUS "Torch")
+find_package(Torch REQUIRED)
+if (NOT ${Torch_FOUND})
+    message(FATAL_ERROR "Unable to find Torch")
+endif()
+set(LIBRARIES ${LIBRARIES} ${TORCH_LIBRARIES})
+message(STATUS "Using Torch: " ${TORCH_LIBRARIES})
+
 # Log4cc
 find_package(log4cxx CONFIG REQUIRED)
 if (NOT ${log4cxx})
@@ -451,7 +460,7 @@ add_subdirectory(src)
 # Add Library
 get_source_nes(nes_SOURCE_FILES)
 get_header_nes(nes_HEADER_FILES)
-add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
+add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS} src/Optimizer/QueryPlacement/GradientStrategy.cpp include/Optimizer/QueryPlacement/GradientStrategy.hpp)
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
