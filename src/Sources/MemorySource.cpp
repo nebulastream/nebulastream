@@ -99,12 +99,12 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
             buffer = globalBufferManager->getBufferBlocking();
             break;
         }
-        case wrapBuffer: {
+        case copyBuffer: {
             buffer = globalBufferManager->getBufferBlocking();
             memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
             break;
         }
-        case copyBuffer: {
+        case wrapBuffer : {
             buffer = Runtime::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, bufferSize, this);
             break;
         }
