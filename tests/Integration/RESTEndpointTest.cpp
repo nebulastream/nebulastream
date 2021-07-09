@@ -21,12 +21,14 @@
 #include <Components/NesWorker.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpprest/http_client.h>
 #include <iostream>
+
 
 namespace NES {
 
@@ -625,4 +627,83 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
 }
+
+
+// tests für schema addlogicalstream
+
+
+TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0U);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    const std::string defaultLogicalStreamName = "default_logical";
+    StreamCatalogPtr streamCatalog = crd->getStreamCatalog();
+
+    //make httpclient with new endpoint -ex:
+    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/streamCatalog/addLogicalStream-ex");
+
+    //create message as Protobuf encoded object
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    SerializableSchemaPtr serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
+    SerializableNamedSchema request;
+    request.set_streamname(defaultLogicalStreamName);
+    request.set_allocated_schema(serializableSchema.get());
+    std::string msg = request.SerializeAsString();
+
+    web::json::value postJsonReturn;
+    int statusCode = 0;
+    httpClient.request(web::http::methods::POST, "", msg)
+        .then([&statusCode](const web::http::http_response& response) {
+          statusCode = response.status_code();
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
+        .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("post addLogicalStream-ex: set return");
+              postJsonReturn = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_ERROR("post addLogicalStream-ex: error while setting return" << e.what());
+          }
+        })
+        .wait();
+
+    EXPECT_EQ(statusCode, 200);
+    EXPECT_TRUE(postJsonReturn.has_field("Success"));
+    EXPECT_EQ(streamCatalog->getAllLogicalStreamAsString().size(), 3U);
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+
+
+
+
+
+
 }// namespace NES
