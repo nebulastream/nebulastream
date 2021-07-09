@@ -1,6 +1,3 @@
-//
-// Created by Jule on 26.05.2021.
-//
 
 #ifndef NES_ILPSTRATEGY_HPP
 #define NES_ILPSTRATEGY_HPP
@@ -30,6 +27,9 @@ class ILPStrategy : public BasePlacementStrategy {
                                                     TopologyPtr topology,
                                                     TypeInferencePhasePtr typeInferencePhase,
                                                     StreamCatalogPtr streamCatalog);
+
+    void setNetWeight(double value);
+    void setOUWeight(double value);
 
   private:
     double weightOverutilization = 1.0;
@@ -106,8 +106,6 @@ class ILPStrategy : public BasePlacementStrategy {
 
     double getOUWeight();
     double getNetWeight();
-    void setOUWeight(double value);
-    void setNetWeight(double value);
 };
 }// namespace NES::Optimizer
 

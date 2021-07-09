@@ -1,6 +1,3 @@
-//
-// Created by Jule on 26.05.2021.
-//
 
 #include "../../../include/Optimizer/QueryPlacement/ILPStrategy.hpp"
 #include "z3++.h"
