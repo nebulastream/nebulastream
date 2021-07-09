@@ -221,8 +221,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
 
     /* for (uint64_t recordIndex = 0; recordIndex < tuple_buffer_1->num_tuples; ++id) */
     // input_buffer.getNumberOfTuples()
-//    auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
-    auto numberOfRecords = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(10L)));
+    auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
     code->forLoopStmt = std::make_shared<FOR>(code->varDeclarationRecordIndex,
                                               (VarRef(code->varDeclarationRecordIndex) < (numberOfRecords)).copy(),
                                               (++VarRef(code->varDeclarationRecordIndex)).copy());

@@ -221,16 +221,12 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
     std::optional<TupleBuffer> receiveData() override {
         // 10 tuples of size one
         TupleBuffer buf = bufferManager->getBufferBlocking();
-        uint64_t tupleCnt = buf.getBufferSize() / sizeof(InputTuple);
-
-        auto layoutRow = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
-
-
-
 
         if (schema->layoutType == Schema::COL_LAYOUT) {
             auto layoutCol = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(schema, true);
+            uint64_t tupleCnt = buf.getBufferSize() / layoutCol->getRecordSize();
             auto bindedColLayout = layoutCol->bind(buf);
+
             for (uint32_t i = 0; i < tupleCnt; i++) {
                 std::tuple<uint32_t, int16_t, float, double, char, std::array<char, 12>> tuple;
                 std::get<0>(tuple) = i; // id
@@ -245,9 +241,13 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 
                 bindedColLayout->pushRecord<true>(tuple);
             }
+            buf.setNumberOfTuples(tupleCnt);
+
         } else if (schema->layoutType == Schema::ROW_LAYOUT) {
             auto layoutRow = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+            uint64_t tupleCnt = buf.getBufferSize() / layoutRow->getRecordSize();
             auto bindedRowLayout = layoutRow->bind(buf);
+
             for (uint32_t i = 0; i < tupleCnt; i++) {
                 std::tuple<uint32_t, int16_t, float, double, char, std::array<char, 12>> tuple;
                 std::get<0>(tuple) = i; // id
@@ -262,12 +262,11 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 
                 bindedRowLayout->pushRecord<true>(tuple);
             }
+            buf.setNumberOfTuples(tupleCnt);
         } else {
             NES_ERROR("PredicateTestingDataGeneratorSource: schema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!");
         }
 
-        //buf->setBufferSizeInBytes(sizeof(InputTuple));
-        buf.setNumberOfTuples(tupleCnt);
         return buf;
     }
 };
@@ -1051,7 +1050,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     auto fourthFieldsOutput =
         Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<double, true>::create(4, bindedOutputColumnLayout);
 
-    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
+    for (uint64_t recordIndex = 0; recordIndex < inputBuffer.getNumberOfTuples(); recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
         auto doubleValue = thirdFieldsInput[recordIndex];
         auto reference = (floatValue * doubleValue) + 2;
