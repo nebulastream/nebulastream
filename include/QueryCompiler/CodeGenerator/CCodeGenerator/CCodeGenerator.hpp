@@ -41,8 +41,7 @@ class CCodeGenerator : public CodeGenerator {
      * @param outputMemoryLayout The memory layout which is used for the output
      * @return flag if the generation was successful.
      */
-    bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context,
-                             Runtime::DynamicMemoryLayout::DynamicMemoryLayout inputMemoryLayout) override;
+    bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) override;
 
     /**
      * @brief Code generation for a setup of a scan, which depends on a particular input schema.
@@ -238,7 +237,8 @@ class CCodeGenerator : public CodeGenerator {
                                                    const VariableDeclaration& workerContextVariable);
     void generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
                                        const VariableDeclaration& varDeclResultTuple,
-                                       const StructDeclaration& structDeclarationResultTuple);
+                                       const StructDeclaration& structDeclarationResultTuple,
+                                       SchemaPtr schema);
 
     static StructDeclaration getStructDeclarationFromSchema(const std::string& structName, const SchemaPtr& schema);
 
@@ -274,6 +274,13 @@ class CCodeGenerator : public CodeGenerator {
     VariableDeclaration getJoinOperatorHandler(const PipelineContextPtr& context,
                                                const VariableDeclaration& tupleBufferVariable,
                                                uint64_t joinOperatorIndex);
+    bool generateCodeInitStructFieldsColLayout(const SchemaPtr& schema,
+                                               CompilerTypesFactoryPtr& tf,
+                                               const VariableDeclaration& varDeclarationInputBuffer,
+                                               const StructDeclaration structDeclaration,
+                                               const VariableDeclaration varTuples,
+                                               std::vector<StatementPtr>& statements,
+                                               const std::string& capacityVarName) ;
 };
 }// namespace QueryCompilation
 }// namespace NES
