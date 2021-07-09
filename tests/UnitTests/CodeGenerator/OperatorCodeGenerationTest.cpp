@@ -223,18 +223,47 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
         TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize() / sizeof(InputTuple);
 
-        auto* tuples = buf.getBuffer<InputTuple>();
+        auto layoutRow = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
 
-        for (uint32_t i = 0; i < tupleCnt; i++) {
-            tuples[i].id = i;
-            tuples[i].valueSmall = -123 + (i * 2);
-            tuples[i].valueFloat = i * M_PI;
-            tuples[i].valueDouble = i * M_PI * 2;
-            tuples[i].singleChar = ((i + 1) % (127 - 'A')) + 'A';
-            for (std::size_t j = 0; j < 11; ++j) {
-                tuples[i].text[j] = ((i + 1) % 64) + 64;
+
+
+
+        if (schema->layoutType == Schema::COL_LAYOUT) {
+            auto layoutCol = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(schema, true);
+            auto bindedColLayout = layoutCol->bind(buf);
+            for (uint32_t i = 0; i < tupleCnt; i++) {
+                std::tuple<uint32_t, int16_t, float, double, char, std::array<char, 12>> tuple;
+                std::get<0>(tuple) = i; // id
+                std::get<1>(tuple) = -123 + (i * 2); // valueSmall
+                std::get<2>(tuple) = i * M_PI; // valueFloat
+                std::get<3>(tuple) = i * M_PI * 2; // valueDouble
+                std::get<4>(tuple) = ((i + 1) % (127 - 'A')) + 'A'; // singleChar
+                for (std::size_t j = 0; j < 11; ++j) {
+                    std::get<5>(tuple)[j] = ((i + 1) % 64) + 64; // text
+                }
+                std::get<5>(tuple)[11] = '\0'; //text
+
+                bindedColLayout->pushRecord<true>(tuple);
             }
-            tuples[i].text[11] = '\0';
+        } else if (schema->layoutType == Schema::ROW_LAYOUT) {
+            auto layoutRow = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+            auto bindedRowLayout = layoutRow->bind(buf);
+            for (uint32_t i = 0; i < tupleCnt; i++) {
+                std::tuple<uint32_t, int16_t, float, double, char, std::array<char, 12>> tuple;
+                std::get<0>(tuple) = i; // id
+                std::get<1>(tuple) = -123 + (i * 2); // valueSmall
+                std::get<2>(tuple) = i * M_PI; // valueFloat
+                std::get<3>(tuple) = i * M_PI * 2; // valueDouble
+                std::get<4>(tuple) = ((i + 1) % (127 - 'A')) + 'A'; // singleChar
+                for (std::size_t j = 0; j < 11; ++j) {
+                    std::get<5>(tuple)[j] = ((i + 1) % 64) + 64; // text
+                }
+                std::get<5>(tuple)[11] = '\0'; //text
+
+                bindedRowLayout->pushRecord<true>(tuple);
+            }
+        } else {
+            NES_ERROR("PredicateTestingDataGeneratorSource: schema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!");
         }
 
         //buf->setBufferSizeInBytes(sizeof(InputTuple));
@@ -953,7 +982,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
 
 
 /**
- * @brief This test generates a map predicate, which manipulates the input buffer content. This one with a column layout
+ * @brief This test generates a map predicate, which manipulates the input buffer content.
+ * This one with a column layout for both input and output schema
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
@@ -1018,6 +1048,164 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
         Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<float, true>::create(2, bindedInputColumnLayout);
     auto thirdFieldsInput =
         Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<double, true>::create(3, bindedInputColumnLayout);
+    auto fourthFieldsOutput =
+        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<double, true>::create(4, bindedOutputColumnLayout);
+
+    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
+        auto floatValue = secondFieldsInput[recordIndex];
+        auto doubleValue = thirdFieldsInput[recordIndex];
+        auto reference = (floatValue * doubleValue) + 2;
+        auto const mv = fourthFieldsOutput[recordIndex];
+        EXPECT_EQ(reference, mv);
+    }
+}
+
+/**
+ * @brief This test generates a map predicate, which manipulates the input buffer content.
+ * This one with a column layout for input and row for output schema
+ */
+TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
+
+    /* prepare objects for test */
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                   Schema::COL_LAYOUT);
+    auto codeGenerator = QueryCompilation::CCodeGenerator::create();
+    auto context = QueryCompilation::PipelineContext::create();
+    context->pipelineName = "1";
+    auto inputSchema = source->getSchema();
+    auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
+
+    /* generate code for writing result tuples to output buffer */
+    auto outputSchema = Schema::create(Schema::ROW_LAYOUT)
+        ->addField("id", DataTypeFactory::createInt32())
+        ->addField("valueSmall", DataTypeFactory::createInt16())
+        ->addField("valueFloat", DataTypeFactory::createFloat())
+        ->addField("valueDouble", DataTypeFactory::createDouble())
+        ->addField(mappedValue)
+        ->addField("valueChar", DataTypeFactory::createChar())
+        ->addField("text", DataTypeFactory::createFixedChar(12));
+
+    codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
+
+    //predicate definition
+    codeGenerator->generateCodeForMap(mappedValue,
+                                      createPredicate((inputSchema->get(2) * QueryCompilation::PredicateItem(inputSchema->get(3)))
+                                                      + QueryCompilation::PredicateItem(2)),
+                                      context);
+
+    /* generate code for writing result tuples to output buffer */
+    codeGenerator->generateCodeForEmit(outputSchema, context);
+
+    /* compile code to pipeline stage */
+    auto stage = codeGenerator->compile(context);
+
+    /* prepare input tuple buffer */
+    source->open();
+    auto inputBuffer = source->receiveData().value();
+
+    /* execute Stage */
+    Runtime::WorkerContext wctx{0};
+
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                       nodeEngine->getBufferManager(),
+                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
+
+    stage->setup(*queryContext);
+    stage->start(*queryContext);
+    stage->execute(inputBuffer, *queryContext, wctx);
+
+    auto resultBuffer = queryContext->buffers[0];
+    auto inputLayout = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(inputSchema, true);
+    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+
+    auto bindedInputColumnLayout = inputLayout->bind(inputBuffer);
+    auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
+
+    auto secondFieldsInput =
+        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<float, true>::create(2, bindedInputColumnLayout);
+    auto thirdFieldsInput =
+        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<double, true>::create(3, bindedInputColumnLayout);
+    auto fourthFieldsOutput =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputRowLayout);
+
+    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
+        auto floatValue = secondFieldsInput[recordIndex];
+        auto doubleValue = thirdFieldsInput[recordIndex];
+        auto reference = (floatValue * doubleValue) + 2;
+        auto const mv = fourthFieldsOutput[recordIndex];
+        EXPECT_EQ(reference, mv);
+    }
+}
+
+/**
+ * @brief This test generates a map predicate, which manipulates the input buffer content.
+ * This one with a row layout for input and column for output schema
+ */
+TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
+
+    /* prepare objects for test */
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                   Schema::ROW_LAYOUT);
+    auto codeGenerator = QueryCompilation::CCodeGenerator::create();
+    auto context = QueryCompilation::PipelineContext::create();
+    context->pipelineName = "1";
+    auto inputSchema = source->getSchema();
+    auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
+
+    /* generate code for writing result tuples to output buffer */
+    auto outputSchema = Schema::create(Schema::COL_LAYOUT)
+        ->addField("id", DataTypeFactory::createInt32())
+        ->addField("valueSmall", DataTypeFactory::createInt16())
+        ->addField("valueFloat", DataTypeFactory::createFloat())
+        ->addField("valueDouble", DataTypeFactory::createDouble())
+        ->addField(mappedValue)
+        ->addField("valueChar", DataTypeFactory::createChar())
+        ->addField("text", DataTypeFactory::createFixedChar(12));
+
+    codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
+
+    //predicate definition
+    codeGenerator->generateCodeForMap(mappedValue,
+                                      createPredicate((inputSchema->get(2) * QueryCompilation::PredicateItem(inputSchema->get(3)))
+                                                      + QueryCompilation::PredicateItem(2)),
+                                      context);
+
+    /* generate code for writing result tuples to output buffer */
+    codeGenerator->generateCodeForEmit(outputSchema, context);
+
+    /* compile code to pipeline stage */
+    auto stage = codeGenerator->compile(context);
+
+    /* prepare input tuple buffer */
+    source->open();
+    auto inputBuffer = source->receiveData().value();
+
+    /* execute Stage */
+    Runtime::WorkerContext wctx{0};
+
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                       nodeEngine->getBufferManager(),
+                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
+
+    stage->setup(*queryContext);
+    stage->start(*queryContext);
+    stage->execute(inputBuffer, *queryContext, wctx);
+
+    auto resultBuffer = queryContext->buffers[0];
+    auto inputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(inputSchema, true);
+    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(outputSchema, true);
+
+    auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
+    auto bindedOutputColumnLayout = outputLayout->bind(resultBuffer);
+
+    auto secondFieldsInput =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputRowLayout);
+    auto thirdFieldsInput =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputRowLayout);
     auto fourthFieldsOutput =
         Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<double, true>::create(4, bindedOutputColumnLayout);
 
