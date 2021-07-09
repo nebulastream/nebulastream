@@ -128,8 +128,7 @@ bool CCodeGenerator::generateCodeForScanSetup(PipelineContextPtr context) {
     return true;
 }
 
-bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context,
-                                         Runtime::DynamicMemoryLayout::DynamicMemoryLayoutPtr inputMemoryLayout) {
+bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) {
     NES_DEBUG("CCodeGenerator: Generating code for scan with inputSchema " << inputSchema->toString());
     context->inputSchema = outputSchema->copy();
     auto code = context->code;
@@ -211,28 +210,19 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             .copy());
 
     // Setting the start of all fields for col layout
-
-    // TODO this has to be implemented as multiple statements
     if (inputSchema->layoutType == Schema::COL_LAYOUT) {
-        auto* layout = dynamic_cast<Runtime::DynamicMemoryLayout::DynamicColumnLayout*>(inputMemoryLayout.get());
-
-        code->variableInitStmts.push_back(VarDeclStatement());
-
-        uint64_t offsetCounter = 0;
-        uint64_t capacity = inputTupleBuffer.getNumberOfTuples() / inputMemoryLayout->getRecordSize();
-        for (const auto& fieldSize : layout->getFieldSizes()) {
-            offsetCounter += fieldSize * capacity;
-
-        }
+        auto compStatement = code->currentCodeInsertionPoint;
+        generateCodeInitStructFieldsColLayout(inputSchema, tf, varDeclarationInputBuffer,
+                                              code->structDeclarationInputTuples[0],
+                                              context->code->varDeclarationInputTuples,
+                                              code->variableInitStmts,
+                                              "capacityScan");
     }
-
-    code->variableInitStmts.push_back(VarDeclStatement());
-
 
     /* for (uint64_t recordIndex = 0; recordIndex < tuple_buffer_1->num_tuples; ++id) */
     // input_buffer.getNumberOfTuples()
 //    auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
-    auto numberOfRecords = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(1L)));
+    auto numberOfRecords = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(2L)));
     code->forLoopStmt = std::make_shared<FOR>(code->varDeclarationRecordIndex,
                                               (VarRef(code->varDeclarationRecordIndex) < (numberOfRecords)).copy(),
                                               (++VarRef(code->varDeclarationRecordIndex)).copy());
@@ -262,6 +252,43 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     }
 
     code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
+    return true;
+}
+
+bool CCodeGenerator::generateCodeInitStructFieldsColLayout(const SchemaPtr& schema,
+                                                           CompilerTypesFactoryPtr& tf,
+                                                           const VariableDeclaration& varDeclarationBuffer,
+                                                           const StructDeclaration structDeclaration,
+                                                           const VariableDeclaration varTuples,
+                                                           std::vector<StatementPtr>& statements,
+                                                           const std::string& capacityVarName) {
+
+    // Creating a layout from the schema
+    auto layout = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(schema, false);
+
+    // Creating capacity variable
+    auto capacityVarDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), capacityVarName);
+    auto capacityVarStatement = getBufferSize(varDeclarationBuffer) / Constant(tf->createValueType(DataTypeFactory::createBasicValue(layout->getRecordSize())));
+    auto capacityVarAssignment = VarDeclStatement(capacityVarDeclaration).assign(capacityVarStatement);
+    statements.push_back(capacityVarAssignment.copy());
+
+    uint64_t offsetCounter = 0;
+    for (size_t i = 0; i < layout->getFieldSizes().size(); ++i) {
+        const auto& field = schema->fields[i];
+        const auto& fieldSize = layout->getFieldSizes()[i];
+        auto variable = getVariableDeclarationForField(structDeclaration, field);
+        auto fieldRefStmt = VarRef(varTuples).accessPtr(VarRef(variable));
+
+
+        // Create offSet in tupleBuffer
+        auto expr = BinaryOperatorStatement((getBuffer(varDeclarationBuffer)), PLUS_OP, Constant(tf->createValueType(DataTypeFactory::createBasicValue(offsetCounter))))
+                                            .addRight(MULTIPLY_OP, VarRef(capacityVarDeclaration), BRACKETS);
+        auto offSetAssignment = TypeCast(expr, tf->createPointer(tf->createDataType(field->getDataType())));
+        statements.push_back(fieldRefStmt.assign(offSetAssignment).copy());
+
+        offsetCounter += fieldSize;
+    }
+
     return true;
 }
 
@@ -364,6 +391,13 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
                                           .assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple))
                                           .copy());
 
+    // Setting the start of all fields for col layout
+    if (sinkSchema->layoutType == Schema::COL_LAYOUT) {
+        generateCodeInitStructFieldsColLayout(sinkSchema, tf, code->varDeclarationResultBuffer,
+                                              code->structDeclarationResultTuple, varDeclResultTuple,
+                                              code->variableInitStmts, "capacityEmit");
+    }
+
     auto recordHandler = context->getRecordHandler();
     for (const auto& field : context->resultSchema->fields) {
 
@@ -409,7 +443,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
     code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
 
     // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
-    generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple);
+    generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
 
     // Generate final logic to emit the last buffer to the Runtime
     // 1. set the number of tuples to the buffer
@@ -554,7 +588,8 @@ void CCodeGenerator::generateCodeForWatermarkUpdaterJoin(const PipelineContextPt
 
 void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
                                                    const VariableDeclaration& varDeclResultTuple,
-                                                   const StructDeclaration& structDeclarationResultTuple) {
+                                                   const StructDeclaration& structDeclarationResultTuple,
+                                                   SchemaPtr schema) {
     NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check");
 
     auto code = context->code;
@@ -604,6 +639,16 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     // 2.2 get typed result buffer from resultTupleBuffer -> resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();
     thenStatement->addStatement(
         VarRef(varDeclResultTuple).assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple)).copy());
+
+    // Setting the start of all fields for col layout
+    if (schema->layoutType == Schema::COL_LAYOUT) {
+        std::vector<StatementPtr> statements;
+        generateCodeInitStructFieldsColLayout(schema, tf, code->varDeclarationResultBuffer,
+                                              structDeclarationResultTuple, varDeclResultTuple, statements, "capacityEmitThen");
+        for (const auto& stmt : statements) {
+            thenStatement->addStatement(stmt->createCopy());
+        }
+    }
 }
 
 /**
