@@ -505,7 +505,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
     for (auto querySubPlanId : querySubPlanIds) {
         if (unregisterQuerySubPlanHelper(querySubPlanId)) {
             deployedQEPs.erase(querySubPlanId);
-            NES_DEBUG("Runtime: unregister of query " << querySubPlanId << " succeeded");
+            NES_DEBUG("Runtime: unregister of query sub plan: " << querySubPlanId << " succeeded");
         } else {
             success = false;
         }
@@ -685,6 +685,7 @@ void NodeEngine::onDataBuffer(Network::NesPartition, TupleBuffer&) {
 
 void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
     // propagate EOS to the locally running QEPs that use the network source
+    std::unique_lock lock(engineMutex);
     NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
     queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
 }

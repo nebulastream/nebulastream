@@ -197,32 +197,37 @@ void QueryReconfigurationPhase::removeDeletedOperators(QueryPlanPtr& queryPlan, 
             if (subPlanContainingModifiedOperator->getQuerySubPlanId() == subPlanContainingRemovedOperator->getQuerySubPlanId()) {
                 auto removedOperatorInSubPlan = subPlanContainingModifiedOperator->getOperatorWithId(removedOperator);
                 for (const auto& rootNode : removedOperatorInSubPlan->getAllRootNodes()) {
-                    subPlanContainingRemovedOperator->removeAsRootOperator(rootNode->as<LogicalOperatorNode>());
+                    if (rootNode->getChildren().size() <= 1) {
+                        subPlanContainingRemovedOperator->removeAsRootOperator(rootNode->as<LogicalOperatorNode>());
+                    }
                 }
                 for (const auto& operatorToRemove : removedOperatorInSubPlan->getAndFlattenAllAncestors()) {
                     operatorToRemove->removeAllParent();
                     operatorToRemove->removeChildren();
                 }
-            }
-            std::vector<SourceLogicalOperatorNodePtr> sourcesChain{subPlanContainingRemovedOperator->getSourceOperators()};
-            while (!sourcesChain.empty()) {
-                auto sourceOperator = sourcesChain.back();
-                sourcesChain.pop_back();
-                auto found = networkSourcesToSinks.find(sourceOperator);
-                if (found != networkSourcesToSinks.end()) {
-                    for (const auto& sinkWritingToSource : found->second) {
-                        auto planWithSinkWriting = operatorToSubPlan[sinkWritingToSource->getId()];
-                        if (planWithSinkWriting->getQuerySubPlanId() == subPlanContainingModifiedOperator->getQuerySubPlanId()) {
-                            planWithSinkWriting->removeAsRootOperator(sinkWritingToSource);
-                            std::vector<NodePtr> children = sinkWritingToSource->getChildren();
-                            while (!children.empty()) {
-                                auto childOperator = children.back()->as<OperatorNode>();
-                                children.pop_back();
-                                if (childOperator->getId() != childIdOfOperatorRemoved) {
-                                    childOperator->removeAllParent();
-                                    auto grandChildren = childOperator->getChildren();
-                                    children.insert(children.end(), grandChildren.begin(), grandChildren.end());
-                                    childOperator->removeChildren();
+            } else {
+                // Navigate via network sources to remove network sink writing to operator being removed
+                std::vector<SourceLogicalOperatorNodePtr> sourcesChain{subPlanContainingRemovedOperator->getSourceOperators()};
+                while (!sourcesChain.empty()) {
+                    auto sourceOperator = sourcesChain.back();
+                    sourcesChain.pop_back();
+                    auto found = networkSourcesToSinks.find(sourceOperator);
+                    if (found != networkSourcesToSinks.end()) {
+                        for (const auto& sinkWritingToSource : found->second) {
+                            auto planWithSinkWriting = operatorToSubPlan[sinkWritingToSource->getId()];
+                            if (planWithSinkWriting->getQuerySubPlanId()
+                                == subPlanContainingModifiedOperator->getQuerySubPlanId()) {
+                                planWithSinkWriting->removeAsRootOperator(sinkWritingToSource);
+                                std::vector<NodePtr> children = sinkWritingToSource->getChildren();
+                                while (!children.empty()) {
+                                    auto childOperator = children.back()->as<OperatorNode>();
+                                    children.pop_back();
+                                    if (childOperator->getId() != childIdOfOperatorRemoved) {
+                                        childOperator->removeAllParent();
+                                        auto grandChildren = childOperator->getChildren();
+                                        children.insert(children.end(), grandChildren.begin(), grandChildren.end());
+                                        childOperator->removeChildren();
+                                    }
                                 }
                             }
                         }
