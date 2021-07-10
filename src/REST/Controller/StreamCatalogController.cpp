@@ -16,6 +16,7 @@
 
 #include "REST/Controller/StreamCatalogController.hpp"
 #include <Catalogs/StreamCatalog.hpp>
+#include <CoordinatorRPCService.pb.h>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
 
@@ -213,17 +214,26 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
         message.extract_string(true)
                 .then([this, message](utility::string_t body) {
                     try {
+                        std::shared_ptr<RegisterPhysicalStreamRequest> protobufMessage = std::make_shared<RegisterPhysicalStreamRequest>();
+
+                        if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
+                            json::value errorResponse{};
+                            errorResponse["detail"] = json::value::string("Invalid Protobuf message");
+                            badRequestImpl(message, errorResponse);
+                            return;
+                        }
                         NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Start trying to add new physical stream");
-                        //Prepare Input query from user string
-                        std::string payload(body.begin(), body.end());
-                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: userRequest: " << payload);
-                        json::value req = json::value::parse(payload);
-                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Json Parse Value: " << req);
-                        std::string logicalStreamName = req.at("logicalStreamName").as_string();
-                        std::string physicalStreamName = req.at("physicalStreamName").as_string();
-                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Try to add  Physical Stream to a Logical Stream"
+                        std::string physicalStreamName = protobufMessage->physicalstreamname();
+                        std::string logicalStreamName = protobufMessage->logicalstreamname();
+                        bool added;
+                        if(logicalStreamName==""){
+                            NES_ERROR("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Parameter logicalStreamName was not given.");
+                            return;
+                        }else{
+                            NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Try to add  Physical Stream to a Logical Stream"
                                           << logicalStreamName);
-                        bool added = streamCatalog->addPhysicalStreamToLogicalStream(physicalStreamName, logicalStreamName);
+                            added = streamCatalog->addPhysicalStreamToLogicalStream(physicalStreamName, logicalStreamName);
+                        }
                         NES_DEBUG("StreamCatalogController: handlePost -addPhysicalToLogicalStream: Successfully added  Physical Stream to logical Stream?"
                                           << added);
                         //Prepare the response

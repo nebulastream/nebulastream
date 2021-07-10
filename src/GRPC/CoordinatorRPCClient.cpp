@@ -106,7 +106,7 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string physicalStreamNa
     UnregisterPhysicalStreamRequest request;
     request.set_id(workerId);
     request.set_physicalstreamname(physicalStreamName);
-    request.set_logicalstreamname("_");
+    request.set_logicalstreamname("");
     NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalStreamRequest request=" << request.DebugString());
 
     UnregisterPhysicalStreamReply reply;
