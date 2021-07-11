@@ -124,6 +124,12 @@ class StreamCatalog {
      */
     bool removePhysicalStreamByHashId(uint64_t hashId);
 
+    /**
+    * @brief method to remove a physical stream from its logical stream in mismappedStreams mapping. If there are no elements left for that logicalStreamName that is also deleted from the mapping.
+    * @param name of the physical stream, name of logical Stream
+    * @return bool indicating success of remove of physical stream
+    */
+    bool removePhysicalToLogicalMappingFromMismappedStreams(std::string logicalStreamName, std::string physicalStreamName);
 
     /**
    * @brief method to remove the mapping of all physical streams from a specific logical stream.
@@ -201,10 +207,17 @@ class StreamCatalog {
     bool testIfLogicalStreamExistsInMismappedStreams(std::string logicalStreamName);
 
     /**
-   * @brief return all physical nodes that contribute to this logical stream
-   * @param name of logical stream
-   * @return list of physical nodes as pointers into the topology
-   */
+    * @brief test if in mismappedStreams there is a mapping of a specific physical to a specific logical stream.
+    * @param name of the logical and physical streams to test.
+    * @return bool indicating if mapping exists
+    */
+    bool testIfLogicalStreamToPhysicalStreamMappingExistsInMismappedStreams(std::string logicalStreamName, std::string physicalStreamName);
+
+    /**
+    * @brief return all physical nodes that contribute to this logical stream
+    * @param name of logical stream
+    * @return list of physical nodes as pointers into the topology
+    */
     std::vector<TopologyNodePtr> getSourceNodesForLogicalStream(std::string logicalStreamName);
 
     /**

@@ -247,12 +247,17 @@ bool StreamCatalog::removeAllPhysicalStreams(std::string logicalStreamName) {
 bool StreamCatalog::removePhysicalStreamFromLogicalStream(std::string physicalStreamName, std::string logicalStreamName){
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: Try to remove "<<physicalStreamName<<" from logical stream "<<logicalStreamName);
-    if(!testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalStreamName)){
-        NES_ERROR("StreamCatalog: logical stream "<<logicalStreamName<<" does not have any physical streams.");
-        return false;
-    }
     if(!testIfPhysicalStreamWithNameExists(physicalStreamName)){
         NES_ERROR("StreamCatalog: physical stream "<<physicalStreamName<<" does not exist");
+        return false;
+    }
+    if(!testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalStreamName)){
+        NES_DEBUG("StreamCatalog: logical stream " << logicalStreamName << " does not have any physical streams.");
+        NES_DEBUG("StreamCatalog: In mismappedStreams mapping - try to remove "<<physicalStreamName<<" from logical stream "<<logicalStreamName);
+        if(testIfLogicalStreamToPhysicalStreamMappingExistsInMismappedStreams(logicalStreamName, physicalStreamName)){
+            removePhysicalToLogicalMappingFromMismappedStreams(logicalStreamName, physicalStreamName);
+            // BDAPRO : hier muss ich nichts anderes returnen oder ?
+        }
         return false;
     }
     std::vector<std::string> &phyStreams = logicalToPhysicalStreamMapping[logicalStreamName];
@@ -331,6 +336,17 @@ bool StreamCatalog::removePhysicalStreamByHashId(uint64_t hashId) {
     return false;
 }
 
+bool StreamCatalog::removePhysicalToLogicalMappingFromMismappedStreams(std::string logicalStreamName, std::string physicalStreamName){
+    std::unique_lock lock(catalogMutex);
+    std::vector<std::string> &phyStreams = mismappedStreams[logicalStreamName];
+    auto it = std::remove(phyStreams.begin(), phyStreams.end(), physicalStreamName);
+    phyStreams.erase(it, phyStreams.end());
+    if (mismappedStreams[logicalStreamName].empty()){
+        mismappedStreams.erase(logicalStreamName);
+    }
+    return true;
+}
+
 SchemaPtr StreamCatalog::getSchemaForLogicalStream(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     return logicalStreamToSchemaMapping[logicalStreamName];
@@ -389,6 +405,14 @@ bool StreamCatalog::testIfPhysicalStreamWithNameExists(std::string physicalStrea
 bool StreamCatalog::testIfLogicalStreamExistsInMismappedStreams(std::string logicalStreamName){
     std::unique_lock lock(catalogMutex);
     return mismappedStreams.find(logicalStreamName) != mismappedStreams.end();
+}
+
+bool StreamCatalog::testIfLogicalStreamToPhysicalStreamMappingExistsInMismappedStreams(std::string logicalStreamName, std::string physicalStreamName){
+    std::unique_lock lock(catalogMutex);
+    if (!testIfLogicalStreamExistsInMismappedStreams(logicalStreamName)){
+        return false;
+    }
+    return std::find(mismappedStreams[logicalStreamName].begin(), mismappedStreams[logicalStreamName].end(), physicalStreamName) != mismappedStreams[logicalStreamName].end();
 }
 
 std::vector<TopologyNodePtr> StreamCatalog::getSourceNodesForLogicalStream(std::string logicalStreamName) {
