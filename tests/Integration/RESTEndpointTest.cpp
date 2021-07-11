@@ -629,8 +629,7 @@ TEST_F(RESTEndpointTest, testGetAllPhysicalStreams) {
 
     NES_INFO("allPhysicalStream: try to acc return");
     NES_DEBUG("allPhysicalStream response: " << getAllPhysicalStreamJsonReturn.serialize());
-    std::string expected= R"({"Physical Streams":["physicalName=test_physical1 logicalStreamName=(default_logical) sourceType=DefaultSource on node=2","physicalName=test_physical2 logicalStreamName=(default_logical) sourceType=DefaultSource on node=3"]})";
-    NES_DEBUG("allPhysicalStream response: expected = " << expected);
+    std::string expected= "{\"Physical Streams\":[\"physicalName=test_physical1 logicalStreamName=(default_logical) sourceType=DefaultSource on node="+std::to_string(wrk1->getWorkerId())+"\",\"physicalName=test_physical2 logicalStreamName=(default_logical) sourceType=DefaultSource on node="+std::to_string(wrk2->getWorkerId())+"\"]}";    NES_DEBUG("allPhysicalStream response: expected = " << expected);
     ASSERT_EQ(getAllPhysicalStreamJsonReturn.serialize(), expected);
 
     NES_INFO("RESTEndpointTest: Stop worker 1");
