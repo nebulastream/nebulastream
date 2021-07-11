@@ -229,6 +229,9 @@ void QueryReconfigurationPhase::removeDeletedOperators(QueryPlanPtr& queryPlan, 
                                         childOperator->removeChildren();
                                     }
                                 }
+                            } else {
+                                auto planSources = planWithSinkWriting->getSourceOperators();
+                                sourcesChain.insert(sourcesChain.end(), planSources.begin(), planSources.end());
                             }
                         }
                     }
@@ -301,6 +304,9 @@ void QueryReconfigurationPhase::populateReconfigurationPlan(QueryId queryId,
                                                             const OperatorId operatorId,
                                                             QueryReconfigurationTypes reconfigurationType) {
     auto subPlan = operatorToSubPlan[operatorId];
+    if (reconfigurationShadowPlans.contains(subPlan)) {
+        return;
+    }
     reconfigurationShadowPlans.insert(subPlan);
     shadowSubPlans.erase(subPlan);
     auto srcExecutionNode = subPlanToExecutionNode[subPlan];
@@ -401,6 +407,7 @@ bool QueryReconfigurationPhase::stopQuerySubPlan(QueryId queryId, const std::set
         auto executionNode = subPlanToExecutionNode[subPlan];
         std::string rpcAddress = getRpcAddress(executionNode);
         workerRPCClient->stopQuerySubPlanAsync(rpcAddress, subPlan->getQuerySubPlanId(), queueForExecutionNode);
+        NES_DEBUG("QueryReconfigurationPhase::stopQuerySubPlan: subQueryId=" << subPlan->getQuerySubPlanId());
         completionQueues[queueForExecutionNode] = 1;
         executionNode->removeQuerySubPlan(subPlan);
     }

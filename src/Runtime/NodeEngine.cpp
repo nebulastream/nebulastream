@@ -358,6 +358,8 @@ bool NodeEngine::reconfigureDataSource(const std::shared_ptr<Execution::Executab
                                        std::shared_ptr<Execution::ExecutableQueryPlan>& newQep) {
     // If qep has data sinks, sink reconfiguration, else if data source source reconfiguration
     // Ensure new data sources are not added
+    NES_DEBUG("NodeEngine::reconfigureDataSource: Reconfigure data source oldQep: " << oldQep->getQuerySubPlanId() << " newQep: "
+                                                                                    << newQep->getQuerySubPlanId());
     std::unordered_map<OperatorId, DataSourcePtr> oldQepDataSourceMapping;
     std::unordered_map<OperatorId, DataSourcePtr> newQepDataSourceMapping;
     for (const auto& source : oldQep->getSources()) {
@@ -417,6 +419,7 @@ bool NodeEngine::reconfigureDataSource(const std::shared_ptr<Execution::Executab
     }
 
     for (auto oldPipelineSuccessor : oldPipelineSuccessors) {
+        NES_DEBUG("NodeEngine::reconfigureDataSource: Trigger EoS for oldQep: " << oldQep->getQuerySubPlanId());
         queryManager->propagateViaSuccessorPipelines(
             SoftEndOfStream,
             [](const Execution::ExecutableQueryPlanPtr& executableQueryPlan) {
@@ -681,7 +684,6 @@ void NodeEngine::onDataBuffer(Network::NesPartition, TupleBuffer&) {
 
 void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
     // propagate EOS to the locally running QEPs that use the network source
-    std::unique_lock lock(engineMutex);
     NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
     queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
 }

@@ -663,8 +663,12 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
                                                                                 << isSourcePipeline);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
     NES_ASSERT2_FMT(isSourcePipeline, "invalid source");
-    NES_ASSERT2_FMT(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
-                    "Operator id to query map for operator is empty for operator: " << sourceId);
+    if (sourceIdToExecutableQueryPlanMap.find(sourceId) == sourceIdToExecutableQueryPlanMap.end()) {
+        // When sink has multiple successor and if one of them is a data sink, then immediately QEP stop is invoked.
+        // This causes QEP to stop and further sources of QEP are not processed hence we let this mapping be empty.
+        NES_WARNING("QueryManager::addEndOfStream: Operator id to query map for operator is empty for operator: " << sourceId);
+        return true;
+    }
     if (graceful) {
         auto qep = sourceIdToExecutableQueryPlanMap[sourceId];
         // todo adopt this code for multiple source pipelines
