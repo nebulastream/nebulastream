@@ -57,6 +57,13 @@ class StreamCatalog {
     bool addLogicalStream(const std::string& streamName, const std::string& streamSchema);
 
     /**
+   * @brief method to add a logical stream which was present in mismappedStreams
+   * @param logical stream name
+   * @param schema of logical stream as string
+     */
+    void addLogicalStreamFromMismappedStreams(std::string logicalStreamName, SchemaPtr schemaPtr);
+
+    /**
        * @brief method to delete a logical stream
        * @caution this method only remove the entry from the catalog not from the topology
        * @param name of logical stream to delete
@@ -187,6 +194,13 @@ class StreamCatalog {
     bool testIfPhysicalStreamWithNameExists(std::string physicalStreamName);
 
     /**
+    * @brief test if logical stream exists in mismappedStreams
+    * @param name of the logical stream to test
+    * @return bool indicating if stream exists
+    */
+    bool testIfLogicalStreamExistsInMismappedStreams(std::string logicalStreamName);
+
+    /**
    * @brief return all physical nodes that contribute to this logical stream
    * @param name of logical stream
    * @return list of physical nodes as pointers into the topology
@@ -261,6 +275,9 @@ class StreamCatalog {
 
     // map physicalStreamName to StreamCatalogEntryPtr
     std::map<std::string, StreamCatalogEntryPtr> nameToPhysicalStream;
+
+    // map logicalStreamName to vector of physicalStreamName
+    std::map<std::string, std::vector<std::string>> mismappedStreams;
 
     void addDefaultStreams();
 };
