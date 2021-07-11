@@ -610,31 +610,28 @@ TEST_F(RESTEndpointTest, testGetAllPhysicalStreams) {
     success = wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
     EXPECT_TRUE(success);
 
-    web::http::client::http_client getAllLogicalStreamsClient("http://127.0.0.1:" + std::to_string(restPort)
+    web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
                                                               + "/v1/nes/streamCatalog/allPhysicalStream?logicalStreamName=default_logical");
-    web::json::value getAllLogicalStreamsJsonReturn;
+    web::json::value getAllPhysicalStreamJsonReturn;
 
-    getAllLogicalStreamsClient.request(web::http::methods::GET, "")
+    getAllPhysicalStreamClient.request(web::http::methods::GET, "")
         .then([](const web::http::http_response& response) {
           NES_INFO("get first then");
           return response.extract_json();})
-        .then([&getAllLogicalStreamsJsonReturn](const pplx::task<web::json::value>& task) {
+        .then([&getAllPhysicalStreamJsonReturn](const pplx::task<web::json::value>& task) {
           try {
               NES_INFO("get execution-plan: set return");
-              getAllLogicalStreamsJsonReturn = task.get();
+              getAllPhysicalStreamJsonReturn = task.get();
           } catch (const web::http::http_exception& e) {
               NES_ERROR("get execution-plan: error while setting return" << e.what());
           }})
         .wait();
 
     NES_INFO("allPhysicalStream: try to acc return");
-    NES_DEBUG("allPhysicalStream response: " << getAllLogicalStreamsJsonReturn.serialize());
-    std::string expected= R"({"Physical Streams":[
-                            "physicalName=test_physical1 logicalStreamName=(default_logical) sourceType=DefaultSource on node=2",
-                            "physicalName=test_physical2 logicalStreamName=(default_logical) sourceType=DefaultSource on node=3"
-                            ]})";
+    NES_DEBUG("allPhysicalStream response: " << getAllPhysicalStreamJsonReturn.serialize());
+    std::string expected= R"({"Physical Streams":["physicalName=test_physical1 logicalStreamName=(default_logical) sourceType=DefaultSource on node=2","physicalName=test_physical2 logicalStreamName=(default_logical) sourceType=DefaultSource on node=3"]})";
     NES_DEBUG("allPhysicalStream response: expected = " << expected);
-    ASSERT_EQ(getAllLogicalStreamsJsonReturn.serialize(), expected);
+    ASSERT_EQ(getAllPhysicalStreamJsonReturn.serialize(), expected);
 
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
