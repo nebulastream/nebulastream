@@ -51,7 +51,7 @@ NesWorker::NesWorker(WorkerConfigPtr workerConfig, NesNodeType type)
       numberOfBuffersPerPipeline(workerConfig->getnumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
-      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), configs{PhysicalStreamConfig::createEmpty()},
+      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), configs{},
       topologyNodeId(INVALID_TOPOLOGY_NODE_ID), isRunning(false) {
     connected = false;
     withRegisterStream = false;
@@ -171,9 +171,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("NesWorker: start with register stream");
         // BDAPRO do bulk registration instead of multiple calls
         for (auto& config : configs) {
-            if (config->getSourceType() == "DefaultSource") {
-                continue;
-            }
             bool success = registerPhysicalStream(config);
 
             NES_DEBUG("registered " << config->getPhysicalStreamName() << "= " << success);

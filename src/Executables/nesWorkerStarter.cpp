@@ -108,20 +108,22 @@ int main(int argc, char** argv) {
                                                   << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
-    //register phy stream if necessary
-    if (sourceConfig->getSourceType()->getValue() != "NoSource") {
-        NES_INFO("start with dedicated source=" << sourceConfig->getSourceType()->getValue() << "\n");
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    // register phy stream if necessary
+    if (sourceConfigs.size() > 0) {
+        for (auto& config : sourceConfigs) {
+            NES_INFO("start with dedicated source=" << config->getSourceType()->getValue() << "\n");
+            PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(config);
 
-        std::vector<std::string> lNames = sourceConfig->getLogicalStreamName()->getValue();
+            auto lNames = config->getLogicalStreamName()->getValue();
 
-        NES_INFO("NESWORKERSTARTER: Source Config type = "
-                 << sourceConfig->getSourceType()->getValue() << " Config = " << sourceConfig->getSourceConfig()->getValue()
-                 << " physicalStreamName = " << sourceConfig->getPhysicalStreamName()->getValue()
-                 << " logicalStreamName = (" <<
-                 UtilityFunctions::combineStringsWithDelimiter(lNames,",") +")");
+            NES_INFO("NESWORKERSTARTER: Source Config type = "
+                     << config->getSourceType()->getValue() << " Config = " << config->getSourceConfig()->getValue()
+                     << " physicalStreamName = " << config->getPhysicalStreamName()->getValue()
+                     << " logicalStreamName = " << "(" <<
+                         UtilityFunctions::combineStringsWithDelimiter(lNames,",") +")");
 
-        wrk->setWithRegister(conf);
+            wrk->setWithRegister(conf);
+        }
     } else if (workerConfig->getParentId()->getValue() != "-1") {
         NES_INFO("start with dedicated parent=" << workerConfig->getParentId()->getValue());
         wrk->setWithParent(workerConfig->getParentId()->getValue());
