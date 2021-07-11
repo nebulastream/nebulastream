@@ -849,7 +849,10 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationTotalMergi
     QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, strategy);
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath1));
+    EXPECT_TRUE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
+                                              "Column originId must have {1, 2} unique values",
+                                              outputFilePath1,
+                                              true));
 
     string query2 =
         R"(Query::from("car").sink(FileSinkDescriptor::create(")" + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -857,13 +860,16 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationTotalMergi
     auto globalQueryPlan = crd->getGlobalQueryPlan();
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath2));
+    EXPECT_TRUE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
+                                              "Column originId must have {1, 2} unique values",
+                                              outputFilePath2,
+                                              true));
 
-    NES_INFO("QueryReconfigurationTest: Remove query");
+    NES_INFO("QueryReconfigurationTest: Remove query 1");
     queryService->validateAndQueueStopRequest(queryId1);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
-    NES_INFO("QueryReconfigurationTest: Remove query");
+    NES_INFO("QueryReconfigurationTest: Remove query 2");
     queryService->validateAndQueueStopRequest(queryId2);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
@@ -887,7 +893,7 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationTotalMergi
     EXPECT_EQ(response2, 0);
 }
 
-TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationTotalMergingWithoutReconfiguration) {
+TEST_P(QueryReconfigurationPlacementParameterizedTest, DISABLED_reconfigurationTotalMergingWithoutReconfiguration) {
 
     std::string strategy = GetParam();
 
@@ -1068,23 +1074,31 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationPartialMer
 
     string query1 = R"(Query::from("car").filter(Attribute("value") / 5 > 0).sink(FileSinkDescriptor::create(")" + outputFilePath1
         + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "TopDown");
+    QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, strategy);
     string query2 =
         R"(Query::from("car").filter(Attribute("value") / 5 > 0).map(Attribute("newQueryId") = 2).sink(FileSinkDescriptor::create(")"
         + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "TopDown");
+    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, strategy);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+
+    EXPECT_TRUE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
+                                              "Column originId must have {1, 2} unique values",
+                                              outputFilePath1,
+                                              true));
+
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
-    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath1));
-    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath2));
+    EXPECT_TRUE(TestUtils::validateCSVContent(distinctColumnValuesValidator(4, std::unordered_set<std::string>{"1", "2"}),
+                                              "Column originId must have {1, 2} unique values",
+                                              outputFilePath2,
+                                              true));
 
-    NES_INFO("QueryReconfigurationTest: Remove query");
+    NES_INFO("QueryReconfigurationTest: Remove query 1");
     queryService->validateAndQueueStopRequest(queryId1);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
-    NES_INFO("QueryReconfigurationTest: Remove query");
+    NES_INFO("QueryReconfigurationTest: Remove query 2");
     queryService->validateAndQueueStopRequest(queryId2);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
@@ -1108,6 +1122,7 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationPartialMer
 TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationPartialMoreThanTwoQueriesMerging) {
 
     std::string strategy = GetParam();
+//    std::string strategy = "TopDown";
 
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
@@ -1178,15 +1193,15 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationPartialMor
 
     string query1 = R"(Query::from("car").filter(Attribute("value") / 5 > 0).sink(FileSinkDescriptor::create(")" + outputFilePath1
         + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
+    QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, strategy);
     string query2 =
         R"(Query::from("car").filter(Attribute("value") / 5 > 0).map(Attribute("newQueryId") = 2).sink(FileSinkDescriptor::create(")"
         + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
+    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, strategy);
     string query3 =
         R"(Query::from("car").filter(Attribute("value") / 5 > 0).map(Attribute("newQueryId") = 3).sink(FileSinkDescriptor::create(")"
         + outputFilePath3 + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId3 = queryService->validateAndQueueAddRequest(query3, "BottomUp");
+    QueryId queryId3 = queryService->validateAndQueueAddRequest(query3, strategy);
 
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
@@ -1197,16 +1212,16 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationPartialMor
     EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath2));
     EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(100, outputFilePath3));
 
-    NES_INFO("QueryReconfigurationTest: Remove query");
+    NES_INFO("QueryReconfigurationTest: Remove query: 1");
     queryService->validateAndQueueStopRequest(queryId1);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
-    NES_INFO("QueryReconfigurationTest: Remove query");
+    NES_INFO("QueryReconfigurationTest: Remove query: 2");
     queryService->validateAndQueueStopRequest(queryId2);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
-    NES_INFO("QueryReconfigurationTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId2);
+    NES_INFO("QueryReconfigurationTest: Remove query: 3");
+    queryService->validateAndQueueStopRequest(queryId3);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId3, queryCatalog));
 
     stopWorker(wrk1, 1);
