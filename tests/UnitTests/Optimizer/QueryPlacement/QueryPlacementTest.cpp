@@ -691,7 +691,8 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 
     planToDeploy = updatedSharedQMToDeploy[0]->getQueryPlan();
-    planToDeploy->setQueryId(queryPlan1->getQueryId());
+
+    ASSERT_EQ(planToDeploy->getQueryId(), queryPlan1->getQueryId());
 
     auto mergedPlacementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
                                                                                     globalExecutionPlan,
@@ -700,6 +701,30 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
                                                                                     streamCatalog);
 
     mergedPlacementStrategy->partiallyUpdateGlobalExecutionPlan(planToDeploy);
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(planToDeploy->getQueryId());
+    ASSERT_EQ(executionNodes.size(), 3UL);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(planToDeploy->getQueryId());
+            ASSERT_EQ(querySubPlans.size(), 1UL);
+            ASSERT_EQ(querySubPlans[0]->getSinkOperators().size(), 3UL);
+        } else {
+            EXPECT_TRUE(executionNode->getId() == 2ULL || executionNode->getId() == 3ULL);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(planToDeploy->getQueryId());
+            // map merged into querySubPlan with filter
+            ASSERT_EQ(querySubPlans.size(), 1UL);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1UL);
+            for (const auto& rootOperator : actualRootOperators) {
+                EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                EXPECT_TRUE(rootOperator->as<SinkLogicalOperatorNode>()
+                                ->getSinkDescriptor()
+                                ->instanceOf<Network::NetworkSinkDescriptor>());
+            }
+        }
+    }
 }
 
 /* Test query placement of query with multiple sinks and multiple source operators with Top Down strategy  */
