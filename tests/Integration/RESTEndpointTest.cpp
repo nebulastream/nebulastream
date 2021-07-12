@@ -634,12 +634,9 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
 
 TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
+
 
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -647,16 +644,6 @@ TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     EXPECT_NE(port, 0U);
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
-    NES_INFO("RESTEndpointTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("RESTEndpointTest: Worker1 started successfully");
-
-    const std::string defaultLogicalStreamName = "default_logical";
     StreamCatalogPtr streamCatalog = crd->getStreamCatalog();
 
     //make httpclient with new endpoint -ex:
@@ -666,7 +653,7 @@ TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     SerializableSchemaPtr serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
     SerializableNamedSchema request;
-    request.set_streamname(defaultLogicalStreamName);
+    request.set_streamname("test");
     request.set_allocated_schema(serializableSchema.get());
     std::string msg = request.SerializeAsString();
 
@@ -692,18 +679,10 @@ TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     EXPECT_TRUE(postJsonReturn.has_field("Success"));
     EXPECT_EQ(streamCatalog->getAllLogicalStreamAsString().size(), 3U);
 
-    NES_INFO("RESTEndpointTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
     NES_INFO("RESTEndpointTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
 }
-
-
-
-
-
 
 }// namespace NES
