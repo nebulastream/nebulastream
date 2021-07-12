@@ -318,7 +318,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, testPathIgnoresNodesMarkedForMaintena
     EXPECT_TRUE(mThirdStartNodeParent4->getId() == 1);
     //TODO: move to Unit Tests
 }
-TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_DiamondTopologyWithOneQueryFirstStrategyTest) {
+TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologyWithOneQueryFirstStrategyTest) {
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();

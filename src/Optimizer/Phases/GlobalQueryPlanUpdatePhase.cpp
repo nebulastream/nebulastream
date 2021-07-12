@@ -24,6 +24,7 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
@@ -82,9 +83,10 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 globalQueryPlan->removeQuery(queryId);
             }
             else if(nesRequest->instanceOf<RestartQueryRequest>()){
-//                    auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
-//                    auto sharedQueryChangeLog = globalQueryPlan->//getSharedQueryMetaData(sharedQueryId);
-//                    sharedQueryMetadata->markAsNotDeployed();
+                    auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
+                    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+                    sharedQueryPlan->markAsNotDeployed();
+
             }
             else if (nesRequest->instanceOf<RunQueryRequest>()) {
 
