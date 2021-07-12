@@ -261,6 +261,19 @@ class StreamCatalog {
     std::vector<StreamCatalogEntryPtr> getPhysicalStreams(std::string logicalStreamName);
 
     /**
+    * @brief gets the fulll mismappedStreams mapping
+    * @return mapping
+    */
+    std::map<std::string, std::vector<std::string>> getMismappedPhysicalStreams();
+    /**
+    * @brief get all mismapped pyhsical streams for a logical stream
+    * @param logicalStreamName
+    * @return
+    */
+    std::vector<std::string> getMismappedPhysicalStreams(std::string logicalStreamName);
+
+
+    /**
     * @brief get all physical streams
     * @return std::vector containing all StreamCatalogEntryPtr
     */

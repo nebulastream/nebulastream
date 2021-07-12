@@ -73,28 +73,28 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
         if (param == parameters.end()) {
             NES_DEBUG("QueryController: No logicalStreamName was specified, returning all physical streams");
             json::value result{};
-            const std::vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams();
+            const std::vector <StreamCatalogEntryPtr> &allPhysicalStream = streamCatalog->getPhysicalStreams();
             if (allPhysicalStream.empty()) {
                 NES_DEBUG("No Physical Stream Found");
                 resourceNotFoundImpl(request);
                 return;
             } else {
-                std::vector<json::value> allStream = {};
-                for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
+                std::vector <json::value> allStream = {};
+                for (auto const &physicalStream : std::as_const(allPhysicalStream)) {
                     allStream.push_back(json::value::string(physicalStream->toString()));
                 }
                 result["Physical Streams"] = json::value::array(allStream);
                 successMessageImpl(request, result);
                 return;
             }
-        }
-        else {
+        } else {
             // logical stream name specified
             try {
                 //Prepare Input query from user string
                 std::string logicalStreamName = param->second;
 
-                const std::vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(logicalStreamName);
+                const std::vector <StreamCatalogEntryPtr> &allPhysicalStream = streamCatalog->getPhysicalStreams(
+                        logicalStreamName);
 
                 //Prepare the response
                 json::value result{};
@@ -103,25 +103,89 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                     resourceNotFoundImpl(request);
                     return;
                 } else {
-                    std::vector<json::value> allStream = {};
-                    for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
+                    std::vector <json::value> allStream = {};
+                    for (auto const &physicalStream : std::as_const(allPhysicalStream)) {
                         allStream.push_back(json::value::string(physicalStream->toString()));
                     }
                     result["Physical Streams"] = json::value::array(allStream);
                     successMessageImpl(request, result);
                     return;
                 }
-            } catch (const std::exception& exc) {
-                NES_ERROR("StreamCatalogController: handleGet -allPhysicalStream: Exception occurred while building the "
-                          "query plan for user request:"
-                          << exc.what());
+            } catch (const std::exception &exc) {
+                NES_ERROR(
+                        "StreamCatalogController: handleGet -allPhysicalStream: Exception occurred while building the "
+                        "query plan for user request:"
+                                << exc.what());
                 handleException(request, exc);
                 return;
             } catch (...) {
                 RuntimeUtils::printStackTrace();
                 internalServerErrorImpl(request);
                 return;
-            }}
+            }
+        }
+    } else if (path[1] == "allMismappedStreams") {
+        //Check if the path contains the query id
+        auto param = parameters.find("logicalStreamName");
+        if (param == parameters.end()) {
+            NES_DEBUG("QueryController: No logicalStreamName was specified, returning all MISMAPPED physical streams");
+            json::value result{};
+            const std::map<std::string, std::vector<std::string>> &mismappedStreams = streamCatalog->getMismappedPhysicalStreams();
+            if (mismappedStreams.empty()) {
+                NES_DEBUG("No Mismapped Stream Found");
+                resourceNotFoundImpl(request);
+                return;
+            } else {
+                std::vector <json::value> allStream = {};
+                for (auto const &entry : mismappedStreams) {
+                    std::string mapping = entry.first + ":";
+                    for (std::string physicalStreamName: entry.second){
+                        mapping += "\n" + physicalStreamName;
+                    }
+                    allStream.push_back(json::value::string(mapping));
+                }
+                result["Mismapped Streams"] = json::value::array(allStream);
+                successMessageImpl(request, result);
+                return;
+            }
+        } else {
+            // logical stream name specified
+
+            try {
+                //Prepare Input query from user string
+                std::string logicalStreamName = param->second;
+
+                const std::vector <std::string> &allPhysicalStream = streamCatalog->getMismappedPhysicalStreams(
+                        logicalStreamName);
+
+                //Prepare the response
+                json::value result{};
+                if (allPhysicalStream.empty()) {
+                    NES_DEBUG("No Mismapped Physical Stream Found");
+                    resourceNotFoundImpl(request);
+                    return;
+                } else {
+                    std::vector <json::value> allStream = {};
+                    for (auto const &physicalStream : std::as_const(allPhysicalStream)) {
+                        allStream.push_back(json::value::string(physicalStream));
+                    }
+                    result["Physical Streams"] = json::value::array(allStream);
+                    successMessageImpl(request, result);
+                    return;
+                }
+            } catch (const std::exception &exc) {
+                NES_ERROR(
+                        "StreamCatalogController: handleGet -allMismappedStreams: Exception occurred while building the "
+                        "query plan for user request:"
+                                << exc.what());
+                handleException(request, exc);
+                return;
+            } catch (...) {
+                RuntimeUtils::printStackTrace();
+                internalServerErrorImpl(request);
+                return;
+            }
+        }
     } else {
         resourceNotFoundImpl(request);
     }

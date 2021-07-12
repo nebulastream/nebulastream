@@ -463,7 +463,6 @@ std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     return ss.str();
 }
 
-// BDAPRO test this function
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     std::vector<std::string> physicalStreamsNames = logicalToPhysicalStreamMapping[logicalStreamName];
@@ -475,6 +474,16 @@ std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string
     }
     return physicalStreams;
 }
+std::map<std::string, std::vector<std::string>> StreamCatalog::getMismappedPhysicalStreams(){
+    return mismappedStreams;
+}
+
+std::vector<std::string> StreamCatalog::getMismappedPhysicalStreams(std::string logicalStreamName) {
+    std::unique_lock lock(catalogMutex);
+    std::vector<std::string> physicalStreamsNames = logicalToPhysicalStreamMapping[logicalStreamName];
+    return physicalStreamsNames;
+}
+
 
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(){
     std::unique_lock lock(catalogMutex);
