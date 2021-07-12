@@ -198,13 +198,15 @@ void QueryReconfigurationPhase::removeDeletedOperators(QueryPlanPtr& queryPlan,
             auto subPlanContainingRemovedOperator = operatorToSubPlan[removedOperator];
             if (subPlanContainingModifiedOperator->getQuerySubPlanId() == subPlanContainingRemovedOperator->getQuerySubPlanId()) {
                 auto removedOperatorInSubPlan = subPlanContainingModifiedOperator->getOperatorWithId(removedOperator);
-                auto operatorBeingRemoved = subPlanContainingModifiedOperator->getOperatorWithId(removedOperator);
-                for (const auto& rootNode : operatorBeingRemoved->getAllRootNodes()) {
+                if (removedOperatorInSubPlan == nullptr) {
+                    continue;
+                }
+                for (const auto& rootNode : removedOperatorInSubPlan->getAllRootNodes()) {
                     if (rootNode->getChildren().size() <= 1) {
                         subPlanContainingRemovedOperator->removeAsRootOperator(rootNode->as<LogicalOperatorNode>());
                     }
                 }
-                operatorBeingRemoved->removeChildren();
+                removedOperatorInSubPlan->removeChildren();
                 for (const auto& operatorToRemove : removedOperatorInSubPlan->getAndFlattenAllAncestors()) {
                     operatorToRemove->removeAllParent();
                 }
