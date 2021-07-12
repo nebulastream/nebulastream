@@ -96,11 +96,11 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     Runtime::TupleBuffer buffer;
     switch (sourceMode) {
         case emptyBuffer: {
-            buffer = globalBufferManager->getBufferBlocking();
+            buffer = bufferManager->getBufferBlocking();
             break;
         }
         case copyBuffer: {
-            buffer = globalBufferManager->getBufferBlocking();
+            buffer = bufferManager->getBufferBlocking();
             memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
             break;
         }
