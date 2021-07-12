@@ -27,7 +27,7 @@ namespace NES {
  */
 class RuntimeNesMetrics {
   public:
-    RuntimeNesMetrics();
+    RuntimeNesMetrics() = default;
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -51,10 +51,6 @@ class RuntimeNesMetrics {
      */
     web::json::value toJson() const;
 
-    bool operator==(const RuntimeNesMetrics& rhs) const;
-    bool operator!=(const RuntimeNesMetrics& rhs) const;
-
-  private:
     uint64_t memoryUsageInBytes;
     uint64_t cpuLoadInJiffies;//user+system
     uint64_t blkioBytesRead;
