@@ -32,6 +32,24 @@
 
 namespace NES {
 
+void SystemResourcesReader::ReadRuntimeNesMetrics() {
+    // used memory -> /sys/fs/cgroup/memory/memory.usage_in_bytes
+    // used cpu -> /sys/fs/cgroup/cpuacct/cpuacct.stat
+    // I/O -> /sys/fs/cgroup/blkio/blkio.throttle.io_service_bytes
+
+    std::ifstream t("/sys/fs/cgroup/memory/memory.usage_in_bytes");
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+
+    NES_INFO(buffer.str());
+}
+
+void SystemResourcesReader::ReadStaticNesMetrics() {
+
+}
+
+
+
 CpuMetrics SystemResourcesReader::ReadCPUStats() {
     std::ifstream fileStat("/proc/stat");
     std::string line;

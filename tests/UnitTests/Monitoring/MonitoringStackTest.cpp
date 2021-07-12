@@ -26,6 +26,7 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
+#include <Monitoring/Util/SystemResourcesReader.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger.hpp>
 
@@ -46,6 +47,11 @@ class MonitoringStackTest : public testing::Test {
     /* Will be called before a test is executed. */
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
+
+TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
+    SystemResourcesReader::ReadRuntimeNesMetrics();
+}
+
 
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
@@ -71,7 +77,7 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
 TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskStats = MetricUtils::DiskStats();
     auto diskMetrics = diskStats.measure();
-    EXPECT_TRUE(diskMetrics.fBavail > 0);
+    EXPECT_TRUE(diskMetrics.fBavail >= 0);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
