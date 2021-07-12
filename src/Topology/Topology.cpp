@@ -17,6 +17,7 @@
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Topology/TopologyNodeId.hpp>
 #include <algorithm>
 #include <deque>
 #include <utility>
@@ -283,6 +284,24 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
     }
     return foundNode;
 }
+
+TopologyNodePtr Topology::findTopologyNodeByIdInSubgraphHelper(TopologyNodePtr sourceNode, uint64_t id){
+    // DFS
+    TopologyNodePtr resultNode = nullptr;
+    if (sourceNode->getId() == id) {
+        return sourceNode;
+    }
+
+    // not equal
+    for (auto& currentNode : sourceNode->getParents()) {
+        resultNode = findTopologyNodeByIdInSubgraphHelper(currentNode->as<TopologyNode>(), id);
+        if (resultNode) {
+            break;
+        }
+    }
+    return resultNode;
+}
+
 
 std::string Topology::toString() {
     std::unique_lock lock(topologyLock);
@@ -586,6 +605,16 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(std::vector<TopologyNode
     }
 
     return findNodesBetween(commonAncestorForChildren, commonChildForParents);
+}
+TopologyNodePtr Topology::findTopologyNodeByIdInSubGraph(uint64_t id, std::vector<TopologyNodePtr> sourceNodes) {
+    TopologyNodePtr found = nullptr;
+    for(const auto&sourceNode : sourceNodes){
+        found = findTopologyNodeByIdInSubgraphHelper(sourceNode, id);
+        if(found){
+            break;
+        }
+    }
+    return found;
 }
 
 }// namespace NES

@@ -48,6 +48,7 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
     NES_DEBUG("BasePlacementStrategy: Prepare a map of source to physical nodes");
     NES_TRACE("BasePlacementStrategy: Clear the previous pinned operator mapping");
     pinnedOperatorLocationMap.clear();
+    topologyNodesWithSourceOperators.clear();
     TopologyNodePtr sinkNode = topology->getRoot();
     std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
     std::vector<TopologyNodePtr> allSourceNodes;
@@ -145,6 +146,7 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
                 "BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
         }
         pinnedOperatorLocationMap[sourceNode->getId()] = candidateTopologyNode;
+        topologyNodesWithSourceOperators.emplace_back(candidateTopologyNode);
         topologyNodes.erase(topologyNodes.begin());
         mapOfSourceToTopologyNodes[logicalSourceName] = topologyNodes;
     }
@@ -156,6 +158,7 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, Qu
     NES_DEBUG("BasePlacementStrategy: Prepare a map of source to physical nodes");
     NES_TRACE("BasePlacementStrategy: Clear the previous pinned operator mapping");
     pinnedOperatorLocationMap.clear();
+    topologyNodesWithSourceOperators.clear();
 
     NES_TRACE("BasePlacementStrategy: Find the topology sub graph for the source nodes.");
     std::vector<TopologyNodePtr> topoSubGraphSourceNodes = this->topology->findPathBetween(sourceNodes, {rootNode});
@@ -188,6 +191,7 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, Qu
 
                 }
                 pinnedOperatorLocationMap[sourceOperator->getId()] = (*found);
+                topologyNodesWithSourceOperators.emplace_back((*found));
 
     }
 

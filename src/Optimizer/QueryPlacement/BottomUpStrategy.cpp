@@ -82,6 +82,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         NES_DEBUG("BottomUpStrategy: clear the temporary map : " << queryId);
         operatorToExecutionNodeMap.clear();
         pinnedOperatorLocationMap.clear();
+        topologyNodesWithSourceOperators.clear();
         NES_DEBUG("BottomUpStrategy: Run type inference phase for query plans in global execution plan for query with id : "
                   << queryId);
 
@@ -151,6 +152,7 @@ std::unordered_set<ExecutionNodePtr> BottomUpStrategy::updateGlobalExecutionPlan
         NES_DEBUG("BottomUpStrategy: clear the temporary map : " << queryId);
         operatorToExecutionNodeMap.clear();
         pinnedOperatorLocationMap.clear();
+        topologyNodesWithSourceOperators.clear();
         NES_DEBUG("BottomUpStrategy: Run type inference phase for query plans in global execution plan for query with id : "
                       << queryId);
 

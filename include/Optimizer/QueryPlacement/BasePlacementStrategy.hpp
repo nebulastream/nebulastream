@@ -159,6 +159,7 @@ class BasePlacementStrategy {
     std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_set<ExecutionNodePtr> executionNodesCreatedDuringPartialPlacement;
+    std::vector<TopologyNodePtr> topologyNodesWithSourceOperators;
 
   private:
     /**
