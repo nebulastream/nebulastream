@@ -30,7 +30,7 @@ std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(con
         case BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
         case TopDown:
             return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
-        case IFCOP: IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+        case IFCOP: return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
             // FIXME: enable them with issue #755
             //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
             //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
