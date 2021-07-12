@@ -85,6 +85,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      * @param logicalStreamName the name of the logical stream
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
+     * @param sourceMode how the memroy source create the content, either by wrapping or by copy buffer
      * @return a constructed MemorySourceStreamConfig
      */
     static AbstractPhysicalStreamConfigPtr create(const std::string& sourceType,
