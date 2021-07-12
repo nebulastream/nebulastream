@@ -39,6 +39,10 @@ class IFCOPStrategy : public BasePlacementStrategy {
                   TopologyPtr topology,
                   TypeInferencePhasePtr typeInferencePhase,
                   StreamCatalogPtr streamCatalog);
+
+    void getPathForPlacement(NES::QueryPlanPtr queryPlan);
+
+    std::vector<std::vector<bool>> getPlacementCandidate(NES::QueryPlanPtr queryPlan);
 };
 }// namespace NES::Optimizer
 #endif//IFCOPSTRATEGY_HPP
