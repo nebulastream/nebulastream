@@ -196,14 +196,15 @@ void QueryReconfigurationPhase::removeDeletedOperators(QueryPlanPtr& queryPlan, 
             auto subPlanContainingRemovedOperator = operatorToSubPlan[removedOperator];
             if (subPlanContainingModifiedOperator->getQuerySubPlanId() == subPlanContainingRemovedOperator->getQuerySubPlanId()) {
                 auto removedOperatorInSubPlan = subPlanContainingModifiedOperator->getOperatorWithId(removedOperator);
-                for (const auto& rootNode : removedOperatorInSubPlan->getAllRootNodes()) {
+                auto operatorBeingRemoved = subPlanContainingModifiedOperator->getOperatorWithId(removedOperator);
+                for (const auto& rootNode : operatorBeingRemoved->getAllRootNodes()) {
                     if (rootNode->getChildren().size() <= 1) {
                         subPlanContainingRemovedOperator->removeAsRootOperator(rootNode->as<LogicalOperatorNode>());
                     }
                 }
+                operatorBeingRemoved->removeChildren();
                 for (const auto& operatorToRemove : removedOperatorInSubPlan->getAndFlattenAllAncestors()) {
                     operatorToRemove->removeAllParent();
-                    operatorToRemove->removeChildren();
                 }
             } else {
                 // Navigate via network sources to remove network sink writing to operator being removed
