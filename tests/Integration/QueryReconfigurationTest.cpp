@@ -1122,7 +1122,6 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationPartialMer
 TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationPartialMoreThanTwoQueriesMerging) {
 
     std::string strategy = GetParam();
-//    std::string strategy = "TopDown";
 
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
