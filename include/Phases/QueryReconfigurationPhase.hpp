@@ -123,7 +123,9 @@ class QueryReconfigurationPhase {
     void mapNetworkSourcesToSinks();
     std::set<QueryPlanPtr> plansAboveMergePoint(const std::vector<uint64_t>& sinkOperatorIds,
                                                 const std::set<QueryPlanPtr>& subPlansContainingMergePoints);
-    void removeDeletedOperators(QueryPlanPtr& queryPlan, const SharedQueryPlanChangeLogPtr& changeLog);
+    void
+    removeDeletedOperators(QueryPlanPtr& queryPlan, const SharedQueryPlanChangeLogPtr& changeLog,
+                                const std::set<QueryPlanPtr>& set);
 };
 }// namespace NES
 #endif//NES_QUERYRECONFIGURATIONPHASE_HPP
