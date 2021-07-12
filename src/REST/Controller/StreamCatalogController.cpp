@@ -137,8 +137,8 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 }
             })
             .wait();
-}
-    else if(path[1] == "addLogicalStream-ex") {
+
+} else if(path[1] == "addLogicalStream-ex") {
 
         NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: REST received request to add new Logical Stream "
                   << message.to_string());
