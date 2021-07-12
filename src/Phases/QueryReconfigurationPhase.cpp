@@ -156,7 +156,7 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
     }
 
     // Remove operator in query subplan
-    removeDeletedOperators(queryPlan, changeLog);
+    removeDeletedOperators(queryPlan, changeLog, querySubPlansToStop);
 
     NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
 
@@ -185,7 +185,9 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
     return true;
 }
 
-void QueryReconfigurationPhase::removeDeletedOperators(QueryPlanPtr& queryPlan, const SharedQueryPlanChangeLogPtr& changeLog) {
+void QueryReconfigurationPhase::removeDeletedOperators(QueryPlanPtr& queryPlan,
+                                                       const SharedQueryPlanChangeLogPtr& changeLog,
+                                                       const std::set<QueryPlanPtr>& querySubPlansToStop) {
     for (const auto& removal : changeLog->getRemoval()) {
         OperatorId childIdOfOperatorRemoved = removal.first->getId();
         if (!queryPlan->hasOperatorWithId(childIdOfOperatorRemoved)) {
@@ -207,32 +209,15 @@ void QueryReconfigurationPhase::removeDeletedOperators(QueryPlanPtr& queryPlan, 
                     operatorToRemove->removeAllParent();
                 }
             } else {
-                // Navigate via network sources to remove network sink writing to operator being removed
-                std::vector<SourceLogicalOperatorNodePtr> sourcesChain{subPlanContainingRemovedOperator->getSourceOperators()};
-                while (!sourcesChain.empty()) {
-                    auto sourceOperator = sourcesChain.back();
-                    sourcesChain.pop_back();
-                    auto found = networkSourcesToSinks.find(sourceOperator);
-                    if (found != networkSourcesToSinks.end()) {
-                        for (const auto& sinkWritingToSource : found->second) {
-                            auto planWithSinkWriting = operatorToSubPlan[sinkWritingToSource->getId()];
-                            if (planWithSinkWriting->getQuerySubPlanId()
-                                == subPlanContainingModifiedOperator->getQuerySubPlanId()) {
-                                planWithSinkWriting->removeAsRootOperator(sinkWritingToSource);
-                                std::vector<NodePtr> children = sinkWritingToSource->getChildren();
-                                while (!children.empty()) {
-                                    auto childOperator = children.back()->as<OperatorNode>();
-                                    children.pop_back();
-                                    if (childOperator->getId() != childIdOfOperatorRemoved) {
-                                        childOperator->removeAllParent();
-                                        auto grandChildren = childOperator->getChildren();
-                                        children.insert(children.end(), grandChildren.begin(), grandChildren.end());
-                                        childOperator->removeChildren();
-                                    }
-                                }
-                            } else {
-                                auto planSources = planWithSinkWriting->getSourceOperators();
-                                sourcesChain.insert(sourcesChain.end(), planSources.begin(), planSources.end());
+                auto operatorBeingModified = subPlanContainingModifiedOperator->getOperatorWithId(childIdOfOperatorRemoved);
+                for (const auto& root : subPlanContainingModifiedOperator->getSinkOperators()) {
+                    if (root->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+                        auto sinkDesc = root->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>();
+                        auto subPlanSinkWritesTo = operatorToSubPlan[sinkDesc->getNesPartition().getOperatorId()];
+                        if (querySubPlansToStop.contains(subPlanSinkWritesTo)) {
+                            root->removeChild(operatorBeingModified);
+                            if (root->getChildren().empty()) {
+                                subPlanContainingModifiedOperator->removeAsRootOperator(root);
                             }
                         }
                     }
