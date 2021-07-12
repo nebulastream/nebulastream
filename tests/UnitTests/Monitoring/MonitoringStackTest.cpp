@@ -26,6 +26,7 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
+#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/Util/SystemResourcesReader.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger.hpp>
@@ -49,7 +50,8 @@ class MonitoringStackTest : public testing::Test {
 };
 
 TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
-    SystemResourcesReader::ReadRuntimeNesMetrics();
+    auto runtimeMetrics = SystemResourcesReader::ReadRuntimeNesMetrics();
+    NES_INFO(runtimeMetrics.toJson());
 }
 
 

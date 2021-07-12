@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
@@ -32,16 +33,63 @@
 
 namespace NES {
 
-void SystemResourcesReader::ReadRuntimeNesMetrics() {
-    // used memory -> /sys/fs/cgroup/memory/memory.usage_in_bytes
-    // used cpu -> /sys/fs/cgroup/cpuacct/cpuacct.stat
-    // I/O -> /sys/fs/cgroup/blkio/blkio.throttle.io_service_bytes
+RuntimeNesMetrics SystemResourcesReader::ReadRuntimeNesMetrics() {
+    RuntimeNesMetrics output{};
 
-    std::ifstream t("/sys/fs/cgroup/memory/memory.usage_in_bytes");
-    std::stringstream buffer;
-    buffer << t.rdbuf();
+    std::vector<std::string> metricLocations {
+        "/sys/fs/cgroup/memory/memory.usage_in_bytes",
+        "/sys/fs/cgroup/cpuacct/cpuacct.stat",
+        "/sys/fs/cgroup/blkio/blkio.throttle.io_service_bytes"
+    };
 
-    NES_INFO(buffer.str());
+    NES_DEBUG("SystemResourcesReader: Reading memory.usage_in_bytes for metrics");
+    std::string line;
+    int i = 0;
+    std::ifstream memoryLoc(metricLocations[0]);
+    std::string memoryStr((std::istreambuf_iterator<char>(memoryLoc)),std::istreambuf_iterator<char>());
+    output.memoryUsageInBytes = std::stoull(memoryStr);
+
+    NES_DEBUG("SystemResourcesReader: Reading cpuacct.stat for metrics");
+    std::ifstream cpuStat(metricLocations[1]);
+    while (std::getline(cpuStat, line)) {
+        std::istringstream ss(line);
+        std::vector<std::string> tokens{std::istream_iterator<std::string>{ss}, std::istream_iterator<std::string>{}};
+
+        char name[2];
+        int len = tokens[0].copy(name, tokens[0].size());
+        name[len] = '\0';
+
+        if (i==0) {
+            output.cpuLoadInJiffies = std::stoull(tokens[1]);
+        }
+        else if (i == 1) {
+            output.cpuLoadInJiffies += std::stoull(tokens[1]);
+        }
+        else {
+            break;
+        }
+        i++;
+    }
+
+    NES_DEBUG("SystemResourcesReader: Reading blkio.throttle.io_service_bytes for metrics");
+    std::ifstream fileStat(metricLocations[2]);
+    while (std::getline(fileStat, line)) {
+        std::istringstream ss(line);
+        std::vector<std::string> tokens{std::istream_iterator<std::string>{ss}, std::istream_iterator<std::string>{}};
+
+        char name[3];
+        int len = tokens[0].copy(name, tokens[0].size());
+        name[len] = '\0';
+
+        if (tokens[1] == "Read") {
+            output.blkioBytesRead += std::stoul(tokens[2]);
+        }
+        else if (tokens[1] == "Write") {
+            output.blkioBytesWritten += std::stoul(tokens[2]);
+        }
+    }
+
+    return output;
 }
 
 void SystemResourcesReader::ReadStaticNesMetrics() {

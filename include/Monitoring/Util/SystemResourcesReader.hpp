@@ -27,6 +27,7 @@ class CpuMetrics;
 class MemoryMetrics;
 class NetworkMetrics;
 class DiskMetrics;
+class RuntimeNesMetrics;
 
 /**
  * @brief This is a static utility class to collect basic system information
@@ -34,7 +35,7 @@ class DiskMetrics;
  */
 class SystemResourcesReader {
   public:
-    static void ReadRuntimeNesMetrics();
+    static RuntimeNesMetrics ReadRuntimeNesMetrics();
 
     static void ReadStaticNesMetrics();
 
