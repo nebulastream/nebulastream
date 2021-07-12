@@ -480,7 +480,7 @@ std::map<std::string, std::vector<std::string>> StreamCatalog::getMismappedPhysi
 
 std::vector<std::string> StreamCatalog::getMismappedPhysicalStreams(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
-    std::vector<std::string> physicalStreamsNames = logicalToPhysicalStreamMapping[logicalStreamName];
+    std::vector<std::string> physicalStreamsNames = mismappedStreams[logicalStreamName];
     return physicalStreamsNames;
 }
 
