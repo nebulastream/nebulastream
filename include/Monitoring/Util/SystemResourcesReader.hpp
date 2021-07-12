@@ -34,6 +34,10 @@ class DiskMetrics;
  */
 class SystemResourcesReader {
   public:
+    static void ReadRuntimeNesMetrics();
+
+    static void ReadStaticNesMetrics();
+
     /**
      * @brief This method reads CPU information from /proc/stat.
      * @return A map where for each CPU the according /proc/stat information are returned in the form
