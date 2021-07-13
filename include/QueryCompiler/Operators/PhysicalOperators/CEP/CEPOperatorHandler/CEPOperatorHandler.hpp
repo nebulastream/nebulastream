@@ -22,17 +22,13 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-
-
+#include <Windowing/CEPForwardRefs.hpp>
 
 namespace NES::CEP{
-class CEPOperatorHandler;
-using CEPOperatorHandlerPtr = std::shared_ptr<NES::CEP::CEPOperatorHandler>;
-
 /**
  * @brief Operator handler for cep operators
  */
-
+//template<class KeyType>
 class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
     CEPOperatorHandler();
@@ -76,10 +72,6 @@ class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
     Runtime::StateManagerPtr stateManager;
     uint64_t id;
 };
-
-class CEPOperatorHandler;
-using CEPOperatorHandlerPtr [[maybe_unused]] = std::shared_ptr<CEP::CEPOperatorHandler>;
-
 }// namespace NES::CEP
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATOR_PHYSICALOPERATOR_CEP_CEPOPERATORHANDLER_CEPOPERATORHANDLER_HPP_

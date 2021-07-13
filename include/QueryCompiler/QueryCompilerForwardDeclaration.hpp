@@ -62,6 +62,12 @@ class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 }// namespace Join
 
+namespace CEP {
+
+class CEPOperatorHandler;
+using CEPOperatorHandlerPtr [[maybe_unused]] = std::shared_ptr<CEPOperatorHandler>;
+}// namespace CEP
+
 namespace Windowing {
 
 class LogicalWindowDefinition;
