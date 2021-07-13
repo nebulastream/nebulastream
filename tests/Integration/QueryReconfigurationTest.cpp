@@ -1296,7 +1296,11 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationPartialMor
 
     wrk1->addParent(wrk5->getWorkerId());
     wrk2->addParent(wrk6->getWorkerId());
+    wrk5->addParent(wrk7->getWorkerId());
+    wrk6->addParent(wrk7->getWorkerId());
 
+    wrk5->removeParent(crd->getNesWorker()->getWorkerId());
+    wrk6->removeParent(crd->getNesWorker()->getWorkerId());
     wrk1->removeParent(crd->getNesWorker()->getWorkerId());
     wrk2->removeParent(crd->getNesWorker()->getWorkerId());
 
@@ -1379,6 +1383,9 @@ TEST_P(QueryReconfigurationPlacementParameterizedTest, reconfigurationPartialMor
     stopWorker(wrk2, 2);
     stopWorker(wrk3, 3);
     stopWorker(wrk4, 4);
+    stopWorker(wrk5, 5);
+    stopWorker(wrk6, 6);
+    stopWorker(wrk6, 7);
 
     NES_INFO("QueryReconfigurationTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
