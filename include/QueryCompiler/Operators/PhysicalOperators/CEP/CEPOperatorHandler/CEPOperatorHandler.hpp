@@ -70,7 +70,6 @@ class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
   private:
     uint64_t counter;
     Runtime::StateManagerPtr stateManager;
-    uint64_t id;
 };
 }// namespace NES::CEP
 

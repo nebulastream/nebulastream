@@ -47,6 +47,7 @@
 #include <iostream>
 #include <utility>
 
+#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
@@ -1378,9 +1379,9 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
 }
 
 /**
- * @brief This test generates a predicate with string comparision
+ * @brief This test checks the correctness of the current CEPiteration OP
  */
-TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOP) {
+TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
 
@@ -1393,13 +1394,17 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOP) {
     codeGenerator->generateCodeForScan(inputSchema, inputSchema, context);
 
     //define number of iterations
-    codeGenerator->generateCodeForCEPIteration(2,4,context);
+    codeGenerator->generateCodeForCEPIteration(50,150,context);
 
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(inputSchema, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(context);
+
+    // init handler
+    auto cepOperatorHandler = CEP::CEPOperatorHandler::create();
+    context->registerOperatorHandler(cepOperatorHandler);
 
     /* prepare input tuple buffer */
     source->open();
@@ -1408,10 +1413,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOP) {
     auto inputBuffer = *optVal;
 
     /* execute Stage */
-
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        nodeEngine->getBufferManager(),
-                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
+                                                                       context->getOperatorHandlers());
+
+    cepOperatorHandler->start(queryContext, nodeEngine->getStateManager(),0);
+
     cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
     Runtime::WorkerContext wctx{0};
     stage->setup(*queryContext);
@@ -1420,8 +1427,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOP) {
 
     auto resultBuffer = queryContext->buffers[0];
 
-    /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), false);
+    /* check for correctness, as minIteration = 50, we expect 2 outputs from the 131 tuples in the inputBuffer*/
+    EXPECT_EQ(int(resultBuffer.getNumberOfTuples()), 2);
 
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, inputSchema));
 }
