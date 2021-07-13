@@ -2223,7 +2223,6 @@ VariableDeclaration CCodeGenerator::getWindowOperatorHandler(const PipelineConte
     auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::WindowOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
-    // auto windowOperatorHandler = executionContext.getOperatorHandler<Windowing::WindowOperatorHandler>(windowOperatorIndex)
     auto windowOperatorStatement =
         VarDeclStatement(windowOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
     context->code->variableInitStmts.push_back(windowOperatorStatement.copy());

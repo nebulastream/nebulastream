@@ -19,12 +19,19 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalIterationCEPOperator::PhysicalIterationCEPOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                           uint64_t minIterations, uint64_t maxIterations)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), minIterations(minIterations), maxIterations(maxIterations)  {}
+PhysicalIterationCEPOperator::PhysicalIterationCEPOperator(OperatorId id,
+                                                           SchemaPtr inputSchema,
+                                                           SchemaPtr outputSchema,
+                                                           uint64_t minIterations,
+                                                           uint64_t maxIterations)
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), minIterations(minIterations),
+      maxIterations(maxIterations) {}
 
-PhysicalOperatorPtr
-PhysicalIterationCEPOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations) {
+PhysicalOperatorPtr PhysicalIterationCEPOperator::create(OperatorId id,
+                                                         SchemaPtr inputSchema,
+                                                         SchemaPtr outputSchema,
+                                                         uint64_t minIterations,
+                                                         uint64_t maxIterations) {
     return std::make_shared<PhysicalIterationCEPOperator>(id, inputSchema, outputSchema, minIterations, maxIterations);
 }
 
@@ -32,13 +39,18 @@ uint64_t PhysicalIterationCEPOperator::getMaxIterations() { return maxIterations
 
 uint64_t PhysicalIterationCEPOperator::getMinIterations() { return minIterations; }
 
-PhysicalOperatorPtr PhysicalIterationCEPOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations) {
+PhysicalOperatorPtr PhysicalIterationCEPOperator::create(SchemaPtr inputSchema,
+                                                         SchemaPtr outputSchema,
+                                                         uint64_t minIterations,
+                                                         uint64_t maxIterations) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, minIterations, maxIterations);
 }
 
 std::string PhysicalIterationCEPOperator::toString() const { return "PhysicalIterationCEPOperator"; }
 
-OperatorNodePtr PhysicalIterationCEPOperator::copy() { return create(id, inputSchema, outputSchema, getMinIterations(), getMaxIterations()); }
+OperatorNodePtr PhysicalIterationCEPOperator::copy() {
+    return create(id, inputSchema, outputSchema, getMinIterations(), getMaxIterations());
+}
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
