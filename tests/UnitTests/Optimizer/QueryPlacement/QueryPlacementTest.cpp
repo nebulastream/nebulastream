@@ -756,6 +756,11 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
     }
 }
 
+/**
+ * Test on a linear topology with one logical source
+ * Topology: sinkNode--midNode---srcNode
+ * Query: SinkOp---FilterOp---SourceOp
+ */
 TEST_F(QueryPlacementTest, testIFCOPPlacement) {
     // Setup the topology
     // We are using a linear topology of three nodes:
@@ -859,4 +864,120 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
     }
 
     // TODO: Assert that all operators are placed
+}
+
+/**
+ * Test on a branched topology with one logical source
+ * Topology: sinkNode--srcNode1
+ *                   \
+ *                    --srcNode2
+ * Query: SinkOp---FilterOp---SourceOp
+ */
+TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
+    // Setup the topology
+    // We are using a linear topology of three nodes:
+    // srcNode -> midNode -> sinkNode
+    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4);
+    auto srcNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
+    auto srcNode2 = TopologyNode::create(2, "localhost", 4002, 5002, 4);
+
+    TopologyPtr topology = Topology::create();
+    topology->setAsRoot(sinkNode);
+
+    topology->addNewPhysicalNodeAsChild(sinkNode, srcNode1);
+    topology->addNewPhysicalNodeAsChild(sinkNode, srcNode2);
+
+    ASSERT_TRUE(sinkNode->containAsChild(srcNode1));
+    ASSERT_TRUE(sinkNode->containAsChild(srcNode2));
+
+    // Prepare the source and schema
+    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                         "->addField(\"value\", BasicType::UINT64);";
+    const std::string streamName = "car";
+
+    streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addLogicalStream(streamName, schema);
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("car");
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, srcNode1);
+    StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, srcNode2);
+
+    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+    streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
+
+    // Prepare the query
+    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+
+    sinkOperator->addChild(filterOperator);
+    filterOperator->addChild(sourceOperator);
+
+    QueryPlanPtr testQueryPlan = QueryPlan::create();
+    testQueryPlan->addRootOperator(sinkOperator);
+
+    // Prepare the placement
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("IFCOP",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
+
+
+    // Execute optimization phases prior to placement
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    testQueryPlan = queryReWritePhase->execute(testQueryPlan);
+    typeInferencePhase->execute(testQueryPlan);
+
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(testQueryPlan);
+    typeInferencePhase->execute(testQueryPlan);
+
+    // Execute the placement
+    placementStrategy->updateGlobalExecutionPlan(testQueryPlan);
+    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
+
+    EXPECT_EQ(executionNodes.size(), 3UL);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 0U) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
+            EXPECT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            EXPECT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+        } else if (executionNode->getId() == 1U) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
+            EXPECT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            EXPECT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());//system generated source
+        } else if (executionNode->getId() == 1U) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
+            EXPECT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            EXPECT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());// stream source
+        }
+    }
+
+    // TODO #1018: Assert that all operators are placed
+
+    // TODO #1018: Assert that filter are placed either at both sources or at the sink
 }

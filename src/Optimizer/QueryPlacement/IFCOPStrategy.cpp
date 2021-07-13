@@ -97,46 +97,46 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
     }
     auto topologyIterator = BreadthFirstNodeIterator(topology->getRoot());
 
-    int placedOperator = 0;
-    int totalNumberOfOperators = QueryPlanIterator(queryPlan).snapshot().size();
+    uint32_t placedOperator = 0;
+    uint32_t totalNumberOfOperators = QueryPlanIterator(queryPlan).snapshot().size();
 
     for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
         // add a new entry in the binary mapping for the current node
         std::vector<bool> currentTopologyNodeMapping;
 
         auto currentTopologyNode = (*itr)->as<TopologyNode>();
-        auto isSourceNode =
-            std::find(allSourceNodes.begin(), allSourceNodes.end(), currentTopologyNode) != allSourceNodes.end();
+        NES_TRACE("IFCOPStrategy::getPlacementCandidate:currentTopologyNode:" << (std::string) currentTopologyNode->toString());
+        auto isSourceNode = std::find(allSourceNodes.begin(), allSourceNodes.end(), currentTopologyNode) != allSourceNodes.end();
         auto isSinkNode = currentTopologyNode->equal(topology->getRoot());
 
-        int lowerBound = 0;
+        uint32_t lowerBound = 0;
         if (isSinkNode) {
             // if the current node is a sink node, place at least 1 operator (i.e., the sink)
             lowerBound = 1;
         }
 
-        int upperBound = totalNumberOfOperators - placedOperator;
-        if (!isSourceNode) {
-            // if the current node is NOT a source node, avoid placing the last operator (i.e., the source)
-            upperBound = totalNumberOfOperators - placedOperator - 1;
-        }
+        uint32_t upperBound = totalNumberOfOperators - placedOperator - queryPlan->getSourceOperators().size();
+//        if (!isSourceNode) {
+//            // if the current node is NOT a source node, avoid placing the source operators
+//            upperBound = totalNumberOfOperators - placedOperator - queryPlan->getSourceOperators().size();
+//        }
 
         // define the number of operator to place in the current node
         std::random_device r;
         std::default_random_engine e1(r());
-        std::uniform_int_distribution<int> uniform_dist(lowerBound, upperBound);
-        int numOperatorToPlace = uniform_dist(e1);
+        std::uniform_int_distribution<uint32_t> uniform_dist(lowerBound, upperBound);
+        uint32_t numOperatorToPlace = uniform_dist(e1);
 
         // if we are reaching the source node but still have operators to place, place them all in the source node
-        if (isSourceNode && (placedOperator < totalNumberOfOperators)) {
-            numOperatorToPlace = totalNumberOfOperators - placedOperator;
+        if (isSourceNode && (placedOperator + queryPlan->getSourceOperators().size() < totalNumberOfOperators)) {
+            numOperatorToPlace = totalNumberOfOperators - placedOperator - queryPlan->getSourceOperators().size();
         }
 
         auto queryPlanIteror = QueryPlanIterator(queryPlan);
         auto qPlanItr = queryPlanIteror.begin();
 
         // skip already placed operators
-        for (int i=0; i<placedOperator; i++) {
+        for (uint32_t i = 0; i < placedOperator; i++) {
             currentTopologyNodeMapping.push_back(false);
             ++qPlanItr;
         }
