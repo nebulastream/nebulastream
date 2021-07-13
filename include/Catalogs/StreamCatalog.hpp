@@ -115,14 +115,14 @@ class StreamCatalog {
    * @param hashId of the actor
    * @return bool indicating success of remove stream
    */
-    bool deletePhysicalStream(std::string physicalStreamName, std::uint64_t hashId);
+    bool unregisterPhysicalStream(std::string physicalStreamName, std::uint64_t hashId);
 
     /**
      * @brief method to remove a physical stream from its logical streams
      * @param hasId of the leaving node
      * @return bool indicating success of remove of physical stream
      */
-    bool removePhysicalStreamByHashId(uint64_t hashId);
+    bool unregisterPhysicalStreamByHashId(uint64_t hashId);
 
     /**
     * @brief method to remove a physical stream from its logical stream in mismappedStreams mapping. If there are no elements left for that logicalStreamName that is also deleted from the mapping.
@@ -144,7 +144,7 @@ class StreamCatalog {
    * @param param of the node to be deleted
    * @return bool indicating success of remove stream
    */
-   bool removePhysicalStreamFromAllLogicalStreams(std::string physicalStreamName);
+   bool unregisterPhysicalStreamFromAllLogicalStreams(std::string physicalStreamName);
 
     /**
     * @brief method to return the stream for an existing logical stream

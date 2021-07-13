@@ -21,6 +21,8 @@
 
 namespace NES {
 
+//BDAPRO all state changes method call should be triggered in this class
+
 StreamCatalogEntry::StreamCatalogEntry(std::string sourceType,
                                        std::string physicalStreamName,
                                        std::vector<std::string> logicalStreamName,
@@ -52,6 +54,8 @@ std::string StreamCatalogEntry::getPhysicalName() { return physicalStreamName; }
 
 std::vector<std::string> StreamCatalogEntry::getLogicalName() { return logicalStreamName; }
 
+std::vector<std::string> StreamCatalogEntry::getMissmappedLogicalName() { return mismappedLogicalStreamName; }
+
 bool StreamCatalogEntry::addLogicalStreamName(std::string newLogicalStreamName){
     for(std::string name : logicalStreamName){
         if(name==newLogicalStreamName){
@@ -61,6 +65,59 @@ bool StreamCatalogEntry::addLogicalStreamName(std::string newLogicalStreamName){
     }
     logicalStreamName.push_back(newLogicalStreamName);
     return true;
+}
+
+bool StreamCatalogEntry::addLogicalStreamNameToMismapped(std::string newLogicalStreamName){
+    for(std::string &name : mismappedLogicalStreamName){
+        if(name==newLogicalStreamName){
+            NES_ERROR("StreamCatalogEntry::addLogicalStreamNameToMismapped logicalStreamName="<<newLogicalStreamName<<" could not be added to StreamCatalogEntry as it already exists");
+            return false;
+        }
+    }
+    mismappedLogicalStreamName.push_back(newLogicalStreamName);
+    //BDAPRO - update state
+    return true;
+}
+
+void StreamCatalogEntry::moveLogicalStreamFromMismappedToRegular(std::string logicalStreamName){
+    auto it = std::remove(mismappedLogicalStreamName.begin(), mismappedLogicalStreamName.end(), logicalStreamName);
+    mismappedLogicalStreamName.erase(it, mismappedLogicalStreamName.end());
+
+    this->logicalStreamName.push_back(logicalStreamName);
+
+    //BDAPRO - update state
+}
+
+bool StreamCatalogEntry::removeLogicalStreamFromMismapped(std::string oldLogicalStreamName){
+    for(std::string &name : mismappedLogicalStreamName){
+        if(name==oldLogicalStreamName){
+            auto it = std::remove(mismappedLogicalStreamName.begin(), mismappedLogicalStreamName.end(), oldLogicalStreamName);
+            mismappedLogicalStreamName.erase(it, mismappedLogicalStreamName.end());
+            NES_DEBUG("StreamCatalogEntry::removeLogicalStream logicalStreamName="<<oldLogicalStreamName<<" was removed.");
+            //BDAPRO - update state
+            return true;
+        }
+    }
+    NES_ERROR("StreamCatalogEntry::removeLogicalStream logicalStreamName="<<oldLogicalStreamName<<" could not be removed from StreamCatalogEntry as it does not exists.");
+    return false;
+}
+
+bool StreamCatalogEntry::removeLogicalStream(std::string oldLogicalStreamName){
+    for(std::string &name : logicalStreamName){
+        if(name==oldLogicalStreamName){
+            auto it = std::remove(logicalStreamName.begin(), logicalStreamName.end(), oldLogicalStreamName);
+            logicalStreamName.erase(it, logicalStreamName.end());
+            NES_DEBUG("StreamCatalogEntry::removeLogicalStream logicalStreamName="<<oldLogicalStreamName<<" was removed.");
+            //BDAPRO - update state
+            return true;
+        }
+    }
+    NES_ERROR("StreamCatalogEntry::removeLogicalStream logicalStreamName="<<oldLogicalStreamName<<" could not be removed from StreamCatalogEntry as it does not exists.");
+    return false;
+}
+void StreamCatalogEntry::setStateToNoLogicalStream(){
+    //BDAPRO set state to no logical stream
+    return;
 }
 
 std::string StreamCatalogEntry::toString() {

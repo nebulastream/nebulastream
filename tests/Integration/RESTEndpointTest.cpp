@@ -981,5 +981,6 @@ TEST_F(RESTEndpointTest, testGetAllMismappedStreamsForLogicalStream) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
 }
+//BDAPRO add test for removeLogicalStreamFromMismapped
 
 }// namespace NES

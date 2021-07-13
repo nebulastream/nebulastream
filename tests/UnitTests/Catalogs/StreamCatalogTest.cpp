@@ -170,7 +170,7 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
     EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
-    EXPECT_TRUE(streamCatalog->deletePhysicalStream(conf->getPhysicalStreamName(),
+    EXPECT_TRUE(streamCatalog->unregisterPhysicalStream(conf->getPhysicalStreamName(),
                                                     physicalNode->getId()));
     NES_INFO(streamCatalog->getPhysicalStreamAndSchemaAsString());
 }

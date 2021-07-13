@@ -94,10 +94,46 @@ class StreamCatalogEntry {
     std::vector<std::string> getLogicalName();
 
     /**
+     * @brief get a vector of logical stream names which are mismapped (logical schema does not exists)
+     * @return vector of names as strings
+     */
+    std::vector<std::string> getMissmappedLogicalName();
+
+    /**
      * @brief add a logical stream name
      * @return true if the logicalStreamName was added successfully, false otherwise
      */
      bool addLogicalStreamName(std::string newLogicalStreamName);
+
+     /**
+      * @brief add a logical stream name to mismapped (logical streams without schema)
+      * @return true if the logicalStreamName was added successfully, false otherwise
+      */
+      bool addLogicalStreamNameToMismapped(std::string newLogicalStreamName);
+
+    /**
+    * @brief change a formerly mismapped logical stream to a regular one
+    * @return true if the logicalStreamName was added successfully, false otherwise
+    */
+      void moveLogicalStreamFromMismappedToRegular(std::string newLogicalStreamName);
+
+    /**
+    * @brief remove a logical stream from the vector of mismapped logical streams
+    * @return true if the logicalStreamName was removed successfully, false otherwise
+    */
+      bool removeLogicalStreamFromMismapped(std::string oldLogicalStreamName);
+
+    /**
+    * @brief remove a logical stream from the vector of regular logical streams
+    * @return true if the logicalStreamName was removed successfully, false otherwise
+    */
+      bool removeLogicalStream(std::string oldLogicalStreamName);
+
+      /**
+       * @brief changes the state to having no logical stream (method should only be called from within this class
+       * or through StreamCatalog::addPhysicalStreamWithoutLogicalStreams)
+       */
+      void setStateToNoLogicalStream();
 
     /**
      * @brief get PhysicalStreamState which contains count (#logicalstreams for that physicalStream) and state (e.g. misconfigured, regular)
@@ -111,6 +147,7 @@ class StreamCatalogEntry {
     std::string sourceType;
     std::string physicalStreamName;
     std::vector<std::string> logicalStreamName;
+    std::vector<std::string> mismappedLogicalStreamName;
     TopologyNodePtr node;
     PhysicalStreamState physicalStreamState;
 };

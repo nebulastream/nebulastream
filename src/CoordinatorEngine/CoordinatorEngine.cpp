@@ -141,7 +141,7 @@ bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
     }
     NES_DEBUG("CoordinatorEngine::UnregisterNode: found sensor, try to delete it in catalog");
     //remove from catalog
-    bool successCatalog = streamCatalog->removePhysicalStreamByHashId(nodeId);
+    bool successCatalog = streamCatalog->unregisterPhysicalStreamByHashId(nodeId);
     NES_DEBUG("CoordinatorEngine::UnregisterNode: success in catalog is " << successCatalog);
 
     NES_DEBUG("CoordinatorEngine::UnregisterNode: found sensor, try to delete it in toplogy");
@@ -196,7 +196,7 @@ bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, std::string ph
     }
     NES_DEBUG("CoordinatorEngine: node=" << physicalNode->toString());
 
-    bool success = streamCatalog->deletePhysicalStream(physicalStreamName, nodeId);
+    bool success = streamCatalog->unregisterPhysicalStream(physicalStreamName, nodeId);
     return success;
 }
 

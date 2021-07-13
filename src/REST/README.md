@@ -259,7 +259,7 @@ To Update a logical stream.
 
 To delete a logical stream.
 
-**API**: /streamCatalog/deleteLogicalStream\
+**API**: /streamCatalog/removeLogicalStream\
 **Verb**: DELETE\
 **Response Code**: 200 OK
 
