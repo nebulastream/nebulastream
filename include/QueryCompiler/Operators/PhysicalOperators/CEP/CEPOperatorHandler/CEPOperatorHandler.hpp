@@ -31,7 +31,7 @@ namespace NES::CEP{
 //template<class KeyType>
 class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
-    CEPOperatorHandler();
+    CEPOperatorHandler() = default;
 
     /**
      * @brief Factory to create new WindowOperatorHandler
