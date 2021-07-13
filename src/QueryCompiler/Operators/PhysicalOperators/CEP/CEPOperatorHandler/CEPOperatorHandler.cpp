@@ -31,8 +31,9 @@ void CEPOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr c
     //stateManager->registerState<CEPOperatorHandler>(stateId);
 }
 
-void CEPOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
+void CEPOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr context) {
 
+   //TODO: inregister from stateManager (requires StateVariable, ?localStateVariableId?) stateManager->unRegisterState(STATEVARIABLE)
 }
 
 void CEPOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
