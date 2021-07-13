@@ -368,46 +368,6 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
             return;
         }
     }
-    else if(path[1] == "removeLogicalStreamFromMismapped"){
-        //Check if the path contains the query id
-        auto param = parameters.find("streamName");
-        if (param == parameters.end()) {
-            NES_ERROR("StreamCatalogController: handleDelete -removeLogicalStream: Exception occurred while trying to remove "
-                      "logical stream");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
-            badRequestImpl(request, errorResponse);
-        }
-
-        try {
-            //Prepare Input query from user string
-            std::string streamName = param->second;
-
-            //BDAPRO - change method call
-            bool removed = streamCatalog->removeLogicalStream(streamName);
-
-            //Prepare the response
-            json::value result{};
-            if (removed) {
-                result["Success"] = json::value::boolean(removed);
-                successMessageImpl(request, result);
-            } else {
-                throw std::invalid_argument("Could not remove logical stream " + streamName);
-            }
-
-            return;
-        } catch (const std::exception& exc) {
-            NES_ERROR("StreamCatalogController: handleDelete -removeLogicalStream: Exception occurred while building the "
-                      "query plan for user request."
-                          << exc.what());
-            handleException(request, exc);
-            return;
-        } catch (...) {
-            RuntimeUtils::printStackTrace();
-            internalServerErrorImpl(request);
-            return;
-        }
-    }
     else if(path[1]=="removePhysicalStreamFromLogicalStream"){
         auto logicalStreamName = parameters.find("logicalStreamName");
         if (logicalStreamName == parameters.end()) {
