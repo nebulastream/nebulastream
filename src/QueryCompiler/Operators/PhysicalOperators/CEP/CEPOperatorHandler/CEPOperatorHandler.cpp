@@ -22,18 +22,13 @@ CEPOperatorHandlerPtr CEPOperatorHandler::create() {
     return std::make_shared<NES::CEP::CEPOperatorHandler>();
 }
 
-void CEPOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr context, Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) {
+void CEPOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr context, Runtime::StateManagerPtr, uint32_t localStateVariableId) {
     NES_DEBUG("CEPOperatorHandler::start() with localStateVariableId" << localStateVariableId << context);
-    this->stateManager = stateManager;
     this->clearCounter();
-    StateId stateId = {stateManager->getNodeId(), id, localStateVariableId};
-    //TODO fix registration -> key,Value
-    //stateManager->registerState<CEPOperatorHandler>(stateId);
 }
 
-void CEPOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr context) {
-
-   //TODO: inregister from stateManager (requires StateVariable, ?localStateVariableId?) stateManager->unRegisterState(STATEVARIABLE)
+void CEPOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
+   //TODO: unregister from stateManager (requires StateVariable, ?localStateVariableId?) stateManager->unRegisterState(STATEVARIABLE)
 }
 
 void CEPOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
