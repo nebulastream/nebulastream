@@ -1280,8 +1280,8 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0u);
     ASSERT_EQ(lambdaDataSource.numberOfTuplesToProduce, 52u);
+    lambdaDataSource.open();
 
-    // open is not needed here, since there's no local buff mgr to init
     while (lambdaDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
         auto resBuf = lambdaDataSource.receiveData();
         EXPECT_NE(resBuf, std::nullopt);
@@ -1328,8 +1328,8 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
                                        {});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.gatheringIngestionRate, 1u);
+    lambdaDataSource.open();
 
-    // open is not needed here, since there's no local buff mgr to init
     while (lambdaDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
         auto resBuf = lambdaDataSource.receiveData();
         EXPECT_NE(resBuf, std::nullopt);
