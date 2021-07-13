@@ -23,13 +23,16 @@
 #include <State/StateManager.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
+
+
 namespace NES::CEP{
 class CEPOperatorHandler;
-using CEPOperatorHandlerPtr = std::shared_ptr<CEPOperatorHandler>;
+using CEPOperatorHandlerPtr = std::shared_ptr<NES::CEP::CEPOperatorHandler>;
 
 /**
  * @brief Operator handler for cep operators
  */
+
 class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
     CEPOperatorHandler();
@@ -68,14 +71,15 @@ class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     void clearCounter();
 
-    bool CounterCheck(uint64_t minIterations, uint64_t maxIterations, uint64_t counter);
-
   private:
     uint64_t counter;
     Runtime::StateManagerPtr stateManager;
     uint64_t id;
 };
 
-}// namespace NES::Windowing
+class CEPOperatorHandler;
+using CEPOperatorHandlerPtr [[maybe_unused]] = std::shared_ptr<CEP::CEPOperatorHandler>;
+
+}// namespace NES::CEP
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATOR_PHYSICALOPERATOR_CEP_CEPOPERATORHANDLER_CEPOPERATORHANDLER_HPP_

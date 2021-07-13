@@ -15,22 +15,20 @@
 */
 #include <State/StateManager.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>
-#include <utility>
 
-// LOGGER!!
 namespace NES::CEP {
 
 CEPOperatorHandlerPtr CEPOperatorHandler::create() {
-    return std::make_shared<CEPOperatorHandler>();
+    return std::make_shared<NES::CEP::CEPOperatorHandler>();
 }
 
 void CEPOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr context, Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) {
     NES_DEBUG("CEPOperatorHandler::start() with localStateVariableId" << localStateVariableId << context);
     this->stateManager = stateManager;
     this->clearCounter();
-    //TODO I guess that registering process is required -> problem: key,value pair do I need to create a template for my class
-    //StateId stateId = {stateManager->getNodeId(), id ,localStateVariableId};
-    //stateManager->registerStateWithDefault<>(stateId,counter);
+    StateId stateId = {stateManager->getNodeId(), id, localStateVariableId};
+
+    //stateManager->registerState<CEPOperatorHandler>(stateId);
 }
 
 void CEPOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
@@ -56,16 +54,4 @@ void CEPOperatorHandler::clearCounter(){
     counter = 0;
 }
 
-bool CEPOperatorHandler::CounterCheck(uint64_t minIterations, uint64_t maxIterations, uint64_t counter){
-    if ( counter >= minIterations && counter <= maxIterations ){
-        return true;
-    }
-    else
-        return false;
-}
-
-
-
-
-
-}// namespace NES::Windowing
+}// namespace NES::CEP

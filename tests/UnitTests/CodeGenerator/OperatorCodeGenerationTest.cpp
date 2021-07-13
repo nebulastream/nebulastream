@@ -1425,5 +1425,4 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOP) {
 
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, inputSchema));
 }
-
 }// namespace NES
