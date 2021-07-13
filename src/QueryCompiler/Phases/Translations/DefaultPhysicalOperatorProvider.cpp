@@ -127,7 +127,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         lowerProjectOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
-            lowerCEPIterationOperator(queryPlan, operatorNode);
+        lowerCEPIterationOperator(queryPlan, operatorNode);
     } else {
         NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
@@ -175,10 +175,11 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
 
 void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(const QueryPlanPtr, const LogicalOperatorNodePtr operatorNode) {
     auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();
-    auto physicalCEpIterationOperator = PhysicalOperators::PhysicalIterationCEPOperator::create(iterationOperator->getInputSchema(),
-                                                                              iterationOperator->getOutputSchema(),
-                                                                              iterationOperator->getMinIterations(),
-                                                                              iterationOperator->getMaxIterations());
+    auto physicalCEpIterationOperator =
+        PhysicalOperators::PhysicalIterationCEPOperator::create(iterationOperator->getInputSchema(),
+                                                                iterationOperator->getOutputSchema(),
+                                                                iterationOperator->getMinIterations(),
+                                                                iterationOperator->getMaxIterations());
     operatorNode->replace(physicalCEpIterationOperator);
 }
 

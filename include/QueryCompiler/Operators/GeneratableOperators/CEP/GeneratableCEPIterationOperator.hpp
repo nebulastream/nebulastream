@@ -39,7 +39,7 @@ class GeneratableCEPIterationOperator : public GeneratableOperator {
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIteration, uint64_t maxIteration);
 
     /**
-     * @brief Creates a new generatable map operator, which applies a map expression on a specific input record.
+     * @brief Creates a new generatable CEP Iteration operator
      * @param id operator id
      * @param inputSchema the input schema
      * @param outputSchema the output schema
@@ -55,10 +55,10 @@ class GeneratableCEPIterationOperator : public GeneratableOperator {
 
   private:
     GeneratableCEPIterationOperator(OperatorId id,
-                           SchemaPtr inputSchema,
-                           SchemaPtr outputSchema,
-                           uint64_t minIteration,
-                           uint64_t maxIteration);
+                                    SchemaPtr inputSchema,
+                                    SchemaPtr outputSchema,
+                                    uint64_t minIteration,
+                                    uint64_t maxIteration);
     const uint64_t minIteration;
     const uint64_t maxIteration;
 };

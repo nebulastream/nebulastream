@@ -151,10 +151,7 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
 
-    virtual bool generateCodeForCEPIteration(
-        uint64_t minIteration,
-        uint64_t maxIeration,
-        PipelineContextPtr context) = 0;
+    virtual bool generateCodeForCEPIteration(uint64_t minIteration, uint64_t maxIeration, PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
