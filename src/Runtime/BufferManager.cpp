@@ -38,7 +38,7 @@ BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_
 }
 
 void BufferManager::destroy() {
-    std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex);
+    std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex, localBufferPoolsMutex);
     auto success = true;
     NES_DEBUG("Shutting down Buffer Manager " << this);
     for (auto& localPool : localBufferPools) {
@@ -285,6 +285,7 @@ size_t BufferManager::getAvailableBuffers() const {
     std::unique_lock lock(availableBuffersMutex);
     return availableBuffers.size();
 #else
+    std::unique_lock lock(localBufferPoolsMutex);
     auto qSize = availableBuffers.size();
     auto avail = qSize > 0 ? qSize : 0;
     for (auto& pool : localBufferPools) {
@@ -295,7 +296,7 @@ size_t BufferManager::getAvailableBuffers() const {
 }
 
 size_t BufferManager::getAvailableBuffersInFixedSizePools() const {
-    std::unique_lock lock(availableBuffersMutex);
+    std::unique_lock lock(localBufferPoolsMutex);
     size_t sum = 0;
     for (auto& pool : localBufferPools) {
         auto type = pool->getBufferManagerType();
@@ -337,7 +338,10 @@ LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedB
 #endif
     }
     auto ret = std::make_shared<LocalBufferPool>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
-    localBufferPools.push_back(ret);
+    {
+        std::unique_lock lock(localBufferPoolsMutex);
+        localBufferPools.push_back(ret);
+    }
     return ret;
 }
 
@@ -357,7 +361,10 @@ FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfR
 #endif
     }
     auto ret = std::make_shared<FixedSizeBufferPool>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
-    localBufferPools.push_back(ret);
+    {
+        std::unique_lock lock(localBufferPoolsMutex);
+        localBufferPools.push_back(ret);
+    }
     return ret;
 }
 
