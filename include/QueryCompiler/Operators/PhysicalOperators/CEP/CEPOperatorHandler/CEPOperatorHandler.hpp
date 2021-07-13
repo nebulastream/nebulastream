@@ -28,16 +28,13 @@ namespace NES::CEP{
 /**
  * @brief Operator handler for cep operators
  */
-//template<class KeyType>
 class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
     CEPOperatorHandler() = default;
 
     /**
-     * @brief Factory to create new WindowOperatorHandler
-     * @param windowDefinition logical window definition
-     * @param resultSchema window result schema
-     * @return WindowOperatorHandlerPtr
+     * @brief Factory to create new CEPOperatorHandler
+     * @return CEPOperatorHandlerPtr
      */
    static CEPOperatorHandlerPtr create();
 
@@ -45,12 +42,13 @@ class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
     * @brief Starts cep handler
      * @param pipelineExecutionContext pointer to the current pipeline execution context
      * @param stateManager point to the current state manager
+     * @param localStateVariableId
     */
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) override;
 
     /**
-    * @brief Stops window handler
+    * @brief Stops cep handler
      * @param pipelineExecutionContext pointer to the current pipeline execution context
     */
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
@@ -61,15 +59,15 @@ class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     ~CEPOperatorHandler() override { NES_DEBUG("~CEPOperatorHandler()"); }
 
-    void addTuple();
+    [[maybe_unused]] void addTuple();
 
-    uint64_t getCounter();
+    [[maybe_unused]] uint64_t getCounter();
 
     void clearCounter();
 
   private:
     uint64_t counter;
-    Runtime::StateManagerPtr stateManager;
+
 };
 }// namespace NES::CEP
 
