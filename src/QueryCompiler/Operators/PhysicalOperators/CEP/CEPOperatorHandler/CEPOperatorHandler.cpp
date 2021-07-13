@@ -27,7 +27,7 @@ void CEPOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr c
     this->stateManager = stateManager;
     this->clearCounter();
     StateId stateId = {stateManager->getNodeId(), id, localStateVariableId};
-
+    //TODO fix registration -> key,Value
     //stateManager->registerState<CEPOperatorHandler>(stateId);
 }
 
