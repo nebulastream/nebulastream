@@ -49,10 +49,7 @@ FixedSizeBufferPool::~FixedSizeBufferPool() {
     // nop
 }
 
-BufferManagerType FixedSizeBufferPool::getBufferManagerType() const
-{
-    return BufferManagerType::FIXED;
-}
+BufferManagerType FixedSizeBufferPool::getBufferManagerType() const { return BufferManagerType::FIXED; }
 
 void FixedSizeBufferPool::destroy() {
     NES_DEBUG("Destroying LocalBufferPool");

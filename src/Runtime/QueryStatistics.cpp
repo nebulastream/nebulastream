@@ -45,8 +45,8 @@ void QueryStatistics::incProcessedWatermarks() { this->processedWatermarks++; }
 void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTuple += tupleCnt; }
 void QueryStatistics::incLatencySum(uint64_t latency) { this->latencySum += latency; }
 void QueryStatistics::incQueueSizeSum(uint64_t size) { this->queueSizeSum += size; }
-void QueryStatistics::incAvailableGlobalBufferSum(uint64_t size){ this->availableGlobalBufferSum += size; }
-void QueryStatistics::incAvailableFixedBufferSum(uint64_t size){ this->availableFixedBufferSum += size; }
+void QueryStatistics::incAvailableGlobalBufferSum(uint64_t size) { this->availableGlobalBufferSum += size; }
+void QueryStatistics::incAvailableFixedBufferSum(uint64_t size) { this->availableFixedBufferSum += size; }
 
 void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) { this->processedBuffers = processedBuffers; }
 
@@ -71,8 +71,7 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
 uint64_t QueryStatistics::getQueryId() const { return queryId.load(); }
 uint64_t QueryStatistics::getSubQueryId() const { return subQueryId.load(); }
 
-QueryStatistics::QueryStatistics(const QueryStatistics& other)
-{
+QueryStatistics::QueryStatistics(const QueryStatistics& other) {
     processedTasks = other.processedTasks.load();
     processedTuple = other.processedTuple.load();
     processedBuffers = other.processedBuffers.load();
@@ -86,4 +85,4 @@ QueryStatistics::QueryStatistics(const QueryStatistics& other)
     tsToLatencyMap = other.tsToLatencyMap;
 }
 
-}// namespace NES::NodeEngine
+}// namespace NES::Runtime

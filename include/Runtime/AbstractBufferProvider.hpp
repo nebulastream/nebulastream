@@ -24,11 +24,7 @@
  * local: buffer manager that we give to the processing
  * fixed: buffer manager that we use for sources
  */
-enum BufferManagerType{
-    GLOBAL,
-    LOCAL,
-    FIXED
-};
+enum BufferManagerType { GLOBAL, LOCAL, FIXED };
 class AbstractBufferProvider {
   public:
     virtual ~AbstractBufferProvider() {

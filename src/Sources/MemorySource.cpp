@@ -104,7 +104,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
             memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
             break;
         }
-        case wrapBuffer : {
+        case wrapBuffer: {
             buffer = Runtime::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, bufferSize, this);
             break;
         }
@@ -131,18 +131,14 @@ MemorySource::SourceMode MemorySource::getSourceModeFromString(const std::string
     UtilityFunctions::trim(mode);
     if (mode == "emptyBuffer") {
         return SourceMode::emptyBuffer;
-    }
-    else if (mode == "wrapBuffer") {
+    } else if (mode == "wrapBuffer") {
         return SourceMode::wrapBuffer;
-    }
-    else if (mode == "copyBuffer") {
+    } else if (mode == "copyBuffer") {
         return SourceMode::copyBuffer;
     } else {
         NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
     }
 }
-
-
 
 std::string MemorySource::toString() const { return "MemorySource"; }
 
