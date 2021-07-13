@@ -628,10 +628,6 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
     NES_INFO("RESTEndpointTest: Test finished");
 }
 
-
-// tests für schema addlogicalstream
-
-
 TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     coordinatorConfig->setRpcPort(rpcPort);
@@ -656,6 +652,7 @@ TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     request.set_streamname("test");
     request.set_allocated_schema(serializableSchema.get());
     std::string msg = request.SerializeAsString();
+    request.release_schema();
 
     web::json::value postJsonReturn;
     int statusCode = 0;
