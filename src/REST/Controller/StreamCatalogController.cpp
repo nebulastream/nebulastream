@@ -452,6 +452,42 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
             return;
         }
     }
+    else if(path[1]=="removeMismappedForLogical"){
+        auto logicalStreamName = parameters.find("logicalStreamName");
+        if (logicalStreamName == parameters.end()) {
+            NES_ERROR("StreamCatalogController: Unable to find parameter logicalStreamName");
+            json::value errorResponse{};
+            errorResponse["detail"] = json::value::string("Parameter logicalStreamName must be provided");
+            badRequestImpl(request, errorResponse);
+        }
+
+        try {
+            std::string streamName = logicalStreamName->second;
+
+            bool removed = streamCatalog->removeAllMismapped(streamName);
+
+            //Prepare the response
+            json::value result{};
+            if (removed) {
+                result["Success"] = json::value::boolean(removed);
+                successMessageImpl(request, result);
+            } else {
+                throw std::invalid_argument("Could not remove from mismapped logical stream " + streamName);
+            }
+
+            return;
+        } catch (const std::exception& exc) {
+            NES_ERROR("StreamCatalogController: handleDelete -removeAllMismapped: Exception occurred removing all "
+                      "the mismapped from the specified logical stream "
+                          << exc.what());
+            handleException(request, exc);
+            return;
+        } catch (...) {
+            RuntimeUtils::printStackTrace();
+            internalServerErrorImpl(request);
+            return;
+        }
+    }
     else {
         resourceNotFoundImpl(request);
     }

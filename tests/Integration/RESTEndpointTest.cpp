@@ -981,6 +981,106 @@ TEST_F(RESTEndpointTest, testGetAllMismappedStreamsForLogicalStream) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
 }
-//BDAPRO add test for removeLogicalStreamFromMismapped
+
+TEST_F(RESTEndpointTest, testRemoveLogicalStreamFromMismapped) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 2");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("RESTEndpointTest: Worker2 started successfully");
+
+    srcConf->setPhysicalStreamName("test_physical1");
+    srcConf->setLogicalStreamName("test_1,test_2");
+    bool success = wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+    EXPECT_TRUE(success);
+
+    srcConf->setPhysicalStreamName("test_physical2");
+    srcConf->setLogicalStreamName("test_1");
+    success = wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+    EXPECT_TRUE(success);
+
+    bool setup_suc = !crd->getStreamCatalog()->getMismappedPhysicalStreams().empty()
+                        && !crd->getStreamCatalog()->getPhysicalStreams().empty();
+    EXPECT_TRUE(setup_suc);
+
+    web::http::client::http_client removeMismappedForLogicalClient("http://127.0.0.1:" + std::to_string(restPort)
+                                                              + "/v1/nes/streamCatalog/removeMismappedForLogical?logicalStreamName=test_2");
+    web::json::value removeMismappedForLogicalJSONReturn;
+
+    removeMismappedForLogicalClient.request(web::http::methods::DEL, "")
+        .then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();})
+        .then([&removeMismappedForLogicalJSONReturn](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("get execution-plan: set return");
+              removeMismappedForLogicalJSONReturn = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_ERROR("get execution-plan: error while setting return" << e.what());
+          }})
+        .wait();
+
+    NES_INFO("removeLogicalStreamFromMismapped: try to acc return");
+    NES_DEBUG("removeLogicalStreamFromMismapped response: " << removeMismappedForLogicalJSONReturn.serialize());
+
+    bool remove_suc = crd->getStreamCatalog()->getMismappedPhysicalStreams("test_2").empty()
+                      && !crd->getStreamCatalog()->getMismappedPhysicalStreams("test_1").empty();
+    EXPECT_TRUE(remove_suc);
+
+    //test moving from mismapped to regular
+    NES_DEBUG("Adding schema to remaining mismapped logical stream (should be regular after that)");
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+
+    wrk1->registerLogicalStream("test_1", testSchemaFileName);
+
+    bool move_sub = crd->getStreamCatalog()->getMismappedPhysicalStreams("test_1").empty()
+                    && !crd->getStreamCatalog()->getPhysicalStreams("test_1").empty();
+    EXPECT_TRUE(move_sub);
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("RESTEndpointTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+
 
 }// namespace NES

@@ -90,7 +90,8 @@ class StreamCatalog {
         /**
        * @brief method to add a physical stream
        * @caution combination of node and name has to be unique
-       * @return true if the physical stream was added successfully to all logicalStreams named, false otherwise
+       * @return true if the physical stream was added successfully to all logicalStreams named (also true im physical stream was added to mismapped
+         * logical streams), false otherwise
        */
     bool addPhysicalStream(std::vector<std::string> logicalStreamNames, StreamCatalogEntryPtr entry);
 
@@ -138,6 +139,13 @@ class StreamCatalog {
    * @return bool indicating success of remove stream
    */
     bool removeAllPhysicalStreams(std::string logicalStreamName);
+
+    /**
+     * @brief method to delete all mismappings for a logical stream
+     * @param logicalStreamName from which all mismappings to physical streams are to be deleted
+     * @return bool indicating success of remove of physical stream
+     */
+    bool removeAllMismapped(std::string logicalStreamName);
 
     /**
    * @brief method to remove a physical stream from all logical streams
