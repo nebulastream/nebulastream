@@ -112,7 +112,6 @@ class MemorySourceDescriptor : public SourceDescriptor {
     uint64_t gatheringValue;
     DataSource::GatheringMode gatheringMode;
     MemorySource::SourceMode sourceMode;
-
 };
 }// namespace NES
 

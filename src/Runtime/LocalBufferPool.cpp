@@ -50,10 +50,7 @@ LocalBufferPool::~LocalBufferPool() {
     // nop
 }
 
-BufferManagerType LocalBufferPool::getBufferManagerType() const
-{
-    return BufferManagerType::LOCAL;
-}
+BufferManagerType LocalBufferPool::getBufferManagerType() const { return BufferManagerType::LOCAL; }
 
 void LocalBufferPool::destroy() {
     NES_DEBUG("Destroying LocalBufferPool");
