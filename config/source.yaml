@@ -7,6 +7,7 @@ sourceType: NoSource
 # Set source configuration. Options depend on source type.
 # DefaultSource: NoConfig (not needed)
 # CSVSource: String with path to CSV file.
+# MQTTSource:
 # OPCSource (ToDo: Make source available): String set up as follows: "url;namespaceIndex;identifier;user;pwd"
 #            where the url is a string containing the full OPC server url,
 #            namespaceIndex is a uint16_t providing the namespanaceIndex for the nodeId,
