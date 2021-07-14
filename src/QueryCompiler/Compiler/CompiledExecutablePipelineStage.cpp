@@ -98,6 +98,7 @@ ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTuple
         // This is somehow not working currently.
         return ExecutionResult::Error;
     }
+
     return executablePipelineStage->execute(inputTupleBuffer, pipelineExecutionContext, workerContext);
 }
 

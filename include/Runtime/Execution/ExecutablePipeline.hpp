@@ -163,6 +163,7 @@ class ExecutablePipeline : public Reconfigurable {
     bool reconfiguration;
     std::atomic<PipelineStatus> pipelineStatus;
     std::atomic<uint32_t> activeProducers;
+    std::atomic<uint32_t> activeWorker;
     std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
 

@@ -34,7 +34,7 @@ ExecutablePipeline::ExecutablePipeline(uint64_t pipelineId,
     : pipelineId(pipelineId), querySubPlanId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
       pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration),
       pipelineStatus(reconfiguration ? PipelineStatus::PipelineRunning : PipelineStatus::PipelineCreated),
-      activeProducers(numOfProducingPipelines), successorPipelines(std::move(successorPipelines)) {
+      activeProducers(numOfProducingPipelines), activeWorker(0), successorPipelines(std::move(successorPipelines)) {
     // nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext && numOfProducingPipelines > 0,
                "Wrong pipeline stage argument");
@@ -45,7 +45,10 @@ ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerCont
                                                 << " stage=" << pipelineId);
     auto pipelineStatus = this->pipelineStatus.load();
     if (pipelineStatus == PipelineStatus::PipelineRunning) {
-        return executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
+        activeWorker += 1;
+        auto res = executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
+        activeWorker -= 1;
+        return res;
     }
     if (pipelineStatus == PipelineStatus::PipelineStopped) {
         return ExecutionResult::Finished;
@@ -76,6 +79,13 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
 bool ExecutablePipeline::stop() {
     auto expected = PipelineStatus::PipelineRunning;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineStopped)) {
+        //wait until all task are processed
+        while(activeWorker.load() != 0)
+        {
+            NES_TRACE("wait for active task");
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
             operatorHandler->stop(pipelineContext);
         }
