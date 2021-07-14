@@ -194,9 +194,17 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"))
             .copy());
 
-    code->varDeclarationInputTuples =
-        VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclarationInputTuples[0])),
-                                    "inputTuples");
+    if (inputSchema->layoutType == Schema::ROW_LAYOUT) {
+        code->varDeclarationInputTuples =
+            VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclarationInputTuples[0])),
+                                        "inputTuples");
+    } else if (inputSchema->layoutType == Schema::COL_LAYOUT) {
+        code->varDeclarationInputTuples =
+            VariableDeclaration::create(tf->createUserDefinedType(code->structDeclarationInputTuples[0]), "inputTuples");
+    } else {
+        NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+    }
+
 
     code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
 
@@ -276,7 +284,7 @@ bool CCodeGenerator::generateCodeInitStructFieldsColLayout(const SchemaPtr& sche
         const auto& field = schema->fields[i];
         const auto& fieldSize = layout->getFieldSizes()[i];
         auto variable = getVariableDeclarationForField(structDeclaration, field);
-        auto fieldRefStmt = VarRef(varTuples).accessPtr(VarRef(variable));
+        auto fieldRefStmt = VarRef(varTuples).accessRef(VarRef(variable));
 
 
         // Create offSet in tupleBuffer
@@ -383,41 +391,35 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
     // add type declaration for the result tuple
     code->typeDeclarations.push_back(structDeclarationResultTuple);
 
-    auto varDeclResultTuple =
-        VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(structDeclarationResultTuple)), "resultTuples");
 
-    /* ResultTuple* resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();*/
-    code->variableInitStmts.push_back(VarDeclStatement(varDeclResultTuple)
-                                          .assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple))
-                                          .copy());
 
-    // Setting the start of all fields for col layout
-    if (sinkSchema->layoutType == Schema::COL_LAYOUT) {
-        generateCodeInitStructFieldsColLayout(sinkSchema, tf, code->varDeclarationResultBuffer,
-                                              code->structDeclarationResultTuple, varDeclResultTuple,
-                                              code->variableInitStmts, "capacityEmit");
-    }
+    if (sinkSchema->layoutType == Schema::ROW_LAYOUT) {
+        auto varDeclResultTuple =
+            VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(structDeclarationResultTuple)), "resultTuples");
 
-    auto recordHandler = context->getRecordHandler();
-    for (const auto& field : context->resultSchema->fields) {
+        /* ResultTuple* resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();*/
+        code->variableInitStmts.push_back(VarDeclStatement(varDeclResultTuple)
+                                              .assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple))
+                                              .copy());
 
-        auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
-        if (!resultRecordFieldVariableDeclaration) {
-            NES_FATAL_ERROR("CodeGenerator: Could not extract field " << field->toString() << " from result record struct "
-                                                                      << structDeclarationResultTuple.getTypeName());
-        }
+        auto recordHandler = context->getRecordHandler();
+        for (const auto& field : context->resultSchema->fields) {
 
-        // check if record handler has current field
-        if (!recordHandler->hasAttribute(field->getName())) {
-            NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
-                            + " is part of the output schema, "
-                              "but not registered in the record handler.");
-        }
+            auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
+            if (!resultRecordFieldVariableDeclaration) {
+                NES_FATAL_ERROR("CodeGenerator: Could not extract field " << field->toString() << " from result record struct "
+                                                                          << structDeclarationResultTuple.getTypeName());
+            }
 
-        // Get current field from record handler.
-        auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
+            // check if record handler has current field
+            if (!recordHandler->hasAttribute(field->getName())) {
+                NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
+                                + " is part of the output schema, "
+                                  "but not registered in the record handler.");
+            }
 
-        if (sinkSchema->layoutType == Schema::ROW_LAYOUT) {
+            // Get current field from record handler.
+            auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
 
             // use regular assing for types which are not arrays, as fixed char arrays support
             // assignment by operator.
@@ -426,24 +428,59 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
                 .assign(currentFieldVariableReference);
 
             code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
+        }
 
-        } else if (sinkSchema->layoutType == Schema::COL_LAYOUT) {
+        // increment number of tuples in buffer -> ++numberOfResultTuples;
+        code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
+
+        // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
+        generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
+
+    } else if (sinkSchema->layoutType == Schema::COL_LAYOUT) {
+        auto varDeclResultTuple = VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
+        NES_DEBUG("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is " << varDeclResultTuple.getCode());
+        code->variableDeclarations.push_back(varDeclResultTuple);
+
+        // Setting the start of all fields for col layout
+        generateCodeInitStructFieldsColLayout(sinkSchema, tf, code->varDeclarationResultBuffer,
+                                              code->structDeclarationResultTuple, varDeclResultTuple,
+                                              code->variableInitStmts, "capacityEmit");
+
+        auto recordHandler = context->getRecordHandler();
+        for (const auto& field : context->resultSchema->fields) {
+
+            auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
+            if (!resultRecordFieldVariableDeclaration) {
+                NES_FATAL_ERROR("CodeGenerator: Could not extract field " << field->toString() << " from result record struct "
+                                                                          << structDeclarationResultTuple.getTypeName());
+            }
+
+            // check if record handler has current field
+            if (!recordHandler->hasAttribute(field->getName())) {
+                NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
+                                + " is part of the output schema, "
+                                  "but not registered in the record handler.");
+            }
+
+            // Get current field from record handler.
+            auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
             auto const copyFieldStatement = VarRef(varDeclResultTuple)
                 .accessPtr(VarRef(resultRecordFieldVariableDeclaration))[VarRef(code->varDeclarationNumberOfResultTuples)]
                 .assign(currentFieldVariableReference);
 
             code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
-
-        } else {
-            NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
         }
+
+        // increment number of tuples in buffer -> ++numberOfResultTuples;
+        code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
+
+        // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
+        generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
+
+    } else {
+        NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
-    // increment number of tuples in buffer -> ++numberOfResultTuples;
-    code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
-
-    // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
-    generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
 
     // Generate final logic to emit the last buffer to the Runtime
     // 1. set the number of tuples to the buffer
@@ -631,14 +668,16 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
             .copy());
     // 2.1 reset the numberOfResultTuples to 0 -> numberOfResultTuples = 0;
     thenStatement->addStatement(VarRef(code->varDeclarationNumberOfResultTuples)
-                                    .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 0))))
+                                    .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0L))))
                                     .copy());
     // 2.2 allocate a new buffer -> resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
     thenStatement->addStatement(
         VarRef(code->varDeclarationResultBuffer).assign(allocateTupleBuffer(code->varDeclarationExecutionContext)).copy());
     // 2.2 get typed result buffer from resultTupleBuffer -> resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();
-    thenStatement->addStatement(
-        VarRef(varDeclResultTuple).assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple)).copy());
+    if (schema->layoutType == Schema::ROW_LAYOUT) {
+        thenStatement->addStatement(
+            VarRef(varDeclResultTuple).assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple)).copy());
+    }
 
     // Setting the start of all fields for col layout
     if (schema->layoutType == Schema::COL_LAYOUT) {
