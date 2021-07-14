@@ -306,8 +306,18 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
 
             NES_TRACE(
                 "BasePlacementStrategy: Find the nodes between the topology node (inclusive) for child and parent operators.");
-            TopologyNodePtr sourceNode = executionNode->getTopologyNode();
-            TopologyNodePtr destinationNode = parentExecutionNode->getTopologyNode();
+            TopologyNodePtr sourceNode;
+            TopologyNodePtr destinationNode;
+            //ManualPlacement still uses old elements. Must be updated
+            if(!topologyNodesWithSourceOperators.empty()) {
+                sourceNode = topology->findTopologyNodeByIdInSubGraph(executionNode->getTopologyNode()->getId(), topologyNodesWithSourceOperators);
+                destinationNode = topology->findTopologyNodeByIdInSubGraph(parentExecutionNode->getTopologyNode()->getId(), topologyNodesWithSourceOperators);
+            }
+            else{
+                sourceNode = executionNode->getTopologyNode();
+                destinationNode = parentExecutionNode->getTopologyNode();
+            }
+
             std::vector<TopologyNodePtr> nodesBetween = topology->findNodesBetween(sourceNode, destinationNode);
 
             NES_TRACE("BasePlacementStrategy: For all the nodes between the topology node for child and parent operators add "

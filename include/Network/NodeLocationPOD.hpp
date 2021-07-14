@@ -25,6 +25,6 @@ struct NodeLocationPOD{
     std::string hostname;
     uint32_t port;
 
-};
+} __attribute__((aligned(64))) __attribute__((packed));
 
 #endif//NES_NODELOCATIONPOD_HPP

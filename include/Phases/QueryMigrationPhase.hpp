@@ -94,21 +94,11 @@ class QueryMigrationPhase{
     */
     std::vector<TopologyNodePtr> findParentExecutionNodesAsTopologyNodes(QueryId queryId, TopologyNodeId topologyNodeId);
 
-    /**
-     * Finds all QSP that have NetworkSinks that point to the node makred for maintenance. These are the QSPs that hold the network sinks that require
-     * reconfiguration. This map is passed over GRPC to NesWorker.
-     * @param queryId
-     * @param childExecutionNode
-     * @return map of QSPs that hold Network Sinks that need reconfiguartion
-     */
-    std::map<QuerySubPlanId , std::vector<OperatorId >> querySubPlansAndNetworkSinksToReconfigure(QueryId queryId, const ExecutionNodePtr& childExecutionNode, const Network::NodeLocation& markedNodeLocation);
-
-
   private:
 
-    bool executeMigrationWithBuffer(const std::vector<TopologyNodePtr>& path,const std::vector<ExecutionNodePtr>& execNodes, const std::map<TopologyNodeId ,std::string>& addresses,QueryId queryId, TopologyNodeId topId);
+    bool executeMigrationWithBuffer(std::vector<QueryPlanPtr>& queryPlans);
 
-    bool executeMigrationWithoutBuffer(const std::vector<TopologyNodePtr>& path, const std::vector<ExecutionNodePtr>& execNodes,const std::map<TopologyNodeId ,std::string>& addresses, QueryId queryId, TopologyNodeId topId);
+    bool executeMigrationWithoutBuffer(const std::vector<QueryPlanPtr>& queryPlans);
 
     explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient, Optimizer::QueryPlacementPhasePtr queryPlacementPhase);
 
@@ -119,6 +109,8 @@ class QueryMigrationPhase{
     */
     bool deployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
 
+    TopologyNodePtr findNewNodeLocationOfNetworkSource(QueryId queryId, OperatorId sourceOperatorIds,std::vector<ExecutionNodePtr>& potentialLocations);
+
     /**
      * method to find Path between all child and parent execution nodes of the node marked for maintenance for a specific query Id
      * @param queryId
@@ -127,16 +119,6 @@ class QueryMigrationPhase{
      */
     std::vector<TopologyNodePtr> findPath(QueryId queryId, TopologyNodeId topologyNodeId);
 
-    std::vector<ExecutionNodePtr> buildExecutionNodes(const std::vector<TopologyNodePtr>& path, const std::vector<QueryPlanPtr>& subqueries);
-
-    /**
-     * builds addresses of all execution nodes that will be sent a GRPC message
-     * @param childExecutionNodes
-     * @return vector of addresses
-     */
-    std::map<TopologyNodeId ,std::string> getAddresses(const std::vector<TopologyNodePtr>& childExecutionNodes);
-
-
     /**
      * @brief method to start a already deployed query
      * @param queryId
@@ -144,14 +126,10 @@ class QueryMigrationPhase{
      */
     bool startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
 
-    ExecutionNodePtr getExecutionNode(TopologyNodeId nodeId);
-
-
     WorkerRPCClientPtr  workerRPCClient;
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
-
 
 };
 

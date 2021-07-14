@@ -91,6 +91,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 
                 NodeLocationPOD pod = task.getUserData<NodeLocationPOD>();
                 Network::NodeLocation updatedNodeLocation(pod.nodeId, pod.hostname, pod.port);
+                nodeLocation = updatedNodeLocation;
 
                 auto updatedChannel =
                         networkManager->registerSubpartitionProducer(updatedNodeLocation, nesPartition, waitTime, retryTimes,workerContext.getChannel(nesPartition.getOperatorId())->moveBuffer());

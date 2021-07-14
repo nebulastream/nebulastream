@@ -153,10 +153,11 @@ std::unordered_set<ExecutionNodePtr> BottomUpStrategy::updateGlobalExecutionPlan
         operatorToExecutionNodeMap.clear();
         pinnedOperatorLocationMap.clear();
         topologyNodesWithSourceOperators.clear();
-        NES_DEBUG("BottomUpStrategy: Run type inference phase for query plans in global execution plan for query with id : "
-                      << queryId);
 
         NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+        if(!runTypeInferencePhase(queryId)){
+            throw Exception("BottomUpStrategy: Error during TypeInferencePhase for partialPlacement");
+        }
         return executionNodesCreatedDuringPartialPlacement;
     } catch (Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
