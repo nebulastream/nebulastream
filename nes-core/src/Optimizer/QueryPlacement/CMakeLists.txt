@@ -15,6 +15,7 @@ add_source_files(nes-core
         BasePlacementStrategy.cpp
         BottomUpStrategy.cpp
         TopDownStrategy.cpp
+        MlHeuristicStrategy.cpp
         ManualPlacementStrategy.cpp
         IFCOPStrategy.cpp
 		ILPStrategy.cpp
