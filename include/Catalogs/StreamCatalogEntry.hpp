@@ -133,7 +133,7 @@ class StreamCatalogEntry {
        * @brief changes the state to having no logical stream (method should only be called from within this class
        * or through StreamCatalog::addPhysicalStreamWithoutLogicalStreams)
        */
-      void setStateToNoLogicalStream();
+      void setStateToWithoutLogicalStream();
 
     /**
      * @brief get PhysicalStreamState which contains count (#logicalstreams for that physicalStream) and state (e.g. misconfigured, regular)

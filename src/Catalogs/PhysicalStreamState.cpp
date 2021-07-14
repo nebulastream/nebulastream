@@ -20,24 +20,47 @@
 namespace NES {
 //BDAPRO create constructor
 PhysicalStreamState::PhysicalStreamState(){
-    this->state = State::misconfigured;
-    this->description = "";
-}
-void PhysicalStreamState::increaseLogicalStreamCount() {
-    count++;
-    if (count == 1) changeState();
+    this->state = State::regular;
 }
 
-void PhysicalStreamState::lowerLogicalStreamCount() {
-    count--;
-    if (count == 0) changeState();
-}
-// BDAPRO add description / remove description
-void PhysicalStreamState::changeState() {
-    if (count == 0) state = misconfigured;
-    else state = regular;
+std::string PhysicalStreamState::getStateDescription(){
+    if(state==regular){
+        return "regular";
+    }
+    std::string desc = "misconfigured";
+
+    std::map<Reason, std::string>::iterator it = description.begin();
+    // Iterate over the map using Iterator till end.
+    while (it != description.end()){
+        desc = desc+"\n"+getStringForReasonEnum(it->first)+": "+ it->second;
+        it++;
+    }
+
+    return desc;
 }
 
-std::string PhysicalStreamState::getStateDescription(){ return description; }
+void PhysicalStreamState::addReason(Reason reason, std::string desc){
+    this->description[reason] = desc;
+    this->state = misconfigured;
+
+}
+void PhysicalStreamState::removeReason(Reason reason){
+    this->description.erase(reason);
+    if(description.empty()){
+        this->state = regular;
+    }
+}
+
+std::string PhysicalStreamState::getStringForReasonEnum(Reason reason){
+    if(reason==noLogicalStream){
+        return "noLogicalStream";
+    }else if (reason==logicalStreamWithoutSchema){
+        return "logicalStreamWithoutSchema";
+    }else if (reason==fileNotFound){
+        return "fileNotFound";
+    }else{
+        return "duplicatePhysicalStreamName";
+    }
+}
 
 } // namespace NES

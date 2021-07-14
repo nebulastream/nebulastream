@@ -23,24 +23,15 @@
 #define NES_PHYSICALSTREAMSTATE_HPP
 
 #include <string>
+#include <map>
 
 namespace NES {
 enum State {misconfigured, regular};
+enum Reason {noLogicalStream, logicalStreamWithoutSchema,duplicatePhysicalStreamName, fileNotFound};
 
 class PhysicalStreamState {
   public:
     PhysicalStreamState();
-    /**
-     * @brief raises state objects count variable by one if a logical stream is added. Also checks internally if count > 0 now, which changes state to regular.
-     *
-     */
-    void increaseLogicalStreamCount();
-
-    /**
-     * @brief lowers state objects count variable by one if a logical stream is added. Also checks internally if count == 0 now, which changes state to misconfigured.
-     *
-     */
-    void lowerLogicalStreamCount();
 
     /**
      * @brief changes the State in case count has been increased/lowered to a significant value (0 => misconfigured, > 0 => regular)
@@ -54,10 +45,29 @@ class PhysicalStreamState {
      */
     std::string getStateDescription();
 
+    /**
+     * adds a reason to the reason-mapping
+     * @param reason to add
+     * @param desc the description of the reason
+     */
+    void addReason(Reason reason, std::string desc);
+
+    /**
+     * Removes a reason from the reason-mapping
+     * @param reason to remove
+     */
+    void removeReason(Reason reason);
+
+    /**
+     * Get string for enum
+     * @param reason
+     * @return string description of enum
+     */
+    std::string getStringForReasonEnum(Reason reason);
+
     State state;
   private:
-    int count;
-    std::string description;
+    std::map<Reason, std::string> description;
 };
 
 

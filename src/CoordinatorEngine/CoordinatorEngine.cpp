@@ -168,8 +168,8 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
     }
     bool success;
     if(logicalStreamName==""){
-        NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: logical stream = "<< logicalStreamName <<", therefore physical stream is registered without logical stream");
-        std::vector<std::string> logicalStreamNameVec{logicalStreamName};
+        NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: logical stream = '"<< logicalStreamName <<"', therefore physical stream is registered without logical stream");
+        std::vector<std::string> logicalStreamNameVec{};
         StreamCatalogEntryPtr sce =
             std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamNameVec, physicalNode);
         success = streamCatalog->addPhysicalStreamWithoutLogicalStreams(sce);

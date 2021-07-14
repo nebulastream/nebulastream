@@ -115,7 +115,7 @@ void StreamCatalog::addLogicalStreamFromMismappedStreams(std::string logicalStre
 bool StreamCatalog::addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry) {
     std::unique_lock lock(catalogMutex);
     nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
-    nameToPhysicalStream[newEntry->getPhysicalName()]->setStateToNoLogicalStream();
+    nameToPhysicalStream[newEntry->getPhysicalName()]->setStateToWithoutLogicalStream();
     return true;
 }
 
@@ -170,8 +170,10 @@ bool StreamCatalog::addPhysicalStream(std::vector<std::string> logicalStreamName
     for(std::string notFound : std::get<1>(inAndExclude)){
         NES_WARNING("StreamCatalog: logical stream " << notFound << " does not exists when inserting physical stream "
                                                    << newEntry->getPhysicalName());
-        addPhysicalStreamWithoutLogicalStreams(newEntry);
+        nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
         mismappedStreams[notFound].push_back(newEntry->getPhysicalName());
+        newEntry->removeLogicalStream(notFound);
+        newEntry->addLogicalStreamNameToMismapped(notFound);
     }
     // Handle logicalStream names which were found in schema mapping
     for(std::string found : std::get<0>(inAndExclude)){
