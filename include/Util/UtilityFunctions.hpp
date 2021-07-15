@@ -150,6 +150,13 @@ class UtilityFunctions {
      */
     static std::string combineStringsWithDelimiter(std::vector<std::string>& strings, std::string delim);
 
+    /**
+     * Generates a string representing a random Hex number
+     * @param length of the string
+     * @return the string representation
+     */
+    static std::string simpleHexStringGenerator(int length);
+
     static std::string prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, SchemaPtr schema);
 
     /**

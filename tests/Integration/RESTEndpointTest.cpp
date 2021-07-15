@@ -1122,7 +1122,7 @@ TEST_F(RESTEndpointTest, testGetAllMisconfiguredStreamCatalogEntries) {
     NES_INFO("RESTEndpointTest: Added a physical stream without a logical stream.");
 
 
-srcConf->setPhysicalStreamName("test_physical2");
+    srcConf->setPhysicalStreamName("test_physical2");
     srcConf->setLogicalStreamName("default_logical");
     success = wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
     EXPECT_TRUE(success);

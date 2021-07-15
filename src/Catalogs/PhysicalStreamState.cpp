@@ -51,6 +51,13 @@ void PhysicalStreamState::removeReason(Reason reason){
     }
 }
 
+bool PhysicalStreamState::isNameValid() {
+    if(description.find(duplicatePhysicalStreamName)!=description.end()){
+        return false;
+    }
+    return true;
+}
+
 std::string PhysicalStreamState::getStringForReasonEnum(Reason reason){
     if(reason==noLogicalStream){
         return "noLogicalStream";

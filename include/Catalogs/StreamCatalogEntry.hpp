@@ -135,6 +135,12 @@ class StreamCatalogEntry {
        */
       void setStateToWithoutLogicalStream();
 
+      /**
+       * @brief changes the physical stream name, should only be called by StreamCatalog::addPhysicalStream else
+       * the stream catalog mappings may become inconsistent
+       */
+      void changePhysicalStreamName(std::string newName);
+
     /**
      * @brief get PhysicalStreamState which contains count (#logicalstreams for that physicalStream) and state (e.g. misconfigured, regular)
      * @return PhysicalStreamState object

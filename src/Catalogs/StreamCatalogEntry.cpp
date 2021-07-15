@@ -135,6 +135,11 @@ PhysicalStreamState StreamCatalogEntry::getPhysicalStreamState(){
 }
 
 
+void StreamCatalogEntry::changePhysicalStreamName(std::string newName){
+    physicalStreamState.addReason(duplicatePhysicalStreamName, "Physical stream was renamed from "+physicalStreamName+" to "+newName+", as the old name already existed.");
+    physicalStreamName=newName;
+}
+
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
     ss << "physicalName=" << physicalStreamName << " logicalStreamName=(" << UtilityFunctions::combineStringsWithDelimiter(logicalStreamName,",") << ") sourceType=" << sourceType

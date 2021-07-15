@@ -273,6 +273,18 @@ std::string UtilityFunctions::combineStringsWithDelimiter(std::vector<std::strin
 
     return combined;
 }
+std::string UtilityFunctions::simpleHexStringGenerator(int length) {
+    //hexadecimal characters
+    char hex_characters[]={'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+
+    int i;
+    std::string hex;
+    for(i=0;i<length;i++)
+    {
+        hex[i]=hex_characters[rand()%16];
+    }
+    return hex;
+}
 
 std::string UtilityFunctions::printTupleBufferAsText(NodeEngine::TupleBuffer& buffer) {
     std::stringstream ss;

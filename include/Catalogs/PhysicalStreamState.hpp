@@ -59,6 +59,12 @@ class PhysicalStreamState {
     void removeReason(Reason reason);
 
     /**
+     * Tests whether the StreamCatalogEntry's name is valid
+     * @return true if the name is valid, false otherwise
+     */
+    bool isNameValid();
+
+    /**
      * Get string for enum
      * @param reason
      * @return string description of enum

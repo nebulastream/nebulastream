@@ -184,7 +184,7 @@ class StreamCatalog {
      * @param logicalStreamNames names of the logical streams to test
      * @return a tuple of vectors, the first vector contains the logical streams included in the mapping and the second one the rest
      */
-    std::tuple<std::vector<std::string>, std::vector<std::string>> testIfLogicalStreamVecExistsInSchemaMapping(std::vector<std::string> logicalStreamNames);
+    std::tuple<std::vector<std::string>, std::vector<std::string>> testIfLogicalStreamVecExistsInSchemaMapping(std::vector<std::string> &logicalStreamNames);
 
     /**
    * @brief test if logical stream with this name exists in the log to schema mapping
@@ -299,6 +299,13 @@ class StreamCatalog {
      * @return
      */
     bool updatedLogicalStream(std::string& streamName, std::string& streamSchema);
+
+    /**
+     * @brief removes from a misconfigured stream with a formerly duplicated name, the misconfigured flag and allows querying if possible
+     * @param physicalStreamName the current name
+     * @return true whether the validation was succesful
+     */
+    bool validatePhysicalStreamName(std::string physicalStreamName);
 
     StreamCatalog();
     ~StreamCatalog();
