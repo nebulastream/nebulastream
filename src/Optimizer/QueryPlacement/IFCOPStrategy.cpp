@@ -88,73 +88,61 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
 
     std::vector<std::vector<bool>> placementCandidate;
 
-    // FIXME 1018: assuming a single logical source
-    std::vector<TopologyNodePtr> allSourceNodes;
-    for (const auto& sourceOperator : queryPlan->getSourceOperators()) {
-        const auto& streamName = sourceOperator->getSourceDescriptor()->getStreamName();
-        const auto sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
-        allSourceNodes.insert(allSourceNodes.end(), sourceNodes.begin(), sourceNodes.end());
-    }
+    std::map<std::pair<OperatorId, uint64_t>, std::pair<uint64_t, uint64_t>> matrixMapping;
+
     auto topologyIterator = BreadthFirstNodeIterator(topology->getRoot());
 
-    uint32_t placedOperator = 0;
-    uint32_t totalNumberOfOperators = QueryPlanIterator(queryPlan).snapshot().size();
+    uint64_t topoIdx = 0;
 
-    for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
+    // prepare the mapping
+    for (auto topoItr = topologyIterator.begin(); topoItr != NES::BreadthFirstNodeIterator::end(); ++topoItr) {
         // add a new entry in the binary mapping for the current node
         std::vector<bool> currentTopologyNodeMapping;
 
-        auto currentTopologyNode = (*itr)->as<TopologyNode>();
-        NES_TRACE("IFCOPStrategy::getPlacementCandidate:currentTopologyNode:" << (std::string) currentTopologyNode->toString());
-        auto isSourceNode = std::find(allSourceNodes.begin(), allSourceNodes.end(), currentTopologyNode) != allSourceNodes.end();
-        auto isSinkNode = currentTopologyNode->equal(topology->getRoot());
+        QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
 
-        uint32_t lowerBound = 0;
-        if (isSinkNode) {
-            // if the current node is a sink node, place at least 1 operator (i.e., the sink)
-            lowerBound = 1;
-        }
-
-        uint32_t upperBound = totalNumberOfOperators - placedOperator - queryPlan->getSourceOperators().size();
-//        if (!isSourceNode) {
-//            // if the current node is NOT a source node, avoid placing the source operators
-//            upperBound = totalNumberOfOperators - placedOperator - queryPlan->getSourceOperators().size();
-//        }
-
-        // define the number of operator to place in the current node
-        std::random_device r;
-        std::default_random_engine e1(r());
-        std::uniform_int_distribution<uint32_t> uniform_dist(lowerBound, upperBound);
-        uint32_t numOperatorToPlace = uniform_dist(e1);
-
-        // if we are reaching the source node but still have operators to place, place them all in the source node
-        if (isSourceNode && (placedOperator + queryPlan->getSourceOperators().size() < totalNumberOfOperators)) {
-            numOperatorToPlace = totalNumberOfOperators - placedOperator - queryPlan->getSourceOperators().size();
-        }
-
-        auto queryPlanIteror = QueryPlanIterator(queryPlan);
-        auto qPlanItr = queryPlanIteror.begin();
-
-        // skip already placed operators
-        for (uint32_t i = 0; i < placedOperator; i++) {
+        uint64_t opIdx = 0;
+        for (auto qPlanItr = queryPlanIterator.begin(); qPlanItr != QueryPlanIterator::end(); ++qPlanItr) {
+            auto currentEntry =
+                std::make_pair(std::make_pair((*topoItr)->as<TopologyNode>()->getId(), (*qPlanItr)->as<OperatorNode>()->getId()),
+                               std::make_pair(topoIdx, opIdx));
+            matrixMapping.insert(currentEntry);
             currentTopologyNodeMapping.push_back(false);
-            ++qPlanItr;
+            ++opIdx;
         }
-
-        // place the rest of the operators
-        while (qPlanItr != QueryPlanIterator::end()) {
-            ++qPlanItr;
-            if (numOperatorToPlace > 0) {
-                currentTopologyNodeMapping.push_back(true);
-                numOperatorToPlace--;
-                placedOperator++;
-            } else {
-                currentTopologyNodeMapping.push_back(false);
-            }
-        }
-
+        topoIdx++;
         placementCandidate.push_back(currentTopologyNodeMapping);
     }
+
+    // perform the assignment
+    std::map<TopologyNodePtr, std::vector<std::string>> topologyNodeToStreamName;
+    std::vector<OperatorId> placedOperatorIds;// bookkeeping: each operator should be placed once
+    // loop over all logical stream
+    for (auto srcOp : queryPlan->getSourceOperators()) {
+        auto currentOperator = srcOp;
+        for (auto topologyNode : streamCatalog->getSourceNodesForLogicalStream(srcOp->getSourceDescriptor()->getStreamName())) {
+            auto topoIdx = matrixMapping[std::make_pair(topologyNode->getId(), currentOperator->getId())].first;
+            auto opIdx = matrixMapping[std::make_pair(topologyNode->getId(), currentOperator->getId())].second;
+
+            // place the current source operator here if no source operator for the same logical source is placed
+            if (std::find(placedOperatorIds.begin(), placedOperatorIds.end(), srcOp->getId()) == placedOperatorIds.end()
+                && std::find(topologyNodeToStreamName[topologyNode].begin(),
+                             topologyNodeToStreamName[topologyNode].end(),
+                             srcOp->getSourceDescriptor()->getStreamName())
+                    == topologyNodeToStreamName[topologyNode].end()) {
+                placementCandidate[topoIdx][opIdx] = true;
+                placedOperatorIds.push_back(srcOp->getId());
+
+                if (topologyNodeToStreamName.find(topologyNode) == topologyNodeToStreamName.end()) {
+                    std::vector<std::string> placedLogicalStreams = {srcOp->getSourceDescriptor()->getStreamName()};
+                    topologyNodeToStreamName.insert(std::make_pair(topologyNode, placedLogicalStreams));
+                } else {
+                    topologyNodeToStreamName[topologyNode].push_back(srcOp->getSourceDescriptor()->getStreamName());
+                }
+            }
+        }
+    }
+
     return placementCandidate;
 }
 
