@@ -490,7 +490,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
     coConf->setRpcPort(rpcPort);
     coConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
-    wrkConf->setNumWorkerThreads(1);
+    wrkConf->setNumWorkerThreads(3);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -511,17 +511,25 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
 
     wrkConf->setRpcPort(port + 30);
     wrkConf->setDataPort(port + 31);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    wrk4->replaceParent(1, 2);
-    wrk4->addParent(3);
+    wrk4->replaceParent(1,3);
+
+
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
+    bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart5);
+    wrk5->replaceParent(1, 2);
+    wrk5->addParent(4);
 
     TopologyPtr topo = crd->getTopology();
+    NES_DEBUG(topo->toString());
     ASSERT_EQ(topo->getRoot()->getId(), 1UL);
     ASSERT_EQ(topo->getRoot()->getChildren().size(), 2UL);
-    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1UL);
-    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1UL);
+
 
     //register logical stream
     std::string testSchema = "Schema::create()->addField(createField(\"id\", UINT64));";
@@ -529,7 +537,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
     std::ofstream out(testSchemaFileName);
     out << testSchema;
     out.close();
-    wrk4->registerLogicalStream("testStream", testSchemaFileName);
+    wrk5->registerLogicalStream("testStream", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
     ASSERT_TRUE(std::filesystem::exists("../tests/test_data/test_balint.csv"));
@@ -541,8 +549,9 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
     srcConf->setNumberOfBuffersToProduce(11000);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
-    wrk4->registerPhysicalStream(conf);
-    std::string filePath = "withBuffer.csv";
+    wrk5->registerPhysicalStream(conf);
+
+    std::string filePath = "withoutBuffer.csv";
     remove(filePath.c_str());
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -566,9 +575,8 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
     ASSERT_TRUE(!(globalExecutionPlan->checkIfExecutionNodeExists(3)));
-    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
-
-    ASSERT_TRUE(wrk2->getNodeEngine()->getDeployedQEP(3));
+    ASSERT_TRUE(!(globalExecutionPlan->checkIfExecutionNodeExists(4)));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(5));
 
     maintenanceService->submitMaintenanceRequest(2,2);
     sleep(5);
@@ -634,17 +642,25 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTes
 
     wrkConf->setRpcPort(port + 30);
     wrkConf->setDataPort(port + 31);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    wrk4->replaceParent(1, 2);
-    wrk4->addParent(3);
+    wrk4->replaceParent(1,3);
+
+
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
+    bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart5);
+    wrk5->replaceParent(1, 2);
+    wrk5->addParent(4);
 
     TopologyPtr topo = crd->getTopology();
+    NES_DEBUG(topo->toString());
     ASSERT_EQ(topo->getRoot()->getId(), 1UL);
     ASSERT_EQ(topo->getRoot()->getChildren().size(), 2UL);
-    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1UL);
-    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1UL);
+
 
     //register logical stream
     std::string testSchema = "Schema::create()->addField(createField(\"id\", UINT64));";
@@ -652,7 +668,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTes
     std::ofstream out(testSchemaFileName);
     out << testSchema;
     out.close();
-    wrk4->registerLogicalStream("testStream", testSchemaFileName);
+    wrk5->registerLogicalStream("testStream", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
     ASSERT_TRUE(std::filesystem::exists("../tests/test_data/test_balint.csv"));
@@ -664,7 +680,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTes
     srcConf->setNumberOfBuffersToProduce(11000);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
-    wrk4->registerPhysicalStream(conf);
+    wrk5->registerPhysicalStream(conf);
 
     std::string filePath = "withoutBuffer.csv";
     remove(filePath.c_str());
@@ -690,9 +706,8 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTes
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
     ASSERT_TRUE(!(globalExecutionPlan->checkIfExecutionNodeExists(3)));
-    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
-
-    ASSERT_TRUE(wrk2->getNodeEngine()->getDeployedQEP(3));
+    ASSERT_TRUE(!(globalExecutionPlan->checkIfExecutionNodeExists(4)));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(5));
 
     maintenanceService->submitMaintenanceRequest(2,3);
     sleep(5);
