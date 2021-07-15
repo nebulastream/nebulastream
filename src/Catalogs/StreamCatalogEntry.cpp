@@ -130,6 +130,11 @@ void StreamCatalogEntry::setStateToWithoutLogicalStream(){
     return;
 }
 
+PhysicalStreamState StreamCatalogEntry::getPhysicalStreamState(){
+    return physicalStreamState;
+}
+
+
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
     ss << "physicalName=" << physicalStreamName << " logicalStreamName=(" << UtilityFunctions::combineStringsWithDelimiter(logicalStreamName,",") << ") sourceType=" << sourceType

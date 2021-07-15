@@ -511,6 +511,15 @@ std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     }
     return ss.str();
 }
+std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(){
+    std::unique_lock lock(catalogMutex);
+    std::vector<StreamCatalogEntryPtr> physicalStreams;
+    for (auto entry : nameToPhysicalStream) {
+        // returned a list of physicalStreamNames
+        physicalStreams.push_back(entry.second);
+    }
+    return physicalStreams;
+    }
 
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
@@ -536,16 +545,18 @@ std::vector<std::string> StreamCatalog::getMismappedPhysicalStreams(std::string 
     return physicalStreamsNames;
 }
 
-
-std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(){
+std::vector<StreamCatalogEntryPtr> StreamCatalog::getAllMisconfiguredPhysicalStreams(){
     std::unique_lock lock(catalogMutex);
-    std::vector<StreamCatalogEntryPtr> physicalStreams;
+    NES_DEBUG("StreamCatalog: getting all misconfigured physical streams");
+    std::vector<StreamCatalogEntryPtr> streamCatalogEntryPtrs{};
     for (auto entry : nameToPhysicalStream) {
-        // returned a list of physicalStreamNames
-        physicalStreams.push_back(entry.second);
+        //BDAPRO: change to predication?
+        if (entry.second->getPhysicalStreamState().state != regular){
+            streamCatalogEntryPtrs.push_back(entry.second);
+        }
     }
-    return physicalStreams;
-}
+    return streamCatalogEntryPtrs;
+    }
 
 
 std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStream() { return logicalStreamToSchemaMapping; }

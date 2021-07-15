@@ -186,7 +186,23 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                 return;
             }
         }
-    } else {
+    } else if (path[1] == "allMisconfiguredStreamCatalogEntries") {
+        // BDAPRO : return a list, nicely formatted of all misconfiguredStreamCatalogEntires with Reasons!
+        const std::vector<StreamCatalogEntryPtr>& allMisconfiguredPhysicalStreams = streamCatalog->getAllMisconfiguredPhysicalStreams();
+
+        json::value result{};
+        if (allMisconfiguredPhysicalStreams.empty()) {
+            NES_DEBUG("StreamCatalogController: No misconfigured physical stream found");
+            resourceNotFoundImpl(request);
+            return;
+        } else {
+            for (auto entry : allMisconfiguredPhysicalStreams) {
+                result[entry->getPhysicalName()] = json::value::string(entry->getPhysicalStreamState().getStateDescription());
+            }
+            successMessageImpl(request, result);
+            return;
+        }
+    }  else {
         resourceNotFoundImpl(request);
     }
 }

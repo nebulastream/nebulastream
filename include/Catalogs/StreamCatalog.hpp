@@ -262,6 +262,12 @@ class StreamCatalog {
     std::string getPhysicalStreamAndSchemaAsString();
 
     /**
+     * @brief get all physical streams
+        * @return std::vector containing all StreamCatalogEntryPtr
+    */
+    std::vector<StreamCatalogEntryPtr> getPhysicalStreams();
+
+    /**
      * @brief get all pyhsical streams for a logical stream
      * @param logicalStreamName
      * @return
@@ -274,18 +280,17 @@ class StreamCatalog {
     */
     std::map<std::string, std::vector<std::string>> getMismappedPhysicalStreams();
     /**
-    * @brief get all mismapped pyhsical streams for a logical stream
+    * @brief get all mismapped physical streams for a logical stream
     * @param logicalStreamName
-    * @return
+    * @return vector of mismapped physical streams
     */
     std::vector<std::string> getMismappedPhysicalStreams(std::string logicalStreamName);
 
-
     /**
-    * @brief get all physical streams
-    * @return std::vector containing all StreamCatalogEntryPtr
+    * @brief get all StreamCatalogEntryPtr where the state is misconfigured
+     * @return vector of misconfigured StreamCatalogEntryPtr
     */
-    std::vector<StreamCatalogEntryPtr> getPhysicalStreams();
+    std::vector<StreamCatalogEntryPtr> getAllMisconfiguredPhysicalStreams();
 
     /**
      * @brief update an existing stream
