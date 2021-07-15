@@ -48,6 +48,20 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
     this->gatheringValue = gatheringValue;
 }
 
+
+MemorySource::SourceMode MemorySourceStreamConfig::getSourceModeFromString(const std::string& mode) {
+    UtilityFunctions::trim(mode);
+    if (mode == "emptyBuffer") {
+        return SourceMode::emptyBuffer;
+    } else if (mode == "wrapBuffer") {
+        return SourceMode::wrapBuffer;
+    } else if (mode == "copyBuffer") {
+        return SourceMode::copyBuffer;
+    } else {
+        NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
+    }
+}
+
 std::string MemorySourceStreamConfig::getSourceType() { return sourceType; }
 
 std::string MemorySourceStreamConfig::toString() { return sourceType; }

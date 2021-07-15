@@ -162,8 +162,8 @@ class ExecutablePipeline : public Reconfigurable {
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
     std::atomic<PipelineStatus> pipelineStatus;
-    std::atomic<uint32_t> activeProducers;
-    std::atomic<uint32_t> activeWorker;
+    std::atomic<uint32_t> activeProducers = 0;
+    std::atomic<uint32_t> inProgressTasks = 0;
     std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
 
