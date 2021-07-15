@@ -127,19 +127,6 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     return buffer;
 }
 
-MemorySource::SourceMode MemorySource::getSourceModeFromString(const std::string& mode) {
-    UtilityFunctions::trim(mode);
-    if (mode == "emptyBuffer") {
-        return SourceMode::emptyBuffer;
-    } else if (mode == "wrapBuffer") {
-        return SourceMode::wrapBuffer;
-    } else if (mode == "copyBuffer") {
-        return SourceMode::copyBuffer;
-    } else {
-        NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
-    }
-}
-
 std::string MemorySource::toString() const { return "MemorySource"; }
 
 NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }

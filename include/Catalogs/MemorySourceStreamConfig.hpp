@@ -98,6 +98,8 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
                                                   const std::string& gatheringMode,
                                                   const std::string& sourceMode);
 
+    static MemorySource::SourceMode getSourceModeFromString(const std::string& mode);
+
   private:
     std::string sourceType;
     std::shared_ptr<uint8_t> memoryArea;

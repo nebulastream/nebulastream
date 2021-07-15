@@ -83,8 +83,6 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      */
     virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
 
-    static SourceMode getSourceModeFromString(const std::string& mode);
-
   private:
     uint64_t numberOfTuplesToProduce;
     std::shared_ptr<uint8_t> memoryArea;
