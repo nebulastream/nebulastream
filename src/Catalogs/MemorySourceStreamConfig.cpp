@@ -16,6 +16,7 @@
 
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES {
@@ -44,7 +45,7 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
     this->logicalStreamName = std::move(logicalStreamName);
     this->numberOfBuffersToProduce = numBuffersToProcess;
     this->gatheringMode = DataSource::getGatheringModeFromString(std::move(gatheringMode));
-    this->sourceMode = MemorySource::getSourceModeFromString(std::move(sourceMode));
+    this->sourceMode = getSourceModeFromString(std::move(sourceMode));
     this->gatheringValue = gatheringValue;
 }
 
@@ -52,11 +53,11 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
 MemorySource::SourceMode MemorySourceStreamConfig::getSourceModeFromString(const std::string& mode) {
     UtilityFunctions::trim(mode);
     if (mode == "emptyBuffer") {
-        return SourceMode::emptyBuffer;
+        return MemorySource::emptyBuffer;
     } else if (mode == "wrapBuffer") {
-        return SourceMode::wrapBuffer;
+        return MemorySource::wrapBuffer;
     } else if (mode == "copyBuffer") {
-        return SourceMode::copyBuffer;
+        return MemorySource::copyBuffer;
     } else {
         NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
     }
