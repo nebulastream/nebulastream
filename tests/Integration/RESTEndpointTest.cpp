@@ -1116,7 +1116,7 @@ TEST_F(RESTEndpointTest, testGetAllMisconfiguredStreamCatalogEntries) {
     NES_INFO("RESTEndpointTest: Worker2 started successfully");
 
     srcConf->setPhysicalStreamName("test_physical1");
-    //srcConf->setLogicalStreamName("");
+    srcConf->setLogicalStreamName("");
     bool success = wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
     EXPECT_TRUE(success);
     NES_INFO("RESTEndpointTest: Added a physical stream without a logical stream.");
