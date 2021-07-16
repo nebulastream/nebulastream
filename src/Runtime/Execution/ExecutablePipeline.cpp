@@ -80,8 +80,7 @@ bool ExecutablePipeline::stop() {
     auto expected = PipelineStatus::PipelineRunning;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineStopped)) {
         //wait until all task are processed
-        while(inProgressTasks.load() != 0)
-        {
+        while (inProgressTasks.load() != 0) {
             NES_TRACE("wait for in progress tasks in query stop");
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }

@@ -49,7 +49,6 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
     this->gatheringValue = gatheringValue;
 }
 
-
 MemorySource::SourceMode MemorySourceStreamConfig::getSourceModeFromString(const std::string& mode) {
     UtilityFunctions::trim(mode);
     if (mode == "emptyBuffer") {
