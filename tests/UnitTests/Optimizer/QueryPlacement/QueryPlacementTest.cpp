@@ -948,6 +948,12 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
 
+    std::vector<OperatorId> sourceOperatorIds;
+    for (auto srcOp: testQueryPlan->getSourceOperators()) {
+        sourceOperatorIds.push_back(srcOp->getId());
+    }
+
+
     EXPECT_EQ(executionNodes.size(), 3UL);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 0U) {
@@ -959,25 +965,35 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
         } else if (executionNode->getId() == 1U) {
+            // Assert if one source operator is placed here
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
-            EXPECT_EQ(querySubPlans.size(), 1U);
-            auto querySubPlan = querySubPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            EXPECT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());//system generated source
-        } else if (executionNode->getId() == 1U) {
+
+            auto placedSourceCount = 0;
+            auto execNodeSourceOps = querySubPlans[0]->getSourceOperators();
+
+            for (auto srcOp: execNodeSourceOps) {
+                if (std::find(sourceOperatorIds.begin(), sourceOperatorIds.end(), srcOp->getId()) != sourceOperatorIds.end()) {
+                    placedSourceCount++;
+                }
+            }
+
+            EXPECT_EQ(placedSourceCount, 1);
+        } else if (executionNode->getId() == 2U) {
+            // Assert if one source operator is placed here
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
-            EXPECT_EQ(querySubPlans.size(), 1U);
-            auto querySubPlan = querySubPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            EXPECT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());// stream source
+
+            auto placedSourceCount = 0;
+            auto execNodeSourceOps = querySubPlans[0]->getSourceOperators();
+
+            for (auto srcOp: execNodeSourceOps) {
+                if (std::find(sourceOperatorIds.begin(), sourceOperatorIds.end(), srcOp->getId()) != sourceOperatorIds.end()) {
+                    placedSourceCount++;
+                }
+            }
+
+            EXPECT_EQ(placedSourceCount, 1);
         }
     }
 
     // TODO #1018: Assert that all operators are placed
-
-    // TODO #1018: Assert that filter are placed either at both sources or at the sink
 }
