@@ -15,6 +15,7 @@
 */
 
 #include <Catalogs/StreamCatalog.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
@@ -119,10 +120,12 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
     std::vector<OperatorId> placedOperatorIds;// bookkeeping: each operator should be placed once
     // loop over all logical stream
     for (auto srcOp : queryPlan->getSourceOperators()) {
-        auto currentOperator = srcOp;
+        LogicalOperatorNodePtr currentOperator = srcOp;
         for (auto topologyNode : streamCatalog->getSourceNodesForLogicalStream(srcOp->getSourceDescriptor()->getStreamName())) {
-            auto topoIdx = matrixMapping[std::make_pair(topologyNode->getId(), currentOperator->getId())].first;
-            auto opIdx = matrixMapping[std::make_pair(topologyNode->getId(), currentOperator->getId())].second;
+            TopologyNodePtr currentTopologyNodePtr = topologyNode;
+
+            topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].first;
+            auto opIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].second;
 
             // place the current source operator here if no source operator for the same logical source is placed
             if (std::find(placedOperatorIds.begin(), placedOperatorIds.end(), srcOp->getId()) == placedOperatorIds.end()
@@ -130,19 +133,53 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
                              topologyNodeToStreamName[topologyNode].end(),
                              srcOp->getSourceDescriptor()->getStreamName())
                     == topologyNodeToStreamName[topologyNode].end()) {
-                placementCandidate[topoIdx][opIdx] = true;
-                placedOperatorIds.push_back(srcOp->getId());
+                placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
+                placedOperatorIds.push_back(currentOperator->getId());
 
+                // bookkeeping the assignment of source operators
                 if (topologyNodeToStreamName.find(topologyNode) == topologyNodeToStreamName.end()) {
                     std::vector<std::string> placedLogicalStreams = {srcOp->getSourceDescriptor()->getStreamName()};
                     topologyNodeToStreamName.insert(std::make_pair(topologyNode, placedLogicalStreams));
                 } else {
                     topologyNodeToStreamName[topologyNode].push_back(srcOp->getSourceDescriptor()->getStreamName());
                 }
+
+                // placing the rest of the operator except the sink
+                auto randomGenerator = std::bind(std::uniform_int_distribution<>(0,1),std::default_random_engine());
+                while (currentTopologyNodePtr != topology->getRoot()) {
+                    auto stop = randomGenerator();
+                    while (!stop && !currentOperator->getParents()[0]->instanceOf<SinkLogicalOperatorNode>()) {// assuming one sink operator
+                        currentOperator =
+                            currentOperator->getParents()[0]->as<LogicalOperatorNode>();// assuming one parent per operator
+
+                        topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].first;
+                        opIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].second;
+                        placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
+                        placedOperatorIds.push_back(currentOperator->getId());
+                        stop = randomGenerator();
+                    }
+                    currentTopologyNodePtr =
+                        currentTopologyNodePtr->getParents()[0]->as<TopologyNode>();// assuming one parent per operator
+                }
             }
         }
     }
 
+
+    auto currentTopologyNodePtr = topology->getRoot();
+    // check all un-assigned operators, including the sink
+    QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto qPlanIter = queryPlanIterator.begin(); qPlanIter != NES::QueryPlanIterator::end(); ++qPlanIter) {
+        auto currentOpId = (*qPlanIter)->as<LogicalOperatorNode>()->getId();
+        if (std::find(placedOperatorIds.begin(), placedOperatorIds.end(), currentOpId) == placedOperatorIds.end()) {
+            // if the current operator id is not in placedOperatorIds, then place the current operator at the sink
+            topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOpId)].first;
+            auto opIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOpId)].second;
+
+            placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
+            placedOperatorIds.push_back(currentOpId);
+        }
+    }
     return placementCandidate;
 }
 
