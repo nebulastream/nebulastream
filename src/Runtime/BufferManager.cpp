@@ -45,7 +45,7 @@ void BufferManager::destroy() {
         localPool->destroy();
     }
     localBufferPools.clear();
-    if (allBuffers.size() != availableBuffers.size()) {
+    if ((size_t) allBuffers.size() != availableBuffers.size()) {
         NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers " << availableBuffers.size());
         success = false;
     }
@@ -325,7 +325,7 @@ void BufferManager::UnpooledBufferHolder::markFree() { free = true; }
 LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedBuffers) {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
-    NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
+    NES_ASSERT2_FMT((size_t)availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i) {
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
         auto* memSegment = availableBuffers.front();
@@ -348,7 +348,7 @@ LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedB
 FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfReservedBuffers) {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
-    NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
+    NES_ASSERT2_FMT((size_t)availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i) {
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
         auto* memSegment = availableBuffers.front();

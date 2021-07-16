@@ -65,7 +65,7 @@ void LocalBufferPool::destroy() {
     }
 #endif
 
-    NES_ASSERT2_FMT(numberOfReservedBuffers == exclusiveBuffers.size(),
+    NES_ASSERT2_FMT(numberOfReservedBuffers == (size_t)exclusiveBuffers.size(),
                     "one or more buffers were not returned to the pool: " << exclusiveBuffers.size() << " but expected "
                                                                           << numberOfReservedBuffers);
 
