@@ -260,7 +260,7 @@ class StreamCatalog {
      */
     bool setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
 
-    StreamCatalog(WorkerRPCClientPtr workerRpcClient);
+    StreamCatalog();
     ~StreamCatalog();
 
   private:

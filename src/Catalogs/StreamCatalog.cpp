@@ -59,8 +59,10 @@ void StreamCatalog::addDefaultStreams() {
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 }
-StreamCatalog::StreamCatalog(WorkerRPCClientPtr workerRpcClient) : catalogMutex(), workerRpcClient(workerRpcClient) {
+StreamCatalog::StreamCatalog() : catalogMutex() {
     NES_DEBUG("StreamCatalog: construct stream catalog");
+    // TODO use from coordinator
+    this->workerRpcClient = std::make_shared<WorkerRPCClient>();
     addDefaultStreams();
     NES_DEBUG("StreamCatalog: construct stream catalog successfully");
 }
@@ -151,7 +153,7 @@ bool StreamCatalog::addPhysicalToLogicalStream(std::string logicalStreamName, St
 }
 
 bool StreamCatalog::addPhysicalStream(std::vector<std::string> logicalStreamNames, StreamCatalogEntryPtr newEntry) {
-    NES_DEBUG("StreamCatalog: addPhysicalStream");
+    NES_DEBUG("StreamCatalog: acquiring lock");
     std::unique_lock lock(catalogMutex);
 
     //check if physical stream does not exist yet
