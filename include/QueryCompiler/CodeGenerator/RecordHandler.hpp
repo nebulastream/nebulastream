@@ -39,7 +39,8 @@ class RecordHandler {
 
     /**
      * @brief Checks a specific attribute was already registered.
-     * @return name attribute name.
+     * @param name attribute name.
+     * @return true if attribute is registered
      */
     bool hasAttribute(const std::string& name);
 

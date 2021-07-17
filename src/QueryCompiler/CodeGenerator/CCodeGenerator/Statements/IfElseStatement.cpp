@@ -13,16 +13,32 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFElseStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
+#include <sstream>
+
 namespace NES::QueryCompilation {
-IfElseStatement::IfElseStatement(const Statement&, const Statement&) {}
+    IfElseStatement::IfElseStatement(const Statement& cond_expr, const Statement& cond_true_stmt, const Statement& cond_false_stmt)
+    : conditionalExpression(cond_expr.createCopy()), trueCaseStatement(new CompoundStatement()), falseCaseStatement(new CompoundStatement()) {
+        trueCaseStatement->addStatement(cond_true_stmt.createCopy());
+        falseCaseStatement->addStatement(cond_false_stmt.createCopy());
+    }
 
-CodeExpressionPtr IfElseStatement::getCode() const { return std::make_shared<CodeExpression>(""); }
-
-StatementType IfElseStatement::getStamentType() const { return IF_STMT; }
+StatementType IfElseStatement::getStamentType() const { return IF_ELSE_STMT; }
+CodeExpressionPtr IfElseStatement::getCode() const {
+    std::stringstream code;
+    code << "if(" << conditionalExpression->getCode()->code_ << "){" << std::endl;
+    code << trueCaseStatement->getCode()->code_ << std::endl;
+    code << "} else {" << std::endl;
+    code << falseCaseStatement->getCode()->code_ << std::endl;
+    code << "}" << std::endl;
+    return std::make_shared<CodeExpression>(code.str());
+}
 
 StatementPtr IfElseStatement::createCopy() const { return std::make_shared<IfElseStatement>(*this); }
 
+
+CompoundStatementPtr IfElseStatement::getTrueCaseCompoundStatement() { return trueCaseStatement; }
+CompoundStatementPtr IfElseStatement::getFalseCaseCompoundStatement() { return falseCaseStatement; }
 }// namespace NES::QueryCompilation

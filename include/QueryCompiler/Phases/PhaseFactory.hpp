@@ -21,7 +21,7 @@ namespace QueryCompilation {
 namespace Phases {
 
 /**
- * @brief A abstract factory, which allows the query compiler to create instances of particular phases,
+ * @brief An abstract factory, which allows the query compiler to create instances of particular phases,
  * without knowledge about the concrete implementations. This ensures extendability.
  */
 class PhaseFactory {

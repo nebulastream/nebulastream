@@ -25,7 +25,7 @@ namespace NES {
 namespace QueryCompilation {
 
 /**
- * @brief This phase lower a pipeline plan of physical operators into a pipeline plan of generatable operators.
+ * @brief This phase lowers a pipeline plan of physical operators into a pipeline plan of generatable operators.
  * The lowering of individual operators is defined by the generatable operator provider to improve extendability.
  */
 class LowerPhysicalToGeneratableOperators {

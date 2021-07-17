@@ -23,7 +23,7 @@ namespace QueryCompilation {
 /**
  * @brief Simple phase to add scan and emit operator to pipelines in necessary.
  * A common case would be that, the pipelining phase placed a filter operator in an own pipeline.
- * In this case, the AddScanAndEmitPhase adds a scan before and end emit operator before respectively after the filter operator.
+ * In this case, the AddScanAndEmitPhase adds a scan before and end emit operator respectively after the filter operator.
  */
 class AddScanAndEmitPhase {
   public:

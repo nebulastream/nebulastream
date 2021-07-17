@@ -136,7 +136,7 @@ bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
 
 bool Schema::hasEqualTypes(const SchemaPtr& otherSchema) {
     auto otherFields = otherSchema->fields;
-    //Check if the number of filed are same or not
+    // Check if the number of fields are same or not
     if (otherFields.size() != fields.size()) {
         return false;
     }
