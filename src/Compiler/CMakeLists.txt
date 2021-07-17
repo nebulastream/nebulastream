@@ -15,6 +15,7 @@
 add_source_nes(
         JITCompiler.cpp
         JITCompilerBuilder.cpp
+        DynamicObject.cpp
         CompilationRequest.cpp
         CompilationResult.cpp
         SourceCode.cpp

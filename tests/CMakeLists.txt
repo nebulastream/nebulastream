@@ -81,6 +81,10 @@ message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}")
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
 
+add_executable(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
+target_link_libraries(compiler-test nes ${GTEST_LIBRARIES})
+add_test(NAME compiler-test COMMAND compiler-test)
+
 add_executable(compiler-sharedlibrary-test "UnitTests/Compiler/SharedLibraryTest.cpp")
 target_link_libraries(compiler-sharedlibrary-test nes ${GTEST_LIBRARIES})
 add_test(NAME compiler-sharedlibrary-test COMMAND compiler-sharedlibrary-test)

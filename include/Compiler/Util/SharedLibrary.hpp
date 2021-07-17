@@ -13,13 +13,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_LANGUAGE_HPP_
-#define NES_INCLUDE_COMPILER_LANGUAGE_HPP_
-
+#ifndef NES_INCLUDE_COMPILER_CPPCOMPILER_SHAREDLIBRARY_HPP_
+#define NES_INCLUDE_COMPILER_CPPCOMPILER_SHAREDLIBRARY_HPP_
+#include <Compiler/DynamicObject.hpp>
+#include <memory>
 namespace NES::Compiler {
 
-enum Language { CPP };
+class SharedLibrary;
+using SharedLibraryPtr = std::shared_ptr<SharedLibrary>;
 
-}
+class SharedLibrary : public DynamicObject {
+  public:
+    ~SharedLibrary() override;
 
-#endif//NES_INCLUDE_COMPILER_LANGUAGE_HPP_
+    static SharedLibraryPtr load(const std::string& filePath);
+
+    [[nodiscard]] void* getInvocableFunctionPtr(const std::string& member) override;
+
+    explicit SharedLibrary(void* shareLib);
+
+  private:
+    void* shareLib;
+};
+
+}// namespace NES::Compiler
+
+#endif//NES_INCLUDE_COMPILER_CPPCOMPILER_SHAREDLIBRARY_HPP_
