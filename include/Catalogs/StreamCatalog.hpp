@@ -133,14 +133,6 @@ class StreamCatalog {
     bool removePhysicalToLogicalMappingFromMismappedStreams(std::string logicalStreamName, std::string physicalStreamName);
 
     /**
-   * @brief method to remove the mapping of all physical streams from a specific logical stream.
-     * The deleted physical streams may still be used in other log - to physical mappings.
-   * @param logicalStreamName from which all mappings to physical streams are to be deleted
-   * @return bool indicating success of remove stream
-   */
-    bool removeAllPhysicalStreams(std::string logicalStreamName);
-
-    /**
      * @brief method to delete all mismappings for a logical stream
      * @param logicalStreamName from which all mismappings to physical streams are to be deleted
      * @return bool indicating success of remove of physical stream
@@ -248,7 +240,7 @@ class StreamCatalog {
 
     /**
     * @brief Return a list of logical stream names registered at catalog for a specific physicalStream as strings
-    * @return map containing stream name as key and schema as string
+    * @return map containing stream name as key and schema as string (empty if physical stream does not exists)
     */
     std::map<std::string, std::string> getAllLogicalStreamForPhysicalStreamAsString(std::string physicalStreamName);
 

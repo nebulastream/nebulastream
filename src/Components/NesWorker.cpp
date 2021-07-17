@@ -169,12 +169,10 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
     if (withRegisterStream) {
         NES_DEBUG("NesWorker: start with register stream");
-        // BDAPRO do bulk registration instead of multiple calls
         for (auto& config : configs) {
             bool success = registerPhysicalStream(config);
 
             NES_DEBUG("registered " << config->getPhysicalStreamName() << "= " << success);
-            // BDAPRO handle registration failure differently
             NES_ASSERT(success, "cannot register");
         }
     }
@@ -318,7 +316,6 @@ bool NesWorker::unregisterPhysicalStream(std::string physicalName) {
 }
 
 bool NesWorker::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
-    // BDAPRO maybe register all physical streams at once to reduce RPC calls
     NES_ASSERT(conf, "invalid configuration");
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);

@@ -1108,7 +1108,6 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     std::cout << "E2EBase: Test finished" << std::endl;
 }
 
-//BDAPRO: fix this one, currently segmentation fault thrown through multithreading
 TEST_F(SourceTest, DISABLED_testTwoLambdaSourcesMultiThread) {
     NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
     crdConf->setRpcPort(4000);

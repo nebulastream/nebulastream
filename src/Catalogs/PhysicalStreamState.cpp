@@ -18,7 +18,6 @@
 
 
 namespace NES {
-//BDAPRO create constructor
 PhysicalStreamState::PhysicalStreamState(){
     this->state = State::regular;
 }
@@ -63,8 +62,6 @@ std::string PhysicalStreamState::getStringForReasonEnum(Reason reason){
         return "noLogicalStream";
     }else if (reason==logicalStreamWithoutSchema){
         return "logicalStreamWithoutSchema";
-    }else if (reason==fileNotFound){
-        return "fileNotFound";
     }else{
         return "duplicatePhysicalStreamName";
     }

@@ -80,7 +80,6 @@ int main(int argc, char** argv) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
     if (sourceConfigPath != commandLineParams.end()) {
-        // BDAPRO check this again, this looks a bit clunky, any recommendations?
         auto sourceConfigPaths = UtilityFunctions::splitWithStringDelimiter(sourceConfigPath->second, ";");
         if (sourceConfigPaths.size() == 1) {
             sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);

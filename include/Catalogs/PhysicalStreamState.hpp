@@ -14,11 +14,6 @@
     limitations under the License.
 */
 
-// BDAPRO ADD states as enum
-// BDAPRO add addLog() function, removeLog(), getState(), setState()
-// BDAPRO detect miscongig on count == 0
-
-
 #ifndef NES_PHYSICALSTREAMSTATE_HPP
 #define NES_PHYSICALSTREAMSTATE_HPP
 
@@ -27,7 +22,7 @@
 
 namespace NES {
 enum State {misconfigured, regular};
-enum Reason {noLogicalStream, logicalStreamWithoutSchema,duplicatePhysicalStreamName, fileNotFound};
+enum Reason {noLogicalStream, logicalStreamWithoutSchema,duplicatePhysicalStreamName};
 
 class PhysicalStreamState {
   public:

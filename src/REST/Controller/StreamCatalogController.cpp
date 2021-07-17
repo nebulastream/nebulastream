@@ -49,6 +49,13 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                 std::string physicalStreamName = param->second;
                 const std::map <std::string, std::string> &allLogicalStreamForPhysicalStream = streamCatalog->getAllLogicalStreamForPhysicalStreamAsString(
                         physicalStreamName);
+                if(allLogicalStreamForPhysicalStream.empty()){
+                    json::value result{};
+                    result["Success"] = json::value::boolean(false);
+                    result["Reason"] = json::value::string("Physical stream "+physicalStreamName+" either does not exist or has no valid logical stream mappings");
+                    successMessageImpl(request, result);
+                    return;
+                }
                 for (auto const&[key, val] : allLogicalStreamForPhysicalStream) {
                     result[key] = json::value::string(val);
                 }
@@ -187,7 +194,6 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             }
         }
     } else if (path[1] == "allMisconfiguredStreamCatalogEntries") {
-        // BDAPRO : return a list, nicely formatted of all misconfiguredStreamCatalogEntires with Reasons!
         const std::vector<StreamCatalogEntryPtr>& allMisconfiguredPhysicalStreams = streamCatalog->getAllMisconfiguredPhysicalStreams();
 
         json::value result{};
