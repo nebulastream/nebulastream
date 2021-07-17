@@ -144,12 +144,13 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
                                                                                    logicalStreamName[0]);
     EXPECT_TRUE(successRegisterPhysicalStream);
 
-    //test register existing stream
+    //test register existing stream, should create renamed duplicate
     bool successRegisterExistingPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId,
                                                                                            conf->getSourceType(),
                                                                                            conf->getPhysicalStreamName(),
                                                                                            logicalStreamName[0]);
-    EXPECT_TRUE(!successRegisterExistingPhysicalStream);
+
+    EXPECT_TRUE(successRegisterExistingPhysicalStream);
 
     //test unregister not existing physical stream
     bool successUnregisterNotExistingPhysicalStream =
