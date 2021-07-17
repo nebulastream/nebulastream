@@ -13,13 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_LANGUAGE_HPP_
-#define NES_INCLUDE_COMPILER_LANGUAGE_HPP_
+#include <Compiler/DynamicObject.hpp>
 
-namespace NES::Compiler {
+namespace NES::Compiler{
 
-enum Language { CPP };
 
 }
-
-#endif//NES_INCLUDE_COMPILER_LANGUAGE_HPP_

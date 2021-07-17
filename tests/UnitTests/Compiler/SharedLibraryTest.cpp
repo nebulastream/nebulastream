@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Compiler/CPPCompiler/SharedLibrary.hpp>
+#include <Compiler/Util/SharedLibrary.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
@@ -32,7 +32,7 @@ class SharedLibraryTest : public testing::Test {
 TEST(SharedLibraryTest, loadSharedLib) {
     using FunctionType = uint64_t (*)();
     auto sharedLib = SharedLibrary::load("libnes.so");
-    auto function = sharedLib->getFunction<FunctionType>("_ZN3NES16UtilityFunctions17getNextOperatorIdEv");
+    auto function = sharedLib->getInvocableMember<FunctionType>("_ZN3NES16UtilityFunctions17getNextOperatorIdEv");
     EXPECT_EQ(function(), 1ULL);
     EXPECT_EQ(function(), 2ULL);
     sharedLib.reset();
@@ -45,7 +45,7 @@ TEST(SharedLibraryTest, loadSharedLibERROR) {
 TEST(SharedLibraryTest, loadSymbleERROR) {
     using FunctionType = uint64_t (*)();
     auto sharedLib = SharedLibrary::load("libnes.so");
-    EXPECT_ANY_THROW(sharedLib->getFunction<FunctionType>("NotExisting"));
+    EXPECT_ANY_THROW(sharedLib->getInvocableMember<FunctionType>("NotExisting"));
 
 }
 

@@ -15,5 +15,4 @@
 add_source_nes(
         CPPCompiler.cpp
         CPPCompilerFlags.cpp
-        SharedLibrary.cpp
 )
