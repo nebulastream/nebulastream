@@ -54,6 +54,8 @@ CoordinatorConfig::CoordinatorConfig() {
 
     enableSemanticQueryValidation =
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
+
+    dataDir = ConfigOption<std::string>::create("dataDir", "/var/nes/data/", "Directory for Persistence");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -77,6 +79,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             setQueryMergerRule(config["queryMergerRule"].As<std::string>());
             setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
+            setDataDir(config["dataDir"].As<std::string>());
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
             NES_WARNING("CoordinatorConfig: Keeping default values.");
@@ -119,6 +122,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setQueryMergerRule(it->second);
             } else if (it->first == "--enableSemanticQueryValidation") {
                 setEnableSemanticQueryValidation((it->second == "true"));
+            } else if (it->first == "--dataDir") {
+                setDataDir(it->second);
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -145,6 +150,7 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
     setQueryMergerRule(queryMergerRule->getDefaultValue());
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
+    setDataDir(dataDir->getDefaultValue());
 }
 
 StringConfigOption CoordinatorConfig::getRestIp() { return restIp; }
@@ -214,5 +220,8 @@ BoolConfigOption CoordinatorConfig::getEnableSemanticQueryValidation() { return 
 void CoordinatorConfig::setEnableSemanticQueryValidation(bool enableSemanticQueryValidation) {
     CoordinatorConfig::enableSemanticQueryValidation->setValue(enableSemanticQueryValidation);
 }
+void CoordinatorConfig::setDataDir(std::string dataDir) { CoordinatorConfig::dataDir->setValue(dataDir); }
+
+StringConfigOption CoordinatorConfig::getDataDir() { return dataDir; }
 
 }// namespace NES

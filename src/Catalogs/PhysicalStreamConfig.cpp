@@ -20,8 +20,8 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <sstream>
 namespace NES {
 
@@ -49,7 +49,8 @@ const std::string PhysicalStreamConfig::toString() {
        << "ms"
        << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer
        << " numberOfBuffersToProduce=" << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
-       << " logicalStreamName=" << "("+UtilityFunctions::combineStringsWithDelimiter(logicalStreamName, ", ")+")";
+       << " logicalStreamName="
+       << "(" + UtilityFunctions::combineStringsWithDelimiter(logicalStreamName, ", ") + ")";
     return ss.str();
 }
 
@@ -67,13 +68,14 @@ const std::string PhysicalStreamConfig::getPhysicalStreamName() { return physica
 
 const std::vector<std::string> PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
-void PhysicalStreamConfig::addLogicalStreamName(std::string logicalStreamName){this->logicalStreamName.push_back(logicalStreamName);}
+void PhysicalStreamConfig::addLogicalStreamName(std::string logicalStreamName) {
+    this->logicalStreamName.push_back(logicalStreamName);
+}
 
 bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
 
 SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema, std::string streamName) {
     auto* config = this;
-
 
     std::string type = config->getSourceType();
     std::string conf = config->getSourceConfig();
@@ -112,5 +114,17 @@ void PhysicalStreamConfig::setNumberOfTuplesToProducePerBuffer(uint32_t numberOf
 }
 void PhysicalStreamConfig::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce) {
     PhysicalStreamConfig::numberOfBuffersToProduce = numberOfBuffersToProduce;
+}
+SourceConfigPtr PhysicalStreamConfig::toSourceConfig() {
+    auto config = SourceConfig::create();
+    config->setSourceType(sourceType);
+    config->setSourceConfig(sourceConfig);
+    config->setSourceFrequency(sourceFrequency.count());
+    config->setNumberOfBuffersToProduce(numberOfTuplesToProducePerBuffer);
+    config->setNumberOfTuplesToProducePerBuffer(numberOfBuffersToProduce);
+    config->setPhysicalStreamName(physicalStreamName);
+    config->setLogicalStreamName(UtilityFunctions::combineStringsWithDelimiter(logicalStreamName, ","));
+    config->setSkipHeader(skipHeader);
+    return config;
 }
 }// namespace NES

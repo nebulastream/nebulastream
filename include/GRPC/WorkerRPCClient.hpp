@@ -156,6 +156,21 @@ class WorkerRPCClient {
      */
     bool checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> queues, RpcClientModes mode);
 
+    /**
+     * @brief requests the source config of a given physical stream name
+     * @param physicalStreamName name of the requested stream
+     * @return the serialized source config if the stream exists
+     */
+    std::string getSourceConfig(const std::string& address, const std::string& physicalStreamName);
+
+    /**
+     * @brief tries to set the source config of the physical stream
+     * @param physicalStreamName the physical stream name of the stream to set
+     * @param sourceConfig the serialized source config
+     * @return true if successful
+     */
+    bool setSourceConfig(const std::string& address, std::string& physicalStreamName, std::string& sourceConfig);
+
   private:
 };
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;

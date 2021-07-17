@@ -291,10 +291,16 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     // TODO we should get rid of the following method
     /**
-     * @brief Set the physical stream config
-     * @param config : configuration to be set
+     * @brief Add the physical stream config
+     * @param config : configuration to be added
      */
     void addConfig(AbstractPhysicalStreamConfigPtr config);
+
+    /**
+     * @brief Get a physical stream config by the physicalStreamName
+     * @param physicalStreamName : the name of the physical stream
+     */
+    AbstractPhysicalStreamConfigPtr getConfig(const std::string& physicalStreamName);
 
     /**
      * @brief Creates a logical source descriptor according to a logical source descriptor
@@ -305,7 +311,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
   private:
-    std::vector<AbstractPhysicalStreamConfigPtr> configs;
+    std::map<std::string, AbstractPhysicalStreamConfigPtr> physicalStreams;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;

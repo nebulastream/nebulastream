@@ -16,6 +16,10 @@
 
 #ifndef NES_CONFIGURATIONPERSISTENCE_H
 #define NES_CONFIGURATIONPERSISTENCE_H
-class FileConfigurationPersistence {};
+namespace NES {
+namespace NodeEngine {
+class AbstractConfigurationPersistence {};
+}// namespace NodeEngine
+}// namespace NES
 
 #endif//NES_CONFIGURATIONPERSISTENCE_H

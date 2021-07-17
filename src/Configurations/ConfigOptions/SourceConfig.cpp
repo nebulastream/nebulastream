@@ -19,6 +19,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <cpprest/json.h>
 #include <filesystem>
 #include <string>
 
@@ -42,8 +43,9 @@ SourceConfig::SourceConfig() {
         ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.");
     physicalStreamName =
         ConfigOption<std::string>::create("physicalStreamName", "default_physical", "Physical name of the stream.");
-    std::vector<std::string> defaultLogicalStreamName {"default_logical"};
-    logicalStreamName = ConfigOption<std::vector<std::string>>::create("logicalStreamName", defaultLogicalStreamName,
+    std::vector<std::string> defaultLogicalStreamName{"default_logical"};
+    logicalStreamName = ConfigOption<std::vector<std::string>>::create("logicalStreamName",
+                                                                       defaultLogicalStreamName,
                                                                        "Names of the logical streams.");
     skipHeader = ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.");
 }
@@ -107,6 +109,8 @@ void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
     }
 }
 
+void SourceConfig::overwriteConfigWithStringInput(const std::string&) {}
+
 void SourceConfig::resetSourceOptions() {
     setSourceConfig(sourceConfig->getDefaultValue());
     setSourceType(sourceType->getDefaultValue());
@@ -155,7 +159,7 @@ void SourceConfig::setPhysicalStreamName(std::string physicalStreamNameValue) {
 void SourceConfig::setLogicalStreamName(std::vector<std::string> logicalStreamNameValue) {
     logicalStreamName->setValue(logicalStreamNameValue);
 }
-void SourceConfig::setLogicalStreamName(std::string logicalStreamNameStr){
+void SourceConfig::setLogicalStreamName(std::string logicalStreamNameStr) {
     std::vector<std::string> logicalStreamNameVec = UtilityFunctions::splitWithStringDelimiter(logicalStreamNameStr, ",");
     logicalStreamName->setValue(logicalStreamNameVec);
 }
@@ -165,5 +169,26 @@ void SourceConfig::addLogicalStreamName(std::string logicalStreamNameValue) {
 }
 
 void SourceConfig::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }
+
+std::string SourceConfig::toJson() {
+    web::json::value json{};
+
+    json["sourceType"] = web::json::value::string(sourceType->getValue());
+    json["sourceConfig"] = web::json::value::string(sourceType->getValue());
+    json["sourceFrequency"] = web::json::value::number(sourceFrequency->getValue());
+    json["numberOfBuffersToProduce"] = web::json::value::number(numberOfBuffersToProduce->getValue());
+    json["numberOfTuplesToProducePerBuffer"] = web::json::value::number(numberOfTuplesToProducePerBuffer->getValue());
+    json["physicalStreamName"] = web::json::value::string(physicalStreamName->getValue());
+
+    auto names = std::vector<web::json::value>{};
+    for (auto& name : logicalStreamName->getValue()) {
+        names.emplace_back(web::json::value::string(name));
+    }
+    json["logicalStreamName"] = web::json::value::array(names);
+    json["skipHeader"] = web::json::value::boolean(skipHeader->getValue());
+
+    return json.serialize();
+}
+std::string SourceConfig::toYaml() { return ""; }
 
 }// namespace NES

@@ -126,4 +126,25 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
         return Status::CANCELLED;
     }
 }
+
+Status WorkerRPCServer::SetSourceConfig(ServerContext*, const SetSourceConfigRequest*, SetSourceConfigReply*) {
+    try {
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: Setting source config failed: " << ex.what());
+        return Status::CANCELLED;
+    }
+}
+
+Status WorkerRPCServer::GetSourceConfig(ServerContext*, const GetSourceConfigRequest* request, GetSourceConfigReply* reply) {
+    NES_DEBUG("WorkerRPCServer::GetSourceConfig: got request for " << request->physicalstreamname());
+    try {
+        auto conf = nodeEngine->getConfig(request->physicalstreamname());
+        reply->set_sourceconfig(conf->toSourceConfig()->toJson());
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer::GetSourceConfig: failed");
+        return Status::CANCELLED;
+    }
+}
 }// namespace NES

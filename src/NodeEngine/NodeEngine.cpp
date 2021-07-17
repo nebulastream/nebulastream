@@ -175,7 +175,7 @@ NodeEngine::NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
     for (auto& config : configs) {
-        this->configs.push_back(std::move(config));
+        physicalStreams[config->getPhysicalStreamName()] = config;
     }
 
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
@@ -520,12 +520,12 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
     // name of the logical stream associated with the sourceDescriptor
-    auto sourceDescriptorName = sourceDescriptor -> getStreamName();
+    auto sourceDescriptorName = sourceDescriptor->getStreamName();
 
-    for(auto &conf: configs){
-        auto logicalStreamNames = conf ->getLogicalStreamName();
-        for(std::string logicalStreamName : logicalStreamNames){
-            if(logicalStreamName == sourceDescriptorName){
+    for (auto const& [physicalStreamName, conf] : physicalStreams) {
+        auto logicalStreamNames = conf->getLogicalStreamName();
+        for (std::string logicalStreamName : logicalStreamNames) {
+            if (logicalStreamName == sourceDescriptorName) {
                 return conf->build(sourceDescriptor->getSchema(), sourceDescriptorName);
             }
         }
@@ -538,7 +538,15 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 
 void NodeEngine::addConfig(AbstractPhysicalStreamConfigPtr config) {
     NES_ASSERT(config, "physical source config is not specified");
-    this->configs.push_back(config);
+    this->physicalStreams[config->getPhysicalStreamName()] = config;
+}
+AbstractPhysicalStreamConfigPtr NodeEngine::getConfig(const std::string& physicalStreamName) {
+    if (physicalStreams.find(physicalStreamName) != physicalStreams.end()) {
+        return physicalStreams[physicalStreamName];
+    } else {
+        NES_ERROR("NodeEngine::getConfig: physical stream does not exists " << physicalStreamName);
+        throw Exception("Required stream does not exists " + physicalStreamName);
+    }
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {

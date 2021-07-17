@@ -18,7 +18,9 @@
 #define NES_SOURCECONFIG_HPP
 
 #include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace NES {
 
@@ -51,6 +53,24 @@ class SourceConfig {
      * @param inputParams map with key=command line parameter and value = value
      */
     void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams);
+
+    /**
+     * @brief overwrite the config with configuration parsed from the string
+     * @param configString the string containing the configuration
+     */
+    void overwriteConfigWithStringInput(const std::string& configString);
+
+    /**
+     * @brief serializes the configuration to a JSON string representation
+     * @return a JSON string
+     */
+    std::string toJson();
+
+    /**
+     * @brief serializes the configuration to a YAML string representation
+     * @return a YAML string
+     */
+    std::string toYaml();
 
     /**
      * @brief resets all options to default values

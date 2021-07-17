@@ -25,6 +25,7 @@
 #include <vector>
 //#include <Topology/NESTopologyEntry.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 namespace NES {
 
 class LogicalStream;
@@ -71,7 +72,6 @@ class StreamCatalog {
      */
     bool addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry);
 
-
     /**
      * @brief method to add to a logicalStream a physical stream
      * @param logicalStreamName name of the logical stream
@@ -80,7 +80,7 @@ class StreamCatalog {
      */
     bool addPhysicalToLogicalStream(std::string logicalStreamName, StreamCatalogEntryPtr entry);
 
-        /**
+    /**
        * @brief method to add a physical stream
        * @caution combination of node and name has to be unique
        * @return true if the physical stream was added successfully to all logicalStreams named, false otherwise
@@ -117,7 +117,6 @@ class StreamCatalog {
      */
     bool removePhysicalStreamByHashId(uint64_t hashId);
 
-
     /**
    * @brief method to remove the mapping of all physical streams from a specific logical stream.
      * The deleted physical streams may still be used in other log - to physical mappings.
@@ -131,7 +130,7 @@ class StreamCatalog {
    * @param param of the node to be deleted
    * @return bool indicating success of remove stream
    */
-   bool removePhysicalStreamFromAllLogicalStreams(std::string physicalStreamName);
+    bool removePhysicalStreamFromAllLogicalStreams(std::string physicalStreamName);
 
     /**
     * @brief method to return the stream for an existing logical stream
@@ -140,7 +139,6 @@ class StreamCatalog {
     * @note the stream will also contain the schema
     */
     SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);
-
 
     /**
     * @brief method to return the stream for an existing logical stream
@@ -163,7 +161,8 @@ class StreamCatalog {
      * @param logicalStreamNames names of the logical streams to test
      * @return a tuple of vectors, the first vector contains the logical streams included in the mapping and the second one the rest
      */
-    std::tuple<std::vector<std::string>, std::vector<std::string>> testIfLogicalStreamVecExistsInSchemaMapping(std::vector<std::string> logicalStreamNames);
+    std::tuple<std::vector<std::string>, std::vector<std::string>>
+    testIfLogicalStreamVecExistsInSchemaMapping(std::vector<std::string> logicalStreamNames);
 
     /**
    * @brief test if logical stream with this name exists in the log to schema mapping
@@ -217,7 +216,6 @@ class StreamCatalog {
     */
     std::map<std::string, std::string> getAllLogicalStreamForPhysicalStreamAsString(std::string physicalStreamName);
 
-
     std::map<std::string, std::string> getAllLogicalStreamAsString();
 
     /**
@@ -247,11 +245,28 @@ class StreamCatalog {
      */
     bool updatedLogicalStream(std::string& streamName, std::string& streamSchema);
 
-    StreamCatalog();
+    /**
+     *
+     * @param physicalStreamName
+     * @return
+     */
+    std::string getSourceConfig(const std::string& physicalStreamName);
+
+    /**
+     *
+     * @param physicalStreamName
+     * @param sourceConfig
+     * @return
+     */
+    bool setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
+
+    StreamCatalog(WorkerRPCClientPtr workerRpcClient);
     ~StreamCatalog();
 
   private:
     std::recursive_mutex catalogMutex;
+
+    WorkerRPCClientPtr workerRpcClient;
 
     //map logical stream to schema
     std::map<std::string, SchemaPtr> logicalStreamToSchemaMapping;
