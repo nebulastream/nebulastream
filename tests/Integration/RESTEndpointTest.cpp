@@ -50,7 +50,6 @@ class RESTEndpointTest : public testing::Test {
 
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
 };
-
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
@@ -1081,7 +1080,6 @@ TEST_F(RESTEndpointTest, testRemoveLogicalStreamFromMismapped) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
 }
-// BDAPRO: Write Endpoint Test to get all misconfigured StreamCatalogEntries
 TEST_F(RESTEndpointTest, testGetAllMisconfiguredStreamCatalogEntries) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
@@ -1151,9 +1149,195 @@ TEST_F(RESTEndpointTest, testGetAllMisconfiguredStreamCatalogEntries) {
 
     NES_INFO("allMisconfiguredStreamCatalogEntries: try to acc return");
     NES_DEBUG("allMisconfiguredStreamCatalogEntries response: " << allMisconfiguredStreamCatalogEntriesJsonReturn.serialize());
-    std::string expected= "{\"test_physical2\":\"misconfigured\\nlogicalStreamWithoutSchema: (non_existing_logical)\"}";
+    std::string expected= "{\"test_physical1\":\"misconfigured\\nnoLogicalStream: no valid logical stream\",\"test_physical2\":\"misconfigured\\nlogicalStreamWithoutSchema: (non_existing_logical)\"}";
     NES_DEBUG("allMisconfiguredStreamCatalogEntries response: expected = " << expected);
     ASSERT_EQ(allMisconfiguredStreamCatalogEntriesJsonReturn.serialize(), expected);
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("RESTEndpointTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+TEST_F(RESTEndpointTest, testGetAllMisconfiguredStreamCatalogEntriesDuplicatePhysical) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 2");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("RESTEndpointTest: Worker2 started successfully");
+
+    srcConf->setPhysicalStreamName("myphysical");
+    srcConf->setLogicalStreamName("default_logical");
+    bool success = wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+    EXPECT_TRUE(success);
+    NES_INFO("RESTEndpointTest: Added a physical stream without a logical stream.");
+
+
+    srcConf->setLogicalStreamName("");
+    success = wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+    EXPECT_TRUE(success);
+
+
+    web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
+                                                              + "/v1/nes/streamCatalog/allMisconfiguredStreamCatalogEntries");
+    web::json::value allMisconfiguredStreamCatalogEntriesJsonReturn;
+
+    getAllPhysicalStreamClient.request(web::http::methods::GET, "")
+    .then([](const web::http::http_response& response) {
+    NES_INFO("get first then");
+    return response.extract_json();})
+    .then([&allMisconfiguredStreamCatalogEntriesJsonReturn](const pplx::task<web::json::value>& task) {
+    try {
+    NES_INFO("get execution-plan: set return");
+    allMisconfiguredStreamCatalogEntriesJsonReturn = task.get();
+    } catch (const web::http::http_exception& e) {
+    NES_ERROR("get execution-plan: error while setting return" << e.what());
+    }})
+    .wait();
+
+    NES_INFO("allMisconfiguredStreamCatalogEntries: try to acc return");
+    NES_DEBUG("allMisconfiguredStreamCatalogEntries response: " << allMisconfiguredStreamCatalogEntriesJsonReturn.serialize());
+
+    auto physicalStreams = crd->getStreamCatalog()->getPhysicalStreams();
+    bool hasDuplicate = true;
+    for (auto entry : physicalStreams){
+    if(entry->getPhysicalName() == "myphysical"){
+    continue;
+    }else if (entry->getPhysicalName().find("myphysical_") != std::string::npos){
+    continue;
+    }
+    hasDuplicate = false;
+    }
+    EXPECT_TRUE(hasDuplicate);
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("RESTEndpointTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+TEST_F(RESTEndpointTest, testActivateDuplicatePhysicalStreamName) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 2");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("RESTEndpointTest: Worker2 started successfully");
+
+    srcConf->setPhysicalStreamName("myphysical");
+    srcConf->setLogicalStreamName("default_logical");
+    bool success = wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+    EXPECT_TRUE(success);
+    NES_INFO("RESTEndpointTest: Added a physical stream without a logical stream.");
+
+
+    srcConf->setLogicalStreamName("exdra");
+    success = wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+    EXPECT_TRUE(success);
+
+    auto physicalStreams = crd->getStreamCatalog()->getPhysicalStreams();
+    StreamCatalogEntryPtr duplicate;
+    for (auto entry : physicalStreams){
+        if(entry->getPhysicalName().find("_") != std::string::npos) {
+            duplicate = entry;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(!crd->getStreamCatalog()->testIfLogicalStreamExistsInLogicalToPhysicalMapping("exdra"));
+
+
+RegisterPhysicalStreamRequest req;
+    req.set_physicalstreamname(duplicate->getPhysicalName());
+
+    std::string msg = req.SerializeAsString();
+
+    web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
+                                                              + "/v1/nes/streamCatalog/activateDuplicateStreamName");
+    web::json::value allMisconfiguredStreamCatalogEntriesJsonReturn;
+
+    getAllPhysicalStreamClient.request(web::http::methods::POST, "", msg)
+    .then([](const web::http::http_response& response) {
+    NES_INFO("get first then");
+    return response.extract_json();})
+    .then([&allMisconfiguredStreamCatalogEntriesJsonReturn](const pplx::task<web::json::value>& task) {
+    try {
+    NES_INFO("get execution-plan: set return");
+    allMisconfiguredStreamCatalogEntriesJsonReturn = task.get();
+    } catch (const web::http::http_exception& e) {
+    NES_ERROR("get execution-plan: error while setting return" << e.what());
+    }})
+    .wait();
+
+    NES_INFO("allMisconfiguredStreamCatalogEntries: try to acc return");
+    NES_DEBUG("allMisconfiguredStreamCatalogEntries response: " << allMisconfiguredStreamCatalogEntriesJsonReturn.serialize());
+
+    EXPECT_TRUE(crd->getStreamCatalog()->testIfLogicalStreamExistsInLogicalToPhysicalMapping("exdra"));
 
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

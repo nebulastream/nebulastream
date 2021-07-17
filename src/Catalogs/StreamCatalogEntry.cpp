@@ -134,7 +134,7 @@ PhysicalStreamState StreamCatalogEntry::getPhysicalStreamState(){
     return physicalStreamState;
 }
 
-
+// BDAPRO : Put changes on Node but not persistent, persistence only after validation
 void StreamCatalogEntry::changePhysicalStreamName(std::string newName){
     physicalStreamState.addReason(duplicatePhysicalStreamName, "Physical stream was renamed from "+physicalStreamName+" to "+newName+", as the old name already existed.");
     physicalStreamName=newName;

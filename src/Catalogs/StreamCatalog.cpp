@@ -114,6 +114,14 @@ void StreamCatalog::addLogicalStreamFromMismappedStreams(std::string logicalStre
 
 bool StreamCatalog::addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry) {
     std::unique_lock lock(catalogMutex);
+    if (nameToPhysicalStream.find(newEntry->getPhysicalName()) != nameToPhysicalStream.end()){
+        std::string newName = newEntry->getPhysicalName()+"_"+ UtilityFunctions::simpleHexStringGenerator(10);
+        while(nameToPhysicalStream.find(newName) != nameToPhysicalStream.end()){
+            newName = newEntry->getPhysicalName()+"_"+ UtilityFunctions::simpleHexStringGenerator(10);
+        }
+        NES_WARNING("StreamCatalog: physicalStream with name=" << newEntry->getPhysicalName() << " already exists. Change it to "<<newName<<", new name has to be validated before querying on this Node is allowed.");
+        newEntry->changePhysicalStreamName(newName);
+    }
     nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
     nameToPhysicalStream[newEntry->getPhysicalName()]->setStateToWithoutLogicalStream();
     return true;
@@ -162,7 +170,7 @@ bool StreamCatalog::addPhysicalStream(std::vector<std::string> logicalStreamName
         NES_WARNING("StreamCatalog: physicalStream with name=" << newEntry->getPhysicalName() << " already exists. Change it to "<<newName<<", new name has to be validated before querying on this Node is allowed.");
         newEntry->changePhysicalStreamName(newName);
         nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
-        return false;
+        return true;
     }
 
     NES_DEBUG("StreamCatalog: physical stream " << newEntry->getPhysicalName() << " does not exist, try to add");
@@ -650,6 +658,7 @@ bool StreamCatalog::validatePhysicalStreamName(std::string physicalStreamName){
 
             phyStream->getPhysicalStreamState().removeReason(duplicatePhysicalStreamName);
             NES_DEBUG("StreamCatalog: physical stream with name "+physicalStreamName+" is now valid.");
+            return true;
         }
         NES_DEBUG("StreamCatalog: physical stream with name "+physicalStreamName+" is already valid.");
         return false;

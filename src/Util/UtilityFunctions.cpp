@@ -281,7 +281,7 @@ std::string UtilityFunctions::simpleHexStringGenerator(int length) {
     std::string hex;
     for(i=0;i<length;i++)
     {
-        hex[i]=hex_characters[rand()%16];
+        hex+=hex_characters[rand()%16];
     }
     return hex;
 }

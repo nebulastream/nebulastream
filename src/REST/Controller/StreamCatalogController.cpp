@@ -199,6 +199,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             for (auto entry : allMisconfiguredPhysicalStreams) {
                 result[entry->getPhysicalName()] = json::value::string(entry->getPhysicalStreamState().getStateDescription());
             }
+
             successMessageImpl(request, result);
             return;
         }
@@ -334,8 +335,45 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                     }
                 })
                 .wait();
+    }else if (path[1] == "activateDuplicateStreamName") {
+        NES_DEBUG("StreamCatalogController: handlePost -activateDuplicateStreamName: REST received request to activate a currently disabled physicalStream. "
+                          << message.to_string());
+        message.extract_string(true)
+                .then([this, message](utility::string_t body) {
+                    try {
+                        std::shared_ptr<RegisterPhysicalStreamRequest> protobufMessage = std::make_shared<RegisterPhysicalStreamRequest>();
+
+                        if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
+                            json::value errorResponse{};
+                            errorResponse["detail"] = json::value::string("Invalid Protobuf message");
+                            badRequestImpl(message, errorResponse);
+                            return;
+                        }
+                        NES_DEBUG("StreamCatalogController: handlePost -activateDuplicateStreamName: Start trying to activate physicalStream with formerly duplicated name");
+                        std::string physicalStreamName = protobufMessage->physicalstreamname();
+                        bool activated = streamCatalog->validatePhysicalStreamName(physicalStreamName);
+                        NES_DEBUG("StreamCatalogController: handlePost -activateDuplicateStreamName: Successfully activated physicalStream with formerly duplicated name? "
+                                          << activated);
+                        //Prepare the response
+                        json::value result{};
+                        result["Success"] = json::value::boolean(activated);
+                        successMessageImpl(message, result);
+                        return;
+                    } catch (const std::exception& exc) {
+                        NES_ERROR("StreamCatalogController: handlePost -activateDuplicateStreamName: Exception occurred while trying to activate  "
+                                  "physical stream name "
+                                          << exc.what());
+                        handleException(message, exc);
+                        return;
+                    } catch (...) {
+                        RuntimeUtils::printStackTrace();
+                        internalServerErrorImpl(message);
+                        return;
+                    }
+                })
+                .wait();
     }
-    else {
+        else {
         resourceNotFoundImpl(message);
     }
 }
