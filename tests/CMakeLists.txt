@@ -353,11 +353,6 @@ add_executable(query-placement-test "UnitTests/Optimizer/QueryPlacement/QueryPla
 target_link_libraries(query-placement-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-placement-test COMMAND query-placement-test)
 
-### Query Reconfiguration Tests ###
-add_executable(query-unit-reconfiguration-test "UnitTests/Optimizer/QueryPlacement/QueryReconfigurationTest.cpp")
-target_link_libraries(query-unit-reconfiguration-test nes ${GTEST_LIBRARIES})
-add_test(NAME query-unit-reconfiguration-test COMMAND query-unit-reconfiguration-test)
-
 ### Thread Naming Test ###
 add_executable(thread-naming-tests "UnitTests/Util/ThreadNamingTest.cpp")
 target_link_libraries(thread-naming-tests nes ${GTEST_LIBRARIES})
