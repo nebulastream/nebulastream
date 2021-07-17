@@ -26,18 +26,15 @@ class IFStatement : public Statement {
     explicit IFStatement(const Statement& cond_expr);
 
     IFStatement(const Statement& cond_expr, const Statement& cond_true_stmt);
-
     IFStatement(StatementPtr cond_expr, const StatementPtr& cond_true_stmt);
 
     [[nodiscard]] StatementType getStamentType() const override;
-
     [[nodiscard]] CodeExpressionPtr getCode() const override;
-
     [[nodiscard]] StatementPtr createCopy() const override;
 
     CompoundStatementPtr getCompoundStatement();
 
-    ~IFStatement() override = default;
+    ~IFStatement() noexcept override = default;
 
   private:
     const StatementPtr conditionalExpression;

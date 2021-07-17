@@ -74,7 +74,7 @@ class CCodeGenerator : public CodeGenerator {
     bool generateCodeForMap(AttributeFieldPtr field, LegacyExpressionPtr pred, PipelineContextPtr context) override;
 
     /**
-    * @brief Code generation for a emit, which depends on a particular output schema.
+    * @brief Code generation for an emit, which depends on a particular output schema.
     * @param schema The output schema.
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.

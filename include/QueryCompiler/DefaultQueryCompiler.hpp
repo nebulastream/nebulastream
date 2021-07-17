@@ -27,7 +27,7 @@ class DefaultQueryCompiler : public QueryCompiler {
   public:
     /**
      * @brief Creates a new instance of the DefaultQueryCompiler, with a set of options and phases.
-     * @param options QueryCompilatiopnOptions.
+     * @param options QueryCompilationOptions.
      * @param phaseFactory Factory which allows the injection of query optimization phases.
      * @return QueryCompilerPtr
      */
