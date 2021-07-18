@@ -14,8 +14,8 @@
     limitations under the License.
 */
 #include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
-#include <NodeEngine/Reconfigurable.hpp>
-#include <NodeEngine/WorkerContext.hpp>
+#include <Runtime/Reconfigurable.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
@@ -34,8 +34,8 @@ InferModelOperatorHandler::InferModelOperatorHandler(std::string model) {
     tfAdapter->initializeModel(model);
 }
 
-void InferModelOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr,
-                                NodeEngine::StateManagerPtr stateManager,
+void InferModelOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+                                      Runtime::StateManagerPtr stateManager,
                                 uint32_t localStateVariableId) {
     std::cout << stateManager->getNodeId() << std::endl;
     std::cout << localStateVariableId << std::endl;
@@ -44,15 +44,15 @@ void InferModelOperatorHandler::start(NodeEngine::Execution::PipelineExecutionCo
     // implement start here
 }
 
-void InferModelOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) {
+void InferModelOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
     // implement stop here
 }
-void InferModelOperatorHandler::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) {
-    NodeEngine::Execution::OperatorHandler::reconfigure(task, context);
+void InferModelOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
+    Runtime::Execution::OperatorHandler::reconfigure(task, context);
 }
 
-void InferModelOperatorHandler::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) {
-    NodeEngine::Execution::OperatorHandler::postReconfigurationCallback(task);
+void InferModelOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
+    Runtime::Execution::OperatorHandler::postReconfigurationCallback(task);
 }
 const std::string& InferModelOperatorHandler::getModel() const { return model; }
 const TensorflowAdapterPtr& InferModelOperatorHandler::getTensorflowAdapter() const { return tfAdapter; }
