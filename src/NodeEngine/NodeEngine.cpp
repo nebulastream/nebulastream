@@ -24,8 +24,8 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Persistence/FileConfigurationPersistence.hpp>
-#include <Persistence/InMemoryConfigurationPersistence.hpp>
+#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
+#include <Persistence/FilePhysicalStreamsPersistence.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
@@ -91,11 +91,11 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
             throw Exception("Error while creating compiler");
         }
 
-        ConfigurationPersistencePtr configurationPersistence;
+        PhysicalStreamsPersistencePtr configurationPersistence;
         if (configPersistenceType == "file") {
-            configurationPersistence = std::make_shared<FileConfigurationPersistence>(configPersistencePath);
+            configurationPersistence = std::make_shared<FilePhysicalStreamsPersistence>(configPersistencePath);
         } else {
-            configurationPersistence = std::make_shared<InMemoryConfigurationPersistence>();
+            configurationPersistence = std::make_shared<DefaultPhysicalStreamsPersistence>();
         }
 
         auto engine = std::make_shared<NodeEngine>(
@@ -133,7 +133,7 @@ NodeEngine::NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager,
-                       ConfigurationPersistencePtr&& configurationPersistence,
+                       PhysicalStreamsPersistencePtr&& configurationPersistence,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,

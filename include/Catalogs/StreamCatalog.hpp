@@ -26,6 +26,7 @@
 //#include <Topology/NESTopologyEntry.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Persistence/StreamCatalogPersistence.hpp>
 namespace NES {
 
 class LogicalStream;
@@ -261,12 +262,14 @@ class StreamCatalog {
     std::string setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
 
     StreamCatalog();
+    StreamCatalog(StreamCatalogPersistencePtr persistence);
     ~StreamCatalog();
 
   private:
     std::recursive_mutex catalogMutex;
 
     WorkerRPCClientPtr workerRpcClient;
+    StreamCatalogPersistencePtr persistence;
 
     //map logical stream to schema
     std::map<std::string, SchemaPtr> logicalStreamToSchemaMapping;

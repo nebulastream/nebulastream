@@ -20,7 +20,7 @@
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <Persistence/InMemoryConfigurationPersistence.hpp>
+#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -634,7 +634,7 @@ void assertKiller() {
                          std::move(partitionManager),
                          std::move(compiler),
                          std::make_shared<NES::NodeEngine::StateManager>(),
-                         std::make_shared<NES::InMemoryConfigurationPersistence>(),
+                         std::make_shared<NES::DefaultPhysicalStreamsPersistence>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
@@ -676,7 +676,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          std::move(partitionManager),
                          std::move(compiler),
                          std::make_shared<NES::NodeEngine::StateManager>(),
-                         std::make_shared<NES::InMemoryConfigurationPersistence>(),
+                         std::make_shared<NES::DefaultPhysicalStreamsPersistence>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
@@ -746,7 +746,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          std::move(partitionManager),
                          std::move(compiler),
                          std::make_shared<NES::NodeEngine::StateManager>(),
-                         std::make_shared<NES::InMemoryConfigurationPersistence>(),
+                         std::make_shared<NES::DefaultPhysicalStreamsPersistence>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,

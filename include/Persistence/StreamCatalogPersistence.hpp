@@ -14,18 +14,22 @@
     limitations under the License.
 */
 
-#include <Persistence/InMemoryConfigurationPersistence.hpp>
-#include <Util/Logger.hpp>
-#include <filesystem>
+#ifndef NEBULASTREAM_STREAMCATALOGPERSISTENCE_H
+#define NEBULASTREAM_STREAMCATALOGPERSISTENCE_H
+
+#include <map>
+#include <memory>
 
 namespace NES {
+class StreamCatalogPersistence;
+typedef std::shared_ptr<StreamCatalogPersistence> StreamCatalogPersistencePtr;
 
-InMemoryConfigurationPersistence::InMemoryConfigurationPersistence() {
-    NES_DEBUG("InMemoryConfigurationPersistence: creating InMemoryConfigurationPersistence");
-}
+class StreamCatalogPersistence {
+  public:
+    virtual bool persistLogicalStream(const std::string& logicalStreamName, const std::string& schema) = 0;
+    virtual bool deleteLogicalStream(const std::string& logicalStreamName) = 0;
 
-bool InMemoryConfigurationPersistence::persistConfiguration(SourceConfigPtr) { return true; }
-
-std::vector<SourceConfigPtr> InMemoryConfigurationPersistence::loadConfigurations() { return {}; }
-
+    virtual std::map<std::string, std::string> loadLogicalStreams() = 0;
+};
 }// namespace NES
+#endif//NEBULASTREAM_STREAMCATALOGPERSISTENCE_H

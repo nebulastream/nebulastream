@@ -14,24 +14,30 @@
     limitations under the License.
 */
 
-#ifndef NES_FILECONFIGURATIONPERSISTENCE_H
-#define NES_FILECONFIGURATIONPERSISTENCE_H
+#ifndef NES_FILESTREAMCATALOGPERSISTENCE_H
+#define NES_FILESTREAMCATALOGPERSISTENCE_H
 
-#include <Persistence/ConfigurationPersistence.hpp>
+#include <Persistence/StreamCatalogPersistence.hpp>
 #include <filesystem>
+#include <memory>
+#include <vector>
 
 namespace NES {
-class FileConfigurationPersistence : public ConfigurationPersistence {
+class FileStreamCatalogPersistence;
+typedef std::shared_ptr<FileStreamCatalogPersistence> FileStreamCatalogPersistencePtr;
+
+class FileStreamCatalogPersistence : public StreamCatalogPersistence {
   public:
-    FileConfigurationPersistence(const std::string& baseDir);
+    FileStreamCatalogPersistence(const std::string& baseDir);
 
-    bool persistConfiguration(SourceConfigPtr sourceConfig) override;
+    bool persistLogicalStream(const std::string& logicalStreamName, const std::string& schema) override;
+    bool deleteLogicalStream(const std::string& logicalStreamName) override;
 
-    std::vector<SourceConfigPtr> loadConfigurations() override;
+    std::map<std::string, std::string> loadLogicalStreams() override;
 
   private:
     std::filesystem::path baseDir;
 };
-}// namespace NES
 
-#endif//NES_FILECONFIGURATIONPERSISTENCE_H
+}// namespace NES
+#endif//NES_FILESTREAMCATALOGPERSISTENCE_H

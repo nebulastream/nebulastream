@@ -17,6 +17,7 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Persistence/DefaultStreamCatalogPersistence.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -59,7 +60,10 @@ void StreamCatalog::addDefaultStreams() {
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 }
-StreamCatalog::StreamCatalog() : catalogMutex() {
+
+StreamCatalog::StreamCatalog() : StreamCatalog(DefaultStreamCatalogPersistence::create()){};
+
+StreamCatalog::StreamCatalog(StreamCatalogPersistencePtr persistence) : catalogMutex(), persistence(persistence) {
     NES_DEBUG("StreamCatalog: construct stream catalog");
     // TODO use from coordinator
     this->workerRpcClient = std::make_shared<WorkerRPCClient>();
@@ -73,7 +77,11 @@ bool StreamCatalog::addLogicalStream(const std::string& streamName, const std::s
     std::unique_lock lock(catalogMutex);
     SchemaPtr schema = UtilityFunctions::createSchemaFromCode(streamSchema);
     NES_DEBUG("StreamCatalog: schema successfully created");
-    return addLogicalStream(streamName, schema);
+    bool success = addLogicalStream(streamName, schema);
+    if (success) {
+        persistence->persistLogicalStream(streamName, streamSchema);
+    }
+    return success;
 }
 
 bool StreamCatalog::addLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr) {
@@ -110,6 +118,8 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
         uint64_t cnt = logicalStreamToSchemaMapping.erase(logicalStreamName);
         NES_DEBUG("StreamCatalog: removed " << cnt << " copies of the stream");
         NES_ASSERT(!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName), "log stream should not exist");
+
+        persistence->deleteLogicalStream(logicalStreamName);
         return true;
     }
 }

@@ -14,18 +14,18 @@
     limitations under the License.
 */
 
-#ifndef NES_INMEMORYCONFIGURATIONPERSISTENCE_H
-#define NES_INMEMORYCONFIGURATIONPERSISTENCE_H
-#include <Persistence/ConfigurationPersistence.hpp>
+#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
+#include <Util/Logger.hpp>
+#include <filesystem>
+
 namespace NES {
-class InMemoryConfigurationPersistence : public ConfigurationPersistence {
-  public:
-    InMemoryConfigurationPersistence();
 
-    bool persistConfiguration(SourceConfigPtr sourceConfig) override;
+DefaultPhysicalStreamsPersistencePtr DefaultPhysicalStreamsPersistence::create() {
+    return std::make_shared<DefaultPhysicalStreamsPersistence>();
+}
 
-    std::vector<SourceConfigPtr> loadConfigurations() override;
-};
+bool DefaultPhysicalStreamsPersistence::persistConfiguration(SourceConfigPtr) { return true; }
+
+std::vector<SourceConfigPtr> DefaultPhysicalStreamsPersistence::loadConfigurations() { return {}; }
+
 }// namespace NES
-
-#endif//NES_INMEMORYCONFIGURATIONPERSISTENCE_H

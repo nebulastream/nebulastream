@@ -31,7 +31,7 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
-#include <Persistence/FileConfigurationPersistence.hpp>
+#include <Persistence/FilePhysicalStreamsPersistence.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <sys/stat.h>
@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
 
     if (workerConfig->getConfigPersistenceType()->getValue() == "file") {
         auto configurationPersistence =
-            std::make_shared<FileConfigurationPersistence>(workerConfig->getConfigPersistencePath()->getValue());
+            std::make_shared<FilePhysicalStreamsPersistence>(workerConfig->getConfigPersistencePath()->getValue());
         auto loadedConfigs = configurationPersistence->loadConfigurations();
         if (!loadedConfigs.empty()) {
             sourceConfigs = loadedConfigs;

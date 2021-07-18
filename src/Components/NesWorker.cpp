@@ -26,8 +26,8 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Persistence/FileConfigurationPersistence.hpp>
-#include <Persistence/InMemoryConfigurationPersistence.hpp>
+#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
+#include <Persistence/FilePhysicalStreamsPersistence.hpp>
 
 #include <Util/Logger.hpp>
 #include <future>

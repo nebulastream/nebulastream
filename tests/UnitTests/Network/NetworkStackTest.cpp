@@ -25,8 +25,8 @@
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <Persistence/InMemoryConfigurationPersistence.hpp>
 #include <NodeEngine/WorkerContext.hpp>
+#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
@@ -791,7 +791,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                          std::move(partitionManager),
                          std::move(queryCompiler),
                          std::make_shared<NES::NodeEngine::StateManager>(),
-                         std::make_shared<NES::InMemoryConfigurationPersistence>(),
+                         std::make_shared<NES::DefaultPhysicalStreamsPersistence>(),
                          0,
                          64,
                          64,

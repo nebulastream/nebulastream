@@ -26,7 +26,7 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
-#include <Persistence/ConfigurationPersistence.hpp>
+#include <Persistence/PhysicalStreamsPersistence.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -99,7 +99,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
                         StateManagerPtr&&,
-                        ConfigurationPersistencePtr&&,
+                        PhysicalStreamsPersistencePtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
@@ -289,7 +289,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::NetworkManagerPtr networkManager;
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
-    ConfigurationPersistencePtr configurationPersistence;
+    PhysicalStreamsPersistencePtr configurationPersistence;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     std::atomic<bool> isRunning;
     mutable std::recursive_mutex engineMutex;

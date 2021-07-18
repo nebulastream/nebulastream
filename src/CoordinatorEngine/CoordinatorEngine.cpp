@@ -205,10 +205,7 @@ bool CoordinatorEngine::registerLogicalStream(std::string logicalStreamName, std
     NES_DEBUG("CoordinatorEngine::registerLogicalStream: register logical stream=" << logicalStreamName
                                                                                    << " schema=" << schemaString);
     std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
-
-    SchemaPtr schema = UtilityFunctions::createSchemaFromCode(schemaString);
-    NES_DEBUG("StreamCatalogService: schema successfully created");
-    bool success = streamCatalog->addLogicalStream(logicalStreamName, schema);
+    bool success = streamCatalog->addLogicalStream(logicalStreamName, schemaString);
     return success;
 }
 

@@ -17,8 +17,10 @@
 #ifndef NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 
+#include <Persistence/StreamCatalogPersistence.hpp>
 #include <memory>
 #include <mutex>
+
 enum NodeType : int;
 namespace NES {
 class StreamCatalog;
@@ -28,6 +30,7 @@ class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
 class NodeStats;
 typedef std::shared_ptr<NodeStats> NodeStatsPtr;
+
 class CoordinatorEngine {
 
   public:
@@ -113,6 +116,7 @@ class CoordinatorEngine {
   private:
     StreamCatalogPtr streamCatalog;
     TopologyPtr topology;
+
     std::mutex registerDeregisterNode;
     std::mutex addRemoveLogicalStream;
     std::mutex addRemovePhysicalStream;

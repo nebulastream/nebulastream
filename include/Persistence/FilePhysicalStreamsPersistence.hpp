@@ -14,23 +14,27 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONPERSISTENCE_H
-#define NES_CONFIGURATIONPERSISTENCE_H
+#ifndef NES_FILEPHYSICALSTREAMSPERSISTENCE_H
+#define NES_FILEPHYSICALSTREAMSPERSISTENCE_H
 
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <memory>
-#include <vector>
+#include <Persistence/PhysicalStreamsPersistence.hpp>
+#include <filesystem>
 
 namespace NES {
-class ConfigurationPersistence {
+class FilePhysicalStreamsPersistence;
+typedef std::shared_ptr<FilePhysicalStreamsPersistence> FilePhysicalStreamsPersistencePtr;
+
+class FilePhysicalStreamsPersistence : public PhysicalStreamsPersistence {
   public:
-    virtual bool persistConfiguration(SourceConfigPtr sourceConfig) = 0;
+    FilePhysicalStreamsPersistence(const std::string& baseDir);
 
-    virtual std::vector<SourceConfigPtr> loadConfigurations() = 0;
+    bool persistConfiguration(SourceConfigPtr sourceConfig) override;
+
+    std::vector<SourceConfigPtr> loadConfigurations() override;
+
+  private:
+    std::filesystem::path baseDir;
 };
-
-typedef std::shared_ptr<ConfigurationPersistence> ConfigurationPersistencePtr;
-
 }// namespace NES
 
-#endif//NES_CONFIGURATIONPERSISTENCE_H
+#endif//NES_FILEPHYSICALSTREAMSPERSISTENCE_H
