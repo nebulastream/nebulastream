@@ -65,50 +65,50 @@ if (NES_BUILD_BENCHMARKS)
     #-------------------------------# Micro Benchmark Suite#-----------------------------
 
     ### Statemanager Benchmark ###
-#    add_executable(statemanager-benchmark "src/Micro-Benchmarks/StatemanagerBenchmark.cpp")
-#    target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
-#    add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
-#
-#    ### Benchmark Uniform Data Benchmark ###
-#    add_executable(uniformdata-benchmark "src/Micro-Benchmarks/BenchmarkCreateUniformData.cpp")
-#    target_link_libraries(uniformdata-benchmark nes ${GBENCHMARK_LIBRARIES})
-#    target_sources(uniformdata-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME uniformdata-benchmark COMMAND uniformdata-benchmark --benchmark_out=uniformdata-benchmark.log --benchmark_out_format=json)
-#
-#    ### Tuple Buffer Benchmark ###
-#    add_executable(tuplebuffer-benchmark "src/Micro-Benchmarks/TupleBufferBenchmark.cpp")
-#    target_link_libraries(tuplebuffer-benchmark nes ${GBENCHMARK_LIBRARIES})
-#    add_test(NAME tuplebuffer-benchmark COMMAND tuplebuffer-benchmark --benchmark_out=tuplebuffer-benchmark.log --benchmark_out_format=json)
-#
-#    ### Filter Queries Benchmark ###
-#    add_executable(filter-query-benchmark "src/Micro-Benchmarks/FilterQueryBenchmarks.cpp")
-#    target_link_libraries(filter-query-benchmark nes)
-#    target_sources(filter-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME filter-query-benchmark COMMAND filter-query-benchmark --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
-#
-#    ### Filter Queries Benchmark ###
-#    add_executable(ysb-query "src/Micro-Benchmarks/YSBSelect.cpp")
-#    target_link_libraries(ysb-query nes)
-#    target_sources(ysb-query PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME ysb-query COMMAND ysb-query --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
-#
-#    ### Map Queries Benchmark ###
-#    add_executable(map-query-benchmark "src/Micro-Benchmarks/MapQueryBenchmarks.cpp")
-#    target_link_libraries(map-query-benchmark nes)
-#    target_sources(map-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME map-query-benchmark COMMAND map-query-benchmark --benchmark_out=map-query-benchmark.log --benchmark_out_format=json)
-#
-#    ### BufferSize Query Benchmark ###
-#    add_executable(buffer-size-query-benchmark "src/Micro-Benchmarks/QueryBufferSizesBenchmark.cpp")
-#    target_link_libraries(buffer-size-query-benchmark nes)
-#    target_sources(buffer-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME buffer-size-query-benchmark COMMAND buffer-size-query-benchmark --benchmark_out=buffer-size-query-benchmark.log --benchmark_out_format=json)
-#
-#    ### TupleSize Query Benchmark ###
-#    add_executable(tuple-size-query-benchmark "src/Micro-Benchmarks/QueryTupleSizesBenchmark.cpp")
-#    target_link_libraries(tuple-size-query-benchmark nes)
-#    target_sources(tuple-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-#    add_test(NAME tuple-size-query-benchmark COMMAND tuple-size-query-benchmark --benchmark_out=tuple-size-query-benchmark.log --benchmark_out_format=json)
+    #    add_executable(statemanager-benchmark "src/Micro-Benchmarks/StatemanagerBenchmark.cpp")
+    #    target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
+    #    add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
+    #
+    #    ### Benchmark Uniform Data Benchmark ###
+    #    add_executable(uniformdata-benchmark "src/Micro-Benchmarks/BenchmarkCreateUniformData.cpp")
+    #    target_link_libraries(uniformdata-benchmark nes ${GBENCHMARK_LIBRARIES})
+    #    target_sources(uniformdata-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    #    add_test(NAME uniformdata-benchmark COMMAND uniformdata-benchmark --benchmark_out=uniformdata-benchmark.log --benchmark_out_format=json)
+    #
+    #    ### Tuple Buffer Benchmark ###
+    #    add_executable(tuplebuffer-benchmark "src/Micro-Benchmarks/TupleBufferBenchmark.cpp")
+    #    target_link_libraries(tuplebuffer-benchmark nes ${GBENCHMARK_LIBRARIES})
+    #    add_test(NAME tuplebuffer-benchmark COMMAND tuplebuffer-benchmark --benchmark_out=tuplebuffer-benchmark.log --benchmark_out_format=json)
+    #
+    #    ### Filter Queries Benchmark ###
+    #    add_executable(filter-query-benchmark "src/Micro-Benchmarks/FilterQueryBenchmarks.cpp")
+    #    target_link_libraries(filter-query-benchmark nes)
+    #    target_sources(filter-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    #    add_test(NAME filter-query-benchmark COMMAND filter-query-benchmark --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
+    #
+    #    ### Filter Queries Benchmark ###
+    #    add_executable(ysb-query "src/Micro-Benchmarks/YSBSelect.cpp")
+    #    target_link_libraries(ysb-query nes)
+    #    target_sources(ysb-query PUBLIC "src/util/BenchmarkUtils.cpp")
+    #    add_test(NAME ysb-query COMMAND ysb-query --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
+    #
+    #    ### Map Queries Benchmark ###
+    #    add_executable(map-query-benchmark "src/Micro-Benchmarks/MapQueryBenchmarks.cpp")
+    #    target_link_libraries(map-query-benchmark nes)
+    #    target_sources(map-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    #    add_test(NAME map-query-benchmark COMMAND map-query-benchmark --benchmark_out=map-query-benchmark.log --benchmark_out_format=json)
+    #
+    #    ### BufferSize Query Benchmark ###
+    #    add_executable(buffer-size-query-benchmark "src/Micro-Benchmarks/QueryBufferSizesBenchmark.cpp")
+    #    target_link_libraries(buffer-size-query-benchmark nes)
+    #    target_sources(buffer-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    #    add_test(NAME buffer-size-query-benchmark COMMAND buffer-size-query-benchmark --benchmark_out=buffer-size-query-benchmark.log --benchmark_out_format=json)
+    #
+    #    ### TupleSize Query Benchmark ###
+    #    add_executable(tuple-size-query-benchmark "src/Micro-Benchmarks/QueryTupleSizesBenchmark.cpp")
+    #    target_link_libraries(tuple-size-query-benchmark nes)
+    #    target_sources(tuple-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    #    add_test(NAME tuple-size-query-benchmark COMMAND tuple-size-query-benchmark --benchmark_out=tuple-size-query-benchmark.log --benchmark_out_format=json)
 
     ### Memory Layout Benchmark ###
     #add_executable(memory-layout-benchmark "src/Micro-Benchmarks/BenchmarkMemoryLayout.cpp")
@@ -121,12 +121,16 @@ if (NES_BUILD_BENCHMARKS)
     #add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
 
     ### Query Merger Benchmark ###
-#    add_executable(query-merger-benchmark "src/Micro-Benchmarks/Query-Merger/BenchmarkQueryMerger.cpp")
-#    target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
-#    add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=query-merger-benchmark.log --benchmark_out_format=json)
+    #    add_executable(query-merger-benchmark "src/Micro-Benchmarks/Query-Merger/BenchmarkQueryMerger.cpp")
+    #    target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
+    #    add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=query-merger-benchmark.log --benchmark_out_format=json)
+
+    ## Query Merger Benchmark ###
+    add_executable(query-placement-benchmark "src/Micro-Benchmarks/BenchmarkQueryPlacement.cpp")
+    target_link_libraries(query-placement-benchmark nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME query-placement-benchmark COMMAND query-placement-benchmark --benchmark_out=query-placement-benchmark.log --benchmark_out_format=json)
 
     message("---Done building benchmarks")
-
 else (NES_BUILD_BENCHMARKS)
     message("---Not building benchmarks!")
 endif ()
