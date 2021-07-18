@@ -17,6 +17,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
@@ -114,6 +115,11 @@ void MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
                                                    TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("MlHeuristicStrategy: Place " << operatorNode);
+
+    if(operatorNode->instanceOf<InferModelLogicalOperatorNode>()){
+        NES_TRACE("MlHeuristicStrategy: Received an InferModel operator for placement.");
+    }
+
     if ((operatorNode->hasMultipleChildrenOrParents() && !operatorNode->instanceOf<SourceLogicalOperatorNode>())
         || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE("MlHeuristicStrategy: Received an NAry operator for placement.");
