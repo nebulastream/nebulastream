@@ -16,9 +16,9 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_INFERMODELOPERATORHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_INFERMODELOPERATORHANDLER_HPP_
-#include <NodeEngine/Execution/OperatorHandler.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/Reconfigurable.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/Reconfigurable.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 
@@ -28,7 +28,7 @@ namespace NES::Join {
 /**
  * @brief Operator handler for inferModel.
  */
-class InferModelOperatorHandler : public NodeEngine::Execution::OperatorHandler {
+class InferModelOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
     InferModelOperatorHandler(std::string model);
 
@@ -36,15 +36,15 @@ class InferModelOperatorHandler : public NodeEngine::Execution::OperatorHandler 
 
     ~InferModelOperatorHandler() override { NES_DEBUG("~InferModelOperatorHandler()"); }
 
-    void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               NodeEngine::StateManagerPtr stateManager,
+    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+               Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
-    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override;
+    void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) override;
 
-    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override;
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override;
 
   private:
     std::string model;
