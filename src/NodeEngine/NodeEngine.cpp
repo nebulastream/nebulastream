@@ -93,7 +93,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
 
         ConfigurationPersistencePtr configurationPersistence;
         if (configPersistenceType == "file") {
-            configurationPersistence = std::make_shared<FileConfigurationPersistence>(configPersistenecPath);
+            configurationPersistence = std::make_shared<FileConfigurationPersistence>(configPersistencePath);
         } else {
             configurationPersistence = std::make_shared<InMemoryConfigurationPersistence>();
         }
