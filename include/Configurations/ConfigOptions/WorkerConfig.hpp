@@ -185,6 +185,26 @@ class WorkerConfig {
      */
     void setLogLevel(std::string logLevel);
 
+    /**
+     * @brief get the value for the config persistence (i.e. directory name)
+     */
+    StringConfigOption getConfigPersistencePath();
+
+    /**
+     * @brief Sets the config persistence
+     */
+    void setConfigPersistencePath(std::string path);
+
+    /**
+     * @brief Gets the config persistence type (i.e. "file")
+     */
+    StringConfigOption getConfigPersistenceType();
+
+    /**
+     * @brief sets the config persitence type (i.e. "file")
+     */
+    void setConfigPersistenceType(std::string configPersistenceType);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -203,6 +223,8 @@ class WorkerConfig {
     IntConfigOption bufferSizeInBytes;
     StringConfigOption parentId;
     StringConfigOption logLevel;
+    StringConfigOption configPersistencePath;
+    StringConfigOption configPersistenceType;
 };
 
 }// namespace NES

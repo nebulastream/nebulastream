@@ -120,7 +120,7 @@ class SourceTest : public testing::Test {
   public:
     void SetUp() {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, {streamConf});
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }

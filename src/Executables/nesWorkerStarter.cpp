@@ -108,6 +108,14 @@ int main(int argc, char** argv) {
                                                   << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
+    if (workerConfig->getConfigPersistenceType == "file") {
+        auto configurationPersistence = std::make_shared<FileConfigurationPersistence>();
+        loadedConfigs = configurationPersistence->loadConfigurations();
+        if (!loadedConfigs.empty()) {
+            sourceConfigs = loadedConfigs;
+        }
+    }
+
     // register phy stream if necessary
     if (sourceConfigs.size() > 0) {
         for (auto& config : sourceConfigs) {
@@ -118,9 +126,8 @@ int main(int argc, char** argv) {
 
             NES_INFO("NESWORKERSTARTER: Source Config type = "
                      << config->getSourceType()->getValue() << " Config = " << config->getSourceConfig()->getValue()
-                     << " physicalStreamName = " << config->getPhysicalStreamName()->getValue()
-                     << " logicalStreamName = " << "(" <<
-                         UtilityFunctions::combineStringsWithDelimiter(lNames,",") +")");
+                     << " physicalStreamName = " << config->getPhysicalStreamName()->getValue() << " logicalStreamName = "
+                     << "(" << UtilityFunctions::combineStringsWithDelimiter(lNames, ",") + ")");
 
             wrk->setWithRegister(conf);
         }

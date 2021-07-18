@@ -63,7 +63,7 @@ class SinkTest : public testing::Test {
         path_to_bin_file = "../tests/test_data/sink.bin";
         path_to_osfile_file = "../tests/test_data/testOs.txt";
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, {streamConf});
     }
 
     /* Called after a single test. */

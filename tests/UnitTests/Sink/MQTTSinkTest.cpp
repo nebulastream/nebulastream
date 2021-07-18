@@ -63,8 +63,8 @@ class MQTTTSinkTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
         NES_DEBUG("Setup MQTTTSinkTest test case.");
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 3111, conf);
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        nodeEngine = NodeEngine::create("127.0.0.1", 3111, {streamConf});
         testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     }
 

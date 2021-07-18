@@ -72,7 +72,7 @@ class QueryExecutionTest : public testing::Test {
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        nodeEngine = NodeEngine::create("127.0.0.1", 31337, {streamConf});
     }
 
     /* Will be called before a test is executed. */

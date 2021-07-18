@@ -54,6 +54,14 @@ WorkerConfig::WorkerConfig() {
     logLevel = ConfigOption<std::string>::create("logLevel",
                                                  "LOG_DEBUG",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
+
+    configPersistenceType =
+        ConfigOption<std::string>::create("configPersistenceType",
+                                          "file",
+                                          "The type of configuration persistence to use (supported: none, file)");
+    configPersistencePath = ConfigOption<std::string>::create("configPersistencePath",
+                                                              "/var/nes/config/",
+                                                              "The path to the configuration persistence");
 }
 
 void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -77,6 +85,8 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
+            setConfigPersistenceType(config["configPersistenceType"].As<std::string>());
+            setConfigPersistencePath(config["configPersistencePath"].As<std::string>());
         } catch (std::exception& e) {
             NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
                       "values. "
@@ -117,6 +127,10 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setParentId(it->second);
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
+            } else if (it->first == "--configPersistenceType") {
+                setConfigPersistenceType(it->second);
+            } else if (it->first == "--configPersistencePath") {
+                setConfigPersistencePath(it->second);
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -142,6 +156,8 @@ void WorkerConfig::resetWorkerOptions() {
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
     setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+    setConfigPersistenceType(configPersistenceType->getDefaultValue());
+    setConfigPersistencePath(configPersistencePath->getDefaultValue());
 }
 
 StringConfigOption WorkerConfig::getLocalWorkerIp() { return localWorkerIp; }
@@ -195,5 +211,13 @@ void WorkerConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) {
 IntConfigOption WorkerConfig::getBufferSizeInBytes() { return bufferSizeInBytes; }
 
 void WorkerConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
+
+StringConfigOption WorkerConfig::getConfigPersistenceType() { return configPersistenceType; }
+
+void WorkerConfig::setConfigPersistenceType(std::string type) { configPersistenceType->setValue(type); }
+
+StringConfigOption WorkerConfig::getConfigPersistencePath() { return configPersistencePath; }
+
+void WorkerConfig::setConfigPersistencePath(std::string path) { configPersistencePath->setValue(path); }
 
 }// namespace NES

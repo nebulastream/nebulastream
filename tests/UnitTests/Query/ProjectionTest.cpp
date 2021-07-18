@@ -65,7 +65,7 @@ class ProjectionTest : public testing::Test {
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
         auto streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, {streamConf}, 1, 4096, 1024, 12, 12);
     }
 
     /* Will be called before a test is executed. */
