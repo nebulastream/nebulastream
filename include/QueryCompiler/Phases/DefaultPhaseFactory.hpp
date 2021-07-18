@@ -36,6 +36,7 @@ class DefaultPhaseFactory : public PhaseFactory {
     CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options,
                                                      Compiler::JITCompilerPtr jitCompiler) override;
     LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) override;
+    BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) override;
 };
 
 }// namespace Phases

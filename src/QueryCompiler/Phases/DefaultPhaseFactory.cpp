@@ -28,6 +28,7 @@
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToGeneratableOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger.hpp>
 
@@ -74,5 +75,9 @@ LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQ
     auto sourceProvider = DataSourceProvider::create(options);
     auto sinkProvider = DataSinkProvider::create();
     return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
+}
+BufferOptimizationPhasePtr DefaultPhaseFactory::createBufferOptimizationPhase(QueryCompilerOptionsPtr options) {
+    NES_DEBUG("Create buffer optimization phase");
+    return BufferOptimizationPhase::create(options->getBufferOptimizationStrategy());
 }
 }// namespace NES::QueryCompilation::Phases

@@ -156,6 +156,9 @@ using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
 class AddScanAndEmitPhase;
 using AddScanAndEmitPhasePtr = std::shared_ptr<AddScanAndEmitPhase>;
 
+class BufferOptimizationPhase;
+using BufferOptimizationPhasePtr = std::shared_ptr<BufferOptimizationPhase>;
+
 class CodeGenerationPhase;
 using CodeGenerationPhasePtr = std::shared_ptr<CodeGenerationPhase>;
 

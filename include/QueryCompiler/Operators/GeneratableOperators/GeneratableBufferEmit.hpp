@@ -17,6 +17,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEBUFFEREMIT_HPP_
 
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
+#include <QueryCompiler/Phases/BufferOptimizationStrategies.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -46,9 +47,13 @@ class GeneratableBufferEmit : public GeneratableOperator {
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
+    BufferOptimizationStrategy getBufferOptimizationStrategy() const;
+    void setBufferOptimizationStrategy(BufferOptimizationStrategy strategy);
 
   private:
     GeneratableBufferEmit(OperatorId id, const SchemaPtr& outputSchema);
+    BufferOptimizationStrategy bufferStrategy;
+
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

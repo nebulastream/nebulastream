@@ -19,6 +19,7 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/TypeCastExprStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
+#include <QueryCompiler/Phases/BufferOptimizationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
@@ -76,10 +77,11 @@ class CCodeGenerator : public CodeGenerator {
     /**
     * @brief Code generation for an emit, which depends on a particular output schema.
     * @param schema The output schema.
+    * @param bufferStrategy Strategy for allocation of and writing to result buffer.
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPtr context) override;
+    bool generateCodeForEmit(SchemaPtr sinkSchema, BufferOptimizationStrategy bufferStrategy, PipelineContextPtr context) override;
 
     /**
      * @brief Code generation for a watermark assigner operator.

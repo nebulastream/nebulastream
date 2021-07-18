@@ -381,32 +381,13 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, LegacyExpressio
     return true;
 }
 
-bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, BufferOptimizationStrategy bufferStrategy, PipelineContextPtr context) {
 
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for Sink.");
     auto code = context->code;
     // set result schema to context
     context->resultSchema = sinkSchema;
-
-    // TODO make the enum a member of GeneratableEmit and bring enum logic into a new phase in DEFAULTQUERYCOMPILER
-
-    enum BufferAllocationStrategy { // depends mostly on the input & output schema size in bytes
-        DEFAULT,
-        REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK, // output schema is smaller or equal (bytes) than input schema. We can reuse the buffer
-        REUSE_INPUT_BUFFER, // seperate strategies
-        OMIT_OVERFLOW_CHECK,
-        ONLY_INPLACE_OPERATIONS // If all records and all fields match up in input and result buffer we can simply emit the input buffer. For this no filter can be applied and no new fields can be added. The only typical operations possible are inplace-maps, e.g. "id = id + 1".
-    };
-
-    uint64_t inputSize = context->inputSchema->getSchemaSizeInBytes();
-    uint64_t outputSize = context->resultSchema->getSchemaSizeInBytes();
-
-    BufferAllocationStrategy bufferAllocationStrategy = DEFAULT;
-    if (outputSize <= inputSize) {
-        bufferAllocationStrategy = REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK;
-    }
-//    bufferAllocationStrategy = ONLY_INPLACE_OPERATIONS;
 
     // generate result tuple struct
     auto structDeclarationResultTuple = getStructDeclarationFromSchema("ResultTuple", sinkSchema);
@@ -419,7 +400,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
                                         "resultTuples");
 
         // initialize result buffer
-    if (bufferAllocationStrategy == ONLY_INPLACE_OPERATIONS) {
+    if (bufferStrategy == ONLY_INPLACE_OPERATIONS) {
         // We do not even initialize a buffer, we just use "inputBuffer" as the resultBuffer-handle for the later emit.
         // The only contents in the Scan's for loop will be map operations.
         code->varDeclarationResultBuffer = code->varDeclarationInputBuffer;
@@ -431,8 +412,8 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
         auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
         code->varDeclarationResultBuffer = varDeclarationResultBuffer;
 
-        if (bufferAllocationStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
-            || bufferAllocationStrategy == REUSE_INPUT_BUFFER) {                    // Reuse the input buffer as the result buffer.
+        if (bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
+            || bufferStrategy == REUSE_INPUT_BUFFER) {                    // Reuse the input buffer as the result buffer.
             // Generates: NES::Runtime::TupleBuffer resultTupleBuffer = inputTupleBuffer;
             code->variableInitStmts.push_back(
                     VarDeclStatement(code->varDeclarationResultBuffer).assign(
@@ -554,8 +535,8 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
 
         // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
         // We can optimize this away if the result schema is smaller thatn the input schema.
-        if (!(bufferAllocationStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
-              || bufferAllocationStrategy == OMIT_OVERFLOW_CHECK)) {
+        if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
+              || bufferStrategy == OMIT_OVERFLOW_CHECK)) {
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple);
         }
         // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.

@@ -17,6 +17,7 @@ add_source_nes(
         PhaseFactory.cpp
         DefaultPhaseFactory.cpp
         CodeGenerationPhase.cpp
+        BufferOptimizationPhase.cpp
 )
 
 add_subdirectory(Pipelining)

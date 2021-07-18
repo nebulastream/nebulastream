@@ -23,6 +23,10 @@ void QueryCompilerOptions::enableOperatorFusion() { this->operatorFusion = true;
 
 void QueryCompilerOptions::disableOperatorFusion() { this->operatorFusion = false; }
 
+BufferOptimizationStrategy QueryCompilerOptions::getBufferOptimizationStrategy() const { return desiredBufferOptimizationStrategy; };
+
+void QueryCompilerOptions::setBufferOptimizationStrategy(BufferOptimizationStrategy strategy) { this->desiredBufferOptimizationStrategy = strategy; };
+
 void QueryCompilerOptions::setNumSourceLocalBuffers(uint64_t num) { this->numSourceLocalBuffers = num; }
 
 uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() const { return numSourceLocalBuffers; }
