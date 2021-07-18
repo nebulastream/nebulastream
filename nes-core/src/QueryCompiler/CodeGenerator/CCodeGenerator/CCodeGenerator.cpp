@@ -393,6 +393,8 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
     int64_t inferModelOperatorHandlerIndex = 0;
 
+    code->variableInitStmts.push_back(call("TfLiteVersion"));
+
     auto inferModelOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "inferModelOperatorHandler");
     auto getOperatorHandlerCall = call("getOperatorHandler<Join::InferModelOperatorHandler>");

@@ -77,7 +77,10 @@ FileBuilder FileBuilder::create(const std::string&) {
            "#include <Windowing/WindowAggregations/ExecutableMedianAggregation.hpp>\n"
            "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>\n"
            "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>\n"
-           "using namespace NES::QueryCompilation;"
+           "#include <tensorflow/lite/c/c_api.h>\n"
+                          "#include <tensorflow/lite/c/c_api_experimental.h>\n"
+                          "#include <tensorflow/lite/c/common.h>\n"
+                          "using namespace NES::QueryCompilation;"
         << std::endl;
 
     return builder;
