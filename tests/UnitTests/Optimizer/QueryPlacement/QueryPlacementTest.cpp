@@ -1391,12 +1391,16 @@ class ILPPlacementBenchmark : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down ILPPlacementBenchmark test class." << std::endl; }
 
-    void setupTopologyAndStreamCatalogForILP(int n, int SourcePerMiddle) {
+    void setupTopologyAndStreamCatalogForILP(int n, int SourcePerMiddle, int resources, bool exponentialResources) {
         int nodeID = 1;
 
+        int resources1 = exponentialResources ? resources^0: resources;
+        int resources2 = exponentialResources ? resources^1: resources;
+        int resources3 = exponentialResources ? resources^2: resources;
+
         topologyForILP = Topology::create();
-        TopologyNodePtr rootNode = TopologyNode::create(nodeID++, "localhost", 123, 124, 100);
-        rootNode->addNodeProperty("slots", 100);
+        TopologyNodePtr rootNode = TopologyNode::create(nodeID++, "localhost", 123, 124, resources1);
+        rootNode->addNodeProperty("slots", resources1);
         topologyForILP->setAsRoot(rootNode);
         streamCatalogForILP = std::make_shared<StreamCatalog>();
 
@@ -1405,15 +1409,15 @@ class ILPPlacementBenchmark : public testing::Test {
                              "->addField(\"value\", BasicType::UINT64);";
 
         for(int i = 0; i < n; i+=SourcePerMiddle) {
-            TopologyNodePtr middleNode = TopologyNode::create(nodeID++, "localhost", 123, 124, 10);
-            middleNode->addNodeProperty("slots", 10);
+            TopologyNodePtr middleNode = TopologyNode::create(nodeID++, "localhost", 123, 124, resources2);
+            middleNode->addNodeProperty("slots", resources2);
             topologyForILP->addNewPhysicalNodeAsChild(rootNode, middleNode);
             middleNode->addLinkProperty(rootNode, linkProperty);
             rootNode->addLinkProperty(middleNode, linkProperty);
 
             for(int j = 0; j < SourcePerMiddle; j++) {
-                TopologyNodePtr sourceNode = TopologyNode::create(nodeID++, "localhost", 123, 124, 1);
-                sourceNode->addNodeProperty("slots", 1);
+                TopologyNodePtr sourceNode = TopologyNode::create(nodeID++, "localhost", 123, 124, resources3);
+                sourceNode->addNodeProperty("slots", resources3);
                 topologyForILP->addNewPhysicalNodeAsChild(middleNode, sourceNode);
                 sourceNode->addLinkProperty(middleNode, linkProperty);
                 middleNode->addLinkProperty(sourceNode, linkProperty);
@@ -1440,13 +1444,13 @@ class ILPPlacementBenchmark : public testing::Test {
 
 
 /* Test query placement with ILP strategy  */
-TEST_F(ILPPlacementBenchmark, testPlacingQueryWithILPStrategy) {
+TEST_F(ILPPlacementBenchmark, increaseSources) {
     std::list<int> listOfInts( {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20});
 
     int repetitions = 11;
     int SourcePerMiddle = 10;
     int max_size = *std::max_element(listOfInts.begin(), listOfInts.end());
-    setupTopologyAndStreamCatalogForILP(max_size, SourcePerMiddle);
+    setupTopologyAndStreamCatalogForILP(max_size, SourcePerMiddle, 10, true);
 
     std::map<int, std::vector<long>> counts;
     for(int n : listOfInts) {
@@ -1463,6 +1467,76 @@ TEST_F(ILPPlacementBenchmark, testPlacingQueryWithILPStrategy) {
 
             std::vector<Query> subqueries;
             for (int i = 0; i < n; i++) {
+                Query subquery = Query::from("car" + std::to_string(i))
+                    .filter(Attribute("id") < 45)
+                    .map(Attribute("c") = Attribute("id") + Attribute("value"));
+                subqueries.push_back(subquery);
+            }
+
+            Query query = subqueries[0];
+            for (int i = 1; i < subqueries.size(); i++) {
+                query.unionWith(&subqueries[i]);
+            }
+            query = query.sink(PrintSinkDescriptor::create());
+
+            QueryPlanPtr queryPlan = query.getQueryPlan();
+            QueryId queryId = PlanIdGenerator::getNextQueryId();
+            queryPlan->setQueryId(queryId);
+
+            int num_operators = 0;
+            auto queryPlanIterator = QueryPlanIterator(queryPlan);
+            for (auto node : queryPlanIterator) {
+                num_operators++;
+            }
+
+            auto start = std::chrono::high_resolution_clock::now();
+            ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(queryPlan));
+            auto stop = std::chrono::high_resolution_clock::now();
+            long count = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+            NES_INFO("Solved Placement for " << num_operators << " Operators, " << n << " Sources and " << n * 2 + 1 << " Topology nodes");
+            NES_INFO("Found Solution in " << count << "ms");
+            counts_n.push_back(count);
+        }
+        counts.insert(std::make_pair(n, counts_n));
+    }
+
+    for (auto& [n, counts_n] : counts) {
+        std::sort(counts_n.begin(), counts_n.end());
+        long median = counts_n[counts_n.size() / 2];
+        if (counts.size() % 2 == 0) {
+            median = (median + counts_n[(counts_n.size() - 1) / 2]) / 2;
+        }
+        std::stringstream ss;
+        for (auto& count : counts_n) {
+            ss << count << ", ";
+        }
+
+        NES_INFO("N: " << n << ", median: " << median << ", measures: " << ss.str());
+    }
+}
+
+TEST_F(ILPPlacementBenchmark, increaseResources) {
+    std::list<int> listOfInts( {1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100});
+
+    int repetitions = 101;
+    int iot_devices = 10;
+
+    std::map<int, std::vector<long>> counts;
+    for(int n : listOfInts) {
+        setupTopologyAndStreamCatalogForILP(iot_devices, iot_devices, n, false);
+        std::vector<long> counts_n;
+
+        for(int j = 0; j < repetitions; j++) {
+            GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
+            auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("ILP",
+                                                                                      globalExecutionPlan,
+                                                                                      topologyForILP,
+                                                                                      typeInferencePhase,
+                                                                                      streamCatalogForILP);
+
+            std::vector<Query> subqueries;
+            for (int i = 0; i < iot_devices; i++) {
                 Query subquery = Query::from("car" + std::to_string(i))
                     .filter(Attribute("id") < 45)
                     .map(Attribute("c") = Attribute("id") + Attribute("value"));
