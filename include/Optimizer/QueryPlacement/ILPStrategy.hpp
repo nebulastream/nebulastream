@@ -28,6 +28,8 @@ class ILPStrategy : public BasePlacementStrategy {
                                                     TypeInferencePhasePtr typeInferencePhase,
                                                     StreamCatalogPtr streamCatalog);
 
+    double getOUWeight();
+    double getNetWeight();
     void setNetWeight(double value);
     void setOUWeight(double value);
 
@@ -103,9 +105,6 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param operatorNode
     */
     void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode);
-
-    double getOUWeight();
-    double getNetWeight();
 };
 }// namespace NES::Optimizer
 
