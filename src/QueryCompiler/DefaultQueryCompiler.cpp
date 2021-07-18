@@ -20,6 +20,7 @@
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
+#include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
@@ -42,6 +43,7 @@ DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const& option
       lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
+      bufferOptimizationPhase(phaseFactory->createBufferOptimizationPhase(options)),
       codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options, std::move(jitCompiler))) {}
 
 QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const& options,
@@ -79,8 +81,11 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         lowerPhysicalToGeneratableOperatorsPhase->apply(pipelinedQueryPlan);
         dumpContext->dump("5. GeneratableOperators", pipelinedQueryPlan);
 
+        bufferOptimizationPhase->apply(pipelinedQueryPlan);
+        dumpContext->dump("6. BufferOptimizationPhase", pipelinedQueryPlan);
+
         codeGenerationPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("6. ExecutableOperatorPlan", pipelinedQueryPlan);
+        dumpContext->dump("7. ExecutableOperatorPlan", pipelinedQueryPlan);
 
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         return QueryCompilationResult::create(executableQueryPlan);

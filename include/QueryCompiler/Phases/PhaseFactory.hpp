@@ -69,6 +69,13 @@ class PhaseFactory {
     * @return LowerToExecutableQueryPlanPhasePtr
     */
     virtual LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
+
+    /**
+    * @brief Creates buffer optimiuation phase
+    * @param QueryCompilerOptionsPtr options
+    * @return BufferOptimizationPhasePtr
+    */
+    virtual BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) = 0;
 };
 
 }// namespace Phases

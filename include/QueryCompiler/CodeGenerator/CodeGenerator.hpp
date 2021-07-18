@@ -29,6 +29,8 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
+#include <QueryCompiler/Phases/BufferOptimizationStrategies.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -88,9 +90,10 @@ class CodeGenerator {
     * @brief Code generation for a emit, which depends on a particular output schema.
     * @param schema The output schema.
     * @param context The context of the current pipeline.
+    * @param bufferStrategy Strategy for allocation of and writing to result buffer.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForEmit(SchemaPtr schema, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForEmit(SchemaPtr sinkSchema, BufferOptimizationStrategy bufferStrategy, PipelineContextPtr context) = 0;
 
     /**
      * @brief Code generation for a watermark assigner operator.

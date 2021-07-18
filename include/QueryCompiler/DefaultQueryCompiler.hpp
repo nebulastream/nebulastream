@@ -51,6 +51,7 @@ class DefaultQueryCompiler : public QueryCompiler {
     LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhase;
     PipeliningPhasePtr pipeliningPhase;
     AddScanAndEmitPhasePtr addScanAndEmitPhase;
+    BufferOptimizationPhasePtr bufferOptimizationPhase;
     CodeGenerationPhasePtr codeGenerationPhase;
 };
 
