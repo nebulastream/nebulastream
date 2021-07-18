@@ -161,7 +161,7 @@ class WorkerRPCClient {
      * @param physicalStreamName name of the requested stream
      * @return the serialized source config if the stream exists
      */
-    std::string getSourceConfig(const std::string& address, const std::string& physicalStreamName);
+    std::tuple<bool, std::string> getSourceConfig(const std::string& address, const std::string& physicalStreamName);
 
     /**
      * @brief tries to set the source config of the physical stream
@@ -169,7 +169,8 @@ class WorkerRPCClient {
      * @param sourceConfig the serialized source config
      * @return true if successful
      */
-    bool setSourceConfig(const std::string& address, std::string& physicalStreamName, std::string& sourceConfig);
+    std::tuple<bool, std::string>
+    setSourceConfig(const std::string& address, const std::string& physicalStreamName, const std::string& sourceConfig);
 
   private:
 };

@@ -43,6 +43,7 @@ message SetSourceConfigRequest {
 
 message SetSourceConfigReply {
   bool success = 1;
+  string sourceConfig = 2;
 }
 
 message GetSourceConfigRequest {
@@ -50,7 +51,8 @@ message GetSourceConfigRequest {
 }
 
 message GetSourceConfigReply {
-  string sourceConfig = 1;
+  bool success = 1;
+  string sourceConfig = 2;
 }
 
 message DeployQueryRequest {

@@ -362,7 +362,8 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, NodeEngi
     }
     return false;
 }
-bool WorkerRPCClient::setSourceConfig(const std::string& address, std::string& physicalStreamName, std::string& sourceConfig) {
+std::tuple<bool, std::string>
+WorkerRPCClient::setSourceConfig(const std::string& address, const std::string& physicalStreamName, const std::string& sourceConfig) {
     NES_DEBUG("WorkerRPCClient: SourceConfig request address=" << address << " physicalStreamName=" << physicalStreamName);
     SetSourceConfigRequest request;
     ClientContext context;
@@ -377,13 +378,14 @@ bool WorkerRPCClient::setSourceConfig(const std::string& address, std::string& p
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::GetSourceConfig: status ok");
-        return reply.success();
+        return {reply.success(), reply.sourceconfig()};
     } else {
         NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::GetSourceConfig error=" << std::to_string(status.error_code()) << ": "
                                                                            << status.error_message());
     }
 }
-std::string WorkerRPCClient::getSourceConfig(const std::string& address, const std::string& physicalStreamName) {
+std::tuple<bool, std::string> WorkerRPCClient::getSourceConfig(const std::string& address,
+                                                               const std::string& physicalStreamName) {
     NES_DEBUG("WorkerRPCClient: SourceConfig request address=" << address << " physicalStreamName=" << physicalStreamName);
     GetSourceConfigRequest request;
     ClientContext context;
@@ -397,7 +399,7 @@ std::string WorkerRPCClient::getSourceConfig(const std::string& address, const s
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::GetSourceConfig: status ok");
-        return reply.sourceconfig();
+        return {reply.success(), reply.sourceconfig()};
     } else {
         NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::GetSourceConfig error=" << std::to_string(status.error_code()) << ": "
                                                                            << status.error_message());

@@ -258,7 +258,7 @@ class StreamCatalog {
      * @param sourceConfig
      * @return
      */
-    bool setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
+    std::string setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
 
     StreamCatalog();
     ~StreamCatalog();

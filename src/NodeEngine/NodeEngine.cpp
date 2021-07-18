@@ -85,6 +85,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numberOfBuffersInGlobalBufferManager);
         auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
         auto stateManager = std::make_shared<StateManager>();
+
         if (!partitionManager) {
             NES_ERROR("NodeEngine: error while creating partition manager");
             throw Exception("Error while creating partition manager");
@@ -517,6 +518,7 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
 Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
 
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
+    std::unique_lock lock(physicalStreamsMutex);
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
     // name of the logical stream associated with the sourceDescriptor
@@ -537,10 +539,13 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 }
 
 void NodeEngine::addConfig(AbstractPhysicalStreamConfigPtr config) {
+    std::unique_lock lock(physicalStreamsMutex);
     NES_ASSERT(config, "physical source config is not specified");
     this->physicalStreams[config->getPhysicalStreamName()] = config;
 }
+
 AbstractPhysicalStreamConfigPtr NodeEngine::getConfig(const std::string& physicalStreamName) {
+    std::unique_lock lock(physicalStreamsMutex);
     if (physicalStreams.find(physicalStreamName) != physicalStreams.end()) {
         return physicalStreams[physicalStreamName];
     } else {

@@ -15,4 +15,7 @@
 */
 
 #include <NodeEngine/Persistence/FileConfigurationPersistence.hpp>
-namespace NES::NodeEngine {}
+namespace NES::NodeEngine {
+
+
+}

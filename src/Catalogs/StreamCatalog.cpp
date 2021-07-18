@@ -512,13 +512,42 @@ std::string StreamCatalog::getSourceConfig(const std::string& physicalStreamName
     std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
 
     try {
-        return workerRpcClient->getSourceConfig(rpcAddress, physicalStreamName);
+        auto [success, configString] = workerRpcClient->getSourceConfig(rpcAddress, physicalStreamName);
+        if (!success) {
+            throw Exception("Could not retrieve source config for physicalStream " + physicalStreamName);
+        }
+        return configString;
     } catch (std::exception& ex) {
         NES_ERROR("StreamCatalog: error on rpc call to retrieve source config, physicalStreamName=" << physicalStreamName);
         throw Exception("Could not retrieve source config for physicalStream " + physicalStreamName);
     }
 }
 
-bool StreamCatalog::setSourceConfig(const std::string&, const std::string&) { return false; }
+std::string StreamCatalog::setSourceConfig(const std::string& physicalStreamName, const std::string& configString) {
+    NES_INFO("StreamCatalog: set source config, physicalStreamName=" << physicalStreamName);
+
+    if (nameToPhysicalStream.find(physicalStreamName) == nameToPhysicalStream.end()) {
+        NES_ERROR("StreamCatalog: unable to find stream physicalStreamName=" << physicalStreamName);
+        throw Exception("Unknown physical stream " + physicalStreamName);
+    }
+
+    auto physicalStream = nameToPhysicalStream[physicalStreamName];
+    auto node = physicalStream->getNode();
+    auto ipAddress = node->getIpAddress();
+    auto grpcPort = node->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+
+    try {
+        auto [success, updatedConfigString] = workerRpcClient->setSourceConfig(rpcAddress, physicalStreamName, configString);
+        if (!success) {
+            NES_ERROR("StreamCatalog: error when setting source config, physicalStreamName=" << physicalStreamName);
+            throw new Exception("Could not set source config for physicalStream " + physicalStreamName);
+        }
+        return updatedConfigString;
+    } catch (std::exception& ex) {
+        NES_ERROR("StreamCatalog: error on rpc call to set source config, physicalStreamName=" << physicalStreamName);
+        throw Exception("Could not retrieve source config for physicalStream " + physicalStreamName);
+    }
+}
 
 }// namespace NES

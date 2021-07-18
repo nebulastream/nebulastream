@@ -128,20 +128,31 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
         auto param = parameters.find("streamName");
         if (param == parameters.end()) {
             NES_ERROR(
-                "StreamCatalogController: handleGet -physicalStreamConfig: Exception occurred while tryig to retrieve config");
+                "StreamCatalogController: handleGet -physicalStreamConfig: Exception occurred while trying to retrieve config");
             json::value errorResponse{};
             errorResponse["detail"] = json::value::string("Parameter streamName must be provided");
             badRequestImpl(request, errorResponse);
             return;
-        }
-        else{
-
+        } else {
+            try {
+                std::string sourceConfig = streamCatalog->getSourceConfig(param->second);
+                auto result = json::value::parse(sourceConfig);
+                successMessageImpl(request, result);
+                return;
+            } catch (std::exception& exc) {
+                NES_ERROR("StreamCatalogController: handleGet -physicalStreamConfig (for a physical stream): Exception "
+                          "occured retrieving sourceConfig"
+                          << exc.what());
+                handleException(request, exc);
+                return;
+            }
         }
     } else {
         resourceNotFoundImpl(request);
     }
 }
 void StreamCatalogController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
+    auto parameters = getParameters(message);
 
     if (path[1] == "addLogicalStream") {
         NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: REST received request to add new Logical Stream "
@@ -274,6 +285,51 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 }
             })
             .wait();
+    } else if (path[1] == "updatePhysicalStreamConfig") {
+        NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: REST received request to update Logical Stream "
+                  << message.to_string());
+        auto param = parameters.find("streamName");
+        if (param == parameters.end()) {
+            NES_ERROR(
+                "StreamCatalogController: handleGet -physicalStreamConfig: Exception occurred while trying to retrieve config");
+            json::value errorResponse{};
+            errorResponse["detail"] = json::value::string("Parameter streamName must be provided");
+            badRequestImpl(message, errorResponse);
+            return;
+        } else {
+            message.extract_string(true)
+                .then([this, param, message](utility::string_t body) {
+                    try {
+                        NES_DEBUG("StreamCatalogController: handlePost -physicalStreamConfig: Start trying to update "
+                                  "physicalStreamConfig");
+
+                        std::string streamName = param->second;
+
+                        //Prepare Input query from user string
+                        std::string userRequest(body.begin(), body.end());
+                        NES_DEBUG("StreamCatalogController: handlePost -physicalStreamConfig: userRequest: " << userRequest);
+                        // json::value req = json::value::parse(userRequest);
+
+                        auto updatedConfig = streamCatalog->setSourceConfig(streamName, userRequest);
+                        auto result = json::value::parse(updatedConfig);
+                        successMessageImpl(message, result);
+                        return;
+
+                    } catch (const std::exception& exc) {
+                        NES_ERROR("StreamCatalogController: handlePost -physicalStreamConfig: Exception occurred while trying "
+                                  "to update  "
+                                  "physical stream"
+                                  << exc.what());
+                        handleException(message, exc);
+                        return;
+                    } catch (...) {
+                        RuntimeUtils::printStackTrace();
+                        internalServerErrorImpl(message);
+                        return;
+                    }
+                })
+                .wait();
+        }
     } else {
         resourceNotFoundImpl(message);
     }
