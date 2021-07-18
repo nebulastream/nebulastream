@@ -222,27 +222,25 @@ BENCHMARK_CAPTURE(
     std::vector<std::string>{
         R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
         R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
+        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).sink(PrintSinkDescriptor::create());)",
+        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
     })
     ->Repetitions(5);
 
-//BENCHMARK_CAPTURE(
-//    BM_Complete_Placement,
-//    complete_bottom_up_hierarchical,
-//    200,
-//    5,
-//    10,
-//    std::string("BottomUp"),
-//    std::vector<std::string>{
-//        R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
-//        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
-//        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-//        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-//        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-//    })
-//    ->Repetitions(5);
+BENCHMARK_CAPTURE(
+    BM_Complete_Placement,
+    complete_bottom_up_hierarchical,
+    200,
+    5,
+    10,
+    std::string("BottomUp"),
+    std::vector<std::string>{
+        R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
+        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
+        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).sink(PrintSinkDescriptor::create());)",
+        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
+    })
+    ->Repetitions(5);
 
 BENCHMARK_CAPTURE(
     BM_Partial_Placement,
@@ -256,27 +254,23 @@ BENCHMARK_CAPTURE(
         R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
         R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).sink(PrintSinkDescriptor::create());)",
         R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
     })
     ->Repetitions(5);
 
-//BENCHMARK_CAPTURE(
-//    BM_Partial_Placement,
-//    partial_bottom_up_hierarchical,
-//    200,
-//    5,
-//    10,
-//    std::string("BottomUp"),
-//    std::vector<std::string>{
-//        R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
-//        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
-//        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).sink(PrintSinkDescriptor::create());)",
-//        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-//        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-//        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-//    })
-//    ->Repetitions(5);
+BENCHMARK_CAPTURE(
+    BM_Partial_Placement,
+    partial_bottom_up_hierarchical,
+    200,
+    5,
+    10,
+    std::string("BottomUp"),
+    std::vector<std::string>{
+        R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
+        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
+        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).sink(PrintSinkDescriptor::create());)",
+        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
+    })
+    ->Repetitions(5);
 
 int main(int argc, char** argv) {
     NESLogger->removeAllAppenders();
