@@ -17,11 +17,12 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Persistence/DefaultStreamCatalogPersistence.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <assert.h>
 #include <algorithm>
+#include <assert.h>
 
 namespace NES {
 
@@ -59,7 +60,11 @@ void StreamCatalog::addDefaultStreams() {
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 }
-StreamCatalog::StreamCatalog() : catalogMutex() {
+
+StreamCatalog::StreamCatalog() : StreamCatalog(DefaultStreamCatalogPersistence::create(), nullptr){};
+
+StreamCatalog::StreamCatalog(StreamCatalogPersistencePtr persistence, WorkerRPCClientPtr workerRpcClient)
+    : catalogMutex(), persistence(persistence), workerRpcClient(workerRpcClient) {
     NES_DEBUG("StreamCatalog: construct stream catalog");
     addDefaultStreams();
     NES_DEBUG("StreamCatalog: construct stream catalog successfully");
@@ -71,7 +76,11 @@ bool StreamCatalog::addLogicalStream(const std::string& streamName, const std::s
     std::unique_lock lock(catalogMutex);
     SchemaPtr schema = UtilityFunctions::createSchemaFromCode(streamSchema);
     NES_DEBUG("StreamCatalog: schema successfully created");
-    return addLogicalStream(streamName, schema);
+    bool success = addLogicalStream(streamName, schema);
+    if (success) {
+        persistence->persistLogicalStream(streamName, streamSchema);
+    }
+    return success;
 }
 
 bool StreamCatalog::addLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr) {
@@ -119,13 +128,14 @@ bool StreamCatalog::addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr
         }
         NES_WARNING("StreamCatalog: physicalStream with name=" << newEntry->getPhysicalName() << " already exists. Change it to "<<newName<<", new name has to be validated before querying on this Node is allowed.");
         newEntry->changePhysicalStreamName(newName);
+        //BDAPRO: grpc call to update physical stream name
     }
     nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
     nameToPhysicalStream[newEntry->getPhysicalName()]->setStateToWithoutLogicalStream();
     return true;
 }
 
-bool StreamCatalog::addPhysicalToLogicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry){
+bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry) {
     NES_DEBUG("StreamCatalog: logical stream " << logicalStreamName << " exists try to add physical stream "
                                                << newEntry->getPhysicalName());
     //get current physicalStreamNames for this logicalStream
@@ -133,7 +143,7 @@ bool StreamCatalog::addPhysicalToLogicalStream(std::string logicalStreamName, St
     //get corresponding StreamCatalogEntries
 
     std::vector<StreamCatalogEntryPtr> entries;
-    for (std::string physicalStreamName : physicalStreams){
+    for (std::string physicalStreamName : physicalStreams) {
         NES_INFO("PUSH BACK");
         entries.push_back(nameToPhysicalStream[physicalStreamName]);
     }
@@ -153,10 +163,12 @@ bool StreamCatalog::addPhysicalToLogicalStream(std::string logicalStreamName, St
 
     NES_DEBUG("StreamCatalog: physical stream " << newEntry->getPhysicalName() << " id=" << newEntry->getNode()->getId()
                                                 << " successful added");
+
     return true;
 }
 
 bool StreamCatalog::addPhysicalStream(std::vector<std::string> logicalStreamNames, StreamCatalogEntryPtr newEntry) {
+    NES_DEBUG("StreamCatalog: acquiring lock");
     std::unique_lock lock(catalogMutex);
 
     //check if physical stream does not exist yet
@@ -168,6 +180,7 @@ bool StreamCatalog::addPhysicalStream(std::vector<std::string> logicalStreamName
         NES_WARNING("StreamCatalog: physicalStream with name=" << newEntry->getPhysicalName() << " already exists. Change it to "<<newName<<", new name has to be validated before querying on this Node is allowed.");
         newEntry->changePhysicalStreamName(newName);
         nameToPhysicalStream[newEntry->getPhysicalName()] = newEntry;
+        //BDAPRO: grpc call to update physical stream name
         return true;
     }
 
@@ -190,7 +203,7 @@ bool StreamCatalog::addPhysicalStream(std::vector<std::string> logicalStreamName
     }
     // Handle logicalStream names which were found in schema mapping
     for(std::string found : std::get<0>(inAndExclude)){
-        addPhysicalToLogicalStream(found, newEntry);
+        addPhysicalStreamToLogicalStream(found, newEntry);
     }
     return true;
 }
@@ -214,6 +227,18 @@ bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string physicalStreamN
         }
         mismappedStreams[logicalStreamName].push_back(physicalStreamName);
         nameToPhysicalStream[physicalStreamName]->addLogicalStreamNameToMismapped(logicalStreamName);
+        try {
+            std::vector<std::string> logicalStreams{};
+            nameToPhysicalStream[physicalStreamName]->getAllLogicalName(logicalStreams);
+            bool success = setLogicalStreamsOnWorker(physicalStreamName, logicalStreams);
+            if (!success) {
+                NES_ERROR("StreamCatalog: failed to set logical streams on worker node");
+            }
+            return success;
+        } catch (std::exception& ex) {
+            NES_ERROR("StreamCatalog: could not propagate to worker node: " << ex.what());
+            return false;
+        }
         return false;
     }
 
@@ -234,7 +259,20 @@ bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string physicalStreamN
             std::pair<std::string, std::vector<std::string>>(logicalStreamName, std::vector<std::string>()));
         logicalToPhysicalStreamMapping[logicalStreamName].push_back(physicalStreamName);
     }
-    return nameToPhysicalStream[physicalStreamName]->addLogicalStreamName(logicalStreamName);
+    nameToPhysicalStream[physicalStreamName]->addLogicalStreamName(logicalStreamName);
+
+    try {
+        std::vector<std::string> logicalStreams{};
+        nameToPhysicalStream[physicalStreamName]->getAllLogicalName(logicalStreams);
+        bool success = setLogicalStreamsOnWorker(physicalStreamName, logicalStreams);
+        if (!success) {
+            NES_ERROR("StreamCatalog: failed to set logical streams on worker node");
+        }
+        return success;
+    } catch (std::exception& ex) {
+        NES_ERROR("StreamCatalog: could not propagate to worker node: " << ex.what());
+        return false;
+    }
 }
 
 bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
@@ -255,6 +293,7 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
         uint64_t cnt = logicalStreamToSchemaMapping.erase(logicalStreamName);
         NES_DEBUG("StreamCatalog: deleted " << cnt << " copies of the stream");
         NES_ASSERT(!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName), "log stream should not exist");
+        persistence->deleteLogicalStream(logicalStreamName);
         return true;
     }
 }
@@ -266,22 +305,37 @@ bool StreamCatalog::removePhysicalStreamFromLogicalStream(std::string physicalSt
         NES_ERROR("StreamCatalog: physical stream "<<physicalStreamName<<" does not exist");
         return false;
     }
+    bool exists = false;
     if(!testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalStreamName)){
         NES_DEBUG("StreamCatalog: logical stream " << logicalStreamName << " does not have any physical streams.");
         NES_DEBUG("StreamCatalog: In mismappedStreams mapping - try to remove "<<physicalStreamName<<" from logical stream "<<logicalStreamName);
         if(testIfLogicalStreamToPhysicalStreamMappingExistsInMismappedStreams(logicalStreamName, physicalStreamName)){
             removePhysicalToLogicalMappingFromMismappedStreams(logicalStreamName, physicalStreamName);
             NES_DEBUG("StreamCatalog: In mismappedStreams mapping - physical stream removed from logical.");
+        } else{
+            return false;
         }
+    }else{
+        exists = true;
+        std::vector<std::string> &phyStreams = logicalToPhysicalStreamMapping[logicalStreamName];
+        auto it = std::remove(phyStreams.begin(), phyStreams.end(), physicalStreamName);
+        phyStreams.erase(it, phyStreams.end());
+        nameToPhysicalStream[physicalStreamName]->removeLogicalStream(logicalStreamName);
+        NES_DEBUG("StreamCatalog: number of entries for logical stream "<<logicalStreamName<<" afterwards "
+                                                                        << logicalToPhysicalStreamMapping[logicalStreamName].size());
+    }
+    try {
+        std::vector<std::string> logicalStreams{};
+        nameToPhysicalStream[physicalStreamName]->getAllLogicalName(logicalStreams);
+        bool success = setLogicalStreamsOnWorker(physicalStreamName, logicalStreams);
+        if (!success) {
+            NES_ERROR("StreamCatalog: failed to set logical streams on worker node");
+        }
+        return exists && success;
+    } catch (std::exception& ex) {
+        NES_ERROR("StreamCatalog: could not propagate to worker node: " << ex.what());
         return false;
     }
-    std::vector<std::string> &phyStreams = logicalToPhysicalStreamMapping[logicalStreamName];
-    auto it = std::remove(phyStreams.begin(), phyStreams.end(), physicalStreamName);
-    phyStreams.erase(it, phyStreams.end());
-    nameToPhysicalStream[physicalStreamName]->removeLogicalStream(logicalStreamName);
-    NES_DEBUG("StreamCatalog: number of entries for logical stream "<<logicalStreamName<<" afterwards "
-                                                                    << logicalToPhysicalStreamMapping[logicalStreamName].size());
-    return true;
 }
 
 bool StreamCatalog::removePhysicalToLogicalMappingFromMismappedStreams(std::string logicalStreamName, std::string physicalStreamName){
@@ -301,36 +355,57 @@ bool StreamCatalog::removeAllMismapped(std::string logicalStreamName){
         NES_ERROR("StreamCatalog: removeAllMismapped - logical stream "+logicalStreamName+" does not exist in mismappings.");
         return false;
     }
+    bool failed = false;
     for(std::string &phyStream : mismappedStreams[logicalStreamName]){
         nameToPhysicalStream[phyStream]->removeLogicalStreamFromMismapped(logicalStreamName);
+        try {
+            std::vector<std::string> logicalStreams{};
+            nameToPhysicalStream[phyStream]->getAllLogicalName(logicalStreams);
+            bool success = setLogicalStreamsOnWorker(phyStream, logicalStreams);
+            if (!success) {
+                NES_ERROR("StreamCatalog: failed to set logical streams on worker node");
+                failed=true;
+            }
+        } catch (std::exception& ex) {
+            NES_ERROR("StreamCatalog: could not propagate to worker node: " << ex.what());
+            failed=true;
+        }
     }
     mismappedStreams.erase(logicalStreamName);
-    return true;
+    return !failed;
 }
 
 bool StreamCatalog::unregisterPhysicalStreamByHashId(uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
-    //removing physical streams for which a mapping to at least one logical stream exists.
-    for (auto logStream : logicalToPhysicalStreamMapping) {
-        NES_DEBUG("StreamCatalog: check log stream " << logStream.first);
-        for (std::vector<std::string>::const_iterator physicalStreamName = logicalToPhysicalStreamMapping[logStream.first].cbegin();
-             physicalStreamName != logicalToPhysicalStreamMapping[logStream.first].cend();
-             physicalStreamName++) {
-            StreamCatalogEntryPtr entry = nameToPhysicalStream[*physicalStreamName];
-            if (entry->getNode()->getId() == hashId){
-                NES_DEBUG("StreamCatalog: found entry with nodeid=" << entry->getNode()->getId()
-                                                                    << " physicalStream=" << entry->getPhysicalName()
-                                                                    << " logicalStream=" << logStream.first);
-                //TODO: fix this to return value of erase to update entry or if you use the foreach loop, collect the entries to remove, and remove them in a batch after
-                NES_DEBUG("StreamCatalog: deleted physical stream with hashID" << hashId << "and name"
-                                                                               << entry->getPhysicalName());
-                logicalToPhysicalStreamMapping[logStream.first].erase(physicalStreamName);
-                nameToPhysicalStream.erase(*physicalStreamName);
-                return true;
+    bool found = false;
+
+    for(auto phyStream : nameToPhysicalStream){
+        if(phyStream.second->getNode()->getId()!=hashId){
+            continue;
+        }
+        auto mismappedLogs = phyStream.second->getMissmappedLogicalName();
+        auto logStreams = phyStream.second->getLogicalName();
+
+        //TODO: change to batch delete
+        for(auto mis : mismappedLogs){
+            std::vector<std::string> &misStreams = mismappedStreams[mis];
+            auto it = std::remove(misStreams.begin(), misStreams.end(), phyStream.first);
+            misStreams.erase(it, misStreams.end());
+            if(misStreams.empty()){
+                mismappedStreams.erase(mis);
             }
         }
+        for(auto reg : logStreams){
+            std::vector<std::string> &logStreams = logicalToPhysicalStreamMapping[reg];
+            auto it = std::remove(logStreams.begin(), logStreams.end(), phyStream.first);
+            logStreams.erase(it, logStreams.end());
+            if(logStreams.empty()){
+                logicalToPhysicalStreamMapping.erase(reg);
+            }
+        }
+        nameToPhysicalStream.erase(phyStream.first);
     }
-    return false;
+    return found;
 }
 
 bool StreamCatalog::unregisterPhysicalStream(std::string physicalStreamName, std::uint64_t hashId) {
@@ -416,10 +491,10 @@ StreamCatalog::testIfLogicalStreamVecExistsInSchemaMapping(std::vector<std::stri
     std::vector<std::string> included;
     std::vector<std::string> excluded;
 
-    for(std::string logicalStreamName: logicalStreamNames){
-        if(StreamCatalog::testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)){
+    for (std::string logicalStreamName : logicalStreamNames) {
+        if (StreamCatalog::testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
             included.push_back(logicalStreamName);
-        }else{
+        } else {
             excluded.push_back(logicalStreamName);
         }
     }
@@ -439,7 +514,7 @@ bool StreamCatalog::testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::str
 }
 
 // checks if the corresponding physical stream exists in nameToPhysicalStream Mapping.
-bool StreamCatalog::testIfPhysicalStreamWithNameExists(std::string physicalStreamName){
+bool StreamCatalog::testIfPhysicalStreamWithNameExists(std::string physicalStreamName) {
     std::unique_lock lock(catalogMutex);
     return nameToPhysicalStream.find(physicalStreamName) != nameToPhysicalStream.end();
 
@@ -466,7 +541,7 @@ std::vector<TopologyNodePtr> StreamCatalog::getSourceNodesForLogicalStream(std::
     std::vector<std::string> physicalStreamNames = logicalToPhysicalStreamMapping[logicalStreamName];
 
     std::vector<StreamCatalogEntryPtr> physicalStreams;
-    for (auto name : physicalStreamNames){
+    for (auto name : physicalStreamNames) {
         physicalStreams.push_back(nameToPhysicalStream[name]);
     }
 
@@ -595,6 +670,36 @@ std::map<std::string, std::string> StreamCatalog::getAllLogicalStreamAsString() 
     return allLogicalStreamAsString;
 }
 
+std::string StreamCatalog::getSourceConfig(const std::string& physicalStreamName) {
+    if (!workerRpcClient) {
+        NES_ERROR("StreamCatalog: set source config failed, no workerRpcClient supplied!");
+        return "";
+    }
+    NES_INFO("StreamCatalog: get source config, physicalStreamName=" << physicalStreamName);
+
+    if (nameToPhysicalStream.find(physicalStreamName) == nameToPhysicalStream.end()) {
+        NES_ERROR("StreamCatalog: unable to find stream physicalStreamName=" << physicalStreamName);
+        throw Exception("Unknown physical stream " + physicalStreamName);
+    }
+
+    auto physicalStream = nameToPhysicalStream[physicalStreamName];
+    auto node = physicalStream->getNode();
+    auto ipAddress = node->getIpAddress();
+    auto grpcPort = node->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+
+    try {
+        auto [success, configString] = workerRpcClient->getSourceConfig(rpcAddress, physicalStreamName);
+        if (!success) {
+            throw Exception("Could not retrieve source config for physicalStream " + physicalStreamName);
+        }
+        return configString;
+    } catch (std::exception& ex) {
+        NES_ERROR("StreamCatalog: error on rpc call to retrieve source config, physicalStreamName=" << physicalStreamName);
+        throw Exception("Could not retrieve source config for physicalStream " + physicalStreamName);
+    }
+}
+
 bool StreamCatalog::updatedLogicalStream(std::string& streamName, std::string& streamSchema) {
     NES_INFO("StreamCatalog: Update the logical stream " << streamName << " with the schema " << streamSchema);
     std::unique_lock lock(catalogMutex);
@@ -633,7 +738,7 @@ bool StreamCatalog::validatePhysicalStreamName(std::string physicalStreamName){
             }
             // Handle logicalStream names which were found in schema mapping
             for(std::string found : std::get<0>(inAndExclude)){
-                addPhysicalToLogicalStream(found, phyStream);
+                addPhysicalStreamToLogicalStream(found, phyStream);
             }
 
             phyStream->getPhysicalStreamState().removeReason(duplicatePhysicalStreamName);
@@ -647,5 +752,67 @@ bool StreamCatalog::validatePhysicalStreamName(std::string physicalStreamName){
     return false;
 }
 
+bool StreamCatalog::setLogicalStreamsOnWorker(const std::string& physicalStreamName,
+                                              const std::vector<std::string>& logicalStreamNames) {
+    if (!workerRpcClient) {
+        NES_WARNING(
+            "StreamCatalog::addPhysicalStreamToLogicalStream: could not propagate update to worker: workerRpcClient no supplied");
+        return true;
+    }
+    NES_INFO("StreamCatalog: set logical streams config, physicalStreamName=" << physicalStreamName);
+
+    if (nameToPhysicalStream.find(physicalStreamName) == nameToPhysicalStream.end()) {
+        NES_ERROR("StreamCatalog: unable to find stream physicalStreamName=" << physicalStreamName);
+        throw Exception("Unknown physical stream " + physicalStreamName);
+    }
+
+    auto physicalStream = nameToPhysicalStream[physicalStreamName];
+    auto node = physicalStream->getNode();
+    auto ipAddress = node->getIpAddress();
+    auto grpcPort = node->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+
+    try {
+        auto success = workerRpcClient->setLogicalStreams(rpcAddress, physicalStreamName, logicalStreamNames);
+        if (!success) {
+            throw Exception("could not set logical stream names on worker for " + physicalStreamName);
+        }
+        return success;
+    } catch (std::exception& ex) {
+        NES_ERROR("StreamCatalog: error on rpc call to retrieve source config, physicalStreamName=" << physicalStreamName);
+        throw Exception("Could not retrieve source config for physicalStream " + physicalStreamName);
+    }
+}
+
+std::string StreamCatalog::setSourceConfig(const std::string& physicalStreamName, const std::string& configString) {
+    if (!workerRpcClient) {
+        NES_ERROR("StreamCatalog: set source config failed, no workerRpcClient supplied!");
+        return "";
+    }
+    NES_INFO("StreamCatalog: set source config, physicalStreamName=" << physicalStreamName);
+
+    if (nameToPhysicalStream.find(physicalStreamName) == nameToPhysicalStream.end()) {
+        NES_ERROR("StreamCatalog: unable to find stream physicalStreamName=" << physicalStreamName);
+        throw Exception("Unknown physical stream " + physicalStreamName);
+    }
+
+    auto physicalStream = nameToPhysicalStream[physicalStreamName];
+    auto node = physicalStream->getNode();
+    auto ipAddress = node->getIpAddress();
+    auto grpcPort = node->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+
+    try {
+        auto [success, updatedConfigString] = workerRpcClient->setSourceConfig(rpcAddress, physicalStreamName, configString);
+        if (!success) {
+            NES_ERROR("StreamCatalog: error when setting source config, physicalStreamName=" << physicalStreamName);
+            throw new Exception("Could not set source config for physicalStream " + physicalStreamName);
+        }
+        return updatedConfigString;
+    } catch (std::exception& ex) {
+        NES_ERROR("StreamCatalog: error on rpc call to set source config, physicalStreamName=" << physicalStreamName);
+        throw Exception("Could not retrieve source config for physicalStream " + physicalStreamName);
+    }
+}
 
 }// namespace NES

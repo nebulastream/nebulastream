@@ -25,6 +25,8 @@
 #include <vector>
 //#include <Topology/NESTopologyEntry.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
+#include <Persistence/StreamCatalogPersistence.hpp>
 namespace NES {
 
 class LogicalStream;
@@ -82,10 +84,10 @@ class StreamCatalog {
     /**
      * @brief method to add to a logicalStream a physical stream
      * @param logicalStreamName name of the logical stream
-     * @param entry (physicalstream)
+     * @param newEntry (physicalstream)
      * @return true if the physical stream was successfully added to the logicalStream, false otherwise
      */
-    bool addPhysicalToLogicalStream(std::string logicalStreamName, StreamCatalogEntryPtr entry);
+    bool addPhysicalStreamToLogicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry);
 
         /**
        * @brief method to add a physical stream
@@ -267,7 +269,7 @@ class StreamCatalog {
     std::vector<StreamCatalogEntryPtr> getPhysicalStreams(std::string logicalStreamName);
 
     /**
-    * @brief gets the fulll mismappedStreams mapping
+    * @brief gets the full mismappedStreams mapping
     * @return mapping
     */
     std::map<std::string, std::vector<std::string>> getMismappedPhysicalStreams();
@@ -293,6 +295,22 @@ class StreamCatalog {
     bool updatedLogicalStream(std::string& streamName, std::string& streamSchema);
 
     /**
+     *
+     * @param physicalStreamName
+     * @return
+     */
+    std::string getSourceConfig(const std::string& physicalStreamName);
+
+    /**
+     *
+     * @param physicalStreamName
+     * @param sourceConfig
+     * @return
+     */
+    std::string setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
+
+
+    /**
      * @brief removes from a misconfigured stream with a formerly duplicated name, the misconfigured flag and allows querying if possible
      * @param physicalStreamName the current name
      * @return true whether the validation was succesful
@@ -300,10 +318,14 @@ class StreamCatalog {
     bool validatePhysicalStreamName(std::string physicalStreamName);
 
     StreamCatalog();
+    StreamCatalog(StreamCatalogPersistencePtr persistence, WorkerRPCClientPtr workerRpcClient);
     ~StreamCatalog();
 
   private:
     std::recursive_mutex catalogMutex;
+
+    WorkerRPCClientPtr workerRpcClient;
+    StreamCatalogPersistencePtr persistence;
 
     //map logical stream to schema
     std::map<std::string, SchemaPtr> logicalStreamToSchemaMapping;
@@ -318,6 +340,7 @@ class StreamCatalog {
     std::map<std::string, std::vector<std::string>> mismappedStreams;
 
     void addDefaultStreams();
+    bool setLogicalStreamsOnWorker(const std::string& physicalStreamName, const std::vector<std::string>& logicalStreamNames);
 };
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 }// namespace NES

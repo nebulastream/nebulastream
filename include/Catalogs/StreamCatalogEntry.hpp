@@ -147,6 +147,12 @@ class StreamCatalogEntry {
      */
     PhysicalStreamState getPhysicalStreamState();
 
+    /**
+     * @brief fills a vector with all logical stream names associated, regardless of whether they are mismapped
+     * @param the vector to fill
+     */
+     void getAllLogicalName(std::vector<std::string>& all);
+
     std::string toString();
 
   private:

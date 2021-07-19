@@ -362,5 +362,76 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, NodeEngi
     }
     return false;
 }
+std::tuple<bool, std::string> WorkerRPCClient::setSourceConfig(const std::string& address,
+                                                               const std::string& physicalStreamName,
+                                                               const std::string& sourceConfig) {
+    NES_DEBUG("WorkerRPCClient: SourceConfig request address=" << address << " physicalStreamName=" << physicalStreamName);
+    SetSourceConfigRequest request;
+    ClientContext context;
+    SetSourceConfigReply reply;
+
+    request.set_physicalstreamname(physicalStreamName);
+    request.set_sourceconfig(sourceConfig);
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->SetSourceConfig(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::GetSourceConfig: status ok");
+        return {reply.success(), reply.sourceconfig()};
+    } else {
+        NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::GetSourceConfig error=" << std::to_string(status.error_code()) << ": "
+                                                                           << status.error_message());
+    }
+}
+std::tuple<bool, std::string> WorkerRPCClient::getSourceConfig(const std::string& address,
+                                                               const std::string& physicalStreamName) {
+    NES_DEBUG("WorkerRPCClient: SourceConfig request address=" << address << " physicalStreamName=" << physicalStreamName);
+    GetSourceConfigRequest request;
+    ClientContext context;
+    GetSourceConfigReply reply;
+
+    request.set_physicalstreamname(physicalStreamName);
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->GetSourceConfig(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::GetSourceConfig: status ok");
+        return {reply.success(), reply.sourceconfig()};
+    } else {
+        NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::GetSourceConfig error=" << std::to_string(status.error_code()) << ": "
+                                                                           << status.error_message());
+    }
+}
+
+bool WorkerRPCClient::setLogicalStreams(const std::string& address,
+                                        const std::string& physicalStreamName,
+                                        const std::vector<std::string>& logicalStreamNames) {
+    NES_DEBUG("WorkerRPCClient: addPhysicalToLogical request address=" << address
+                                                                       << " physicalStreamName=" << physicalStreamName);
+    LogicalStreamsRequest request;
+    ClientContext context;
+    LogicalStreamsReply reply;
+
+    request.set_physicalstreamname(physicalStreamName);
+    for (auto& name : logicalStreamNames){
+        request.add_logicalstreamname(name);
+    }
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->SetLogicalStreams(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::AddPhysicalToLogicalStream: status ok");
+        return reply.success();
+    } else {
+        NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::AddPhysicalToLogicalStream error=" << std::to_string(status.error_code())
+                                                                                      << ": " << status.error_message());
+    }
+}
 
 }// namespace NES

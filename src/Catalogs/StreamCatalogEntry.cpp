@@ -140,6 +140,12 @@ void StreamCatalogEntry::changePhysicalStreamName(std::string newName){
     physicalStreamName=newName;
 }
 
+void StreamCatalogEntry::getAllLogicalName(std::vector<std::string>& all){
+    all.reserve( logicalStreamName.size() + mismappedLogicalStreamName.size() ); // preallocate memory
+    all.insert( all.end(), logicalStreamName.begin(), logicalStreamName.end() );
+    all.insert( all.end(), mismappedLogicalStreamName.begin(), mismappedLogicalStreamName.end() );
+}
+
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
     ss << "physicalName=" << physicalStreamName << " logicalStreamName=(" << UtilityFunctions::combineStringsWithDelimiter(logicalStreamName,",") << ") sourceType=" << sourceType

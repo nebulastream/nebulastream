@@ -154,7 +154,7 @@ class BenchmarkUtils {
                                 NES_WARNING("BenchmarkUtils: Starting zmq on port " << zmqPort);                                 \
                                 auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1",                                    \
                                                                                  zmqPort,                                        \
-                                                                                 streamConf,                                     \
+                                                                                 {streamConf},                                     \
                                                                                  workerThreads,                                  \
                                                                                  bufferSize,                                     \
                                                                                  numBuffers,                                     \

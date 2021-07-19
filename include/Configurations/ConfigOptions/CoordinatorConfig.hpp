@@ -239,6 +239,30 @@ class CoordinatorConfig {
      */
     void setEnableSemanticQueryValidation(bool enableSemanticQueryValidation);
 
+    /**
+     * @brief Set the value for the persistence type
+     * @param type: the persistence type ("none", "file")
+     */
+    void setPersistenceType(std::string type);
+
+    /**
+     * @brief Get the value for the persistence type
+     * @return path to the directory
+     */
+    StringConfigOption getPersistenceType();
+
+    /**
+     * @brief Set the value for the persistence directory
+     * @param persistenceDir: Path to persistence directory
+     */
+    void setPersistenceDir(std::string persistenceDir);
+
+    /**
+     * @brief Get the value for the persistence directory
+     * @return path to the directory
+     */
+    StringConfigOption getPersistenceDir();
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -259,6 +283,8 @@ class CoordinatorConfig {
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;
     StringConfigOption queryMergerRule;
+    StringConfigOption persistenceType;
+    StringConfigOption persistenceDir;
 
     // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;

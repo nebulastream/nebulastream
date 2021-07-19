@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
@@ -126,4 +127,67 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
         return Status::CANCELLED;
     }
 }
+
+Status WorkerRPCServer::SetSourceConfig(ServerContext*, const SetSourceConfigRequest* request, SetSourceConfigReply* reply) {
+    NES_DEBUG("WorkerRPCServer::SetSourceConfig: got request for " << request->physicalstreamname());
+    try {
+        auto sourceConfig = nodeEngine->getConfig(request->physicalstreamname())->toSourceConfig();
+        auto origStreamName = sourceConfig->getPhysicalStreamName();
+        NES_DEBUG(request->sourceconfig());
+        sourceConfig->overwriteConfigWithStringInput(request->sourceconfig());
+
+        if (origStreamName != sourceConfig->getPhysicalStreamName()) {
+            NES_ERROR("WorkerRPCServer::SetSourceConfig: cannot change physicalStreamName");
+            reply->set_success(false);
+            return Status::CANCELLED;
+        }
+
+        auto physicalStreamConfig = PhysicalStreamConfig::create(sourceConfig);
+        nodeEngine->addConfig(physicalStreamConfig);
+        reply->set_success(true);
+        reply->set_sourceconfig(sourceConfig->toJson());
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer::SetSourceConfig: Setting source config failed: " << ex.what());
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+}
+
+Status WorkerRPCServer::GetSourceConfig(ServerContext*, const GetSourceConfigRequest* request, GetSourceConfigReply* reply) {
+    NES_DEBUG("WorkerRPCServer::GetSourceConfig: got request for " << request->physicalstreamname());
+    try {
+        auto conf = nodeEngine->getConfig(request->physicalstreamname());
+        reply->set_success(true);
+        reply->set_sourceconfig(conf->toSourceConfig()->toJson());
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer::GetSourceConfig: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+}
+
+Status WorkerRPCServer::SetLogicalStreams(ServerContext*, const LogicalStreamsRequest* request, LogicalStreamsReply* reply) {
+    NES_DEBUG("WorkerRPCServer::GetSourceConfig: got request for " << request->physicalstreamname());
+    try {
+        auto conf = nodeEngine->getConfig(request->physicalstreamname())->toSourceConfig();
+        std::vector<std::string> logicalStreamNames{};
+        for (int i = 0; i < request->logicalstreamname_size(); i++) {
+            logicalStreamNames.push_back(request->logicalstreamname(i));
+        }
+
+        conf->setLogicalStreamName(logicalStreamNames);
+
+        auto physicalStreamConfig = PhysicalStreamConfig::create(conf);
+        nodeEngine->addConfig(physicalStreamConfig);
+        reply->set_success(true);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer::GetSourceConfig: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+}
+
 }// namespace NES

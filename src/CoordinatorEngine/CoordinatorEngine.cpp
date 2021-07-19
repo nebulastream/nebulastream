@@ -167,14 +167,16 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
         return false;
     }
     bool success;
-    if(logicalStreamName==""){
-        NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: logical stream = '"<< logicalStreamName <<"', therefore physical stream is registered without logical stream");
-        std::vector<std::string> logicalStreamNameVec{};
+    if (logicalStreamName == "") {
+        NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: logical stream = "
+                  << logicalStreamName << ", therefore physical stream is registered without logical stream");
+        std::vector<std::string> logicalStreamNameVec{logicalStreamName};
         StreamCatalogEntryPtr sce =
             std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamNameVec, physicalNode);
         success = streamCatalog->addPhysicalStreamWithoutLogicalStreams(sce);
-    }else{
-        NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: register physical stream = " << physicalStreamName << "with logical stream(s)=(" << logicalStreamName<<")");
+    } else {
+        NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: register physical stream = "
+                  << physicalStreamName << "with logical stream(s)=(" << logicalStreamName << ")");
         std::vector<std::string> logicalStreamNameVec = UtilityFunctions::splitWithStringDelimiter(logicalStreamName, ",");
         StreamCatalogEntryPtr sce =
             std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamNameVec, physicalNode);
@@ -183,10 +185,9 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
     return success;
 }
 
-
 bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, std::string physicalStreamName) {
-    NES_DEBUG("CoordinatorEngine::UnregisterPhysicalStream: try to remove physical stream with name "
-              << physicalStreamName << " workerId=" << nodeId);
+    NES_DEBUG("CoordinatorEngine::UnregisterPhysicalStream: try to remove physical stream with name " << physicalStreamName
+                                                                                                      << " workerId=" << nodeId);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
@@ -204,10 +205,7 @@ bool CoordinatorEngine::registerLogicalStream(std::string logicalStreamName, std
     NES_DEBUG("CoordinatorEngine::registerLogicalStream: register logical stream=" << logicalStreamName
                                                                                    << " schema=" << schemaString);
     std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
-
-    SchemaPtr schema = UtilityFunctions::createSchemaFromCode(schemaString);
-    NES_DEBUG("StreamCatalogService: schema successfully created");
-    bool success = streamCatalog->addLogicalStream(logicalStreamName, schema);
+    bool success = streamCatalog->addLogicalStream(logicalStreamName, schemaString);
     return success;
 }
 

@@ -97,6 +97,8 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
     bool getSkipHeader() const;
 
+    SourceConfigPtr toSourceConfig() override;
+
     SourceDescriptorPtr build(SchemaPtr, std::string) override;
 
     void setSourceFrequency(uint32_t sourceFrequency);

@@ -26,6 +26,7 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <Persistence/PhysicalStreamsPersistence.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -47,8 +48,7 @@ typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 
 namespace NES::NodeEngine {
 
-NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
-NodeEnginePtr create(const std::string& hostname, uint16_t port, std::vector<PhysicalStreamConfigPtr>& configs);
+NodeEnginePtr create(const std::string& hostname, uint16_t port, const std::vector<PhysicalStreamConfigPtr>& configs);
 
 /**
  * @brief this class represents the interface and entrance point into the
@@ -79,47 +79,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     static NodeEnginePtr create(const std::string& hostname,
                                 uint16_t port,
-                                PhysicalStreamConfigPtr config,
-                                uint16_t numThreads,
-                                uint64_t bufferSize,
-                                uint64_t numberOfBuffersInGlobalBufferManager,
-                                uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                uint64_t numberOfBuffersPerPipeline);
-
-    /**
-     * @brief this creates a new NodeEngine
-     * @param hostname the ip address for the network manager
-     * @param port the port for the network manager
-     * @param numThreads the number of worker threads for this nodeEngine
-     * @param bufferSize the buffer size for the buffer manager
-     * @param numBuffers the number of buffers for the buffer manager
-     * @return
-     */
-
-    static NodeEnginePtr create(const std::string& hostname,
-                                uint16_t port,
                                 const std::vector<PhysicalStreamConfigPtr>& configs,
                                 uint16_t numThreads,
                                 uint64_t bufferSize,
                                 uint64_t numberOfBuffersInGlobalBufferManager,
                                 uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                uint64_t numberOfBuffersPerPipeline);
-
-    /**
-     * @brief Create a node engine and gather node information
-     * and initialize QueryManager, BufferManager and ThreadPool
-     */
-    explicit NodeEngine(PhysicalStreamConfigPtr&& config,
-                        BufferManagerPtr&&,
-                        QueryManagerPtr&&,
-                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
-                        Network::PartitionManagerPtr&&,
-                        QueryCompilation::QueryCompilerPtr&&,
-                        StateManagerPtr&&,
-                        uint64_t nodeEngineId,
-                        uint64_t numberOfBuffersInGlobalBufferManager,
-                        uint64_t numberOfBuffersInSourceLocalBufferPool,
-                        uint64_t numberOfBuffersPerPipeline);
+                                uint64_t numberOfBuffersPerPipeline,
+                                std::string configPersistenceType = "none",
+                                std::string configPersistencePath = "");
 
     /**
      * @brief Create a node engine and gather node information
@@ -132,6 +99,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
                         StateManagerPtr&&,
+                        PhysicalStreamsPersistencePtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
@@ -289,12 +257,17 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void onChannelError(Network::Messages::ErrorMessage) override;
 
-    // TODO we should get rid of the following method
     /**
-     * @brief Set the physical stream config
-     * @param config : configuration to be set
+     * @brief Add the physical stream config
+     * @param config : configuration to be added
      */
     void addConfig(AbstractPhysicalStreamConfigPtr config);
+
+    /**
+     * @brief Get a physical stream config by the physicalStreamName
+     * @param physicalStreamName : the name of the physical stream
+     */
+    AbstractPhysicalStreamConfigPtr getConfig(const std::string& physicalStreamName);
 
     /**
      * @brief Creates a logical source descriptor according to a logical source descriptor
@@ -305,7 +278,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
   private:
-    std::vector<AbstractPhysicalStreamConfigPtr> configs;
+    std::map<std::string, AbstractPhysicalStreamConfigPtr> physicalStreams;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
@@ -315,9 +288,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::NetworkManagerPtr networkManager;
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
+    PhysicalStreamsPersistencePtr configurationPersistence;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     std::atomic<bool> isRunning;
     mutable std::recursive_mutex engineMutex;
+    mutable std::recursive_mutex physicalStreamsMutex;
     uint64_t nodeEngineId;
     uint32_t numberOfBuffersInGlobalBufferManager;
     uint32_t numberOfBuffersInSourceLocalBufferPool;

@@ -20,6 +20,7 @@
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Persistence/StreamCatalogPersistence.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
@@ -175,6 +176,9 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     uint32_t numberOfBuffersPerPipeline;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
+    std::string persistenceDir;
+    std::string persistenceType;
+
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     std::shared_ptr<std::thread> queryRequestProcessorThread;
@@ -185,6 +189,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;
+    StreamCatalogPersistencePtr persistence;
     TopologyPtr topology;
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;

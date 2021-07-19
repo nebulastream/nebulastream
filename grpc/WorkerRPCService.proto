@@ -31,6 +31,39 @@ service WorkerRPCService {
 
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
+
+  rpc SetSourceConfig (SetSourceConfigRequest) returns (SetSourceConfigReply) {}
+  rpc GetSourceConfig (GetSourceConfigRequest) returns (GetSourceConfigReply) {}
+
+  rpc SetLogicalStreams (LogicalStreamsRequest) returns (LogicalStreamsReply) {}
+}
+
+message LogicalStreamsRequest {
+  string physicalStreamName = 1;
+  repeated string logicalStreamName = 2;
+}
+
+message LogicalStreamsReply {
+  bool success = 1;
+}
+
+message SetSourceConfigRequest {
+  string physicalStreamName = 1;
+  string sourceConfig = 2;
+}
+
+message SetSourceConfigReply {
+  bool success = 1;
+  string sourceConfig = 2;
+}
+
+message GetSourceConfigRequest {
+  string physicalStreamName = 1;
+}
+
+message GetSourceConfigReply {
+  bool success = 1;
+  string sourceConfig = 2;
 }
 
 message DeployQueryRequest {

@@ -86,7 +86,7 @@ class MillisecondIntervalTest : public testing::Test {
         rpcPort = rpcPort + 40;
 
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, {streamConf});
 
         crdConf = CoordinatorConfig::create();
         crdConf->setRpcPort(rpcPort);

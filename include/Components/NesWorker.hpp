@@ -184,7 +184,7 @@ class NesWorker {
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
 
-    std::vector<PhysicalStreamConfigPtr> configs; // was PhysicalStreamConfig configs
+    std::vector<PhysicalStreamConfigPtr> configs;// was PhysicalStreamConfig configs
     bool connected;
     bool withRegisterStream;
     bool withParent;
@@ -201,6 +201,8 @@ class NesWorker {
     uint32_t numberOfBuffersPerPipeline;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
+    std::string configurationPersistenceType;
+    std::string configurationPersistencePath;
     NesNodeType type;
     std::atomic<bool> isRunning;
     TopologyNodeId topologyNodeId;

@@ -26,6 +26,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/WorkerContext.hpp>
+#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
@@ -664,7 +665,8 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
 TEST_F(NetworkStackTest, testNetworkSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+    auto nodeEngine =
+        NodeEngine::NodeEngine::create("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -687,7 +689,8 @@ TEST_F(NetworkStackTest, testNetworkSource) {
 
 TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+    auto nodeEngine =
+        NodeEngine::NodeEngine::create("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -736,7 +739,8 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         options->setNumSourceLocalBuffers(12);
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory);
 
-        return std::make_shared<MockedNodeEngine>(std::move(streamConf),
+        std::vector<PhysicalStreamConfigPtr> streamConfigs{streamConf};
+        return std::make_shared<MockedNodeEngine>(streamConfigs,
                                                   std::move(bufferManager),
                                                   std::move(queryManager),
                                                   std::move(networkManagerCreator),
@@ -771,7 +775,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         atomic<int>& bufferCnt;
 
         explicit MockedNodeEngine(
-            PhysicalStreamConfigPtr streamConf,
+            const std::vector<PhysicalStreamConfigPtr>& streamConfigs,
             NES::NodeEngine::BufferManagerPtr&& bufferManager,
             NES::NodeEngine::QueryManagerPtr&& queryManager,
             std::function<Network::NetworkManagerPtr(NES::NodeEngine::NodeEnginePtr)>&& networkManagerCreator,
@@ -780,13 +784,14 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             std::promise<bool>& completed,
             NesPartition nesPartition,
             std::atomic<int>& bufferCnt)
-            : NodeEngine(std::move(streamConf),
+            : NodeEngine(streamConfigs,
                          std::move(bufferManager),
                          std::move(queryManager),
                          std::move(networkManagerCreator),
                          std::move(partitionManager),
                          std::move(queryCompiler),
                          std::make_shared<NES::NodeEngine::StateManager>(),
+                         std::make_shared<NES::DefaultPhysicalStreamsPersistence>(),
                          0,
                          64,
                          64,
@@ -885,7 +890,8 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                            ->addField("test$value", DataTypeFactory::createInt64());
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 12);
+    auto nodeEngine =
+        NodeEngine::NodeEngine::create("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 12);
     auto netManager = nodeEngine->getNetworkManager();
     // create NetworkSink
 

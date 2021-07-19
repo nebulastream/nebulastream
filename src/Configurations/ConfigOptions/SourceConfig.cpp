@@ -19,6 +19,8 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <algorithm>
+#include <cpprest/json.h>
 #include <filesystem>
 #include <string>
 
@@ -42,38 +44,24 @@ SourceConfig::SourceConfig() {
         ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.");
     physicalStreamName =
         ConfigOption<std::string>::create("physicalStreamName", "default_physical", "Physical name of the stream.");
-    std::vector<std::string> defaultLogicalStreamName {"default_logical"};
-    logicalStreamName = ConfigOption<std::vector<std::string>>::create("logicalStreamName", defaultLogicalStreamName,
+    std::vector<std::string> defaultLogicalStreamName{"default_logical"};
+    logicalStreamName = ConfigOption<std::vector<std::string>>::create("logicalStreamName",
+                                                                       defaultLogicalStreamName,
                                                                        "Names of the logical streams.");
     skipHeader = ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.");
 }
 
 void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
-
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         NES_INFO("NesSourceConfig: Using config file with path: " << filePath << " .");
-        Yaml::Node config;
-        Yaml::Parse(config, filePath.c_str());
-        try {
-            setSourceConfig(config["sourceConfig"].As<std::string>());
-            setSourceType(config["sourceType"].As<std::string>());
-            setSourceFrequency(config["sourceFrequency"].As<uint16_t>());
-            setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint64_t>());
-            setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].As<uint16_t>());
-            setPhysicalStreamName(config["physicalStreamName"].As<std::string>());
-            std::string lNameVectorString = config["logicalStreamName"].As<std::string>();
-            std::vector<std::string> lNames = UtilityFunctions::splitWithStringDelimiter(lNameVectorString, ",");
-            setLogicalStreamName(lNames);
-            setSkipHeader(config["skipHeader"].As<bool>());
-        } catch (std::exception& e) {
-            NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from XAML file.");
-            NES_WARNING("NesWorkerConfig: Keeping default values.");
-            resetSourceOptions();
-        }
+        std::ifstream configFile(filePath);
+        std::stringstream ss;
+        configFile >> ss.rdbuf();
+        overwriteConfigWithStringInput(ss.str());
         return;
     }
-    NES_ERROR("NesWorkerConfig: No file path was provided or file could not be found at " << filePath << ".");
-    NES_WARNING("NesWorkerConfig: Keeping default values for Coordinator Config.");
+    NES_ERROR("NesSourceConfig: No file path was provided or file could not be found at " << filePath << ".");
+    NES_WARNING("NesSourceConfig: Keeping default values for Source Config.");
 }
 
 void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
@@ -101,9 +89,69 @@ void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
             }
         }
     } catch (std::exception& e) {
-        NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from command line. " << e.what());
-        NES_WARNING("NesWorkerConfig: Keeping default values.");
+        NES_ERROR("NesSourceConfig: Error while initializing configuration parameters from command line. " << e.what());
+        NES_WARNING("NesSourceConfig: Keeping default values.");
         resetSourceOptions();
+    }
+}
+
+void SourceConfig::overwriteConfigWithStringInput(const std::string& configString) {
+    try {
+        // try and parse as YAML
+        Yaml::Node config;
+        Yaml::Parse(config, configString);
+        setSourceConfig(config["sourceConfig"].As<std::string>(sourceConfig->getValue()));
+        setSourceType(config["sourceType"].As<std::string>(sourceType->getValue()));
+        setSourceFrequency(config["sourceFrequency"].As<uint16_t>(sourceFrequency->getValue()));
+        setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint64_t>(numberOfBuffersToProduce->getValue()));
+        setNumberOfTuplesToProducePerBuffer(
+            config["numberOfTuplesToProducePerBuffer"].As<uint16_t>(numberOfTuplesToProducePerBuffer->getValue()));
+        setPhysicalStreamName(config["physicalStreamName"].As<std::string>(physicalStreamName->getValue()));
+
+        std::vector<std::string> oldLogicalStreamNames = logicalStreamName->getValue();
+        std::string lNameVectorString = config["logicalStreamName"].As<std::string>(
+            UtilityFunctions::combineStringsWithDelimiter(oldLogicalStreamNames, ","));
+        std::vector<std::string> lNames = UtilityFunctions::splitWithStringDelimiter(lNameVectorString, ",");
+        setLogicalStreamName(lNames);
+        setSkipHeader(config["skipHeader"].As<bool>(skipHeader->getValue()));
+        return;
+    } catch (std::exception& e) {
+        NES_WARNING("NesSourceConfig: Could not parse sourceConfig as YAML: " << e.what());
+    }
+    try {
+        // try and parse as json
+        web::json::value config = web::json::value::parse(configString);
+        if (config.has_field("sourceConfig")) {
+            setSourceConfig(config["sourceConfig"].as_string());
+        }
+        if (config.has_field("sourceType")) {
+            setSourceType(config["sourceType"].as_string());
+        }
+        if (config.has_field("sourceFrequency")) {
+            setSourceFrequency(config["sourceFrequency"].as_integer());
+        }
+        if (config.has_field("numberOfBuffersToProduce")) {
+            setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].as_integer());
+        }
+        if (config.has_field("numberOfTuplesToProducePerBuffer")) {
+            setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].as_integer());
+        }
+        if (config.has_field("physicalStreamName")) {
+            setPhysicalStreamName(config["physicalStreamName"].as_string());
+        }
+        if (config.has_field("logicalStreamName")) {
+            auto lNamesJson = config["logicalStreamName"].as_array();
+            std::vector<std::string> lNames{};
+            for (auto& lName : lNamesJson) {
+                lNames.push_back(lName.as_string());
+            }
+            setLogicalStreamName(lNames);
+        }
+        if (config.has_field("skipHeader")) {
+            setSkipHeader(config["skipHeader"].as_bool());
+        }
+    } catch (std::exception& e) {
+        NES_WARNING("NesSourceConfig: Could not parse sourceConfig as JSON: " << e.what());
     }
 }
 
@@ -155,7 +203,7 @@ void SourceConfig::setPhysicalStreamName(std::string physicalStreamNameValue) {
 void SourceConfig::setLogicalStreamName(std::vector<std::string> logicalStreamNameValue) {
     logicalStreamName->setValue(logicalStreamNameValue);
 }
-void SourceConfig::setLogicalStreamName(std::string logicalStreamNameStr){
+void SourceConfig::setLogicalStreamName(std::string logicalStreamNameStr) {
     std::vector<std::string> logicalStreamNameVec = UtilityFunctions::splitWithStringDelimiter(logicalStreamNameStr, ",");
     logicalStreamName->setValue(logicalStreamNameVec);
 }
@@ -166,4 +214,23 @@ void SourceConfig::addLogicalStreamName(std::string logicalStreamNameValue) {
 
 void SourceConfig::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }
 
+std::string SourceConfig::toJson() {
+    web::json::value json{};
+
+    json["sourceType"] = web::json::value::string(sourceType->getValue());
+    json["sourceConfig"] = web::json::value::string(sourceConfig->getValue());
+    json["sourceFrequency"] = web::json::value::number(sourceFrequency->getValue());
+    json["numberOfBuffersToProduce"] = web::json::value::number(numberOfBuffersToProduce->getValue());
+    json["numberOfTuplesToProducePerBuffer"] = web::json::value::number(numberOfTuplesToProducePerBuffer->getValue());
+    json["physicalStreamName"] = web::json::value::string(physicalStreamName->getValue());
+
+    auto names = std::vector<web::json::value>{};
+    for (auto& name : logicalStreamName->getValue()) {
+        names.emplace_back(web::json::value::string(name));
+    }
+    json["logicalStreamName"] = web::json::value::array(names);
+    json["skipHeader"] = web::json::value::boolean(skipHeader->getValue());
+
+    return json.serialize();
+}
 }// namespace NES

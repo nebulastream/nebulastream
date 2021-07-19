@@ -18,10 +18,12 @@
 
 #include "SerializableQueryPlan.pb.h"
 #include "CoordinatorRPCService.pb.h"
+#include "SerializableQueryPlan.pb.h"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Persistence/DefaultStreamCatalogPersistence.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
@@ -50,6 +52,7 @@ class RESTEndpointTest : public testing::Test {
 
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
 };
+
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
@@ -531,28 +534,30 @@ TEST_F(RESTEndpointTest, testGetAllLogicalStreams) {
     success = wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
     EXPECT_TRUE(success);
 
-    web::http::client::http_client getAllLogicalStreamsClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                              + "/v1/nes/streamCatalog/allLogicalStream?physicalStreamName=test_physical");
+    web::http::client::http_client getAllLogicalStreamsClient(
+        "http://127.0.0.1:" + std::to_string(restPort)
+        + "/v1/nes/streamCatalog/allLogicalStream?physicalStreamName=test_physical");
     web::json::value getAllLogicalStreamsJsonReturn;
 
     getAllLogicalStreamsClient.request(web::http::methods::GET, "")
         .then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();})
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
         .then([&getAllLogicalStreamsJsonReturn](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("get execution-plan: set return");
-              getAllLogicalStreamsJsonReturn = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("get execution-plan: error while setting return" << e.what());
-          }})
+            try {
+                NES_INFO("get execution-plan: set return");
+                getAllLogicalStreamsJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get execution-plan: error while setting return" << e.what());
+            }
+        })
         .wait();
 
     NES_INFO("getAllLogicalStreams: try to acc return");
     NES_DEBUG("getAllLogicalStreams response: " << getAllLogicalStreamsJsonReturn.serialize());
     // expected: default_logical and here create testSchema
-    auto expected =
-        R"({"default_logical":"id:INTEGER value:INTEGER ","testSchema":"id:INTEGER value:INTEGER "})";
+    auto expected = R"({"default_logical":"id:INTEGER value:INTEGER ","testSchema":"id:INTEGER value:INTEGER "})";
     NES_DEBUG("getAllLogicalStreams response: expected = " << expected);
     ASSERT_EQ(getAllLogicalStreamsJsonReturn.serialize(), expected);
 
@@ -609,26 +614,33 @@ TEST_F(RESTEndpointTest, testGetAllPhysicalStreams) {
     success = wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
     EXPECT_TRUE(success);
 
-    web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                              + "/v1/nes/streamCatalog/allPhysicalStream?logicalStreamName=default_logical");
+    web::http::client::http_client getAllPhysicalStreamClient(
+        "http://127.0.0.1:" + std::to_string(restPort)
+        + "/v1/nes/streamCatalog/allPhysicalStream?logicalStreamName=default_logical");
     web::json::value getAllPhysicalStreamJsonReturn;
 
     getAllPhysicalStreamClient.request(web::http::methods::GET, "")
         .then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();})
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
         .then([&getAllPhysicalStreamJsonReturn](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("get execution-plan: set return");
-              getAllPhysicalStreamJsonReturn = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("get execution-plan: error while setting return" << e.what());
-          }})
+            try {
+                NES_INFO("get execution-plan: set return");
+                getAllPhysicalStreamJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get execution-plan: error while setting return" << e.what());
+            }
+        })
         .wait();
 
     NES_INFO("allPhysicalStream: try to acc return");
     NES_DEBUG("allPhysicalStream response: " << getAllPhysicalStreamJsonReturn.serialize());
-    std::string expected= "{\"Physical Streams\":[\"physicalName=test_physical1 logicalStreamName=(default_logical) sourceType=DefaultSource on node="+std::to_string(wrk1->getWorkerId())+"\",\"physicalName=test_physical2 logicalStreamName=(default_logical) sourceType=DefaultSource on node="+std::to_string(wrk2->getWorkerId())+"\"]}";
+    std::string expected = "{\"Physical Streams\":[\"physicalName=test_physical1 logicalStreamName=(default_logical) "
+                           "sourceType=DefaultSource on node="
+        + std::to_string(wrk1->getWorkerId())
+        + "\",\"physicalName=test_physical2 logicalStreamName=(default_logical) sourceType=DefaultSource on node="
+        + std::to_string(wrk2->getWorkerId()) + "\"]}";
     NES_DEBUG("allPhysicalStream response: expected = " << expected);
     ASSERT_EQ(getAllPhysicalStreamJsonReturn.serialize(), expected);
 
@@ -688,23 +700,23 @@ TEST_F(RESTEndpointTest, testAddPhysicalToLogicalStream) {
     req.set_physicalstreamname("test_physical");
     req.set_logicalstreamname("testSchema");
 
-   std::string msg = req.SerializeAsString();
+    std::string msg = req.SerializeAsString();
 
     web::http::client::http_client addPhysicalToLogicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                                   + "/v1/nes/streamCatalog/addPhysicalToLogicalStream");
+                                                                   + "/v1/nes/streamCatalog/addPhysicalStreamToLogicalStream");
     web::json::value addJsonReturn;
     addPhysicalToLogicalStreamClient.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
+            NES_INFO("get first then");
+            return response.extract_json();
         })
         .then([&addJsonReturn](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("addPhysicalToLogical: set return");
-              addJsonReturn = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("addPhysicalToLogical: error while setting return" << e.what());
-          }
+            try {
+                NES_INFO("addPhysicalToLogical: set return");
+                addJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("addPhysicalToLogical: error while setting return" << e.what());
+            }
         })
         .wait();
 
@@ -776,22 +788,23 @@ TEST_F(RESTEndpointTest, testRemoveLogicalStreamFromPhysicalStream) {
     auto vec2 = crd->getStreamCatalog()->getPhysicalStreams("testSchema2");
     EXPECT_TRUE(!vec1.empty() && !vec2.empty());
 
-    web::http::client::http_client removeLogicalFromPhysicalClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                              + "/v1/nes/streamCatalog/removePhysicalStreamFromLogicalStream"
-                                                                     "?logicalStreamName=testSchema1&physicalStreamName=test_physical");
+    web::http::client::http_client removeLogicalFromPhysicalClient(
+        "http://127.0.0.1:" + std::to_string(restPort)
+        + "/v1/nes/streamCatalog/removePhysicalStreamFromLogicalStream"
+          "?logicalStreamName=testSchema1&physicalStreamName=test_physical");
     web::json::value delJsonReturn;
     removeLogicalFromPhysicalClient.request(web::http::methods::DEL)
         .then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
+            NES_INFO("get first then");
+            return response.extract_json();
         })
         .then([&delJsonReturn](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("del remove from physical a logical: set return");
-              delJsonReturn = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("del remove from physical a logical: error while setting return" << e.what());
-          }
+            try {
+                NES_INFO("del remove from physical a logical: set return");
+                delJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("del remove from physical a logical: error while setting return" << e.what());
+            }
         })
         .wait();
 
@@ -811,6 +824,169 @@ TEST_F(RESTEndpointTest, testRemoveLogicalStreamFromPhysicalStream) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
 }
+
+TEST_F(RESTEndpointTest, testGetPhysicalSourceConfig) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    //create two test schemas
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
+    std::string testSchemaFileName1 = "testSchema1.hpp";
+    std::ofstream out1(testSchemaFileName1);
+    out1 << testSchema;
+    out1.close();
+
+    bool success = crd->getNesWorker()->registerLogicalStream("testSchema1", testSchemaFileName1);
+    EXPECT_TRUE(success);
+
+    //create worker with 2 physical stream which registering for 2 logical streams
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    std::vector<std::string> logicalStreamNames{"testSchema1"};
+    srcConf->setLogicalStreamName(logicalStreamNames);
+    srcConf->setPhysicalStreamName("test_physical");
+
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
+    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
+                                              + "/v1/nes/streamCatalog/physicalStreamConfig"
+                                                "?physicalStreamName=test_physical");
+
+    web::json::value jsonResponse;
+    httpClient.request(web::http::methods::GET)
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&jsonResponse](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get physical stream config: set return");
+                jsonResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get physical stream config: error while setting return" << e.what());
+            }
+        })
+        .wait();
+
+    NES_INFO("getPhysicalStreamConfig: try to acc return");
+    NES_DEBUG("getPhysicalStreamConfig response: " << jsonResponse.serialize());
+
+    std::string expected = srcConf->toJson();
+    NES_DEBUG("allPhysicalStream response: expected = " << expected);
+    ASSERT_EQ(jsonResponse.serialize(), expected);
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+
+TEST_F(RESTEndpointTest, testUpdatePhysicalSourceConfig) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    //create two test schemas
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
+    std::string testSchemaFileName1 = "testSchema1.hpp";
+    std::ofstream out1(testSchemaFileName1);
+    out1 << testSchema;
+    out1.close();
+
+    bool success = crd->getNesWorker()->registerLogicalStream("testSchema1", testSchemaFileName1);
+    EXPECT_TRUE(success);
+
+    //create worker with 2 physical stream which registering for 2 logical streams
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    std::vector<std::string> logicalStreamNames{"testSchema1"};
+    srcConf->setLogicalStreamName(logicalStreamNames);
+    srcConf->setPhysicalStreamName("test_physical");
+
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
+    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
+                                              + "/v1/nes/streamCatalog/updatePhysicalStreamConfig"
+                                                "?physicalStreamName=test_physical");
+
+    std::string msg = "{\"sourceConfig\": \"test_value\"}";
+
+    web::json::value postJsonReturn;
+    httpClient.request(web::http::methods::POST, "", msg)
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("post update-physical-stream-config: set return");
+                postJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("post update-physical-stream-config: error while setting return" << e.what());
+            }
+        })
+        .wait();
+
+    NES_INFO("getPhysicalStreamConfig: try to acc return");
+    NES_DEBUG("getPhysicalStreamConfig response: " << postJsonReturn.serialize());
+
+    srcConf->setSourceConfig("test_value");
+    std::string expected = srcConf->toJson();
+    NES_DEBUG("allPhysicalStream response: expected = " << expected);
+    ASSERT_EQ(postJsonReturn.serialize(), expected);
+
+    ASSERT_EQ(wrk1->getNodeEngine()->getConfig("test_physical")->toSourceConfig()->toJson(), expected);
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+
+
 TEST_F(RESTEndpointTest, testGetAllMismappedStreams) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();

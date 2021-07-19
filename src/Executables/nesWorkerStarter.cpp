@@ -31,6 +31,7 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
+#include <Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <sys/stat.h>
@@ -79,18 +80,16 @@ int main(int argc, char** argv) {
     if (workerConfigPath != commandLineParams.end()) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
+
     if (sourceConfigPath != commandLineParams.end()) {
         auto sourceConfigPaths = UtilityFunctions::splitWithStringDelimiter(sourceConfigPath->second, ";");
-        if (sourceConfigPaths.size() == 1) {
-            sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
-        } else {
-            for (auto& path : sourceConfigPaths) {
-                SourceConfigPtr curr = SourceConfig::create();
-                curr->overwriteConfigWithYAMLFileInput(path);
-                sourceConfigs.emplace_back(curr);
-            }
+        for (auto& path : sourceConfigPaths) {
+            SourceConfigPtr curr = SourceConfig::create();
+            curr->overwriteConfigWithYAMLFileInput(path);
+            sourceConfigs.emplace_back(curr);
         }
     }
+
     if (argc >= 1) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
         sourceConfig->overwriteConfigWithCommandLineInput(commandLineParams);
@@ -107,6 +106,15 @@ int main(int argc, char** argv) {
                                                   << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
+    auto configurationPersistence =
+        PhysicalStreamsPersistenceFactory::createForType(workerConfig->getConfigPersistenceType()->getValue(),
+                                                         workerConfig->getConfigPersistencePath()->getValue());
+
+    auto loadedConfigs = configurationPersistence->loadConfigurations();
+    if (!loadedConfigs.empty()) {
+        sourceConfigs = loadedConfigs;
+    }
+
     // register phy stream if necessary
     if (sourceConfigs.size() > 0) {
         for (auto& config : sourceConfigs) {
@@ -117,9 +125,8 @@ int main(int argc, char** argv) {
 
             NES_INFO("NESWORKERSTARTER: Source Config type = "
                      << config->getSourceType()->getValue() << " Config = " << config->getSourceConfig()->getValue()
-                     << " physicalStreamName = " << config->getPhysicalStreamName()->getValue()
-                     << " logicalStreamName = " << "(" <<
-                         UtilityFunctions::combineStringsWithDelimiter(lNames,",") +")");
+                     << " physicalStreamName = " << config->getPhysicalStreamName()->getValue() << " logicalStreamName = "
+                     << "(" << UtilityFunctions::combineStringsWithDelimiter(lNames, ",") + ")");
 
             wrk->setWithRegister(conf);
         }

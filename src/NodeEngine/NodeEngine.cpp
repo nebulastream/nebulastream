@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
@@ -41,35 +42,11 @@ namespace NES::NodeEngine {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener>);
 
-NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    std::vector<PhysicalStreamConfigPtr> streamConfigs{config};
-    return NodeEngine::create(hostname, port, streamConfigs, 1, 4096, 1024, 128, 12);
-}
-
-NodeEnginePtr create(const std::string& hostname, uint16_t port, std::vector<PhysicalStreamConfigPtr>& configs) {
+NodeEnginePtr create(const std::string& hostname, uint16_t port, const std::vector<PhysicalStreamConfigPtr>& configs) {
     return NodeEngine::create(hostname, port, configs, 1, 4096, 1024, 128, 12);
 }
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
-
-NodeEnginePtr NodeEngine::create(const std::string& hostname,
-                                 uint16_t port,
-                                 PhysicalStreamConfigPtr config,
-                                 uint16_t numThreads,
-                                 uint64_t bufferSize,
-                                 uint64_t numberOfBuffersInGlobalBufferManager,
-                                 uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                 uint64_t numberOfBuffersPerPipeline) {
-    std::vector<PhysicalStreamConfigPtr> streamConfigs{config};
-    return NodeEngine::create(hostname,
-                              port,
-                              streamConfigs,
-                              numThreads,
-                              bufferSize,
-                              numberOfBuffersInGlobalBufferManager,
-                              numberOfBuffersInSourceLocalBufferPool,
-                              numberOfBuffersPerPipeline);
-}
 
 NodeEnginePtr NodeEngine::create(const std::string& hostname,
                                  uint16_t port,
@@ -78,13 +55,16 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
                                  uint64_t bufferSize,
                                  uint64_t numberOfBuffersInGlobalBufferManager,
                                  uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                 uint64_t numberOfBuffersPerPipeline) {
+                                 uint64_t numberOfBuffersPerPipeline,
+                                 std::string configPersistenceType,
+                                 std::string configPersistencePath) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numberOfBuffersInGlobalBufferManager);
         auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
         auto stateManager = std::make_shared<StateManager>();
+
         if (!partitionManager) {
             NES_ERROR("NodeEngine: error while creating partition manager");
             throw Exception("Error while creating partition manager");
@@ -109,6 +89,10 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
             NES_ERROR("NodeEngine: error while creating compiler");
             throw Exception("Error while creating compiler");
         }
+
+        auto configurationPersistence =
+            PhysicalStreamsPersistenceFactory::createForType(configPersistenceType, configPersistencePath);
+
         auto engine = std::make_shared<NodeEngine>(
             configs,
             std::move(bufferManager),
@@ -123,6 +107,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
             std::move(partitionManager),
             std::move(compiler),
             std::move(stateManager),
+            std::move(configurationPersistence),
             nodeEngineId,
             numberOfBuffersInGlobalBufferManager,
             numberOfBuffersInSourceLocalBufferPool,
@@ -136,29 +121,6 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
     return nullptr;
 }
 
-NodeEngine::NodeEngine(PhysicalStreamConfigPtr&& config,
-                       BufferManagerPtr&& bufferManager,
-                       QueryManagerPtr&& queryManager,
-                       std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
-                       Network::PartitionManagerPtr&& partitionManager,
-                       QueryCompilation::QueryCompilerPtr&& queryCompiler,
-                       StateManagerPtr&& stateManager,
-                       uint64_t nodeEngineId,
-                       uint64_t numberOfBuffersInGlobalBufferManager,
-                       uint64_t numberOfBuffersInSourceLocalBufferPool,
-                       uint64_t numberOfBuffersPerPipeline)
-    : NodeEngine(std::vector<PhysicalStreamConfigPtr>{config},
-                 std::move(bufferManager),
-                 std::move(queryManager),
-                 std::move(networkManagerCreator),
-                 std::move(partitionManager),
-                 std::move(queryCompiler),
-                 std::move(stateManager),
-                 nodeEngineId,
-                 numberOfBuffersInGlobalBufferManager,
-                 numberOfBuffersInSourceLocalBufferPool,
-                 numberOfBuffersPerPipeline) {}
-
 NodeEngine::NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
                        BufferManagerPtr&& bufferManager,
                        QueryManagerPtr&& queryManager,
@@ -166,6 +128,7 @@ NodeEngine::NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager,
+                       PhysicalStreamsPersistencePtr&& configurationPersistence,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
@@ -174,10 +137,6 @@ NodeEngine::NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
-    for (auto& config : configs) {
-        this->configs.push_back(std::move(config));
-    }
-
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
     this->queryCompiler = std::move(queryCompiler);
@@ -185,12 +144,19 @@ NodeEngine::NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
     this->bufferManager = std::move(bufferManager);
     this->partitionManager = std::move(partitionManager);
     this->stateManager = std::move(stateManager);
+    this->configurationPersistence = std::move(configurationPersistence);
     // here shared_from_this() does not work because of the machinery behind make_shared
     // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
     // plz make sure that ExchangeProtocol never leaks the impl pointer
     networkManager = networkManagerCreator(std::shared_ptr<NodeEngine>(this, [](NodeEngine*) {
         // nop
     }));
+
+    for (auto& config : configs) {
+        physicalStreams[config->getPhysicalStreamName()] = config;
+        this->configurationPersistence->persistConfiguration(config->toSourceConfig());
+    }
+
     if (!this->queryManager->startThreadPool()) {
         NES_ERROR("NodeEngine: error while start thread pool");
         throw Exception("Error while start thread pool");
@@ -517,15 +483,16 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
 Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
 
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
+    std::unique_lock lock(physicalStreamsMutex);
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
     // name of the logical stream associated with the sourceDescriptor
-    auto sourceDescriptorName = sourceDescriptor -> getStreamName();
+    auto sourceDescriptorName = sourceDescriptor->getStreamName();
 
-    for(auto &conf: configs){
-        auto logicalStreamNames = conf ->getLogicalStreamName();
-        for(std::string logicalStreamName : logicalStreamNames){
-            if(logicalStreamName == sourceDescriptorName){
+    for (auto const& [physicalStreamName, conf] : physicalStreams) {
+        auto logicalStreamNames = conf->getLogicalStreamName();
+        for (std::string logicalStreamName : logicalStreamNames) {
+            if (logicalStreamName == sourceDescriptorName) {
                 return conf->build(sourceDescriptor->getSchema(), sourceDescriptorName);
             }
         }
@@ -537,8 +504,20 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 }
 
 void NodeEngine::addConfig(AbstractPhysicalStreamConfigPtr config) {
+    std::unique_lock lock(physicalStreamsMutex);
     NES_ASSERT(config, "physical source config is not specified");
-    this->configs.push_back(config);
+    this->physicalStreams[config->getPhysicalStreamName()] = config;
+    this->configurationPersistence->persistConfiguration(config->toSourceConfig());
+}
+
+AbstractPhysicalStreamConfigPtr NodeEngine::getConfig(const std::string& physicalStreamName) {
+    std::unique_lock lock(physicalStreamsMutex);
+    if (physicalStreams.find(physicalStreamName) != physicalStreams.end()) {
+        return physicalStreams[physicalStreamName];
+    } else {
+        NES_ERROR("NodeEngine::getConfig: physical stream does not exists " << physicalStreamName);
+        throw Exception("Required stream does not exists " + physicalStreamName);
+    }
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {

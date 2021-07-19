@@ -26,6 +26,9 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
+#include <Persistence/FilePhysicalStreamsPersistence.hpp>
+
 #include <Util/Logger.hpp>
 #include <future>
 #include <signal.h>
@@ -51,11 +54,14 @@ NesWorker::NesWorker(WorkerConfigPtr workerConfig, NesNodeType type)
       numberOfBuffersPerPipeline(workerConfig->getnumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
-      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), configs{},
+      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()),
+      configurationPersistenceType(workerConfig->getConfigPersistenceType()->getValue()),
+      configurationPersistencePath(workerConfig->getConfigPersistencePath()->getValue()), type(type), configs{},
       topologyNodeId(INVALID_TOPOLOGY_NODE_ID), isRunning(false) {
     connected = false;
     withRegisterStream = false;
     withParent = false;
+
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
 }
@@ -140,7 +146,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                     bufferSizeInBytes,
                                                     numberOfBuffersInGlobalBufferManager,
                                                     numberOfBuffersInSourceLocalBufferPool,
-                                                    numberOfBuffersPerPipeline);
+                                                    numberOfBuffersPerPipeline,
+                                                    configurationPersistenceType,
+                                                    configurationPersistencePath);
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create();
         NES_DEBUG("NesWorker: MonitoringAgent configured with default values");
