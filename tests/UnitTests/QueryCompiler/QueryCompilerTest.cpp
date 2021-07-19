@@ -16,6 +16,7 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -58,12 +59,18 @@ using namespace NES::QueryCompilation::PhysicalOperators;
 
 class QueryCompilerTest : public testing::Test {
   public:
+    std::shared_ptr<QueryParsingService> queryParsingService;
+    std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     static void SetUpTestCase() {
         NES::setupLogging("QueryCompilerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup QueryCompilerTest test class.");
     }
 
-    void SetUp() override {}
+    void SetUp() override {
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
+    }
 
     void TearDown() override { NES_DEBUG("Tear down QueryCompilerTest Test."); }
 };
@@ -77,9 +84,7 @@ class QueryCompilerTest : public testing::Test {
 TEST_F(QueryCompilerTest, filterQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
@@ -110,9 +115,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
@@ -147,9 +150,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     schema->addField("key", INT32);
     schema->addField("ts", INT64);
     schema->addField("value", INT32);
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
@@ -185,9 +186,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
@@ -220,9 +219,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("leftStream", schema);
     streamCatalog->addLogicalStream("rightStream", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
