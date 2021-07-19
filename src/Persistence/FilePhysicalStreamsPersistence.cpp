@@ -24,9 +24,13 @@ namespace NES {
 
 FilePhysicalStreamsPersistence::FilePhysicalStreamsPersistence(const std::string& baseDir) : baseDir(baseDir) {
     NES_DEBUG("FilePhysicalStreamsPersistence: creating FilePhysicalStreamsPersistence, baseDir=" << baseDir);
-    if (!std::filesystem::exists(baseDir)) {
-        NES_DEBUG("FilePhysicalStreamsPersistence: creating directories at " << baseDir);
-        std::filesystem::create_directories(baseDir);
+    try {
+        if (!std::filesystem::exists(baseDir)) {
+            NES_DEBUG("FilePhysicalStreamsPersistence: creating directories at " << baseDir);
+            std::filesystem::create_directories(baseDir);
+        }
+    } catch (std::exception& ex) {
+        NES_FATAL_ERROR("FilePhysicalStreamsPersistence: failed initializing: " << ex.what());
     }
 }
 
@@ -40,7 +44,7 @@ bool FilePhysicalStreamsPersistence::persistConfiguration(SourceConfigPtr source
               << filePath.c_str() << ", physicalStreamName=" << physicalStreamName);
     try {
         std::ofstream ofs(filePath);
-        ofs << sourceConfig->toYaml();
+        ofs << sourceConfig->toJson();
         ofs.close();
         return true;
     } catch (std::exception& ex) {
@@ -59,7 +63,11 @@ std::vector<SourceConfigPtr> FilePhysicalStreamsPersistence::loadConfigurations(
         try {
             NES_DEBUG("FilePhysicalStreamsPersistence::loadConfigurations: loading configuration from " << entry.path().c_str());
             auto sourceConfig = SourceConfig::create();
-            sourceConfig->overwriteConfigWithYAMLFileInput(entry.path());
+            std::ifstream ifs(entry.path());
+            std::stringstream ss;
+            ifs >> ss.rdbuf();
+
+            sourceConfig->overwriteConfigWithStringInput(ss.str());
             sourceConfigs.push_back(sourceConfig);
         } catch (std::exception& ex) {
             NES_ERROR("FilePhysicalStreamsPersistence::loadConfigurations: failed loading: " << ex.what());

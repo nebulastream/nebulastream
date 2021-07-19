@@ -24,8 +24,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
-#include <Persistence/FilePhysicalStreamsPersistence.hpp>
+#include <Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
@@ -91,12 +90,8 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
             throw Exception("Error while creating compiler");
         }
 
-        PhysicalStreamsPersistencePtr configurationPersistence;
-        if (configPersistenceType == "file") {
-            configurationPersistence = std::make_shared<FilePhysicalStreamsPersistence>(configPersistencePath);
-        } else {
-            configurationPersistence = std::make_shared<DefaultPhysicalStreamsPersistence>();
-        }
+        auto configurationPersistence =
+            PhysicalStreamsPersistenceFactory::createForType(configPersistenceType, configPersistencePath);
 
         auto engine = std::make_shared<NodeEngine>(
             configs,

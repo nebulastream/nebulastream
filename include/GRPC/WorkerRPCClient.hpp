@@ -158,6 +158,7 @@ class WorkerRPCClient {
 
     /**
      * @brief requests the source config of a given physical stream name
+     * @param address the addres of the worker
      * @param physicalStreamName name of the requested stream
      * @return the serialized source config if the stream exists
      */
@@ -165,12 +166,24 @@ class WorkerRPCClient {
 
     /**
      * @brief tries to set the source config of the physical stream
+     * @param address the address of the worker
      * @param physicalStreamName the physical stream name of the stream to set
      * @param sourceConfig the serialized source config
      * @return true if successful
      */
     std::tuple<bool, std::string>
     setSourceConfig(const std::string& address, const std::string& physicalStreamName, const std::string& sourceConfig);
+
+    /**
+     * @brief sets the logical streams for a physicalStream
+     * @param address of the worker
+     * @param physicalStreamName of the stream
+     * @param logicalStreamNames of the logicalStreams
+     * @return
+     */
+    bool setLogicalStreams(const std::string& address,
+                           const std::string& physicalStreamName,
+                           const std::vector<std::string>& logicalStreamNames);
 
   private:
 };

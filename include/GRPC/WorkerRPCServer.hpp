@@ -52,6 +52,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetSourceConfig(ServerContext* context, const GetSourceConfigRequest* request, GetSourceConfigReply* reply) override;
 
+    Status SetLogicalStreams(ServerContext* context, const LogicalStreamsRequest* request, LogicalStreamsReply* reply) override;
+
   private:
     NodeEngine::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;

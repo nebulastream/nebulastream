@@ -824,4 +824,165 @@ TEST_F(RESTEndpointTest, testRemoveLogicalStreamFromPhysicalStream) {
     NES_INFO("RESTEndpointTest: Test finished");
 }
 
+TEST_F(RESTEndpointTest, testGetPhysicalSourceConfig) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    //create two test schemas
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
+    std::string testSchemaFileName1 = "testSchema1.hpp";
+    std::ofstream out1(testSchemaFileName1);
+    out1 << testSchema;
+    out1.close();
+
+    bool success = crd->getNesWorker()->registerLogicalStream("testSchema1", testSchemaFileName1);
+    EXPECT_TRUE(success);
+
+    //create worker with 2 physical stream which registering for 2 logical streams
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    std::vector<std::string> logicalStreamNames{"testSchema1"};
+    srcConf->setLogicalStreamName(logicalStreamNames);
+    srcConf->setPhysicalStreamName("test_physical");
+
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
+    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
+                                              + "/v1/nes/streamCatalog/physicalStreamConfig"
+                                                "?physicalStreamName=test_physical");
+
+    web::json::value jsonResponse;
+    httpClient.request(web::http::methods::GET)
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&jsonResponse](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get physical stream config: set return");
+                jsonResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get physical stream config: error while setting return" << e.what());
+            }
+        })
+        .wait();
+
+    NES_INFO("getPhysicalStreamConfig: try to acc return");
+    NES_DEBUG("getPhysicalStreamConfig response: " << jsonResponse.serialize());
+
+    std::string expected = srcConf->toJson();
+    NES_DEBUG("allPhysicalStream response: expected = " << expected);
+    ASSERT_EQ(jsonResponse.serialize(), expected);
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+
+TEST_F(RESTEndpointTest, testUpdatePhysicalSourceConfig) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    //create two test schemas
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
+    std::string testSchemaFileName1 = "testSchema1.hpp";
+    std::ofstream out1(testSchemaFileName1);
+    out1 << testSchema;
+    out1.close();
+
+    bool success = crd->getNesWorker()->registerLogicalStream("testSchema1", testSchemaFileName1);
+    EXPECT_TRUE(success);
+
+    //create worker with 2 physical stream which registering for 2 logical streams
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    std::vector<std::string> logicalStreamNames{"testSchema1"};
+    srcConf->setLogicalStreamName(logicalStreamNames);
+    srcConf->setPhysicalStreamName("test_physical");
+
+    wrk1->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
+
+    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
+                                              + "/v1/nes/streamCatalog/updatePhysicalStreamConfig"
+                                                "?physicalStreamName=test_physical");
+
+    std::string msg = "{\"sourceConfig\": \"test_value\"}";
+
+    web::json::value postJsonReturn;
+    httpClient.request(web::http::methods::POST, "", msg)
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("post update-physical-stream-config: set return");
+                postJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("post update-physical-stream-config: error while setting return" << e.what());
+            }
+        })
+        .wait();
+
+    NES_INFO("getPhysicalStreamConfig: try to acc return");
+    NES_DEBUG("getPhysicalStreamConfig response: " << postJsonReturn.serialize());
+
+    srcConf->setSourceConfig("test_value");
+    std::string expected = srcConf->toJson();
+    NES_DEBUG("allPhysicalStream response: expected = " << expected);
+    ASSERT_EQ(postJsonReturn.serialize(), expected);
+
+    ASSERT_EQ(wrk1->getNodeEngine()->getConfig("test_physical")->toSourceConfig()->toJson(), expected);
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+
 }// namespace NES

@@ -167,4 +167,27 @@ Status WorkerRPCServer::GetSourceConfig(ServerContext*, const GetSourceConfigReq
         return Status::CANCELLED;
     }
 }
+
+Status WorkerRPCServer::SetLogicalStreams(ServerContext*, const LogicalStreamsRequest* request, LogicalStreamsReply* reply) {
+    NES_DEBUG("WorkerRPCServer::GetSourceConfig: got request for " << request->physicalstreamname());
+    try {
+        auto conf = nodeEngine->getConfig(request->physicalstreamname())->toSourceConfig();
+        std::vector<std::string> logicalStreamNames{};
+        for (int i = 0; i < request->logicalstreamname_size(); i++) {
+            logicalStreamNames.push_back(request->logicalstreamname(i));
+        }
+
+        conf->setLogicalStreamName(logicalStreamNames);
+
+        auto physicalStreamConfig = PhysicalStreamConfig::create(conf);
+        nodeEngine->addConfig(physicalStreamConfig);
+        reply->set_success(true);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer::GetSourceConfig: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+}
+
 }// namespace NES

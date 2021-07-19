@@ -21,8 +21,7 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Persistence/DefaultStreamCatalogPersistence.hpp>
-#include <Persistence/FileStreamCatalogPersistence.hpp>
+#include <Persistence/StreamCatalogPersistenceFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -67,18 +66,14 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
       persistenceDir(coordinatorConfig->getPersistenceDir()->getValue()), inherited0(), inherited1(), isRunning(false) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
-    if (persistenceType == "file") {
-        persistence = std::make_shared<FileStreamCatalogPersistence>(persistenceDir);
-    } else {
-        persistence = std::make_shared<DefaultStreamCatalogPersistence>();
-    }
 
+    persistence = StreamCatalogPersistenceFactory::createForType(persistenceType, persistenceDir);
     topology = Topology::create();
     globalExecutionPlan = GlobalExecutionPlan::create();
-    queryCatalog = std::make_shared<QueryCatalog>();
-    streamCatalog = std::make_shared<StreamCatalog>(persistence);
-    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
+    queryCatalog = std::make_shared<QueryCatalog>();
+    streamCatalog = std::make_shared<StreamCatalog>(persistence, workerRpcClient);
+    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     queryRequestQueue = std::make_shared<NESRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
 

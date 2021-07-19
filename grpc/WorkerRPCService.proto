@@ -20,9 +20,6 @@ import "SerializableOperator.proto";
 import "SerializableDataType.proto";
 
 service WorkerRPCService {
-  rpc SetSourceConfig (SetSourceConfigRequest) returns (SetSourceConfigReply) {}
-  rpc GetSourceConfig (GetSourceConfigRequest) returns (GetSourceConfigReply) {}
-
   rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
   rpc UndeployQuery (UndeployQueryRequest) returns (UndeployQueryReply) {}
 
@@ -34,6 +31,20 @@ service WorkerRPCService {
 
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
+
+  rpc SetSourceConfig (SetSourceConfigRequest) returns (SetSourceConfigReply) {}
+  rpc GetSourceConfig (GetSourceConfigRequest) returns (GetSourceConfigReply) {}
+
+  rpc SetLogicalStreams (LogicalStreamsRequest) returns (LogicalStreamsReply) {}
+}
+
+message LogicalStreamsRequest {
+  string physicalStreamName = 1;
+  repeated string logicalStreamName = 2;
+}
+
+message LogicalStreamsReply {
+  bool success = 1;
 }
 
 message SetSourceConfigRequest {

@@ -19,6 +19,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <algorithm>
 #include <cpprest/json.h>
 #include <filesystem>
 #include <string>
@@ -51,7 +52,6 @@ SourceConfig::SourceConfig() {
 }
 
 void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
-
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         NES_INFO("NesSourceConfig: Using config file with path: " << filePath << " .");
         std::ifstream configFile(filePath);
@@ -208,10 +208,6 @@ void SourceConfig::setLogicalStreamName(std::string logicalStreamNameStr) {
     logicalStreamName->setValue(logicalStreamNameVec);
 }
 
-void SourceConfig::addLogicalStreamName(std::string logicalStreamNameValue) {
-    logicalStreamName->getValue().push_back(logicalStreamNameValue);
-}
-
 void SourceConfig::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }
 
 std::string SourceConfig::toJson() {
@@ -233,6 +229,4 @@ std::string SourceConfig::toJson() {
 
     return json.serialize();
 }
-std::string SourceConfig::toYaml() { return ""; }
-
 }// namespace NES

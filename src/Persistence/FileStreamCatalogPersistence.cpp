@@ -30,7 +30,7 @@ FileStreamCatalogPersistence::FileStreamCatalogPersistence(const std::string& ba
             std::filesystem::create_directories(baseDir);
         }
     } catch (std::exception& ex) {
-        NES_ERROR("FileStreamCatalogPersistence: failed initializing: " << ex.what());
+        NES_FATAL_ERROR("FileStreamCatalogPersistence: failed initializing: " << ex.what());
     }
 }
 

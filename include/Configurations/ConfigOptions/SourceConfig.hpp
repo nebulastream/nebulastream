@@ -67,12 +67,6 @@ class SourceConfig {
     std::string toJson();
 
     /**
-     * @brief serializes the configuration to a YAML string representation
-     * @return a YAML string
-     */
-    std::string toYaml();
-
-    /**
      * @brief resets all options to default values
      */
     void resetSourceOptions();
@@ -151,11 +145,6 @@ class SourceConfig {
      * @brief set the value for logicalStreamName with the appropriate data format (expects a single string with the names separated by comma)
      */
     void setLogicalStreamName(std::string logicalStreamName);
-
-    /**
-     * @brief add the logicalStreamName to the vector of logicalStreamNames
-     */
-    void addLogicalStreamName(std::string logicalStreamName);
 
     /**
      * @brief gets a ConfigOption object with skipHeader

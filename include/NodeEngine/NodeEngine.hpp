@@ -257,7 +257,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void onChannelError(Network::Messages::ErrorMessage) override;
 
-    // TODO we should get rid of the following method
     /**
      * @brief Add the physical stream config
      * @param config : configuration to be added

@@ -125,7 +125,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             }
         }
     } else if (path[1] == "physicalStreamConfig") {
-        auto param = parameters.find("streamName");
+        auto param = parameters.find("physicalStreamName");
         if (param == parameters.end()) {
             NES_ERROR(
                 "StreamCatalogController: handleGet -physicalStreamConfig: Exception occurred while trying to retrieve config");
@@ -288,10 +288,10 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
     } else if (path[1] == "updatePhysicalStreamConfig") {
         NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: REST received request to update Logical Stream "
                   << message.to_string());
-        auto param = parameters.find("streamName");
+        auto param = parameters.find("physicalStreamName");
         if (param == parameters.end()) {
             NES_ERROR(
-                "StreamCatalogController: handleGet -physicalStreamConfig: Exception occurred while trying to retrieve config");
+                "StreamCatalogController: handlePost -updatePhysicalStreamConfig: Exception occurred while trying to retrieve config");
             json::value errorResponse{};
             errorResponse["detail"] = json::value::string("Parameter streamName must be provided");
             badRequestImpl(message, errorResponse);
@@ -300,14 +300,14 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
             message.extract_string(true)
                 .then([this, param, message](utility::string_t body) {
                     try {
-                        NES_DEBUG("StreamCatalogController: handlePost -physicalStreamConfig: Start trying to update "
+                        NES_DEBUG("StreamCatalogController: handlePost -updatePhysicalStreamConfig: Start trying to update "
                                   "physicalStreamConfig");
 
                         std::string streamName = param->second;
 
                         //Prepare Input query from user string
                         std::string userRequest(body.begin(), body.end());
-                        NES_DEBUG("StreamCatalogController: handlePost -physicalStreamConfig: userRequest: " << userRequest);
+                        NES_DEBUG("StreamCatalogController: handlePost -updatePhysicalStreamConfig: userRequest: " << userRequest);
                         // json::value req = json::value::parse(userRequest);
 
                         auto updatedConfig = streamCatalog->setSourceConfig(streamName, userRequest);
@@ -316,7 +316,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                         return;
 
                     } catch (const std::exception& exc) {
-                        NES_ERROR("StreamCatalogController: handlePost -physicalStreamConfig: Exception occurred while trying "
+                        NES_ERROR("StreamCatalogController: handlePost -updatePhysicalStreamConfig: Exception occurred while trying "
                                   "to update  "
                                   "physical stream"
                                   << exc.what());

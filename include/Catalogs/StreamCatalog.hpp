@@ -262,7 +262,7 @@ class StreamCatalog {
     std::string setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
 
     StreamCatalog();
-    StreamCatalog(StreamCatalogPersistencePtr persistence);
+    StreamCatalog(StreamCatalogPersistencePtr persistence, WorkerRPCClientPtr workerRpcClient);
     ~StreamCatalog();
 
   private:
@@ -281,6 +281,7 @@ class StreamCatalog {
     std::map<std::string, StreamCatalogEntryPtr> nameToPhysicalStream;
 
     void addDefaultStreams();
+    bool setLogicalStreamsOnWorker(const std::string& physicalStreamName, const std::vector<std::string>& logicalStreamNames);
 };
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 }// namespace NES

@@ -31,7 +31,7 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
-#include <Persistence/FilePhysicalStreamsPersistence.hpp>
+#include <Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <sys/stat.h>
@@ -80,19 +80,16 @@ int main(int argc, char** argv) {
     if (workerConfigPath != commandLineParams.end()) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
+
     if (sourceConfigPath != commandLineParams.end()) {
-        // BDAPRO check this again, this looks a bit clunky, any recommendations?
         auto sourceConfigPaths = UtilityFunctions::splitWithStringDelimiter(sourceConfigPath->second, ";");
-        if (sourceConfigPaths.size() == 1) {
-            sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
-        } else {
-            for (auto& path : sourceConfigPaths) {
-                SourceConfigPtr curr = SourceConfig::create();
-                curr->overwriteConfigWithYAMLFileInput(path);
-                sourceConfigs.emplace_back(curr);
-            }
+        for (auto& path : sourceConfigPaths) {
+            SourceConfigPtr curr = SourceConfig::create();
+            curr->overwriteConfigWithYAMLFileInput(path);
+            sourceConfigs.emplace_back(curr);
         }
     }
+
     if (argc >= 1) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
         sourceConfig->overwriteConfigWithCommandLineInput(commandLineParams);
@@ -109,13 +106,13 @@ int main(int argc, char** argv) {
                                                   << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
-    if (workerConfig->getConfigPersistenceType()->getValue() == "file") {
-        auto configurationPersistence =
-            std::make_shared<FilePhysicalStreamsPersistence>(workerConfig->getConfigPersistencePath()->getValue());
-        auto loadedConfigs = configurationPersistence->loadConfigurations();
-        if (!loadedConfigs.empty()) {
-            sourceConfigs = loadedConfigs;
-        }
+    auto configurationPersistence =
+        PhysicalStreamsPersistenceFactory::createForType(workerConfig->getConfigPersistenceType()->getValue(),
+                                                         workerConfig->getConfigPersistencePath()->getValue());
+
+    auto loadedConfigs = configurationPersistence->loadConfigurations();
+    if (!loadedConfigs.empty()) {
+        sourceConfigs = loadedConfigs;
     }
 
     // register phy stream if necessary

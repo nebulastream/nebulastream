@@ -61,12 +61,11 @@ void StreamCatalog::addDefaultStreams() {
     }
 }
 
-StreamCatalog::StreamCatalog() : StreamCatalog(DefaultStreamCatalogPersistence::create()){};
+StreamCatalog::StreamCatalog() : StreamCatalog(DefaultStreamCatalogPersistence::create(), nullptr){};
 
-StreamCatalog::StreamCatalog(StreamCatalogPersistencePtr persistence) : catalogMutex(), persistence(persistence) {
+StreamCatalog::StreamCatalog(StreamCatalogPersistencePtr persistence, WorkerRPCClientPtr workerRpcClient)
+    : catalogMutex(), persistence(persistence), workerRpcClient(workerRpcClient) {
     NES_DEBUG("StreamCatalog: construct stream catalog");
-    // TODO use from coordinator
-    this->workerRpcClient = std::make_shared<WorkerRPCClient>();
     addDefaultStreams();
     NES_DEBUG("StreamCatalog: construct stream catalog successfully");
 }
@@ -159,6 +158,7 @@ bool StreamCatalog::addPhysicalToLogicalStream(std::string logicalStreamName, St
 
     NES_DEBUG("StreamCatalog: physical stream " << newEntry->getPhysicalName() << " id=" << newEntry->getNode()->getId()
                                                 << " successful added");
+
     return true;
 }
 
@@ -222,7 +222,18 @@ bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string physicalStreamN
         logicalToPhysicalStreamMapping[logicalStreamName].push_back(physicalStreamName);
     }
     nameToPhysicalStream[physicalStreamName]->addLogicalStreamName(logicalStreamName);
-    return true;
+
+    try {
+        std::vector<std::string> logicalStreams = nameToPhysicalStream[physicalStreamName]->getLogicalName();
+        bool success = setLogicalStreamsOnWorker(physicalStreamName, logicalStreams);
+        if (!success) {
+            NES_ERROR("StreamCatalog: failed to set logical streams on worker node");
+        }
+        return success;
+    } catch (std::exception& ex) {
+        NES_ERROR("StreamCatalog: could not propagate to worker node: " << ex.what());
+        return false;
+    }
 }
 
 bool StreamCatalog::removeAllPhysicalStreams(std::string logicalStreamName) {
@@ -256,7 +267,18 @@ bool StreamCatalog::removePhysicalStreamFromLogicalStream(std::string physicalSt
 
     NES_DEBUG("StreamCatalog: number of entries for logical stream " << logicalStreamName << " afterwards "
                                                                      << logicalToPhysicalStreamMapping[logicalStreamName].size());
-    return true;
+
+    try {
+        std::vector<std::string> logicalStreams = nameToPhysicalStream[physicalStreamName]->getLogicalName();
+        bool success = setLogicalStreamsOnWorker(physicalStreamName, logicalStreams);
+        if (!success) {
+            NES_ERROR("StreamCatalog: failed to set logical streams on worker node");
+        }
+        return success;
+    } catch (std::exception& ex) {
+        NES_ERROR("StreamCatalog: could not propagate to worker node: " << ex.what());
+        return false;
+    }
 }
 
 bool StreamCatalog::removePhysicalStreamFromAllLogicalStreams(std::string physicalStreamName) {
@@ -276,7 +298,17 @@ bool StreamCatalog::removePhysicalStreamFromAllLogicalStreams(std::string physic
                   << logicalStreamName << " afterwards " << logicalToPhysicalStreamMapping[logicalStreamName].size());
     }
     NES_DEBUG("StreamCatalog: removed physical stream from all logical streams");
-    return true;
+
+    try {
+        bool success = setLogicalStreamsOnWorker(physicalStreamName, {});
+        if (!success) {
+            NES_ERROR("StreamCatalog: failed to set logical streams on worker node");
+        }
+        return success;
+    } catch (std::exception& ex) {
+        NES_ERROR("StreamCatalog: could not propagate to worker node: " << ex.what());
+        return false;
+    }
 }
 
 bool StreamCatalog::deletePhysicalStream(std::string physicalStreamName, std::uint64_t hashId) {
@@ -508,6 +540,10 @@ bool StreamCatalog::updatedLogicalStream(std::string& streamName, std::string& s
     return true;
 }
 std::string StreamCatalog::getSourceConfig(const std::string& physicalStreamName) {
+    if (!workerRpcClient) {
+        NES_ERROR("StreamCatalog: set source config failed, no workerRpcClient supplied!");
+        return "";
+    }
     NES_INFO("StreamCatalog: get source config, physicalStreamName=" << physicalStreamName);
 
     if (nameToPhysicalStream.find(physicalStreamName) == nameToPhysicalStream.end()) {
@@ -534,6 +570,10 @@ std::string StreamCatalog::getSourceConfig(const std::string& physicalStreamName
 }
 
 std::string StreamCatalog::setSourceConfig(const std::string& physicalStreamName, const std::string& configString) {
+    if (!workerRpcClient) {
+        NES_ERROR("StreamCatalog: set source config failed, no workerRpcClient supplied!");
+        return "";
+    }
     NES_INFO("StreamCatalog: set source config, physicalStreamName=" << physicalStreamName);
 
     if (nameToPhysicalStream.find(physicalStreamName) == nameToPhysicalStream.end()) {
@@ -556,6 +596,38 @@ std::string StreamCatalog::setSourceConfig(const std::string& physicalStreamName
         return updatedConfigString;
     } catch (std::exception& ex) {
         NES_ERROR("StreamCatalog: error on rpc call to set source config, physicalStreamName=" << physicalStreamName);
+        throw Exception("Could not retrieve source config for physicalStream " + physicalStreamName);
+    }
+}
+
+bool StreamCatalog::setLogicalStreamsOnWorker(const std::string& physicalStreamName,
+                                              const std::vector<std::string>& logicalStreamNames) {
+    if (!workerRpcClient) {
+        NES_WARNING(
+            "StreamCatalog::addPhysicalStreamToLogicalStream: could not propagate update to worker: workerRpcClient no supplied");
+        return true;
+    }
+    NES_INFO("StreamCatalog: set logical streams config, physicalStreamName=" << physicalStreamName);
+
+    if (nameToPhysicalStream.find(physicalStreamName) == nameToPhysicalStream.end()) {
+        NES_ERROR("StreamCatalog: unable to find stream physicalStreamName=" << physicalStreamName);
+        throw Exception("Unknown physical stream " + physicalStreamName);
+    }
+
+    auto physicalStream = nameToPhysicalStream[physicalStreamName];
+    auto node = physicalStream->getNode();
+    auto ipAddress = node->getIpAddress();
+    auto grpcPort = node->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+
+    try {
+        auto success = workerRpcClient->setLogicalStreams(rpcAddress, physicalStreamName, logicalStreamNames);
+        if (!success) {
+            throw Exception("could not set logical stream names on worker for " + physicalStreamName);
+        }
+        return success;
+    } catch (std::exception& ex) {
+        NES_ERROR("StreamCatalog: error on rpc call to retrieve source config, physicalStreamName=" << physicalStreamName);
         throw Exception("Could not retrieve source config for physicalStream " + physicalStreamName);
     }
 }
