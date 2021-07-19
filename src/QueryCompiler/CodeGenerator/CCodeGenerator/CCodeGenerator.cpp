@@ -19,6 +19,11 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+#include <Compiler/CompilationRequest.hpp>
+#include <Compiler/CompilationResult.hpp>
+#include <Compiler/DynamicObject.hpp>
+#include <Compiler/JITCompiler.hpp>
+#include <Compiler/SourceCode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
@@ -43,9 +48,7 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
-#include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
-#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
@@ -67,7 +70,7 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 namespace NES::QueryCompilation {
-CCodeGenerator::CCodeGenerator() : compiler(Compiler::create()) {}
+CCodeGenerator::CCodeGenerator() {}
 
 StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::string& structName, const SchemaPtr& schema) {
     /* struct definition for tuples */
@@ -2081,9 +2084,14 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     return file.code;
 }
 
-Runtime::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(PipelineContextPtr code) {
+Runtime::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
+                                                                       PipelineContextPtr code) {
     std::string src = generateCode(code);
-    auto compiledCode = compiler->compile(src);
+    auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::CPP, src);
+    auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, true);
+    auto result = jitCompiler->compile(std::move(request));
+    auto compiledCode = result.get().getDynamicObject();
+
     PipelineStageArity const arity = [&ari = code->arity]() {
         switch (ari) {
             case PipelineContext::Unary: return Unary;

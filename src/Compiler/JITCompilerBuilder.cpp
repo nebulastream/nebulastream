@@ -20,8 +20,9 @@ namespace NES::Compiler{
 
 JITCompilerBuilder::JITCompilerBuilder() = default;
 
-void JITCompilerBuilder::registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler>& languageCompiler) {
+JITCompilerBuilder& JITCompilerBuilder::registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler>& languageCompiler) {
     this->languageCompilers[languageCompiler->getLanguage()] = languageCompiler;
+    return *this;
 }
 
 std::shared_ptr<JITCompiler> JITCompilerBuilder::build() {

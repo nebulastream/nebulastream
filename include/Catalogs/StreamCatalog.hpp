@@ -30,6 +30,9 @@ namespace NES {
 class LogicalStream;
 using LogicalStreamPtr = std::shared_ptr<LogicalStream>;
 
+class QueryParsingService;
+using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
+
 /**
  * @brief the stream catalog handles the mapping of logical to physical streams
  * @Limitations
@@ -178,10 +181,12 @@ class StreamCatalog {
      */
     bool updatedLogicalStream(std::string& streamName, std::string& streamSchema);
 
-    StreamCatalog();
+    StreamCatalog(QueryParsingServicePtr queryParsingService);
     ~StreamCatalog();
 
   private:
+    QueryParsingServicePtr queryParsingService;
+
     std::recursive_mutex catalogMutex;
 
     //map logical stream to schema

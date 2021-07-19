@@ -33,12 +33,15 @@
 #include <thread>
 
 //GRPC Includes
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/MonitoringManager.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -63,9 +66,18 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     topology = Topology::create();
-    streamCatalog = std::make_shared<StreamCatalog>();
+
+    // TODO make compiler backend configurable
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    auto queryParsingService = QueryParsingService::create(jitCompiler);
+
+
+    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();
+
+
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<NESRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
@@ -90,6 +102,7 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     queryService = std::make_shared<QueryService>(queryCatalog,
                                                   queryRequestQueue,
                                                   streamCatalog,
+                                                  queryParsingService,
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 }
 

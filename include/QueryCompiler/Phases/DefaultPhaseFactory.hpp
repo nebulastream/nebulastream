@@ -33,7 +33,7 @@ class DefaultPhaseFactory : public PhaseFactory {
     AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
     LowerPhysicalToGeneratableOperatorsPtr
     createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr options) override;
-    CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options) override;
+    CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options, Compiler::JITCompilerPtr jitCompiler) override;
     LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) override;
 };
 

@@ -60,7 +60,7 @@ class PhaseFactory {
     * @param QueryCompilerOptionsPtr options
     * @return CodeGenerationPhasePtr
     */
-    virtual CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options) = 0;
+    virtual CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options, Compiler::JITCompilerPtr jitCompiler) = 0;
 
     /**
     * @brief Creates lower operator plan to executable query plan phase

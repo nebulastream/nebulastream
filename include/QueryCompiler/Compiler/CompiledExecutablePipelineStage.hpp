@@ -22,6 +22,11 @@
 #include <atomic>
 #include <mutex>
 namespace NES {
+
+namespace Compiler{
+class DynamicObject;
+}
+
 using Runtime::TupleBuffer;
 using Runtime::WorkerContext;
 using Runtime::Execution::PipelineExecutionContext;
@@ -39,11 +44,11 @@ class CompiledExecutablePipelineStage : public Runtime::Execution::ExecutablePip
      * @param arity of the pipeline, e.g., binary or unary
      * @param sourceCode as string
      */
-    explicit CompiledExecutablePipelineStage(const CompiledCodePtr& compiledCode,
+    explicit CompiledExecutablePipelineStage(std::shared_ptr<Compiler::DynamicObject> dynamicObject,
                                              PipelineStageArity arity,
                                              std::string sourceCode);
     static Runtime::Execution::ExecutablePipelineStagePtr
-    create(const CompiledCodePtr& compiledCode, PipelineStageArity arity, const std::string& sourceCode = "");
+    create(std::shared_ptr<Compiler::DynamicObject> dynamicObject, PipelineStageArity arity, const std::string& sourceCode = "");
     ~CompiledExecutablePipelineStage();
 
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
@@ -61,7 +66,7 @@ class CompiledExecutablePipelineStage : public Runtime::Execution::ExecutablePip
   private:
     enum ExecutionStage { NotInitialized, Initialized, Running, Stopped };
     Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
-    CompiledCodePtr compiledCode;
+    std::shared_ptr<Compiler::DynamicObject> dynamicObject;
     std::mutex executionStageLock;
     std::atomic<ExecutionStage> currentExecutionStage;
     std::string sourceCode;

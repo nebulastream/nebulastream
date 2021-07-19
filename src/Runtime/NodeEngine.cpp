@@ -15,6 +15,8 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -80,8 +82,10 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
         }
         auto compilerOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         compilerOptions->setNumSourceLocalBuffers(numberOfBuffersInSourceLocalBufferPool);
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
-        auto compiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+        auto compiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
         if (!compiler) {
             NES_ERROR("Runtime: error while creating compiler");
             throw Exception("Error while creating compiler");

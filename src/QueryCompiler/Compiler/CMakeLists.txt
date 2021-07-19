@@ -13,9 +13,5 @@
 # limitations under the License.
 
 add_source_nes(
-        Compiler.cpp
-        CompiledCode.cpp
-        SystemCompilerCompiledCode.cpp
-        CompilerFlags.cpp
         CompiledExecutablePipelineStage.cpp
 )

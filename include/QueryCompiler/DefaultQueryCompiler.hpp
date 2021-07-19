@@ -31,7 +31,9 @@ class DefaultQueryCompiler : public QueryCompiler {
      * @param phaseFactory Factory which allows the injection of query optimization phases.
      * @return QueryCompilerPtr
      */
-    static QueryCompilerPtr create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory);
+    static QueryCompilerPtr create(QueryCompilerOptionsPtr const& options,
+                                   Phases::PhaseFactoryPtr const& phaseFactory,
+                                   Compiler::JITCompilerPtr jitCompiler);
 
     /**
     * @brief Submits a new query compilation request for compilation.
@@ -41,7 +43,9 @@ class DefaultQueryCompiler : public QueryCompiler {
     QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) override;
 
   protected:
-    DefaultQueryCompiler(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory);
+    DefaultQueryCompiler(QueryCompilerOptionsPtr const& options,
+                         Phases::PhaseFactoryPtr const& phaseFactory,
+                         Compiler::JITCompilerPtr jitCompiler);
     LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
     LowerPhysicalToGeneratableOperatorsPtr lowerPhysicalToGeneratableOperatorsPhase;
     LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhase;

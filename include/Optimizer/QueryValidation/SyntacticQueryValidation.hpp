@@ -18,11 +18,17 @@
 #define NES_OPTIMIZE_SYNTACTIC_QUERY_VALIDATION_HPP
 
 #include <memory>
+
 namespace NES {
 
 class Query;
 using QueryPtr = std::shared_ptr<Query>;
+
+class QueryParsingService;
+using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
+
 }// namespace NES
+
 
 namespace NES::Optimizer {
 
@@ -33,13 +39,12 @@ using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
  * @brief This class is responsible for Syntactic Query Validation
  */
 class SyntacticQueryValidation {
-  private:
-    /**
-     * @brief Throws InvalidQueryException with formatted exception message
-     */
-    static void handleException(const std::exception& ex);
-
   public:
+
+    SyntacticQueryValidation(QueryParsingServicePtr queryParsingService);
+
+    static SyntacticQueryValidationPtr create(QueryParsingServicePtr queryParsingService);
+
     /**
      * @brief Checks the syntactic validity of a Query string
      */
@@ -50,7 +55,14 @@ class SyntacticQueryValidation {
      */
     QueryPtr checkValidityAndGetQuery(const std::string& inputQuery);
 
-    static SyntacticQueryValidationPtr create();
+
+
+  private:
+    QueryParsingServicePtr queryParsingService;
+    /**
+     * @brief Throws InvalidQueryException with formatted exception message
+     */
+    static void handleException(const std::exception& ex);
 };
 
 }// namespace NES::Optimizer
