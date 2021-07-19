@@ -211,66 +211,148 @@ void BM_Partial_Placement(benchmark::State& state,
     }
 }
 
+#define REPETITIONS 5
+
+const std::vector<std::string> partialMerging{
+    R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
+    R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
+    R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).sink(PrintSinkDescriptor::create());)",
+    R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
+};
+
+const std::vector<std::string> equalQueries{
+    R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
+    R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
+    R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
+    R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
+};
+
 // 10 Level topology max node in each level has maximum of 50 children, TopDown
-BENCHMARK_CAPTURE(
-    BM_Complete_Placement,
-    complete_top_down_hierarchical,
-    200,
-    5,
-    10,
-    std::string("TopDown"),
-    std::vector<std::string>{
-        R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-    })
-    ->Repetitions(5);
+BENCHMARK_CAPTURE(BM_Complete_Placement,
+                  partial_queries_complete_top_down_hierarchical,
+                  200,
+                  5,
+                  10,
+                  std::string("TopDown"),
+                  partialMerging)
+    ->Repetitions(REPETITIONS);
 
-BENCHMARK_CAPTURE(
-    BM_Complete_Placement,
-    complete_bottom_up_hierarchical,
-    200,
-    5,
-    10,
-    std::string("BottomUp"),
-    std::vector<std::string>{
-        R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-    })
-    ->Repetitions(5);
+BENCHMARK_CAPTURE(BM_Complete_Placement,
+                  partial_queries_complete_bottom_up_hierarchical,
+                  200,
+                  5,
+                  10,
+                  std::string("BottomUp"),
+                  partialMerging)
+    ->Repetitions(REPETITIONS);
 
-BENCHMARK_CAPTURE(
-    BM_Partial_Placement,
-    partial_top_down_hierarchical,
-    200,
-    5,
-    10,
-    std::string("TopDown"),
-    std::vector<std::string>{
-        R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-    })
-    ->Repetitions(5);
+BENCHMARK_CAPTURE(BM_Partial_Placement,
+                  partial_queries_partial_top_down_hierarchical,
+                  200,
+                  5,
+                  10,
+                  std::string("TopDown"),
+                  partialMerging)
+    ->Repetitions(REPETITIONS);
 
-BENCHMARK_CAPTURE(
-    BM_Partial_Placement,
-    partial_bottom_up_hierarchical,
-    200,
-    5,
-    10,
-    std::string("BottomUp"),
-    std::vector<std::string>{
-        R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 3).sink(PrintSinkDescriptor::create());)",
-        R"(Query::from("car").filter(Attribute("value") > 5).map(Attribute("queryId") = 2).map(Attribute("newValue") = 20).sink(PrintSinkDescriptor::create());)",
-    })
-    ->Repetitions(5);
+BENCHMARK_CAPTURE(BM_Partial_Placement,
+                  partial_queries_partial_bottom_up_hierarchical,
+                  200,
+                  5,
+                  10,
+                  std::string("BottomUp"),
+                  partialMerging)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Complete_Placement,
+                  equal_queries_complete_bottom_up_hierarchical,
+                  200,
+                  5,
+                  10,
+                  std::string("BottomUp"),
+                  equalQueries)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Complete_Placement,
+                  equal_queries_complete_top_down_hierarchical,
+                  200,
+                  5,
+                  10,
+                  std::string("TopDown"),
+                  equalQueries)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Partial_Placement,
+                  equal_queries_partial_bottom_up_hierarchical,
+                  200,
+                  5,
+                  10,
+                  std::string("BottomUp"),
+                  equalQueries)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Partial_Placement,
+                  equal_queries_partial_top_down_hierarchical,
+                  200,
+                  5,
+                  10,
+                  std::string("TopDown"),
+                  equalQueries)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Complete_Placement,
+                  partial_queries_complete_top_down_flat,
+                  200,
+                  2,
+                  200,
+                  std::string("TopDown"),
+                  partialMerging)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Complete_Placement,
+                  partial_queries_complete_bottom_up_flat,
+                  200,
+                  2,
+                  200,
+                  std::string("BottomUp"),
+                  partialMerging)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Partial_Placement,
+                  partial_queries_partial_top_down_flat,
+                  200,
+                  2,
+                  200,
+                  std::string("TopDown"),
+                  partialMerging)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Partial_Placement,
+                  partial_queries_partial_bottom_up_flat,
+                  200,
+                  2,
+                  200,
+                  std::string("BottomUp"),
+                  partialMerging)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Complete_Placement,
+                  equal_queries_complete_bottom_up_flat,
+                  200,
+                  2,
+                  200,
+                  std::string("BottomUp"),
+                  equalQueries)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Complete_Placement, equal_queries_complete_top_down_flat, 200, 2, 200, std::string("TopDown"), equalQueries)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Partial_Placement, equal_queries_partial_bottom_up_flat, 200, 2, 200, std::string("BottomUp"), equalQueries)
+    ->Repetitions(REPETITIONS);
+
+BENCHMARK_CAPTURE(BM_Partial_Placement, equal_queries_partial_top_down_flat, 200, 2, 200, std::string("TopDown"), equalQueries)
+    ->Repetitions(REPETITIONS);
 
 int main(int argc, char** argv) {
     NESLogger->removeAllAppenders();
