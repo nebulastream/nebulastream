@@ -62,7 +62,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto queryCatalog = std::make_shared<QueryCatalog>();
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
                                                                streamCatalog,
@@ -89,7 +89,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
     auto queryCatalog = std::make_shared<QueryCatalog>();
     queryCatalog->addNewQuery(queryString, q1.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
                                                                streamCatalog,
@@ -120,7 +120,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
     auto queryCatalog = std::make_shared<QueryCatalog>();
     queryCatalog->addNewQuery(queryString, q1.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
                                                                streamCatalog,
@@ -151,7 +151,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     queryCatalog->addNewQuery(queryString1, q1.getQueryPlan(), "TopDown");
     queryCatalog->addNewQuery(queryString2, q2.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
                                                                streamCatalog,
@@ -187,7 +187,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
     auto catalogEntry1 = queryCatalog->addNewQuery("", q1.getQueryPlan(), "topdown");
     //Explicitly fail the query
     queryCatalog->setQueryFailureReason(queryId, "Random reason");
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
                                                                streamCatalog,
@@ -218,7 +218,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     queryCatalog->addNewQuery(queryString1, q1.getQueryPlan(), "TopDown");
     queryCatalog->addNewQuery(queryString2, q2.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
                                                                streamCatalog,
@@ -269,7 +269,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
         batchOfNesRequests.emplace_back(nesRequest);
     }
 
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase =
         Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
@@ -324,7 +324,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
         batchOfNesRequests.emplace_back(nesRequest);
     }
 
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     NES::SchemaPtr schema = NES::Schema::create()
                                 ->addField("id", NES::UINT64)
                                 ->addField("val", NES::UINT64)

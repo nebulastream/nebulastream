@@ -124,7 +124,7 @@ void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog =  std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -147,7 +147,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog =  std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalogTwoNodes(streamCatalog);
 
     // Prepare
@@ -178,7 +178,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog =  std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalogFiveNodes(streamCatalog);
 
     // Prepare

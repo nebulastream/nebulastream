@@ -15,7 +15,9 @@
 */
 
 #include "gtest/gtest.h"
-
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
@@ -37,6 +39,7 @@ const std::string defaultLogicalStreamName = "default_logical";
 class StreamCatalogTest : public testing::Test {
   public:
     SourceConfigPtr sourceConfig;
+    std::shared_ptr<StreamCatalog> streamCatalog;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -45,7 +48,13 @@ class StreamCatalogTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { sourceConfig = SourceConfig::create(); }
+    void SetUp() override {
+        sourceConfig = SourceConfig::create();
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        auto queryParsingService = QueryParsingService::create(jitCompiler);
+        streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    }
 
     /* Will be called before a test is executed. */
     void TearDown() override { NES_INFO("Tear down StreamCatalogTest test case."); }
@@ -55,7 +64,7 @@ class StreamCatalogTest : public testing::Test {
 };
 
 TEST_F(StreamCatalogTest, testAddGetLogStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
 
     streamCatalog->addLogicalStream("test_stream", Schema::create());
     SchemaPtr sPtr = streamCatalog->getSchemaForLogicalStream("test_stream");
@@ -73,8 +82,6 @@ TEST_F(StreamCatalogTest, testAddGetLogStream) {
 }
 
 TEST_F(StreamCatalogTest, testAddRemoveLogStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-
     streamCatalog->addLogicalStream("test_stream", Schema::create());
 
     EXPECT_TRUE(streamCatalog->removeLogicalStream("test_stream"));
@@ -92,14 +99,13 @@ TEST_F(StreamCatalogTest, testAddRemoveLogStream) {
 }
 
 TEST_F(StreamCatalogTest, testGetNotExistingKey) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
 
     SchemaPtr sPtr = streamCatalog->getSchemaForLogicalStream("test_stream22");
     EXPECT_EQ(sPtr, nullptr);
 }
 
 TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyPtr topology = Topology::create();
 
     streamCatalog->addLogicalStream("test_stream", Schema::create());
@@ -129,7 +135,6 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
 //TODO: add test for a second physical stream add
 
 TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyPtr topology = Topology::create();
 
     streamCatalog->addLogicalStream("test_stream", Schema::create());
@@ -154,7 +159,6 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
 }
 
 TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyPtr topology = Topology::create();
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
@@ -172,7 +176,6 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
 }
 //new from service
 TEST_F(StreamCatalogTest, testGetAllLogicalStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 
     const map<std::string, std::string>& allLogicalStream = streamCatalog->getAllLogicalStreamAsString();
     EXPECT_EQ(allLogicalStream.size(), 2U);
@@ -182,16 +185,13 @@ TEST_F(StreamCatalogTest, testGetAllLogicalStream) {
     }
 }
 
-TEST_F(StreamCatalogTest, testAddLogicalStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-
+TEST_F(StreamCatalogTest, testAddLogicalStreamFromString) {
     streamCatalog->addLogicalStream("test", testSchema);
     const map<std::string, std::string>& allLogicalStream = streamCatalog->getAllLogicalStreamAsString();
     EXPECT_EQ(allLogicalStream.size(), 3U);
 }
 
 TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyPtr topology = Topology::create();
 
     std::string newLogicalStreamName = "test_stream";
@@ -217,15 +217,11 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
 }
 
 TEST_F(StreamCatalogTest, testDeleteLogicalStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-
     bool success = streamCatalog->removeLogicalStream(defaultLogicalStreamName);
     EXPECT_TRUE(success);
 }
 
 TEST_F(StreamCatalogTest, testUpdateLogicalStreamWithInvalidStreamName) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-
     std::string logicalStreamName = "test";
     std::string newSchema = "Schema::create()->addField(\"id\", BasicType::UINT32);";
     bool success = streamCatalog->updatedLogicalStream(logicalStreamName, newSchema);
@@ -233,8 +229,6 @@ TEST_F(StreamCatalogTest, testUpdateLogicalStreamWithInvalidStreamName) {
 }
 
 TEST_F(StreamCatalogTest, testUpdateLogicalStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-
     std::string logicalStreamName = "test";
     bool success = streamCatalog->addLogicalStream(logicalStreamName, testSchema);
     EXPECT_TRUE(success);

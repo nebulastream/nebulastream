@@ -15,7 +15,8 @@
 */
 
 #include <gtest/gtest.h>
-
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -126,7 +127,9 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         };
         auto compilerOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
-        auto queryCompiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        auto queryCompiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
         auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(streamConf),
                                                              std::move(bufferManager),

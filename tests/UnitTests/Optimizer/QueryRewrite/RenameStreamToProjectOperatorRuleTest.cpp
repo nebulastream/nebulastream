@@ -122,7 +122,7 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingMultipleStreamRenameOper
 TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingStreamRenameOperatorWithProject) {
 
     // Prepare
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("src")

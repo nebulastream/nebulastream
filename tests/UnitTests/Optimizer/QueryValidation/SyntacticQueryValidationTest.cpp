@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Util/Logger.hpp>
@@ -24,9 +27,13 @@ namespace NES {
 
 class SyntacticQueryValidationTest : public testing::Test {
   public:
+    std::shared_ptr<QueryParsingService> queryParsingService;
     void SetUp() override {
         NES::setupLogging("SyntacticQueryValidationTest.log", NES::LOG_NONE);
         NES_INFO("Setup SyntacticQueryValidationTest class.");
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
     }
     void TearDown() override { NES_INFO("Tear down SyntacticQueryValidationTest class."); }
 
@@ -34,16 +41,17 @@ class SyntacticQueryValidationTest : public testing::Test {
 
     void TestForException(const std::string& queryString) {
         PrintQString(queryString);
-        auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create();
+        auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
         EXPECT_THROW(syntacticQueryValidation->checkValidity(queryString), InvalidQueryException);
     }
+
 };
 
 // Positive test for a syntactically valid query
 TEST_F(SyntacticQueryValidationTest, validQueryTest) {
     NES_INFO("Valid Query test");
 
-    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create();
+    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
 
     std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10 && Attribute("id") < 100); )";
 

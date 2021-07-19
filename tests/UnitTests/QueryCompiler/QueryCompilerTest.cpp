@@ -19,6 +19,8 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -75,13 +77,15 @@ class QueryCompilerTest : public testing::Test {
 TEST_F(QueryCompilerTest, filterQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
     auto query = Query::from("streamName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
@@ -106,13 +110,15 @@ TEST_F(QueryCompilerTest, windowQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
     auto query = Query::from("streamName")
                      .window(SlidingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10), Seconds(2)))
@@ -141,13 +147,15 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     schema->addField("key", INT32);
     schema->addField("ts", INT64);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
     auto query = Query::from("streamName")
                      .window(SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(10), Seconds(2)))
@@ -177,13 +185,15 @@ TEST_F(QueryCompilerTest, unionQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
     auto query1 = Query::from("streamName");
     auto query2 =
         Query::from("streamName").filter(Attribute("key") == 32).unionWith(&query1).sink(NullOutputSinkDescriptor::create());
@@ -210,14 +220,16 @@ TEST_F(QueryCompilerTest, joinQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     streamCatalog->addLogicalStream("leftStream", schema);
     streamCatalog->addLogicalStream("rightStream", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
     auto query1 = Query::from("leftStream");
     auto query2 = Query::from("rightStream")
                       .joinWith(query1)
