@@ -30,6 +30,8 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
@@ -742,10 +744,13 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                    Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManager);
         };
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
         auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         options->setNumSourceLocalBuffers(12);
-        auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory);
+
+        auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory, jitCompiler);
 
         return std::make_shared<MockedNodeEngine>(std::move(streamConf),
                                                   std::move(bufferManager),
