@@ -23,7 +23,6 @@ enum NodeType : int;
 namespace NES {
 class StreamCatalog;
 using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
-
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 class NodeStats;

@@ -23,10 +23,16 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
-CodeGenerationPhasePtr CodeGenerationPhase::create() { return std::make_shared<CodeGenerationPhase>(); }
+CodeGenerationPhase::CodeGenerationPhase(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler)
+    : codeGenerator(std::move(codeGenerator)), jitCompiler(std::move(jitCompiler)) {}
+
+CodeGenerationPhasePtr CodeGenerationPhase::create(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler) {
+    return std::make_shared<CodeGenerationPhase>(codeGenerator, jitCompiler);
+}
 
 PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) {
     NES_DEBUG("Generate code for query plan " << queryPlan->getQueryId() << " - " << queryPlan->getQuerySubPlanId());
@@ -40,23 +46,24 @@ PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) 
 
 OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
     NES_DEBUG("Generate code for pipeline " << pipeline->getPipelineId());
-    auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
     auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
     auto rootOperator = pipelineRoots[0];
-    generate(rootOperator, [&codeGenerator, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
+
+    generate(rootOperator, [this, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
         operatorNode->generateOpen(codeGenerator, context);
     });
 
-    generate(rootOperator, [&codeGenerator, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
+    generate(rootOperator, [this, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
         operatorNode->generateExecute(codeGenerator, context);
     });
 
-    generate(rootOperator, [&codeGenerator, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
+    generate(rootOperator, [this, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
         operatorNode->generateClose(codeGenerator, context);
     });
-    auto pipelineStage = codeGenerator->compile(context);
+
+    auto pipelineStage = codeGenerator->compile(jitCompiler, context);
 
     // we replace the current pipeline operators with an executable operator.
     // this allows us to keep the pipeline structure.

@@ -24,6 +24,11 @@ using BasicValuePtr = std::shared_ptr<BasicValue>;
 class ArrayPhysicalType;
 using ArrayPhysicalTypePtr = std::shared_ptr<ArrayPhysicalType>;
 
+namespace Compiler{
+class JITCompiler;
+using JITCompilerPtr = std::shared_ptr<JITCompiler>;
+}
+
 namespace Runtime {
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

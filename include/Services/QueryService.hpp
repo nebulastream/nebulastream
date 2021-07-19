@@ -40,6 +40,9 @@ using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 class NESRequestQueue;
 using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
 
+class QueryParsingService;
+using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
+
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queries.
  */
@@ -49,6 +52,7 @@ class QueryService {
     explicit QueryService(QueryCatalogPtr queryCatalog,
                           NESRequestQueuePtr queryRequestQueue,
                           StreamCatalogPtr streamCatalog,
+                          QueryParsingServicePtr queryParsingService,
                           bool enableSemanticQueryValidation);
 
     ~QueryService();

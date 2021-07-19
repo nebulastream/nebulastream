@@ -20,7 +20,6 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <chrono>
 #include <string>
 namespace NES {

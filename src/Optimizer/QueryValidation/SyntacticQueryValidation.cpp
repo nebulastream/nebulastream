@@ -14,19 +14,23 @@
     limitations under the License.
 */
 
+#include <Services/QueryParsingService.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 
 namespace NES::Optimizer {
 
-SyntacticQueryValidationPtr SyntacticQueryValidation::create() { return std::make_shared<SyntacticQueryValidation>(); }
+SyntacticQueryValidation::SyntacticQueryValidation(QueryParsingServicePtr queryParsingService): queryParsingService(queryParsingService) {}
+
+SyntacticQueryValidationPtr SyntacticQueryValidation::create(QueryParsingServicePtr queryParsingService) {
+    return std::make_shared<SyntacticQueryValidation>(queryParsingService); }
 
 void SyntacticQueryValidation::checkValidity(const std::string& inputQuery) {
     try {
         // Compiling the query string to an object
         // If it's unsuccessful, the validity check fails
-        QueryPtr query = UtilityFunctions::createQueryFromCodeString(inputQuery);
+        QueryPtr query = queryParsingService->createQueryFromCodeString(inputQuery);
     } catch (const std::exception& ex) {
         handleException(ex);
     }
@@ -38,7 +42,7 @@ NES::QueryPtr SyntacticQueryValidation::checkValidityAndGetQuery(const std::stri
         // Compiling the query string to an object
         // If it's unsuccessful, the validity check fails
         // If it's successful, we return the created object
-        query = UtilityFunctions::createQueryFromCodeString(inputQuery);
+        query = queryParsingService->createQueryFromCodeString(inputQuery);
         return query;
     } catch (const std::exception& ex) {
         handleException(ex);

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/Compiler/CompiledCode.hpp>
+#include <Compiler/DynamicObject.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
@@ -29,25 +29,25 @@ static constexpr auto MANGELED_ENTRY_POINT = "_ZN3NES6createEv";
 
 using CreateFunctionPtr = Runtime::Execution::ExecutablePipelineStagePtr (*)();
 
-CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(const CompiledCodePtr& compiledCode,
+CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(std::shared_ptr<Compiler::DynamicObject> dynamicObject,
                                                                  PipelineStageArity arity,
                                                                  std::string sourceCode)
-    : base(arity), compiledCode(compiledCode), currentExecutionStage(NotInitialized), sourceCode(std::move(sourceCode)) {
-    auto createFunction = compiledCode->getFunctionPointer<CreateFunctionPtr>(MANGELED_ENTRY_POINT);
+    : base(arity), dynamicObject(dynamicObject), currentExecutionStage(NotInitialized), sourceCode(std::move(sourceCode)) {
+    auto createFunction = dynamicObject->getInvocableMember<CreateFunctionPtr>(MANGELED_ENTRY_POINT);
     this->executablePipelineStage = (*createFunction)();
 }
 
-Runtime::Execution::ExecutablePipelineStagePtr CompiledExecutablePipelineStage::create(const CompiledCodePtr& compiledCode,
+Runtime::Execution::ExecutablePipelineStagePtr CompiledExecutablePipelineStage::create(std::shared_ptr<Compiler::DynamicObject> dynamicObject,
                                                                                        PipelineStageArity arity,
                                                                                        const std::string& sourceCode) {
-    return std::make_shared<CompiledExecutablePipelineStage>(compiledCode, arity, sourceCode);
+    return std::make_shared<CompiledExecutablePipelineStage>(dynamicObject, arity, sourceCode);
 }
 
 CompiledExecutablePipelineStage::~CompiledExecutablePipelineStage() {
     // First we have to destroy the pipeline stage only afterwards we can remove the associated code.
     NES_DEBUG("~CompiledExecutablePipelineStage()");
     this->executablePipelineStage.reset();
-    this->compiledCode.reset();
+    this->dynamicObject.reset();
 }
 
 uint32_t CompiledExecutablePipelineStage::setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) {

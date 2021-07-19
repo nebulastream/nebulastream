@@ -28,6 +28,7 @@
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToGeneratableOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES::QueryCompilation::Phases {
@@ -61,9 +62,11 @@ DefaultPhaseFactory::createLowerPhysicalToGeneratableOperatorsPhase(QueryCompile
     auto generatableOperatorProvider = DefaultGeneratableOperatorProvider::create();
     return LowerPhysicalToGeneratableOperators::create(generatableOperatorProvider);
 }
-CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr) {
+CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr, Compiler::JITCompilerPtr jitCompiler) {
     NES_DEBUG("Create default code generation phase");
-    return CodeGenerationPhase::create();
+    // TODO create a option to choose between different code generators.
+    auto codeGenerator = CCodeGenerator::create();
+    return CodeGenerationPhase::create(codeGenerator, jitCompiler);
 }
 LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) {
     NES_DEBUG("Create lower to executable query plan phase");

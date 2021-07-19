@@ -30,20 +30,25 @@
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
-DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory)
-    : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
+DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const& options,
+                                           Phases::PhaseFactoryPtr const& phaseFactory,
+                                           Compiler::JITCompilerPtr jitCompiler)
+    : QueryCompiler(options),
+      lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
       lowerPhysicalToGeneratableOperatorsPhase(phaseFactory->createLowerPhysicalToGeneratableOperatorsPhase(options)),
       lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
-      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options)) {}
+      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options, std::move(jitCompiler))) {}
 
 QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const& options,
-                                              Phases::PhaseFactoryPtr const& phaseFactory) {
-    return std::make_shared<DefaultQueryCompiler>(DefaultQueryCompiler(options, phaseFactory));
+                                              Phases::PhaseFactoryPtr const& phaseFactory,
+                                              Compiler::JITCompilerPtr jitCompiler) {
+    return std::make_shared<DefaultQueryCompiler>(DefaultQueryCompiler(options, phaseFactory, std::move(jitCompiler)));
 }
 
 QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationRequestPtr request) {

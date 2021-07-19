@@ -21,6 +21,7 @@
 #include <Compiler/SourceCode.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
+#include <future>
 
 namespace NES::Compiler {
 

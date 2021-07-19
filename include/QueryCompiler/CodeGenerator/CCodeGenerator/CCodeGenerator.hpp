@@ -200,15 +200,13 @@ class CCodeGenerator : public CodeGenerator {
      * @param code generated code.
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
-    Runtime::Execution::ExecutablePipelineStagePtr compile(PipelineContextPtr context) override;
+    Runtime::Execution::ExecutablePipelineStagePtr compile(Compiler::JITCompilerPtr jitCompiler, PipelineContextPtr context) override;
 
     std::string generateCode(PipelineContextPtr context) override;
 
     ~CCodeGenerator() override;
 
   private:
-    CompilerPtr compiler;
-
     static BinaryOperatorStatement getBuffer(const VariableDeclaration& tupleBufferVariable);
     VariableDeclaration
     getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);

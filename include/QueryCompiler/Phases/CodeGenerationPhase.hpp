@@ -26,11 +26,14 @@ namespace QueryCompilation {
  */
 class CodeGenerationPhase {
   public:
+
+    CodeGenerationPhase(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler);
+
     /**
      * @brief Creates the code generation phase.
      * @return CodeGenerationPhasePtr
      */
-    static CodeGenerationPhasePtr create();
+    static CodeGenerationPhasePtr create(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler);
 
     /**
      * @brief Generates code for all pipelines in a pipelined query plan.
@@ -47,6 +50,8 @@ class CodeGenerationPhase {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:
+    CodeGeneratorPtr codeGenerator;
+    Compiler::JITCompilerPtr jitCompiler;
     static void generate(const OperatorNodePtr& rootOperator,
                          const std::function<void(GeneratableOperators::GeneratableOperatorPtr)>& applyFunction);
 };

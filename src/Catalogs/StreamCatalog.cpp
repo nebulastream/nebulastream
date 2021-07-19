@@ -18,6 +18,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cassert>
@@ -59,7 +60,7 @@ void StreamCatalog::addDefaultStreams() {
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 }
-StreamCatalog::StreamCatalog() {
+StreamCatalog::StreamCatalog(QueryParsingServicePtr queryParsingService): queryParsingService(queryParsingService) {
     NES_DEBUG("StreamCatalog: construct stream catalog");
     addDefaultStreams();
     NES_DEBUG("StreamCatalog: construct stream catalog successfully");
@@ -69,7 +70,7 @@ StreamCatalog::~StreamCatalog() { NES_DEBUG("~StreamCatalog:"); }
 
 bool StreamCatalog::addLogicalStream(const std::string& streamName, const std::string& streamSchema) {
     std::unique_lock lock(catalogMutex);
-    SchemaPtr schema = UtilityFunctions::createSchemaFromCode(streamSchema);
+    SchemaPtr schema = queryParsingService->createSchemaFromCode(streamSchema);
     NES_DEBUG("StreamCatalog: schema successfully created");
     return addLogicalStream(streamName, schema);
 }
@@ -321,7 +322,7 @@ bool StreamCatalog::updatedLogicalStream(std::string& streamName, std::string& s
     }
 
     NES_TRACE("StreamCatalog: create a new schema object and add to the catalog");
-    SchemaPtr schema = UtilityFunctions::createSchemaFromCode(streamSchema);
+    SchemaPtr schema = queryParsingService->createSchemaFromCode(streamSchema);
     logicalStreamToSchemaMapping[streamName] = schema;
     return true;
 }

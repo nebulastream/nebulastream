@@ -16,4 +16,5 @@ add_source_nes(
         MonitoringService.cpp
         QueryService.cpp
         NESRequestProcessorService.cpp
+        QueryParsingService.cpp
 )
