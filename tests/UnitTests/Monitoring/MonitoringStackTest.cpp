@@ -27,6 +27,7 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/Util/SystemResourcesReader.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger.hpp>
@@ -51,9 +52,31 @@ class MonitoringStackTest : public testing::Test {
 
 TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
     auto runtimeMetrics = SystemResourcesReader::ReadRuntimeNesMetrics();
-    NES_INFO(runtimeMetrics.toJson());
+    NES_DEBUG("MonitoringStackTest: Runtime metrics=" << runtimeMetrics.toJson());
+
+    EXPECT_TRUE(runtimeMetrics.blkioBytesWritten >= 0);
+    EXPECT_TRUE(runtimeMetrics.blkioBytesRead >= 0);
+    EXPECT_TRUE(runtimeMetrics.memoryUsageInBytes > 0);
+    EXPECT_TRUE(runtimeMetrics.cpuLoadInJiffies > 0);
+    EXPECT_TRUE(runtimeMetrics.longCoord >= 0);
+    EXPECT_TRUE(runtimeMetrics.latCoord >= 0);
+    EXPECT_TRUE(runtimeMetrics.batteryStatus >= 0);
+
 }
 
+TEST_F(MonitoringStackTest, testStaticNesMetrics) {
+    auto staticMetrics = SystemResourcesReader::ReadStaticNesMetrics();
+    NES_DEBUG("MonitoringStackTest: Static metrics=" << staticMetrics.toJson());
+
+    EXPECT_TRUE(staticMetrics.operatingSystem == OS::LINUX);
+    EXPECT_TRUE(staticMetrics.cpuQuotaUS >= -1);
+    EXPECT_TRUE(staticMetrics.cpuPeriodUS >= -1);
+    EXPECT_TRUE(staticMetrics.totalCPUJiffies > 0);
+    EXPECT_TRUE(staticMetrics.cpuCoreNum > 0);
+    EXPECT_TRUE(staticMetrics.totalMemoryBytes > 0 );
+    EXPECT_TRUE(staticMetrics.hasBattery == false);
+    EXPECT_TRUE(staticMetrics.isMoving == false);
+}
 
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();

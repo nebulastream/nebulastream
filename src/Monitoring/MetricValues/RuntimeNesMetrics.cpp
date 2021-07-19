@@ -28,17 +28,23 @@
 
 namespace NES {
 
+RuntimeNesMetrics::RuntimeNesMetrics()
+    : memoryUsageInBytes(0), cpuLoadInJiffies(0), blkioBytesRead(0), blkioBytesWritten(0), batteryStatus(0), latCoord(0),
+      longCoord(0) {
+    NES_DEBUG("RuntimeNesMetrics: Default ctor");
+}
+
 SchemaPtr RuntimeNesMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);
 
     SchemaPtr schema = Schema::create()
-        ->addField(prefix + "memoryUsageInBytes", BasicType::UINT64)
-        ->addField(prefix + "cpuLoadInJiffies", BasicType::UINT64)
-        ->addField(prefix + "blkioBytesRead", BasicType::UINT64)
-        ->addField(prefix + "blkioBytesWritten", BasicType::UINT64)
-        ->addField(prefix + "batteryStatus", BasicType::UINT64)
-        ->addField(prefix + "latCoord", BasicType::UINT64)
-        ->addField(prefix + "longCoord", BasicType::UINT64);
+                           ->addField(prefix + "memoryUsageInBytes", BasicType::UINT64)
+                           ->addField(prefix + "cpuLoadInJiffies", BasicType::UINT64)
+                           ->addField(prefix + "blkioBytesRead", BasicType::UINT64)
+                           ->addField(prefix + "blkioBytesWritten", BasicType::UINT64)
+                           ->addField(prefix + "batteryStatus", BasicType::UINT64)
+                           ->addField(prefix + "latCoord", BasicType::UINT64)
+                           ->addField(prefix + "longCoord", BasicType::UINT64);
 
     return schema;
 }
@@ -56,7 +62,8 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
     }
 
     auto hasName = UtilityFunctions::endsWith(schema->fields[i]->getName(), rnSchema->get(0)->getName());
-    auto hasLastField = UtilityFunctions::endsWith(schema->fields[i + rnSchema->getSize() - 1]->getName(), rnSchema->get(rnSchema->getSize())->getName());
+    auto hasLastField = UtilityFunctions::endsWith(schema->fields[i + rnSchema->getSize() - 1]->getName(),
+                                                   rnSchema->get(rnSchema->getSize())->getName());
 
     if (!hasName || !hasLastField) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
@@ -65,10 +72,13 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
     auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
-    output.memoryUsageInBytes = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.cpuLoadInJiffies = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.memoryUsageInBytes =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.cpuLoadInJiffies =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.blkioBytesRead = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.blkioBytesWritten = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.blkioBytesWritten =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.batteryStatus = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.latCoord = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.longCoord = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
@@ -92,7 +102,8 @@ web::json::value RuntimeNesMetrics::toJson() const {
 
 void writeToBuffer(const RuntimeNesMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
-    NES_ASSERT(byteOffset + sizeof(RuntimeNesMetrics) < buf.getBufferSize(), "RuntimeNesMetrics: Content does not fit in TupleBuffer");
+    NES_ASSERT(byteOffset + sizeof(RuntimeNesMetrics) < buf.getBufferSize(),
+               "RuntimeNesMetrics: Content does not fit in TupleBuffer");
 
     memcpy(tbuffer + byteOffset, &metric, sizeof(RuntimeNesMetrics));
     buf.setNumberOfTuples(1);
