@@ -15,6 +15,7 @@
 */
 
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
@@ -92,8 +93,43 @@ RuntimeNesMetrics SystemResourcesReader::ReadRuntimeNesMetrics() {
     return output;
 }
 
-void SystemResourcesReader::ReadStaticNesMetrics() {
+StaticNesMetrics SystemResourcesReader::ReadStaticNesMetrics() {
+    StaticNesMetrics output {false, false};
+    output.operatingSystem = OS::LINUX;
 
+    std::vector<std::string> metricLocations {
+        "/sys/fs/cgroup/memory/memory.limit_in_bytes",
+        "/sys/fs/cgroup/cpuacct/cpu.cfs_period_us",
+        "/sys/fs/cgroup/cpuacct/cpu.cfs_quota_us"
+    };
+
+    NES_DEBUG("SystemResourcesReader: Reading memory.usage_in_bytes for metrics");
+    std::string memLine;
+    std::ifstream memoryLoc(metricLocations[0]);
+    std::string memoryStr((std::istreambuf_iterator<char>(memoryLoc)),std::istreambuf_iterator<char>());
+
+    // check if a limit is set for the given cgroup, the smaller value is the available RAM
+    uint64_t systemMem = SystemResourcesReader::ReadMemoryStats().TOTAL_RAM;
+    uint64_t limitMem = std::stoull(memoryStr);
+    output.totalMemoryBytes = std::min(limitMem, systemMem);
+
+    // CPU metrics
+    auto cpuStats = SystemResourcesReader::ReadCPUStats();
+    auto totalStats = cpuStats.getTotal();
+    output.totalCPUJiffies = totalStats.user + totalStats.system + totalStats.idle;
+    output.cpuCoreNum = SystemResourcesReader::ReadCPUStats().getNumCores();
+
+    std::string periodLine;
+    std::ifstream periodLoc(metricLocations[1]);
+    std::string periodStr((std::istreambuf_iterator<char>(periodLoc)),std::istreambuf_iterator<char>());
+    output.cpuPeriodUS = std::stoll(periodStr);
+
+    std::string quotaLine;
+    std::ifstream quotaLoc(metricLocations[2]);
+    std::string quotaStr((std::istreambuf_iterator<char>(quotaLoc)),std::istreambuf_iterator<char>());
+    output.cpuQuotaUS = std::stoll(quotaStr);
+
+    return output;
 }
 
 

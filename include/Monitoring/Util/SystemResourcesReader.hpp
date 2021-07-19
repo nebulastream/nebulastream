@@ -28,6 +28,7 @@ class MemoryMetrics;
 class NetworkMetrics;
 class DiskMetrics;
 class RuntimeNesMetrics;
+class StaticNesMetrics;
 
 /**
  * @brief This is a static utility class to collect basic system information
@@ -37,7 +38,7 @@ class SystemResourcesReader {
   public:
     static RuntimeNesMetrics ReadRuntimeNesMetrics();
 
-    static void ReadStaticNesMetrics();
+    static StaticNesMetrics ReadStaticNesMetrics();
 
     /**
      * @brief This method reads CPU information from /proc/stat.

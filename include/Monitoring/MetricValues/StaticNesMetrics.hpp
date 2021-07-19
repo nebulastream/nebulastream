@@ -14,20 +14,27 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIMENESMETRICS_HPP
-#define NES_RUNTIMENESMETRICS_HPP
+#ifndef NES_STATICNESMETRICS_HPP
+#define NES_STATICNESMETRICS_HPP
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
-/**
- * @brief Wrapper class to represent the metrics read from the OS about cpu data.
- */
-class RuntimeNesMetrics {
+enum OS {
+    LINUX,
+    WINDOWS,
+    MAC_OS,
+    UNKNOWN
+};
+
+std::string toString(OS os);
+
+class StaticNesMetrics {
   public:
-    RuntimeNesMetrics();
+    StaticNesMetrics();
+    StaticNesMetrics(bool isMoving, bool hasBattery);
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -43,7 +50,7 @@ class RuntimeNesMetrics {
      * @param prefix
      * @return The object
      */
-    static RuntimeNesMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
+    static StaticNesMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json
@@ -51,13 +58,18 @@ class RuntimeNesMetrics {
      */
     web::json::value toJson() const;
 
-    uint64_t memoryUsageInBytes;
-    uint64_t cpuLoadInJiffies;//user+system
-    uint64_t blkioBytesRead;
-    uint64_t blkioBytesWritten;
-    uint64_t batteryStatus;
-    uint64_t latCoord;
-    uint64_t longCoord;
+    uint64_t totalMemoryBytes;
+
+    uint16_t cpuCoreNum;
+    uint64_t totalCPUJiffies; //user+idle+system (Note: This value can change everytime it is read via SystemResourcesReader)
+
+    // Using 1.5 CPUs is equivalent to --cpu-period="100000" and --cpu-quota="150000"
+    int64_t cpuPeriodUS; //the CPU CFS scheduler period in microseconds
+    int64_t cpuQuotaUS; // CPU CFS quota in microseconds
+
+    bool isMoving;
+    bool hasBattery;
+    OS operatingSystem;
 };
 
 /**
@@ -68,7 +80,7 @@ class RuntimeNesMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const RuntimeNesMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const StaticNesMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief Class specific getSchema() method
@@ -76,8 +88,8 @@ void writeToBuffer(const RuntimeNesMetrics& metrics, Runtime::TupleBuffer& buf, 
  * @param prefix
  * @return the SchemaPtr
  */
-SchemaPtr getSchema(const RuntimeNesMetrics& metrics, const std::string& prefix);
+SchemaPtr getSchema(const StaticNesMetrics& metrics, const std::string& prefix);
 
-}// namespace NES
+}
 
-#endif//NES_RUNTIMENESMETRICS_HPP
+#endif//NES_STATICNESMETRICS_HPP

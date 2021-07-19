@@ -22,6 +22,7 @@ add_source_nes(
         NetworkMetrics.cpp
         NetworkValues.cpp
         RuntimeNesMetrics.cpp
+        StaticNesMetrics.cpp
 )
 
 
