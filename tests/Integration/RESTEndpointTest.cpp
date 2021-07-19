@@ -29,7 +29,6 @@
 #include <cpprest/http_client.h>
 #include <iostream>
 
-
 namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
