@@ -36,6 +36,8 @@ class CoordinatorEngineTest : public testing::Test {
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
 
+    std::shared_ptr<QueryParsingService> queryParsingService;
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup NES Coordinator test class." << std::endl; }
 
@@ -44,6 +46,9 @@ class CoordinatorEngineTest : public testing::Test {
         std::cout << "Setup NES Coordinator test case." << std::endl;
         NES::setupLogging("CoordinatorEngineTest.log", NES::LOG_DEBUG);
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
     }
 
     /* Will be called before a test is executed. */
@@ -60,7 +65,7 @@ class CoordinatorEngineTest : public testing::Test {
 };
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
 
@@ -86,7 +91,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     std::string logicalStreamName = "testStream";
@@ -109,10 +114,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto parsingService = QueryParsingService::create(jitCompiler);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(parsingService);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     std::string physicalStreamName = "testStream";
