@@ -145,10 +145,11 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                 try {
-                    // decode string into protobuf message
+                    // extract protobuf message from http body
                     std::shared_ptr<SerializableNamedSchema> protobufMessage = std::make_shared<SerializableNamedSchema>();
 
                     if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
+                        NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: invalid Protobuf message");
                         json::value errorResponse{};
                         errorResponse["detail"] = json::value::string("Invalid Protobuf message");
                         badRequestImpl(message, errorResponse);
@@ -156,17 +157,17 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                     }
 
                     NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Start trying to add new logical stream");
-
+                    // decode protobuf message into c++ obj repr
                     SerializableSchema* schema = protobufMessage->mutable_schema();
                     SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(schema);
+                    std::string streamName = protobufMessage->streamname();
 
-                    std::string* streamName = protobufMessage->mutable_streamname();
-
-                    bool added = streamCatalog->addLogicalStream(*streamName, deserializedSchema);
-
+                    // try to add the user supplied stream
+                    bool added = streamCatalog->addLogicalStream(streamName, deserializedSchema);
                     NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Successfully added new logical Stream ?"
                               << added);
 
+                    //forward return value to client
                     json::value result{};
                     result["Success"] = json::value::boolean(added);
                     successMessageImpl(message, result);
@@ -185,8 +186,6 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 }
             })
             .wait();
-
-
 
     } else if (path[1] == "updateLogicalStream") {
         NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: REST received request to update Logical Stream "
