@@ -66,7 +66,7 @@ void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -103,7 +103,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -147,7 +147,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -196,7 +196,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -240,7 +240,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -277,7 +277,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -341,7 +341,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -403,7 +403,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator)
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -471,7 +471,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelowABinaryOperator) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -546,7 +546,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFiltersBelowABinaryOperator) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -622,7 +622,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     NES::SchemaPtr schema = NES::Schema::create()
                                 ->addField("id", NES::UINT64)
                                 ->addField("val", NES::UINT64)

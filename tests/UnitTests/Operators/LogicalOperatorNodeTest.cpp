@@ -51,7 +51,7 @@ class LogicalOperatorNodeTest : public testing::Test {
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
-        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
         sPtr = streamCatalog->getStreamForLogicalStreamOrThrowException("default_logical");
         SchemaPtr schema = sPtr->getSchema();
         auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0);

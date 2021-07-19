@@ -61,7 +61,7 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
 

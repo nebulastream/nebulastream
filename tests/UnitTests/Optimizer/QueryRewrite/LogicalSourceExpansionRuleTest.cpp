@@ -76,7 +76,7 @@ void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithJustSource) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -98,7 +98,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinksAndJustSource) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
     const std::string logicalStreamName = "default_logical";
 
@@ -132,7 +132,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinks) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
     const std::string logicalStreamName = "default_logical";
 
@@ -169,7 +169,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -192,7 +192,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMergeOperator) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare

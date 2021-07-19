@@ -18,6 +18,9 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <CoordinatorRPCService.pb.h>
@@ -57,7 +60,7 @@ class CoordinatorEngineTest : public testing::Test {
 };
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     TopologyPtr topology = Topology::create();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
 
@@ -83,7 +86,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     TopologyPtr topology = Topology::create();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     std::string logicalStreamName = "testStream";
@@ -106,7 +109,10 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    auto parsingService = QueryParsingService::create(jitCompiler);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(parsingService);
     TopologyPtr topology = Topology::create();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     std::string physicalStreamName = "testStream";

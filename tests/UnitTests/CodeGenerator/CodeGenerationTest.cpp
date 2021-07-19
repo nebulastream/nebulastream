@@ -17,6 +17,10 @@
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Compiler/JITCompiler.hpp>
+#include <Compiler/CompilationResult.hpp>
+#include <Compiler/SourceCode.hpp>
+#include <Compiler/CompilationRequest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ClassDefinition.hpp>
@@ -33,7 +37,6 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
-#include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -52,6 +55,8 @@
 #include <iostream>
 #include <utility>
 
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/SharedPointerGen.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
@@ -522,8 +527,13 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileB.addDeclaration(pipelineNamespace->getDeclaration()).build();
 
-    Compiler compiler;
-    auto stage = CompiledExecutablePipelineStage::create(compiler.compile(file.code), Unary);
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::CPP, file.code);
+    auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, true);
+    auto result = jitCompiler->compile(std::move(request));
+    auto compiledCode = result.get().getDynamicObject();
+    auto stage = CompiledExecutablePipelineStage::create(compiledCode, Unary);
 
     /* setup input and output for test */
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();

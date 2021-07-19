@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -27,18 +30,23 @@ namespace NES {
 /// Check that this does not cause any issues for any logical expression
 class LogicalExpressionTest : public testing::Test {
   public:
+    std::shared_ptr<QueryParsingService> queryParsingService;
     static void SetUpTestCase() {
         NES::setupLogging("LogicalExpressionTest.log", NES::LOG_DEBUG);
         NES_DEBUG("LogicalExpressionTest: Setup QueryCatalogTest test class.");
     }
 
-    void SetUp() override {}
+    void SetUp() override {
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
+    }
 
     void TearDown() override { NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test case."); }
 
     static void TearDownTestCase() { NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test class."); }
 
-    inline static void testBinaryOperator(std::string const& op) noexcept {
+    inline void testBinaryOperator(std::string const& op) noexcept {
 
         std::vector<std::tuple<std::string, std::string>> pairs{
             {"0", R"(Attribute("value"))"},
@@ -52,10 +60,10 @@ class LogicalExpressionTest : public testing::Test {
 
         for (auto const& [v1, v2] : pairs) {
             auto const q1 = R"(Query::from("").filter()" + v1 + op + v2 + R"( );)";
-            EXPECT_NO_THROW(UtilityFunctions::createQueryFromCodeString(q1));
+            EXPECT_NO_THROW(queryParsingService->createQueryFromCodeString(q1));
 
             auto const q2 = R"(Query::from("").filter()" + v2 + op + v1 + R"( );)";
-            EXPECT_NO_THROW(UtilityFunctions::createQueryFromCodeString(q2));
+            EXPECT_NO_THROW(queryParsingService->createQueryFromCodeString(q2));
         }
     }
 };

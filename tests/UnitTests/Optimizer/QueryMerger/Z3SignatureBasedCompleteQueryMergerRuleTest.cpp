@@ -60,7 +60,7 @@ class Z3SignatureBasedCompleteQueryMergerRuleTest : public testing::Test {
                      ->addField("value", BasicType::UINT64)
                      ->addField("id1", BasicType::UINT32)
                      ->addField("value1", BasicType::UINT64);
-        streamCatalog = std::make_shared<StreamCatalog>();
+        streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
         streamCatalog->addLogicalStream("car", schema);
         streamCatalog->addLogicalStream("bike", schema);
         streamCatalog->addLogicalStream("truck", schema);

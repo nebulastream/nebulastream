@@ -17,6 +17,9 @@
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -42,6 +45,7 @@ using namespace web;
 
 class QueryPlacementTest : public testing::Test {
   public:
+    std::shared_ptr<QueryParsingService> queryParsingService;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
 
@@ -49,6 +53,9 @@ class QueryPlacementTest : public testing::Test {
     void SetUp() override {
         NES::setupLogging("QueryPlacementTest.log", NES::LOG_DEBUG);
         std::cout << "Setup QueryPlacementTest test case." << std::endl;
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
     }
 
     /* Will be called before a test is executed. */
@@ -74,7 +81,7 @@ class QueryPlacementTest : public testing::Test {
                              "->addField(\"value\", BasicType::UINT64);";
         const std::string streamName = "car";
 
-        streamCatalog = std::make_shared<StreamCatalog>();
+        streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
         streamCatalog->addLogicalStream(streamName, schema);
 
         SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -562,7 +569,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
                          "->addField(\"value\", BasicType::UINT64);";
     const std::string streamName = "car";
 
-    streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -666,7 +673,7 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
                          "->addField(\"value\", BasicType::UINT64);";
     const std::string streamName = "car";
 
-    streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
