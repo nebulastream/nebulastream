@@ -67,7 +67,7 @@ class RenameStreamToProjectOperatorRuleTest : public testing::Test {
 TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingSingleStreamRenameOperator) {
 
     // Prepare
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("src").map(Attribute("b") = Attribute("b") + Attribute("a")).as("x").sink(printSinkDescriptor);
@@ -94,7 +94,7 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingSingleStreamRenameOperat
 TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingMultipleStreamRenameOperator) {
 
     // Prepare
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query =

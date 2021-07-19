@@ -23,6 +23,9 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <utility>
 namespace NES {
 
@@ -122,7 +125,9 @@ class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
 inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler() {
     auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
     auto phaseProvider = std::make_shared<TestPhaseProvider>();
-    return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider);
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider, jitCompiler);
 }
 
 }// namespace TestUtils
