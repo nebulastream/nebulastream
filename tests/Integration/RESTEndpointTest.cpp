@@ -422,6 +422,151 @@ TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
     NES_INFO("RESTEndpointTest: Test finished");
 }
 
+TEST_F(RESTEndpointTest, testAddParentTopology) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0U);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("RESTEndpointTest: Worker2 started successfully");
+
+    uint64_t parentId = wrk2->getWorkerId();
+    uint64_t childId = wrk1->getWorkerId();
+
+    auto parent = crd->getTopology()->findNodeWithId(parentId);
+    auto child = crd->getTopology()->findNodeWithId(childId);
+
+    ASSERT_FALSE(child->containAsParent(parent));
+
+    web::json::value response;
+    web::http::client::http_client addParent("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/topology/addParent");
+    std::string msg = "{\"parentId\":\"" + std::to_string(parentId) + "\", \"childId\":\"" + std::to_string(childId) + "\"}";
+    addParent.request(web::http::methods::POST, "", msg)
+        .then([](const web::http::http_response& response) {
+            return response.extract_json();
+        })
+        .then([&response](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get status of adding parent");
+                response = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+
+    auto addParentResponse = response.as_object();
+    NES_DEBUG("Response: " << response.serialize());
+    EXPECT_TRUE(addParentResponse.size() == 1);
+    EXPECT_TRUE(addParentResponse.find("Success") != addParentResponse.end());
+    EXPECT_TRUE(addParentResponse.at("Success").as_bool());
+
+    ASSERT_TRUE(child->containAsParent(parent));
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("RESTEndpointTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+
+TEST_F(RESTEndpointTest, testRemoveParentTopology) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0U);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    uint64_t parentId = crd->getNesWorker()->getWorkerId();
+    uint64_t childId = wrk1->getWorkerId();
+
+    auto parent = crd->getTopology()->findNodeWithId(parentId);
+    auto child = crd->getTopology()->findNodeWithId(childId);
+
+    ASSERT_TRUE(child->containAsParent(parent));
+
+    web::json::value response;
+    web::http::client::http_client addParent("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/topology/removeParent");
+    std::string msg = "{\"parentId\":\"" + std::to_string(parentId) + "\", \"childId\":\"" + std::to_string(childId) + "\"}";
+    addParent.request(web::http::methods::POST, "", msg)
+        .then([](const web::http::http_response& response) {
+            return response.extract_json();
+        })
+        .then([&response](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get status of removing parent");
+                response = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+
+    auto addParentResponse = response.as_object();
+    NES_DEBUG("Response: " << response.serialize());
+    EXPECT_TRUE(addParentResponse.size() == 1);
+    EXPECT_TRUE(addParentResponse.find("Success") != addParentResponse.end());
+    EXPECT_TRUE(addParentResponse.at("Success").as_bool());
+
+    ASSERT_FALSE(child->containAsParent(parent));
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
+
 TEST_F(RESTEndpointTest, testConnectivityCheck) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();

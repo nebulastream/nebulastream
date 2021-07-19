@@ -42,6 +42,13 @@ class TopologyController : public BaseController {
      */
     void handleGet(const std::vector<utility::string_t>& paths, const web::http::http_request& message);
 
+    /**
+     * Handling the Post requests for the query
+     * @param path : the url of the rest request
+     * @param message : the user message
+     */
+    void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
+
   private:
     TopologyPtr topology;
 };
