@@ -133,6 +133,8 @@ void RestEngine::handlePost(http_request request) {
         } else if (paths[0] == "monitoring") {
             monitoringController->handlePost(paths, request);
             return;
+        } else if (paths[0] == "topology") {
+            topologyController->handlePost(paths, request);
         }
     }
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));

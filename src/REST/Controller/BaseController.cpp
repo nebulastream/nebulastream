@@ -137,6 +137,10 @@ void BaseController::handleException(const web::http::http_request& message, con
             } else if (paths[1] == "query") {
                 errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
             }
+        } else if (paths[0] == "topology") {
+            if (paths[1] == "addParent" || paths[1] == "removeParent") {
+                errorResponse["detail"] = json::value::string("Parameter childId and parentId must be provided");
+            }
         }
         this->badRequestImpl(message, errorResponse);
 
@@ -198,6 +202,10 @@ void BaseController::handleException(const web::http::http_request& message, con
         this->badRequestImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("SemanticQueryValidation") != std::string::npos) {
         // handle error caused by Semantic Query Validation
+        errorResponse["message"] = json::value::string(exceptionMsg);
+        this->badRequestImpl(message, errorResponse);
+    } else if (std::string(exceptionMsg).find("Could not add parent for node in topology") != std::string::npos) {
+        // handle error caused by failure in adding a parent for a node in topology
         errorResponse["message"] = json::value::string(exceptionMsg);
         this->badRequestImpl(message, errorResponse);
     } else {
