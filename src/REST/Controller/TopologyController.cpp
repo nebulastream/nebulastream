@@ -42,7 +42,7 @@ void TopologyController::handleGet(const std::vector<utility::string_t>& paths, 
 
 void TopologyController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
     if (path[1] == "addParent") {
-        NES_DEBUG("TopologyController::handlePost: handlePost -addParent: REST received request to add parent for a node"
+        NES_DEBUG("TopologyController::handlePost:addParent: REST received request to add parent for a node"
                   << message.to_string());
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
@@ -58,8 +58,8 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
 
                     NES_DEBUG("TopologyController::handlePost:addParent: childId=" << childId << " parentId=" << parentId);
 
-                    if (childId == parentId) {
-                        throw Exception("Could not add parent for node in topology: childId and parentId must not be same.");
+                    if (parentId == childId) {
+                        throw Exception("Could not add parent for node in topology: childId and parentId must be different.");
                     }
 
                     TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
@@ -67,14 +67,12 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
                         throw Exception("Could not add parent for node in topology: Node with childId=" + std::to_string(childId)
                                         + " not found.");
                     }
-                    NES_DEBUG("TopologyController::handlePost:addParent: childId: " << childId << " exists");
 
                     TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
                     if (!parentPhysicalNode) {
-                        throw Exception("Could not add parent for node in topology: Node with parentId=" + std::to_string(childId)
+                        throw Exception("Could not add parent for node in topology: Node with parentId=" + std::to_string(parentId)
                                         + " not found.");
                     }
-                    NES_DEBUG("TopologyController::handlePost:addParent: sensorParent node: " << childId << " exists");
 
                     bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysicalNode);
                     if (added) {
@@ -121,6 +119,10 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
 
                     NES_DEBUG("TopologyController::handlePost:removeParent: childId=" << childId << " parentId=" << parentId);
 
+                    if (parentId == childId) {
+                        throw Exception("Could not remove parent for node in topology: childId and parentId must be different.");
+                    }
+
                     TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
                     if (!childPhysicalNode) {
                         throw Exception("Could not remove parent for node in topology: Node with childId="
@@ -131,9 +133,9 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
                     TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
                     if (!parentPhysicalNode) {
                         throw Exception("Could not remove parent for node in topology: Node with parentId="
-                                        + std::to_string(childId) + " not found.");
+                                        + std::to_string(parentId) + " not found.");
                     }
-                    NES_DEBUG("TopologyController::handlePost:removeParent: sensorParent node: " << childId << " exists");
+                    NES_DEBUG("TopologyController::handlePost:removeParent: parent node: " << parentId << " exists");
 
                     bool added = topology->removeNodeAsChild(parentPhysicalNode, childPhysicalNode);
                     if (added) {
@@ -141,7 +143,7 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
                         topology->print();
                     } else {
                         NES_ERROR("TopologyController::handlePost:removeParent: Failed");
-                        throw Exception("TopologyController::handlePost:addParent: Failed");
+                        throw Exception("TopologyController::handlePost:removeParent: Failed");
                     }
 
                     //Prepare the response
@@ -150,7 +152,7 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
                     successMessageImpl(message, result);
                     return;
                 } catch (const std::exception& exc) {
-                    NES_ERROR("TopologyController::handlePost:removeParent: Exception occurred while trying to remove parent "
+                    NES_ERROR("TopologyController::handlePost:removeParent: Exception occurred while trying to remove parent."
                               "for a node "
                               << exc.what());
                     handleException(message, exc);

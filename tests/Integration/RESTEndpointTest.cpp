@@ -443,14 +443,14 @@ TEST_F(RESTEndpointTest, testAddParentTopology) {
     workerConfig->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");
 
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
+    ASSERT_TRUE(retStart2);
     NES_INFO("RESTEndpointTest: Worker2 started successfully");
 
     uint64_t parentId = wrk2->getWorkerId();
@@ -521,7 +521,7 @@ TEST_F(RESTEndpointTest, testRemoveParentTopology) {
     workerConfig->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");
 
     uint64_t parentId = crd->getNesWorker()->getWorkerId();
