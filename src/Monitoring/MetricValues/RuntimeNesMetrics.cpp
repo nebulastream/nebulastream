@@ -38,6 +38,7 @@ SchemaPtr RuntimeNesMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);
 
     SchemaPtr schema = Schema::create()
+                           ->addField(prefix + "wallTimeNs", BasicType::UINT64)
                            ->addField(prefix + "memoryUsageInBytes", BasicType::UINT64)
                            ->addField(prefix + "cpuLoadInJiffies", BasicType::UINT64)
                            ->addField(prefix + "blkioBytesRead", BasicType::UINT64)
@@ -63,7 +64,7 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
 
     auto hasName = UtilityFunctions::endsWith(schema->fields[i]->getName(), rnSchema->get(0)->getName());
     auto hasLastField = UtilityFunctions::endsWith(schema->fields[i + rnSchema->getSize() - 1]->getName(),
-                                                   rnSchema->get(rnSchema->getSize())->getName());
+                                                   rnSchema->get(rnSchema->getSize()-1)->getName());
 
     if (!hasName || !hasLastField) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
@@ -72,6 +73,8 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
     auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
+    output.wallTimeNs =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.memoryUsageInBytes =
         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.cpuLoadInJiffies =
@@ -89,6 +92,7 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
 web::json::value RuntimeNesMetrics::toJson() const {
     web::json::value metricsJson{};
 
+    metricsJson["WallClockNs"] = web::json::value::number(wallTimeNs);
     metricsJson["MemoryUsageInBytes"] = web::json::value::number(memoryUsageInBytes);
     metricsJson["CpuLoadInJiffies"] = web::json::value::number(cpuLoadInJiffies);
     metricsJson["BlkioBytesRead"] = web::json::value::number(blkioBytesRead);
@@ -100,13 +104,27 @@ web::json::value RuntimeNesMetrics::toJson() const {
     return metricsJson;
 }
 
+bool RuntimeNesMetrics::operator==(const RuntimeNesMetrics& rhs) const {
+    return wallTimeNs == rhs.wallTimeNs && memoryUsageInBytes == rhs.memoryUsageInBytes && cpuLoadInJiffies == rhs.cpuLoadInJiffies
+        && blkioBytesRead == rhs.blkioBytesRead && blkioBytesWritten == rhs.blkioBytesWritten
+        && batteryStatus == rhs.batteryStatus && latCoord == rhs.latCoord && longCoord == rhs.longCoord;
+}
+
+bool RuntimeNesMetrics::operator!=(const RuntimeNesMetrics& rhs) const { return !(rhs == *this); }
+
+
 void writeToBuffer(const RuntimeNesMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(RuntimeNesMetrics) < buf.getBufferSize(),
                "RuntimeNesMetrics: Content does not fit in TupleBuffer");
+    NES_ASSERT(sizeof(RuntimeNesMetrics) == RuntimeNesMetrics::getSchema("")->getSchemaSizeInBytes(),
+               sizeof(RuntimeNesMetrics) << "!=" << RuntimeNesMetrics::getSchema("")->getSchemaSizeInBytes());
 
     memcpy(tbuffer + byteOffset, &metric, sizeof(RuntimeNesMetrics));
     buf.setNumberOfTuples(1);
 }
+
+SchemaPtr getSchema(const RuntimeNesMetrics&, const std::string& prefix) { return RuntimeNesMetrics::getSchema(prefix); }
+
 
 }// namespace NES

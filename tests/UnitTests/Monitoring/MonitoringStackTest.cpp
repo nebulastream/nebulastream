@@ -54,6 +54,7 @@ TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
     auto runtimeMetrics = SystemResourcesReader::ReadRuntimeNesMetrics();
     NES_DEBUG("MonitoringStackTest: Runtime metrics=" << runtimeMetrics.toJson());
 
+    EXPECT_TRUE(runtimeMetrics.wallTimeNs <= SystemResourcesReader::getWallTimeInNs());
     EXPECT_TRUE(runtimeMetrics.blkioBytesWritten >= 0);
     EXPECT_TRUE(runtimeMetrics.blkioBytesRead >= 0);
     EXPECT_TRUE(runtimeMetrics.memoryUsageInBytes > 0);
@@ -61,14 +62,12 @@ TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
     EXPECT_TRUE(runtimeMetrics.longCoord >= 0);
     EXPECT_TRUE(runtimeMetrics.latCoord >= 0);
     EXPECT_TRUE(runtimeMetrics.batteryStatus >= 0);
-
 }
 
 TEST_F(MonitoringStackTest, testStaticNesMetrics) {
     auto staticMetrics = SystemResourcesReader::ReadStaticNesMetrics();
     NES_DEBUG("MonitoringStackTest: Static metrics=" << staticMetrics.toJson());
 
-    EXPECT_TRUE(staticMetrics.operatingSystem == OS::LINUX);
     EXPECT_TRUE(staticMetrics.cpuQuotaUS >= -1);
     EXPECT_TRUE(staticMetrics.cpuPeriodUS >= -1);
     EXPECT_TRUE(staticMetrics.totalCPUJiffies > 0);

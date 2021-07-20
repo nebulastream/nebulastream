@@ -68,7 +68,7 @@ class MemoryMetrics {
     uint64_t LOADS_1MIN;
     uint64_t LOADS_5MIN;
     uint64_t LOADS_15MIN;
-};
+} __attribute__((packed));
 
 /**
  * @brief The serialize method to write MemoryMetrics into the given Schema and TupleBuffer. The prefix specifies a string

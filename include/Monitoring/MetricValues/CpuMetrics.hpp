@@ -71,7 +71,7 @@ class CpuMetrics {
     CpuValues total;
     uint16_t numCores;
     std::vector<CpuValues> cpuValues;
-};
+} __attribute__((packed));
 
 /**
  * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string

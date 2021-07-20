@@ -33,6 +33,8 @@
 #include <Util/UtilityFunctions.hpp>
 
 #include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <memory>
 
 namespace NES {
@@ -63,7 +65,10 @@ class MonitoringSerializationTest : public testing::Test {
         crdConf->resetCoordinatorOptions();
         wrkConf->resetWorkerOptions();
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
-        bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
+
+        unsigned int numCPU = std::thread::hardware_concurrency();
+        bufferManager = std::make_shared<Runtime::BufferManager>(4096 + (numCPU+1)*sizeof(CpuValues) +sizeof(CpuMetrics), 10);
+
         rpcPort = rpcPort + 30;
         crdConf->setRpcPort(rpcPort);
         wrkConf->setCoordinatorPort(rpcPort);
@@ -73,11 +78,45 @@ class MonitoringSerializationTest : public testing::Test {
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
-TEST_F(MonitoringSerializationTest, DISABLED_testSerializationMetricsCpu) {
-    auto cpuStats = MetricUtils::CPUStats();
+TEST_F(MonitoringSerializationTest, testSerializationRuntimeNesMetrics) {
+    auto rutimeStats = MetricUtils::RuntimeNesStats();
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
+    RuntimeNesMetrics measuredVal = rutimeStats.measure();
+    auto schema = getSchema(measuredVal, "");
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+
+    RuntimeNesMetrics deserVal = RuntimeNesMetrics::fromBuffer(schema, tupleBuffer, "");
+
+    EXPECT_EQ(measuredVal, deserVal);
+}
+
+TEST_F(MonitoringSerializationTest, testSerializationStaticNesMetrics) {
+    auto staticStats = MetricUtils::StaticNesStats();
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+
+    StaticNesMetrics measuredVal = staticStats.measure();
+    auto schema = getSchema(measuredVal, "");
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+
+    NES_DEBUG(measuredVal.toJson());
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+
+    StaticNesMetrics deserVal = StaticNesMetrics::fromBuffer(schema, tupleBuffer, "");
+
+    EXPECT_EQ(measuredVal, deserVal);
+}
+
+TEST_F(MonitoringSerializationTest, testSerializationMetricsCpu) {
+    auto cpuStats = MetricUtils::CPUStats();
     CpuMetrics measuredVal = cpuStats.measure();
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+
     auto schema = getSchema(measuredVal, "");
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
@@ -117,7 +156,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkMetrics) {
     EXPECT_EQ(measuredVal, deserNw);
 }
 
-TEST_F(MonitoringSerializationTest, DISABLED_testSerializationGroups) {
+TEST_F(MonitoringSerializationTest, testSerializationGroups) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
@@ -146,7 +185,7 @@ TEST_F(MonitoringSerializationTest, DISABLED_testSerializationGroups) {
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, metricGroup->createSchema()));
 }
 
-TEST_F(MonitoringSerializationTest, DISABLED_testDeserializationMetricValues) {
+TEST_F(MonitoringSerializationTest, testDeserializationMetricValues) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
@@ -189,7 +228,7 @@ TEST_F(MonitoringSerializationTest, DISABLED_testDeserializationMetricValues) {
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
-TEST_F(MonitoringSerializationTest, DISABLED_testSerDeserMetricGroup) {
+TEST_F(MonitoringSerializationTest, testSerDeserMetricGroup) {
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
 

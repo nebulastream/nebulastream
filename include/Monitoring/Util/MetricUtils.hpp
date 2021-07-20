@@ -26,12 +26,26 @@ class CpuMetrics;
 class MemoryMetrics;
 class DiskMetrics;
 class NetworkMetrics;
+class RuntimeNesMetrics;
+class StaticNesMetrics;
 
 /**
  * @brief Pre-defined metrics used for NES internally.
  */
 class MetricUtils {
   public:
+    /**
+     * @brief Gauge metric for reading the runtime stats of NES
+     * @return the cpu stats
+     */
+    static Gauge<RuntimeNesMetrics> RuntimeNesStats();
+
+    /**
+     * @brief Gauge metric for reading the static stats of NES
+     * @return the cpu stats
+     */
+    static Gauge<StaticNesMetrics> StaticNesStats();
+
     /**
      * @brief Gauge metric for reading the CPU stats
      * @return the cpu stats

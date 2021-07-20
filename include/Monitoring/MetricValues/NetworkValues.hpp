@@ -73,7 +73,7 @@ class NetworkValues {
     uint64_t tColls;
     uint64_t tCarrier;
     uint64_t tCompressed;
-};
+} __attribute__((packed));
 
 /**
  * @brief The serialize method to write NetworkValues into the given Schema and TupleBuffer. The prefix specifies a string
