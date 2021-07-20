@@ -184,7 +184,7 @@ class NesWorker {
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
 
-    std::vector<PhysicalStreamConfigPtr> configs;// was PhysicalStreamConfig configs
+    std::vector<PhysicalStreamConfigPtr> configs;
     bool connected;
     bool withRegisterStream;
     bool withParent;

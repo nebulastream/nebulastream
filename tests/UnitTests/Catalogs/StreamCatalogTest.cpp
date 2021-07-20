@@ -113,7 +113,8 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
-    EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
+    const auto& [addPhysicalStreamSuccess, name] = streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce);
+    EXPECT_TRUE(addPhysicalStreamSuccess);
 
     std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=(test_stream) "
                            "sourceType=DefaultSource on node=1\n";
@@ -141,8 +142,8 @@ TEST_F(StreamCatalogTest, testAddTwoPhysicalStreamsToOneLogical) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
-
-    EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
+    const auto& [catalogSuccess, name] = streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce);
+    EXPECT_TRUE(catalogSuccess);
 
     std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=(test_stream) "
                            "sourceType=DefaultSource on node=1\n";
@@ -169,7 +170,8 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
-    EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
+    const auto& [catalogSuccess, name] = streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce);
+    EXPECT_TRUE(catalogSuccess);
     EXPECT_TRUE(streamCatalog->unregisterPhysicalStream(conf->getPhysicalStreamName(),
                                                     physicalNode->getId()));
     NES_INFO(streamCatalog->getPhysicalStreamAndSchemaAsString());
@@ -184,7 +186,8 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
-    EXPECT_TRUE(streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce));
+    const auto& [catalogSuccess, name] = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
+    EXPECT_TRUE(catalogSuccess);
 
     std::string expected =
         "stream name=default_logical with 1 elements:physicalName=default_physical logicalStreamName=(default_logical) "
@@ -231,7 +234,8 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
 
     StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     std::vector<std::string> newLogicalStreamNameVec{newLogicalStreamName};
-    streamCatalog->addPhysicalStream(newLogicalStreamNameVec, catalogEntryPtr);
+    const auto& [catalogSuccess, name] = streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), catalogEntryPtr);
+    EXPECT_TRUE(catalogSuccess);
     const vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(newLogicalStreamName);
     EXPECT_EQ(allPhysicalStream.size(), 1);
 }
