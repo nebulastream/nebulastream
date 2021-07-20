@@ -66,12 +66,13 @@ bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandl
         setThreadName("whdlr-%d", handlerName.c_str());
         while (this->running) {
             NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
-            std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
             if (joinHandler != nullptr) {
                 joinHandler->trigger();
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
         }
     });
+    thread->detach();
     return true;
 }
 
@@ -83,10 +84,10 @@ bool ExecutableOnTimeTriggerPolicy::stop() {
         return true;
     }
     this->running = false;
-
+    lock.unlock();
     if (thread && thread->joinable()) {
-        thread->join();
-        NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Thread joinded");
+       thread->join();
+       NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Thread joinded");
     }
     thread.reset();
     // TODO what happens to the content of the window that it is still in the state?

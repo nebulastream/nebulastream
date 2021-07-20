@@ -19,7 +19,9 @@
 #include <dlfcn.h>
 namespace NES::Compiler {
 
-SharedLibrary::SharedLibrary(void* shareLib) : DynamicObject(), shareLib(shareLib) { NES_ASSERT(shareLib != nullptr, "Shared lib is null"); }
+SharedLibrary::SharedLibrary(void* shareLib) : DynamicObject(), shareLib(shareLib) {
+    NES_ASSERT(shareLib != nullptr, "Shared lib is null");
+}
 
 SharedLibrary::~SharedLibrary() {
     NES_DEBUG("~SharedLibrary()");
