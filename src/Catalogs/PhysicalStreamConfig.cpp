@@ -127,4 +127,7 @@ SourceConfigPtr PhysicalStreamConfig::toSourceConfig() {
     config->setSkipHeader(skipHeader);
     return config;
 }
+void PhysicalStreamConfig::setPhysicalStreamName(const std::string& newName) {
+    PhysicalStreamConfig::physicalStreamName = newName;
+}
 }// namespace NES

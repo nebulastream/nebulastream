@@ -74,6 +74,7 @@ message RegisterPhysicalStreamRequest {
 
 message RegisterPhysicalStreamReply {
   bool success = 1;
+  string physicalStreamName = 2;
 }
 
 message UnregisterPhysicalStreamRequest {

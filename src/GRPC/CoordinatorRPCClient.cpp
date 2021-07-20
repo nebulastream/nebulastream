@@ -18,10 +18,10 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeStats.pb.h>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <filesystem>
 #include <fstream>
 #include <string>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -40,7 +40,7 @@ CoordinatorRPCClient::CoordinatorRPCClient(std::string address) : address(addres
 
 CoordinatorRPCClient::~CoordinatorRPCClient() { NES_DEBUG("~CoordinatorRPCClient()"); }
 
-bool CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
+std::tuple<bool, std::string> CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf->toString() << " workerID=" << workerId);
 
     RegisterPhysicalStreamRequest request;
@@ -58,11 +58,11 @@ bool CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPt
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: status ok return success=" << reply.success());
-        return reply.success();
+        return {reply.success(), reply.physicalstreamname()};
     } else {
         NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream error=" << status.error_code() << ": "
                                                                          << status.error_message());
-        return reply.success();
+        return {reply.success(), reply.physicalstreamname()};
     }
 }
 
@@ -101,7 +101,8 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName, std::st
 }
 
 bool CoordinatorRPCClient::unregisterPhysicalStream(std::string physicalStreamName) {
-    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalStream physical stream" << physicalStreamName << " from all logical streams");
+    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalStream physical stream" << physicalStreamName
+                                                                               << " from all logical streams");
 
     UnregisterPhysicalStreamRequest request;
     request.set_id(workerId);

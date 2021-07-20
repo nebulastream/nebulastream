@@ -132,34 +132,32 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     // coordinator engine aspects combined string
     std::vector<std::string> logicalStreamName = conf->getLogicalStreamName();
 
-
     // assumed that logicalStreamName has only one entry
     bool successRegisterLogicalStream = coordinatorEngine->registerLogicalStream(logicalStreamName[0], testSchema);
     EXPECT_TRUE(successRegisterLogicalStream);
 
     // common case
-    bool successRegisterPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId,
-                                                                                   conf->getSourceType(),
-                                                                                   conf->getPhysicalStreamName(),
-                                                                                   logicalStreamName[0]);
+    auto [successRegisterPhysicalStream, origName] = coordinatorEngine->registerPhysicalStream(nodeId,
+                                                                                               conf->getSourceType(),
+                                                                                               conf->getPhysicalStreamName(),
+                                                                                               logicalStreamName[0]);
     EXPECT_TRUE(successRegisterPhysicalStream);
 
     //test register existing stream, should create renamed duplicate
-    bool successRegisterExistingPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId,
-                                                                                           conf->getSourceType(),
-                                                                                           conf->getPhysicalStreamName(),
-                                                                                           logicalStreamName[0]);
+    auto [successRegisterExistingPhysicalStream, newName] =
+        coordinatorEngine->registerPhysicalStream(nodeId,
+                                                  conf->getSourceType(),
+                                                  conf->getPhysicalStreamName(),
+                                                  logicalStreamName[0]);
 
     EXPECT_TRUE(successRegisterExistingPhysicalStream);
 
     //test unregister not existing physical stream
-    bool successUnregisterNotExistingPhysicalStream =
-        coordinatorEngine->unregisterPhysicalStream(nodeId, "asd");
+    bool successUnregisterNotExistingPhysicalStream = coordinatorEngine->unregisterPhysicalStream(nodeId, "asd");
     EXPECT_TRUE(!successUnregisterNotExistingPhysicalStream);
 
     //test remove not existing local stream from physical-logical mapping
-    bool successUnregisterNotExistingLocicalStream =
-        coordinatorEngine->unregisterLogicalStream("doesNotExist");
+    bool successUnregisterNotExistingLocicalStream = coordinatorEngine->unregisterLogicalStream("doesNotExist");
     EXPECT_TRUE(!successUnregisterNotExistingLocicalStream);
 
     //test unregister existing node

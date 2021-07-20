@@ -74,7 +74,7 @@ NesWorker::~NesWorker() {
 
 bool NesWorker::setWithRegister(PhysicalStreamConfigPtr conf) {
     withRegisterStream = true;
-    this->configs.push_back(conf);// was this->configs = configs
+    this->configs.push_back(conf);
     return true;
 }
 
@@ -328,9 +328,10 @@ bool NesWorker::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "cannot connect");
-    bool success = coordinatorRpcClient->registerPhysicalStream(conf);
+    auto [success, newName] = coordinatorRpcClient->registerPhysicalStream(conf);
     NES_ASSERT(success, "failed to register stream");
     // TODO we need to get rid of this
+    conf->setPhysicalStreamName(newName);
     nodeEngine->addConfig(conf);
     NES_DEBUG("NesWorker::registerPhysicalStream success=" << success);
     return success;

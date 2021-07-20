@@ -76,10 +76,10 @@ class StreamCatalog {
     /**
      * @brief method to add a physical stream without a logical stream leading to a misconfigured physicalStream
      * @param newEntry
-     * @return
+     * @return true or false depending if the registration was successful; in case that the stream name already exists, a
+     * modified name is returned instead
      */
-    bool addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry);
-
+    std::tuple<bool, std::string> addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry);
 
     /**
      * @brief method to add to a logicalStream a physical stream
@@ -89,13 +89,13 @@ class StreamCatalog {
      */
     bool addPhysicalStreamToLogicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry);
 
-        /**
-       * @brief method to add a physical stream
-       * @caution combination of node and name has to be unique
-       * @return true if the physical stream was added successfully to all logicalStreams named (also true im physical stream was added to mismapped
-         * logical streams), false otherwise
-       */
-    bool addPhysicalStream(std::vector<std::string> logicalStreamNames, StreamCatalogEntryPtr entry);
+    /**
+     * @brief method to add a physical stream
+     * @caution combination of node and name has to be unique
+     * @return true if the physical stream was added successfully to all logicalStreams named (also true im physical stream was added to mismapped
+     * logical streams), false otherwise. additionally, the physical stream name is returned (which changes in case of duplicate entries)
+     */
+    std::tuple<bool, std::string> addPhysicalStream(std::vector<std::string> logicalStreamNames, StreamCatalogEntryPtr entry);
 
     /**
    * @brief method to add a physical stream to a logical stream
@@ -146,7 +146,7 @@ class StreamCatalog {
    * @param param of the node to be deleted
    * @return bool indicating success of remove stream
    */
-   bool unregisterPhysicalStreamFromAllLogicalStreams(std::string physicalStreamName);
+    bool unregisterPhysicalStreamFromAllLogicalStreams(std::string physicalStreamName);
 
     /**
     * @brief method to return the stream for an existing logical stream
@@ -155,7 +155,6 @@ class StreamCatalog {
     * @note the stream will also contain the schema
     */
     SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);
-
 
     /**
     * @brief method to return the stream for an existing logical stream
@@ -178,7 +177,8 @@ class StreamCatalog {
      * @param logicalStreamNames names of the logical streams to test
      * @return a tuple of vectors, the first vector contains the logical streams included in the mapping and the second one the rest
      */
-    std::tuple<std::vector<std::string>, std::vector<std::string>> testIfLogicalStreamVecExistsInSchemaMapping(std::vector<std::string> &logicalStreamNames);
+    std::tuple<std::vector<std::string>, std::vector<std::string>>
+    testIfLogicalStreamVecExistsInSchemaMapping(std::vector<std::string>& logicalStreamNames);
 
     /**
    * @brief test if logical stream with this name exists in the log to schema mapping
@@ -213,7 +213,8 @@ class StreamCatalog {
     * @param name of the logical and physical streams to test.
     * @return bool indicating if mapping exists
     */
-    bool testIfLogicalStreamToPhysicalStreamMappingExistsInMismappedStreams(std::string logicalStreamName, std::string physicalStreamName);
+    bool testIfLogicalStreamToPhysicalStreamMappingExistsInMismappedStreams(std::string logicalStreamName,
+                                                                            std::string physicalStreamName);
 
     /**
     * @brief return all physical nodes that contribute to this logical stream
@@ -245,7 +246,6 @@ class StreamCatalog {
     * @return map containing stream name as key and schema as string (empty if physical stream does not exists)
     */
     std::map<std::string, std::string> getAllLogicalStreamForPhysicalStreamAsString(std::string physicalStreamName);
-
 
     std::map<std::string, std::string> getAllLogicalStreamAsString();
 
@@ -308,7 +308,6 @@ class StreamCatalog {
      * @return
      */
     std::string setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
-
 
     /**
      * @brief removes from a misconfigured stream with a formerly duplicated name, the misconfigured flag and allows querying if possible

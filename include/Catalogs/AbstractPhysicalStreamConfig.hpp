@@ -52,6 +52,11 @@ class AbstractPhysicalStreamConfig {
     virtual const std::string getPhysicalStreamName() = 0;
 
     /**
+     * @brief Sets the physical stream name of the source
+     */
+    virtual void setPhysicalStreamName(const std::string&) = 0;
+
+    /**
      * @brief Provides the vector of logical stream names of the source
      * @return the logical stream names of the source
      */

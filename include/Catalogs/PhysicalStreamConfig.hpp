@@ -81,6 +81,12 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     const std::string getPhysicalStreamName() override;
 
     /**
+     * @brief sets the physical stream name
+     * @param newName of the stream
+     */
+    void setPhysicalStreamName(const std::string& newName) override;
+
+    /**
      * @brief get a vector of logical stream names
      * @return logical stream name
      */

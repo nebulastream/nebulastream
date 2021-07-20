@@ -60,18 +60,20 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*,
                                                     RegisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream: request =" << request);
 
-    bool success = coordinatorEngine->registerPhysicalStream(request->id(),
-                                                             request->sourcetype(),
-                                                             request->physicalstreamname(),
-                                                             request->logicalstreamname());
+    auto [success, newName] = coordinatorEngine->registerPhysicalStream(request->id(),
+                                                                        request->sourcetype(),
+                                                                        request->physicalstreamname(),
+                                                                        request->logicalstreamname());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream success");
         reply->set_success(true);
+        reply->set_physicalstreamname(newName);
         return Status::OK;
     } else {
         NES_ERROR("CoordinatorRPCServer::RegisterPhysicalStream failed");
         reply->set_success(false);
+        reply->set_physicalstreamname(newName);
         return Status::CANCELLED;
     }
 }
@@ -81,8 +83,7 @@ Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext*,
                                                       UnregisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalStream: request =" << request);
 
-    bool success =
-        coordinatorEngine->unregisterPhysicalStream(request->id(), request->physicalstreamname());
+    bool success = coordinatorEngine->unregisterPhysicalStream(request->id(), request->physicalstreamname());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalStream success");

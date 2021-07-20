@@ -42,9 +42,9 @@ class CoordinatorRPCClient {
     /**
      * @brief this methods registers a physical stream via the coordinator to multiple logical streams
      * @param configuration of the stream
-     * @return bool indicating success
+     * @return bool indicating success and a new name in case there was a name conflict
      */
-    bool registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf);
+    std::tuple<bool, std::string> registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf);
 
     /**
      * @brief this method registers logical streams via the coordinator
