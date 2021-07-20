@@ -82,6 +82,7 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
                         topology->print();
                     } else {
                         NES_ERROR("TopologyController::handlePost:addParent: Failed");
+                        throw Exception("TopologyController::handlePost:addParent: Failed");
                     }
 
                     //Prepare the response
@@ -140,6 +141,7 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
                         topology->print();
                     } else {
                         NES_ERROR("TopologyController::handlePost:removeParent: Failed");
+                        throw Exception("TopologyController::handlePost:addParent: Failed");
                     }
 
                     //Prepare the response
