@@ -73,7 +73,7 @@ class CpuValues {
     uint64_t steal;
     uint64_t guest;
     uint64_t guestnice;
-};
+} __attribute__((packed));
 
 /**
  * @brief The serialize method to write CpuValues into the given Schema and TupleBuffer. The prefix specifies a string

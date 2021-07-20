@@ -31,11 +31,14 @@
 #include <sys/sysinfo.h>
 #include <thread>
 #include <vector>
+#include <chrono>
+
 
 namespace NES {
 
 RuntimeNesMetrics SystemResourcesReader::ReadRuntimeNesMetrics() {
     RuntimeNesMetrics output{};
+    output.wallTimeNs = SystemResourcesReader::getWallTimeInNs();
 
     std::vector<std::string> metricLocations {
         "/sys/fs/cgroup/memory/memory.usage_in_bytes",
@@ -95,7 +98,6 @@ RuntimeNesMetrics SystemResourcesReader::ReadRuntimeNesMetrics() {
 
 StaticNesMetrics SystemResourcesReader::ReadStaticNesMetrics() {
     StaticNesMetrics output {false, false};
-    output.operatingSystem = OS::LINUX;
 
     std::vector<std::string> metricLocations {
         "/sys/fs/cgroup/memory/memory.limit_in_bytes",
@@ -307,5 +309,15 @@ DiskMetrics SystemResourcesReader::ReadDiskStats() {
 
     return output;
 }
+
+uint64_t SystemResourcesReader::getWallTimeInNs() {
+    auto now = std::chrono::system_clock::now();
+    auto now_s = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
+    auto epoch = now_s.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch);
+    uint64_t duration = value.count();
+    return duration;
+}
+
 
 }// namespace NES

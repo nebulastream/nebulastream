@@ -21,10 +21,15 @@
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
+#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/Util/SystemResourcesReader.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
+Gauge<RuntimeNesMetrics> MetricUtils::RuntimeNesStats() { return Gauge<RuntimeNesMetrics>(SystemResourcesReader::ReadRuntimeNesMetrics); }
+
+Gauge<StaticNesMetrics> MetricUtils::StaticNesStats() { return Gauge<StaticNesMetrics>(SystemResourcesReader::ReadStaticNesMetrics); }
 
 Gauge<CpuMetrics> MetricUtils::CPUStats() { return Gauge<CpuMetrics>(SystemResourcesReader::ReadCPUStats); }
 

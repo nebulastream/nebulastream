@@ -29,14 +29,13 @@
 namespace NES {
 
 StaticNesMetrics::StaticNesMetrics()
-    : totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false), hasBattery(false),
-      operatingSystem(OS::UNKNOWN) {
+    : totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false), hasBattery(false) {
     NES_DEBUG("StaticNesMetrics: Default ctor");
 }
 
 StaticNesMetrics::StaticNesMetrics(bool isMoving, bool hasBattery)
-    : totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving), hasBattery(hasBattery),
-      operatingSystem(OS::UNKNOWN) {
+    : totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving),
+      hasBattery(hasBattery) {
     NES_DEBUG("StaticNesMetrics: Init with flag moving:" + std::to_string(isMoving)
               + ", hasBattery:" + std::to_string(hasBattery));
 }
@@ -53,8 +52,7 @@ SchemaPtr StaticNesMetrics::getSchema(const std::string& prefix) {
                            ->addField(prefix + "cpuQuotaUS", BasicType::INT64)
 
                            ->addField(prefix + "isMoving", BasicType::BOOLEAN)
-                           ->addField(prefix + "hasBattery", BasicType::BOOLEAN)
-                           ->addField(prefix + "operatingSystem", BasicType::UINT8);
+                           ->addField(prefix + "hasBattery", BasicType::BOOLEAN);
 
     return schema;
 }
@@ -73,7 +71,7 @@ StaticNesMetrics StaticNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::
 
     auto hasName = UtilityFunctions::endsWith(schema->fields[i]->getName(), rnSchema->get(0)->getName());
     auto hasLastField = UtilityFunctions::endsWith(schema->fields[i + rnSchema->getSize() - 1]->getName(),
-                                                   rnSchema->get(rnSchema->getSize())->getName());
+                                                   rnSchema->get(rnSchema->getSize() - 1)->getName());
 
     if (!hasName || !hasLastField) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
@@ -93,8 +91,6 @@ StaticNesMetrics StaticNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::
     output.isMoving = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<bool, true>::create(i++, bindedRowLayout)[0];
     output.hasBattery = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<bool, true>::create(i++, bindedRowLayout)[0];
 
-    output.operatingSystem =
-        static_cast<OS>(Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, true>::create(i++, bindedRowLayout)[0]);
     return output;
 }
 
@@ -110,30 +106,28 @@ web::json::value StaticNesMetrics::toJson() const {
 
     metricsJson["IsMoving"] = web::json::value::number(isMoving);
     metricsJson["HasBattery"] = web::json::value::number(hasBattery);
-    metricsJson["OperatingSystem"] = web::json::value::string(toString(operatingSystem));
 
     return metricsJson;
 }
 
+bool StaticNesMetrics::operator==(const StaticNesMetrics& rhs) const {
+    return totalMemoryBytes == rhs.totalMemoryBytes && cpuCoreNum == rhs.cpuCoreNum && totalCPUJiffies == rhs.totalCPUJiffies
+        && cpuPeriodUS == rhs.cpuPeriodUS && cpuQuotaUS == rhs.cpuQuotaUS && isMoving == rhs.isMoving
+        && hasBattery == rhs.hasBattery;
+}
+bool StaticNesMetrics::operator!=(const StaticNesMetrics& rhs) const { return !(rhs == *this); }
+
 void writeToBuffer(const StaticNesMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(StaticNesMetrics) < buf.getBufferSize(),
-               "StaticNesMetrics: Content does not fit in TupleBuffer");
+               "RuntimeNesMetrics: Content does not fit in TupleBuffer");
+    NES_ASSERT(sizeof(StaticNesMetrics) == StaticNesMetrics::getSchema("")->getSchemaSizeInBytes(),
+               sizeof(StaticNesMetrics) << "!=" << StaticNesMetrics::getSchema("")->getSchemaSizeInBytes());
 
     memcpy(tbuffer + byteOffset, &metric, sizeof(StaticNesMetrics));
     buf.setNumberOfTuples(1);
 }
 
-std::string toString(OS os) {
-    if (os == OS::LINUX) {
-        return "LINUX";
-    } else if (os == OS::WINDOWS) {
-        return "WINDOWS";
-    } else if (os == OS::MAC_OS) {
-        return "MAC_OS";
-    } else {
-        return "UNKNOWN";
-    }
-}
+SchemaPtr getSchema(const StaticNesMetrics&, const std::string& prefix) { return StaticNesMetrics::getSchema(prefix); }
 
 }// namespace NES

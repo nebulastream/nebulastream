@@ -22,15 +22,6 @@
 
 namespace NES {
 
-enum OS {
-    LINUX,
-    WINDOWS,
-    MAC_OS,
-    UNKNOWN
-};
-
-std::string toString(OS os);
-
 class StaticNesMetrics {
   public:
     StaticNesMetrics();
@@ -58,6 +49,9 @@ class StaticNesMetrics {
      */
     web::json::value toJson() const;
 
+    bool operator==(const StaticNesMetrics& rhs) const;
+    bool operator!=(const StaticNesMetrics& rhs) const;
+
     uint64_t totalMemoryBytes;
 
     uint16_t cpuCoreNum;
@@ -69,8 +63,7 @@ class StaticNesMetrics {
 
     bool isMoving;
     bool hasBattery;
-    OS operatingSystem;
-};
+} __attribute__((packed));
 
 /**
  * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string

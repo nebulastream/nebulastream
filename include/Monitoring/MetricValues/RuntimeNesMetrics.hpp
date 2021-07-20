@@ -51,6 +51,10 @@ class RuntimeNesMetrics {
      */
     web::json::value toJson() const;
 
+    bool operator==(const RuntimeNesMetrics& rhs) const;
+    bool operator!=(const RuntimeNesMetrics& rhs) const;
+
+    uint64_t wallTimeNs;
     uint64_t memoryUsageInBytes;
     uint64_t cpuLoadInJiffies;//user+system
     uint64_t blkioBytesRead;
@@ -58,7 +62,7 @@ class RuntimeNesMetrics {
     uint64_t batteryStatus;
     uint64_t latCoord;
     uint64_t longCoord;
-};
+} __attribute__((packed));
 
 /**
  * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
