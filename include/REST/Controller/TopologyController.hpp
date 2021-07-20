@@ -17,6 +17,7 @@
 #pragma once
 
 #include <REST/Controller/BaseController.hpp>
+#include <REST/RestEngine.hpp>
 #include <cpprest/http_msg.h>
 
 /*

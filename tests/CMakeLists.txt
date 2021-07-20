@@ -135,6 +135,11 @@ add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
 target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-tests COMMAND topology-tests)
 
+### NES Topology Controller Tests ###
+add_executable(topology-controller-tests "UnitTests/Rest/TopologyControllerTest.cpp")
+target_link_libraries(topology-controller-tests nes ${GTEST_LIBRARIES})
+add_test(NAME topology-controller-tests COMMAND topology-controller-tests)
+
 ### NES TopologyProperty Tests ###
 add_executable(topology-property-tests "UnitTests/Topology/TopologyPropertyTest.cpp")
 target_link_libraries(topology-property-tests nes ${GTEST_LIBRARIES})

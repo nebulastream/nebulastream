@@ -208,6 +208,10 @@ void BaseController::handleException(const web::http::http_request& message, con
         // handle error caused by failure in adding a parent for a node in topology
         errorResponse["message"] = json::value::string(exceptionMsg);
         this->badRequestImpl(message, errorResponse);
+    } else if (std::string(exceptionMsg).find("Could not remove parent for node in topology") != std::string::npos) {
+        // handle error caused by failure in removed a parent for a node in topology
+        errorResponse["message"] = json::value::string(exceptionMsg);
+        this->badRequestImpl(message, errorResponse);
     } else {
         this->internalServerErrorImpl(message);
     }
