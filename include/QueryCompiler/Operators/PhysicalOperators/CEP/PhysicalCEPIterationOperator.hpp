@@ -27,9 +27,15 @@ namespace PhysicalOperators {
  */
 class PhysicalIterationCEPOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalIterationCEPOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
+    PhysicalIterationCEPOperator(OperatorId id,
+                                 SchemaPtr inputSchema,
+                                 SchemaPtr outputSchema,
+                                 uint64_t minIterations,
+                                 uint64_t maxIterations);
+    static PhysicalOperatorPtr
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
+    static PhysicalOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
@@ -57,4 +63,3 @@ class PhysicalIterationCEPOperator : public PhysicalUnaryOperator {
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_CEP_ITERATIONPHYSICALOPERATOR_HPP_
-

@@ -212,8 +212,9 @@ class CCodeGenerator : public CodeGenerator {
     static BinaryOperatorStatement getBuffer(const VariableDeclaration& tupleBufferVariable);
     VariableDeclaration
     getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
-    VariableDeclaration
-    getCEPIterationOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
+    VariableDeclaration getCEPIterationOperatorHandler(const PipelineContextPtr& context,
+                                                       const VariableDeclaration& tupleBufferVariable,
+                                                       uint64_t index);
     static BinaryOperatorStatement getWatermark(const VariableDeclaration& tupleBufferVariable);
     static BinaryOperatorStatement getOriginId(const VariableDeclaration& tupleBufferVariable);
     BinaryOperatorStatement getSequenceNumber(VariableDeclaration tupleBufferVariable);
