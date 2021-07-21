@@ -77,11 +77,17 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     if (desiredStrategy == ONLY_INPLACE_OPERATIONS && inputSchema->equals(outputSchema) && !filterOperatorFound) {
         // The highest level of optimization - just modifying the input buffer in place and passing it on - can be applied as there are no filter statements etc.
         emitNode->setBufferOptimizationStrategy(ONLY_INPLACE_OPERATIONS);
-    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()) {
-        // The optimizations  "reuse input buffer as output buffer" and "omit size check" can be applied (or both). The following line might also write pass on "DEFAULT" if it is the desiredStrategy.
-        emitNode->setBufferOptimizationStrategy(desiredStrategy);
+    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (desiredStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || desiredStrategy == ONLY_INPLACE_OPERATIONS)) {
+        // The optimizations  "reuse input buffer as output buffer" and "omit size check" can be applied.
+        emitNode->setBufferOptimizationStrategy(REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK);
+    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && desiredStrategy == REUSE_INPUT_BUFFER) {
+        // The optimization  "reuse input buffer as output buffer" can be applied.
+        emitNode->setBufferOptimizationStrategy(REUSE_INPUT_BUFFER);
+    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && desiredStrategy == OMIT_OVERFLOW_CHECK) {
+        // The optimization "omit size check" can be applied.
+        emitNode->setBufferOptimizationStrategy(OMIT_OVERFLOW_CHECK);
     }
-    // TODO if the highest optimization level ONLY_INPLACE_OPERATIONS is requested, but can't be fulfilled do we want to fall back on a lesser optimization or just use default?
+    // TODO if the highest optimization level ONLY_INPLACE_OPERATIONS is requested, but can't be fulfilled do we want to fall back on a lesser optimization or just use default? Currently: yes
 
     return operatorPipeline;
 }
