@@ -49,8 +49,11 @@ class GeneratableCEPIterationOperator : public GeneratableOperator {
      */
     static GeneratableOperatorPtr
     create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIteration, uint64_t maxIteration);
+
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+
     std::string toString() const override;
+
     OperatorNodePtr copy() override;
 
   private:

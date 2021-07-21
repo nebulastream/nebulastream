@@ -803,28 +803,32 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 }
 
 bool CCodeGenerator::generateCodeForCEPIteration(uint64_t minIteration, uint64_t maxIteration, PipelineContextPtr context) {
-
     NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: start generating code for CEPITerations");
     auto tf = getTypeFactory();
     auto handler = CEP::CEPOperatorHandler::create();
     auto index = context->registerOperatorHandler(handler);
     auto recordHandler = context->getRecordHandler();
-    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: get CEP OperatorHandler created CEPHandlerVariableDeclaration");
+
+    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: call getCEPOperatorHandler using" << context << "and " << index);
     auto CEPOperatorHandlerDeclaration = getCEPOperatorHandler(context, context->code->varDeclarationExecutionContext, index);
-    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: increase Tuple counter");
+    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: got CEPOperatorHadnler");
+
+    // for each tuple: call addTuple on CEPOperatorCounter to count occurrences of events
     auto updateCounter = VarRef(CEPOperatorHandlerDeclaration).accessPtr(call("addTuple"));
     context->code->currentCodeInsertionPoint->addStatement(updateCounter.copy());
-    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: start generating code for CounterStatement");
-    //check counter if iteration conditions are fullfilled
+
+    //check counter if iteration conditions (minIteration and maxIteration) are fulfilled
     auto constantMinIteration = Constant(tf->createValueType(DataTypeFactory::createBasicValue(minIteration)));
     auto constantMaxIteration = Constant(tf->createValueType(DataTypeFactory::createBasicValue(maxIteration)));
     auto checkCounter = VarRef(CEPOperatorHandlerDeclaration).accessPtr(call("getCounter"));
     auto ifStatement = IF(checkCounter <= constantMaxIteration && checkCounter >= constantMinIteration);
+
     NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: created IF CounterStatement");
     // first, add the head and brackets of the if-Counter statement
     context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
     // second, move insertion point. the rest of the pipeline will be generated within the brackets of the if-statement
     context->code->currentCodeInsertionPoint = ifStatement.getCompoundStatement();
+
     NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: Last Step clearCounter if condition is fulfilled");
     //TODO: this is not 100% correct, (1) we ignore the maxIteration condition with his solution, that would require a time condition that states when the counter needs to be reset
     auto resetCounter = VarRef(CEPOperatorHandlerDeclaration).accessPtr(call("clearCounter"));
@@ -2242,6 +2246,7 @@ VariableDeclaration CCodeGenerator::getCEPOperatorHandler(const PipelineContextP
     auto OperatorStatement =
         VarDeclStatement(CEPOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
     context->code->variableInitStmts.push_back(OperatorStatement.copy());
+
     return CEPOperatorHandlerDeclaration;
 }
 
