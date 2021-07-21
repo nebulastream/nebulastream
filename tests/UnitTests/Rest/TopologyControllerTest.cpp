@@ -258,16 +258,16 @@ TEST_F(TopologyControllerTest, testRemoveParentTopologyWhenParentIsAbsent) {
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "removeParent"}, msg);
     msg.get_response()
         .then([&httpResponse](const pplx::task<http_response>& task) {
-          try {
-              httpResponse = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                httpResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
     httpResponse.extract_json()
         .then([&response](const pplx::task<web::json::value>& task) {
-          response = task.get();
+            response = task.get();
         })
         .wait();
     auto removeParentResponse = response.as_object();
