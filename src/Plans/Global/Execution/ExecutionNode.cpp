@@ -186,5 +186,18 @@ std::vector<std::string> ExecutionNode::toMultilineString() {
 
     return lines;
 }
+bool ExecutionNode::removeSingleQuerySubPlan(QueryId queryId, QueryId querySubPlanId) {
+    auto querySubPlans = getQuerySubPlans(queryId);
+    if(!querySubPlans.empty()){
+       auto it = std::remove_if(querySubPlans.begin(), querySubPlans.end(), [querySubPlanId] (QueryPlanPtr querySubPlan){
+            return querySubPlan->getQuerySubPlanId() == querySubPlanId;});
+        if(it == querySubPlans.end()){
+            NES_DEBUG("ExecutionNode: ExcutionNode " << this->getId() << "doesnt contain a QSP with ID " << querySubPlanId << " for QueryId " << queryId);
+            return false;
+        }
+        return true;
+        }
+    return false;
+}
 
 }// namespace NES

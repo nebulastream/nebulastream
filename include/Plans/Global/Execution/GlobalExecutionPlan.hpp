@@ -98,6 +98,12 @@ class GlobalExecutionPlan {
     ExecutionNodePtr getExecutionNodeByNodeId(uint64_t id);
 
     /**
+     * removes a ExecutionNode from the QueryIdIndex if executionNode no longer has any QSP for
+     * Query with QueryId
+     */
+    bool removeExecutionNodeFromQueryIdIndex(QueryId queryId, uint64_t nodeId);
+
+    /**
      * Get the nodes to be scheduled/deployed
      * @return vector of execution nodes to be scheduled
      */

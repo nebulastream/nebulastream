@@ -61,18 +61,19 @@ bool QueryMigrationPhase::execute(MigrateQueryRequestPtr req) {
     }
 
     // Step 2. Build all necessary execution nodes
-    auto subqueries = globalExecutionPlan->getExecutionNodeByNodeId(markedTopNodeId)->getQuerySubPlans(queryId);
+    auto markedExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(markedTopNodeId);
+    auto subqueries = markedExecutionNode->getQuerySubPlans(queryId);
     globalExecutionPlan->removeExecutionNode(markedTopNodeId);
     //Both migration types have many steps in common, but are ordered differently
     if(req->isWithBuffer()){
-        return executeMigrationWithBuffer(subqueries);
+        return executeMigrationWithBuffer(subqueries, markedExecutionNode );
     }
     else{
-        return executeMigrationWithoutBuffer(subqueries);
+        return executeMigrationWithoutBuffer(subqueries, markedExecutionNode);
     }
 }
 
-bool QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& queryPlans) {
+bool QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& queryPlans, ExecutionNodePtr markedNode) {
 
     auto queryId = queryPlans[0]->getQueryId();
 
@@ -140,6 +141,10 @@ bool QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& 
                                                     newSourceTopologyNode->getDataPort(),
                                                     helperMap);
                 NES_DEBUG(globalExecutionPlan->getAsString());
+                bool success = markedNode->removeSingleQuerySubPlan(queryId,queryPlan->getQuerySubPlanId());
+                if(!success){
+                    throw Exception("QueryMigrationPhase: Error while removing a QSP from an ExecutionNode. No such QSP found");
+                }
             } else {
                 NES_DEBUG("QueryMigrationPhase: Issues while starting execution nodes. Triggering unbuffering of data");
                 //workerRPCClient->unbufferData(rpcAddress, helperMap);
@@ -150,10 +155,11 @@ bool QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& 
             //workerRPCClient->unbufferData(rpcAddress, helperMap);
         }
     }
+    bool success = globalExecutionPlan->removeExecutionNodeFromQueryIdIndex(queryId,markedNode->getId());
     return true;
 }
 
-bool QueryMigrationPhase::executeMigrationWithoutBuffer(const std::vector<QueryPlanPtr>& queryPlans) {
+bool QueryMigrationPhase::executeMigrationWithoutBuffer(const std::vector<QueryPlanPtr>& queryPlans,ExecutionNodePtr markedNode) {
 
     auto queryId = queryPlans[0]->getQueryId();
 
@@ -220,6 +226,10 @@ bool QueryMigrationPhase::executeMigrationWithoutBuffer(const std::vector<QueryP
                                                     newSourceTopologyNode->getIpAddress(),
                                                     newSourceTopologyNode->getDataPort(),
                                                     helperMap);
+                bool success = markedNode->removeSingleQuerySubPlan(queryId,queryPlan->getQuerySubPlanId());
+                if(!success){
+                    throw Exception("QueryMigrationPhase: Error while removing a QSP from an ExecutionNode. No such QSP found");
+                }
                 NES_DEBUG(globalExecutionPlan->getAsString());
             } else {
                 NES_DEBUG("QueryMigrationPhase: Issues while starting execution nodes. Triggering unbuffering of data");
@@ -231,18 +241,13 @@ bool QueryMigrationPhase::executeMigrationWithoutBuffer(const std::vector<QueryP
             //workerRPCClient->unbufferData(rpcAddress, helperMap);
         }
     }
+    bool success = globalExecutionPlan->removeExecutionNodeFromQueryIdIndex(queryId,markedNode->getId());
     return true;
 }
 
 std::vector<TopologyNodePtr> QueryMigrationPhase::findPath(QueryId queryId, TopologyNodeId topologyNodeId) {
     auto childNodes = findChildExecutionNodesAsTopologyNodes(queryId,topologyNodeId);
-    if(childNodes.size()>1){
-        throw QueryMigrationException(queryId, "Currently migration is only supported for cases in which there is only a single CHILD node");
-    }
-    auto parentNodes = findParentExecutionNodesAsTopologyNodes(queryId,topologyNodeId);
-    if(childNodes.size()>1){
-        throw QueryMigrationException(queryId, "Currently migration is only supported for cases in which there is only a single PARENT node");
-    }
+    auto parentNodes = findParentExecutionNodesAsTopologyNodes(queryId, topologyNodeId);
     return topology->findPathBetween(childNodes,parentNodes);
 }
 

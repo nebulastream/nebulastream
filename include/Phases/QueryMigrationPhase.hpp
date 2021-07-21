@@ -96,9 +96,9 @@ class QueryMigrationPhase{
 
   private:
 
-    bool executeMigrationWithBuffer(std::vector<QueryPlanPtr>& queryPlans);
+    bool executeMigrationWithBuffer(std::vector<QueryPlanPtr>& queryPlans, ExecutionNodePtr markedNode);
 
-    bool executeMigrationWithoutBuffer(const std::vector<QueryPlanPtr>& queryPlans);
+    bool executeMigrationWithoutBuffer(const std::vector<QueryPlanPtr>& queryPlans, ExecutionNodePtr markedNode);
 
     explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient, Optimizer::QueryPlacementPhasePtr queryPlacementPhase);
 

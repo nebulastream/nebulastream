@@ -216,5 +216,19 @@ std::map<uint64_t, uint32_t> GlobalExecutionPlan::getMapOfTopologyNodeIdToOccupi
     NES_DEBUG("GlobalExecutionPlan: returning the map of occupied resources for the query " << queryId);
     return mapOfTopologyNodeIdToOccupiedResources;
 }
+bool GlobalExecutionPlan::removeExecutionNodeFromQueryIdIndex(QueryId queryId, uint64_t nodeId) {
+    auto executionNodes = queryIdIndex[queryId];
+    auto found = std::find_if(executionNodes.begin(),executionNodes.end(), [nodeId] (ExecutionNodePtr& exeNodes){
+        return exeNodes->getId() == nodeId;
+    });
+    if(found != executionNodes.end()){
+        if((*found)->getQuerySubPlans(queryId).empty()){
+            queryIdIndex[queryId].erase(found);
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
 
 }// namespace NES

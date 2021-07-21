@@ -98,6 +98,8 @@ class ExecutionNode : public Node {
      */
     bool removeQuerySubPlans(QueryId queryId);
 
+    bool removeSingleQuerySubPlan(QueryId queryId, QueryId querySubPlanId);
+
     /**
      * Get the map of all query sub plans
      * @return
