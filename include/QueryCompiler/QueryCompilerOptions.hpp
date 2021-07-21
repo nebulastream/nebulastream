@@ -71,7 +71,7 @@ class QueryCompilerOptions {
   protected:
     bool operatorFusion;
     uint64_t numSourceLocalBuffers;
-    BufferOptimizationStrategy desiredBufferOptimizationStrategy;
+    BufferOptimizationStrategy desiredBufferStrategy;
 };
 }// namespace QueryCompilation
 }// namespace NES

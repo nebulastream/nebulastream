@@ -46,10 +46,6 @@ PipelineQueryPlanPtr BufferOptimizationPhase::apply(PipelineQueryPlanPtr pipelin
 }
 
 OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
-
-    // TODO: set the desired Strategy in the correct place (setDefaultOptions or somewhere)
-    desiredStrategy = ONLY_INPLACE_OPERATIONS;
-
     auto queryPlan = operatorPipeline->getQueryPlan();
     auto nodes = QueryPlanIterator(queryPlan).snapshot();
 
@@ -74,20 +70,19 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     if (emitNode == nullptr || outputSchema == nullptr) { NES_ERROR("BufferOptimizationPhase: No Emit operator found in pipeline"); }
 
     // Check if necessary conditions are fulfilled and set the desired strategy in the emit operator:
-    if (desiredStrategy == ONLY_INPLACE_OPERATIONS && inputSchema->equals(outputSchema) && !filterOperatorFound) {
+    if (inputSchema->equals(outputSchema) && !filterOperatorFound && (desiredStrategy == ONLY_INPLACE_OPERATIONS || desiredStrategy == HIGHEST_POSSIBLE)) {
         // The highest level of optimization - just modifying the input buffer in place and passing it on - can be applied as there are no filter statements etc.
         emitNode->setBufferOptimizationStrategy(ONLY_INPLACE_OPERATIONS);
-    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (desiredStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || desiredStrategy == ONLY_INPLACE_OPERATIONS)) {
+    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (desiredStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || desiredStrategy == HIGHEST_POSSIBLE)) {
         // The optimizations  "reuse input buffer as output buffer" and "omit size check" can be applied.
         emitNode->setBufferOptimizationStrategy(REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK);
-    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && desiredStrategy == REUSE_INPUT_BUFFER) {
+    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (desiredStrategy == REUSE_INPUT_BUFFER || desiredStrategy == HIGHEST_POSSIBLE)) {
         // The optimization  "reuse input buffer as output buffer" can be applied.
         emitNode->setBufferOptimizationStrategy(REUSE_INPUT_BUFFER);
-    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && desiredStrategy == OMIT_OVERFLOW_CHECK) {
+    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (desiredStrategy == OMIT_OVERFLOW_CHECK || desiredStrategy == HIGHEST_POSSIBLE)) {
         // The optimization "omit size check" can be applied.
         emitNode->setBufferOptimizationStrategy(OMIT_OVERFLOW_CHECK);
     }
-    // TODO if the highest optimization level ONLY_INPLACE_OPERATIONS is requested, but can't be fulfilled do we want to fall back on a lesser optimization or just use default? Currently: yes
 
     return operatorPipeline;
 }
