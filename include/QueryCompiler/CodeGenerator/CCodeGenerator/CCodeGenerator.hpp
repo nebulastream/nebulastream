@@ -136,7 +136,7 @@ class CCodeGenerator : public CodeGenerator {
     * @param context - includes the context of the used fields
     * @return flag if the generation was successful.
     */
-    bool generateCodeForCEPIteration(uint64_t minIteration, uint64_t maxIteration, PipelineContextPtr context) override;
+    bool generateCodeForCEPIterationOperator(uint64_t minIteration, uint64_t maxIteration, PipelineContextPtr context) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -213,7 +213,7 @@ class CCodeGenerator : public CodeGenerator {
     VariableDeclaration
     getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
     VariableDeclaration
-    getCEPOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
+    getCEPIterationOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
     static BinaryOperatorStatement getWatermark(const VariableDeclaration& tupleBufferVariable);
     static BinaryOperatorStatement getOriginId(const VariableDeclaration& tupleBufferVariable);
     BinaryOperatorStatement getSequenceNumber(VariableDeclaration tupleBufferVariable);
