@@ -802,7 +802,9 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     return true;
 }
 
-bool CCodeGenerator::generateCodeForCEPIterationOperator(uint64_t minIteration, uint64_t maxIteration, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForCEPIterationOperator(uint64_t minIteration,
+                                                         uint64_t maxIteration,
+                                                         PipelineContextPtr context) {
     NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: start generating code for CEPITerations");
     auto tf = getTypeFactory();
     auto handler = CEP::CEPOperatorHandler::create();
@@ -810,7 +812,8 @@ bool CCodeGenerator::generateCodeForCEPIterationOperator(uint64_t minIteration, 
     auto recordHandler = context->getRecordHandler();
 
     NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: call getCEPOperatorHandler using" << context << "and " << index);
-    auto CEPOperatorHandlerDeclaration = getCEPIterationOperatorHandler(context, context->code->varDeclarationExecutionContext, index);
+    auto CEPOperatorHandlerDeclaration =
+        getCEPIterationOperatorHandler(context, context->code->varDeclarationExecutionContext, index);
     // creates the following line of code
     // auto CEPOperatorHandler = pipelineExecutionContext.getOperatorHandler<CEP::CEPOperatorHandler>(0);
     NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: got CEPOperatorHadnler");
@@ -2241,8 +2244,8 @@ VariableDeclaration CCodeGenerator::getWindowOperatorHandler(const PipelineConte
 }
 
 VariableDeclaration CCodeGenerator::getCEPIterationOperatorHandler(const PipelineContextPtr& context,
-                                                          const VariableDeclaration& tupleBufferVariable,
-                                                          uint64_t CEPOperatorIndex) {
+                                                                   const VariableDeclaration& tupleBufferVariable,
+                                                                   uint64_t CEPOperatorIndex) {
     auto tf = getTypeFactory();
     auto executionContextRef = VarRefStatement(tupleBufferVariable);
     auto CEPOperatorHandlerDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "OperatorHandler");

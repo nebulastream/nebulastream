@@ -32,13 +32,13 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -93,7 +93,7 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
         filterOp6 = LogicalOperatorFactory::createFilterOperator(pred6);
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
         projectPp = LogicalOperatorFactory::createProjectionOperator({});
-        iterationCEPOp = LogicalOperatorFactory::createCEPIterationOperator(2,6);
+        iterationCEPOp = LogicalOperatorFactory::createCEPIterationOperator(2, 6);
         {
             Windowing::WindowTriggerPolicyPtr triggerPolicy = Windowing::OnTimeTriggerPolicyDescription::create(1000);
             auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
@@ -763,25 +763,24 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSinkSourceQuery) {
  *
  */
 TEST_F(TranslateToPhysicalOperatorPhaseTest, translateCEPiteration) {
-auto queryPlan = QueryPlan::create(sourceOp1);
-queryPlan->appendOperatorAsNewRoot(iterationCEPOp);
-queryPlan->appendOperatorAsNewRoot(sinkOp1);
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(iterationCEPOp);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
 
-NES_DEBUG(queryPlan->toString());
-auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-phase->apply(queryPlan);
-NES_DEBUG(queryPlan->toString());
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
 
-auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = QueryPlanIterator(queryPlan).begin();
 
-ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-++iterator;
-ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalIterationCEPOperator>());
-++iterator;
-ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalIterationCEPOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }
 
 }// namespace NES
-

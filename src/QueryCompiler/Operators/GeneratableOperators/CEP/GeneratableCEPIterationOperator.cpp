@@ -26,22 +26,27 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 GeneratableCEPIterationOperator::GeneratableCEPIterationOperator(OperatorId id,
-                                               SchemaPtr inputSchema,
-                                               SchemaPtr outputSchema,
-                                               uint64_t minIteration,
-                                               uint64_t maxIteration)
-    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), minIteration(minIteration), maxIteration(maxIteration) {}
+                                                                 SchemaPtr inputSchema,
+                                                                 SchemaPtr outputSchema,
+                                                                 uint64_t minIteration,
+                                                                 uint64_t maxIteration)
+    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), minIteration(minIteration),
+      maxIteration(maxIteration) {}
 
-GeneratableOperatorPtr GeneratableCEPIterationOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIteration, uint64_t maxIteration) {
+GeneratableOperatorPtr GeneratableCEPIterationOperator::create(SchemaPtr inputSchema,
+                                                               SchemaPtr outputSchema,
+                                                               uint64_t minIteration,
+                                                               uint64_t maxIteration) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, minIteration, maxIteration);
 }
 
 GeneratableOperatorPtr GeneratableCEPIterationOperator::create(OperatorId id,
-                                                      SchemaPtr inputSchema,
-                                                      SchemaPtr outputSchema,
-                                                      uint64_t minIteration,
-                                                      uint64_t maxIteration) {
-    return std::make_shared<GeneratableCEPIterationOperator>(GeneratableCEPIterationOperator(id, inputSchema, outputSchema, minIteration, maxIteration));
+                                                               SchemaPtr inputSchema,
+                                                               SchemaPtr outputSchema,
+                                                               uint64_t minIteration,
+                                                               uint64_t maxIteration) {
+    return std::make_shared<GeneratableCEPIterationOperator>(
+        GeneratableCEPIterationOperator(id, inputSchema, outputSchema, minIteration, maxIteration));
 }
 
 void GeneratableCEPIterationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
@@ -49,7 +54,9 @@ void GeneratableCEPIterationOperator::generateExecute(CodeGeneratorPtr codegen, 
     codegen->generateCodeForCEPIterationOperator(minIteration, maxIteration, context);
 }
 
-OperatorNodePtr GeneratableCEPIterationOperator::copy() { return create(id, inputSchema, outputSchema, minIteration, maxIteration); }
+OperatorNodePtr GeneratableCEPIterationOperator::copy() {
+    return create(id, inputSchema, outputSchema, minIteration, maxIteration);
+}
 std::string GeneratableCEPIterationOperator::toString() const { return "GeneratableCEPIterationOperator"; }
 
 }// namespace GeneratableOperators

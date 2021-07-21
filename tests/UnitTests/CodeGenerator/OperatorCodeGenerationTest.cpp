@@ -1394,7 +1394,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     codeGenerator->generateCodeForScan(inputSchema, inputSchema, context);
 
     //define number of iterations
-    codeGenerator->generateCodeForCEPIterationOperator(50,150,context);
+    codeGenerator->generateCodeForCEPIterationOperator(50, 150, context);
 
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(inputSchema, context);
@@ -1417,7 +1417,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
                                                                        nodeEngine->getBufferManager(),
                                                                        context->getOperatorHandlers());
 
-    cepOperatorHandler->start(queryContext, nodeEngine->getStateManager(),0);
+    cepOperatorHandler->start(queryContext, nodeEngine->getStateManager(), 0);
 
     cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
     Runtime::WorkerContext wctx{0};

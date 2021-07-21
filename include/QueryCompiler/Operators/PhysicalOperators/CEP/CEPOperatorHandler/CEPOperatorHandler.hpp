@@ -16,15 +16,15 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATOR_PHYSICALOPERATOR_CEP_CEPOPERATORHANDLER_CEPOPERATORHANDLER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATOR_PHYSICALOPERATOR_CEP_CEPOPERATORHANDLER_CEPOPERATORHANDLER_HPP_
 
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <State/StateManager.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
 #include <Windowing/CEPForwardRefs.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 
-namespace NES::CEP{
+namespace NES::CEP {
 /**
  * @brief Operator handler for cep operators
  */
@@ -36,16 +36,17 @@ class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
      * @brief Factory to create new CEPOperatorHandler
      * @return CEPOperatorHandlerPtr
      */
-   static CEPOperatorHandlerPtr create();
+    static CEPOperatorHandlerPtr create();
 
-     /**
+    /**
     * @brief Starts cep handler
      * @param pipelineExecutionContext pointer to the current pipeline execution context
      * @param stateManager point to the current state manager
      * @param localStateVariableId
     */
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) override;
+               Runtime::StateManagerPtr stateManager,
+               uint32_t localStateVariableId) override;
 
     /**
     * @brief Stops cep handler
@@ -67,7 +68,6 @@ class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
 
   private:
     uint64_t counter;
-
 };
 }// namespace NES::CEP
 
