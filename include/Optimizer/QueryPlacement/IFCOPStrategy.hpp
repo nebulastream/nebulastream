@@ -40,9 +40,15 @@ class IFCOPStrategy : public BasePlacementStrategy {
                   TypeInferencePhasePtr typeInferencePhase,
                   StreamCatalogPtr streamCatalog);
 
-    void getPathForPlacement(NES::QueryPlanPtr queryPlan);
-
     std::vector<std::vector<bool>> getPlacementCandidate(NES::QueryPlanPtr queryPlan);
+
+    double getCost(std::vector<std::vector<bool>> placementCandidate, NES::QueryPlanPtr queryPlan);
+
+    double getLocalCost(std::vector<bool> nodePlacement, NES::QueryPlanPtr queryPlan);
+
+    double getNetworkCost(const TopologyNodePtr& currentNode, std::vector<std::vector<bool>> placementCandidate, NES::QueryPlanPtr queryPlan);
+
+    std::map<uint64_t, uint64_t> topologyNodeIdToIndexMap;
 };
 }// namespace NES::Optimizer
 #endif//IFCOPSTRATEGY_HPP
