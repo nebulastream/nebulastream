@@ -70,8 +70,8 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
 
                     TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
                     if (!parentPhysicalNode) {
-                        throw Exception("Could not add parent for node in topology: Node with parentId=" + std::to_string(parentId)
-                                        + " not found.");
+                        throw Exception("Could not add parent for node in topology: Node with parentId="
+                                        + std::to_string(parentId) + " not found.");
                     }
 
                     bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysicalNode);
