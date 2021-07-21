@@ -44,43 +44,38 @@ IFCOPStrategy::IFCOPStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
     : BasePlacementStrategy(std::move(globalExecutionPlan),
                             std::move(topology),
                             std::move(typeInferencePhase),
-                            std::move(streamCatalog)) {}
+                            std::move(streamCatalog)) {
 
-void IFCOPStrategy::getPathForPlacement(NES::QueryPlanPtr queryPlan) {
-    // 1. get source-to-sink path for all sources
-    std::vector<TopologyNodePtr> allSourceNodes;
-    // 1a. list all logical stream used in the query
-    for (const auto& sourceOperator : queryPlan->getSourceOperators()) {
-        const auto& streamName = sourceOperator->getSourceDescriptor()->getStreamName();
-
-        // 1b. for each logical stream, get topology nodes containing the logical stream
-        const auto sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
-        allSourceNodes.insert(allSourceNodes.end(), sourceNodes.begin(), sourceNodes.end());
-    }
-    // 1c. get the sink node
-    auto sinkNode = topology->getRoot();
-
-    // 2. get source to sink path for each source node
-    std::vector<std::optional<TopologyNodePtr>> allSourceToSinkPath;
-    for (const auto& sourceNode : allSourceNodes) {
-        auto sourceToSink = topology->findAllPathBetween(sourceNode, sinkNode);
-        allSourceToSinkPath.push_back(sourceToSink);
-    }
-
-    // 3. merge all source to sink path
-    NES_TRACE("IFCOPStrategy::getPathForPlacement: merging all source to sink paths");
-    TopologyPtr selectedTopology;
-    TopologyNodePtr root = topology->getRoot()->copy();
-    root->removeChildren();
-
-    for (auto path : allSourceToSinkPath) {
-        NES_TRACE("IFCOPStrategy::getPathForPlacement: iterate throuugh allSourceToSinkPath");
-    }
 }
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
-    auto placementCandidate = getPlacementCandidate(queryPlan);
-    assignMappingToTopology(topology, queryPlan, placementCandidate);
+    // initiate operatorIdToNodePlacementMap
+    auto topologyIterator = BreadthFirstNodeIterator(topology->getRoot());
+    uint32_t topoIdx = 0;
+    for (auto topoItr = topologyIterator.begin(); topoItr != NES::BreadthFirstNodeIterator::end(); ++topoItr) {
+        topologyNodeIdToIndexMap.insert({(*topoItr)->as<TopologyNode>()->getId(), topoIdx});
+        topoIdx++;
+    }
+
+    auto currentCandidate = getPlacementCandidate(queryPlan);
+    auto currentCost = getCost(currentCandidate, queryPlan);
+    auto bestCandidate = currentCandidate;
+    auto bestCost = currentCost;
+
+    const uint32_t maxIter = 100;// maximum iteration to search for an optimal placement candidate
+    for (uint32_t i = 1; i < maxIter; i++) {
+        currentCandidate = getPlacementCandidate(queryPlan);
+        currentCost = getCost(currentCandidate, queryPlan);
+
+        if (currentCost < bestCost) {
+            bestCandidate = currentCandidate;
+            bestCost = currentCost;
+        }
+
+        NES_DEBUG("IFCOP: currentCost: " << currentCost);
+    }
+
+    assignMappingToTopology(topology, queryPlan, bestCandidate);
 
     addNetworkSourceAndSinkOperators(queryPlan);
     return runTypeInferencePhase(queryPlan->getQueryId());
@@ -99,7 +94,6 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
     for (auto topoItr = topologyIterator.begin(); topoItr != NES::BreadthFirstNodeIterator::end(); ++topoItr) {
         // add a new entry in the binary mapping for the current node
         std::vector<bool> currentTopologyNodeMapping;
-
         QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
 
         uint64_t opIdx = 0;
@@ -148,9 +142,14 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
                 std::random_device rd;
                 std::mt19937 mt(rd());
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+                const double stopChance = 0.5;
+
                 while (currentTopologyNodePtr != topology->getRoot()) {
-                    auto stop = dist(mt) > 0.5;
-                    while (!stop && !currentOperator->getParents()[0]->instanceOf<SinkLogicalOperatorNode>()) {// assuming one sink operator
+                    auto stop = dist(mt) > stopChance;
+                    while (!stop
+                           && !currentOperator->getParents()[0]
+                                   ->instanceOf<SinkLogicalOperatorNode>()) {// assuming one sink operator
                         currentOperator =
                             currentOperator->getParents()[0]->as<LogicalOperatorNode>();// assuming one parent per operator
 
@@ -158,7 +157,7 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
                         opIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].second;
                         placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
                         placedOperatorIds.push_back(currentOperator->getId());
-                        stop = dist(mt);
+                        stop = dist(mt) > stopChance;
                     }
                     currentTopologyNodePtr =
                         currentTopologyNodePtr->getParents()[0]->as<TopologyNode>();// assuming one parent per operator
@@ -166,7 +165,6 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
             }
         }
     }
-
 
     auto currentTopologyNodePtr = topology->getRoot();
     // check all un-assigned operators, including the sink
@@ -183,6 +181,62 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
         }
     }
     return placementCandidate;
+}
+
+double IFCOPStrategy::getCost(std::vector<std::vector<bool>> placementCandidate, NES::QueryPlanPtr queryPlan) {
+    double totalCost = 0.0;
+
+    // compute over-utilization cost
+    uint32_t nodeIndex = 0;
+    uint32_t overutilizationCost = 0;
+    auto topologyIterator = BreadthFirstNodeIterator(topology->getRoot());
+    for (auto topoItr = topologyIterator.begin(); topoItr != NES::BreadthFirstNodeIterator::end(); ++topoItr) {
+        auto currentTopologyNode = (*topoItr)->as<TopologyNode>();
+        auto totalAssignedOperators =
+            std::count_if(placementCandidate[nodeIndex].begin(), placementCandidate[nodeIndex].end(), [](bool item) {
+                return item;
+            });
+        if (totalAssignedOperators > currentTopologyNode->getAvailableResources()) {
+            overutilizationCost += (totalAssignedOperators - currentTopologyNode->getAvailableResources());
+        }
+        nodeIndex++;
+    }
+
+    totalCost += getNetworkCost(topology->getRoot(), placementCandidate, std::move(queryPlan)) + overutilizationCost;
+    return totalCost;
+}
+double IFCOPStrategy::getLocalCost(std::vector<bool> nodePlacement, NES::QueryPlanPtr queryPlan) {
+    QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
+    uint32_t opIdx = 0;
+
+    double cost = 1.0;
+    for (auto qPlanItr = queryPlanIterator.begin(); qPlanItr != QueryPlanIterator::end(); ++qPlanItr) {
+        auto currentOperator = (*qPlanItr)->as<OperatorNode>();
+        double dmf = 1;
+        //        double dmf = std::any_cast<double>(currentOperator->getProperty("DMF"));
+        cost = cost * (nodePlacement[opIdx] * dmf + (1 - nodePlacement[opIdx]));
+    }
+    return cost;
+}
+
+double IFCOPStrategy::getNetworkCost(const TopologyNodePtr& currentNode,
+                                     std::vector<std::vector<bool>> placementCandidate,
+                                     NES::QueryPlanPtr queryPlan) {
+
+    auto currentNodeCost = getLocalCost(placementCandidate[topologyNodeIdToIndexMap[currentNode->getId()]], queryPlan);
+
+    if (!currentNode->getChildren().empty()) {
+        double childCost = 0;
+
+        for (const auto& node : currentNode->getChildren()) {
+            auto childNode = node->as<TopologyNode>();
+            childCost += getNetworkCost(childNode, placementCandidate, queryPlan);
+        }
+        double cost = childCost * currentNodeCost;
+        return cost;
+    }
+
+    return currentNodeCost;
 }
 
 }// namespace NES::Optimizer
