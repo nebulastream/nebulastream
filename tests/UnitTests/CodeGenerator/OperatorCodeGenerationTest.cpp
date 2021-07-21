@@ -1394,7 +1394,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     codeGenerator->generateCodeForScan(inputSchema, inputSchema, context);
 
     //define number of iterations
-    codeGenerator->generateCodeForCEPIteration(50,150,context);
+    codeGenerator->generateCodeForCEPIterationOperator(50,150,context);
 
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(inputSchema, context);

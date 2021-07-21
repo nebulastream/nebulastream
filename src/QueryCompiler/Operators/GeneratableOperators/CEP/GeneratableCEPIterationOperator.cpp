@@ -46,7 +46,7 @@ GeneratableOperatorPtr GeneratableCEPIterationOperator::create(OperatorId id,
 
 void GeneratableCEPIterationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
 
-    codegen->generateCodeForCEPIteration(minIteration, maxIteration, context);
+    codegen->generateCodeForCEPIterationOperator(minIteration, maxIteration, context);
 }
 
 OperatorNodePtr GeneratableCEPIterationOperator::copy() { return create(id, inputSchema, outputSchema, minIteration, maxIteration); }
