@@ -176,6 +176,7 @@ void BM_Complete_Placement(benchmark::State& state,
                            uint8_t batchSize,
                            const std::string& placement,
                            const std::vector<std::string>& queries) {
+    NES::setupLogging("BenchmarkQueryPlacement.log", NES::LOG_FATAL);
     auto cache = cacheSetup(sources, levels, batchSize, queries);
     PlacementStrategyHelper placementStrategyHelper = cache.first;
     auto sharedPlans = cache.second;
@@ -197,6 +198,7 @@ void BM_Partial_Placement(benchmark::State& state,
                           uint8_t batchSize,
                           const std::string& placement,
                           const std::vector<std::string>& queries) {
+    NES::setupLogging("BenchmarkQueryPlacement.log", NES::LOG_FATAL);
     auto cache = cacheSetup(sources, levels, batchSize, queries);
     PlacementStrategyHelper placementStrategyHelper = cache.first;
     auto sharedPlans = cache.second;
@@ -212,6 +214,9 @@ void BM_Partial_Placement(benchmark::State& state,
 }
 
 #define REPETITIONS 5
+#define NUMBER_OF_SOURCES 2
+#define NUMBER_OF_LEVELS 10
+#define CHILDREN_PER_PARENT 10
 
 const std::vector<std::string> partialMerging{
     R"(Query::from("car").filter(Attribute("value") > 5).sink(PrintSinkDescriptor::create());)",
@@ -230,129 +235,163 @@ const std::vector<std::string> equalQueries{
 // 10 Level topology max node in each level has maximum of 50 children, TopDown
 BENCHMARK_CAPTURE(BM_Complete_Placement,
                   partial_queries_complete_top_down_hierarchical,
-                  200,
-                  5,
-                  10,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("TopDown"),
                   partialMerging)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Complete_Placement,
                   partial_queries_complete_bottom_up_hierarchical,
-                  200,
-                  5,
-                  10,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("BottomUp"),
                   partialMerging)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Partial_Placement,
                   partial_queries_partial_top_down_hierarchical,
-                  200,
-                  5,
-                  10,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("TopDown"),
                   partialMerging)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Partial_Placement,
                   partial_queries_partial_bottom_up_hierarchical,
-                  200,
-                  5,
-                  10,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("BottomUp"),
                   partialMerging)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Complete_Placement,
                   equal_queries_complete_bottom_up_hierarchical,
-                  200,
-                  5,
-                  10,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("BottomUp"),
                   equalQueries)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Complete_Placement,
                   equal_queries_complete_top_down_hierarchical,
-                  200,
-                  5,
-                  10,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("TopDown"),
                   equalQueries)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Partial_Placement,
                   equal_queries_partial_bottom_up_hierarchical,
-                  200,
-                  5,
-                  10,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("BottomUp"),
                   equalQueries)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Partial_Placement,
                   equal_queries_partial_top_down_hierarchical,
-                  200,
-                  5,
-                  10,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("TopDown"),
                   equalQueries)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Complete_Placement,
                   partial_queries_complete_top_down_flat,
-                  200,
-                  2,
-                  200,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("TopDown"),
                   partialMerging)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Complete_Placement,
                   partial_queries_complete_bottom_up_flat,
-                  200,
-                  2,
-                  200,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("BottomUp"),
                   partialMerging)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Partial_Placement,
                   partial_queries_partial_top_down_flat,
-                  200,
-                  2,
-                  200,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("TopDown"),
                   partialMerging)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Partial_Placement,
                   partial_queries_partial_bottom_up_flat,
-                  200,
-                  2,
-                  200,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("BottomUp"),
                   partialMerging)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 BENCHMARK_CAPTURE(BM_Complete_Placement,
                   equal_queries_complete_bottom_up_flat,
-                  200,
-                  2,
-                  200,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
                   std::string("BottomUp"),
                   equalQueries)
-    ->Repetitions(REPETITIONS);
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
-BENCHMARK_CAPTURE(BM_Complete_Placement, equal_queries_complete_top_down_flat, 200, 2, 200, std::string("TopDown"), equalQueries)
-    ->Repetitions(REPETITIONS);
+BENCHMARK_CAPTURE(BM_Complete_Placement,
+                  equal_queries_complete_top_down_flat,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
+                  std::string("TopDown"),
+                  equalQueries)
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
-BENCHMARK_CAPTURE(BM_Partial_Placement, equal_queries_partial_bottom_up_flat, 200, 2, 200, std::string("BottomUp"), equalQueries)
-    ->Repetitions(REPETITIONS);
+BENCHMARK_CAPTURE(BM_Partial_Placement,
+                  equal_queries_partial_bottom_up_flat,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
+                  std::string("BottomUp"),
+                  equalQueries)
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
-BENCHMARK_CAPTURE(BM_Partial_Placement, equal_queries_partial_top_down_flat, 200, 2, 200, std::string("TopDown"), equalQueries)
-    ->Repetitions(REPETITIONS);
+BENCHMARK_CAPTURE(BM_Partial_Placement,
+                  equal_queries_partial_top_down_flat,
+                  NUMBER_OF_SOURCES,
+                  NUMBER_OF_LEVELS,
+                  CHILDREN_PER_PARENT,
+                  std::string("TopDown"),
+                  equalQueries)
+    ->Repetitions(REPETITIONS)
+    ->DisplayAggregatesOnly(true);
 
 int main(int argc, char** argv) {
     NESLogger->removeAllAppenders();
