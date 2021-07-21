@@ -130,9 +130,9 @@ class CCodeGenerator : public CodeGenerator {
         uint64_t windowOperatorId) override;
 
     /**
-    * generates code for CEP Iterations
-    * @param minIteration - defined minimal occurence of the event
-    * @param maxIteration - defined maximal occurence of the event
+    * generates code for the CEP Iteration operator. This operator counts the occurrences of events and expects at least the given minIterations and at most the given maxIterations.
+    * @param minIteration - defined minimal occurrence of the event
+    * @param maxIteration - defined maximal occurrence of the event
     * @param context - includes the context of the used fields
     * @return flag if the generation was successful.
     */

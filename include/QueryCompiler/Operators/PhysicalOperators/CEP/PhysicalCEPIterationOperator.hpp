@@ -46,6 +46,9 @@ class PhysicalIterationCEPOperator : public PhysicalUnaryOperator {
     uint64_t getMinIterations();
 
   private:
+    /**
+     * minIteration and maxIteration define the interval of event occurrences that satisfy the pattern condition
+     */
     const uint64_t minIterations;
     const uint64_t maxIterations;
 };

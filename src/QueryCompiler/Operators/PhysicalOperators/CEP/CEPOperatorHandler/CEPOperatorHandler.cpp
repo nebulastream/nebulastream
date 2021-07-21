@@ -27,9 +27,7 @@ void CEPOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr c
     this->clearCounter();
 }
 
-void CEPOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
-    //TODO: unregister from stateManager (requires StateVariable, ?localStateVariableId?) stateManager->unRegisterState(STATEVARIABLE)
-}
+void CEPOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {}
 
 void CEPOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
@@ -40,6 +38,8 @@ void CEPOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMes
 }
 
 [[maybe_unused]] void CEPOperatorHandler::addTuple() { counter++; }
+
 [[maybe_unused]] uint64_t CEPOperatorHandler::getCounter() { return counter; }
+
 void CEPOperatorHandler::clearCounter() { counter = 0; }
 }// namespace NES::CEP
