@@ -145,9 +145,11 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
                 }
 
                 // placing the rest of the operator except the sink
-                auto randomGenerator = std::bind(std::uniform_int_distribution<>(0,1),std::default_random_engine());
+                std::random_device rd;
+                std::mt19937 mt(rd());
+                std::uniform_real_distribution<double> dist(0.0, 1.0);
                 while (currentTopologyNodePtr != topology->getRoot()) {
-                    auto stop = randomGenerator();
+                    auto stop = dist(mt) > 0.5;
                     while (!stop && !currentOperator->getParents()[0]->instanceOf<SinkLogicalOperatorNode>()) {// assuming one sink operator
                         currentOperator =
                             currentOperator->getParents()[0]->as<LogicalOperatorNode>();// assuming one parent per operator
@@ -156,7 +158,7 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
                         opIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].second;
                         placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
                         placedOperatorIds.push_back(currentOperator->getId());
-                        stop = randomGenerator();
+                        stop = dist(mt);
                     }
                     currentTopologyNodePtr =
                         currentTopologyNodePtr->getParents()[0]->as<TopologyNode>();// assuming one parent per operator
