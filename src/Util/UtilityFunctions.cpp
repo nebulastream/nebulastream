@@ -43,6 +43,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -496,4 +497,17 @@ bool UtilityFunctions::assignPropertiesToQueryOperators(const QueryPlanPtr& quer
 
     return true;
 }
+
+void UtilityFunctions::fillEnvelopeBuffer(char* buffer, bool isSchema, uint64_t numberOfTuples, uint64_t watermark) {
+    int offset = 0;
+
+    std::memcpy(buffer, &isSchema, sizeof(bool));
+    offset += sizeof(bool);
+
+    std::memcpy(buffer + offset, &numberOfTuples, sizeof(uint64_t));
+    offset += sizeof(uint64_t);
+
+    std::memcpy(buffer + offset, &watermark, sizeof(uint64_t));
+}
+
 }// namespace NES

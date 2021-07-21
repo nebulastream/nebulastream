@@ -227,6 +227,15 @@ class UtilityFunctions {
     static bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                                  std::vector<std::map<std::string, std::any>> properties);
 
+    /**
+     *
+     * @param buffer to till
+     * @param isSchema  flag that decides of envelope contains schema metadata
+     * @param numberOfTuples (size of buffer in case isSchema is true)
+     * @param watermark
+     */
+    static void fillEnvelopeBuffer(char* buffer, bool isSchema, uint64_t numberOfTuples, uint64_t watermark);
+
   private:
     /**
      * @brief This method is responsible for returning the location where the sub query terminates

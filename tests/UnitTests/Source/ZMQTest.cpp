@@ -26,6 +26,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;
@@ -125,12 +126,16 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
     while (!receiving_finished) {
 
         // Send data from here.
-        auto const envelopeSizeBytes = 16;
-        zmq::message_t message_tupleCnt(envelopeSizeBytes);
-        memcpy(message_tupleCnt.data(), &tupCnt, envelopeSizeBytes);
-        static_cast<uint64_t*>(message_tupleCnt.data())[1] = static_cast<uint64_t>(0ull);
+        const int envelopeSize =  (sizeof(uint64_t) * 2) + sizeof(bool);
+        zmq::message_t message_tupleCnt(envelopeSize);
+
+        char envelopeData[envelopeSize];
+        UtilityFunctions::fillEnvelopeBuffer(envelopeData, true, tupCnt, 0);
+        memcpy(message_tupleCnt.data(), &envelopeData, envelopeSize);
+
+//        static_cast<uint64_t*>(message_tupleCnt.data())[1] = static_cast<uint64_t>(0ull);
         if (auto const sentEnvelope = socket.send(message_tupleCnt, zmq::send_flags::sndmore).value_or(0);
-            sentEnvelope != envelopeSizeBytes) {
+            sentEnvelope != envelopeSize) {
             NES_ERROR("ZMQ Test Error: Sending message metadata failed!" << sentEnvelope << message_tupleCnt.size());
         }
 

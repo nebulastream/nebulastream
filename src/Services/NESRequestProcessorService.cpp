@@ -121,6 +121,8 @@ void NESRequestProcessorService::start() {
                                                               + std::to_string(sharedQueryId));
                         }
 
+                        NES_DEBUG("QueryProcessingService: Performing Query Deployment for query with shared query id : "
+                                      << sharedQueryId);
                         bool successful = queryDeploymentPhase->execute(sharedQueryId);
                         if (!successful) {
                             throw QueryDeploymentException(

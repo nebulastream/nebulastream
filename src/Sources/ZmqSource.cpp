@@ -64,7 +64,7 @@ std::optional<NodeEngine::TupleBuffer> ZmqSource::receiveData() {
         try {
 
             // Receive metadata
-            auto const metadataSize = sizeof(uint64_t) * 2;
+            auto const metadataSize = sizeof(bool) + (sizeof(uint64_t) * 2);
             zmq::message_t metadata{metadataSize};
 
             // TODO: Clarify following comment: envelope - not needed at the moment
@@ -75,8 +75,16 @@ std::optional<NodeEngine::TupleBuffer> ZmqSource::receiveData() {
             }
 
             auto buffer = bufferManager->getBufferBlocking();
-            buffer.setNumberOfTuples(static_cast<uint64_t*>(metadata.data())[0]);
-            buffer.setWatermark(static_cast<uint64_t*>(metadata.data())[1]);
+            int offset = sizeof(bool);
+
+            uint64_t numberOfTuples = 0;
+            uint64_t watermark = 0;
+            std::memcpy(&numberOfTuples, static_cast<char*>(metadata.data()) + offset, sizeof(uint64_t));
+            offset += sizeof(uint64_t);
+            std::memcpy(&watermark, static_cast<char*>(metadata.data()) + offset, sizeof(uint64_t));
+
+            buffer.setNumberOfTuples(numberOfTuples);
+            buffer.setWatermark(watermark);
             NES_DEBUG("ZMQSource received #tups " << buffer.getNumberOfTuples() << " watermark=" << buffer.getWatermark());
 
             // Receive payload

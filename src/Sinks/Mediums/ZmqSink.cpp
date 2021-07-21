@@ -16,9 +16,7 @@
 
 #include <Sinks/Mediums/ZmqSink.hpp>
 
-#include <cassert>
 #include <cstdint>
-#include <cstring>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -26,7 +24,9 @@
 #include <zmq.hpp>
 
 #include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -65,17 +65,17 @@ bool ZmqSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worker
     }
 
     if (!schemaWritten && !internal) {//TODO:atomic
-        NES_DEBUG("FileSink::getData: write schema");
+        NES_DEBUG("ZmqSink::getData: write schema");
         auto schemaBuffer = sinkFormat->getSchema();
         if (schemaBuffer) {
             NES_DEBUG("ZmqSink writes schema buffer");
             try {
-
                 // Send Header
-                std::array<uint64_t, 2> const envelopeData{schemaBuffer->getNumberOfTuples(), schemaBuffer->getWatermark()};
-                constexpr auto envelopeSize = sizeof(uint64_t) * 2;
-                static_assert(envelopeSize == sizeof(envelopeData));
-                zmq::message_t envelope{&(envelopeData[0]), envelopeSize};
+                const int envelopeSize =  (sizeof(uint64_t) * 2) + sizeof(bool);
+                char envelopeData;
+                UtilityFunctions::fillEnvelopeBuffer(&envelopeData, true,schemaBuffer->getNumberOfTuples(), schemaBuffer->getWatermark());
+
+                zmq::message_t envelope{&envelopeData, envelopeSize};
                 if (auto const sentEnvelopeSize = socket.send(envelope, zmq::send_flags::sndmore).value_or(0);
                     sentEnvelopeSize != envelopeSize) {
                     NES_DEBUG("ZmqSink  " << this << ": schema send NOT successful");
@@ -112,9 +112,10 @@ bool ZmqSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worker
             ++sentBuffer;
 
             // Create envelope
-            std::array<uint64_t, 2> const envelopeData{buffer.getNumberOfTuples(), buffer.getWatermark()};
-            static_assert(sizeof(envelopeData) == sizeof(uint64_t) * 2);
-            zmq::message_t envelope{&(envelopeData[0]), sizeof(envelopeData)};
+            const int envelopeSize =  (sizeof(uint64_t) * 2) + sizeof(bool);
+            char envelopeData[envelopeSize];
+            UtilityFunctions::fillEnvelopeBuffer(envelopeData, false, buffer.getNumberOfTuples(), buffer.getWatermark());
+            zmq::message_t envelope{&(envelopeData), sizeof(envelopeData)};
             if (auto const sentEnvelope = socket.send(envelope, zmq::send_flags::sndmore).value_or(0);
                 sentEnvelope != sizeof(envelopeData)) {
                 NES_WARNING("ZmqSink  " << this << ": data payload send NOT successful");
