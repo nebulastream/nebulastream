@@ -72,8 +72,14 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         }
     }
 
-    if (inputSchema == nullptr) { NES_FATAL_ERROR("BufferOptimizationPhase: No Scan operator found in pipeline"); }
-    if (emitNode == nullptr || outputSchema == nullptr) { NES_FATAL_ERROR("BufferOptimizationPhase: No Emit operator found in pipeline"); }
+    if (inputSchema == nullptr) {
+        NES_DEBUG("BufferOptimizationPhase: No Scan operator found in pipeline. Optimization was requested, but no optimization can be applied.");
+        return operatorPipeline;
+    }
+    if (emitNode == nullptr || outputSchema == nullptr) {
+        NES_DEBUG("BufferOptimizationPhase: No Emit operator found in pipeline. Optimization was requested, but no optimization can be applied.");
+        return operatorPipeline;
+    }
 
     // Check if necessary conditions are fulfilled and set the desired strategy in the emit operator:
     if (inputSchema->equals(outputSchema) && !filterOperatorFound && (level == ONLY_INPLACE_OPERATIONS_NO_FALLBACK || level == ALL)) {
