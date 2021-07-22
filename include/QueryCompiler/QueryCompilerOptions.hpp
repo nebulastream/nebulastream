@@ -16,7 +16,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <QueryCompiler/Phases/BufferOptimizationStrategies.hpp>
+#include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <cstdint>
 namespace NES {
 namespace QueryCompilation {
@@ -50,12 +50,12 @@ class QueryCompilerOptions {
     /**
      * @brief Sets desired buffer optimization strategy.
      */
-    void setBufferOptimizationStrategy(BufferOptimizationStrategy strategy);
+    void setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel level);
 
     /**
      * @brief Returns desired buffer optimization strategy.
      */
-    BufferOptimizationStrategy getBufferOptimizationStrategy() const;
+    OutputBufferOptimizationLevel getOutputBufferOptimizationLevel() const;
 
     /**
      * @brief Sets the number of local buffers per source.
@@ -71,7 +71,7 @@ class QueryCompilerOptions {
   protected:
     bool operatorFusion;
     uint64_t numSourceLocalBuffers;
-    BufferOptimizationStrategy desiredBufferStrategy;
+    OutputBufferOptimizationLevel outputBufferOptimizationLevel;
 };
 }// namespace QueryCompilation
 }// namespace NES

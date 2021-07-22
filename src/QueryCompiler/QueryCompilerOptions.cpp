@@ -23,9 +23,9 @@ void QueryCompilerOptions::enableOperatorFusion() { this->operatorFusion = true;
 
 void QueryCompilerOptions::disableOperatorFusion() { this->operatorFusion = false; }
 
-BufferOptimizationStrategy QueryCompilerOptions::getBufferOptimizationStrategy() const { return desiredBufferStrategy; };
+OutputBufferOptimizationLevel QueryCompilerOptions::getOutputBufferOptimizationLevel() const { return outputBufferOptimizationLevel; };
 
-void QueryCompilerOptions::setBufferOptimizationStrategy(BufferOptimizationStrategy strategy) { this->desiredBufferStrategy = strategy; };
+void QueryCompilerOptions::setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel level) { this->outputBufferOptimizationLevel = level; };
 
 void QueryCompilerOptions::setNumSourceLocalBuffers(uint64_t num) { this->numSourceLocalBuffers = num; }
 
@@ -35,7 +35,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     auto options = QueryCompilerOptions();
     options.enableOperatorFusion();
     options.setNumSourceLocalBuffers(64);
-    options.setBufferOptimizationStrategy(HIGHEST_POSSIBLE);
+    options.setOutputBufferOptimizationLevel(ALL);
     return std::make_shared<QueryCompilerOptions>(options);
 }
 

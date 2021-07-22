@@ -78,6 +78,6 @@ LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQ
 }
 BufferOptimizationPhasePtr DefaultPhaseFactory::createBufferOptimizationPhase(QueryCompilerOptionsPtr options) {
     NES_DEBUG("Create buffer optimization phase");
-    return BufferOptimizationPhase::create(options->getBufferOptimizationStrategy());
+    return BufferOptimizationPhase::create(options->getOutputBufferOptimizationLevel());
 }
 }// namespace NES::QueryCompilation::Phases

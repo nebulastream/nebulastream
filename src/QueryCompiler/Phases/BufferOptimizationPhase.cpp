@@ -29,12 +29,12 @@
 namespace NES::QueryCompilation {
 
 BufferOptimizationPhasePtr
-BufferOptimizationPhase::BufferOptimizationPhase::create(BufferOptimizationStrategy desiredOptimization) {
-    return std::make_shared<BufferOptimizationPhase>(desiredOptimization);
+BufferOptimizationPhase::BufferOptimizationPhase::create(OutputBufferOptimizationLevel level) {
+    return std::make_shared<BufferOptimizationPhase>(level);
 }
 
-BufferOptimizationPhase::BufferOptimizationPhase(BufferOptimizationStrategy desiredOptimization)
-    : desiredStrategy(desiredOptimization) {}  // TODO move needed for enum ?
+BufferOptimizationPhase::BufferOptimizationPhase(OutputBufferOptimizationLevel level)
+    : level(level) {}  // TODO move needed for enum ?
 
 PipelineQueryPlanPtr BufferOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
@@ -46,7 +46,7 @@ PipelineQueryPlanPtr BufferOptimizationPhase::apply(PipelineQueryPlanPtr pipelin
 }
 
 OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
-    if (desiredStrategy == NO_OPTIMIZATION) {
+    if (level == NO) {
         NES_DEBUG("BufferOptimizationPhase: No optimization requested or applied.");
         return operatorPipeline;
     }
@@ -76,23 +76,33 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     if (emitNode == nullptr || outputSchema == nullptr) { NES_FATAL_ERROR("BufferOptimizationPhase: No Emit operator found in pipeline"); }
 
     // Check if necessary conditions are fulfilled and set the desired strategy in the emit operator:
-    if (inputSchema->equals(outputSchema) && !filterOperatorFound && (desiredStrategy == ONLY_INPLACE_OPERATIONS || desiredStrategy == HIGHEST_POSSIBLE)) {
+    if (inputSchema->equals(outputSchema) && !filterOperatorFound && (level == ONLY_INPLACE_OPERATIONS_NO_FALLBACK || level == ALL)) {
         // The highest level of optimization - just modifying the input buffer in place and passing it on - can be applied as there are no filter statements etc.
-        emitNode->setBufferOptimizationStrategy(ONLY_INPLACE_OPERATIONS);
+        emitNode->setOutputBufferAllocationStrategy(ONLY_INPLACE_OPERATIONS);
         NES_DEBUG("BufferOptimizationPhase: Assign ONLY_INPLACE_OPERATIONS optimization strategy to pipeline.");
-    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (desiredStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || desiredStrategy == HIGHEST_POSSIBLE)) {
-        // The optimizations  "reuse input buffer as output buffer" and "omit size check" can be applied.
-        emitNode->setBufferOptimizationStrategy(REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK);
-        NES_DEBUG("BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
-    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (desiredStrategy == REUSE_INPUT_BUFFER || desiredStrategy == HIGHEST_POSSIBLE)) {
-        // The optimization  "reuse input buffer as output buffer" can be applied.
-        emitNode->setBufferOptimizationStrategy(REUSE_INPUT_BUFFER);
-        NES_DEBUG("BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER optimization strategy to pipeline.");
-    } else if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (desiredStrategy == OMIT_OVERFLOW_CHECK || desiredStrategy == HIGHEST_POSSIBLE)) {
-        // The optimization "omit size check" can be applied.
-        emitNode->setBufferOptimizationStrategy(OMIT_OVERFLOW_CHECK);
-        NES_DEBUG("BufferOptimizationPhase: Assign OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
+        return operatorPipeline;
     }
+    if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (level == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK || level == ALL)) {
+        // The optimizations  "reuse input buffer as output buffer" and "omit size check" can be applied.
+        emitNode->setOutputBufferAllocationStrategy(REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK);
+        NES_DEBUG("BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
+        return operatorPipeline;
+    }
+    if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (level == REUSE_INPUT_BUFFER_NO_FALLBACK || level == ALL)) {
+        // The optimization  "reuse input buffer as output buffer" can be applied.
+        emitNode->setOutputBufferAllocationStrategy(REUSE_INPUT_BUFFER);
+        NES_DEBUG("BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER optimization strategy to pipeline.");
+        return operatorPipeline;
+    }
+    if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (level == OMIT_OVERFLOW_CHECK_NO_FALLBACK || level == ALL)) {
+        // The optimization "omit size check" can be applied.
+        emitNode->setOutputBufferAllocationStrategy(OMIT_OVERFLOW_CHECK);
+        NES_DEBUG("BufferOptimizationPhase: Assign OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
+        return operatorPipeline;
+    }
+
+    // level != NO, but still no optimization can be applied
+    NES_DEBUG("BufferOptimizationPhase: Optimization was requested, but no optimization can be applied.");
 
     return operatorPipeline;
 }

@@ -30,7 +30,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
-#include <QueryCompiler/Phases/BufferOptimizationStrategies.hpp>
+#include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -93,7 +93,7 @@ class CodeGenerator {
     * @param bufferStrategy Strategy for allocation of and writing to result buffer.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForEmit(SchemaPtr sinkSchema, BufferOptimizationStrategy bufferStrategy, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, PipelineContextPtr context) = 0;
 
     /**
      * @brief Code generation for a watermark assigner operator.
