@@ -19,27 +19,27 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <QueryCompiler/Phases/BufferOptimizationStrategies.hpp>
+#include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <vector>
 
 namespace NES {
 namespace QueryCompilation {
 
 /**
- * @brief This phase lowers a pipeline plan of physical operators into a pipeline plan of generatable operators.
- * The lowering of individual operators is defined by the generatable operator provider to improve extendability.
+ * @brief This phase scans all pipelines and determines if the OutputBufferOptimizationLevel (level) requested by the user can be applied.
+ * It then notes the correct OutputBufferAllocationStrategy in the Emit operator of the pipeline.
  */
 class BufferOptimizationPhase {
 public:
     /**
      * @brief Constructor to create a BufferOptimizationPhase
      */
-    explicit BufferOptimizationPhase(BufferOptimizationStrategy desiredOptimization);
+    explicit BufferOptimizationPhase(OutputBufferOptimizationLevel level);
 
     /**
      * @brief Create a BufferOptimizationPhase
      */
-    static BufferOptimizationPhasePtr create(BufferOptimizationStrategy desiredOptimization);
+    static BufferOptimizationPhasePtr create(OutputBufferOptimizationLevel level);
 
     /**
      * @brief Applies the phase on a pipelined query plan. Analyzes every pipeline to see if buffer optimization can be applied.
@@ -55,7 +55,7 @@ public:
      */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 private:
-    BufferOptimizationStrategy desiredStrategy;
+    OutputBufferOptimizationLevel level;
 };
 }// namespace QueryCompilation
 }// namespace NES

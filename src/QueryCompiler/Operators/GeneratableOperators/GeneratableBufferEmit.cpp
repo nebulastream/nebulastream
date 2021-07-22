@@ -39,9 +39,9 @@ std::string GeneratableBufferEmit::toString() const { return "GeneratableBufferE
 
 OperatorNodePtr GeneratableBufferEmit::copy() { return create(id, outputSchema); }
 
-BufferOptimizationStrategy GeneratableBufferEmit::getBufferOptimizationStrategy() const { return bufferStrategy; };
+OutputBufferAllocationStrategy GeneratableBufferEmit::getOutputBufferAllocationStrategy() const { return bufferStrategy; };
 
-void GeneratableBufferEmit::setBufferOptimizationStrategy(BufferOptimizationStrategy strategy) { this->bufferStrategy = strategy; };
+void GeneratableBufferEmit::setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy strategy) { this->bufferStrategy = strategy; };
 
 
 }// namespace NES::QueryCompilation::GeneratableOperators

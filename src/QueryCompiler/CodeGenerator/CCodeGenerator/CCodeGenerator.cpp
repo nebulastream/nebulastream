@@ -381,7 +381,7 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, LegacyExpressio
     return true;
 }
 
-bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, BufferOptimizationStrategy bufferStrategy, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, PipelineContextPtr context) {
 
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for Sink.");
