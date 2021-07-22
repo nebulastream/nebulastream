@@ -44,9 +44,7 @@ IFCOPStrategy::IFCOPStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
     : BasePlacementStrategy(std::move(globalExecutionPlan),
                             std::move(topology),
                             std::move(typeInferencePhase),
-                            std::move(streamCatalog)) {
-
-}
+                            std::move(streamCatalog)) {}
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // initiate operatorIdToNodePlacementMap
@@ -78,6 +76,8 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     assignMappingToTopology(topology, queryPlan, bestCandidate);
 
     addNetworkSourceAndSinkOperators(queryPlan);
+
+    // TODO 1018: randomly error on second test
     return runTypeInferencePhase(queryPlan->getQueryId());
 }
 std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan) {
@@ -212,8 +212,11 @@ double IFCOPStrategy::getLocalCost(std::vector<bool> nodePlacement, NES::QueryPl
     double cost = 1.0;
     for (auto qPlanItr = queryPlanIterator.begin(); qPlanItr != QueryPlanIterator::end(); ++qPlanItr) {
         auto currentOperator = (*qPlanItr)->as<OperatorNode>();
-        double dmf = 1;
-        //        double dmf = std::any_cast<double>(currentOperator->getProperty("DMF"));
+
+        double dmf = 1; // fallback if DMF properties does not exist in the current operator
+        if (currentOperator->checkIfPropertyExist("DMF")) {
+            dmf = std::any_cast<double>(currentOperator->getProperty("DMF"));
+        }
         cost = cost * (nodePlacement[opIdx] * dmf + (1 - nodePlacement[opIdx]));
     }
     return cost;

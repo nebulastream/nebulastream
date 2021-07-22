@@ -167,6 +167,10 @@ void OperatorNode::addProperty(const std::string& key, const std::any& value) { 
 
 std::any OperatorNode::getProperty(const std::string& key) { return properties.at(key); }
 
+bool OperatorNode::checkIfPropertyExist(const std::string& key) {
+    return properties.find( key ) != properties.end();
+}
+
 void OperatorNode::removeProperty(const std::string& key) { properties.erase(key); }
 
 }// namespace NES

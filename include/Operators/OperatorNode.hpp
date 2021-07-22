@@ -151,6 +151,13 @@ class OperatorNode : public Node {
      */
     void removeProperty(const std::string& key);
 
+    /**
+     * Check if the given property exists in the current operator
+     * @param key key of the property to check
+     * @return true if property exists
+     */
+    bool checkIfPropertyExist(const std::string& key);
+
   protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
