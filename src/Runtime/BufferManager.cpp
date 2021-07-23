@@ -93,9 +93,7 @@ void BufferManager::initialize(uint32_t withAlignment) {
     uint64_t requiredMemorySpace = (uint64_t) this->bufferSize * (uint64_t) this->numOfBuffers;
     NES_DEBUG("NES malloc " << requiredMemorySpace << " out of " << memorySizeInBytes << " available bytes");
 
-    if (requiredMemorySpace > memorySizeInBytes) {
-        NES_THROW_RUNTIME_ERROR("NES tries to malloc more memory than physically available");
-    }
+    NES_ASSERT2_FMT(requiredMemorySpace < memorySizeInBytes, "NES tries to malloc more memory than physically available requested=" << requiredMemorySpace << " available=" << memorySizeInBytes);
     if (withAlignment > 0) {
         if ((withAlignment & (withAlignment - 1))) {// not a pow of two
             NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is not a pow of two");
