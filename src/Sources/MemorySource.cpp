@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <Runtime/internal/rte_memory.h>
+#include <Runtime/internal/apex_memmove.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -101,7 +102,11 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
         case copyBuffer: {
             buffer = bufferManager->getBufferBlocking();
+#if 1
+            apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+#else
             rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+#endif
             break;
         }
         case wrapBuffer: {

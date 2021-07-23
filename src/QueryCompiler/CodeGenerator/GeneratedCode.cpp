@@ -21,6 +21,7 @@ namespace NES::QueryCompilation {
 GeneratedCode::GeneratedCode()
     : structDeclarationResultTuple(StructDeclaration::create("ResultTuple", "")),
       varDeclarationInputBuffer(VariableDeclaration::create(DataTypeFactory::createInt32(), "input_buffers")),
+      varDeclarationNumOfInputTuples(VariableDeclaration::create(DataTypeFactory::createUInt64(), "numberOfTuples")),
       varDeclarationResultBuffer(VariableDeclaration::create(DataTypeFactory::createInt32(), "output_buffer")),
       varDeclarationWorkerContext(VariableDeclaration::create(DataTypeFactory::createInt32(), "worker_context")),
       varDeclarationExecutionContext(VariableDeclaration::create(DataTypeFactory::createInt32(), "output_buffer")),
