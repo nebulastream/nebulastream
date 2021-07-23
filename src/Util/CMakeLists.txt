@@ -18,7 +18,6 @@ add_source_nes(
         TimeMeasurement.cpp
         StacktraceLoader.cpp
         ThreadNaming.cpp
-        apex_memmove.cpp
 )
 if (NES_USE_MQTT)
     add_source_nes(
