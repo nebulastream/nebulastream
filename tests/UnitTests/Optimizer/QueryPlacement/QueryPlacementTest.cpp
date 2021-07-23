@@ -855,61 +855,45 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
 
-    uint32_t mapPlacementCount = 0;
     EXPECT_EQ(executionNodes.size(), 3UL);
+    // check if map is placed two times
+    uint32_t mapPlacementCount = 0;
+
+    bool isSinkPlacementValid = false;
+    bool isSource1PlacementValid = false;
     for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 0U) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
-            EXPECT_EQ(querySubPlans.size(), 1U);
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(testQueryPlan->getQueryId())) {
+            OperatorNodePtr root = querySubPlan->getRootOperators()[0];
 
-            auto querySubPlan = querySubPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            EXPECT_EQ(actualRootOperators.size(), 1U);
-
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-
-            if (actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>()) {
-                mapPlacementCount++;
-            } else {
-                EXPECT_TRUE(
-                    actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());//system generated source
+            // if the current operator is the sink of the query, it must be placed in the sink node (topology node with id 0)
+            if (root->as<SinkLogicalOperatorNode>()->getId() == testQueryPlan->getSinkOperators()[0]->getId()) {
+                isSinkPlacementValid = executionNode->getTopologyNode()->getId() == 0;
             }
-        } else if (executionNode->getId() == 1U) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
-            EXPECT_EQ(querySubPlans.size(), 1U);
 
-            auto querySubPlan = querySubPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            EXPECT_EQ(actualRootOperators.size(), 1U);
-
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-
-            if (actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>()) {
-                mapPlacementCount++;
-            } else {
-                EXPECT_TRUE(
-                    actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());//system generated source
-            }
-        } else if (executionNode->getId() == 2U) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
-            EXPECT_EQ(querySubPlans.size(), 1U);
-
-            auto querySubPlan = querySubPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            EXPECT_EQ(actualRootOperators.size(), 1U);
-
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            if (actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>()) {
-                mapPlacementCount++;
-            } else {
-                EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());//stream source
+            for (const auto& child : root->getChildren()) {
+                if (child->instanceOf<MapLogicalOperatorNode>()) {
+                    mapPlacementCount++;
+                    for (const auto &childrenOfMapOp: child->getChildren()) {
+                        // if the current operator is a stream source, it should be placed in topology node with id=2 (source nodes)
+                        if (childrenOfMapOp->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
+                            isSource1PlacementValid =
+                                executionNode->getTopologyNode()->getId() == 2;
+                        }
+                    }
+                } else {
+                    EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
+                    // if the current operator is a stream source, it should be placed in topology node with id=2 (source nodes)
+                    if (child->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
+                        isSource1PlacementValid =
+                            executionNode->getTopologyNode()->getId() == 2;
+                    }
+                }
             }
         }
-        // TODO 1018 check if sink operator are placed in the sink node
-
-        // TODO 1018 check if source operator are placed in the source node
     }
+
+    EXPECT_TRUE(isSinkPlacementValid);
+    EXPECT_TRUE(isSource1PlacementValid);
     EXPECT_EQ(mapPlacementCount, 1U);
 }
 
@@ -922,8 +906,6 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
  */
 TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
     // Setup the topology
-    // We are using a linear topology of three nodes:
-    // srcNode -> midNode -> sinkNode
     auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4);
     auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
     auto midNode2 = TopologyNode::create(2, "localhost", 4002, 5002, 4);
@@ -1004,29 +986,54 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
 
-    std::vector<OperatorId> sourceOperatorIds;
-    for (auto srcOp : testQueryPlan->getSourceOperators()) {
-        sourceOperatorIds.push_back(srcOp->getId());
-    }
-
-    EXPECT_EQ(executionNodes.size(), 3UL);
+    EXPECT_EQ(executionNodes.size(), 5UL);
     // check if map is placed two times
     uint32_t mapPlacementCount = 0;
 
+    bool isSinkPlacementValid = false;
+    bool isSource1PlacementValid = false;
+    bool isSource2PlacementValid = false;
     for (const auto& executionNode : executionNodes) {
         for (const auto& querySubPlan : executionNode->getQuerySubPlans(testQueryPlan->getQueryId())) {
             OperatorNodePtr root = querySubPlan->getRootOperators()[0];
+
+            // if the current operator is the sink of the query, it must be placed in the sink node (topology node with id 0)
+            if (root->as<SinkLogicalOperatorNode>()->getId() == testQueryPlan->getSinkOperators()[0]->getId()) {
+                isSinkPlacementValid = executionNode->getTopologyNode()->getId() == 0;
+            }
+
             for (const auto& child : root->getChildren()) {
                 if (child->instanceOf<MapLogicalOperatorNode>()) {
                     mapPlacementCount++;
+                    for (const auto &childrenOfMapOp: child->getChildren()) {
+                        // if the current operator is a stream source, it should be placed in topology node with id 3 or 4 (source nodes)
+                        if (childrenOfMapOp->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
+                            isSource1PlacementValid =
+                                executionNode->getTopologyNode()->getId() == 3 || executionNode->getTopologyNode()->getId() == 4;
+                        } else if (childrenOfMapOp->as<SourceLogicalOperatorNode>()->getId()
+                                   == testQueryPlan->getSourceOperators()[1]->getId()) {
+                            isSource2PlacementValid =
+                                executionNode->getTopologyNode()->getId() == 3 || executionNode->getTopologyNode()->getId() == 4;
+                        }
+                    }
                 } else {
                     EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
+                    // if the current operator is a stream source, it should be placed in topology node with id 3 or 4 (source nodes)
+                    if (child->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
+                        isSource1PlacementValid =
+                            executionNode->getTopologyNode()->getId() == 3 || executionNode->getTopologyNode()->getId() == 4;
+                    } else if (child->as<SourceLogicalOperatorNode>()->getId()
+                               == testQueryPlan->getSourceOperators()[1]->getId()) {
+                        isSource2PlacementValid =
+                            executionNode->getTopologyNode()->getId() == 3 || executionNode->getTopologyNode()->getId() == 4;
+                    }
                 }
             }
         }
-        // TODO 1018 check if sink operator are placed in the sink node
-
-        // TODO 1018 check if source operator are placed in the source node
     }
+
+    EXPECT_TRUE(isSinkPlacementValid);
+    EXPECT_TRUE(isSource1PlacementValid);
+    EXPECT_TRUE(isSource2PlacementValid);
     EXPECT_EQ(mapPlacementCount, 2U);
 }

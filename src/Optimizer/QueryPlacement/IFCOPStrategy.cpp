@@ -15,10 +15,12 @@
 */
 
 #include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
@@ -48,9 +50,10 @@ IFCOPStrategy::IFCOPStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // initiate operatorIdToNodePlacementMap
-    auto topologyIterator = BreadthFirstNodeIterator(topology->getRoot());
+    auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
     uint32_t topoIdx = 0;
-    for (auto topoItr = topologyIterator.begin(); topoItr != NES::BreadthFirstNodeIterator::end(); ++topoItr) {
+    for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {
+        NES_DEBUG("IFCOP::DEBUG:: topoid=" << (*topoItr)->as<TopologyNode>()->getId());
         topologyNodeIdToIndexMap.insert({(*topoItr)->as<TopologyNode>()->getId(), topoIdx});
         topoIdx++;
     }
@@ -73,11 +76,19 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
         NES_DEBUG("IFCOP: currentCost: " << currentCost);
     }
 
+    // BEGIN DEBUG
+    QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto qPlanIter = queryPlanIterator.begin(); qPlanIter != QueryPlanIterator::end(); ++qPlanIter) {
+        NES_DEBUG("IFCOP::DEBUG:: op=" << (*qPlanIter)->as<OperatorNode>()->toString());
+    }
+
+    // END DEBUG
     assignMappingToTopology(topology, queryPlan, bestCandidate);
 
     addNetworkSourceAndSinkOperators(queryPlan);
 
-    // TODO 1018: randomly error on second test
+    NES_DEBUG("IFCOP::DEBUG after network source and sinkGEP:\n" << globalExecutionPlan->getAsString() );
+
     return runTypeInferencePhase(queryPlan->getQueryId());
 }
 std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan) {
@@ -86,12 +97,12 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
 
     std::map<std::pair<OperatorId, uint64_t>, std::pair<uint64_t, uint64_t>> matrixMapping;
 
-    auto topologyIterator = BreadthFirstNodeIterator(topology->getRoot());
+    auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
 
     uint64_t topoIdx = 0;
 
     // prepare the mapping
-    for (auto topoItr = topologyIterator.begin(); topoItr != NES::BreadthFirstNodeIterator::end(); ++topoItr) {
+    for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {
         // add a new entry in the binary mapping for the current node
         std::vector<bool> currentTopologyNodeMapping;
         QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
@@ -189,8 +200,8 @@ double IFCOPStrategy::getCost(std::vector<std::vector<bool>> placementCandidate,
     // compute over-utilization cost
     uint32_t nodeIndex = 0;
     uint32_t overutilizationCost = 0;
-    auto topologyIterator = BreadthFirstNodeIterator(topology->getRoot());
-    for (auto topoItr = topologyIterator.begin(); topoItr != NES::BreadthFirstNodeIterator::end(); ++topoItr) {
+    auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
+    for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {
         auto currentTopologyNode = (*topoItr)->as<TopologyNode>();
         auto totalAssignedOperators =
             std::count_if(placementCandidate[nodeIndex].begin(), placementCandidate[nodeIndex].end(), [](bool item) {
