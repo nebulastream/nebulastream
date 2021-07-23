@@ -748,3 +748,30 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
         }
     }
 }
+
+TEST_F(QueryPlacementTest, testPlacingQueryWithGradientStrategy){
+    setupTopologyAndStreamCatalog();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("Gradient", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+
+    Query query = Query::from("car")
+                      .filter(Attribute("id") < 45)
+                      .map(Attribute("c") = Attribute("value") * 2)
+                      .sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    placementStrategy->updateGlobalExecutionPlan(queryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    ASSERT_EQ(executionNodes.size(), 3u);
+    //Todo: finalize tests
+}

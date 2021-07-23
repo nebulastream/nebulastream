@@ -25,7 +25,7 @@ namespace NES::Optimizer {
 
 class GradientStrategy : public BasePlacementStrategy {
   public:
-    ~GradientStrategy(){};
+    ~BottomUpStrategy() override = default;
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
 
@@ -40,18 +40,29 @@ class GradientStrategy : public BasePlacementStrategy {
                               TypeInferencePhasePtr typeInferencePhase,
                               StreamCatalogPtr streamCatalog);
 
-    torch::Tensor paramWeights = torch::Tensor([4.0, 5.0, 20.0, 10.0])
+    void placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan);
+
+    std::vector<NodePtr> findPathToRoot(NodePtr sourceNode);
+    torch::Tensor computePlacement(std::vector<NodePtr> operators, std::vector<NodePtr> nodes);
+    at::Tensor finalize(at::Tensor tensor);
 
 
-    void createOperatorCostTensor(QueryPlanPtr queryPlan);
+    torch::Tensor operatorPlacement(torch::Tensor assignmentMatrix,
+                                    torch::Tensor operatorCostMatrix,
+                                    torch::Tensor finalizedMatrix,
+                                    std::vector<NodePtr> nodes,
+                                    int opIndex);
 
-    void createTopologyMatrix(TopologyPtr topology);
+    torch::Tensor assignCostParameter(std::vector<NodePtr> vector);
 
-    void createFinalizedMatrix(TopologyPtr topology);
+    void reduceResources(std::vector<NodePtr> nodes, at::Tensor placementTensor);
 
-    void operatorPlacement(QueryPlanPtr queryPlan, int operatorIndex, torch::Tensor topologyMatrix, torch::Tensor costTensor);
+    std::map<int, std::vector<int>>
+    operatorAssignment(std::vector<NodePtr> operators, std::vector<NodePtr> nodes, torch::Tensor finalizedMatrix);
 
-    void createOperatorCostTensor(QueryPlanPtr queryPlan);
+    void finalizePlacement(const QueryPlanPtr& queryPlan, std::map<int, std::vector<int>> assignedOperators);
+    std::map<int, std::vector<int>> modifyMapping(std::map<int, std::vector<int>> assignedOperators,
+                                                  std::map<int, std::vector<int>> input);
 };
 
 }
