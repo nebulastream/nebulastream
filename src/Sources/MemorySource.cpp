@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Runtime/internal/rte_memory.h>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -101,7 +101,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
         case copyBuffer: {
             buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+            rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
             break;
         }
         case wrapBuffer: {
