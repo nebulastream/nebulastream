@@ -76,18 +76,9 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
         NES_DEBUG("IFCOP: currentCost: " << currentCost);
     }
 
-    // BEGIN DEBUG
-    QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
-    for (auto qPlanIter = queryPlanIterator.begin(); qPlanIter != QueryPlanIterator::end(); ++qPlanIter) {
-        NES_DEBUG("IFCOP::DEBUG:: op=" << (*qPlanIter)->as<OperatorNode>()->toString());
-    }
-
-    // END DEBUG
     assignMappingToTopology(topology, queryPlan, bestCandidate);
 
     addNetworkSourceAndSinkOperators(queryPlan);
-
-    NES_DEBUG("IFCOP::DEBUG after network source and sinkGEP:\n" << globalExecutionPlan->getAsString() );
 
     return runTypeInferencePhase(queryPlan->getQueryId());
 }
@@ -224,7 +215,7 @@ double IFCOPStrategy::getLocalCost(std::vector<bool> nodePlacement, NES::QueryPl
     for (auto qPlanItr = queryPlanIterator.begin(); qPlanItr != QueryPlanIterator::end(); ++qPlanItr) {
         auto currentOperator = (*qPlanItr)->as<OperatorNode>();
 
-        double dmf = 1; // fallback if DMF properties does not exist in the current operator
+        double dmf = 1; // fallback if the DMF property does not exist in the current operator
         if (currentOperator->checkIfPropertyExist("DMF")) {
             dmf = std::any_cast<double>(currentOperator->getProperty("DMF"));
         }
