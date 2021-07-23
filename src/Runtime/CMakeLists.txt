@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
+        apex_memmove.cpp
         NodeEngine.cpp
         NodeStatsProvider.cpp
         QueryManager.cpp

@@ -50,6 +50,7 @@ class GeneratedCode {
     std::vector<StructDeclaration> structDeclarationInputTuples;
     StructDeclaration structDeclarationResultTuple;
     VariableDeclaration varDeclarationInputBuffer;
+    VariableDeclaration varDeclarationNumOfInputTuples;
     VariableDeclaration varDeclarationResultBuffer;
     VariableDeclaration varDeclarationWorkerContext;
     VariableDeclaration varDeclarationExecutionContext;

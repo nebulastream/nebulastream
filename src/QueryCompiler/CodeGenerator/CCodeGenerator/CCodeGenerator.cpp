@@ -177,6 +177,9 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                                     "recordIndex",
                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
             .copy());
+
+    /*  declaration of num of records */
+
     /* ExecutionResult ret = Ok; */
     // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
     code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
@@ -220,12 +223,16 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                                               "capacityScan");
     }
 
+    /* numOfRecords = inputBuffer.getNumberOfTuples(); */
+    auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
+    code->variableInitStmts.push_back(VarDeclStatement(code->varDeclarationNumOfInputTuples).assign(numberOfRecords).copy());
+
     /* for (uint64_t recordIndex = 0; recordIndex < tuple_buffer_1->num_tuples; ++id) */
     // input_buffer.getNumberOfTuples()
-    auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
-    code->forLoopStmt = std::make_shared<FOR>(code->varDeclarationRecordIndex,
-                                              (VarRef(code->varDeclarationRecordIndex) < (numberOfRecords)).copy(),
-                                              (++VarRef(code->varDeclarationRecordIndex)).copy());
+    code->forLoopStmt =
+        std::make_shared<FOR>(code->varDeclarationRecordIndex,
+                              (VarRef(code->varDeclarationRecordIndex) < VarRef(code->varDeclarationNumOfInputTuples)).copy(),
+                              (++VarRef(code->varDeclarationRecordIndex)).copy());
 
     code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
     if (context->arity != PipelineContext::Unary) {
