@@ -773,5 +773,5 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithGradientStrategy){
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     ASSERT_EQ(executionNodes.size(), 3u);
-    //Todo: finalize tests
+    //Todo: finalize tests with useful testcases
 }
