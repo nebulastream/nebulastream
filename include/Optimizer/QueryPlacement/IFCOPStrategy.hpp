@@ -42,10 +42,29 @@ class IFCOPStrategy : public BasePlacementStrategy {
 
     std::vector<std::vector<bool>> getPlacementCandidate(NES::QueryPlanPtr queryPlan);
 
+    /**
+     * Get the total cost of a placement candidate
+     * @param placementCandidate matrix representation of the candidate
+     * @param queryPlan query plan to place
+     * @return total cost of the current candidate
+     */
     double getCost(std::vector<std::vector<bool>> placementCandidate, NES::QueryPlanPtr queryPlan);
 
+    /**
+     * Get local cost, i.e., cost of placing operators in the current topology node
+     * @param nodePlacement matrix representation of placement in a topology node
+     * @param queryPlan query plan to place
+     * @return local cost of placement in the topology node
+     */
     double getLocalCost(std::vector<bool> nodePlacement, NES::QueryPlanPtr queryPlan);
 
+    /**
+     * Get the network cost of a placement candidate
+     * @param currentNode current topology node to traverse
+     * @param placementCandidate matrix representation of the candidate
+     * @param queryPlan query plan to place
+     * @return the network cost of a placement candidate
+     */
     double getNetworkCost(const TopologyNodePtr& currentNode, std::vector<std::vector<bool>> placementCandidate, NES::QueryPlanPtr queryPlan);
 
     std::map<uint64_t, uint64_t> topologyNodeIdToIndexMap;
