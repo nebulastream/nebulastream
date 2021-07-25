@@ -35,7 +35,7 @@ FileStreamCatalogPersistence::FileStreamCatalogPersistence(const std::string& ba
 }
 
 bool FileStreamCatalogPersistence::persistLogicalStream(const std::string& logicalStreamName, const std::string& schemaString) {
-    std::filesystem::path fileName(logicalStreamName + ".nes");
+    std::filesystem::path fileName(logicalStreamName + ".hpp");
     std::filesystem::path filePath = baseDir / fileName;
     NES_DEBUG("FileStreamCatalogPersistence::persistConfiguration: persisting logical stream to "
               << filePath.c_str() << ", logicalStreamName=" << logicalStreamName);
@@ -44,6 +44,7 @@ bool FileStreamCatalogPersistence::persistLogicalStream(const std::string& logic
 
         std::ofstream ofs(filePath);
         ofs << schemaString;
+        ofs << "\n";
         ofs.close();
         return true;
     } catch (std::exception& ex) {
@@ -53,10 +54,10 @@ bool FileStreamCatalogPersistence::persistLogicalStream(const std::string& logic
 }
 
 bool FileStreamCatalogPersistence::deleteLogicalStream(const std::string& logicalStreamName) {
-    std::filesystem::path fileName(logicalStreamName + ".nes");
+    std::filesystem::path fileName(logicalStreamName + ".hpp");
     std::filesystem::path filePath = baseDir / fileName;
 
-    std::filesystem::path newFileName(logicalStreamName + ".nes.deleted");
+    std::filesystem::path newFileName(logicalStreamName + ".hpp.deleted");
     std::filesystem::path newFilePath = baseDir / newFileName;
 
     NES_DEBUG("FileStreamCatalogPersistence::persistConfiguration: persisting logical stream to "
@@ -74,7 +75,7 @@ std::map<std::string, std::string> FileStreamCatalogPersistence::loadLogicalStre
     auto ret = std::map<std::string, std::string>();
 
     for (const auto& entry : std::filesystem::directory_iterator(baseDir)) {
-        if (!entry.is_regular_file() || entry.path().extension() != ".nes") {
+        if (!entry.is_regular_file() || entry.path().extension() != ".hpp") {
             continue;
         }
         std::string logicalStreamName = entry.path().stem();

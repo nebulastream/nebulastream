@@ -120,8 +120,8 @@ SourceConfigPtr PhysicalStreamConfig::toSourceConfig() {
     config->setSourceType(sourceType);
     config->setSourceConfig(sourceConfig);
     config->setSourceFrequency(sourceFrequency.count());
-    config->setNumberOfBuffersToProduce(numberOfTuplesToProducePerBuffer);
-    config->setNumberOfTuplesToProducePerBuffer(numberOfBuffersToProduce);
+    config->setNumberOfBuffersToProduce(numberOfBuffersToProduce);
+    config->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer);
     config->setPhysicalStreamName(physicalStreamName);
     config->setLogicalStreamName(UtilityFunctions::combineStringsWithDelimiter(logicalStreamName, ","));
     config->setSkipHeader(skipHeader);

@@ -67,6 +67,12 @@ class SourceConfig {
     std::string toJson();
 
     /**
+     * @brief serializes the configuration to a Yaml string representation
+     * @return a Yaml string
+     */
+    std::string toYaml();
+
+    /**
      * @brief resets all options to default values
      */
     void resetSourceOptions();

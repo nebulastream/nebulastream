@@ -47,22 +47,25 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             try {
                 // /streamCatalog/allLogicalStream?physicalStreamName=ICE2201
                 std::string physicalStreamName = param->second;
-                const std::map <std::string, std::string> &allLogicalStreamForPhysicalStream = streamCatalog->getAllLogicalStreamForPhysicalStreamAsString(
-                        physicalStreamName);
-                if(allLogicalStreamForPhysicalStream.empty()){
+                const std::map<std::string, std::string>& allLogicalStreamForPhysicalStream =
+                    streamCatalog->getAllLogicalStreamForPhysicalStreamAsString(physicalStreamName);
+                if (allLogicalStreamForPhysicalStream.empty()) {
                     json::value result{};
                     result["Success"] = json::value::boolean(false);
-                    result["Reason"] = json::value::string("Physical stream "+physicalStreamName+" either does not exist or has no valid logical stream mappings");
+                    result["Reason"] = json::value::string("Physical stream " + physicalStreamName
+                                                           + " either does not exist or has no valid logical stream mappings");
                     successMessageImpl(request, result);
                     return;
                 }
-                for (auto const&[key, val] : allLogicalStreamForPhysicalStream) {
+                for (auto const& [key, val] : allLogicalStreamForPhysicalStream) {
                     result[key] = json::value::string(val);
                 }
                 successMessageImpl(request, result);
                 return;
-            } catch(const std::exception& exc){
-                NES_ERROR("StreamCatalogController: handleGet -allLogicalStreams (for a specific logical stream): Exception occured while checking param for physicalStreamName" << exc.what());
+            } catch (const std::exception& exc) {
+                NES_ERROR("StreamCatalogController: handleGet -allLogicalStreams (for a specific logical stream): Exception "
+                          "occured while checking param for physicalStreamName"
+                          << exc.what());
                 handleException(request, exc);
                 return;
             }
@@ -130,7 +133,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             }
         }
     } else if (path[1] == "physicalStreamConfig") {
-        auto param = parameters.find("physicalStreamName");
+        auto param = parameters.find("streamName");
         if (param == parameters.end()) {
             NES_ERROR(
                 "StreamCatalogController: handleGet -physicalStreamConfig: Exception occurred while trying to retrieve config");
@@ -140,9 +143,15 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             return;
         } else {
             try {
-                std::string sourceConfig = streamCatalog->getSourceConfig(param->second);
-                auto result = json::value::parse(sourceConfig);
-                successMessageImpl(request, result);
+                auto [success, sourceConfig] = streamCatalog->getSourceConfig(param->second);
+                if (success) {
+                    auto result = json::value::parse(sourceConfig);
+                    successMessageImpl(request, result);
+                } else {
+                    json::value errorResponse{};
+                    errorResponse["detail"] = json::value::string("could not get source config from worker");
+                    badRequestImpl(request, errorResponse);
+                }
                 return;
             } catch (std::exception& exc) {
                 NES_ERROR("StreamCatalogController: handleGet -physicalStreamConfig (for a physical stream): Exception "
@@ -151,23 +160,24 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                 handleException(request, exc);
                 return;
             }
-    }
-}   else if (path[1] == "allMismappedStreams") {
+        }
+    } else if (path[1] == "allMismappedStreams") {
         //Check if the path contains the query id
         auto param = parameters.find("logicalStreamName");
         if (param == parameters.end()) {
             NES_DEBUG("QueryController: No logicalStreamName was specified, returning all MISMAPPED physical streams");
             json::value result{};
-            const std::map<std::string, std::vector<std::string>> &mismappedStreams = streamCatalog->getMismappedPhysicalStreams();
+            const std::map<std::string, std::vector<std::string>>& mismappedStreams =
+                streamCatalog->getMismappedPhysicalStreams();
             if (mismappedStreams.empty()) {
                 NES_DEBUG("No Mismapped Stream Found");
                 resourceNotFoundImpl(request);
                 return;
             } else {
-                std::vector <json::value> allStream = {};
-                for (auto const &entry : mismappedStreams) {
+                std::vector<json::value> allStream = {};
+                for (auto const& entry : mismappedStreams) {
                     std::string mapping = entry.first + ":";
-                    for (std::string physicalStreamName: entry.second){
+                    for (std::string physicalStreamName : entry.second) {
                         mapping += "\n" + physicalStreamName;
                     }
                     allStream.push_back(json::value::string(mapping));
@@ -183,8 +193,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                 //Prepare Input query from user string
                 std::string logicalStreamName = param->second;
 
-                const std::vector <std::string> &allPhysicalStream = streamCatalog->getMismappedPhysicalStreams(
-                        logicalStreamName);
+                const std::vector<std::string>& allPhysicalStream = streamCatalog->getMismappedPhysicalStreams(logicalStreamName);
 
                 //Prepare the response
                 json::value result{};
@@ -193,19 +202,18 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                     resourceNotFoundImpl(request);
                     return;
                 } else {
-                    std::vector <json::value> allStream = {};
-                    for (auto const &physicalStream : std::as_const(allPhysicalStream)) {
+                    std::vector<json::value> allStream = {};
+                    for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
                         allStream.push_back(json::value::string(physicalStream));
                     }
                     result["Physical Streams"] = json::value::array(allStream);
                     successMessageImpl(request, result);
                     return;
                 }
-            } catch (const std::exception &exc) {
-                NES_ERROR(
-                        "StreamCatalogController: handleGet -allMismappedStreams: Exception occurred while building the "
-                        "query plan for user request:"
-                                << exc.what());
+            } catch (const std::exception& exc) {
+                NES_ERROR("StreamCatalogController: handleGet -allMismappedStreams: Exception occurred while building the "
+                          "query plan for user request:"
+                          << exc.what());
                 handleException(request, exc);
                 return;
             } catch (...) {
@@ -215,7 +223,8 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             }
         }
     } else if (path[1] == "allMisconfiguredStreamCatalogEntries") {
-        const std::vector<StreamCatalogEntryPtr>& allMisconfiguredPhysicalStreams = streamCatalog->getAllMisconfiguredPhysicalStreams();
+        const std::vector<StreamCatalogEntryPtr>& allMisconfiguredPhysicalStreams =
+            streamCatalog->getAllMisconfiguredPhysicalStreams();
 
         json::value result{};
         if (allMisconfiguredPhysicalStreams.empty()) {
@@ -230,7 +239,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             successMessageImpl(request, result);
             return;
         }
-    }  else {
+    } else {
         resourceNotFoundImpl(request);
     }
 }
@@ -315,96 +324,108 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 }
             })
             .wait();
-    }
-    else if (path[1] == "addPhysicalStreamToLogicalStream") {
-        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: REST received request to add a Physical Stream to a Logical Stream "
-                          << message.to_string());
+    } else if (path[1] == "addPhysicalStreamToLogicalStream") {
+        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: REST received request to add a "
+                  "Physical Stream to a Logical Stream "
+                  << message.to_string());
         message.extract_string(true)
-                .then([this, message](utility::string_t body) {
-                    try {
-                        std::shared_ptr<RegisterPhysicalStreamRequest> protobufMessage = std::make_shared<RegisterPhysicalStreamRequest>();
+            .then([this, message](utility::string_t body) {
+                try {
+                    std::shared_ptr<RegisterPhysicalStreamRequest> protobufMessage =
+                        std::make_shared<RegisterPhysicalStreamRequest>();
 
-                        if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
-                            json::value errorResponse{};
-                            errorResponse["detail"] = json::value::string("Invalid Protobuf message");
-                            badRequestImpl(message, errorResponse);
-                            return;
-                        }
-                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: Start trying to add new physical stream");
-                        std::string physicalStreamName = protobufMessage->physicalstreamname();
-                        std::string logicalStreamName = protobufMessage->logicalstreamname();
-                        bool added;
-                        if(logicalStreamName==""){
-                            NES_ERROR("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: Parameter logicalStreamName was not given.");
-                            return;
-                        }else{
-                            NES_DEBUG("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: Try to add  Physical Stream to a Logical Stream"
-                                          << logicalStreamName);
-                            added = streamCatalog->addPhysicalStreamToLogicalStream(physicalStreamName, logicalStreamName);
-                        }
-                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: Successfully added  Physical Stream to logical Stream?"
-                                          << added);
-                        //Prepare the response
-                        json::value result{};
-                        result["Success"] = json::value::boolean(added);
-                        successMessageImpl(message, result);
-                        return;
-                    } catch (const std::exception& exc) {
-                        NES_ERROR("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: Exception occurred while trying to add  "
-                                  "physical stream to logical stream"
-                                          << exc.what());
-                        handleException(message, exc);
-                        return;
-                    } catch (...) {
-                        RuntimeUtils::printStackTrace();
-                        internalServerErrorImpl(message);
+                    if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
+                        json::value errorResponse{};
+                        errorResponse["detail"] = json::value::string("Invalid Protobuf message");
+                        badRequestImpl(message, errorResponse);
                         return;
                     }
-                })
-                .wait();
-    }else if (path[1] == "activateDuplicateStreamName") {
-        NES_DEBUG("StreamCatalogController: handlePost -activateDuplicateStreamName: REST received request to activate a currently disabled physicalStream. "
-                          << message.to_string());
+                    NES_DEBUG("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: Start trying to add new "
+                              "physical stream");
+                    std::string physicalStreamName = protobufMessage->physicalstreamname();
+                    std::string logicalStreamName = protobufMessage->logicalstreamname();
+                    bool added;
+                    if (logicalStreamName == "") {
+                        NES_ERROR("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: Parameter "
+                                  "logicalStreamName was not given.");
+                        return;
+                    } else {
+                        NES_DEBUG("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: Try to add  Physical "
+                                  "Stream to a Logical Stream"
+                                  << logicalStreamName);
+                        added = streamCatalog->addPhysicalStreamToLogicalStream(physicalStreamName, logicalStreamName);
+                    }
+                    NES_DEBUG("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: Successfully added  "
+                              "Physical Stream to logical Stream?"
+                              << added);
+                    //Prepare the response
+                    json::value result{};
+                    result["Success"] = json::value::boolean(added);
+                    successMessageImpl(message, result);
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR("StreamCatalogController: handlePost -addPhysicalStreamToLogicalStream: Exception occurred while "
+                              "trying to add  "
+                              "physical stream to logical stream"
+                              << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                    return;
+                }
+            })
+            .wait();
+    } else if (path[1] == "activateDuplicateStreamName") {
+        NES_DEBUG("StreamCatalogController: handlePost -activateDuplicateStreamName: REST received request to activate a "
+                  "currently disabled physicalStream. "
+                  << message.to_string());
         message.extract_string(true)
-                .then([this, message](utility::string_t body) {
-                    try {
-                        std::shared_ptr<RegisterPhysicalStreamRequest> protobufMessage = std::make_shared<RegisterPhysicalStreamRequest>();
+            .then([this, message](utility::string_t body) {
+                try {
+                    std::shared_ptr<RegisterPhysicalStreamRequest> protobufMessage =
+                        std::make_shared<RegisterPhysicalStreamRequest>();
 
-                        if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
-                            json::value errorResponse{};
-                            errorResponse["detail"] = json::value::string("Invalid Protobuf message");
-                            badRequestImpl(message, errorResponse);
-                            return;
-                        }
-                        NES_DEBUG("StreamCatalogController: handlePost -activateDuplicateStreamName: Start trying to activate physicalStream with formerly duplicated name");
-                        std::string physicalStreamName = protobufMessage->physicalstreamname();
-                        bool activated = streamCatalog->validatePhysicalStreamName(physicalStreamName);
-                        NES_DEBUG("StreamCatalogController: handlePost -activateDuplicateStreamName: Successfully activated physicalStream with formerly duplicated name? "
-                                          << activated);
-                        //Prepare the response
-                        json::value result{};
-                        result["Success"] = json::value::boolean(activated);
-                        successMessageImpl(message, result);
-                        return;
-                    } catch (const std::exception& exc) {
-                        NES_ERROR("StreamCatalogController: handlePost -activateDuplicateStreamName: Exception occurred while trying to activate  "
-                                  "physical stream name "
-                                          << exc.what());
-                        handleException(message, exc);
-                        return;
-                    } catch (...) {
-                        RuntimeUtils::printStackTrace();
-                        internalServerErrorImpl(message);
+                    if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
+                        json::value errorResponse{};
+                        errorResponse["detail"] = json::value::string("Invalid Protobuf message");
+                        badRequestImpl(message, errorResponse);
                         return;
                     }
-                })
-                .wait();
+                    NES_DEBUG("StreamCatalogController: handlePost -activateDuplicateStreamName: Start trying to activate "
+                              "physicalStream with formerly duplicated name");
+                    std::string physicalStreamName = protobufMessage->physicalstreamname();
+                    bool activated = streamCatalog->validatePhysicalStreamName(physicalStreamName);
+                    NES_DEBUG("StreamCatalogController: handlePost -activateDuplicateStreamName: Successfully activated "
+                              "physicalStream with formerly duplicated name? "
+                              << activated);
+                    //Prepare the response
+                    json::value result{};
+                    result["Success"] = json::value::boolean(activated);
+                    successMessageImpl(message, result);
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR("StreamCatalogController: handlePost -activateDuplicateStreamName: Exception occurred while trying "
+                              "to activate  "
+                              "physical stream name "
+                              << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                    return;
+                }
+            })
+            .wait();
     } else if (path[1] == "updatePhysicalStreamConfig") {
         NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: REST received request to update Logical Stream "
                   << message.to_string());
-        auto param = parameters.find("physicalStreamName");
+        auto param = parameters.find("streamName");
         if (param == parameters.end()) {
-            NES_ERROR("StreamCatalogController: handlePost -updatePhysicalStreamConfig: Exception occurred while trying to retrieve config");
+            NES_ERROR("StreamCatalogController: handlePost -updatePhysicalStreamConfig: Exception occurred while trying to "
+                      "retrieve config");
             json::value errorResponse{};
             errorResponse["detail"] = json::value::string("Parameter streamName must be provided");
             badRequestImpl(message, errorResponse);
@@ -422,13 +443,26 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                         std::string userRequest(body.begin(), body.end());
                         NES_DEBUG(
                             "StreamCatalogController: handlePost -updatePhysicalStreamConfig: userRequest: " << userRequest);
-                        // json::value req = json::value::parse(userRequest);
+                        json::value req = json::value::parse(userRequest);
 
-                        auto updatedConfig = streamCatalog->setSourceConfig(streamName, userRequest);
-                        auto result = json::value::parse(updatedConfig);
-                        successMessageImpl(message, result);
+                        // sanitize user input to not change mapping
+                        if (req.has_field("physicalStreamName")) {
+                            req.erase("physicalStreamName");
+                        }
+                        if (req.has_field("logicalStreamName")) {
+                            req.erase("logicalStreamName");
+                        }
+
+                        auto [success, updatedConfig] = streamCatalog->setSourceConfig(streamName, req.serialize());
+                        if (success) {
+                            auto result = json::value::parse(updatedConfig);
+                            successMessageImpl(message, result);
+                        } else {
+                            json::value errorResponse{};
+                            errorResponse["detail"] = json::value::string("could not set source config on worker");
+                            badRequestImpl(message, errorResponse);
+                        }
                         return;
-
                     } catch (const std::exception& exc) {
                         NES_ERROR(
                             "StreamCatalogController: handlePost -updatePhysicalStreamConfig: Exception occurred while trying "
@@ -445,8 +479,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 })
                 .wait();
         }
-    }
-        else {
+    } else {
         resourceNotFoundImpl(message);
     }
 }
@@ -530,7 +563,7 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
         } catch (const std::exception& exc) {
             NES_ERROR("StreamCatalogController: handleDelete -removeLogicalStream: Exception occurred removing the "
                       "physical stream from the specified logical stream "
-                          << exc.what());
+                      << exc.what());
             handleException(request, exc);
             return;
         } catch (...) {
@@ -538,8 +571,7 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
             internalServerErrorImpl(request);
             return;
         }
-    }
-    else if(path[1]=="removeMismappedForLogical"){
+    } else if (path[1] == "removeMismappedForLogical") {
         auto logicalStreamName = parameters.find("logicalStreamName");
         if (logicalStreamName == parameters.end()) {
             NES_ERROR("StreamCatalogController: Unable to find parameter logicalStreamName");
@@ -566,7 +598,7 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
         } catch (const std::exception& exc) {
             NES_ERROR("StreamCatalogController: handleDelete -removeAllMismapped: Exception occurred removing all "
                       "the mismapped from the specified logical stream "
-                          << exc.what());
+                      << exc.what());
             handleException(request, exc);
             return;
         } catch (...) {
@@ -574,8 +606,7 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
             internalServerErrorImpl(request);
             return;
         }
-    }
-    else {
+    } else {
         resourceNotFoundImpl(request);
     }
 }

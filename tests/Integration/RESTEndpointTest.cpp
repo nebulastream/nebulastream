@@ -16,7 +16,6 @@
 
 #include <gtest/gtest.h>
 
-#include "SerializableQueryPlan.pb.h"
 #include "CoordinatorRPCService.pb.h"
 #include "SerializableQueryPlan.pb.h"
 #include <Components/NesCoordinator.hpp>
@@ -703,7 +702,7 @@ TEST_F(RESTEndpointTest, testAddPhysicalToLogicalStream) {
     std::string msg = req.SerializeAsString();
 
     web::http::client::http_client addPhysicalToLogicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                                   + "/v1/nes/streamCatalog/addPhysicalStreamToLogicalStream");
+                                                                    + "/v1/nes/streamCatalog/addPhysicalStreamToLogicalStream");
     web::json::value addJsonReturn;
     addPhysicalToLogicalStreamClient.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
@@ -986,7 +985,6 @@ TEST_F(RESTEndpointTest, testUpdatePhysicalSourceConfig) {
     NES_INFO("RESTEndpointTest: Test finished");
 }
 
-
 TEST_F(RESTEndpointTest, testGetAllMismappedStreams) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
@@ -1032,30 +1030,33 @@ TEST_F(RESTEndpointTest, testGetAllMismappedStreams) {
 
     crd->getStreamCatalog()->addPhysicalStreamToLogicalStream("test_physical2", "non_existing_logical");
     EXPECT_TRUE(!(crd->getStreamCatalog()->getMismappedPhysicalStreams().empty()));
-    NES_INFO("RESTEndpointTest: Added a non existing logical stream to the mismappedStreams mapping for an existing physical stream.");
+    NES_INFO(
+        "RESTEndpointTest: Added a non existing logical stream to the mismappedStreams mapping for an existing physical stream.");
 
-//  web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
-  //                                                            + "/v1/nes/streamCatalog/allMismappedStreams?logicalStreamName=default_logical");
-  web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                                + "/v1/nes/streamCatalog/allMismappedStreams");
+    //  web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
+    //                                                            + "/v1/nes/streamCatalog/allMismappedStreams?logicalStreamName=default_logical");
+    web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
+                                                              + "/v1/nes/streamCatalog/allMismappedStreams");
     web::json::value getAllPhysicalStreamJsonReturn;
 
     getAllPhysicalStreamClient.request(web::http::methods::GET, "")
-    .then([](const web::http::http_response& response) {
-    NES_INFO("get first then");
-    return response.extract_json();})
-    .then([&getAllPhysicalStreamJsonReturn](const pplx::task<web::json::value>& task) {
-    try {
-    NES_INFO("get execution-plan: set return");
-    getAllPhysicalStreamJsonReturn = task.get();
-    } catch (const web::http::http_exception& e) {
-    NES_ERROR("get execution-plan: error while setting return" << e.what());
-    }})
-    .wait();
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&getAllPhysicalStreamJsonReturn](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get execution-plan: set return");
+                getAllPhysicalStreamJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get execution-plan: error while setting return" << e.what());
+            }
+        })
+        .wait();
 
     NES_INFO("allPhysicalStream: try to acc return");
     NES_DEBUG("allPhysicalStream response: " << getAllPhysicalStreamJsonReturn.serialize());
-    std::string expected= "{\"Mismapped Streams\":[\"non_existing_logical:\\ntest_physical2\"]}";
+    std::string expected = "{\"Mismapped Streams\":[\"non_existing_logical:\\ntest_physical2\"]}";
     NES_DEBUG("allPhysicalStream response: expected = " << expected);
     ASSERT_EQ(getAllPhysicalStreamJsonReturn.serialize(), expected);
 
@@ -1118,28 +1119,32 @@ TEST_F(RESTEndpointTest, testGetAllMismappedStreamsForLogicalStream) {
     crd->getStreamCatalog()->addPhysicalStreamToLogicalStream("test_physical2", "non_existing_logical");
     auto mismappedStreams = crd->getStreamCatalog()->getMismappedPhysicalStreams();
     EXPECT_TRUE(!(mismappedStreams.empty()));
-    NES_INFO("RESTEndpointTest: Added a non existing logical stream to the mismappedStreams mapping for an existing physical stream.");
+    NES_INFO(
+        "RESTEndpointTest: Added a non existing logical stream to the mismappedStreams mapping for an existing physical stream.");
 
-    web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                                + "/v1/nes/streamCatalog/allMismappedStreams?logicalStreamName=non_existing_logical");
+    web::http::client::http_client getAllPhysicalStreamClient(
+        "http://127.0.0.1:" + std::to_string(restPort)
+        + "/v1/nes/streamCatalog/allMismappedStreams?logicalStreamName=non_existing_logical");
     web::json::value getAllPhysicalStreamJsonReturn;
 
     getAllPhysicalStreamClient.request(web::http::methods::GET, "")
-    .then([](const web::http::http_response& response) {
-    NES_INFO("get first then");
-    return response.extract_json();})
-    .then([&getAllPhysicalStreamJsonReturn](const pplx::task<web::json::value>& task) {
-    try {
-    NES_INFO("get execution-plan: set return");
-    getAllPhysicalStreamJsonReturn = task.get();
-    } catch (const web::http::http_exception& e) {
-    NES_ERROR("get execution-plan: error while setting return" << e.what());
-    }})
-    .wait();
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&getAllPhysicalStreamJsonReturn](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get execution-plan: set return");
+                getAllPhysicalStreamJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get execution-plan: error while setting return" << e.what());
+            }
+        })
+        .wait();
 
     NES_INFO("allMismappedStreams: try to acc return");
     NES_DEBUG("allMismappedStreams response: " << getAllPhysicalStreamJsonReturn.serialize());
-    std::string expected= "{\"Physical Streams\":[\"test_physical2\"]}";
+    std::string expected = "{\"Physical Streams\":[\"test_physical2\"]}";
     NES_DEBUG("allMismappedStreams response: expected = " << expected);
     ASSERT_EQ(getAllPhysicalStreamJsonReturn.serialize(), expected);
 
@@ -1200,32 +1205,35 @@ TEST_F(RESTEndpointTest, testRemoveLogicalStreamFromMismapped) {
     success = wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
     EXPECT_TRUE(success);
 
-    bool setup_suc = !crd->getStreamCatalog()->getMismappedPhysicalStreams().empty()
-                        && !crd->getStreamCatalog()->getPhysicalStreams().empty();
+    bool setup_suc =
+        !crd->getStreamCatalog()->getMismappedPhysicalStreams().empty() && !crd->getStreamCatalog()->getPhysicalStreams().empty();
     EXPECT_TRUE(setup_suc);
 
-    web::http::client::http_client removeMismappedForLogicalClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                              + "/v1/nes/streamCatalog/removeMismappedForLogical?logicalStreamName=test_2");
+    web::http::client::http_client removeMismappedForLogicalClient(
+        "http://127.0.0.1:" + std::to_string(restPort)
+        + "/v1/nes/streamCatalog/removeMismappedForLogical?logicalStreamName=test_2");
     web::json::value removeMismappedForLogicalJSONReturn;
 
     removeMismappedForLogicalClient.request(web::http::methods::DEL, "")
         .then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();})
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
         .then([&removeMismappedForLogicalJSONReturn](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("get execution-plan: set return");
-              removeMismappedForLogicalJSONReturn = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("get execution-plan: error while setting return" << e.what());
-          }})
+            try {
+                NES_INFO("get execution-plan: set return");
+                removeMismappedForLogicalJSONReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get execution-plan: error while setting return" << e.what());
+            }
+        })
         .wait();
 
     NES_INFO("removeLogicalStreamFromMismapped: try to acc return");
     NES_DEBUG("removeLogicalStreamFromMismapped response: " << removeMismappedForLogicalJSONReturn.serialize());
 
     bool remove_suc = crd->getStreamCatalog()->getMismappedPhysicalStreams("test_2").empty()
-                      && !crd->getStreamCatalog()->getMismappedPhysicalStreams("test_1").empty();
+        && !crd->getStreamCatalog()->getMismappedPhysicalStreams("test_1").empty();
     EXPECT_TRUE(remove_suc);
 
     //test moving from mismapped to regular
@@ -1240,7 +1248,7 @@ TEST_F(RESTEndpointTest, testRemoveLogicalStreamFromMismapped) {
     wrk1->registerLogicalStream("test_1", testSchemaFileName);
 
     bool move_sub = crd->getStreamCatalog()->getMismappedPhysicalStreams("test_1").empty()
-                    && !crd->getStreamCatalog()->getPhysicalStreams("test_1").empty();
+        && !crd->getStreamCatalog()->getPhysicalStreams("test_1").empty();
     EXPECT_TRUE(move_sub);
 
     NES_INFO("RESTEndpointTest: Stop worker 1");
@@ -1295,7 +1303,6 @@ TEST_F(RESTEndpointTest, testGetAllMisconfiguredStreamCatalogEntries) {
     EXPECT_TRUE(success);
     NES_INFO("RESTEndpointTest: Added a physical stream without a logical stream.");
 
-
     srcConf->setPhysicalStreamName("test_physical2");
     srcConf->setLogicalStreamName("default_logical");
     success = wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
@@ -1304,28 +1311,32 @@ TEST_F(RESTEndpointTest, testGetAllMisconfiguredStreamCatalogEntries) {
     crd->getStreamCatalog()->addPhysicalStreamToLogicalStream("test_physical2", "non_existing_logical");
     auto mismappedStreams = crd->getStreamCatalog()->getMismappedPhysicalStreams();
     EXPECT_TRUE(!(mismappedStreams.empty()));
-    NES_INFO("RESTEndpointTest: Added a non existing logical stream to the mismappedStreams mapping for an existing physical stream.");
+    NES_INFO(
+        "RESTEndpointTest: Added a non existing logical stream to the mismappedStreams mapping for an existing physical stream.");
 
     web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
                                                               + "/v1/nes/streamCatalog/allMisconfiguredStreamCatalogEntries");
     web::json::value allMisconfiguredStreamCatalogEntriesJsonReturn;
 
     getAllPhysicalStreamClient.request(web::http::methods::GET, "")
-    .then([](const web::http::http_response& response) {
-    NES_INFO("get first then");
-    return response.extract_json();})
-    .then([&allMisconfiguredStreamCatalogEntriesJsonReturn](const pplx::task<web::json::value>& task) {
-    try {
-    NES_INFO("get execution-plan: set return");
-    allMisconfiguredStreamCatalogEntriesJsonReturn = task.get();
-    } catch (const web::http::http_exception& e) {
-    NES_ERROR("get execution-plan: error while setting return" << e.what());
-    }})
-    .wait();
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&allMisconfiguredStreamCatalogEntriesJsonReturn](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get execution-plan: set return");
+                allMisconfiguredStreamCatalogEntriesJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get execution-plan: error while setting return" << e.what());
+            }
+        })
+        .wait();
 
     NES_INFO("allMisconfiguredStreamCatalogEntries: try to acc return");
     NES_DEBUG("allMisconfiguredStreamCatalogEntries response: " << allMisconfiguredStreamCatalogEntriesJsonReturn.serialize());
-    std::string expected= "{\"test_physical1\":\"misconfigured\\nnoLogicalStream: no valid logical stream\",\"test_physical2\":\"misconfigured\\nlogicalStreamWithoutSchema: (non_existing_logical)\"}";
+    std::string expected = "{\"test_physical1\":\"misconfigured\\nnoLogicalStream: no valid logical "
+                           "stream\",\"test_physical2\":\"misconfigured\\nlogicalStreamWithoutSchema: (non_existing_logical)\"}";
     NES_DEBUG("allMisconfiguredStreamCatalogEntries response: expected = " << expected);
     ASSERT_EQ(allMisconfiguredStreamCatalogEntriesJsonReturn.serialize(), expected);
 
@@ -1381,41 +1392,41 @@ TEST_F(RESTEndpointTest, testGetAllMisconfiguredStreamCatalogEntriesDuplicatePhy
     EXPECT_TRUE(success);
     NES_INFO("RESTEndpointTest: Added a physical stream without a logical stream.");
 
-
     srcConf->setLogicalStreamName("");
     success = wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
     EXPECT_TRUE(success);
-
 
     web::http::client::http_client getAllPhysicalStreamClient("http://127.0.0.1:" + std::to_string(restPort)
                                                               + "/v1/nes/streamCatalog/allMisconfiguredStreamCatalogEntries");
     web::json::value allMisconfiguredStreamCatalogEntriesJsonReturn;
 
     getAllPhysicalStreamClient.request(web::http::methods::GET, "")
-    .then([](const web::http::http_response& response) {
-    NES_INFO("get first then");
-    return response.extract_json();})
-    .then([&allMisconfiguredStreamCatalogEntriesJsonReturn](const pplx::task<web::json::value>& task) {
-    try {
-    NES_INFO("get execution-plan: set return");
-    allMisconfiguredStreamCatalogEntriesJsonReturn = task.get();
-    } catch (const web::http::http_exception& e) {
-    NES_ERROR("get execution-plan: error while setting return" << e.what());
-    }})
-    .wait();
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&allMisconfiguredStreamCatalogEntriesJsonReturn](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get execution-plan: set return");
+                allMisconfiguredStreamCatalogEntriesJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get execution-plan: error while setting return" << e.what());
+            }
+        })
+        .wait();
 
     NES_INFO("allMisconfiguredStreamCatalogEntries: try to acc return");
     NES_DEBUG("allMisconfiguredStreamCatalogEntries response: " << allMisconfiguredStreamCatalogEntriesJsonReturn.serialize());
 
     auto physicalStreams = crd->getStreamCatalog()->getPhysicalStreams();
     bool hasDuplicate = true;
-    for (auto entry : physicalStreams){
-    if(entry->getPhysicalName() == "myphysical"){
-    continue;
-    }else if (entry->getPhysicalName().find("myphysical_") != std::string::npos){
-    continue;
-    }
-    hasDuplicate = false;
+    for (auto entry : physicalStreams) {
+        if (entry->getPhysicalName() == "myphysical") {
+            continue;
+        } else if (entry->getPhysicalName().find("myphysical_") != std::string::npos) {
+            continue;
+        }
+        hasDuplicate = false;
     }
     EXPECT_TRUE(hasDuplicate);
 
@@ -1471,15 +1482,14 @@ TEST_F(RESTEndpointTest, testActivateDuplicatePhysicalStreamName) {
     EXPECT_TRUE(success);
     NES_INFO("RESTEndpointTest: Added a physical stream without a logical stream.");
 
-
     srcConf->setLogicalStreamName("exdra");
     success = wrk2->registerPhysicalStream(PhysicalStreamConfig::create(srcConf));
     EXPECT_TRUE(success);
 
     auto physicalStreams = crd->getStreamCatalog()->getPhysicalStreams();
     StreamCatalogEntryPtr duplicate;
-    for (auto entry : physicalStreams){
-        if(entry->getPhysicalName().find("_") != std::string::npos) {
+    for (auto entry : physicalStreams) {
+        if (entry->getPhysicalName().find("_") != std::string::npos) {
             duplicate = entry;
             break;
         }
@@ -1487,8 +1497,7 @@ TEST_F(RESTEndpointTest, testActivateDuplicatePhysicalStreamName) {
 
     EXPECT_TRUE(!crd->getStreamCatalog()->testIfLogicalStreamExistsInLogicalToPhysicalMapping("exdra"));
 
-
-RegisterPhysicalStreamRequest req;
+    RegisterPhysicalStreamRequest req;
     req.set_physicalstreamname(duplicate->getPhysicalName());
 
     std::string msg = req.SerializeAsString();
@@ -1498,17 +1507,19 @@ RegisterPhysicalStreamRequest req;
     web::json::value allMisconfiguredStreamCatalogEntriesJsonReturn;
 
     getAllPhysicalStreamClient.request(web::http::methods::POST, "", msg)
-    .then([](const web::http::http_response& response) {
-    NES_INFO("get first then");
-    return response.extract_json();})
-    .then([&allMisconfiguredStreamCatalogEntriesJsonReturn](const pplx::task<web::json::value>& task) {
-    try {
-    NES_INFO("get execution-plan: set return");
-    allMisconfiguredStreamCatalogEntriesJsonReturn = task.get();
-    } catch (const web::http::http_exception& e) {
-    NES_ERROR("get execution-plan: error while setting return" << e.what());
-    }})
-    .wait();
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&allMisconfiguredStreamCatalogEntriesJsonReturn](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get execution-plan: set return");
+                allMisconfiguredStreamCatalogEntriesJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get execution-plan: error while setting return" << e.what());
+            }
+        })
+        .wait();
 
     NES_INFO("allMisconfiguredStreamCatalogEntries: try to acc return");
     NES_DEBUG("allMisconfiguredStreamCatalogEntries response: " << allMisconfiguredStreamCatalogEntriesJsonReturn.serialize());

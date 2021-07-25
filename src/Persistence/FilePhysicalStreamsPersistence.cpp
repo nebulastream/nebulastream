@@ -37,7 +37,7 @@ FilePhysicalStreamsPersistence::FilePhysicalStreamsPersistence(const std::string
 bool FilePhysicalStreamsPersistence::persistConfiguration(SourceConfigPtr sourceConfig) {
     std::string physicalStreamName = sourceConfig->getPhysicalStreamName()->getValue();
 
-    std::filesystem::path fileName(physicalStreamName + ".yml");
+    std::filesystem::path fileName(physicalStreamName + ".json");
     std::filesystem::path filePath = baseDir / fileName;
 
     NES_DEBUG("FilePhysicalStreamsPersistence::persistConfiguration: persisting configuration to "
@@ -45,6 +45,7 @@ bool FilePhysicalStreamsPersistence::persistConfiguration(SourceConfigPtr source
     try {
         std::ofstream ofs(filePath);
         ofs << sourceConfig->toJson();
+        ofs << "\n";
         ofs.close();
         return true;
     } catch (std::exception& ex) {
@@ -56,7 +57,7 @@ bool FilePhysicalStreamsPersistence::persistConfiguration(SourceConfigPtr source
 std::vector<SourceConfigPtr> FilePhysicalStreamsPersistence::loadConfigurations() {
     std::vector<SourceConfigPtr> sourceConfigs{};
     for (const auto& entry : std::filesystem::directory_iterator(baseDir)) {
-        if (!entry.is_regular_file() || entry.path().extension() != ".yml") {
+        if (!entry.is_regular_file() || entry.path().extension() != ".json") {
             continue;
         }
 

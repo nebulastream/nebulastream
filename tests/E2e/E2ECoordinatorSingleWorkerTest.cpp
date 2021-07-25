@@ -26,6 +26,7 @@
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
 #include <cstdio>
+#include <filesystem>
 #include <sstream>
 using namespace std;
 using namespace utility;
@@ -78,10 +79,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
-    string path2 =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort
-        +" --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "+
-        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
+    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort="
+        + worker1DataPort + " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "
+        + "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc(path2.c_str());
     uint64_t coordinatorPid = coordinatorProc.id();
     uint64_t workerPid = workerProc.id();
@@ -122,10 +122,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
-    string path2 =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort+
-        " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "+
-        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
+    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort="
+        + worker1DataPort + " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "
+        + "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t coordinatorPid = coordinatorProc.id();
@@ -195,10 +194,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
-    string path2 =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort+
-        " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "+
-        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
+    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort="
+        + worker1DataPort + " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "
+        + "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t coordinatorPid = coordinatorProc.id();
@@ -264,10 +262,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
-    string path2 =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort+
-        " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "+
-        "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
+    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort="
+        + worker1DataPort + " --logicalStreamName=default_logical --physicalStreamName=test_stream1 --sourceType=DefaultSource "
+        + "--sourceConfig=1 --numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t coordinatorPid = coordinatorProc.id();
@@ -627,6 +624,224 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     workerProc.terminate();
     NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
     coordinatorProc.terminate();
+}
+
+TEST_F(E2ECoordinatorSingleWorkerTest, testMultiPhysicalStreamsSingleWorker) {
+    NES_INFO(" start coordinator");
+    std::string outputFilePath1 = "MultiplePhysicalStreamsSingleWorker1.txt";
+    remove(outputFilePath1.c_str());
+
+    std::string outputFilePath2 = "MultiplePhysicalStreamsSingleWorker2.txt";
+    remove(outputFilePath2.c_str());
+
+    string coordinatorRPCPort = std::to_string(rpcPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
+    bp::child coordinatorProc(cmdCoord.c_str());
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+
+    std::stringstream schema1;
+    schema1 << "{\"streamName\" : \"csvsources1\",\"schema\" "
+               ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64));\"}";
+    schema1 << endl;
+    NES_INFO("schema submit=" << schema1.str());
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema1.str(), std::to_string(restPort)));
+
+    std::stringstream schema2;
+    schema2 << "{\"streamName\" : \"csvsources2\",\"schema\" "
+               ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64));\"}";
+    schema2 << endl;
+    NES_INFO("schema submit=" << schema2.str());
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema2.str(), std::to_string(restPort)));
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setNumberOfBuffersToProduce(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSkipHeader(false);
+
+    sourceConfig->setSourceConfig("../tests/test_data/csv1.csv");
+    sourceConfig->setPhysicalStreamName("csv1");
+    sourceConfig->setLogicalStreamName("csvsources1");
+
+    std::string sourceConfig1FileName = "sourceConfig1.yml";
+    std::ofstream out1(sourceConfig1FileName);
+    out1 << sourceConfig->toYaml();
+    out1.close();
+
+    sourceConfig->setSourceConfig("../tests/test_data/csv2.csv");
+    sourceConfig->setPhysicalStreamName("csv2");
+    sourceConfig->setLogicalStreamName("csvsources2");
+
+    std::string sourceConfig2FileName = "sourceConfig2.yml";
+    std::ofstream out2(sourceConfig2FileName);
+    out2 << sourceConfig->toYaml();
+    out2.close();
+
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --dataPort=" + worker1DataPort
+        + " --sourceConfigPath=sourceConfig1.yml;sourceConfig2.yml";
+    bp::child workerProc(path2.c_str());
+    NES_INFO("started worker with pid = " << workerProc.id());
+    uint64_t workerPid = workerProc.id();
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+
+    std::stringstream ss1;
+    ss1 << "{\"userQuery\" : ";
+    ss1 << "\"Query::from(\\\"csvsources1\\\").sink(FileSinkDescriptor::create(\\\"";
+    ss1 << outputFilePath1;
+    ss1 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ss1 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ss1 << endl;
+
+    NES_INFO("query string submit=" << ss1.str());
+    web::json::value json_return = TestUtils::startQueryViaRest(ss1.str(), std::to_string(restPort));
+
+    NES_INFO("try to acc return");
+    QueryId queryId = json_return.at("queryId").as_integer();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+
+    string expectedContent = "csvsources1$value:INTEGER,csvsources1$id:INTEGER\n"
+                             "1,1000\n"
+                             "2,2000\n"
+                             "3,3000\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath1));
+
+    std::stringstream ss2;
+    ss2 << "{\"userQuery\" : ";
+    ss2 << "\"Query::from(\\\"csvsources2\\\").sink(FileSinkDescriptor::create(\\\"";
+    ss2 << outputFilePath2;
+    ss2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ss2 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ss2 << endl;
+
+    NES_INFO("query string submit=" << ss2.str());
+    json_return = TestUtils::startQueryViaRest(ss2.str(), std::to_string(restPort));
+
+    NES_INFO("try to acc return");
+    queryId = json_return.at("queryId").as_integer();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+
+    expectedContent = "csvsources2$value:INTEGER,csvsources2$id:INTEGER\n"
+                      "4,4000\n"
+                      "5,5000\n"
+                      "6,6000\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));
+
+    NES_INFO("Killing worker process->PID: " << workerPid);
+    workerProc.terminate();
+    NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
+    coordinatorProc.terminate();
+}
+
+TEST_F(E2ECoordinatorSingleWorkerTest, testCoordinatorWorkerPersistence) {
+    NES_INFO(" start coordinator");
+
+    std::string coordinatorPersistencePath = "coord1";
+    std::filesystem::remove_all(coordinatorPersistencePath);
+    std::filesystem::create_directory(coordinatorPersistencePath);
+
+    std::string workerPersistencePath = "work1";
+    std::filesystem::remove_all(workerPersistencePath);
+    std::filesystem::create_directory(workerPersistencePath);
+
+    string coordinatorRPCPort = std::to_string(rpcPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort)
+        + " --persistenceType=file" + " --persistenceDir=" + coordinatorPersistencePath;
+
+    bp::child coordinatorProc(cmdCoord.c_str());
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+
+    std::stringstream schema1;
+    schema1 << "{\"streamName\" : \"csvsources1\",\"schema\" "
+               ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64));\"}";
+    schema1 << endl;
+    NES_INFO("schema submit=" << schema1.str());
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema1.str(), std::to_string(restPort)));
+
+    std::string expectedContent =
+        "Schema::create()->addField(createField(\"value\",UINT64))->addField(createField(\"id\",UINT64));\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, "coord1/csvsources1.hpp"));
+
+    std::stringstream schema2;
+    schema2 << "{\"streamName\" : \"csvsources2\",\"schema\" "
+               ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64));\"}";
+    schema2 << endl;
+    NES_INFO("schema submit=" << schema2.str());
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema2.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, "coord1/csvsources2.hpp"));
+
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --dataPort=" + worker1DataPort
+        + " --configPersistenceType=file --configPersistencePath=" + workerPersistencePath
+        + " --logicalStreamName=csvsources1 --physicalStreamName=test_stream --sourceType=CSVSource "
+          "--sourceConfig=../tests/test_data/csv1.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 "
+          "--numberOfTuplesToProducePerBuffer=3 --skipHeader=false";
+
+    bp::child workerProc(path2.c_str());
+    NES_INFO("started worker with pid = " << workerProc.id());
+    uint64_t workerPid = workerProc.id();
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+
+    expectedContent = "{\"logicalStreamName\":[\"csvsources1\"],\"numberOfBuffersToProduce\":1,"
+                      "\"numberOfTuplesToProducePerBuffer\":3,\"physicalStreamName\":\"test_stream\",\"skipHeader\":false,"
+                      "\"sourceConfig\":\"../tests/test_data/csv1.csv\",\"sourceFrequency\":1,\"sourceType\":\"CSVSource\"}\n";
+
+    std::stringstream actualContent1;
+    std::ifstream ifs1("work1/test_stream.json");
+    ifs1 >> actualContent1.rdbuf();
+    EXPECT_EQ(expectedContent, actualContent1.str());
+
+    EXPECT_TRUE(TestUtils::addPhysicalToLogicalStream("test_stream", "csvsources2", std::to_string(restPort)));
+    expectedContent = "{\"logicalStreamName\":[\"csvsources1\",\"csvsources2\"],\"numberOfBuffersToProduce\":1,"
+                      "\"numberOfTuplesToProducePerBuffer\":3,\"physicalStreamName\":\"test_stream\",\"skipHeader\":false,"
+                      "\"sourceConfig\":\"../tests/test_data/csv1.csv\",\"sourceFrequency\":1,\"sourceType\":\"CSVSource\"}\n";
+
+    std::stringstream actualContent2;
+    std::ifstream ifs2("work1/test_stream.json");
+    ifs2 >> actualContent2.rdbuf();
+    EXPECT_EQ(expectedContent, actualContent2.str());
+
+    NES_INFO("Killing worker process->PID: " << workerPid);
+    workerProc.terminate();
+
+    NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
+    coordinatorProc.terminate();
+
+    bp::child coordinatorProc2(cmdCoord.c_str());
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    NES_INFO("started coordinator with pid = " << coordinatorProc2.id());
+
+    web::json::value logicalStreams = TestUtils::getLogicalStreams(std::to_string(restPort));
+    EXPECT_TRUE(logicalStreams.has_field("csvsources1"));
+    EXPECT_EQ(logicalStreams["csvsources1"].as_string(), "value:INTEGER id:INTEGER ");
+
+    bp::child workerProc2(path2.c_str());
+    NES_INFO("started worker with pid = " << workerProc2.id());
+
+    NES_INFO("Killing worker process->PID: " << workerPid);
+    workerProc2.terminate();
+
+    NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
+    coordinatorProc2.terminate();
+
+    std::filesystem::remove_all(coordinatorPersistencePath);
+    std::filesystem::remove_all(workerPersistencePath);
 }
 
 }// namespace NES

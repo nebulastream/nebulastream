@@ -299,7 +299,7 @@ class StreamCatalog {
      * @param physicalStreamName
      * @return
      */
-    std::string getSourceConfig(const std::string& physicalStreamName);
+    std::tuple<bool, std::string> getSourceConfig(const std::string& physicalStreamName);
 
     /**
      *
@@ -307,7 +307,7 @@ class StreamCatalog {
      * @param sourceConfig
      * @return
      */
-    std::string setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
+    std::tuple<bool, std::string> setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
 
     /**
      * @brief removes from a misconfigured stream with a formerly duplicated name, the misconfigured flag and allows querying if possible

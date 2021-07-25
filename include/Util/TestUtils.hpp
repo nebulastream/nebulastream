@@ -20,6 +20,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <CoordinatorRPCService.pb.h>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -242,6 +243,100 @@ class TestUtils {
         NES_DEBUG("addLogicalStream: status =" << json_returnSchema);
 
         return json_returnSchema.at("Success").as_bool();
+    }
+
+    /**
+   * @brief This method is used adding a physical stream to a logical stream
+   * @param physicalStreamName
+   * @param logicalStreamName
+   * @return
+   */
+    static bool addPhysicalToLogicalStream(string physicalStreamName, string logicalStreamName, std::string restPort = "8081") {
+        web::json::value json_returnSchema;
+
+        RegisterPhysicalStreamRequest req;
+        req.set_physicalstreamname(physicalStreamName);
+        req.set_logicalstreamname(logicalStreamName);
+
+        std::string msg = req.SerializeAsString();
+        web::http::client::http_client addPhysicalToLogicalStreamClient(
+            "http://127.0.0.1:" + restPort + "/v1/nes/streamCatalog/addPhysicalStreamToLogicalStream");
+        web::json::value addJsonReturn;
+        addPhysicalToLogicalStreamClient.request(web::http::methods::POST, "", msg)
+            .then([](const web::http::http_response& response) {
+                NES_INFO("get first then");
+                return response.extract_json();
+            })
+            .then([&addJsonReturn](const pplx::task<web::json::value>& task) {
+                try {
+                    NES_INFO("addPhysicalToLogicalStream: set return");
+                    addJsonReturn = task.get();
+                } catch (const web::http::http_exception& e) {
+                    NES_ERROR("addPhysicalToLogicalStream: error while setting return" << e.what());
+                }
+            })
+            .wait();
+
+        NES_DEBUG("addPhysicalToLogicalStream: status =" << json_returnSchema);
+
+        return addJsonReturn.at("Success").as_bool();
+    }
+
+    static web::json::value getPhysicalStreamConfig(std::string physicalStreamName, std::string restPort = "8081") {
+        web::json::value ret_value;
+
+        web::http::client::http_client clientPhysicalStreamConfig(
+            "http://127.0.0.1:" + restPort + "/v1/nes/streamCatalog/physicalStreamConfig?streamName=" + physicalStreamName);
+        clientPhysicalStreamConfig.request(web::http::methods::GET)
+            .then([](const web::http::http_response& response) {
+                NES_INFO("get first then");
+                return response.extract_json();
+            })
+            .then([&ret_value](const pplx::task<web::json::value>& task) {
+                try {
+                    NES_INFO("set return");
+                    ret_value = task.get();
+                } catch (const web::http::http_exception& e) {
+                    NES_ERROR("error while setting return");
+                    NES_ERROR("error " << e.what());
+                }
+            })
+            .wait();
+
+        NES_DEBUG("getPhysicalStreamConfig: status =" << ret_value);
+
+        return ret_value;
+    }
+
+    /**
+   * @brief This method is used getting a logical stream
+   * @param query string
+   * @return
+   */
+    static web::json::value getLogicalStreams(std::string restPort = "8081") {
+        web::json::value ret_value;
+
+        web::http::client::http_client clientLogicalStreams("http://127.0.0.1:" + restPort
+                                                            + "/v1/nes/streamCatalog/allLogicalStream");
+        clientLogicalStreams.request(web::http::methods::GET)
+            .then([](const web::http::http_response& response) {
+                NES_INFO("get first then");
+                return response.extract_json();
+            })
+            .then([&ret_value](const pplx::task<web::json::value>& task) {
+                try {
+                    NES_INFO("set return");
+                    ret_value = task.get();
+                } catch (const web::http::http_exception& e) {
+                    NES_ERROR("error while setting return");
+                    NES_ERROR("error " << e.what());
+                }
+            })
+            .wait();
+
+        NES_DEBUG("getLogicalStream: status =" << ret_value);
+
+        return ret_value;
     }
 
     /**

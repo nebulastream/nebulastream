@@ -233,4 +233,23 @@ std::string SourceConfig::toJson() {
 
     return json.serialize();
 }
+std::string SourceConfig::toYaml() {
+    Yaml::Node root;
+    Yaml::Node& ref = root;
+
+    ref["sourceType"] = sourceType->getValue();
+    ref["sourceConfig"] = sourceConfig->getValue();
+    ref["sourceFrequency"] = std::to_string(sourceFrequency->getValue());
+    ref["numberOfBuffersToProduce"] = std::to_string(numberOfBuffersToProduce->getValue());
+    ref["numberOfTuplesToProducePerBuffer"] = std::to_string(numberOfTuplesToProducePerBuffer->getValue());
+    ref["physicalStreamName"] = physicalStreamName->getValue();
+    std::vector<std::string> lNames = logicalStreamName->getValue();
+    ref["logicalStreamName"] = UtilityFunctions::combineStringsWithDelimiter(lNames, ",");
+    ref["skipHeader"] = skipHeader->getValue() ? "true" : "false";
+
+    std::string serialized;
+    Yaml::Serialize(root, serialized);
+    return serialized;
+}
+
 }// namespace NES
