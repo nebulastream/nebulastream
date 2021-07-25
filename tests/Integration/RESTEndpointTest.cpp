@@ -868,7 +868,7 @@ TEST_F(RESTEndpointTest, testGetPhysicalSourceConfig) {
 
     web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
                                               + "/v1/nes/streamCatalog/physicalStreamConfig"
-                                                "?physicalStreamName=test_physical");
+                                                "?streamName=test_physical");
 
     web::json::value jsonResponse;
     httpClient.request(web::http::methods::GET)
@@ -946,7 +946,7 @@ TEST_F(RESTEndpointTest, testUpdatePhysicalSourceConfig) {
 
     web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
                                               + "/v1/nes/streamCatalog/updatePhysicalStreamConfig"
-                                                "?physicalStreamName=test_physical");
+                                                "?streamName=test_physical");
 
     std::string msg = "{\"sourceConfig\": \"test_value\"}";
 
