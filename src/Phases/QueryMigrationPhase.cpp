@@ -156,6 +156,9 @@ bool QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& 
         }
     }
     bool success = globalExecutionPlan->removeExecutionNodeFromQueryIdIndex(queryId,markedNode->getId());
+    if(!success){
+        throw Exception ("QueryMigrationPhase: removal of ExecutionNode from queryIdIndex not sucessful");
+    }
     return true;
 }
 
@@ -242,6 +245,9 @@ bool QueryMigrationPhase::executeMigrationWithoutBuffer(const std::vector<QueryP
         }
     }
     bool success = globalExecutionPlan->removeExecutionNodeFromQueryIdIndex(queryId,markedNode->getId());
+    if(!success){
+        throw Exception ("QueryMigrationPhase: removal of ExecutionNode from queryIdIndex not sucessful");
+    }
     return true;
 }
 
