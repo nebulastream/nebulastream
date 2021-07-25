@@ -191,7 +191,7 @@ ___
 
 ### Getting All Logical Stream
 
-To get all queries registered at NebulaStream.
+To get all Logical streams registered at NebulaStream.
 
 **API**: /streamCatalog/allLogicalStream\
 **Verb**: GET\
@@ -207,6 +207,39 @@ To get all queries registered at NebulaStream.
 "logical_stream_name": "logical_stream_schema" 
 ]}
 
+### Getting All Logical Stream for a Physical Stream
+To get all Logical streams registered for a specific physical stream at NebulaStream.
+
+**API**: /streamCatalog/allLogicalStream\
+**Verb**: GET\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{"physicalStreamName": "physical_stream_name"}
+
+**Response**:
+{[
+"logical_stream_name": "logical_stream_schema"
+]}
+
+### Getting all Physical Stream
+
+To get all physical streams.
+
+**API**: /streamCatalog/allPhysicalStream\
+**Verb**: GET\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{}
+
+**Response**:
+{"Physical Streams":  [physicl_stream_string]}
+
 ### Getting All Physical Stream For a Logical Stream
 
 To get all physical streams for a given logical stream.
@@ -218,10 +251,72 @@ To get all physical streams for a given logical stream.
 **_Example_**: 
 
 **Request**:
-{"streamName": "logical_stream_name"}
+{"logicalStreamName": "logical_stream_name"}
 
 **Response**:
 {"Physical Streams":  [physicl_stream_string]}
+
+### Getting SourceConfig of Physical Stream
+To get the source config of a physical stream
+
+**API**: /streamCatalog/physicalStreamConfig\
+**Verb**: GET\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{"physicalStreamName": "physical_stream_name"}
+
+**Response**:
+{source_config_json}
+
+### Getting all mismapped streams for Logical Stream
+To get all physical streams which mapped to the specific logical stream without schema
+
+**API**: /streamCatalog/allMismappedStreams\
+**Verb**: GET\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{"logicalStreamName": "logical_stream_name"}
+
+**Response**:
+{"Physical Streams":  ["phyStream1","phyStream2]}
+
+### Getting all mismapped streams
+To get all physical streams which mapped to a logical stream without schema
+
+**API**: /streamCatalog/allMismappedStreams\
+**Verb**: GET\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{}
+
+**Response**:
+{"Mismapped Streams":  ["mismappedLogical1":"phyStream1",
+                        "mismappedLogical2":"phyStream1 \n phystream2"]}
+
+### Getting all misconfigured physical streams
+To get all physical streams which are labelled misconfigured (including why they are misconfigured)
+
+**API**: /streamCatalog/allMisconfiguredStreamCatalogEntries\
+**Verb**: GET\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{}
+
+**Response**:
+{"phyStream1": "stateDescriptionPhyStream1",
+ "phyStream2": "stateDescriptionPhyStream2"}
 
 ### Add Logical Stream
 To add a logical stream.
@@ -255,8 +350,55 @@ To Update a logical stream.
 **Response**:
 {"Success": "true"}
 
-### Delete Logical Stream
+### Add physical stream to logical stream
+To add an existing physical to the logical-to-physical mapping of a logical stream
 
+**API**: /streamCatalog/addPhysicalStreamToLogicalStream\
+**Verb**: POST\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{"logicalStreamName": "logical_stream_name",
+"physicalStreamName": "phy1"}
+
+**Response**:
+{"Success": "true"}
+
+### Activate duplicate physical stream name
+If a physical stream tries to register with an already existing stream, a random string
+is added at the end, and the physical stream labelled as misconfigured.
+To be able to query on it, call this method to prove that the new name is valid
+
+**API**: /streamCatalog/addPhysicalStreamToLogicalStream\
+**Verb**: POST\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{"physicalStreamName": "phy1_random"}
+
+**Response**:
+{"Success": "true"}
+
+### Update Source Config of a Physical Stream
+Used to update the configuration parameters of a Physical Streams Source Config
+
+**API**: /streamCatalog/updatePhysicalStreamConfig\
+**Verb**: POST\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{"physicalStreamName": "phy1_random"} <- and params to update
+
+**Response**:
+{"Success": "true"}
+
+### Delete Logical Stream
 To delete a logical stream.
 
 **API**: /streamCatalog/removeLogicalStream\
@@ -267,6 +409,38 @@ To delete a logical stream.
 
 **Request**:
 {"streamName": "logical_stream_name"}
+
+**Response**:
+{"Success": "true"}
+
+### Remove a Physical Stream from a Logical-to-Physical mapping
+To remove a Physical stream out of a logical-to-physical mapping
+
+**API**: /streamCatalog/removePhysicalStreamFromLogicalStream\
+**Verb**: DELETE\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{"logicalStreamName": "logical_stream_name",
+ "physicalStreamName": "physical_stream_name"}
+
+**Response**:
+{"Success": "true"}
+
+### Remove a complete mismapped mapping (logical_without_schema to physical streams)
+To remove an invalid mapping (logical stream has no schema but still physicals mapped 
+to it)
+
+**API**: /streamCatalog/removeMismappedForLogical\
+**Verb**: DELETE\
+**Response Code**: 200 OK
+
+**_Example_**:
+
+**Request**:
+{"logicalStreamName": "logical_stream_name"}
 
 **Response**:
 {"Success": "true"}
