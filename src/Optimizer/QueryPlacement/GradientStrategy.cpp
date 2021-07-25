@@ -171,7 +171,7 @@ torch::Tensor GradientStrategy::operatorPlacement(torch::Tensor assignmentMatrix
             (connections - torch::sum(assignmentMatrix[opIndex]) + assignmentMatrix.index({opIndex, i}));
     }
 
-    torch::Tensor bound = torch::sqrt(torch::sqrt(torch::sum(assignmentMatrix[opIndex]) - 1).square());
+    torch::Tensor bound = torch::sqrt((torch::sum(assignmentMatrix[opIndex]) - 1).square());
     int startIndex = torch::where(finalizedMatrix[opIndex - 1] > 0.9)[0].item<int>();
 
     torch::Tensor validity = torch::sum(torch::slice(assignmentMatrix[opIndex], 0, 0, startIndex).square());
