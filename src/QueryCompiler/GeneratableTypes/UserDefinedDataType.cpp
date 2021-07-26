@@ -16,6 +16,7 @@
 
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
+#include <sstream>
 namespace NES::QueryCompilation {
 UserDefinedDataType::UserDefinedDataType(const StructDeclaration& decl) : declaration(decl) {}
 
@@ -25,7 +26,7 @@ CodeExpressionPtr UserDefinedDataType::getTypeDefinitionCode() const {
 
 CodeExpressionPtr UserDefinedDataType::getCode() const { return std::make_shared<CodeExpression>(declaration.getTypeName()); }
 
-CodeExpressionPtr UserDefinedDataType::getDeclarationCode(std::string) const {
+CodeExpressionPtr UserDefinedDataType::getDeclarationCode(std::string identifier) const {
     std::stringstream str;
     str << " " << identifier;
     return combine(getCode(), std::make_shared<CodeExpression>(str.str()));
