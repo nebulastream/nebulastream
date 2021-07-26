@@ -14,19 +14,18 @@
     limitations under the License.
 */
 #include <Compiler/SourceCode.hpp>
+#include <Util/Logger.hpp>
+#include <utility>
 
-namespace NES::Compiler{
+namespace NES::Compiler {
 
-SourceCode::SourceCode(const std::string& language, const std::string& code):  code(code), language(language) {}
-
-const std::string& SourceCode::getLanguage() const {
-    return language;
+SourceCode::SourceCode(std::string language, std::string code) : code(std::move(code)), language(std::move(language)) {
+    NES_ASSERT(language.empty(), "Language should not be empty");
+    NES_ASSERT(code.empty(), "Code should not be empty");
 }
 
-const std::string & SourceCode::getCode() const {
-    return code;
-}
+const std::string& SourceCode::getLanguage() const { return language; }
 
+const std::string& SourceCode::getCode() const { return code; }
 
-
-}
+}// namespace NES::Compiler

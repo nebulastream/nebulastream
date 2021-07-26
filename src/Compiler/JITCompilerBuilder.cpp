@@ -13,18 +13,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/JITCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/LanguageCompiler.hpp>
-namespace NES::Compiler{
+#include <Util/Logger.hpp>
+namespace NES::Compiler {
 
-JITCompilerBuilder& JITCompilerBuilder::registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler>& languageCompiler) {
+JITCompilerBuilder&
+JITCompilerBuilder::registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler>& languageCompiler) {
+    NES_ASSERT(languageCompiler, "Language compiler should not be null.");
+    NES_ASSERT(languageCompiler->getLanguage().empty(), "Invalid language provided.");
+    NES_ASSERT(languageCompilers.find(languageCompiler->getLanguage()) == languageCompilers.end(),
+               "Compiler for " << languageCompiler->getLanguage() << " was already registered");
     this->languageCompilers[languageCompiler->getLanguage()] = languageCompiler;
     return *this;
 }
 
-std::shared_ptr<JITCompiler> JITCompilerBuilder::build() {
-    return std::make_shared<JITCompiler>(languageCompilers);
-}
+std::shared_ptr<JITCompiler> JITCompilerBuilder::build() { return std::make_shared<JITCompiler>(languageCompilers); }
 
-}
+}// namespace NES::Compiler
