@@ -79,7 +79,7 @@ class MonitoringSerializationTest : public testing::Test {
 };
 
 TEST_F(MonitoringSerializationTest, testSerializationRuntimeNesMetrics) {
-    auto rutimeStats = MetricUtils::RuntimeNesStats();
+    auto rutimeStats = MetricUtils::runtimeNesStats();
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     RuntimeNesMetrics measuredVal = rutimeStats.measure();
@@ -95,7 +95,7 @@ TEST_F(MonitoringSerializationTest, testSerializationRuntimeNesMetrics) {
 }
 
 TEST_F(MonitoringSerializationTest, testSerializationStaticNesMetrics) {
-    auto staticStats = MetricUtils::StaticNesStats();
+    auto staticStats = MetricUtils::staticNesStats();
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     StaticNesMetrics measuredVal = staticStats.measure();
@@ -112,7 +112,7 @@ TEST_F(MonitoringSerializationTest, testSerializationStaticNesMetrics) {
 }
 
 TEST_F(MonitoringSerializationTest, testSerializationMetricsCpu) {
-    auto cpuStats = MetricUtils::CPUStats();
+    auto cpuStats = MetricUtils::cpuStats();
     CpuMetrics measuredVal = cpuStats.measure();
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -128,7 +128,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsCpu) {
 }
 
 TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkValue) {
-    auto networkStats = MetricUtils::NetworkStats();
+    auto networkStats = MetricUtils::networkStats();
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     NetworkValues measuredVal = networkStats.measure().getNetworkValue(0);
@@ -142,7 +142,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkValue) {
 }
 
 TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkMetrics) {
-    auto networkStats = MetricUtils::NetworkStats();
+    auto networkStats = MetricUtils::networkStats();
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     NetworkMetrics measuredVal = networkStats.measure();
@@ -159,10 +159,10 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkMetrics) {
 TEST_F(MonitoringSerializationTest, testSerializationGroups) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
-    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
-    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
-    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
-    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
+    Gauge<CpuMetrics> cpuStats = MetricUtils::cpuStats();
+    Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();
+    Gauge<DiskMetrics> diskStats = MetricUtils::diskStats();
+    Gauge<MemoryMetrics> memStats = MetricUtils::memoryStats();
 
     // add with simple data types
     metricGroup->add("simpleInt_", Metric{1});
@@ -188,10 +188,10 @@ TEST_F(MonitoringSerializationTest, testSerializationGroups) {
 TEST_F(MonitoringSerializationTest, testDeserializationMetricValues) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
-    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
-    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
-    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
-    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
+    Gauge<CpuMetrics> cpuStats = MetricUtils::cpuStats();
+    Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();
+    Gauge<DiskMetrics> diskStats = MetricUtils::diskStats();
+    Gauge<MemoryMetrics> memStats = MetricUtils::memoryStats();
 
     // add with simple data types
     metricGroup->add("simpleInt_", Metric{1});

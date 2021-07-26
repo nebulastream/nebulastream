@@ -25,6 +25,12 @@ namespace NES {
 class StaticNesMetrics {
   public:
     StaticNesMetrics();
+
+    /**
+     * Ctor for the static NES metrics.
+     * @param isMoving flag to indicate if the node is moving.
+     * @param hasBattery flag to indicate if the node runs on battery.
+     */
     StaticNesMetrics(bool isMoving, bool hasBattery);
 
     /**
@@ -66,7 +72,7 @@ class StaticNesMetrics {
 } __attribute__((packed));
 
 /**
- * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
+ * @brief The serialize method to write StaticNesMetrics into the given Schema and TupleBuffer. The prefix specifies a string
  * that should be added before each field description in the Schema.
  * @param the CpuMetrics
  * @param the schema

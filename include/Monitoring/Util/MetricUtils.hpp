@@ -38,44 +38,44 @@ class MetricUtils {
      * @brief Gauge metric for reading the runtime stats of NES
      * @return the cpu stats
      */
-    static Gauge<RuntimeNesMetrics> RuntimeNesStats();
+    static Gauge<RuntimeNesMetrics> runtimeNesStats();
 
     /**
      * @brief Gauge metric for reading the static stats of NES
      * @return the cpu stats
      */
-    static Gauge<StaticNesMetrics> StaticNesStats();
+    static Gauge<StaticNesMetrics> staticNesStats();
 
     /**
      * @brief Gauge metric for reading the CPU stats
      * @return the cpu stats
      */
-    static Gauge<CpuMetrics> CPUStats();
+    static Gauge<CpuMetrics> cpuStats();
 
     /**
      * @brief Gauge metric for reading the memory stats
      * @return the memory stats
      */
-    static Gauge<MemoryMetrics> MemoryStats();
+    static Gauge<MemoryMetrics> memoryStats();
 
     /**
      * @brief Gauge metric for reading the disk stats
      * @return the disk stats
      */
-    static Gauge<DiskMetrics> DiskStats();
+    static Gauge<DiskMetrics> diskStats();
 
     /**
      * @brief Gauge metric for reading reading the network stats
      * @return the network stats
      */
-    static Gauge<NetworkMetrics> NetworkStats();
+    static Gauge<NetworkMetrics> networkStats();
 
     /**
      * @brief Gauge metric for reading idle of the cpu
      * @param the cpu core
      * @return the gauge metric
      */
-    static Gauge<uint64_t> CPUIdle(unsigned int cpuNo);
+    static Gauge<uint64_t> cpuIdle(unsigned int cpuNo);
 
   private:
     MetricUtils() = default;
