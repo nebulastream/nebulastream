@@ -1407,7 +1407,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     codeGenerator->generateCodeForEmit(inputSchema, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(context);
+    auto stage = codeGenerator->compile(jitCompiler, context);
 
     // init handler
     auto cepOperatorHandler = CEP::CEPOperatorHandler::create();

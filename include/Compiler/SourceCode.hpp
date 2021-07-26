@@ -45,7 +45,7 @@ class SourceCode {
 
   private:
     const std::string code;
-    const std::string& language;
+    const std::string language;
 };
 
 }// namespace NES::Compiler
