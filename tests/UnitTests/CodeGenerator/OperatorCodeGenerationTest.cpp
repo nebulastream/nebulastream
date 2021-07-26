@@ -438,7 +438,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* generate code for scanning input buffer */
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context);
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", DataTypeFactory::createUInt64()), context);
+    codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", DataTypeFactory::createUInt64()), NO_OPTIMIZATION, context);
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
 
@@ -491,7 +491,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     codeGenerator->generateCodeForFilter(pred, context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(source->getSchema(), context);
+    codeGenerator->generateCodeForEmit(source->getSchema(), NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -871,7 +871,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
         context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(inputSchema, context);
+    codeGenerator->generateCodeForEmit(inputSchema, NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -935,7 +935,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, context);
+    codeGenerator->generateCodeForEmit(outputSchema, NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -1249,7 +1249,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
         context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, context);
+    codeGenerator->generateCodeForEmit(outputSchema, NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
