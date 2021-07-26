@@ -158,7 +158,7 @@ std::string Schema::toString() const {
         ss << f->toString() << " ";
     }
 
-    ss << "layoutType = " << layoutType;
+    ss << "layoutType = " << getLayoutTypeAsString(layoutType);
     return ss.str();
 }
 
@@ -250,5 +250,14 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
 }
 
 void Schema::clear() { fields.clear(); }
+std::string Schema::getLayoutTypeAsString(Schema::ROW_OR_COL layout) const {
+    if (layout == ROW_LAYOUT) {
+        return "ROW_LAYOUT";
+    } else  if (layout == COL_LAYOUT) {
+        return "COL_LAYOUT";
+    } else {
+        NES_THROW_RUNTIME_ERROR("layout type could not be parsed to string representation!");
+    }
+}
 
 }// namespace NES

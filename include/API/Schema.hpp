@@ -162,6 +162,13 @@ class Schema {
     [[nodiscard]] std::string toString() const;
 
     /**
+     * @brief returns the string representation of layout
+     * @param layout
+     * @return
+     */
+    [[nodiscard]] std::string getLayoutTypeAsString(ROW_OR_COL layout) const;
+
+    /**
      * @brief Method to return the stream name qualifier, thus everything that is before $
      * @return string
      */

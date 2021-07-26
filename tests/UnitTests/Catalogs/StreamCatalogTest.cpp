@@ -71,11 +71,11 @@ TEST_F(StreamCatalogTest, testAddGetLogStream) {
     EXPECT_NE(sPtr, nullptr);
 
     map<std::string, SchemaPtr> allLogicalStream = streamCatalog->getAllLogicalStream();
-    string exp = "id:INTEGER value:INTEGER ";
+    string exp = "id:INTEGER value:INTEGER layoutType = ROW_LAYOUT";
     EXPECT_EQ(allLogicalStream.size(), 3U);
 
     SchemaPtr testSchema = allLogicalStream["test_stream"];
-    EXPECT_EQ("", testSchema->toString());
+    EXPECT_EQ("layoutType = ROW_LAYOUT", testSchema->toString());
 
     SchemaPtr defaultSchema = allLogicalStream["default_logical"];
     EXPECT_EQ(exp, defaultSchema->toString());
