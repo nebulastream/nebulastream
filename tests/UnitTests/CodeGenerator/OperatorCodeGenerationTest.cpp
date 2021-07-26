@@ -1050,7 +1050,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     auto fourthFieldsOutput =
         Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<double, true>::create(4, bindedOutputColumnLayout);
 
-    for (uint64_t recordIndex = 0; recordIndex < inputBuffer.getNumberOfTuples(); recordIndex++) {
+    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
         auto doubleValue = thirdFieldsInput[recordIndex];
         auto reference = (floatValue * doubleValue) + 2;

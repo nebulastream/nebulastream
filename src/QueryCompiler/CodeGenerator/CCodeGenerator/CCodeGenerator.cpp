@@ -199,8 +199,10 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclarationInputTuples[0])),
                                         "inputTuples");
     } else if (inputSchema->layoutType == Schema::COL_LAYOUT) {
-        code->varDeclarationInputTuples =
-            VariableDeclaration::create(tf->createUserDefinedType(code->structDeclarationInputTuples[0]), "inputTuples");
+        code->varDeclarationInputTuples = VariableDeclaration::create(tf->createUserDefinedType(code->structDeclarationInputTuples[0]), "inputTuples");
+        auto varDeclInputTupleStmt = VarDeclStatement(code->varDeclarationInputTuples);
+        NES_DEBUG("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is " << varDeclInputTupleStmt.getCode()->code_);
+        code->variableInitStmts.push_back(varDeclInputTupleStmt.copy());
     } else {
         NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
@@ -212,13 +214,14 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     code->variableInitStmts.push_back(
         VarDeclStatement(varDeclarationResultBuffer).assign(allocateTupleBuffer(varDeclarationPipelineExecutionContext)).copy());
 
-    code->variableInitStmts.push_back(
-        VarDeclStatement(code->varDeclarationInputTuples)
-            .assign(getTypedBuffer(code->varDeclarationInputBuffer, code->structDeclarationInputTuples[0]))
-            .copy());
+    // If it is a row layout, then map struct to buffer, otherwise set the start of all fields
+    if (inputSchema->layoutType == Schema::ROW_LAYOUT) {
+        code->variableInitStmts.push_back(
+            VarDeclStatement(code->varDeclarationInputTuples)
+                .assign(getTypedBuffer(code->varDeclarationInputBuffer, code->structDeclarationInputTuples[0]))
+                .copy());
 
-    // Setting the start of all fields for col layout
-    if (inputSchema->layoutType == Schema::COL_LAYOUT) {
+    } else if (inputSchema->layoutType == Schema::COL_LAYOUT) {
         auto compStatement = code->currentCodeInsertionPoint;
         generateCodeInitStructFieldsColLayout(inputSchema, tf, varDeclarationInputBuffer,
                                               code->structDeclarationInputTuples[0],
@@ -249,7 +252,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
 
             recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
         } else if (inputSchema->layoutType == Schema::COL_LAYOUT) {
-            auto fieldRefStatement = VarRef(context->code->varDeclarationInputTuples).accessPtr(
+            auto fieldRefStatement = VarRef(context->code->varDeclarationInputTuples).accessRef(
                 VarRef(variable))[VarRef(context->code->varDeclarationRecordIndex)];
 
             recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
@@ -437,8 +440,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
         generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
 
     } else if (sinkSchema->layoutType == Schema::COL_LAYOUT) {
-//        auto varDeclResultTuple = VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
-        auto varDeclResultTuple = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()), "resultTuples");
+        auto varDeclResultTuple = VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
         auto varDeclResultTupleStmt = VarDeclStatement(varDeclResultTuple);
         NES_DEBUG("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is " << varDeclResultTupleStmt.getCode()->code_);
         code->variableInitStmts.push_back(varDeclResultTupleStmt.copy());
@@ -467,7 +469,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
             // Get current field from record handler.
             auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
             auto const copyFieldStatement = VarRef(varDeclResultTuple)
-                .accessPtr(VarRef(resultRecordFieldVariableDeclaration))[VarRef(code->varDeclarationNumberOfResultTuples)]
+                .accessRef(VarRef(resultRecordFieldVariableDeclaration))[VarRef(code->varDeclarationNumberOfResultTuples)]
                 .assign(currentFieldVariableReference);
 
             code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
