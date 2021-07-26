@@ -430,7 +430,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 
 // @ Philipp & reviewers: query to test strategies. have a look at the code with a breakpoint at Compiler.cpp:79, then --> console or filesystem. (Expected content wont match though)
 // TODO delete before merge
-TEST_F(QueryExecutionTest, mapQuery) {
+TEST_F(QueryExecutionTest, DISABLED_mapQuery) {
     // creating query plan
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
