@@ -109,7 +109,7 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
     NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
     FILE* fp = nullptr;
-    char buffer[10000];
+    char buffer[8192];
 
     // Redirecting stderr to stdout, to be able to read error messages
     compilerCall << " 2>&1";
