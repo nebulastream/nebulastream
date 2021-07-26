@@ -214,7 +214,7 @@ void BM_Partial_Placement(benchmark::State& state,
 }
 
 #define REPETITIONS 5
-#define NUMBER_OF_SOURCES 2
+#define NUMBER_OF_SOURCES 512
 #define NUMBER_OF_LEVELS 10
 #define CHILDREN_PER_PARENT 10
 
