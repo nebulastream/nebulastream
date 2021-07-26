@@ -2087,7 +2087,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 Runtime::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
                                                                        PipelineContextPtr code) {
     std::string src = generateCode(code);
-    auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::CPP, src);
+    auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", src);
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, true);
     auto result = jitCompiler->compile(std::move(request));
     auto compiledCode = result.get().getDynamicObject();

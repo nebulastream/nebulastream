@@ -19,26 +19,77 @@
 #include <Compiler/CompilerForwardDeclarations.hpp>
 
 namespace NES::Compiler {
+
+/**
+ * @brief Represents a request to compile a specific source code artifact.
+ * A compilation request consists of a unique identifier, a source code artifact and a set of compilation options.
+ */
 class CompilationRequest {
   public:
+    /**
+     * @brief Creates a new @CompilationRequest.
+     * @param sourceCode The source code artifact that should be compiled
+     * @param name the identifier of this request
+     * @param profileCompilation enables profiling for the compilation
+     * @param profileExecution enables profiling for the execution
+     * @param optimizeCompilation enables optimizations
+     * @param debug enables debug options
+     * @return std::unique_ptr<CompilationRequest>
+     */
     CompilationRequest(std::unique_ptr<SourceCode> sourceCode,
                        std::string name,
                        bool profileCompilation,
                        bool profileExecution,
                        bool optimizeCompilation,
                        bool debug);
-    static std::unique_ptr<CompilationRequest> create(std::unique_ptr<SourceCode> sourceCode,
-                                               std::string name,
-                                               bool profileCompilation,
-                                               bool profileExecution,
-                                               bool optimizeCompilation,
-                                               bool debug);
 
+    /**
+     * @brief Creates a new @CompilationRequest.
+     * @param sourceCode The source code artifact that should be compiled
+     * @param name the identifier of this request
+     * @param profileCompilation enables profiling for the compilation
+     * @param profileExecution enables profiling for the execution
+     * @param optimizeCompilation enables optimizations
+     * @param debug enables debug options
+     * @return std::unique_ptr<CompilationRequest>
+     */
+    static std::unique_ptr<CompilationRequest> create(std::unique_ptr<SourceCode> sourceCode,
+                                                      std::string name,
+                                                      bool profileCompilation,
+                                                      bool profileExecution,
+                                                      bool optimizeCompilation,
+                                                      bool debug);
+
+    /**
+     * @brief Returns the source code artifact
+     * @return @SourceCode
+     */
     [[nodiscard]] const std::shared_ptr<SourceCode> getSourceCode() const;
+
+    /**
+     * @brief Indicates if debugging should be enabled.
+     * @return debug flag
+     */
     [[nodiscard]] bool enableDebugging() const;
+    /**
+     * @brief Indicates if optimizations should be enabled.
+     * @return optimization flag
+     */
     [[nodiscard]] bool enableOptimizations() const;
+    /**
+     * @brief Indicates if the compilation process should be profiled.
+     * @return profile compilation flag
+     */
     [[nodiscard]] bool enableCompilationProfiling() const;
+    /**
+     * @brief Indicates if the execution should be profiled.
+     * @return profile compilation flag
+     */
     [[nodiscard]] bool enableExecutionProfiling() const;
+    /**
+     * @brief Returns the identifier
+     * @return name
+     */
     [[nodiscard]] std::string getName() const;
 
   private:

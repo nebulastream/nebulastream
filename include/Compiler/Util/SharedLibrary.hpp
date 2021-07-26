@@ -22,15 +22,36 @@ namespace NES::Compiler {
 class SharedLibrary;
 using SharedLibraryPtr = std::shared_ptr<SharedLibrary>;
 
+/**
+ * @brief Represents a @DynamicObject, which relies on a shared library.
+ */
 class SharedLibrary : public DynamicObject {
   public:
-    ~SharedLibrary() override;
-
+    /**
+     * @brief Creates a new @SharedLibrary Object
+     * @param shareLib
+     */
+    explicit SharedLibrary(void* shareLib);
+    /**
+     * @brief Loads a shared library from a specific path.
+     * @param filePath
+     * @return SharedLibraryPtr
+     */
     static SharedLibraryPtr load(const std::string& filePath);
 
-    [[nodiscard]] void* getInvocableFunctionPtr(const std::string& member) override;
+    /**
+     * @brief Destructor for the shared library.
+     * Automatically unloads the shared library from memory.
+     */
+    ~SharedLibrary() override;
 
-    explicit SharedLibrary(void* shareLib);
+  protected:
+    /**
+     * @brief Returns a untyped function pointer to a specific symbol.
+     * @param member on the dynamic object, currently provided as a MangledName.
+     * @return function ptr
+     */
+    [[nodiscard]] void* getInvocableFunctionPtr(const std::string& member) override;
 
   private:
     void* shareLib;

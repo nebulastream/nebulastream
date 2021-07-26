@@ -17,9 +17,9 @@
 
 namespace NES::Compiler{
 
-SourceCode::SourceCode(Language language, const std::string& code):  code(code), language(language) {}
+SourceCode::SourceCode(const std::string& language, const std::string& code):  code(code), language(language) {}
 
-Language SourceCode::getLanguage() const {
+const std::string& SourceCode::getLanguage() const {
     return language;
 }
 

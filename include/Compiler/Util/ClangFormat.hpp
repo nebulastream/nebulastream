@@ -15,20 +15,28 @@
 */
 #ifndef NES_INCLUDE_COMPILER_UTIL_FORMATER_HPP_
 #define NES_INCLUDE_COMPILER_UTIL_FORMATER_HPP_
-#include <Compiler/File.hpp>
-#include <Compiler/Language.hpp>
+#include <Compiler/Util/File.hpp>
 #include <mutex>
 
-namespace NES ::Compiler {
+namespace NES::Compiler {
 
+/**
+ * @brief Utility, which leverages clang format to
+ */
 class ClangFormat {
   public:
-    explicit ClangFormat(Language language);
+    /**
+     * @brief Create a new clang format instance for a specific language
+     * @param language
+     */
+    explicit ClangFormat(std::string language);
+    /**
+     * @brief Format a particular file with code
+     * @param file
+     */
     void formatFile(std::shared_ptr<File> file);
-
   private:
-    std::string getFileType() const;
-    Language language;
+    const std::string language;
     std::mutex clangFormatMutex;
 
 };

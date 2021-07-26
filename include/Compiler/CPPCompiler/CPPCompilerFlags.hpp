@@ -19,6 +19,9 @@
 #include <vector>
 namespace NES::Compiler {
 
+/**
+ * @brief Represents compilation flags available to the C++ compiler.
+ */
 class CPPCompilerFlags {
   public:
     // sets the cpp language version for the code

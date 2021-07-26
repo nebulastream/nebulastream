@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Compiler/File.hpp>
+#include <Compiler/Util/File.hpp>
 #include <Util/Logger.hpp>
 #include <filesystem>
 #include <fstream>

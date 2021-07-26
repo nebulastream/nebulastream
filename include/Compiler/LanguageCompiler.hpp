@@ -15,14 +15,32 @@
 */
 #ifndef NES_INCLUDE_COMPILER_LANGUAGECOMPILER_HPP_
 #define NES_INCLUDE_COMPILER_LANGUAGECOMPILER_HPP_
-#include <Compiler/Language.hpp>
 namespace NES::Compiler {
 
+/**
+ * @brief Abstract class for a language specific compiler.
+ * A language specific compiler, receives compilation requests and returns compilation results.
+ * All methods are expected to be thread safe.
+ */
 class LanguageCompiler {
   public:
+    /**
+     * @brief Handles a compilation request. Implementations have to be thread safe.
+     * @param request CompilationRequest
+     * @return CompilationResult
+     */
     [[nodiscard]] virtual CompilationResult
     compile(std::unique_ptr<const CompilationRequest> request) const = 0;
-    [[nodiscard]] virtual Language getLanguage() const = 0;
+
+    /**
+     * @brief Returns the language for, which this compiler can handle compilation requests
+     * @return language
+     */
+    [[nodiscard]] virtual std::string getLanguage() const = 0;
+
+    /**
+     * @brief Destructor for the language compiler.
+     */
     virtual ~LanguageCompiler() = default;
 };
 

@@ -18,8 +18,6 @@
 #include <Compiler/LanguageCompiler.hpp>
 namespace NES::Compiler{
 
-JITCompilerBuilder::JITCompilerBuilder() = default;
-
 JITCompilerBuilder& JITCompilerBuilder::registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler>& languageCompiler) {
     this->languageCompilers[languageCompiler->getLanguage()] = languageCompiler;
     return *this;

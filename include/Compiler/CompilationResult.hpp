@@ -21,10 +21,28 @@
 
 namespace NES::Compiler {
 
+/**
+ * @brief Result for a specific @CompilationRequest.
+ * Contains a reference to the @DynmaicObject created by the compiler.
+ */
 class CompilationResult {
   public:
+    /**
+     * @brief Constructor for a Compilation result.
+     * @param dynamicObject The dynamic object created by the @LanguageCompiler
+     * @param compileTime the time it take to handle the @CompilationRequest
+     */
     CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, uint64_t compileTime);
+    /**
+     * @brief Returns the dynamic object created by the Compiler
+     * @return std::shared_ptr<DynamicObject>
+     */
     [[nodiscard]] std::shared_ptr<DynamicObject> getDynamicObject() const;
+
+    /**
+     * @brief Returns the compilation time
+     * @return compilation time
+     */
     [[nodiscard]] uint64_t getCompilationTime() const;
 
   private:
