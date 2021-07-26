@@ -102,6 +102,7 @@ void BasePlacementStrategy::pinSinkOperator(QueryId queryId,
                                             const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators,
                                             std::map<std::string, std::vector<TopologyNodePtr>>& mapOfSourceToTopologyNodes,
                                             std::vector<TopologyNodePtr>& mergedGraphSourceNodes) {
+
     NES_DEBUG("BasePlacementStrategy: Prepare a map of source to physical nodes");
     NES_TRACE("BasePlacementStrategy: Clear the previous pinned operator mapping");
     TopologyNodePtr sinkNode = topology->getRoot();
