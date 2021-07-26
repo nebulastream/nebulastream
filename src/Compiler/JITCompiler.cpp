@@ -15,31 +15,37 @@
 */
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
+#include <Compiler/Exceptions/CompilerException.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Util/Logger.hpp>
-#include <utility>
 #include <future>
+#include <utility>
 
 namespace NES::Compiler {
 
 JITCompiler::JITCompiler(std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers)
     : languageCompilers(std::move(languageCompilers)) {}
 
-std::future<const CompilationResult> JITCompiler::compile(std::unique_ptr<const CompilationRequest> request) const {
-    std::promise<const CompilationResult> result;
+CompilationResult JITCompiler::handleRequest(std::unique_ptr<const CompilationRequest> request) const {
+    if (request->getSourceCode() == nullptr) {
+        throw CompilerException("No source code provided");
+    }
     auto language = request->getSourceCode()->getLanguage();
     auto languageCompiler = languageCompilers.find(language);
 
     if (languageCompiler == languageCompilers.end()) {
-        NES_FATAL_ERROR("No language compiler found for language: " << language);
+        throw CompilerException("No language compiler found for language: " + language);
     }
-    auto asyncResult = std::async(std::launch::async, [&languageCompiler, &request, &result]() {
-        auto compilationResult = languageCompiler->second->compile(std::move(request));
-        result.set_value(compilationResult);
+    return languageCompiler->second->compile(std::move(request));
+}
+
+std::future<CompilationResult> JITCompiler::compile(std::unique_ptr<const CompilationRequest> request) const {
+    auto asyncResult = std::async(std::launch::async, [this, &request]() {
+        return this->handleRequest(std::move(request));
     });
-    return result.get_future();
+    return asyncResult;
 }
 
 }// namespace NES::Compiler

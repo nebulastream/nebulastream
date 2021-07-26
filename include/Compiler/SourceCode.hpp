@@ -29,19 +29,19 @@ class SourceCode {
      * @param language the language of this source code artifact.
      * @param code the code
      */
-    SourceCode(const std::string& language, const std::string& code);
+    SourceCode(std::string  language, std::string  code);
 
     /**
      * @brief Returns the language of this source code.
      * @return std::string
      */
-    const std::string& getLanguage() const;
+    [[nodiscard]] const std::string& getLanguage() const;
 
     /**
      * @brief Returns the code.
      * @return std::string
      */
-    const std::string& getCode() const;
+    [[nodiscard]] const std::string& getCode() const;
 
   private:
     const std::string code;
