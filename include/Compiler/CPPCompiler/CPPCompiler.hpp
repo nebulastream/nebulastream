@@ -21,16 +21,42 @@ namespace NES::Compiler {
 class CPPCompilerFlags;
 class File;
 class ClangFormat;
+
+/**
+ * @brief A @LanguageCompiler for C++.
+ * Relies on clang++ for compilation.
+ */
 class CPPCompiler : public LanguageCompiler {
   public:
-
-    static std::shared_ptr<LanguageCompiler> create();
     CPPCompiler();
+
+    /**
+     * @brief Creates a new instance of the cpp compiler.
+     * @return std::shared_ptr<LanguageCompiler>
+     */
+    static std::shared_ptr<LanguageCompiler> create();
+    /**
+     * @brief Handles a compilation request. Implementations have to be thread safe.
+     * @param request CompilationRequest
+     * @return CompilationResult
+     */
     [[nodiscard]]  CompilationResult compile(std::unique_ptr<const CompilationRequest> request) const override;
-    [[nodiscard]]  Language getLanguage() const override;
+    /**
+    * @brief Returns the language for, which this compiler can handle compilation requests
+    * @return language
+    */
+    [[nodiscard]]  std::string getLanguage() const override;
+
+
     ~CPPCompiler() override = default;
 
   private:
+    /**
+     * @brief Compiles a source code file to a shared lib.
+     * @param flags compilation flags
+     * @param sourceFile the source code file
+     * @param libraryFileName the target lib name
+     */
     void compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File> sourceFile, std::string libraryFileName) const;
     std::unique_ptr<ClangFormat> format;
 };

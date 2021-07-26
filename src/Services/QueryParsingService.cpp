@@ -49,7 +49,7 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
         code << "}" << std::endl;
 
         NES_DEBUG("generated code=" << code.str());
-        auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::CPP, code.str());
+        auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code.str());
         auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, true);
         auto result = jitCompiler->compile(std::move(request));
         auto compiled_code = result.get().getDynamicObject();
@@ -130,7 +130,7 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
         code << "}" << std::endl;
         code << "}" << std::endl;
         NES_DEBUG("UtilityFunctions: query code \n" << code.str());
-        auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::CPP, code.str());
+        auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code.str());
         auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, true);
         auto result = jitCompiler->compile(std::move(request));
         auto compiled_code = result.get().getDynamicObject();

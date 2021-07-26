@@ -15,7 +15,7 @@
 */
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/File.hpp>
+#include <Compiler/Util/File.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -64,7 +64,7 @@ class JITCompilerTest : public testing::Test {
 TEST_F(JITCompilerTest, compileCppCode) {
     auto f = File("../tests/test_data/test_sourceCode/test1.cpp");
     auto content = f.read();
-    auto sourceCode = std::make_unique<SourceCode>(CPP, content);
+    auto sourceCode = std::make_unique<SourceCode>("cpp", content);
     auto request = CompilationRequest::create(std::move(sourceCode), "test_1", false, false, true, true);
 
     auto result = compiler->compile(std::move(request));

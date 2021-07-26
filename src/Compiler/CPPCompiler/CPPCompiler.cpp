@@ -18,7 +18,7 @@
 #include <Compiler/Util/SharedLibrary.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
-#include <Compiler/File.hpp>
+#include <Compiler/Util/File.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Compiler/Util/ClangFormat.hpp>
 #include <Util/Logger.hpp>
@@ -33,9 +33,9 @@ const std::string DEBSIncludePath = PATH_TO_DEB_SOURCE_CODE "/include/";
 
 std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_shared<CPPCompiler>(); }
 
-CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>(CPP)) {}
+CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {}
 
-Language CPPCompiler::getLanguage() const { return CPP; }
+std::string CPPCompiler::getLanguage() const { return "cpp"; }
 
 CompilationResult CPPCompiler::compile(std::unique_ptr<const CompilationRequest> request) const {
     auto start = std::chrono::steady_clock::now();

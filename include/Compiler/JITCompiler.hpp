@@ -15,7 +15,6 @@
 */
 #ifndef NES_INCLUDE_COMPILER_JITCOMPILER_HPP_
 #define NES_INCLUDE_COMPILER_JITCOMPILER_HPP_
-#include <Compiler/Language.hpp>
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <map>
 #include <future>
@@ -23,12 +22,24 @@
 
 namespace NES::Compiler {
 
+/**
+ * @brief The JIT compiler handles compilation requests and dispatches them to the right language compiler implementation.
+ */
 class JITCompiler {
   public:
-    JITCompiler(std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers);
+    /**
+     * @brief Constructor to create a new jit compiler with a fixed set of language compilers.
+     * @param languageCompilers set of language compilers.
+     */
+    JITCompiler(std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers);
+    /**
+     * @brief Processes a compilation request and dispatches it to the correct compiler implementation.
+     * @param request Compilation request
+     * @return Future of the CompilationResult
+     */
     [[nodiscard]] std::future<const CompilationResult> compile(std::unique_ptr<const CompilationRequest> request) const;
   private:
-    const std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers;
+    const std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers;
 };
 
 }// namespace NES::Compiler

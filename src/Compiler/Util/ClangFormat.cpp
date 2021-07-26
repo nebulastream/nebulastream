@@ -18,7 +18,7 @@
 #include <Util/Logger.hpp>
 namespace NES::Compiler {
 
-ClangFormat::ClangFormat(Language language) : language(language) {}
+ClangFormat::ClangFormat(const std::string language) : language(language) {}
 
 void ClangFormat::formatFile(std::shared_ptr<File> file) {
     // lock clang format
@@ -34,8 +34,7 @@ void ClangFormat::formatFile(std::shared_ptr<File> file) {
                                     "If 'clang-format-X' is installed, try to create a symbolic link.");
     }
     // construct clang-format command argument
-    auto fileType = getFileType();
-    auto formatCommand = "clang-format --assume-filename=" + fileType + " -i " + file->getPath();
+    auto formatCommand = "clang-format --assume-filename=" + language + " -i " + file->getPath();
     NES_DEBUG("Format with " << formatCommand);
     auto* res = popen(formatCommand.c_str(), "r");
     if (res == nullptr) {
@@ -45,12 +44,5 @@ void ClangFormat::formatFile(std::shared_ptr<File> file) {
     pclose(res);
 }
 
-std::string ClangFormat::getFileType() const {
-    switch (language) {
-        case CPP: {
-            return "cpp";
-        }
-    }
-}
 
 }// namespace NES::Compiler

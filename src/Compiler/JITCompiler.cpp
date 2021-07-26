@@ -16,7 +16,6 @@
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/JITCompiler.hpp>
-#include <Compiler/Language.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Util/Logger.hpp>
@@ -25,7 +24,7 @@
 
 namespace NES::Compiler {
 
-JITCompiler::JITCompiler(std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers)
+JITCompiler::JITCompiler(std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers)
     : languageCompilers(std::move(languageCompilers)) {}
 
 std::future<const CompilationResult> JITCompiler::compile(std::unique_ptr<const CompilationRequest> request) const {

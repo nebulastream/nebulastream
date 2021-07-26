@@ -16,19 +16,33 @@
 #ifndef NES_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_
 #define NES_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_
 #include <Compiler/CompilerForwardDeclarations.hpp>
-#include <Compiler/Language.hpp>
 #include <map>
 #include <memory>
 namespace NES::Compiler {
 
+/**
+ * @brief Builder for a new JIT compiler.
+ */
 class JITCompilerBuilder {
   public:
-    JITCompilerBuilder();
+    /**
+     * @brief Constructor for a new JIT compiler object.
+     */
+    JITCompilerBuilder() = default;
+    /**
+     * @brief Registers a new language compiler to this JIT compiler.
+     * @param languageCompiler
+     * @return JITCompilerBuilder
+     */
     JITCompilerBuilder& registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler>& languageCompiler);
+    /**
+     * @brief Creates a instance of the JITCompiler containing all language compilers.
+     * @return JITCompiler
+     */
     std::shared_ptr<JITCompiler> build();
 
   private:
-    std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers;
+    std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers;
 };
 
 }// namespace NES::Compiler
