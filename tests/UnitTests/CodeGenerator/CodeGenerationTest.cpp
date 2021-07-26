@@ -349,7 +349,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto varDeclTupleBuffer = VariableDeclaration::create(
             NES::QueryCompilation::GeneratableTypesFactory::createUserDefinedType(tupleBufferStructDecl),
             "buffer");
-        EXPECT_EQ(varDeclTupleBuffer.getCode(), "TupleBuffer");
+        EXPECT_EQ(varDeclTupleBuffer.getCode(), "TupleBuffer buffer");
 
         auto varDeclTupleBufferPointer = VariableDeclaration::create(
             NES::QueryCompilation::GeneratableTypesFactory::createPointer(
