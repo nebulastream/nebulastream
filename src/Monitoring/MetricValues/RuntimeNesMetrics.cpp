@@ -29,7 +29,7 @@
 namespace NES {
 
 RuntimeNesMetrics::RuntimeNesMetrics()
-    : memoryUsageInBytes(0), cpuLoadInJiffies(0), blkioBytesRead(0), blkioBytesWritten(0), batteryStatus(0), latCoord(0),
+    : memoryUsageInBytes(0), cpuLoadInJiffies(0), blkioBytesRead(0), blkioBytesWritten(0), batteryStatusInPercent(0), latCoord(0),
       longCoord(0) {
     NES_DEBUG("RuntimeNesMetrics: Default ctor");
 }
@@ -43,7 +43,7 @@ SchemaPtr RuntimeNesMetrics::getSchema(const std::string& prefix) {
                            ->addField(prefix + "cpuLoadInJiffies", BasicType::UINT64)
                            ->addField(prefix + "blkioBytesRead", BasicType::UINT64)
                            ->addField(prefix + "blkioBytesWritten", BasicType::UINT64)
-                           ->addField(prefix + "batteryStatus", BasicType::UINT64)
+                           ->addField(prefix + "batteryStatusInPercent", BasicType::UINT64)
                            ->addField(prefix + "latCoord", BasicType::UINT64)
                            ->addField(prefix + "longCoord", BasicType::UINT64);
 
@@ -59,7 +59,7 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
         NES_THROW_RUNTIME_ERROR("NetworkValues: Prefix " + prefix + " could not be found in schema:\n" + schema->toString());
     }
     if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is " + std::to_string(buf.getNumberOfTuples()));
+        NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is larger " + std::to_string(buf.getNumberOfTuples()));
     }
 
     auto hasName = UtilityFunctions::endsWith(schema->fields[i]->getName(), rnSchema->get(0)->getName());
@@ -67,7 +67,7 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
                                                    rnSchema->get(rnSchema->getSize()-1)->getName());
 
     if (!hasName || !hasLastField) {
-        NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
+        NES_THROW_RUNTIME_ERROR("NetworkValues: Incomplete number of fields in schema.");
     }
 
     auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
@@ -82,7 +82,7 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
     output.blkioBytesRead = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.blkioBytesWritten =
         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.batteryStatus = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.batteryStatusInPercent = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.latCoord = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.longCoord = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
@@ -97,7 +97,7 @@ web::json::value RuntimeNesMetrics::toJson() const {
     metricsJson["CpuLoadInJiffies"] = web::json::value::number(cpuLoadInJiffies);
     metricsJson["BlkioBytesRead"] = web::json::value::number(blkioBytesRead);
     metricsJson["BlkioBytesWritten"] = web::json::value::number(blkioBytesWritten);
-    metricsJson["BatteryStatus"] = web::json::value::number(batteryStatus);
+    metricsJson["BatteryStatus"] = web::json::value::number(batteryStatusInPercent);
     metricsJson["LatCoord"] = web::json::value::number(latCoord);
     metricsJson["LongCoord"] = web::json::value::number(longCoord);
 
@@ -107,7 +107,8 @@ web::json::value RuntimeNesMetrics::toJson() const {
 bool RuntimeNesMetrics::operator==(const RuntimeNesMetrics& rhs) const {
     return wallTimeNs == rhs.wallTimeNs && memoryUsageInBytes == rhs.memoryUsageInBytes && cpuLoadInJiffies == rhs.cpuLoadInJiffies
         && blkioBytesRead == rhs.blkioBytesRead && blkioBytesWritten == rhs.blkioBytesWritten
-        && batteryStatus == rhs.batteryStatus && latCoord == rhs.latCoord && longCoord == rhs.longCoord;
+        && batteryStatusInPercent == rhs.batteryStatusInPercent
+        && latCoord == rhs.latCoord && longCoord == rhs.longCoord;
 }
 
 bool RuntimeNesMetrics::operator!=(const RuntimeNesMetrics& rhs) const { return !(rhs == *this); }

@@ -37,11 +37,11 @@ class RuntimeNesMetrics {
     static SchemaPtr getSchema(const std::string& prefix = "");
 
     /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @brief Parses a RuntimeNesMetrics objects based on a given Schema and TupleBuffer.
      * @param schema
      * @param buf
      * @param prefix
-     * @return The object
+     * @return The parsed RuntimeNesMetrics object
      */
     static RuntimeNesMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
@@ -59,15 +59,15 @@ class RuntimeNesMetrics {
     uint64_t cpuLoadInJiffies;//user+system
     uint64_t blkioBytesRead;
     uint64_t blkioBytesWritten;
-    uint64_t batteryStatus;
+    uint64_t batteryStatusInPercent;
     uint64_t latCoord;
     uint64_t longCoord;
 } __attribute__((packed));
 
 /**
- * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
+ * @brief The serialize method to write runtime metrics of NES into the given Schema and TupleBuffer. The prefix specifies a string
  * that should be added before each field description in the Schema.
- * @param the CpuMetrics
+ * @param the runtime metrics
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
@@ -75,7 +75,7 @@ class RuntimeNesMetrics {
 void writeToBuffer(const RuntimeNesMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
- * @brief Class specific getSchema() method
+ * @brief Class specific getSchema() method for the runtime metrics
  * @param metric
  * @param prefix
  * @return the SchemaPtr

@@ -14,43 +14,40 @@
     limitations under the License.
 */
 
-#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
-#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
+#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/Util/SystemResourcesReader.hpp>
 
 #include <Util/Logger.hpp>
+#include <chrono>
 #include <fstream>
 #include <iterator>
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>
 #include <thread>
 #include <vector>
-#include <chrono>
-
 
 namespace NES {
 
-RuntimeNesMetrics SystemResourcesReader::ReadRuntimeNesMetrics() {
+RuntimeNesMetrics SystemResourcesReader::readRuntimeNesMetrics() {
     RuntimeNesMetrics output{};
     output.wallTimeNs = SystemResourcesReader::getWallTimeInNs();
 
-    std::vector<std::string> metricLocations {
-        "/sys/fs/cgroup/memory/memory.usage_in_bytes",
-        "/sys/fs/cgroup/cpuacct/cpuacct.stat",
-        "/sys/fs/cgroup/blkio/blkio.throttle.io_service_bytes"
-    };
+    std::vector<std::string> metricLocations{"/sys/fs/cgroup/memory/memory.usage_in_bytes",
+                                             "/sys/fs/cgroup/cpuacct/cpuacct.stat",
+                                             "/sys/fs/cgroup/blkio/blkio.throttle.io_service_bytes"};
 
     NES_DEBUG("SystemResourcesReader: Reading memory.usage_in_bytes for metrics");
     std::string line;
     int i = 0;
     std::ifstream memoryLoc(metricLocations[0]);
-    std::string memoryStr((std::istreambuf_iterator<char>(memoryLoc)),std::istreambuf_iterator<char>());
+    std::string memoryStr((std::istreambuf_iterator<char>(memoryLoc)), std::istreambuf_iterator<char>());
     output.memoryUsageInBytes = std::stoull(memoryStr);
 
     NES_DEBUG("SystemResourcesReader: Reading cpuacct.stat for metrics");
@@ -63,13 +60,11 @@ RuntimeNesMetrics SystemResourcesReader::ReadRuntimeNesMetrics() {
         int len = tokens[0].copy(name, tokens[0].size());
         name[len] = '\0';
 
-        if (i==0) {
+        if (i == 0) {
             output.cpuLoadInJiffies = std::stoull(tokens[1]);
-        }
-        else if (i == 1) {
+        } else if (i == 1) {
             output.cpuLoadInJiffies += std::stoull(tokens[1]);
-        }
-        else {
+        } else {
             break;
         }
         i++;
@@ -87,8 +82,7 @@ RuntimeNesMetrics SystemResourcesReader::ReadRuntimeNesMetrics() {
 
         if (tokens[1] == "Read") {
             output.blkioBytesRead += std::stoul(tokens[2]);
-        }
-        else if (tokens[1] == "Write") {
+        } else if (tokens[1] == "Write") {
             output.blkioBytesWritten += std::stoul(tokens[2]);
         }
     }
@@ -96,54 +90,50 @@ RuntimeNesMetrics SystemResourcesReader::ReadRuntimeNesMetrics() {
     return output;
 }
 
-StaticNesMetrics SystemResourcesReader::ReadStaticNesMetrics() {
-    StaticNesMetrics output {false, false};
+StaticNesMetrics SystemResourcesReader::readStaticNesMetrics() {
+    StaticNesMetrics output{false, false};
 
-    std::vector<std::string> metricLocations {
-        "/sys/fs/cgroup/memory/memory.limit_in_bytes",
-        "/sys/fs/cgroup/cpuacct/cpu.cfs_period_us",
-        "/sys/fs/cgroup/cpuacct/cpu.cfs_quota_us"
-    };
+    std::vector<std::string> metricLocations{"/sys/fs/cgroup/memory/memory.limit_in_bytes",
+                                             "/sys/fs/cgroup/cpuacct/cpu.cfs_period_us",
+                                             "/sys/fs/cgroup/cpuacct/cpu.cfs_quota_us"};
 
     NES_DEBUG("SystemResourcesReader: Reading memory.usage_in_bytes for metrics");
     std::string memLine;
     std::ifstream memoryLoc(metricLocations[0]);
-    std::string memoryStr((std::istreambuf_iterator<char>(memoryLoc)),std::istreambuf_iterator<char>());
+    std::string memoryStr((std::istreambuf_iterator<char>(memoryLoc)), std::istreambuf_iterator<char>());
 
     // check if a limit is set for the given cgroup, the smaller value is the available RAM
-    uint64_t systemMem = SystemResourcesReader::ReadMemoryStats().TOTAL_RAM;
+    uint64_t systemMem = SystemResourcesReader::readMemoryStats().TOTAL_RAM;
     uint64_t limitMem = std::stoull(memoryStr);
     output.totalMemoryBytes = std::min(limitMem, systemMem);
 
     // CPU metrics
-    auto cpuStats = SystemResourcesReader::ReadCPUStats();
+    auto cpuStats = SystemResourcesReader::readCpuStats();
     auto totalStats = cpuStats.getTotal();
     output.totalCPUJiffies = totalStats.user + totalStats.system + totalStats.idle;
-    output.cpuCoreNum = SystemResourcesReader::ReadCPUStats().getNumCores();
+    output.cpuCoreNum = SystemResourcesReader::readCpuStats().getNumCores();
 
     std::string periodLine;
     std::ifstream periodLoc(metricLocations[1]);
-    std::string periodStr((std::istreambuf_iterator<char>(periodLoc)),std::istreambuf_iterator<char>());
+    std::string periodStr((std::istreambuf_iterator<char>(periodLoc)), std::istreambuf_iterator<char>());
     output.cpuPeriodUS = std::stoll(periodStr);
 
     std::string quotaLine;
     std::ifstream quotaLoc(metricLocations[2]);
-    std::string quotaStr((std::istreambuf_iterator<char>(quotaLoc)),std::istreambuf_iterator<char>());
+    std::string quotaStr((std::istreambuf_iterator<char>(quotaLoc)), std::istreambuf_iterator<char>());
     output.cpuQuotaUS = std::stoll(quotaStr);
 
     return output;
 }
 
-
-
-CpuMetrics SystemResourcesReader::ReadCPUStats() {
+CpuMetrics SystemResourcesReader::readCpuStats() {
     std::ifstream fileStat("/proc/stat");
     std::string line;
     unsigned int numCPU = std::thread::hardware_concurrency();
     auto cpu = std::vector<CpuValues>(numCPU);
     CpuValues totalCpu{};
 
-    int i = 0;
+    auto i = 0;
     while (std::getline(fileStat, line)) {
         // line starts with "cpu"
         if (!line.compare(0, 3, "cpu")) {
@@ -182,7 +172,7 @@ CpuMetrics SystemResourcesReader::ReadCPUStats() {
     return CpuMetrics{totalCpu, numCPU, std::move(cpu)};
 }
 
-NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
+NetworkMetrics SystemResourcesReader::readNetworkStats() {
     // alternatively also /sys/class/net/intf/statistics can be parsed
     auto output = NetworkMetrics();
 
@@ -265,7 +255,7 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
     return output;
 }
 
-MemoryMetrics SystemResourcesReader::ReadMemoryStats() {
+MemoryMetrics SystemResourcesReader::readMemoryStats() {
     auto* sinfo = (struct sysinfo*) malloc(sizeof(struct sysinfo));
 
     int ret = sysinfo(sinfo);
@@ -292,7 +282,7 @@ MemoryMetrics SystemResourcesReader::ReadMemoryStats() {
     return output;
 }
 
-DiskMetrics SystemResourcesReader::ReadDiskStats() {
+DiskMetrics SystemResourcesReader::readDiskStats() {
     DiskMetrics output{};
     auto* svfs = (struct statvfs*) malloc(sizeof(struct statvfs));
 
@@ -318,6 +308,5 @@ uint64_t SystemResourcesReader::getWallTimeInNs() {
     uint64_t duration = value.count();
     return duration;
 }
-
 
 }// namespace NES

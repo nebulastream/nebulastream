@@ -51,7 +51,7 @@ class MonitoringStackTest : public testing::Test {
 };
 
 TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
-    auto runtimeMetrics = SystemResourcesReader::ReadRuntimeNesMetrics();
+    auto runtimeMetrics = SystemResourcesReader::readRuntimeNesMetrics();
     NES_DEBUG("MonitoringStackTest: Runtime metrics=" << runtimeMetrics.toJson());
 
     EXPECT_TRUE(runtimeMetrics.wallTimeNs <= SystemResourcesReader::getWallTimeInNs());
@@ -61,11 +61,11 @@ TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
     EXPECT_TRUE(runtimeMetrics.cpuLoadInJiffies > 0);
     EXPECT_TRUE(runtimeMetrics.longCoord >= 0);
     EXPECT_TRUE(runtimeMetrics.latCoord >= 0);
-    EXPECT_TRUE(runtimeMetrics.batteryStatus >= 0);
+    EXPECT_TRUE(runtimeMetrics.batteryStatusInPercent >= 0);
 }
 
 TEST_F(MonitoringStackTest, testStaticNesMetrics) {
-    auto staticMetrics = SystemResourcesReader::ReadStaticNesMetrics();
+    auto staticMetrics = SystemResourcesReader::readStaticNesMetrics();
     NES_DEBUG("MonitoringStackTest: Static metrics=" << staticMetrics.toJson());
 
     EXPECT_TRUE(staticMetrics.cpuQuotaUS >= -1);
@@ -78,7 +78,7 @@ TEST_F(MonitoringStackTest, testStaticNesMetrics) {
 }
 
 TEST_F(MonitoringStackTest, testCPUStats) {
-    auto cpuStats = MetricUtils::CPUStats();
+    auto cpuStats = MetricUtils::cpuStats();
     CpuMetrics cpuMetrics = cpuStats.measure();
     EXPECT_TRUE(cpuMetrics.getNumCores() > 0);
     for (int i = 0; i < cpuMetrics.getNumCores(); i++) {
@@ -86,12 +86,12 @@ TEST_F(MonitoringStackTest, testCPUStats) {
     }
     EXPECT_TRUE(cpuMetrics.getTotal().user > 0);
 
-    auto cpuIdle = MetricUtils::CPUIdle(0);
+    auto cpuIdle = MetricUtils::cpuIdle(0);
     NES_INFO("MonitoringStackTest: Idle " << cpuIdle.measure());
 }
 
 TEST_F(MonitoringStackTest, testMemoryStats) {
-    auto memStats = MetricUtils::MemoryStats();
+    auto memStats = MetricUtils::memoryStats();
     auto memMetrics = memStats.measure();
     EXPECT_TRUE(memMetrics.FREE_RAM > 0);
 
@@ -99,13 +99,13 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
 }
 
 TEST_F(MonitoringStackTest, testDiskStats) {
-    auto diskStats = MetricUtils::DiskStats();
+    auto diskStats = MetricUtils::diskStats();
     auto diskMetrics = diskStats.measure();
     EXPECT_TRUE(diskMetrics.fBavail >= 0);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
-    auto networkStats = MetricUtils::NetworkStats();
+    auto networkStats = MetricUtils::networkStats();
     auto networkMetrics = networkStats.measure();
     EXPECT_TRUE(!networkMetrics.getInterfaceNames().empty());
 
@@ -115,10 +115,10 @@ TEST_F(MonitoringStackTest, testNetworkStats) {
 }
 
 TEST_F(MonitoringStackTest, testMetric) {
-    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
-    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
-    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
-    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
+    Gauge<CpuMetrics> cpuStats = MetricUtils::cpuStats();
+    Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();
+    Gauge<DiskMetrics> diskStats = MetricUtils::diskStats();
+    Gauge<MemoryMetrics> memStats = MetricUtils::memoryStats();
 
     auto metrics = std::vector<Metric>();
     auto metricsMap = std::unordered_map<std::string, Metric>();
@@ -162,10 +162,10 @@ TEST_F(MonitoringStackTest, testMetric) {
 TEST_F(MonitoringStackTest, testMetricGroup) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
-    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
-    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
-    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
-    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
+    Gauge<CpuMetrics> cpuStats = MetricUtils::cpuStats();
+    Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();
+    Gauge<DiskMetrics> diskStats = MetricUtils::diskStats();
+    Gauge<MemoryMetrics> memStats = MetricUtils::memoryStats();
 
     // test with simple data types
     const auto* intS = "simpleInt";
