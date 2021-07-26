@@ -437,9 +437,11 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
         generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
 
     } else if (sinkSchema->layoutType == Schema::COL_LAYOUT) {
-        auto varDeclResultTuple = VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
-        NES_DEBUG("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is " << varDeclResultTuple.getCode());
-        code->variableDeclarations.push_back(varDeclResultTuple);
+//        auto varDeclResultTuple = VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
+        auto varDeclResultTuple = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()), "resultTuples");
+        auto varDeclResultTupleStmt = VarDeclStatement(varDeclResultTuple);
+        NES_DEBUG("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is " << varDeclResultTupleStmt.getCode()->code_);
+        code->variableInitStmts.push_back(varDeclResultTupleStmt.copy());
 
         // Setting the start of all fields for col layout
         generateCodeInitStructFieldsColLayout(sinkSchema, tf, code->varDeclarationResultBuffer,
