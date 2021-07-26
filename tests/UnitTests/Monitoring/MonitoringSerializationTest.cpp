@@ -50,6 +50,7 @@ class MonitoringSerializationTest : public testing::Test {
     uint64_t restPort = 8081;
     CoordinatorConfigPtr crdConf;
     WorkerConfigPtr wrkConf;
+    uint64_t bufferSize = 0;
 
     static void SetUpTestCase() {
         NES::setupLogging("MonitoringStackTest.log", NES::LOG_DEBUG);
@@ -67,7 +68,8 @@ class MonitoringSerializationTest : public testing::Test {
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
 
         unsigned int numCPU = std::thread::hardware_concurrency();
-        bufferManager = std::make_shared<Runtime::BufferManager>(4096 + (numCPU+1)*sizeof(CpuValues) +sizeof(CpuMetrics), 10);
+        bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
+        bufferSize = 4096 + (numCPU+1)*sizeof(CpuValues) +sizeof(CpuMetrics);
 
         rpcPort = rpcPort + 30;
         crdConf->setRpcPort(rpcPort);
@@ -80,7 +82,7 @@ class MonitoringSerializationTest : public testing::Test {
 
 TEST_F(MonitoringSerializationTest, testSerializationRuntimeNesMetrics) {
     auto rutimeStats = MetricUtils::runtimeNesStats();
-    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
 
     RuntimeNesMetrics measuredVal = rutimeStats.measure();
     auto schema = getSchema(measuredVal, "");
@@ -96,7 +98,7 @@ TEST_F(MonitoringSerializationTest, testSerializationRuntimeNesMetrics) {
 
 TEST_F(MonitoringSerializationTest, testSerializationStaticNesMetrics) {
     auto staticStats = MetricUtils::staticNesStats();
-    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
 
     StaticNesMetrics measuredVal = staticStats.measure();
     auto schema = getSchema(measuredVal, "");
@@ -114,8 +116,7 @@ TEST_F(MonitoringSerializationTest, testSerializationStaticNesMetrics) {
 TEST_F(MonitoringSerializationTest, testSerializationMetricsCpu) {
     auto cpuStats = MetricUtils::cpuStats();
     CpuMetrics measuredVal = cpuStats.measure();
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
 
     auto schema = getSchema(measuredVal, "");
     writeToBuffer(measuredVal, tupleBuffer, 0);
@@ -129,7 +130,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsCpu) {
 
 TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkValue) {
     auto networkStats = MetricUtils::networkStats();
-    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
 
     NetworkValues measuredVal = networkStats.measure().getNetworkValue(0);
     writeToBuffer(measuredVal, tupleBuffer, 0);
@@ -143,7 +144,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkValue) {
 
 TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkMetrics) {
     auto networkStats = MetricUtils::networkStats();
-    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
 
     NetworkMetrics measuredVal = networkStats.measure();
     auto schema = getSchema(measuredVal, "");
@@ -179,7 +180,7 @@ TEST_F(MonitoringSerializationTest, testSerializationGroups) {
     // add mem stats
     metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, Metric{memStats});
 
-    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     metricGroup->getSample(tupleBuffer);
 
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, metricGroup->createSchema()));
@@ -208,7 +209,7 @@ TEST_F(MonitoringSerializationTest, testDeserializationMetricValues) {
     // add mem stats
     metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, Metric{memStats});
 
-    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     metricGroup->getSample(tupleBuffer);
 
     auto schema = metricGroup->createSchema();
@@ -234,7 +235,7 @@ TEST_F(MonitoringSerializationTest, testSerDeserMetricGroup) {
 
     //worker side
     MetricGroupPtr metricGroup = plan->createMetricGroup(MetricCatalog::NesMetrics());
-    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     metricGroup->getSample(tupleBuffer);
 
     // coordinator side
