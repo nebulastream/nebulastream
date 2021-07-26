@@ -84,6 +84,8 @@ void NESRequestProcessorService::start() {
             }
 
             //FIXME: What to do if a different requests contain different placement strategies within a batch?
+            auto start = std::chrono::system_clock::now();
+            auto end = std::chrono::system_clock::now();
             std::string placementStrategy = "BottomUp";
             if (nesRequests[0]->instanceOf<RunQueryRequest>()) {
                 placementStrategy = nesRequests[0]->as<RunQueryRequest>()->getQueryPlacementStrategy();
@@ -106,6 +108,10 @@ void NESRequestProcessorService::start() {
                                 throw QueryUndeploymentException("Unable to stop Global QueryId "
                                                                  + std::to_string(sharedQueryId));
                             }
+                            end = std::chrono::system_clock::now();
+                            NES_TIMER("Thesis:Eval: NESRequestProcessorService::stopped: (queryId, microseconds) : "
+                                      << "(" << sharedQueryId << ", "
+                                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                         }
 
                         if (!sharedQueryMetaData->isEmpty()) {
@@ -121,6 +127,10 @@ void NESRequestProcessorService::start() {
                                                               "query plan with shared query id: "
                                                                   + std::to_string(sharedQueryId));
                             }
+                            end = std::chrono::system_clock::now();
+                            NES_TIMER("Thesis:Eval: NESRequestProcessorService::placed: (queryId, microseconds) : "
+                                      << "(" << sharedQueryId << ", "
+                                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
 
                             bool successful = queryDeploymentPhase->execute(sharedQueryId);
                             if (!successful) {
@@ -129,6 +139,10 @@ void NESRequestProcessorService::start() {
                                     "QueryRequestProcessingService: Failed to deploy query with global query Id "
                                         + std::to_string(sharedQueryId));
                             }
+                            end = std::chrono::system_clock::now();
+                            NES_TIMER("Thesis:Eval: NESRequestProcessorService::deployed: (queryId, microseconds) : "
+                                      << "(" << sharedQueryId << ", "
+                                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                         }
                     } else {
                         if (sharedQueryMetaData->isEmpty()) {
@@ -138,6 +152,10 @@ void NESRequestProcessorService::start() {
                                 throw QueryUndeploymentException("Unable to stop Global QueryId "
                                                                  + std::to_string(sharedQueryId));
                             }
+                            end = std::chrono::system_clock::now();
+                            NES_TIMER("Thesis:Eval: NESRequestProcessorService::stopped: (queryId, microseconds) : "
+                                      << "(" << sharedQueryId << ", "
+                                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                         } else {
                             auto queryPlan = sharedQueryMetaData->getQueryPlan();
                             NES_DEBUG(
@@ -153,6 +171,10 @@ void NESRequestProcessorService::start() {
                                                                       + std::to_string(sharedQueryId));
                                 }
                             }
+                            end = std::chrono::system_clock::now();
+                            NES_TIMER("Thesis:Eval: NESRequestProcessorService::placed: (queryId, microseconds) : "
+                                      << "(" << sharedQueryId << ", "
+                                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
 
                             bool successful = queryReconfigurationPhase->execute(sharedQueryMetaData);
                             if (!successful) {
@@ -161,6 +183,10 @@ void NESRequestProcessorService::start() {
                                     "QueryRequestProcessingService: Failed to reconfigure query with global query Id "
                                         + std::to_string(sharedQueryId));
                             }
+                            end = std::chrono::system_clock::now();
+                            NES_TIMER("Thesis:Eval: NESRequestProcessorService::reconfiguration: (queryId, microseconds) : "
+                                      << "(" << sharedQueryId << ", "
+                                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                         }
                     }
                     //Mark the meta data as deployed

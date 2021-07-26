@@ -48,6 +48,7 @@ QueryReconfigurationPhasePtr QueryReconfigurationPhase::create(GlobalExecutionPl
 }
 
 bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
+    auto start = std::chrono::system_clock::now();
     auto queryPlan = sharedPlan->getQueryPlan();
     auto queryId = queryPlan->getQueryId();
 
@@ -181,6 +182,10 @@ bool QueryReconfigurationPhase::execute(const SharedQueryPlanPtr& sharedPlan) {
     reconfigurationShadowPlans.clear();
     executionNodeToReconfigurationPlans.clear();
     networkSourcesToSinks.clear();
+
+    auto end = std::chrono::system_clock::now();
+    NES_TIMER("Thesis:Eval: QueryReconfigurationPhase::execute: (queryId, microseconds) : "
+              << "(" << queryId << ", " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
 
     return true;
 }

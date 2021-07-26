@@ -71,6 +71,8 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
     try {
         //TODO: Parallelize this loop #1738
         for (const auto& nesRequest : nesRequests) {
+            auto start = std::chrono::system_clock::now();
+            auto end = std::chrono::system_clock::now();
             QueryId queryId = nesRequest->getQueryId();
             if (nesRequest->instanceOf<StopQueryRequest>()) {
 
@@ -83,25 +85,45 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " << queryId);
                 queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 
+                start = std::chrono::system_clock::now();
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 queryPlan = typeInferencePhase->execute(queryPlan);
+                end = std::chrono::system_clock::now();
+                NES_TIMER("Thesis:Eval: NESRequestProcessorService::typeInferred: (queryId, microseconds) : "
+                          << "(" << queryId << ", " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                          << ")");
 
                 NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
+                start = std::chrono::system_clock::now();
                 queryPlan = queryRewritePhase->execute(queryPlan);
                 if (!queryPlan) {
                     throw Exception("QueryProcessingService: Failed during query rewrite phase for query: "
                                     + std::to_string(queryId));
                 }
+                end = std::chrono::system_clock::now();
+                NES_TIMER("Thesis:Eval: NESRequestProcessorService::queryRewritten: (queryId, microseconds) : "
+                          << "(" << queryId << ", " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                          << ")");
 
                 NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
+                start = std::chrono::system_clock::now();
                 signatureInferencePhase->execute(queryPlan);
+                end = std::chrono::system_clock::now();
+                NES_TIMER("Thesis:Eval: NESRequestProcessorService::signatureInferred: (queryId, microseconds) : "
+                          << "(" << queryId << ", " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                          << ")");
 
                 NES_INFO("Before " << queryPlan->toString());
+                start = std::chrono::system_clock::now();
                 queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
                 if (!queryPlan) {
                     throw Exception("QueryProcessingService: Failed during query topology specific rewrite phase for query: "
                                     + std::to_string(queryId));
                 }
+                end = std::chrono::system_clock::now();
+                NES_TIMER("Thesis:Eval: NESRequestProcessorService::topologyRewrite: (queryId, microseconds) : "
+                          << "(" << queryId << ", " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                          << ")");
                 queryPlan = typeInferencePhase->execute(queryPlan);
                 if (!queryPlan) {
                     throw Exception("QueryProcessingService: Failed during Type inference phase for query: "
@@ -109,7 +131,12 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 }
 
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
+                start = std::chrono::system_clock::now();
                 globalQueryPlan->addQueryPlan(queryPlan);
+                end = std::chrono::system_clock::now();
+                NES_TIMER("Thesis:Eval: NESRequestProcessorService::addToGlobalPlan: (queryId, microseconds) : "
+                          << "(" << queryId << ", " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                          << ")");
             } else {
                 NES_ERROR("QueryProcessingService: Received unhandled request type " << nesRequest->toString());
                 NES_WARNING("QueryProcessingService: Skipping to process next request.");
@@ -117,8 +144,12 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
             }
         }
 
+        auto start = std::chrono::system_clock::now();
         NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
         queryMergerPhase->execute(globalQueryPlan);
+        auto end = std::chrono::system_clock::now();
+        NES_TIMER("Thesis:Eval: NESRequestProcessorService::queryMerged: (microseconds) : "
+                  << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
 
         NES_DEBUG("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;
