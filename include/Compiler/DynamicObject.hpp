@@ -28,7 +28,7 @@ class DynamicObject {
      * @brief Returns an invocable member of the shared object and cast its to the provided template.
      * @tparam Function
      * @param member on the dynamic object, currently provided as a MangledName.
-     * #TODO look up manged name dynamically.
+     * #TODO #2073 look up mangled name dynamically.
      * @return Function
      */
     template<typename Function>
