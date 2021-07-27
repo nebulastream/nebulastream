@@ -224,7 +224,9 @@ class CCodeGenerator : public CodeGenerator {
      * @param index
      * @return
      */
-    VariableDeclaration getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t windowOperatorIndex);
+    VariableDeclaration getWindowOperatorHandler(const PipelineContextPtr& context,
+                                                 const VariableDeclaration& tupleBufferVariable,
+                                                 uint64_t windowOperatorIndex);
 
     /**
      * @brief returns getOperatorHandler<NES::CEP::CEPOperatorHandler>(CEPOperatorIndex)
@@ -352,7 +354,8 @@ class CCodeGenerator : public CodeGenerator {
      * @param windowAggregationDescriptor
      * @return
      */
-    BinaryOperatorStatement getAggregationWindowHandler(const VariableDeclaration& pipelineContextVariable,
+    BinaryOperatorStatement
+    getAggregationWindowHandler(const VariableDeclaration& pipelineContextVariable,
                                 DataTypePtr keyType,
                                 const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor);
 
@@ -412,7 +415,8 @@ class CCodeGenerator : public CodeGenerator {
      * @param handler
      * @param leftSide
      */
-    void generateCodeForWatermarkUpdaterJoin(const PipelineContextPtr& context, const VariableDeclaration& handler, bool leftSide);
+    void
+    generateCodeForWatermarkUpdaterJoin(const PipelineContextPtr& context, const VariableDeclaration& handler, bool leftSide);
 
     /**
      * @brief Generates the code for initializing partialAggregate and executable aggregation depending on its type. For example,
@@ -441,7 +445,6 @@ class CCodeGenerator : public CodeGenerator {
                                                const VariableDeclaration& tupleBufferVariable,
                                                uint64_t joinOperatorIndex);
 
-
     /**
      * @brief in a col layout, all pointers in the structDeclaration have to be set to the correct field
      * @param schema
@@ -458,7 +461,7 @@ class CCodeGenerator : public CodeGenerator {
                                                const StructDeclaration structDeclaration,
                                                const VariableDeclaration varTuples,
                                                std::vector<StatementPtr>& statements,
-                                               const std::string& capacityVarName) ;
+                                               const std::string& capacityVarName);
 };
 }// namespace QueryCompilation
 }// namespace NES

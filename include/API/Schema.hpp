@@ -31,7 +31,7 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 class Schema {
   public:
-    enum ROW_OR_COL {ROW_LAYOUT = 0, COL_LAYOUT = 1};
+    enum ROW_OR_COL { ROW_LAYOUT = 0, COL_LAYOUT = 1 };
 
     Schema(ROW_OR_COL layoutType = ROW_LAYOUT);
     Schema(SchemaPtr const& query, ROW_OR_COL layoutType = ROW_LAYOUT);
@@ -190,7 +190,6 @@ class Schema {
      * @brief Remove all fields and qualifying name
      */
     void clear();
-
 
     ROW_OR_COL layoutType;
 
