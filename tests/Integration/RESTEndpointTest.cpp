@@ -632,7 +632,6 @@ TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
 
-
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -642,7 +641,8 @@ TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     StreamCatalogPtr streamCatalog = crd->getStreamCatalog();
 
     //make httpclient with new endpoint -ex:
-    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/streamCatalog/addLogicalStream-ex");
+    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
+                                              + "/v1/nes/streamCatalog/addLogicalStream-ex");
 
     //create message as Protobuf encoded object
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
@@ -657,17 +657,17 @@ TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     int statusCode = 0;
     httpClient.request(web::http::methods::POST, "", msg)
         .then([&statusCode](const web::http::http_response& response) {
-          statusCode = response.status_code();
-          NES_INFO("get first then");
-          return response.extract_json();
+            statusCode = response.status_code();
+            NES_INFO("get first then");
+            return response.extract_json();
         })
         .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("post addLogicalStream-ex: set return");
-              postJsonReturn = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("post addLogicalStream-ex: error while setting return" << e.what());
-          }
+            try {
+                NES_INFO("post addLogicalStream-ex: set return");
+                postJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("post addLogicalStream-ex: error while setting return" << e.what());
+            }
         })
         .wait();
 

@@ -15,12 +15,12 @@
 */
 
 #include "REST/Controller/StreamCatalogController.hpp"
+#include "GRPC/Serialization/SchemaSerializationUtil.hpp"
 #include <Catalogs/StreamCatalog.hpp>
 #include <REST/runtime_utils.hpp>
+#include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>
 #include <utility>
-#include "GRPC/Serialization/SchemaSerializationUtil.hpp"
-#include <SerializableOperator.pb.h>
 
 using namespace web;
 using namespace http;
@@ -138,7 +138,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
             })
             .wait();
 
-} else if(path[1] == "addLogicalStream-ex") {
+    } else if (path[1] == "addLogicalStream-ex") {
 
         NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: REST received request to add new Logical Stream "
                   << message.to_string());
