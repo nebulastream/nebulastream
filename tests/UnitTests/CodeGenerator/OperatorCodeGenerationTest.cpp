@@ -1666,7 +1666,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     codeGenerator->generateCodeForCEPIterationOperator(50, 150, context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(inputSchema, context);
+    codeGenerator->generateCodeForEmit(inputSchema, NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
