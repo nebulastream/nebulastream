@@ -28,7 +28,7 @@
 
 namespace NES {
 
-Schema::Schema(ROW_OR_COL layoutType) : layoutType(layoutType) {};
+Schema::Schema(ROW_OR_COL layoutType) : layoutType(layoutType){};
 
 SchemaPtr Schema::create(ROW_OR_COL layoutType) { return std::make_shared<Schema>(layoutType); }
 
@@ -253,7 +253,7 @@ void Schema::clear() { fields.clear(); }
 std::string Schema::getLayoutTypeAsString(Schema::ROW_OR_COL layout) const {
     if (layout == ROW_LAYOUT) {
         return "ROW_LAYOUT";
-    } else  if (layout == COL_LAYOUT) {
+    } else if (layout == COL_LAYOUT) {
         return "COL_LAYOUT";
     } else {
         NES_THROW_RUNTIME_ERROR("layout type could not be parsed to string representation!");

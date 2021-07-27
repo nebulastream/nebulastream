@@ -40,6 +40,8 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -51,8 +53,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <utility>
-#include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
