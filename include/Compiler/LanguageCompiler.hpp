@@ -29,8 +29,7 @@ class LanguageCompiler {
      * @param request CompilationRequest
      * @return CompilationResult
      */
-    [[nodiscard]] virtual CompilationResult
-    compile(std::shared_ptr<const CompilationRequest> request) const = 0;
+    [[nodiscard]] virtual CompilationResult compile(std::shared_ptr<const CompilationRequest> request) const = 0;
 
     /**
      * @brief Returns the language for, which this compiler can handle compilation requests

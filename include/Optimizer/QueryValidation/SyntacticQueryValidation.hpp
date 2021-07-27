@@ -29,7 +29,6 @@ using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
 }// namespace NES
 
-
 namespace NES::Optimizer {
 
 class SyntacticQueryValidation;
@@ -40,7 +39,6 @@ using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
  */
 class SyntacticQueryValidation {
   public:
-
     SyntacticQueryValidation(QueryParsingServicePtr queryParsingService);
 
     static SyntacticQueryValidationPtr create(QueryParsingServicePtr queryParsingService);
@@ -54,8 +52,6 @@ class SyntacticQueryValidation {
      * @brief Checks the syntactic validity of a Query string and returns the created Query object
      */
     QueryPtr checkValidityAndGetQuery(const std::string& inputQuery);
-
-
 
   private:
     QueryParsingServicePtr queryParsingService;

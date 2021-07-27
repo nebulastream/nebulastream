@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_COMPILER_JITCOMPILER_HPP_
 #define NES_INCLUDE_COMPILER_JITCOMPILER_HPP_
 #include <Compiler/CompilerForwardDeclarations.hpp>
-#include <map>
 #include <future>
+#include <map>
 #include <vector>
 
 namespace NES::Compiler {
@@ -38,6 +38,7 @@ class JITCompiler {
      * @return Future of the CompilationResult
      */
     [[nodiscard]] std::future<CompilationResult> compile(std::shared_ptr<const CompilationRequest> request) const;
+
   private:
     /**
      * @brief Processes a compilation request and dispatches it to the correct compiler implementation.

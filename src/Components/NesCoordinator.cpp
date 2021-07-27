@@ -33,16 +33,16 @@
 #include <thread>
 
 //GRPC Includes
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/MonitoringManager.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <Services/MonitoringService.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
@@ -72,11 +72,9 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     auto queryParsingService = QueryParsingService::create(jitCompiler);
 
-
     streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();
-
 
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();

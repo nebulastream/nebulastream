@@ -16,7 +16,7 @@
 #ifndef NES_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
 #define NES_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
 #include <memory>
-namespace NES::Compiler{
+namespace NES::Compiler {
 
 class SourceCode;
 class DynamicObject;
@@ -26,6 +26,6 @@ class CompilationRequest;
 class LanguageCompiler;
 class JITCompiler;
 
-}
+}// namespace NES::Compiler
 
 #endif//NES_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_

@@ -37,8 +37,7 @@ namespace NES::QueryCompilation {
 DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const& options,
                                            Phases::PhaseFactoryPtr const& phaseFactory,
                                            Compiler::JITCompilerPtr jitCompiler)
-    : QueryCompiler(options),
-      lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
+    : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
       lowerPhysicalToGeneratableOperatorsPhase(phaseFactory->createLowerPhysicalToGeneratableOperatorsPhase(options)),
       lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),

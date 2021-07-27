@@ -16,9 +16,9 @@
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
@@ -44,7 +44,6 @@ class SyntacticQueryValidationTest : public testing::Test {
         auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
         EXPECT_THROW(syntacticQueryValidation->checkValidity(queryString), InvalidQueryException);
     }
-
 };
 
 // Positive test for a syntactically valid query

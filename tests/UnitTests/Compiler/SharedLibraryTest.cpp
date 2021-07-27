@@ -38,15 +38,12 @@ TEST(SharedLibraryTest, loadSharedLib) {
     sharedLib.reset();
 }
 
-TEST(SharedLibraryTest, loadSharedLibERROR) {
-    EXPECT_ANY_THROW(SharedLibrary::load("NotExisting.so"));
-}
+TEST(SharedLibraryTest, loadSharedLibERROR) { EXPECT_ANY_THROW(SharedLibrary::load("NotExisting.so")); }
 
 TEST(SharedLibraryTest, loadSymbleERROR) {
     using FunctionType = uint64_t (*)();
     auto sharedLib = SharedLibrary::load("libnes.so");
     EXPECT_ANY_THROW(sharedLib->getInvocableMember<FunctionType>("NotExisting"));
-
 }
 
 }// namespace NES::Compiler

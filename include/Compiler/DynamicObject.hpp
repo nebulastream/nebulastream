@@ -32,7 +32,7 @@ class DynamicObject {
      * @return Function
      */
     template<typename Function>
-    Function getInvocableMember(const std::string& member){
+    Function getInvocableMember(const std::string& member) {
         return reinterpret_cast<Function>(getInvocableFunctionPtr(member));
     }
     /**
@@ -47,8 +47,6 @@ class DynamicObject {
      * @return function ptr
      */
     [[nodiscard]] virtual void* getInvocableFunctionPtr(const std::string& member) = 0;
-
-
 };
 
 }// namespace NES::Compiler

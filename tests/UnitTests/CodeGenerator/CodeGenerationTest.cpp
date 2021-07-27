@@ -17,11 +17,11 @@
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Compiler/JITCompiler.hpp>
-#include <Compiler/CompilationResult.hpp>
-#include <Compiler/SourceCode.hpp>
-#include <Compiler/CompilationRequest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Compiler/CompilationRequest.hpp>
+#include <Compiler/CompilationResult.hpp>
+#include <Compiler/JITCompiler.hpp>
+#include <Compiler/SourceCode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ClassDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/FunctionDefinition.hpp>

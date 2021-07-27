@@ -37,9 +37,10 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(std::shared_ptr
     this->executablePipelineStage = (*createFunction)();
 }
 
-Runtime::Execution::ExecutablePipelineStagePtr CompiledExecutablePipelineStage::create(std::shared_ptr<Compiler::DynamicObject> dynamicObject,
-                                                                                       PipelineStageArity arity,
-                                                                                       const std::string& sourceCode) {
+Runtime::Execution::ExecutablePipelineStagePtr
+CompiledExecutablePipelineStage::create(std::shared_ptr<Compiler::DynamicObject> dynamicObject,
+                                        PipelineStageArity arity,
+                                        const std::string& sourceCode) {
     return std::make_shared<CompiledExecutablePipelineStage>(dynamicObject, arity, sourceCode);
 }
 

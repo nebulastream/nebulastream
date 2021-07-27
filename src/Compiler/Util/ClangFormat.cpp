@@ -30,8 +30,8 @@ void ClangFormat::formatFile(std::shared_ptr<File> file) {
     int ret = system("which clang-format > /dev/null");
     if (ret != 0) {
         throw CompilerException("Compiler: Did not find external tool 'clang-format'. "
-                                    "Please install 'clang-format' and try again."
-                                    "If 'clang-format-X' is installed, try to create a symbolic link.");
+                                "Please install 'clang-format' and try again."
+                                "If 'clang-format-X' is installed, try to create a symbolic link.");
     }
     // construct clang-format command argument
     auto formatCommand = "clang-format --assume-filename=" + language + " -i " + file->getPath();
@@ -43,6 +43,5 @@ void ClangFormat::formatFile(std::shared_ptr<File> file) {
     // wait till command is complete executed.
     pclose(res);
 }
-
 
 }// namespace NES::Compiler

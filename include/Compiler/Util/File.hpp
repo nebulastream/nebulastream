@@ -15,9 +15,9 @@
 */
 #ifndef NES_INCLUDE_COMPILER_FILE_HPP_
 #define NES_INCLUDE_COMPILER_FILE_HPP_
-#include <string>
 #include <memory>
 #include <mutex>
+#include <string>
 namespace NES::Compiler {
 
 /**
@@ -61,6 +61,7 @@ class File {
      * @return std::mutex
      */
     std::mutex& getFileMutex();
+
   private:
     const std::string path;
     mutable std::mutex fileMutex;

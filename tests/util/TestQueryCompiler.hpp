@@ -15,6 +15,8 @@
 */
 #ifndef NES_TESTS_UTIL_TESTQUERYCOMPILER_HPP_
 #define NES_TESTS_UTIL_TESTQUERYCOMPILER_HPP_
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
@@ -22,9 +24,6 @@
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <utility>
 namespace NES {

@@ -15,7 +15,4 @@
 */
 #include <Compiler/DynamicObject.hpp>
 
-namespace NES::Compiler{
-
-
-}
+namespace NES::Compiler {}

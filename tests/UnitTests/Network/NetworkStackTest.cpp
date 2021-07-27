@@ -15,6 +15,8 @@
 */
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
@@ -30,8 +32,6 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"

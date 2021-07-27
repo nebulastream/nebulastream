@@ -15,12 +15,12 @@
 */
 
 #include "gtest/gtest.h"
-#include <Compiler/JITCompilerBuilder.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <iostream>
 
 #include <API/Schema.hpp>

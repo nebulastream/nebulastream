@@ -23,7 +23,7 @@
 #include <mutex>
 namespace NES {
 
-namespace Compiler{
+namespace Compiler {
 class DynamicObject;
 }
 

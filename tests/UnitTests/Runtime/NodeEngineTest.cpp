@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
@@ -34,6 +33,7 @@
 #include <Util/TestUtils.hpp>
 #include <csignal>
 #include <future>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <utility>
 
