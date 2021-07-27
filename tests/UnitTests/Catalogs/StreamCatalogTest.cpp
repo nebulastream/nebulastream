@@ -71,7 +71,7 @@ TEST_F(StreamCatalogTest, testAddGetLogStream) {
     EXPECT_NE(sPtr, nullptr);
 
     map<std::string, SchemaPtr> allLogicalStream = streamCatalog->getAllLogicalStream();
-    string exp = "id:INTEGER value:INTEGER";
+    string exp = "id:INTEGER value:INTEGER ";
     EXPECT_EQ(allLogicalStream.size(), 3U);
 
     SchemaPtr testSchema = allLogicalStream["test_stream"];
