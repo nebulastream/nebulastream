@@ -15,16 +15,16 @@
 */
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CPPCompiler/CPPCompilerFlags.hpp>
-#include <Compiler/Util/SharedLibrary.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
-#include <Compiler/Util/File.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Compiler/Util/ClangFormat.hpp>
+#include <Compiler/Util/File.hpp>
+#include <Compiler/Util/SharedLibrary.hpp>
 #include <Util/Logger.hpp>
-#include <sstream>
-#include <iostream>
 #include <chrono>
+#include <iostream>
+#include <sstream>
 
 namespace NES::Compiler {
 
@@ -43,7 +43,6 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     auto libraryFileName = request->getName() + ".so";
 
     auto file = File::createFile(sourceFileName, request->getSourceCode()->getCode());
-
 
     auto compilationFlags = CPPCompilerFlags::createDefaultCompilerFlags();
     if (request->enableOptimizations()) {
@@ -87,7 +86,6 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 
     compilationFlags.addFlag(sourceFileName);
 
-
     compileSharedLib(compilationFlags, file, libraryFileName);
     // load shared lib
     auto sharedLibrary = SharedLibrary::load(libraryFileName);
@@ -97,7 +95,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     return CompilationResult(sharedLibrary, duration);
 }
 
-void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File> sourceFile, std::string libraryFileName) const{
+void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File> sourceFile, std::string libraryFileName) const {
     // lock file, such that no one can operate on the file at the same time
     const std::lock_guard<std::mutex> fileLock(sourceFile->getFileMutex());
 
@@ -137,6 +135,5 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
         throw std::runtime_error(strstream.str());
     }
 }
-
 
 }// namespace NES::Compiler

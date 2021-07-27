@@ -16,12 +16,12 @@
 
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Services/QueryParsingService.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -56,7 +56,6 @@ class SemanticQueryValidationTest : public testing::Test {
     }
 
     void TestForException(std::string queryString) { EXPECT_THROW(CallValidation(queryString), InvalidQueryException); }
-
 };
 
 // Positive test for a semantically valid query

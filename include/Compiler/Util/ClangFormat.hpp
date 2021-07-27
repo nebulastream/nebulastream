@@ -35,10 +35,10 @@ class ClangFormat {
      * @param file
      */
     void formatFile(std::shared_ptr<File> file);
+
   private:
     const std::string language;
     std::mutex clangFormatMutex;
-
 };
 
 }// namespace NES::Compiler

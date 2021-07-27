@@ -15,13 +15,13 @@
 */
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/DynamicObject.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
@@ -29,7 +29,7 @@
 
 namespace NES {
 
-QueryParsingService::QueryParsingService(std::shared_ptr<Compiler::JITCompiler> jitCompiler): jitCompiler(jitCompiler) {}
+QueryParsingService::QueryParsingService(std::shared_ptr<Compiler::JITCompiler> jitCompiler) : jitCompiler(jitCompiler) {}
 
 std::shared_ptr<QueryParsingService> QueryParsingService::create(std::shared_ptr<Compiler::JITCompiler> jitCompiler) {
     return std::make_shared<QueryParsingService>(jitCompiler);
@@ -176,4 +176,4 @@ uint64_t QueryParsingService::findSubQueryTermination(uint64_t startOfUnionWith,
     return closingLoc;
 }
 
-}// namespace NES::API
+}// namespace NES

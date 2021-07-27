@@ -56,6 +56,6 @@ class QueryParsingService {
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
 };
 
-}// namespace NES:
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERY_PARSING_SERVICE_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 #include <Compiler/Exceptions/CompilerException.hpp>
-#include <Util/Logger.hpp>
 #include <Runtime/internal/backtrace.hpp>
+#include <Util/Logger.hpp>
 namespace NES::Compiler {
 
 Compiler::CompilerException::CompilerException(const std::string& message)

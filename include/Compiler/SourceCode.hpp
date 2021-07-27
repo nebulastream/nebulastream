@@ -29,7 +29,7 @@ class SourceCode {
      * @param language the language of this source code artifact.
      * @param code the code
      */
-    SourceCode(std::string  language, std::string  code);
+    SourceCode(std::string language, std::string code);
 
     /**
      * @brief Returns the language of this source code.

@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -28,7 +29,6 @@
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToGeneratableOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES::QueryCompilation::Phases {
@@ -62,7 +62,8 @@ DefaultPhaseFactory::createLowerPhysicalToGeneratableOperatorsPhase(QueryCompile
     auto generatableOperatorProvider = DefaultGeneratableOperatorProvider::create();
     return LowerPhysicalToGeneratableOperators::create(generatableOperatorProvider);
 }
-CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr, Compiler::JITCompilerPtr jitCompiler) {
+CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr,
+                                                                      Compiler::JITCompilerPtr jitCompiler) {
     NES_DEBUG("Create default code generation phase");
     // TODO create a option to choose between different code generators.
     auto codeGenerator = CCodeGenerator::create();

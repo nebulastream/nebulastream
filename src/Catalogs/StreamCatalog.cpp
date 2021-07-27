@@ -17,8 +17,8 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cassert>
@@ -60,7 +60,7 @@ void StreamCatalog::addDefaultStreams() {
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 }
-StreamCatalog::StreamCatalog(QueryParsingServicePtr queryParsingService): queryParsingService(queryParsingService) {
+StreamCatalog::StreamCatalog(QueryParsingServicePtr queryParsingService) : queryParsingService(queryParsingService) {
     NES_DEBUG("StreamCatalog: construct stream catalog");
     addDefaultStreams();
     NES_DEBUG("StreamCatalog: construct stream catalog successfully");

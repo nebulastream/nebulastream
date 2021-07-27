@@ -40,13 +40,12 @@ class CPPCompiler : public LanguageCompiler {
      * @param request CompilationRequest
      * @return CompilationResult
      */
-    [[nodiscard]]  CompilationResult compile(std::shared_ptr<const CompilationRequest> request) const override;
+    [[nodiscard]] CompilationResult compile(std::shared_ptr<const CompilationRequest> request) const override;
     /**
     * @brief Returns the language for, which this compiler can handle compilation requests
     * @return language
     */
-    [[nodiscard]]  std::string getLanguage() const override;
-
+    [[nodiscard]] std::string getLanguage() const override;
 
     ~CPPCompiler() override = default;
 

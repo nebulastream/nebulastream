@@ -26,7 +26,6 @@ namespace QueryCompilation {
  */
 class CodeGenerationPhase {
   public:
-
     CodeGenerationPhase(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler);
 
     /**
