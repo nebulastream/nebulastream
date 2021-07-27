@@ -26,7 +26,7 @@ void ClangFormat::formatFile(std::shared_ptr<File> file) {
     // lock file, such that no one can operate on the file at the same time
     const std::lock_guard<std::mutex> fileLock(file->getFileMutex());
     // check if we can access clang-format
-    // TODO replace with build-in clang-format
+    // TODO replace with build-in clang-format #2074
     int ret = system("which clang-format > /dev/null");
     if (ret != 0) {
         throw CompilerException("Compiler: Did not find external tool 'clang-format'. "
