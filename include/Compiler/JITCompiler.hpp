@@ -37,14 +37,14 @@ class JITCompiler {
      * @param request Compilation request
      * @return Future of the CompilationResult
      */
-    [[nodiscard]] std::future<CompilationResult> compile(std::unique_ptr<const CompilationRequest> request) const;
+    [[nodiscard]] std::future<CompilationResult> compile(std::shared_ptr<const CompilationRequest> request) const;
   private:
     /**
      * @brief Processes a compilation request and dispatches it to the correct compiler implementation.
      * @param request Compilation request
      * @return Future of the CompilationResult
      */
-    [[nodiscard]] CompilationResult handleRequest(std::unique_ptr<const CompilationRequest> request) const;
+    [[nodiscard]] CompilationResult handleRequest(std::shared_ptr<const CompilationRequest> request) const;
     const std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers;
 };
 

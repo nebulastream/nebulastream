@@ -28,7 +28,7 @@ namespace NES::Compiler {
 JITCompiler::JITCompiler(std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers)
     : languageCompilers(std::move(languageCompilers)) {}
 
-CompilationResult JITCompiler::handleRequest(std::unique_ptr<const CompilationRequest> request) const {
+CompilationResult JITCompiler::handleRequest(std::shared_ptr<const CompilationRequest> request) const {
     if (request->getSourceCode() == nullptr) {
         throw CompilerException("No source code provided");
     }
@@ -38,12 +38,12 @@ CompilationResult JITCompiler::handleRequest(std::unique_ptr<const CompilationRe
     if (languageCompiler == languageCompilers.end()) {
         throw CompilerException("No language compiler found for language: " + language);
     }
-    return languageCompiler->second->compile(std::move(request));
+    return languageCompiler->second->compile(request);
 }
 
-std::future<CompilationResult> JITCompiler::compile(std::unique_ptr<const CompilationRequest> request) const {
-    auto asyncResult = std::async(std::launch::async, [this, &request]() {
-        return this->handleRequest(std::move(request));
+std::future<CompilationResult> JITCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
+    auto asyncResult = std::async(std::launch::async, [this, request]() {
+        return this->handleRequest(request);
     });
     return asyncResult;
 }

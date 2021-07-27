@@ -53,7 +53,7 @@ class CompilationRequest {
      * @param debug enables debug options
      * @return std::unique_ptr<CompilationRequest>
      */
-    static std::unique_ptr<CompilationRequest> create(std::unique_ptr<SourceCode> sourceCode,
+    static std::shared_ptr<CompilationRequest> create(std::unique_ptr<SourceCode> sourceCode,
                                                       std::string name,
                                                       bool profileCompilation,
                                                       bool profileExecution,

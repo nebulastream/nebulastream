@@ -15,13 +15,13 @@
 */
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/Util/File.hpp>
-#include <Compiler/JITCompiler.hpp>
-#include <Compiler/SourceCode.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/DynamicObject.hpp>
+#include <Compiler/JITCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Compiler/SourceCode.hpp>
+#include <Compiler/Util/File.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -47,16 +47,13 @@ class JITCompilerTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
-        std::cout << "Tear down JITCompilerTest test case." << std::endl;
-    }
+    void TearDown() override { std::cout << "Tear down JITCompilerTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down JITCompilerTest test class." << std::endl; }
 
     std::shared_ptr<JITCompiler> compiler;
 };
-
 
 /**
  * @brief This test compiles a test CPP File
@@ -68,8 +65,7 @@ TEST_F(JITCompilerTest, compileCppCode) {
     auto request = CompilationRequest::create(std::move(sourceCode), "test_1", false, false, true, true);
 
     auto result = compiler->compile(std::move(request));
-    auto status = result.wait_for(std::chrono::seconds(waitForCompilation));
-    ASSERT_EQ(status, std::future_status::ready);
+    result.wait_for(std::chrono::seconds(waitForCompilation));
 
     auto compilationResult = result.get();
     auto mulFunction = compilationResult.getDynamicObject()->getInvocableMember<int (*)(int, int)>("_Z3mulii");
@@ -78,5 +74,4 @@ TEST_F(JITCompilerTest, compileCppCode) {
     NES_DEBUG("CompilationTime:" << compilationResult.getCompilationTime());
 }
 
-
-}// namespace NES
+}// namespace NES::Compiler
