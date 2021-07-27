@@ -37,7 +37,7 @@ CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {}
 
 std::string CPPCompiler::getLanguage() const { return "cpp"; }
 
-CompilationResult CPPCompiler::compile(std::unique_ptr<const CompilationRequest> request) const {
+CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
     auto start = std::chrono::steady_clock::now();
     auto sourceFileName = request->getName() + ".cpp";
     auto libraryFileName = request->getName() + ".so";

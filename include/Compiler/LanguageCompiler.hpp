@@ -30,7 +30,7 @@ class LanguageCompiler {
      * @return CompilationResult
      */
     [[nodiscard]] virtual CompilationResult
-    compile(std::unique_ptr<const CompilationRequest> request) const = 0;
+    compile(std::shared_ptr<const CompilationRequest> request) const = 0;
 
     /**
      * @brief Returns the language for, which this compiler can handle compilation requests

@@ -34,7 +34,7 @@ CompilationRequest::CompilationRequest(std::unique_ptr<SourceCode> sourceCode,
     : sourceCode(std::move(sourceCode)), name(std::move(name)), profileCompilation(profileCompilation),
       profileExecution(profileExecution), optimizeCompilation(optimizeCompilation), debug(debug) {}
 
-std::unique_ptr<CompilationRequest> CompilationRequest::create(std::unique_ptr<SourceCode> sourceCode,
+std::shared_ptr<CompilationRequest> CompilationRequest::create(std::unique_ptr<SourceCode> sourceCode,
                                                                std::string identifier,
                                                                bool profileCompilation,
                                                                bool profileExecution,
@@ -52,7 +52,7 @@ std::unique_ptr<CompilationRequest> CompilationRequest::create(std::unique_ptr<S
     std::stringstream requestName;
     requestName << identifier << "_" << std::put_time(&localtime, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);
 
-    return std::make_unique<CompilationRequest>(std::move(sourceCode),
+    return std::make_shared<CompilationRequest>(std::move(sourceCode),
                                                 requestName.str(),
                                                 profileCompilation,
                                                 profileExecution,
