@@ -210,71 +210,251 @@ class CCodeGenerator : public CodeGenerator {
     ~CCodeGenerator() override;
 
   private:
+    CompilerPtr compiler;
+
+    /**
+     * @brief returns tupleBufferVariable.getBuffer()
+     * @param tupleBufferVariable
+     * @return
+     */
     static BinaryOperatorStatement getBuffer(const VariableDeclaration& tupleBufferVariable);
-    VariableDeclaration
-    getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
+
+    /**
+     * @brief returns getOperatorHandler<Windowing::WindowOperatorHandler>(windowOperatorIndex);
+     * @param context
+     * @param tupleBufferVariable
+     * @param index
+     * @return
+     */
+    VariableDeclaration getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t windowOperatorIndex);
+
+    /**
+     * @brief returns getOperatorHandler<NES::CEP::CEPOperatorHandler>(CEPOperatorIndex)
+     * @param context
+     * @param tupleBufferVariable
+     * @param index
+     * @return
+     */
     VariableDeclaration getCEPIterationOperatorHandler(const PipelineContextPtr& context,
                                                        const VariableDeclaration& tupleBufferVariable,
                                                        uint64_t index);
+    /**
+     * @brief returns tupleBufferVariable.getWatermark()
+     * @param tupleBufferVariable
+     * @return
+     */
     static BinaryOperatorStatement getWatermark(const VariableDeclaration& tupleBufferVariable);
+
+    /**
+     * @brief tupleBufferVariable.getOriginId()
+     * @param tupleBufferVariable
+     * @return
+     */
     static BinaryOperatorStatement getOriginId(const VariableDeclaration& tupleBufferVariable);
+
+    /**
+     * @brief return tupleBufferVariable.getSequenceNumber()
+     * @param tupleBufferVariable
+     * @return
+     */
     BinaryOperatorStatement getSequenceNumber(VariableDeclaration tupleBufferVariable);
 
+    /**
+     * @brief casts tupleBufferVariable to pointer type of structDeclaration
+     * @param tupleBufferVariable
+     * @param structDeclaration
+     * @return
+     */
     TypeCastExprStatement getTypedBuffer(const VariableDeclaration& tupleBufferVariable,
                                          const StructDeclaration& structDeclaration);
+
+    /**
+     * @brief returns tupleBufferVariable.getBuffer()
+     * @param tupleBufferVariable
+     * @return
+     */
     static BinaryOperatorStatement getBufferSize(const VariableDeclaration& tupleBufferVariable);
+
+    /**
+     * @brief returns tupleBufferVariable.setNumberOfTuples(numberOfResultTuples)
+     * @param tupleBufferVariable
+     * @param numberOfResultTuples
+     * @return
+     */
     static BinaryOperatorStatement setNumberOfTuples(const VariableDeclaration& tupleBufferVariable,
                                                      const VariableDeclaration& numberOfResultTuples);
+    /**
+     * @brief returns tupleBufferVariable.setWatermark(inputBufferVariable)
+     * @param tupleBufferVariable
+     * @param inputBufferVariable
+     * @return
+     */
     BinaryOperatorStatement setWatermark(const VariableDeclaration& tupleBufferVariable,
                                          const VariableDeclaration& inputBufferVariable);
+
+    /**
+     * @brief returns tupleBufferVariable.setOriginId(inputBufferVariable)
+     * @param tupleBufferVariable
+     * @param inputBufferVariable
+     * @return
+     */
     BinaryOperatorStatement setOriginId(const VariableDeclaration& tupleBufferVariable,
                                         const VariableDeclaration& inputBufferVariable);
+
+    /**
+     * @brief returns tupleBufferVariable.setSequenceNumber(inputBufferVariable)
+     * @param tupleBufferVariable
+     * @param inputBufferVariable
+     * @return
+     */
     BinaryOperatorStatement setSequenceNumber(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
 
+    /**
+     * @brief returns pipelineContext.allocateTupleBuffer()
+     * @param pipelineContext
+     * @return
+     */
     static BinaryOperatorStatement allocateTupleBuffer(const VariableDeclaration& pipelineContext);
+
+    /**
+     * @brief pipelineContext.emitBuffer(tupleBufferVariable, workerContextVariable)
+     * @param pipelineContext
+     * @param tupleBufferVariable
+     * @param workerContextVariable
+     * @return
+     */
     static BinaryOperatorStatement emitTupleBuffer(const VariableDeclaration& pipelineContext,
                                                    const VariableDeclaration& tupleBufferVariable,
                                                    const VariableDeclaration& workerContextVariable);
+
+    /**
+     * @brief creates an if block that checks if a new buffer has to be allocated as the current one is full
+     * @param context
+     * @param varDeclResultTuple
+     * @param structDeclarationResultTuple
+     * @param schema
+     */
     void generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
                                        const VariableDeclaration& varDeclResultTuple,
                                        const StructDeclaration& structDeclarationResultTuple,
                                        SchemaPtr schema);
 
+    /**
+     * @brief creates a struct definition from schema
+     * @param structName
+     * @param schema
+     * @return
+     */
     static StructDeclaration getStructDeclarationFromSchema(const std::string& structName, const SchemaPtr& schema);
 
-    BinaryOperatorStatement
-    getAggregationWindowHandler(const VariableDeclaration& pipelineContextVariable,
+    /**
+     * @brief creates the aggregation window handler
+     * @param pipelineContextVariable
+     * @param keyType
+     * @param windowAggregationDescriptor
+     * @return
+     */
+    BinaryOperatorStatement getAggregationWindowHandler(const VariableDeclaration& pipelineContextVariable,
                                 DataTypePtr keyType,
                                 const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor);
 
+    /**
+     * @brief returns getJoinHandler<NES::Join::JoinHandler,KeyType,leftType,rightType>()
+     * @param pipelineContextVariable
+     * @param KeyType
+     * @param leftType
+     * @param rightType
+     * @return
+     */
     BinaryOperatorStatement getJoinWindowHandler(const VariableDeclaration& pipelineContextVariable,
                                                  DataTypePtr KeyType,
                                                  const std::string& leftType,
                                                  const std::string& rightType);
 
-    static BinaryOperatorStatement getStateVariable(const VariableDeclaration&);
+    /**
+     * @brief returns windowHandlerVariable.getTypedWindowState()
+     * @param windowHandlerVariable
+     * @return
+     */
+    static BinaryOperatorStatement getStateVariable(const VariableDeclaration& windowHandlerVariable);
 
+    /**
+     * @brief returns windowHandlerVariable.getLeftJoinState()
+     * @param windowHandlerVariable
+     * @return
+     */
     static BinaryOperatorStatement getLeftJoinState(const VariableDeclaration& windowHandlerVariable);
+
+    /**
+     * @brief returns windowHandlerVariable.getRightJoinState()
+     * @param windowHandlerVariable
+     * @return
+     */
     static BinaryOperatorStatement getRightJoinState(const VariableDeclaration& windowHandlerVariable);
 
-    static BinaryOperatorStatement getWindowManager(const VariableDeclaration&);
+    /**
+     * @brief windowHandlerVariable.getWindowManager()
+     * @param windowHandlerVariable
+     * @return
+     */
+    static BinaryOperatorStatement getWindowManager(const VariableDeclaration& windowHandlerVariable);
 
+    /**
+     * @brief creates handler.updateMaxTs(getWaterMark(inputBuffer), getOriginId(inputBuffer), getSequenceNumber(inputBuffer)) and
+     * appends it to the cleanup statements
+     * @param context
+     * @param handler
+     */
     void generateCodeForWatermarkUpdaterWindow(const PipelineContextPtr& context, const VariableDeclaration& handler);
-    void
-    generateCodeForWatermarkUpdaterJoin(const PipelineContextPtr& context, const VariableDeclaration& handler, bool leftSide);
 
+    /**
+     * @brief creates handler.updateMaxTs(getWaterMark(inputBuffer), getOriginId(inputBuffer), getSequenceNumber(inputBuffer), leftSide) and
+     * appends it to the cleanup statements
+     * @param context
+     * @param handler
+     * @param leftSide
+     */
+    void generateCodeForWatermarkUpdaterJoin(const PipelineContextPtr& context, const VariableDeclaration& handler, bool leftSide);
+
+    /**
+     * @brief Generates the code for initializing partialAggregate and executable aggregation depending on its type. For example,
+     * the sum aggregate with int auto partialAggregateInitialValue = 0; Windowing::ExecutableSumAggregation<int64_t>::create()
+     * @param setupScope
+     * @param executableAggregation
+     * @param partialAggregateInitialValue
+     * @param aggregationInputType
+     * @param aggregation
+     */
     void generateCodeForAggregationInitialization(const BlockScopeStatementPtr& setupScope,
                                                   const VariableDeclaration& executableAggregation,
                                                   const VariableDeclaration& partialAggregateInitialValue,
                                                   const GeneratableDataTypePtr& aggregationInputType,
                                                   const Windowing::WindowAggregationDescriptorPtr& aggregation);
 
-    StructDeclaration getStructDeclarationFromWindow(std::string structName);
-
+    /**
+     * @brief creates joinOperatorHandler = tupleBufferVariable.getOperatorHandler<Join::JoinOperatorHandler>(joinOperatorIndex) and
+     * appends it to the variableInitStmts
+     * @param context
+     * @param tupleBufferVariable
+     * @param joinOperatorIndex
+     * @return
+     */
     VariableDeclaration getJoinOperatorHandler(const PipelineContextPtr& context,
                                                const VariableDeclaration& tupleBufferVariable,
                                                uint64_t joinOperatorIndex);
-    bool generateCodeInitStructFieldsColLayout(const SchemaPtr& schema,
+
+
+    /**
+     * @brief in a col layout, all pointers in the structDeclaration have to be set to the correct field
+     * @param schema
+     * @param tf
+     * @param varDeclarationInputBuffer
+     * @param structDeclaration
+     * @param varTuples
+     * @param statements
+     * @param capacityVarName
+     */
+    void generateCodeInitStructFieldsColLayout(const SchemaPtr& schema,
                                                CompilerTypesFactoryPtr& tf,
                                                const VariableDeclaration& varDeclarationInputBuffer,
                                                const StructDeclaration structDeclaration,
