@@ -265,7 +265,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     return true;
 }
 
-bool CCodeGenerator::generateCodeInitStructFieldsColLayout(const SchemaPtr& schema,
+void CCodeGenerator::generateCodeInitStructFieldsColLayout(const SchemaPtr& schema,
                                                            CompilerTypesFactoryPtr& tf,
                                                            const VariableDeclaration& varDeclarationBuffer,
                                                            const StructDeclaration structDeclaration,
@@ -299,8 +299,6 @@ bool CCodeGenerator::generateCodeInitStructFieldsColLayout(const SchemaPtr& sche
 
         offsetCounter += fieldSize;
     }
-
-    return true;
 }
 
 bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> projectExpressions, PipelineContextPtr context) {
@@ -1898,12 +1896,6 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     return true;
 }
 
-/*
- * Generates the code for initializing partialAggregate and executable aggregation depending on its type.
- * For example, the sum aggregate with int
- * auto partialAggregateInitialValue = 0;
- * Windowing::ExecutableSumAggregation<int64_t>::create()
- */
 void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeStatementPtr& setupScope,
                                                               const VariableDeclaration& executableAggregation,
                                                               const VariableDeclaration& partialAggregateInitialValue,
@@ -2380,6 +2372,7 @@ TypeCastExprStatement CCodeGenerator::getTypedBuffer(const VariableDeclaration& 
     auto tf = getTypeFactory();
     return TypeCast(getBuffer(tupleBufferVariable), tf->createPointer(tf->createUserDefinedType(structDeclaration)));
 }
+
 VariableDeclaration CCodeGenerator::getWindowOperatorHandler(const PipelineContextPtr& context,
                                                              const VariableDeclaration& tupleBufferVariable,
                                                              uint64_t windowOperatorIndex) {
