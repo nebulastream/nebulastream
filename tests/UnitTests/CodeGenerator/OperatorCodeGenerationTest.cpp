@@ -273,7 +273,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 
 DataSourcePtr createTestSourceCodeGenPredicate(const Runtime::BufferManagerPtr& bPtr,
                                                const Runtime::QueryManagerPtr& dPtr,
-                                               Schema::ROW_OR_COL layoutType = Schema::ROW_LAYOUT) {
+                                               Schema::MemoryLayoutType layoutType = Schema::ROW_LAYOUT) {
     DataSourcePtr source(
         std::make_shared<PredicateTestingDataGeneratorSource>(Schema::create(layoutType)
                                                                   ->addField("id", DataTypeFactory::createUInt32())

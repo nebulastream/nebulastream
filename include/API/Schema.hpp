@@ -31,10 +31,10 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 class Schema {
   public:
-    enum ROW_OR_COL { ROW_LAYOUT = 0, COL_LAYOUT = 1 };
+    enum MemoryLayoutType { ROW_LAYOUT = 0, COL_LAYOUT = 1 };
 
-    Schema(ROW_OR_COL layoutType = ROW_LAYOUT);
-    Schema(SchemaPtr const& query, ROW_OR_COL layoutType = ROW_LAYOUT);
+    Schema(MemoryLayoutType layoutType = ROW_LAYOUT);
+    Schema(SchemaPtr const& query, MemoryLayoutType layoutType = ROW_LAYOUT);
 
     /**
      * @brief Schema qualifier separator
@@ -45,7 +45,7 @@ class Schema {
      * @brief Factory method to create a new SchemaPtr.
      * @return SchemaPtr
      */
-    static SchemaPtr create(ROW_OR_COL layoutType = ROW_LAYOUT);
+    static SchemaPtr create(MemoryLayoutType layoutType = ROW_LAYOUT);
 
     /**
      * @brief Creates a copy of this schema.
@@ -159,6 +159,10 @@ class Schema {
     */
     bool contains(const std::string& fieldName);
 
+    /**
+     * @brief returns a string representation
+     * @return
+     */
     [[nodiscard]] std::string toString() const;
 
     /**
@@ -166,7 +170,7 @@ class Schema {
      * @param layout
      * @return
      */
-    [[nodiscard]] std::string getLayoutTypeAsString(ROW_OR_COL layout) const;
+    [[nodiscard]] std::string getLayoutTypeAsString(MemoryLayoutType layout) const;
 
     /**
      * @brief Method to return the stream name qualifier, thus everything that is before $
@@ -191,7 +195,7 @@ class Schema {
      */
     void clear();
 
-    ROW_OR_COL layoutType;
+    MemoryLayoutType layoutType;
 
     std::vector<AttributeFieldPtr> fields;
 };
