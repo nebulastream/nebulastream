@@ -100,7 +100,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 
     auto mqttSource = createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, 1, 12, {});
 
-    std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER), SERVERADDRESS=tcp://127.0.0.1:1883, "
+    std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
                            "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry. ";
 
