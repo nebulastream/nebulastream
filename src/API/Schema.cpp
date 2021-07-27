@@ -28,13 +28,13 @@
 
 namespace NES {
 
-Schema::Schema(ROW_OR_COL layoutType) : layoutType(layoutType){};
+Schema::Schema(MemoryLayoutType layoutType) : layoutType(layoutType){};
 
-SchemaPtr Schema::create(ROW_OR_COL layoutType) { return std::make_shared<Schema>(layoutType); }
+SchemaPtr Schema::create(MemoryLayoutType layoutType) { return std::make_shared<Schema>(layoutType); }
 
 uint64_t Schema::getSize() const { return fields.size(); }
 
-Schema::Schema(const SchemaPtr& query, ROW_OR_COL layoutType) {
+Schema::Schema(const SchemaPtr& query, MemoryLayoutType layoutType) {
     copyFields(query);
     this->layoutType = layoutType;
 }
@@ -158,7 +158,6 @@ std::string Schema::toString() const {
         ss << f->toString() << " ";
     }
 
-    ss << "layoutType = " << getLayoutTypeAsString(layoutType);
     return ss.str();
 }
 
@@ -250,7 +249,7 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
 }
 
 void Schema::clear() { fields.clear(); }
-std::string Schema::getLayoutTypeAsString(Schema::ROW_OR_COL layout) const {
+std::string Schema::getLayoutTypeAsString(Schema::MemoryLayoutType layout) const {
     if (layout == ROW_LAYOUT) {
         return "ROW_LAYOUT";
     } else if (layout == COL_LAYOUT) {

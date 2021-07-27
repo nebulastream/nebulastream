@@ -56,7 +56,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink
     testSink->setOutputSchema(schema);
     DataSinkPtr fileOutputSink =
         ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, 0);
-    EXPECT_EQ(fileOutputSink->toString(), "FileSink(SCHEMA(layoutType = ROW_LAYOUT))");
+    EXPECT_EQ(fileOutputSink->toString(), "FileSink(SCHEMA())");
 }
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink) {
@@ -66,7 +66,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink)
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, 0);
-    EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK(SCHEMA(layoutType = ROW_LAYOUT), HOST=127.0.0.1, PORT=2000)");
+    EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK(SCHEMA(), HOST=127.0.0.1, PORT=2000)");
 }
 #ifdef ENABLE_KAFKA_BUILD
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSink) {
@@ -89,7 +89,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSin
     testSink->setOutputSchema(schema);
     DataSinkPtr printSink =
         ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, 0);
-    EXPECT_EQ(printSink->toString(), "PRINT_SINK(SCHEMA(layoutType = ROW_LAYOUT))");
+    EXPECT_EQ(printSink->toString(), "PRINT_SINK(SCHEMA())");
 }
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalSink) {

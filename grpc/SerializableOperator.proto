@@ -25,7 +25,11 @@ The serializable wrapper for a schema object
  */
 message SerializableSchema{
   repeated SerializableField fields = 1;
-  int64 layoutType = 2;
+  enum MemoryLayoutType {
+    ROW_LAYOUT = 0;
+    COL_LAYOUT = 1;
+  }
+  MemoryLayoutType layoutType = 2;
 }
 
 /**
