@@ -255,7 +255,7 @@ std::string Schema::getLayoutTypeAsString(Schema::MemoryLayoutType layout) const
     } else if (layout == COL_LAYOUT) {
         return "COL_LAYOUT";
     } else {
-        NES_THROW_RUNTIME_ERROR("layout type could not be parsed to string representation!");
+        NES_THROW_RUNTIME_ERROR("layout type " << layout << " could not be parsed to string representation!");
     }
 }
 
