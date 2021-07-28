@@ -928,7 +928,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -980,7 +980,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    NodeEngine::WorkerContext wctx{0};
+    Runtime::WorkerContext wctx{0};
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        nodeEngine->getBufferManager(),
@@ -994,15 +994,15 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     /* printing results */
 
     auto resultBuffer = queryContext->buffers[0];
-    auto outputLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
 
     auto iris0FieldsOutput =
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(4, bindedOutputRowLayout);
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(4, bindedOutputRowLayout);
     auto iris1FieldsOutput =
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(5, bindedOutputRowLayout);
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(5, bindedOutputRowLayout);
     auto iris2FieldsOutput =
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(6, bindedOutputRowLayout);
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(6, bindedOutputRowLayout);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         std::cout << "-------------------------\n";

@@ -22,6 +22,7 @@
 
 namespace tflite {
     class Interpreter;
+    class TfLiteInterpreter;
 }
 
 namespace NES {
