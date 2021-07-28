@@ -39,6 +39,13 @@ Pattern Pattern::from(const std::string& sourceStreamName) {
     return Pattern(queryPlan);
 }
 
+Pattern Pattern::iter(const uint64_t minIteration, const uint64_t maxIteration) {
+    NES_DEBUG("Pattern: enter iteration function with (min, max)" << minIteration << "," << maxIteration);
+    OperatorNodePtr op = LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+}
+
 Pattern& Pattern::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Pattern: enter sink function");
     NES_DEBUG("Pattern: add additional map operator to pattern");
