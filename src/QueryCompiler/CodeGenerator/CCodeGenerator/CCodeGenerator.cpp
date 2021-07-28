@@ -86,15 +86,15 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
     NES_DEBUG("Define Struct : " << structName);
 
     for (uint64_t i = 0; i < schema->getSize(); ++i) {
-        if (schema->layoutType == Schema::ROW_LAYOUT) {
+        if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
             structDeclarationTuple.addField(
                 VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->getName()));
-        } else if (schema->layoutType == Schema::COL_LAYOUT) {
+        } else if (schema->getLayoutType() == Schema::COL_LAYOUT) {
             auto valuePointer = GeneratableTypesFactory::createPointer(tf->createDataType(schema->get(i)->getDataType()));
             auto valuePointerDeclaration = VariableDeclaration::create(valuePointer, schema->get(i)->getName());
             structDeclarationTuple.addField(valuePointerDeclaration);
         } else {
-            NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+            NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
         }
         NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->getName());
     }
@@ -185,31 +185,31 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"))
             .copy());
 
-    if (inputSchema->layoutType == Schema::ROW_LAYOUT) {
+    if (inputSchema->getLayoutType() == Schema::ROW_LAYOUT) {
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclarationInputTuples[0])),
                                         "inputTuples");
-    } else if (inputSchema->layoutType == Schema::COL_LAYOUT) {
+    } else if (inputSchema->getLayoutType() == Schema::COL_LAYOUT) {
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createUserDefinedType(code->structDeclarationInputTuples[0]), "inputTuples");
         auto varDeclInputTupleStmt = VarDeclStatement(code->varDeclarationInputTuples);
         NES_DEBUG("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is " << varDeclInputTupleStmt.getCode()->code_);
         code->variableInitStmts.push_back(varDeclInputTupleStmt.copy());
     } else {
-        NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
     code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
 
     // If it is a row layout, then map struct to buffer, otherwise set the start of all fields
-    if (inputSchema->layoutType == Schema::ROW_LAYOUT) {
+    if (inputSchema->getLayoutType() == Schema::ROW_LAYOUT) {
         // Generates: InputTuple* inputTuples = (InputTuple*) inputTupleBuffer.getBuffer();
         code->variableInitStmts.push_back(
             VarDeclStatement(code->varDeclarationInputTuples)
                 .assign(getTypedBuffer(code->varDeclarationInputBuffer, code->structDeclarationInputTuples[0]))
                 .copy());
 
-    } else if (inputSchema->layoutType == Schema::COL_LAYOUT) {
+    } else if (inputSchema->getLayoutType()== Schema::COL_LAYOUT) {
         auto compStatement = code->currentCodeInsertionPoint;
         generateCodeInitStructFieldsColLayout(inputSchema,
                                               tf,
@@ -235,19 +235,19 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     auto recordHandler = context->getRecordHandler();
     for (const AttributeFieldPtr& field : inputSchema->fields) {
         auto variable = getVariableDeclarationForField(code->structDeclarationInputTuples[0], field);
-        if (inputSchema->layoutType == Schema::ROW_LAYOUT) {
+        if (inputSchema->getLayoutType()== Schema::ROW_LAYOUT) {
             auto fieldRefStatement =
                 VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                     VarRef(variable));
 
             recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
-        } else if (inputSchema->layoutType == Schema::COL_LAYOUT) {
+        } else if (inputSchema->getLayoutType()== Schema::COL_LAYOUT) {
             auto fieldRefStatement = VarRef(context->code->varDeclarationInputTuples)
                                          .accessRef(VarRef(variable))[VarRef(context->code->varDeclarationRecordIndex)];
 
             recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
         } else {
-            NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+            NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
         }
     }
 
@@ -388,7 +388,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
     // add type declaration for the result tuple
     code->typeDeclarations.push_back(structDeclarationResultTuple);
 
-    if (sinkSchema->layoutType == Schema::ROW_LAYOUT) {
+    if (sinkSchema->getLayoutType()== Schema::ROW_LAYOUT) {
         auto varDeclResultTuple =
             VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(structDeclarationResultTuple)),
                                         "resultTuples");
@@ -481,7 +481,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
-    } else if (sinkSchema->layoutType == Schema::COL_LAYOUT) {
+    } else if (sinkSchema->getLayoutType()== Schema::COL_LAYOUT) {
         auto varDeclResultTuple =
             VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
         auto varDeclResultTupleStmt = VarDeclStatement(varDeclResultTuple);
@@ -532,7 +532,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
     } else {
-        NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
     // Generate final logic to emit the last buffer to the Runtime
@@ -727,14 +727,14 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     thenStatement->addStatement(
         VarRef(code->varDeclarationResultBuffer).assign(allocateTupleBuffer(code->varDeclarationExecutionContext)).copy());
     // 2.2 get typed result buffer from resultTupleBuffer -> resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();
-    if (schema->layoutType == Schema::ROW_LAYOUT) {
+    if (schema->getLayoutType()== Schema::ROW_LAYOUT) {
         thenStatement->addStatement(VarRef(varDeclResultTuple)
                                         .assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple))
                                         .copy());
     }
 
     // Setting the start of all fields for col layout
-    if (schema->layoutType == Schema::COL_LAYOUT) {
+    if (schema->getLayoutType()== Schema::COL_LAYOUT) {
         std::vector<StatementPtr> statements;
         generateCodeInitStructFieldsColLayout(schema,
                                               tf,

@@ -184,6 +184,10 @@ class WorkerConfig {
      * @brief set the value for logLevel with the appropriate data format
      */
     void setLogLevel(std::string logLevel);
+    const StringConfigOption& getQueryCompilerExecutionMode() const;
+    void setQueryCompilerExecutionMode(std::string queryCompilerExecutionMode);
+    const StringConfigOption& getQueryCompilerOutputBufferAllocationStrategy() const;
+    void setQueryCompilerOutputBufferAllocationStrategy(std::string  queryCompilerOutputBufferAllocationStrategy);
 
   private:
     /**
@@ -203,6 +207,10 @@ class WorkerConfig {
     IntConfigOption bufferSizeInBytes;
     StringConfigOption parentId;
     StringConfigOption logLevel;
+    // indicates the execution mode of the query compiler [DEBUG|OPTIMIZE].
+    StringConfigOption queryCompilerExecutionMode;
+    // indicates, which output buffer allocation strategy should be used.
+    StringConfigOption queryCompilerOutputBufferOptimizationLevel;
 };
 
 }// namespace NES
