@@ -19,11 +19,10 @@
 
 #include <memory>
 #include <vector>
+#include <tensorflow/lite/c/c_api.h>
+#include <tensorflow/lite/c/c_api_experimental.h>
+#include <tensorflow/lite/c/common.h>
 
-namespace tflite {
-    class Interpreter;
-    class TfLiteInterpreter;
-}
 
 namespace NES {
 
@@ -39,7 +38,7 @@ class TensorflowAdapter {
     void initializeModel(std::string model);
     void pass() {}
   private:
-//    std::unique_ptr<tflite::Interpreter> interpreter;
+    TfLiteInterpreter* interpreter;
     float* output{};
 };
 

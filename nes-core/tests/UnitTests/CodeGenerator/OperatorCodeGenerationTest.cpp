@@ -935,7 +935,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
-    auto inferModelOperatorHandler = Join::InferModelOperatorHandler::create("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite");
+    auto inferModelOperatorHandler = Join::InferModelOperatorHandler::create("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc.tflite");
     context->registerOperatorHandler(inferModelOperatorHandler);
 
     auto inputSchema = source->getSchema();
@@ -960,7 +960,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto i0 = std::make_shared<ExpressionItem>(Attribute("iris0"));
     auto i1 = std::make_shared<ExpressionItem>(Attribute("iris1"));
     auto i2 = std::make_shared<ExpressionItem>(Attribute("iris2"));
-    auto op = LogicalOperatorFactory::createInferModelOperator("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite",
+    auto op = LogicalOperatorFactory::createInferModelOperator("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc.tflite",
                                                      {valF, valF, valF, valF},
                                                      {i0, i1, i2});
     auto imop = op->as<InferModelLogicalOperatorNode>();
@@ -973,7 +973,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     codeGenerator->generateCodeForEmit(outputSchema, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(context);
+    auto stage = codeGenerator->compile(jitCompiler, context);
 
     /* prepare input tuple buffer */
     source->open();
