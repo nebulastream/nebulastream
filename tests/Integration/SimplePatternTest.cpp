@@ -487,7 +487,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
 /* 6.Test
  * Here, we test if we can use merge operator for patterns and create complex events with it
  */
-TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge) {
+TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();

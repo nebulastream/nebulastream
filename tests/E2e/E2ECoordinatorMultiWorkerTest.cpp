@@ -156,7 +156,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidUserQueryWithFi
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWithFileOutputTwoWorkerSameSource) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerSameSource) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
@@ -243,7 +243,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
