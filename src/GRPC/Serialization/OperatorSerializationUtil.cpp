@@ -1067,7 +1067,8 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
                                                 mqttSerializedSourceDescriptor.serveraddress(),
                                                 mqttSerializedSourceDescriptor.clientid(),
                                                 mqttSerializedSourceDescriptor.user(),
-                                                mqttSerializedSourceDescriptor.topic());
+                                                mqttSerializedSourceDescriptor.topic(),
+                                                mqttSerializedSourceDescriptor.dataType());
         return ret;
     }
 #endif
