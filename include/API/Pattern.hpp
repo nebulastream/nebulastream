@@ -65,6 +65,14 @@ class Pattern : public Query {
     static Pattern from(std::string const& sourceStreamName);
 
     /**
+     * @brief: Monitors a condition from a particular source stream. The source stream is identified by its name.
+     * During processing the underlying source descriptor is retrieved from the stream catalog.
+     * @param sourceStreamName name of the stream to monitor. This name has to be registered in the query catalog.
+     * @return the pattern
+     */
+    Pattern iter(uint64_t minIterations, uint64_t maxIteration);
+
+    /**
      * @brief Add sink operator for the query.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor

@@ -598,4 +598,90 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
+
+/* 8.Test
+ * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
+ */
+TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+    NES_DEBUG("start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("coordinator started successfully");
+
+    NES_INFO("SimplePatternTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("SimplePatternTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    //register logical stream qnv
+    std::string qnv =
+        R"(Schema::create()->addField("sensor_id", UINT64)->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+    std::string testSchemaFileName = "QnV.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << qnv;
+    out.close();
+    wrk1->registerLogicalStream("QnV", testSchemaFileName);
+
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/QnV_short_intID.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("QnV");
+    //register physical stream
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    wrk1->registerPhysicalStream(conf);
+
+    std::string outputFilePath = "testPatternWithWindowandAggregation.out";
+    remove(outputFilePath.c_str());
+
+    //register query
+    std::string query =
+        R"(Pattern::from("QnV").filter(Attribute("quantity") > 100).iter(3,10).sink(FileSinkDescriptor::create(")"
+        + outputFilePath + "\")); ";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 0));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    NES_INFO("SimplePatternTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    //TODO Patternname waiting for String support in map operator
+
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|QnV$start:UINT64|QnV$end:UINT64|QnV$sensor_id:UINT64|QnV$quantity:UINT64|QnV$PatternId:INT32|\n"
+                             "+----------------------------------------------------+\n"
+                             "|1543622400000|1543623300000|2000073|107|1|\n"
+                             "|1543623600000|1543624500000|2000073|107|1|\n"
+                             "+----------------------------------------------------+";
+
+    std::ifstream ifs(outputFilePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    NES_DEBUG("content=" << content);
+    NES_DEBUG("expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
+
+    bool retStopWrk = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
 }// namespace NES
