@@ -46,7 +46,7 @@ StreamCatalogEntryPtr StreamCatalogEntry::create(AbstractPhysicalStreamConfigPtr
 
 std::string StreamCatalogEntry::getSourceType() { return sourceType; }
 
-TopologyNodePtr StreamCatalogEntry::getNode() { return node;}
+TopologyNodePtr StreamCatalogEntry::getNode() { return node; }
 
 std::string StreamCatalogEntry::getPhysicalName() { return physicalStreamName; }
 
@@ -54,10 +54,11 @@ std::vector<std::string> StreamCatalogEntry::getLogicalName() { return logicalSt
 
 std::vector<std::string> StreamCatalogEntry::getMissmappedLogicalName() { return mismappedLogicalStreamName; }
 
-bool StreamCatalogEntry::addLogicalStreamName(std::string newLogicalStreamName){
-    for(std::string name : logicalStreamName){
-        if(name==newLogicalStreamName){
-            NES_ERROR("StreamCatalogEntry::addLogicalStreamName logicalStreamName="<<newLogicalStreamName<<" could not be added to StreamCatalogEntry as it already exists");
+bool StreamCatalogEntry::addLogicalStreamName(std::string newLogicalStreamName) {
+    for (std::string name : logicalStreamName) {
+        if (name == newLogicalStreamName) {
+            NES_ERROR("StreamCatalogEntry::addLogicalStreamName logicalStreamName="
+                      << newLogicalStreamName << " could not be added to StreamCatalogEntry as it already exists");
             return false;
         }
     }
@@ -66,89 +67,95 @@ bool StreamCatalogEntry::addLogicalStreamName(std::string newLogicalStreamName){
     return true;
 }
 
-bool StreamCatalogEntry::addLogicalStreamNameToMismapped(std::string newLogicalStreamName){
-    for(std::string &name : mismappedLogicalStreamName){
-        if(name==newLogicalStreamName){
-            NES_ERROR("StreamCatalogEntry::addLogicalStreamNameToMismapped logicalStreamName="<<newLogicalStreamName<<" could not be added to StreamCatalogEntry as it already exists");
+bool StreamCatalogEntry::addLogicalStreamNameToMismapped(std::string newLogicalStreamName) {
+    for (std::string& name : mismappedLogicalStreamName) {
+        if (name == newLogicalStreamName) {
+            NES_ERROR("StreamCatalogEntry::addLogicalStreamNameToMismapped logicalStreamName="
+                      << newLogicalStreamName << " could not be added to StreamCatalogEntry as it already exists");
             return false;
         }
     }
     mismappedLogicalStreamName.push_back(newLogicalStreamName);
-    physicalStreamState.addReason(logicalStreamWithoutSchema, "("+UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",")+")");
+    physicalStreamState.addReason(logicalStreamWithoutSchema,
+                                  "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",") + ")");
     return true;
 }
 
-void StreamCatalogEntry::moveLogicalStreamFromMismappedToRegular(std::string logicalStreamName){
+void StreamCatalogEntry::moveLogicalStreamFromMismappedToRegular(std::string logicalStreamName) {
     auto it = std::remove(mismappedLogicalStreamName.begin(), mismappedLogicalStreamName.end(), logicalStreamName);
     mismappedLogicalStreamName.erase(it, mismappedLogicalStreamName.end());
 
     this->logicalStreamName.push_back(logicalStreamName);
-    if(mismappedLogicalStreamName.empty()){
+    if (mismappedLogicalStreamName.empty()) {
         physicalStreamState.removeReason(logicalStreamWithoutSchema);
-    }else{
-        physicalStreamState.addReason(logicalStreamWithoutSchema, "("+UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",")+")");
+    } else {
+        physicalStreamState.addReason(logicalStreamWithoutSchema,
+                                      "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",") + ")");
     }
-
 }
 
-bool StreamCatalogEntry::removeLogicalStreamFromMismapped(std::string oldLogicalStreamName){
-    for(std::string &name : mismappedLogicalStreamName){
-        if(name==oldLogicalStreamName){
+bool StreamCatalogEntry::removeLogicalStreamFromMismapped(std::string oldLogicalStreamName) {
+    for (std::string& name : mismappedLogicalStreamName) {
+        if (name == oldLogicalStreamName) {
             auto it = std::remove(mismappedLogicalStreamName.begin(), mismappedLogicalStreamName.end(), oldLogicalStreamName);
             mismappedLogicalStreamName.erase(it, mismappedLogicalStreamName.end());
-            NES_DEBUG("StreamCatalogEntry::removeLogicalStream logicalStreamName="<<oldLogicalStreamName<<" was removed.");
-            if(mismappedLogicalStreamName.empty()){
+            NES_DEBUG("StreamCatalogEntry::removeLogicalStream logicalStreamName=" << oldLogicalStreamName << " was removed.");
+            if (mismappedLogicalStreamName.empty()) {
                 physicalStreamState.removeReason(logicalStreamWithoutSchema);
-            }else{
-                physicalStreamState.addReason(logicalStreamWithoutSchema, "("+UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",")+")");
+            } else {
+                physicalStreamState.addReason(logicalStreamWithoutSchema,
+                                              "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",")
+                                                  + ")");
             }
             return true;
         }
     }
-    NES_ERROR("StreamCatalogEntry::removeLogicalStream logicalStreamName="<<oldLogicalStreamName<<" could not be removed from StreamCatalogEntry as it does not exists.");
+    NES_ERROR("StreamCatalogEntry::removeLogicalStream logicalStreamName="
+              << oldLogicalStreamName << " could not be removed from StreamCatalogEntry as it does not exists.");
     return false;
 }
 
-bool StreamCatalogEntry::removeLogicalStream(std::string oldLogicalStreamName){
-    for(std::string &name : logicalStreamName){
-        if(name==oldLogicalStreamName){
+bool StreamCatalogEntry::removeLogicalStream(std::string oldLogicalStreamName) {
+    for (std::string& name : logicalStreamName) {
+        if (name == oldLogicalStreamName) {
             auto it = std::remove(logicalStreamName.begin(), logicalStreamName.end(), oldLogicalStreamName);
             logicalStreamName.erase(it, logicalStreamName.end());
-            NES_DEBUG("StreamCatalogEntry::removeLogicalStream logicalStreamName="<<oldLogicalStreamName<<" was removed.");
-            if(logicalStreamName.empty()){
+            NES_DEBUG("StreamCatalogEntry::removeLogicalStream logicalStreamName=" << oldLogicalStreamName << " was removed.");
+            if (logicalStreamName.empty()) {
                 physicalStreamState.addReason(noLogicalStream, "no valid logical stream");
             }
             return true;
         }
     }
-    NES_ERROR("StreamCatalogEntry::removeLogicalStream logicalStreamName="<<oldLogicalStreamName<<" could not be removed from StreamCatalogEntry as it does not exists.");
+    NES_ERROR("StreamCatalogEntry::removeLogicalStream logicalStreamName="
+              << oldLogicalStreamName << " could not be removed from StreamCatalogEntry as it does not exists.");
     return false;
 }
 
-void StreamCatalogEntry::setStateToWithoutLogicalStream(){
+void StreamCatalogEntry::setStateToWithoutLogicalStream() {
     physicalStreamState.addReason(noLogicalStream, "no valid logical stream");
     return;
 }
 
-PhysicalStreamState StreamCatalogEntry::getPhysicalStreamState(){
-    return physicalStreamState;
+PhysicalStreamState StreamCatalogEntry::getPhysicalStreamState() { return physicalStreamState; }
+
+void StreamCatalogEntry::changePhysicalStreamName(std::string newName) {
+    physicalStreamState.addReason(duplicatePhysicalStreamName,
+                                  "Physical stream was renamed from " + physicalStreamName + " to " + newName
+                                      + ", as the old name already existed.");
+    physicalStreamName = newName;
 }
 
-// BDAPRO : Put changes on Node but not persistent, persistence only after validation
-void StreamCatalogEntry::changePhysicalStreamName(std::string newName){
-    physicalStreamState.addReason(duplicatePhysicalStreamName, "Physical stream was renamed from "+physicalStreamName+" to "+newName+", as the old name already existed.");
-    physicalStreamName=newName;
-}
-
-void StreamCatalogEntry::getAllLogicalName(std::vector<std::string>& all){
-    all.reserve( logicalStreamName.size() + mismappedLogicalStreamName.size() ); // preallocate memory
-    all.insert( all.end(), logicalStreamName.begin(), logicalStreamName.end() );
-    all.insert( all.end(), mismappedLogicalStreamName.begin(), mismappedLogicalStreamName.end() );
+void StreamCatalogEntry::getAllLogicalName(std::vector<std::string>& all) {
+    all.reserve(logicalStreamName.size() + mismappedLogicalStreamName.size());// preallocate memory
+    all.insert(all.end(), logicalStreamName.begin(), logicalStreamName.end());
+    all.insert(all.end(), mismappedLogicalStreamName.begin(), mismappedLogicalStreamName.end());
 }
 
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
-    ss << "physicalName=" << physicalStreamName << " logicalStreamName=(" << UtilityFunctions::combineStringsWithDelimiter(logicalStreamName,",") << ") sourceType=" << sourceType
+    ss << "physicalName=" << physicalStreamName << " logicalStreamName=("
+       << UtilityFunctions::combineStringsWithDelimiter(logicalStreamName, ",") << ") sourceType=" << sourceType
        << " on node=" + std::to_string(node->getId());
     return ss.str();
 }
