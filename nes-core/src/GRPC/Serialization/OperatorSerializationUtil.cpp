@@ -170,7 +170,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
 
         input.close();
 
-        inferModelDetails.set_mlfilecontent(bytes.c_str());
+        inferModelDetails.set_mlfilecontent(bytes);
 
         serializedOperator.mutable_details()->PackFrom(inferModelDetails);
 
@@ -369,12 +369,14 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             outputFields.push_back(std::make_shared<ExpressionItem>(outputField));
         }
 
-        operatorNode = LogicalOperatorFactory::createInferModelOperator(serializedInferModelOperator.mlfilename(), inputFields, outputFields);
-
         auto content = serializedInferModelOperator.mlfilecontent();
         std::ofstream output(serializedInferModelOperator.mlfilename(), std::ios::binary);
         output << content;
         output.close();
+
+        operatorNode = LogicalOperatorFactory::createInferModelOperator(serializedInferModelOperator.mlfilename(), inputFields, outputFields);
+
+
 
 
     } else if (details.Is<SerializableOperator_WindowDetails>()) {

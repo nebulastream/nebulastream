@@ -878,8 +878,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    // /home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite
-    string query = R"(Query::from("default_logical").inferModel("/home/sumegim/Documents/tub/thesis/test_file.txt",
+
+    string query = R"(Query::from("default_logical").inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc_copy_3.tflite",
                         {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
                         {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                         .sink(FileSinkDescriptor::create(")"
@@ -890,16 +890,16 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER,default_logical$iris0:(Float),default_logical$iris1:(Float),default_logical$iris2:(Float)\n"
-                             "1,1,42.000000,42.000000,42.000000\n"
-                             "1,1,42.000000,42.000000,42.000000\n"
-                             "1,1,42.000000,42.000000,42.000000\n"
-                             "1,1,42.000000,42.000000,42.000000\n"
-                             "1,1,42.000000,42.000000,42.000000\n"
-                             "1,1,42.000000,42.000000,42.000000\n"
-                             "1,1,42.000000,42.000000,42.000000\n"
-                             "1,1,42.000000,42.000000,42.000000\n"
-                             "1,1,42.000000,42.000000,42.000000\n"
-                             "1,1,42.000000,42.000000,42.000000\n";
+                             "1,1,0.434282,0.312879,0.252839\n"
+                             "1,1,0.434282,0.312879,0.252839\n"
+                             "1,1,0.434282,0.312879,0.252839\n"
+                             "1,1,0.434282,0.312879,0.252839\n"
+                             "1,1,0.434282,0.312879,0.252839\n"
+                             "1,1,0.434282,0.312879,0.252839\n"
+                             "1,1,0.434282,0.312879,0.252839\n"
+                             "1,1,0.434282,0.312879,0.252839\n"
+                             "1,1,0.434282,0.312879,0.252839\n"
+                             "1,1,0.434282,0.312879,0.252839\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
