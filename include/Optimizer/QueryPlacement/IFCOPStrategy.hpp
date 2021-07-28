@@ -22,6 +22,8 @@
 
 namespace NES::Optimizer {
 
+using IdToIteratorIndexMapping = std::map<std::pair<OperatorId, uint64_t>, std::pair<uint64_t, uint64_t>>;
+
 class IFCOPStrategy : public BasePlacementStrategy {
 
   public:
@@ -90,7 +92,25 @@ class IFCOPStrategy : public BasePlacementStrategy {
                           const PlacementMatrix& placementCandidate,
                           NES::QueryPlanPtr queryPlan);
 
+    /**
+     * @brief assign all remaining operator, including the sink to the placementCandidate
+     * @param queryPlan query plan to place
+     * @param topoIdx index of the topology node in a DFS iterator where the last assignment is made
+     * @param idToIteratorIndexMapping mapping to help obtaining the index of a topology and operator node based on their ids
+     * @param placedOperatorIds vector that track the id of the operator that has been placed
+     * @param placementCandidate the operator placement candidate to which the assignment is to be applied
+     */
+    void assignRemainingOperator(NES::QueryPlanPtr queryPlan,
+                                 uint32_t topoIdx,
+                                 IdToIteratorIndexMapping& idToIteratorIndexMapping,
+                                 std::vector<OperatorId>& placedOperatorIds,
+                                 PlacementMatrix& placementCandidate);
+
+    /**
+     * @brief initialize the mapping in the topologyNodeIdToIndexMap
+     */
     void initiateTopologyNodeIdToIndexMap();
+
     // a mapping between Ids of nodes in the topology to its index in a depth first search iterator
     std::map<uint64_t, uint64_t> topologyNodeIdToIndexMap;
 };

@@ -95,7 +95,9 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
 
     PlacementMatrix placementCandidate;
 
-    std::map<std::pair<OperatorId, uint64_t>, std::pair<uint64_t, uint64_t>> matrixMapping;
+    // mapping between pair of topologyId and operator id to pair of topology node and operator index in the iterator
+    // this helps to determine the index of a topology and operator in their iterator based on their ids
+    IdToIteratorIndexMapping matrixMapping;
 
     auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
 
@@ -189,20 +191,8 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
         }
     }
 
-    auto currentTopologyNodePtr = topology->getRoot();
-    // check all un-assigned operators, including the sink
-    QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
-    for (auto qPlanIter = queryPlanIterator.begin(); qPlanIter != NES::QueryPlanIterator::end(); ++qPlanIter) {
-        auto currentOpId = (*qPlanIter)->as<LogicalOperatorNode>()->getId();
-        if (std::find(placedOperatorIds.begin(), placedOperatorIds.end(), currentOpId) == placedOperatorIds.end()) {
-            // if the current operator id is not in placedOperatorIds, then place the current operator at the sink
-            topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOpId)].first;
-            auto opIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOpId)].second;
+    assignRemainingOperator(queryPlan, topoIdx, matrixMapping, placedOperatorIds, placementCandidate);
 
-            placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
-            placedOperatorIds.push_back(currentOpId);
-        }
-    }
     return placementCandidate;
 }
 
@@ -234,7 +224,8 @@ double IFCOPStrategy::getCost(const PlacementMatrix& placementCandidate, NES::Qu
         nodeIndex++;
     }
 
-    totalCost += costRatio * getNetworkCost(topology->getRoot(), placementCandidate, std::move(queryPlan)) + (1-costRatio) * overutilizationCost;
+    totalCost += costRatio * getNetworkCost(topology->getRoot(), placementCandidate, std::move(queryPlan))
+        + (1 - costRatio) * overutilizationCost;
     return totalCost;
 }
 
@@ -243,13 +234,13 @@ double IFCOPStrategy::getLocalCost(const std::vector<bool>& nodePlacement, NES::
 
     // initial value for operator index and cost
     uint32_t opIdx = 0;
-    double cost = 1.0; // initialize to 1 as we perform a product operation
+    double cost = 1.0;// initialize to 1 as we perform a product operation
 
     // loop over operators in the query plan and check the placement decision for each operator in the current topology node
     for (auto qPlanItr = queryPlanIterator.begin(); qPlanItr != QueryPlanIterator::end(); ++qPlanItr) {
         auto currentOperator = (*qPlanItr)->as<OperatorNode>();
 
-        double dmf = 1; // fallback if the DMF property does not exist in the current operator
+        double dmf = 1;// fallback if the DMF property does not exist in the current operator
         // check if the current operator has the data modification factor (DMF) property, otherwise fallback to 1
         if (currentOperator->checkIfPropertyExist("DMF")) {
             // obtain the dmf property
@@ -297,6 +288,35 @@ void IFCOPStrategy::initiateTopologyNodeIdToIndexMap() {
         NES_DEBUG("IFCOP::DEBUG:: topoid=" << (*topoItr)->as<TopologyNode>()->getId());
         topologyNodeIdToIndexMap.insert({(*topoItr)->as<TopologyNode>()->getId(), topoIdx});
         topoIdx++;
+    }
+}
+
+void IFCOPStrategy::assignRemainingOperator(
+    NES::QueryPlanPtr queryPlan,
+    uint32_t topoIdx,
+    IdToIteratorIndexMapping& idToIteratorIndexMapping,
+    std::vector<OperatorId>& placedOperatorIds,
+    PlacementMatrix& placementCandidate) {
+    auto currentTopologyNodePtr = topology->getRoot();
+
+    // iterate to all operator in the query to check for un-assinged operator
+    QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto qPlanIter = queryPlanIterator.begin(); qPlanIter != NES::QueryPlanIterator::end(); ++qPlanIter) {
+        auto currentOpId = (*qPlanIter)->as<LogicalOperatorNode>()->getId();
+
+        // check if the current operator has been placed before
+        if (std::find(placedOperatorIds.begin(), placedOperatorIds.end(), currentOpId) == placedOperatorIds.end()) {
+            // if the current operator id is not in placedOperatorIds, then place the current operator at the sink
+
+            // obtain the index of the topology id and operator id
+            topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOpId)].first;
+            auto opIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOpId)].second;
+
+            placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
+
+            // register the current operator as placed
+            placedOperatorIds.push_back(currentOpId);
+        }
     }
 }
 
