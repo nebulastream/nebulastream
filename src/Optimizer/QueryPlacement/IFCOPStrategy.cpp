@@ -71,7 +71,7 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
         // 4.2. compute the cost of the current candidate
         currentCost = getCost(currentCandidate, queryPlan, 1);
 
-        // 4.3. ceck if the current candidate has the lowest cost then the current best candidate
+        // 4.3. check if the current candidate has the lowest cost then the current best candidate
         if (currentCost < bestCost) {
             // 4.3.1 update the current best candidate if that is the case
             bestCandidate = currentCandidate;
@@ -150,7 +150,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
                 }
 
                 // placing the rest of the operator except the sink
-                // prepare a random generator with a uniform distriution
+                // prepare a random generator with a uniform distribution
                 std::random_device rd;
                 std::mt19937 mt(rd());
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
@@ -212,16 +212,25 @@ double IFCOPStrategy::getCost(const PlacementMatrix& placementCandidate, NES::Qu
     // compute over-utilization cost
     uint32_t nodeIndex = 0;
     uint32_t overutilizationCost = 0;
+
+    // iterate the topology using DFS iterator
     auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
     for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {
         auto currentTopologyNode = (*topoItr)->as<TopologyNode>();
+
+        // count the total number of operator assigned to the current topology node (i.e., which has the placement decision = true
         auto totalAssignedOperators =
             std::count_if(placementCandidate[nodeIndex].begin(), placementCandidate[nodeIndex].end(), [](bool item) {
                 return item;
             });
+
+        // check if the number of assigned operator exceed the capacity
         if (totalAssignedOperators > currentTopologyNode->getAvailableResources()) {
+            // accumulate the overutilization
             overutilizationCost += (totalAssignedOperators - currentTopologyNode->getAvailableResources());
         }
+
+        // continue with the next node
         nodeIndex++;
     }
 
@@ -231,16 +240,23 @@ double IFCOPStrategy::getCost(const PlacementMatrix& placementCandidate, NES::Qu
 
 double IFCOPStrategy::getLocalCost(const std::vector<bool>& nodePlacement, NES::QueryPlanPtr queryPlan) {
     QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
-    uint32_t opIdx = 0;
 
-    double cost = 1.0;
+    // initial value for operator index and cost
+    uint32_t opIdx = 0;
+    double cost = 1.0; // initialize to 1 as we perform a product operation
+
+    // loop over operators in the query plan and check the placement decision for each operator in the current topology node
     for (auto qPlanItr = queryPlanIterator.begin(); qPlanItr != QueryPlanIterator::end(); ++qPlanItr) {
         auto currentOperator = (*qPlanItr)->as<OperatorNode>();
 
         double dmf = 1; // fallback if the DMF property does not exist in the current operator
+        // check if the current operator has the data modification factor (DMF) property, otherwise fallback to 1
         if (currentOperator->checkIfPropertyExist("DMF")) {
+            // obtain the dmf property
             dmf = std::any_cast<double>(currentOperator->getProperty("DMF"));
         }
+        // running product of dmf multiplied by the placement decision (either 1 or 0)
+        // the third term is used to avoid multiplication by 0 when the placement decision is 0
         cost = cost * (nodePlacement[opIdx] * dmf + (1 - nodePlacement[opIdx]));
     }
     return cost;
@@ -250,19 +266,27 @@ double IFCOPStrategy::getNetworkCost(const TopologyNodePtr currentNode,
                                      const PlacementMatrix& placementCandidate,
                                      NES::QueryPlanPtr queryPlan) {
 
+    // get the local cost for the current topology node
     auto currentNodeCost = getLocalCost(placementCandidate[topologyNodeIdToIndexMap[currentNode->getId()]], queryPlan);
 
+    // check if the current node has children or if it is a source node
     if (!currentNode->getChildren().empty()) {
         double childCost = 0;
 
+        // loop over the child node of the current topology node and compute to cost of each node
         for (const auto& node : currentNode->getChildren()) {
             auto childNode = node->as<TopologyNode>();
+            // compute the network cost of the current child and then sum it to childCost
             childCost += getNetworkCost(childNode, placementCandidate, queryPlan);
         }
+
+        // multiply the summed childCost with the cost of the current node o quantify how the placement from source node up to the
+        // current topology node affect the cost of placement in the downstream topology nodes
         double cost = childCost * currentNodeCost;
         return cost;
     }
 
+    // if the current topology node is a source node, return only the local cost of the node
     return currentNodeCost;
 }
 
