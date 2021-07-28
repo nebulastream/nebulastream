@@ -40,7 +40,7 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
      * a binary mapping is a 2D vector of i X j that store decision whether to place operator j in node i
      * @param userDefinedBinaryMapping binary mapping to set
      */
-    void setBinaryMapping(std::vector<std::vector<bool>> userDefinedBinaryMapping);
+    void setBinaryMapping(PlacementMatrix userDefinedBinaryMapping);
 
   private:
     explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -49,7 +49,7 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
                                      StreamCatalogPtr streamCatalog);
 
     // stores the binary mapping  of the current strategy
-    std::vector<std::vector<bool>> binaryMapping;
+    PlacementMatrix binaryMapping;
 };
 
 }// namespace NES::Optimizer

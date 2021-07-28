@@ -622,7 +622,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
         Optimizer::ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
     // basic case: one operator per node
-    std::vector<std::vector<bool>> mapping = {{true, false, false}, {false, true, false}, {false, false, true}};
+    NES::Optimizer::PlacementMatrix mapping = {{true, false, false}, {false, true, false}, {false, false, true}};
 
     manualPlacementStrategy->setBinaryMapping(mapping);
 
@@ -726,7 +726,7 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
         Optimizer::ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
     // case: allowing more than one operators per node
-    std::vector<std::vector<bool>> mapping = {{true, true, false}, {false, false, false}, {false, false, true}};
+    NES::Optimizer::PlacementMatrix mapping = {{true, true, false}, {false, false, false}, {false, false, true}};
 
     manualPlacementStrategy->setBinaryMapping(mapping);
 
@@ -803,7 +803,7 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
                          "->addField(\"value\", BasicType::UINT64);";
     const std::string streamName = "car";
 
-    streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -932,7 +932,7 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
                          "->addField(\"value\", BasicType::UINT64);";
     const std::string streamName = "car";
 
-    streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
