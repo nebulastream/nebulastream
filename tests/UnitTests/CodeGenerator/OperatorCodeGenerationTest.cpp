@@ -1013,7 +1013,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, context);
+    codeGenerator->generateCodeForEmit(outputSchema, NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -1092,7 +1092,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, context);
+    codeGenerator->generateCodeForEmit(outputSchema, NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -1170,7 +1170,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, context);
+    codeGenerator->generateCodeForEmit(outputSchema, NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);

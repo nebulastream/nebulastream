@@ -76,6 +76,7 @@ namespace NES::QueryCompilation {
 CCodeGenerator::CCodeGenerator() {}
 
 StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::string& structName, const SchemaPtr& schema) {
+    auto tf = getTypeFactory();
     /* struct definition for tuples */
     StructDeclaration structDeclarationTuple = StructDeclaration::create(structName, "");
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
@@ -85,20 +86,16 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
     NES_DEBUG("Define Struct : " << structName);
 
     for (uint64_t i = 0; i < schema->getSize(); ++i) {
-
         if (schema->layoutType == Schema::ROW_LAYOUT) {
             structDeclarationTuple.addField(
                 VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->getName()));
         } else if (schema->layoutType == Schema::COL_LAYOUT) {
-            auto tf = getTypeFactory();
-            auto val = GeneratableTypesFactory::createPointer(tf->createDataType(schema->get(i)->getDataType()));
-            auto varDeclPointer = VariableDeclaration::create(val, schema->get(i)->getName());
-
-            structDeclarationTuple.addField(varDeclPointer);
+            auto valuePointer = GeneratableTypesFactory::createPointer(tf->createDataType(schema->get(i)->getDataType()));
+            auto valuePointerDeclaration = VariableDeclaration::create(valuePointer, schema->get(i)->getName());
+            structDeclarationTuple.addField(valuePointerDeclaration);
         } else {
             NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
         }
-
         NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->getName());
     }
     return structDeclarationTuple;
@@ -112,10 +109,7 @@ VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& s
     return VariableDeclarationPtr();
 }
 
-std::string toString(void*, const DataTypePtr&) {
-    //     if(type->)
-    return "";
-}
+std::string toString(void*, const DataTypePtr&) { return ""; }
 
 CodeGeneratorPtr CCodeGenerator::create() { return std::make_shared<CCodeGenerator>(); }
 
@@ -206,8 +200,6 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     }
 
     code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
-
-
 
     // If it is a row layout, then map struct to buffer, otherwise set the start of all fields
     if (inputSchema->layoutType == Schema::ROW_LAYOUT) {
@@ -381,7 +373,9 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, LegacyExpressio
     return true;
 }
 
-bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
+                                         OutputBufferAllocationStrategy bufferStrategy,
+                                         PipelineContextPtr context) {
 
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for Sink.");
@@ -400,94 +394,93 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAlloc
                                         "resultTuples");
 
         // initialize result buffer
-    if (bufferStrategy == ONLY_INPLACE_OPERATIONS) {
-        // We do not even initialize a buffer, we just use "inputBuffer" as the resultBuffer-handle for the later emit.
-        // The only contents in the Scan's for loop will be map operations.
-        code->varDeclarationResultBuffer = code->varDeclarationInputBuffer;
-    } else {
-        auto recordHandler = context->getRecordHandler();
+        if (bufferStrategy == ONLY_INPLACE_OPERATIONS) {
+            // We do not even initialize a buffer, we just use "inputBuffer" as the resultBuffer-handle for the later emit.
+            // The only contents in the Scan's for loop will be map operations.
+            code->varDeclarationResultBuffer = code->varDeclarationInputBuffer;
+        } else {
+            auto recordHandler = context->getRecordHandler();
 
-        // The following lines are moved here from generateCodeForScan:
-        auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer"); // duplicate
-        auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
-        code->varDeclarationResultBuffer = varDeclarationResultBuffer;
+            // The following lines are moved here from generateCodeForScan:
+            auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");// duplicate
+            auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
+            code->varDeclarationResultBuffer = varDeclarationResultBuffer;
 
-        if (bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
-            || bufferStrategy == REUSE_INPUT_BUFFER) {                    // Reuse the input buffer as the result buffer.
-            // Generates: NES::Runtime::TupleBuffer resultTupleBuffer = inputTupleBuffer;
-            code->variableInitStmts.push_back(
-                    VarDeclStatement(code->varDeclarationResultBuffer).assign(
-                            VarRef(code->varDeclarationInputBuffer)).copy());
-            // Generates: ResultTuple* resultTuples = (ResultTuple*) resultTupleBuffer.getBuffer();
-            code->variableInitStmts.push_back(VarDeclStatement(varDeclResultTuple)
-                                                      .assign(getTypedBuffer(code->varDeclarationResultBuffer,
-                                                                             structDeclarationResultTuple))
-                                                      .copy());
+            if (bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
+                || bufferStrategy == REUSE_INPUT_BUFFER) {// Reuse the input buffer as the result buffer.
+                // Generates: NES::Runtime::TupleBuffer resultTupleBuffer = inputTupleBuffer;
+                code->variableInitStmts.push_back(
+                    VarDeclStatement(code->varDeclarationResultBuffer).assign(VarRef(code->varDeclarationInputBuffer)).copy());
+                // Generates: ResultTuple* resultTuples = (ResultTuple*) resultTupleBuffer.getBuffer();
+                code->variableInitStmts.push_back(
+                    VarDeclStatement(varDeclResultTuple)
+                        .assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple))
+                        .copy());
 
-            // Save all input fields that may get overwritten because of the input==result optimization into temporary variables.
-            for (const auto &field : context->resultSchema->fields) {
-                if (context->getInputSchema()->hasFieldName(field->getName())) {
-                    // check if record handler has current field
-                    if (!recordHandler->hasAttribute(field->getName())) {
-                        NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
-                                        + " is part of the output schema, "
-                                          "but not registered in the record handler.");
+                // Save all input fields that may get overwritten because of the input==result optimization into temporary variables.
+                for (const auto& field : context->resultSchema->fields) {
+                    if (context->getInputSchema()->hasFieldName(field->getName())) {
+                        // check if record handler has current field
+                        if (!recordHandler->hasAttribute(field->getName())) {
+                            NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
+                                            + " is part of the output schema, "
+                                              "but not registered in the record handler.");
+                        }
+
+                        std::string tmpVarName = "tmp_" + field->getName();
+                        auto variableDeclaration = VariableDeclaration::create(field->getDataType(), tmpVarName);
+                        auto attributeVariable = VarDeclStatement(variableDeclaration);
+                        auto assignedTmpVar = attributeVariable.assign(recordHandler->getAttribute(field->getName())).copy();
+                        recordHandler->registerAttribute(field->getName(), VarRef(variableDeclaration).copy());
+                        code->currentCodeInsertionPoint->addStatement(assignedTmpVar);
                     }
-
-                    std::string tmpVarName = "tmp_" + field->getName();
-                    auto variableDeclaration = VariableDeclaration::create(field->getDataType(), tmpVarName);
-                    auto attributeVariable = VarDeclStatement(variableDeclaration);
-                    auto assignedTmpVar = attributeVariable.assign(
-                            recordHandler->getAttribute(field->getName())).copy();
-                    recordHandler->registerAttribute(field->getName(), VarRef(variableDeclaration).copy());
-                    code->currentCodeInsertionPoint->addStatement(assignedTmpVar);
                 }
-            }
-        } else { // Allocate a dedicated result buffer.
-            // Generates: NES::Runtime::TupleBuffer resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
-            code->variableInitStmts.push_back(
-                    VarDeclStatement(code->varDeclarationResultBuffer).assign(
-                            allocateTupleBuffer(code->varDeclarationExecutionContext)).copy());
-            // Generates: ResultTuple* resultTuples = (ResultTuple*) resultTupleBuffer.getBuffer();
-            code->variableInitStmts.push_back(VarDeclStatement(varDeclResultTuple)
-                                                      .assign(getTypedBuffer(code->varDeclarationResultBuffer,
-                                                                             structDeclarationResultTuple))
+            } else {// Allocate a dedicated result buffer.
+                // Generates: NES::Runtime::TupleBuffer resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
+                code->variableInitStmts.push_back(VarDeclStatement(code->varDeclarationResultBuffer)
+                                                      .assign(allocateTupleBuffer(code->varDeclarationExecutionContext))
                                                       .copy());
-        }
-
-        // Now, copy all fields listed in the result schema into the result buffer.
-        for (const auto& field : context->resultSchema->fields) {
-            auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
-            if (!resultRecordFieldVariableDeclaration) {
-                NES_FATAL_ERROR("CCodeGenerator: Could not extract field " << field->toString() << " from result record struct "
-                                                                          << structDeclarationResultTuple.getTypeName());
+                // Generates: ResultTuple* resultTuples = (ResultTuple*) resultTupleBuffer.getBuffer();
+                code->variableInitStmts.push_back(
+                    VarDeclStatement(varDeclResultTuple)
+                        .assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple))
+                        .copy());
             }
 
-            // check if record handler has current field
-            if (!recordHandler->hasAttribute(field->getName())) {
-                NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
-                                + " is part of the output schema, "
-                                  "but not registered in the record handler.");
+            // Now, copy all fields listed in the result schema into the result buffer.
+            for (const auto& field : context->resultSchema->fields) {
+                auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
+                if (!resultRecordFieldVariableDeclaration) {
+                    NES_FATAL_ERROR("CCodeGenerator: Could not extract field " << field->toString()
+                                                                               << " from result record struct "
+                                                                               << structDeclarationResultTuple.getTypeName());
+                }
+
+                // check if record handler has current field
+                if (!recordHandler->hasAttribute(field->getName())) {
+                    NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
+                                    + " is part of the output schema, "
+                                      "but not registered in the record handler.");
+                }
+
+                // Get current field from record handler.
+                auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
+
+                // use regular assing for types which are not arrays, as fixed char arrays support
+                // assignment by operator.
+                auto const copyFieldStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)]
+                                                    .accessRef(VarRef(resultRecordFieldVariableDeclaration))
+                                                    .assign(currentFieldVariableReference);
+
+                code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
             }
 
-            // Get current field from record handler.
-            auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
+            // increment number of tuples in buffer -> ++numberOfResultTuples;
+            code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
 
-            // use regular assing for types which are not arrays, as fixed char arrays support
-            // assignment by operator.
-            auto const copyFieldStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)]
-                                                .accessRef(VarRef(resultRecordFieldVariableDeclaration))
-                                                .assign(currentFieldVariableReference);
-
-            code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
+            // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
+            generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
-
-        // increment number of tuples in buffer -> ++numberOfResultTuples;
-        code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
-
-        // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
-        generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
-
     } else if (sinkSchema->layoutType == Schema::COL_LAYOUT) {
         auto varDeclResultTuple =
             VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
@@ -535,31 +528,26 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAlloc
 
         // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
         // We can optimize this away if the result schema is smaller thatn the input schema.
-        if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
-              || bufferStrategy == OMIT_OVERFLOW_CHECK)) {
-            generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple);
+        if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || bufferStrategy == OMIT_OVERFLOW_CHECK)) {
+            generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
-        // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
-        generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
-
     } else {
         NES_ERROR("inputSchema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
-        // Generate final logic to emit the last buffer to the Runtime
-        // 1. set the number of tuples to the buffer
-        code->cleanupStmts.push_back(
-            setNumberOfTuples(code->varDeclarationResultBuffer, code->varDeclarationNumberOfResultTuples).copy());
+    // Generate final logic to emit the last buffer to the Runtime
+    // 1. set the number of tuples to the buffer
+    code->cleanupStmts.push_back(
+        setNumberOfTuples(code->varDeclarationResultBuffer, code->varDeclarationNumberOfResultTuples).copy());
 
-        // 2. copy watermark
-        code->cleanupStmts.push_back(setWatermark(code->varDeclarationResultBuffer, code->varDeclarationInputBuffer).copy());
+    // 2. copy watermark
+    code->cleanupStmts.push_back(setWatermark(code->varDeclarationResultBuffer, code->varDeclarationInputBuffer).copy());
 
-        // 3. copy origin id
-        code->cleanupStmts.push_back(setOriginId(code->varDeclarationResultBuffer, code->varDeclarationInputBuffer).copy());
+    // 3. copy origin id
+    code->cleanupStmts.push_back(setOriginId(code->varDeclarationResultBuffer, code->varDeclarationInputBuffer).copy());
 
-        // 4. copy sequence number
-        code->cleanupStmts.push_back(setSequenceNumber(code->varDeclarationResultBuffer, code->varDeclarationInputBuffer).copy());
-    }
+    // 4. copy sequence number
+    code->cleanupStmts.push_back(setSequenceNumber(code->varDeclarationResultBuffer, code->varDeclarationInputBuffer).copy());
 
     // 5. emit the buffer to the runtime.
     code->cleanupStmts.push_back(

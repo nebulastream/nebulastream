@@ -29,7 +29,6 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
-#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
