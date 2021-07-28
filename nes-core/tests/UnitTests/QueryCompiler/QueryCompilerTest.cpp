@@ -163,16 +163,16 @@ TEST_F(QueryCompilerTest, filterQuery) {
 TEST_F(QueryCompilerTest, inferModelQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", FLOAT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
     auto query = Query::from("streamName")
-                     .inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite",
+                     .inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc.tflite",
                                  {Attribute("F1"), Attribute("F1"), Attribute("F1"), Attribute("F1")},
                                  {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                      .sink(NullOutputSinkDescriptor::create());
@@ -197,13 +197,13 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
 TEST_F(QueryCompilerTest, mapQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", FLOAT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>();
+    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
     auto query = Query::from("streamName")
                      .map(Attribute("F2") = Attribute("F1") + 2.0)
