@@ -1016,7 +1016,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     codeGenerator->generateCodeForEmit(outputSchema, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(context);
+    auto stage = codeGenerator->compile(jitCompiler, context);
 
     /* prepare input tuple buffer */
     source->open();
@@ -1095,7 +1095,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
     codeGenerator->generateCodeForEmit(outputSchema, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(context);
+    auto stage = codeGenerator->compile(jitCompiler, context);
 
     /* prepare input tuple buffer */
     source->open();
@@ -1173,7 +1173,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     codeGenerator->generateCodeForEmit(outputSchema, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(context);
+    auto stage = codeGenerator->compile(jitCompiler, context);
 
     /* prepare input tuple buffer */
     source->open();

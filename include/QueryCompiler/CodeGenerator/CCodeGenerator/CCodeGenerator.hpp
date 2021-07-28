@@ -208,7 +208,6 @@ class CCodeGenerator : public CodeGenerator {
     ~CCodeGenerator() override;
 
   private:
-    CompilerPtr compiler;
 
     /**
      * @brief returns tupleBufferVariable.getBuffer()
