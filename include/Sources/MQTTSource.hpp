@@ -54,6 +54,7 @@ class MQTTSource : public DataSource {
                         std::string const& clientId,
                         std::string const& user,
                         std::string const& topic,
+                        std::string const& dataType,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
@@ -76,7 +77,7 @@ class MQTTSource : public DataSource {
      * @param buf buffer to be filled
      * @param data the received data as string
      */
-    void fillBuffer(Runtime::TupleBuffer& buf, const std::string& data);
+    void fillBuffer(Runtime::TupleBuffer& buf, std::string& data, uint64_t tupCnt);
 
     /**
      * @brief override the toString method for the mqtt source
@@ -104,7 +105,16 @@ class MQTTSource : public DataSource {
      * @return topic
      */
     std::string const& getTopic() const;
-
+    /**
+     * @brief getter for dataType
+     * @return dataType
+     */
+    std::string getDataType() const;
+    /**
+     * @brief getter for tupleSize
+     * @return tupleSize
+     */
+    uint64_t getTupleSize() const;
     /**
     * @brief Get source type
     */
@@ -140,7 +150,9 @@ class MQTTSource : public DataSource {
     std::string clientId;
     std::string user;
     std::string topic;
+    std::string dataType;
     mqtt::async_clientPtr client;
+    uint64_t tupleSize;
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;

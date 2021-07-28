@@ -39,7 +39,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @return source descriptor pointer to mqtt source
      */
     static SourceDescriptorPtr
-    create(SchemaPtr schema, std::string serverAddress, std::string clientId, std::string user, std::string topic);
+    create(SchemaPtr schema, std::string serverAddress, std::string clientId, std::string user, std::string topic, std::string dataType );
     /**
      * @brief create a source descriptor pointer for MQTT source
      * @param logicalStreamName Name of the logical data stream
@@ -55,7 +55,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                       std::string serverAddress,
                                       std::string clientId,
                                       std::string user,
-                                      std::string topic);
+                                      std::string topic,
+                                      std::string dataType);
 
     /**
      * @brief get MQTT server address
@@ -82,6 +83,12 @@ class MQTTSourceDescriptor : public SourceDescriptor {
     std::string getTopic() const;
 
     /**
+     * @brief getter for dataType
+     * @return dataType
+     */
+    std::string getDataType() const;
+
+    /**
      * checks if two mqtt source descriptors are the same
      * @param other
      * @return true if they are the same
@@ -103,7 +110,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                   std::string serverAddress,
                                   std::string clientId,
                                   std::string user,
-                                  std::string topic);
+                                  std::string topic,
+                                  std::string dataType);
     /**
      * @brief mqtt source descriptor constructor
      * @param schema the schema of the data
@@ -118,13 +126,15 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                   std::string serverAddress,
                                   std::string clientId,
                                   std::string user,
-                                  std::string topic);
+                                  std::string topic,
+                                  std::string dataType);
 
     std::string serverAddress;
     std::string clientId;
     std::string user;
     std::string password;
     std::string topic;
+    std::string dataType;
 };
 
 using MQTTSourceDescriptorPtr = std::shared_ptr<MQTTSourceDescriptor>;

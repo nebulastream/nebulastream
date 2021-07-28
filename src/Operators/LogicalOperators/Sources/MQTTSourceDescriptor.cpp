@@ -27,12 +27,14 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  std::string serverAddress,
                                                  std::string clientId,
                                                  std::string user,
-                                                 std::string topic) {
+                                                 std::string topic,
+                                                 std::string dataType) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema),
                                                                        std::move(serverAddress),
                                                                        std::move(clientId),
                                                                        std::move(user),
-                                                                       std::move(topic)));
+                                                                       std::move(topic),
+                                                                       std::move(dataType)));
 }
 
 SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
@@ -40,31 +42,35 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  std::string serverAddress,
                                                  std::string clientId,
                                                  std::string user,
-                                                 std::string topic) {
+                                                 std::string topic,
+                                                 std::string dataType) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema),
                                                                        std::move(logicalStreamName),
                                                                        std::move(serverAddress),
                                                                        std::move(clientId),
                                                                        std::move(user),
-                                                                       std::move(topic)));
+                                                                       std::move(topic),
+                                                                       std::move(dataType)));
 }
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string serverAddress,
                                            std::string clientId,
                                            std::string user,
-                                           std::string topic)
+                                           std::string topic,
+                                           std::string dataType)
     : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)),
-      user(std::move(user)), topic(std::move(topic)) {}
+      user(std::move(user)), topic(std::move(topic)), dataType(std::move(dataType)) {}
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string logicalStreamName,
                                            std::string serverAddress,
                                            std::string clientId,
                                            std::string user,
-                                           std::string topic)
+                                           std::string topic,
+                                           std::string dataType)
     : SourceDescriptor(std::move(schema), std::move(logicalStreamName)), serverAddress(std::move(serverAddress)),
-      clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)) {}
+      clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), dataType(std::move(dataType)) {}
 
 std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
 
@@ -74,6 +80,8 @@ std::string MQTTSourceDescriptor::getUser() const { return user; }
 
 std::string MQTTSourceDescriptor::getTopic() const { return topic; }
 
+std::string MQTTSourceDescriptor::getDataType() const { return dataType; }
+
 bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 
     if (!other->instanceOf<MQTTSourceDescriptor>()) {
@@ -82,7 +90,7 @@ bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     auto otherMQTTSource = other->as<MQTTSourceDescriptor>();
     NES_DEBUG("URL= " << serverAddress << " == " << otherMQTTSource->getServerAddress());
     return serverAddress == otherMQTTSource->getServerAddress() && clientId == otherMQTTSource->getClientId()
-        && user == otherMQTTSource->getUser() && topic == otherMQTTSource->getTopic();
+        && user == otherMQTTSource->getUser() && topic == otherMQTTSource->getTopic() && dataType == otherMQTTSource->getDataType();
 }
 
 std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor()"; }
