@@ -15,10 +15,9 @@
 */
 
 #include "QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp"
-//#include "tensorflow/lite/interpreter.h"
-//#include "tensorflow/lite/kernels/register.h"
-//#include "tensorflow/lite/model.h"
-//#include "tensorflow/lite/optional_debug_tools.h"
+#include <tensorflow/lite/c/c_api.h>
+#include <tensorflow/lite/c/c_api_experimental.h>
+#include <tensorflow/lite/c/common.h>
 #include <fstream>
 #include <iostream>
 #include <stdarg.h>
@@ -29,6 +28,8 @@
     fprintf(stderr, "Error at %s:%d\n", __FILE__, __LINE__); \
     exit(1);                                                 \
   }
+
+class TfLiteModel;
 
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
@@ -44,6 +45,8 @@ void NES::TensorflowAdapter::initializeModel(std::string model){
     input.close();
     std::cout << "MODEL CONTENT: " << std::endl;
     std::cout << bytes.c_str();
+
+    printf("Hello from TensorFlow C library version %s\n", TfLiteVersion());
 
 //    std::unique_ptr<tflite::FlatBufferModel> ml_model =
 //        tflite::FlatBufferModel::BuildFromFile(model.c_str());
@@ -63,14 +66,40 @@ void NES::TensorflowAdapter::initializeModel(std::string model){
 }
 
 float NES::TensorflowAdapter::getResultAt(int i) {
-    return 42.0f;
     return output[i];
+    return 42.0f;
 }
 
 void NES::TensorflowAdapter::infer(int n, ...){
     std::cout << "inference... " << std::endl;
     va_list vl;
     va_start(vl, n);
+
+    TfLiteModel* model = TfLiteModelCreateFromFile("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_97acc.tflite");
+    TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
+//   TfLiteInterpreterOptionsSetNumThreads(options, 2);
+    TfLiteInterpreter* interpreter = TfLiteInterpreterCreate(model, options);
+    TfLiteInterpreterAllocateTensors(interpreter);
+
+    TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
+
+    float* input = (float*) malloc(4 * sizeof(float));
+    float* o = (float*) malloc(3 * sizeof(float));
+
+    for (int i = 0; i < n; ++i) {
+        input[i] = (float) va_arg(vl, double);
+    }
+    va_end(vl);
+
+    TfLiteTensorCopyFromBuffer(input_tensor, input, 4 * sizeof(float));
+    TfLiteInterpreterInvoke(interpreter);
+    const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+
+    TfLiteTensorCopyToBuffer(output_tensor, o, 3 * sizeof(float));
+
+    output = o;
+    free(input);
+
 
 //    float* input = interpreter->typed_input_tensor<float>(0);
 //

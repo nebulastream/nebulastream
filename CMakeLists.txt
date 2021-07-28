@@ -356,6 +356,8 @@ message(STATUS "Using z3: " ${Z3_LIBRARIES})
 
 # TensorFlow Lite
 #message(STATUS, "TF-Lite")
+#find_package(libtensorflowlite_c)
+
 #set(TENSORFLOW_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/tensorflow_src" CACHE PATH
 #    "Directory that contains the TensorFlow project")
 #add_subdirectory(
