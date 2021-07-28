@@ -16,55 +16,51 @@
 
 #include <Catalogs/PhysicalStreamState.hpp>
 
-
 namespace NES {
-PhysicalStreamState::PhysicalStreamState(){
-    this->state = State::regular;
-}
+PhysicalStreamState::PhysicalStreamState() { this->state = State::regular; }
 
-std::string PhysicalStreamState::getStateDescription(){
-    if(state==regular){
+std::string PhysicalStreamState::getStateDescription() {
+    if (state == regular) {
         return "regular";
     }
     std::string desc = "misconfigured";
 
     std::map<Reason, std::string>::iterator it = description.begin();
     // Iterate over the map using Iterator till end.
-    while (it != description.end()){
-        desc = desc+"\n"+getStringForReasonEnum(it->first)+": "+ it->second;
+    while (it != description.end()) {
+        desc = desc + "\n" + getStringForReasonEnum(it->first) + ": " + it->second;
         it++;
     }
 
     return desc;
 }
 
-void PhysicalStreamState::addReason(Reason reason, std::string desc){
+void PhysicalStreamState::addReason(Reason reason, std::string desc) {
     this->description[reason] = desc;
     this->state = misconfigured;
-
 }
-void PhysicalStreamState::removeReason(Reason reason){
+void PhysicalStreamState::removeReason(Reason reason) {
     this->description.erase(reason);
-    if(description.empty()){
+    if (description.empty()) {
         this->state = regular;
     }
 }
 
 bool PhysicalStreamState::isNameValid() {
-    if(description.find(duplicatePhysicalStreamName)!=description.end()){
+    if (description.find(duplicatePhysicalStreamName) != description.end()) {
         return false;
     }
     return true;
 }
 
-std::string PhysicalStreamState::getStringForReasonEnum(Reason reason){
-    if(reason==noLogicalStream){
+std::string PhysicalStreamState::getStringForReasonEnum(Reason reason) {
+    if (reason == noLogicalStream) {
         return "noLogicalStream";
-    }else if (reason==logicalStreamWithoutSchema){
+    } else if (reason == logicalStreamWithoutSchema) {
         return "logicalStreamWithoutSchema";
-    }else{
+    } else {
         return "duplicatePhysicalStreamName";
     }
 }
 
-} // namespace NES
+}// namespace NES
