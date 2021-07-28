@@ -31,7 +31,7 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 class Schema {
   public:
-    enum MemoryLayoutType { ROW_LAYOUT = 0, COL_LAYOUT = 1 };
+    enum MemoryLayoutType : std::int8_t{ ROW_LAYOUT = 0, COL_LAYOUT = 1 };
 
     Schema(MemoryLayoutType layoutType = ROW_LAYOUT);
     Schema(SchemaPtr const& query, MemoryLayoutType layoutType = ROW_LAYOUT);
