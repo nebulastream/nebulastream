@@ -258,5 +258,7 @@ std::string Schema::getLayoutTypeAsString(Schema::MemoryLayoutType layout) const
         NES_THROW_RUNTIME_ERROR("layout type " << layout << " could not be parsed to string representation!");
     }
 }
+Schema::MemoryLayoutType Schema::getLayoutType() const { return layoutType; }
+void Schema::setLayoutType(Schema::MemoryLayoutType layoutType) { Schema::layoutType = layoutType; }
 
 }// namespace NES

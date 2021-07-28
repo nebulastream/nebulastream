@@ -195,6 +195,10 @@ class Schema {
      */
     void clear();
 
+    MemoryLayoutType getLayoutType() const;
+    void setLayoutType(MemoryLayoutType layoutType);
+
+  private:
     MemoryLayoutType layoutType;
 
     std::vector<AttributeFieldPtr> fields;
