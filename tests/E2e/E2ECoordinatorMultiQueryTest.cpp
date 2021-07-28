@@ -347,12 +347,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
     string expectedContent1 =
-        "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,_$PatternId:INTEGER\n"
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,_$PatternId:INTEGER\n"
         "R2000073,1543624020000,102.629631,8,1\n"
         "R2000070,1543625280000,108.166664,5,1\n";
 
     string expectedContent2 =
-        "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,_$PatternId:INTEGER\n"
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,_$PatternId:INTEGER\n"
         "R2000073,1543622760000,63.277779,11,1\n"
         "R2000073,1543622940000,66.222221,12,1\n"
         "R2000073,1543623000000,74.666664,11,1\n"
