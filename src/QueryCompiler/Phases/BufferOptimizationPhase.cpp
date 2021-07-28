@@ -21,20 +21,19 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
-#include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
+#include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
 
-BufferOptimizationPhasePtr
-BufferOptimizationPhase::BufferOptimizationPhase::create(OutputBufferOptimizationLevel level) {
+BufferOptimizationPhasePtr BufferOptimizationPhase::BufferOptimizationPhase::create(OutputBufferOptimizationLevel level) {
     return std::make_shared<BufferOptimizationPhase>(level);
 }
 
 BufferOptimizationPhase::BufferOptimizationPhase(OutputBufferOptimizationLevel level)
-    : level(level) {}  // TODO move needed for enum ?
+    : level(level) {}// TODO move needed for enum ?
 
 PipelineQueryPlanPtr BufferOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
@@ -45,9 +44,27 @@ PipelineQueryPlanPtr BufferOptimizationPhase::apply(PipelineQueryPlanPtr pipelin
     return pipelinedQueryPlan;
 }
 
+bool BufferOptimizationPhase::isReadOnlyInput(OperatorPipelinePtr pipeline) {
+    // We define the input of an pipeline as read only if it is shared with another pipeline.
+    // To this end, we check if one of our parents have more then one child.
+    for (const auto& parent : pipeline->getPredecessors()) {
+        if (parent->getSuccessors().size() > 1) {
+            // the parent has more then one successor. So our input is read only.
+            return true;
+        }
+    }
+    return false;
+}
+
 OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
     if (level == NO) {
         NES_DEBUG("BufferOptimizationPhase: No optimization requested or applied.");
+        return operatorPipeline;
+    }
+
+    // If we can't modify the input we cant optimize the buffer access.
+    if (isReadOnlyInput(operatorPipeline)) {
+        NES_DEBUG("BufferOptimizationPhase: No optimization is possible as input is read only.");
         return operatorPipeline;
     }
 
@@ -58,7 +75,7 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     SchemaPtr inputSchema = nullptr;
     SchemaPtr outputSchema = nullptr;
     std::shared_ptr<GeneratableOperators::GeneratableBufferEmit> emitNode = nullptr;
-    bool filterOperatorFound = false; // TODO other checks required? other operators to look out for?
+    bool filterOperatorFound = false;// TODO other checks required? other operators to look out for?
 
     for (const auto& node : nodes) {
         if (node->instanceOf<GeneratableOperators::GeneratableBufferScan>()) {
@@ -73,34 +90,44 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     }
 
     if (inputSchema == nullptr) {
-        NES_DEBUG("BufferOptimizationPhase: No Scan operator found in pipeline. Optimization was requested, but no optimization can be applied.");
+        NES_DEBUG("BufferOptimizationPhase: No Scan operator found in pipeline. No optimization can be applied.");
         return operatorPipeline;
     }
     if (emitNode == nullptr || outputSchema == nullptr) {
-        NES_DEBUG("BufferOptimizationPhase: No Emit operator found in pipeline. Optimization was requested, but no optimization can be applied.");
+        NES_DEBUG("BufferOptimizationPhase: No Emit operator found in pipeline. No optimization can be applied.");
         return operatorPipeline;
     }
 
+    if(inputSchema->getLayoutType() != Schema::ROW_LAYOUT || outputSchema->getLayoutType() != Schema::ROW_LAYOUT){
+        NES_DEBUG("BufferOptimizationPhase: Currently buffer optimization is only possible if the input and output schema are using a ROW layout.");
+    }
+
     // Check if necessary conditions are fulfilled and set the desired strategy in the emit operator:
-    if (inputSchema->equals(outputSchema) && !filterOperatorFound && (level == ONLY_INPLACE_OPERATIONS_NO_FALLBACK || level == ALL)) {
-        // The highest level of optimization - just modifying the input buffer in place and passing it on - can be applied as there are no filter statements etc.
+    if (inputSchema->equals(outputSchema) && !filterOperatorFound
+        && (level == ONLY_INPLACE_OPERATIONS_NO_FALLBACK || level == ALL)) {
+        // The highest level of optimization - just modifying the input buffer in place and passing it to the next pipeline
+        // - can be applied as there are no filter statements etc.
         emitNode->setOutputBufferAllocationStrategy(ONLY_INPLACE_OPERATIONS);
         NES_DEBUG("BufferOptimizationPhase: Assign ONLY_INPLACE_OPERATIONS optimization strategy to pipeline.");
         return operatorPipeline;
     }
-    if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (level == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK || level == ALL)) {
-        // The optimizations  "reuse input buffer as output buffer" and "omit size check" can be applied.
+    if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()
+        && (level == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK || level == ALL)) {
+        // The optimizations "reuse input buffer as output buffer" and "omit size check" can be applied.
         emitNode->setOutputBufferAllocationStrategy(REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK);
-        NES_DEBUG("BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
+        NES_DEBUG(
+            "BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
         return operatorPipeline;
     }
-    if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (level == REUSE_INPUT_BUFFER_NO_FALLBACK || level == ALL)) {
+    if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()
+        && (level == REUSE_INPUT_BUFFER_NO_FALLBACK || level == ALL)) {
         // The optimization  "reuse input buffer as output buffer" can be applied.
         emitNode->setOutputBufferAllocationStrategy(REUSE_INPUT_BUFFER);
         NES_DEBUG("BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER optimization strategy to pipeline.");
         return operatorPipeline;
     }
-    if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes() && (level == OMIT_OVERFLOW_CHECK_NO_FALLBACK || level == ALL)) {
+    if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()
+        && (level == OMIT_OVERFLOW_CHECK_NO_FALLBACK || level == ALL)) {
         // The optimization "omit size check" can be applied.
         emitNode->setOutputBufferAllocationStrategy(OMIT_OVERFLOW_CHECK);
         NES_DEBUG("BufferOptimizationPhase: Assign OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
@@ -108,7 +135,7 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     }
 
     // level != NO, but still no optimization can be applied
-    NES_DEBUG("BufferOptimizationPhase: Optimization was requested, but no optimization can be applied.");
+    NES_DEBUG("BufferOptimizationPhase: Optimization was requested, but no optimization was applied.");
 
     return operatorPipeline;
 }

@@ -56,6 +56,13 @@ public:
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 private:
     OutputBufferOptimizationLevel level;
+    /**
+     * @brief Indicates if the input of this pipeline is read only.
+     * For instance, if the input is shared by a sibling pipeline.
+     * @param pipeline
+     * @return true if pipeline input is read only.
+     */
+    bool isReadOnlyInput(OperatorPipelinePtr pipeline);
 };
 }// namespace QueryCompilation
 }// namespace NES
