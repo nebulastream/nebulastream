@@ -69,6 +69,8 @@ namespace NES::Optimizer {
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
+using PlacementMatrix = std::vector<std::vector<bool>>;
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -136,7 +138,7 @@ class BasePlacementStrategy {
      */
     bool assignMappingToTopology(const NES::TopologyPtr topologyPtr,
                                  const NES::QueryPlanPtr queryPlan,
-                                 const std::vector<std::vector<bool>> mapping);
+                                 const PlacementMatrix mapping);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

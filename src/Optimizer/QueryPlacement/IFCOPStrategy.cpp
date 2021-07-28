@@ -50,41 +50,50 @@ IFCOPStrategy::IFCOPStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // initiate operatorIdToNodePlacementMap
-    auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
-    uint32_t topoIdx = 0;
-    for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {
-        NES_DEBUG("IFCOP::DEBUG:: topoid=" << (*topoItr)->as<TopologyNode>()->getId());
-        topologyNodeIdToIndexMap.insert({(*topoItr)->as<TopologyNode>()->getId(), topoIdx});
-        topoIdx++;
-    }
+    initiateTopologyNodeIdToIndexMap();
 
+    // Search for an operator placement candidate with the lowest cost
+    // 1. get a placement candidate
     auto currentCandidate = getPlacementCandidate(queryPlan);
-    auto currentCost = getCost(currentCandidate, queryPlan);
+
+    // 2. compute the cost of the current candidate
+    auto currentCost = getCost(currentCandidate, queryPlan, 1);
+
+    // 3. prepare variables to store information about the best candidate we obtain so far
     auto bestCandidate = currentCandidate;
     auto bestCost = currentCost;
 
+    // 4. perform iteration to search for the candidate with the lowest cost
     const uint32_t maxIter = 100;// maximum iteration to search for an optimal placement candidate
     for (uint32_t i = 1; i < maxIter; i++) {
+        // 4.1. get a new candidate
         currentCandidate = getPlacementCandidate(queryPlan);
-        currentCost = getCost(currentCandidate, queryPlan);
+        // 4.2. compute the cost of the current candidate
+        currentCost = getCost(currentCandidate, queryPlan, 1);
 
+        // 4.3. ceck if the current candidate has the lowest cost then the current best candidate
         if (currentCost < bestCost) {
+            // 4.3.1 update the current best candidate if that is the case
             bestCandidate = currentCandidate;
             bestCost = currentCost;
         }
 
-        NES_DEBUG("IFCOP: currentCost: " << currentCost);
+        NES_TRACE("IFCOP: currentCost: " << currentCost);
     }
 
+    // 5. assign the PlacementMatrix of the current candidate to the actual execution plan
     assignMappingToTopology(topology, queryPlan, bestCandidate);
 
+    // 6. complete the placement with system-generated network sources and sinks
     addNetworkSourceAndSinkOperators(queryPlan);
 
+    // 7. run the type inference phase
     return runTypeInferencePhase(queryPlan->getQueryId());
 }
-std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan) {
 
-    std::vector<std::vector<bool>> placementCandidate;
+PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan) {
+
+    PlacementMatrix placementCandidate;
 
     std::map<std::pair<OperatorId, uint64_t>, std::pair<uint64_t, uint64_t>> matrixMapping;
 
@@ -141,26 +150,38 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
                 }
 
                 // placing the rest of the operator except the sink
+                // prepare a random generator with a uniform distriution
                 std::random_device rd;
                 std::mt19937 mt(rd());
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
 
+                // we have 50% chance of continuing placing the next operator in the current topology node
                 const double stopChance = 0.5;
 
+                // traverse from the current topology node (i.e., source node) to the last node before the sink node
                 while (currentTopologyNodePtr != topology->getRoot()) {
+                    // draw a random decission whether to stop or continue placing the current operator
                     auto stop = dist(mt) > stopChance;
+                    // while not stop and the current operator is not a sink operator, place the next parent operator in the query plan
                     while (!stop
                            && !currentOperator->getParents()[0]
                                    ->instanceOf<SinkLogicalOperatorNode>()) {// assuming one sink operator
                         currentOperator =
                             currentOperator->getParents()[0]->as<LogicalOperatorNode>();// assuming one parent per operator
 
+                        // get the index of current topology node and operator in the PlacementCandidate
                         topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].first;
                         opIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].second;
+
+                        // set the Placement decision in the current topology and operator index to true
                         placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
                         placedOperatorIds.push_back(currentOperator->getId());
+
+                        // draw a random decision if we should stop or continue after this placement
                         stop = dist(mt) > stopChance;
                     }
+
+                    // traverse to the parent of the current topology node
                     currentTopologyNodePtr =
                         currentTopologyNodePtr->getParents()[0]->as<TopologyNode>();// assuming one parent per operator
                 }
@@ -185,7 +206,7 @@ std::vector<std::vector<bool>> IFCOPStrategy::getPlacementCandidate(NES::QueryPl
     return placementCandidate;
 }
 
-double IFCOPStrategy::getCost(std::vector<std::vector<bool>> placementCandidate, NES::QueryPlanPtr queryPlan) {
+double IFCOPStrategy::getCost(const PlacementMatrix& placementCandidate, NES::QueryPlanPtr queryPlan, double costRatio) {
     double totalCost = 0.0;
 
     // compute over-utilization cost
@@ -204,10 +225,11 @@ double IFCOPStrategy::getCost(std::vector<std::vector<bool>> placementCandidate,
         nodeIndex++;
     }
 
-    totalCost += getNetworkCost(topology->getRoot(), placementCandidate, std::move(queryPlan)) + overutilizationCost;
+    totalCost += costRatio * getNetworkCost(topology->getRoot(), placementCandidate, std::move(queryPlan)) + (1-costRatio) * overutilizationCost;
     return totalCost;
 }
-double IFCOPStrategy::getLocalCost(std::vector<bool> nodePlacement, NES::QueryPlanPtr queryPlan) {
+
+double IFCOPStrategy::getLocalCost(const std::vector<bool>& nodePlacement, NES::QueryPlanPtr queryPlan) {
     QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
     uint32_t opIdx = 0;
 
@@ -224,8 +246,8 @@ double IFCOPStrategy::getLocalCost(std::vector<bool> nodePlacement, NES::QueryPl
     return cost;
 }
 
-double IFCOPStrategy::getNetworkCost(const TopologyNodePtr& currentNode,
-                                     std::vector<std::vector<bool>> placementCandidate,
+double IFCOPStrategy::getNetworkCost(const TopologyNodePtr currentNode,
+                                     const PlacementMatrix& placementCandidate,
                                      NES::QueryPlanPtr queryPlan) {
 
     auto currentNodeCost = getLocalCost(placementCandidate[topologyNodeIdToIndexMap[currentNode->getId()]], queryPlan);
@@ -242,6 +264,16 @@ double IFCOPStrategy::getNetworkCost(const TopologyNodePtr& currentNode,
     }
 
     return currentNodeCost;
+}
+
+void IFCOPStrategy::initiateTopologyNodeIdToIndexMap() {
+    auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
+    uint32_t topoIdx = 0;
+    for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {
+        NES_DEBUG("IFCOP::DEBUG:: topoid=" << (*topoItr)->as<TopologyNode>()->getId());
+        topologyNodeIdToIndexMap.insert({(*topoItr)->as<TopologyNode>()->getId(), topoIdx});
+        topoIdx++;
+    }
 }
 
 }// namespace NES::Optimizer

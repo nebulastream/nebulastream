@@ -349,7 +349,7 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
 }
 bool BasePlacementStrategy::assignMappingToTopology(const NES::TopologyPtr topologyPtr,
                                                     const NES::QueryPlanPtr queryPlan,
-                                                    const std::vector<std::vector<bool>> mapping) {
+                                                    const PlacementMatrix mapping) {
 
     auto topologyIterator = NES::DepthFirstNodeIterator(topologyPtr->getRoot()).begin();
     auto mappingIterator = mapping.begin();
