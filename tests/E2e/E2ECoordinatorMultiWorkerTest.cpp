@@ -215,7 +215,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     string expectedContent =
-        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,_$PatternId:INTEGER\n"
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
         "R2000073,1543624020000,102.629631,8,1\n"
         "R2000070,1543625280000,108.166664,5,1\n"
         "R2000073,1543624020000,102.629631,8,1\n"
