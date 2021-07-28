@@ -122,6 +122,13 @@ class TopologyNode : public Node {
     void addNodeProperty(const std::string& key, const std::any& value);
 
     /**
+     * @brief Check if a Node property exists
+     * @param key key of the property
+     * @return true if the property with the given key exists
+     */
+    bool hasNodeProperty(const std::string& key);
+
+    /**
      * @brief Get a the value of a property
      * @param key key of the value to retrieve
      * @return value of the property with the given key

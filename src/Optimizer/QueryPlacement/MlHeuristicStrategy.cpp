@@ -118,6 +118,13 @@ void MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
 
     if(operatorNode->instanceOf<InferModelLogicalOperatorNode>()){
         NES_TRACE("MlHeuristicStrategy: Received an InferModel operator for placement.");
+
+        if(candidateTopologyNode->hasNodeProperty("tf_installed") &&
+           std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed"))) {
+            NES_TRACE("MlHeuristicStrategy: Operator can be placed here");
+        } else {
+            return;
+        }
     }
 
     if ((operatorNode->hasMultipleChildrenOrParents() && !operatorNode->instanceOf<SourceLogicalOperatorNode>())

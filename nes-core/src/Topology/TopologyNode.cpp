@@ -64,6 +64,7 @@ void TopologyNode::reduceResources(uint16_t usedCapacity) {
 
 TopologyNodePtr TopologyNode::copy() {
     TopologyNodePtr copy = std::make_shared<TopologyNode>(TopologyNode(id, ipAddress, grpcPort, dataPort, resources));
+    copy->nodeProperties = nodeProperties;
     copy->reduceResources(usedResources);
     copy->linkProperties = this->linkProperties;
     copy->nodeProperties = this->nodeProperties;
@@ -97,6 +98,13 @@ bool TopologyNode::containAsChild(NodePtr node) {
 
 void TopologyNode::addNodeProperty(const std::string& key, const std::any& value) {
     nodeProperties.insert(std::make_pair(key, value));
+}
+
+bool TopologyNode::hasNodeProperty(const std::string& key) {
+    if (nodeProperties.find(key) == nodeProperties.end()) {
+        return false;
+    }
+    return true;
 }
 
 std::any TopologyNode::getNodeProperty(const std::string& key) {
