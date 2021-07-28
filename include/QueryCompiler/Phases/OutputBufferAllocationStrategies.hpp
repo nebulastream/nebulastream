@@ -18,26 +18,25 @@
 #define OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP
 
 namespace NES {
-
+namespace QueryCompilation {
 enum OutputBufferOptimizationLevel {
-    ALL,                                                        // Use highest optimization.
-    NO,                                                         // create seperate result buffer and copy everything over after all operations are applied. Check size after every written tuple.
-    ONLY_INPLACE_OPERATIONS_NO_FALLBACK,                        // If all records and all fields match up in input and result buffer we can simply emit the input buffer. For this no filter can be applied and no new fields can be added. The only typical operations possible are inplace-maps, e.g. "id = id + 1".
-    REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,     // Output schema is smaller or equal (bytes) than input schema. We can reuse the buffer and omit size checks.
-    REUSE_INPUT_BUFFER_NO_FALLBACK,                             // enable the two optimizations individually (benchmarking only)
+    ALL,// Use highest optimization.
+    NO,// create seperate result buffer and copy everything over after all operations are applied. Check size after every written tuple.
+    ONLY_INPLACE_OPERATIONS_NO_FALLBACK,// If all records and all fields match up in input and result buffer we can simply emit the input buffer. For this no filter can be applied and no new fields can be added. The only typical operations possible are inplace-maps, e.g. "id = id + 1".
+    REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,// Output schema is smaller or equal (bytes) than input schema. We can reuse the buffer and omit size checks.
+    REUSE_INPUT_BUFFER_NO_FALLBACK,// enable the two optimizations individually (benchmarking only)
     OMIT_OVERFLOW_CHECK_NO_FALLBACK,
 };
 
 enum OutputBufferAllocationStrategy {
-    ONLY_INPLACE_OPERATIONS,                        // If all records and all fields match up in input and result buffer we can simply emit the input buffer. For this no filter can be applied and no new fields can be added. The only typical operations possible are inplace-maps, e.g. "id = id + 1".
-    REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK,     // Output schema is smaller or equal (bytes) than input schema. We can reuse the buffer and omit size checks.
-    REUSE_INPUT_BUFFER,                             // enable the two optimizations individually (benchmarking only)
+    ONLY_INPLACE_OPERATIONS,// If all records and all fields match up in input and result buffer we can simply emit the input buffer. For this no filter can be applied and no new fields can be added. The only typical operations possible are inplace-maps, e.g. "id = id + 1".
+    REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK,// Output schema is smaller or equal (bytes) than input schema. We can reuse the buffer and omit size checks.
+    REUSE_INPUT_BUFFER,// enable the two optimizations individually (benchmarking only)
     OMIT_OVERFLOW_CHECK,
-    NO_OPTIMIZATION,                                // create seperate result buffer and copy everything over after all operations are applied. Check size after every written tuple.
+    NO_OPTIMIZATION,// create seperate result buffer and copy everything over after all operations are applied. Check size after every written tuple.
 };
 
-//const std::string toString(const UnaryOperatorType& type);
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP
