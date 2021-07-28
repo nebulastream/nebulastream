@@ -104,6 +104,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
     uint64_t topoIdx = 0;
 
     // prepare the mapping
+    // TODO: we should avoid iterating the whole topology each time we generate a new placement candidate (#2082)
     for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {
         // add a new entry in the binary mapping for the current node
         std::vector<bool> currentTopologyNodeMapping;
@@ -309,8 +310,8 @@ void IFCOPStrategy::assignRemainingOperator(
             // if the current operator id is not in placedOperatorIds, then place the current operator at the sink
 
             // obtain the index of the topology id and operator id
-            topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOpId)].first;
-            auto opIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOpId)].second;
+            topoIdx = idToIteratorIndexMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOpId)].first;
+            auto opIdx = idToIteratorIndexMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOpId)].second;
 
             placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
 
