@@ -222,7 +222,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
         // 10 tuples of size one
         TupleBuffer buf = bufferManager->getBufferBlocking();
 
-        if (schema->layoutType == Schema::COL_LAYOUT) {
+        if (schema->getLayoutType() == Schema::COL_LAYOUT) {
             auto layoutCol = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(schema, true);
             uint64_t tupleCnt = buf.getBufferSize() / layoutCol->getRecordSize();
             auto bindedColLayout = layoutCol->bind(buf);
@@ -243,7 +243,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
             }
             buf.setNumberOfTuples(tupleCnt);
 
-        } else if (schema->layoutType == Schema::ROW_LAYOUT) {
+        } else if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
             auto layoutRow = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
             uint64_t tupleCnt = buf.getBufferSize() / layoutRow->getRecordSize();
             auto bindedRowLayout = layoutRow->bind(buf);

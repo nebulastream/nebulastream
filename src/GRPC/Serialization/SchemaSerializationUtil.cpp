@@ -35,9 +35,9 @@ SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& 
     }
 
     // Serialize layoutType
-    if (schema->layoutType == Schema::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
         serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_ROW_LAYOUT);
-    } else if (schema->layoutType == Schema::COL_LAYOUT) {
+    } else if (schema->getLayoutType() == Schema::COL_LAYOUT) {
         serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_COL_LAYOUT);
     }
 
@@ -56,7 +56,7 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(SerializableSchema* seriali
     }
 
     // Deserialize layoutType
-    deserializedSchema->layoutType = (Schema::MemoryLayoutType)(serializedSchema->layouttype());
+    deserializedSchema->setLayoutType((Schema::MemoryLayoutType)(serializedSchema->layouttype()));
 
     return deserializedSchema;
 }
