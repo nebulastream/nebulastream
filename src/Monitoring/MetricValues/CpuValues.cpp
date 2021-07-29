@@ -23,6 +23,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <cpprest/json.h>
 #include <cstring>
@@ -46,31 +47,31 @@ SchemaPtr CpuValues::getSchema(const std::string& prefix) {
 
 CpuValues CpuValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     CpuValues output{};
-    //get index where the schema for CpuValues is starting
     auto i = schema->getIndex(prefix + "user");
 
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->getName(), "user")
-        && UtilityFunctions::endsWith(schema->fields[i + 9]->getName(), "guestnice")) {
-        NES_DEBUG("CpuValues: Index found for " + prefix + "user" + " at " + std::to_string(i));
-
-        auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
-        auto bindedRowLayout = layout->bind(buf);
-
-        output.user = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 0, bindedRowLayout)[0];
-        output.nice = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 1, bindedRowLayout)[0];
-        output.system = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 2, bindedRowLayout)[0];
-        output.idle = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 3, bindedRowLayout)[0];
-        output.iowait = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 4, bindedRowLayout)[0];
-        output.irq = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 5, bindedRowLayout)[0];
-        output.softirq = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 6, bindedRowLayout)[0];
-        output.steal = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 7, bindedRowLayout)[0];
-        output.guest = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 8, bindedRowLayout)[0];
-        output.guestnice = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 9, bindedRowLayout)[0];
-
-    } else {
-        NES_THROW_RUNTIME_ERROR("CpuValues: Metrics could not be parsed from schema with prefix " + prefix + ":\n"
-                                + schema->toString());
+    if (buf.getNumberOfTuples() > 1) {
+        NES_THROW_RUNTIME_ERROR("CpuValues: Tuple size should be 1, but is larger "
+                                + std::to_string(buf.getNumberOfTuples()));
     }
+
+    if (!MetricUtils::validateFieldsInSchema(CpuValues::getSchema(""), schema, i)) {
+        NES_THROW_RUNTIME_ERROR("CpuValues: Incomplete number of fields in schema.");
+    }
+
+    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto bindedRowLayout = layout->bind(buf);
+
+    output.user = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 0, bindedRowLayout)[0];
+    output.nice = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 1, bindedRowLayout)[0];
+    output.system = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 2, bindedRowLayout)[0];
+    output.idle = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 3, bindedRowLayout)[0];
+    output.iowait = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 4, bindedRowLayout)[0];
+    output.irq = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 5, bindedRowLayout)[0];
+    output.softirq = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 6, bindedRowLayout)[0];
+    output.steal = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 7, bindedRowLayout)[0];
+    output.guest = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 8, bindedRowLayout)[0];
+    output.guestnice = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 9, bindedRowLayout)[0];
+
     return output;
 }
 

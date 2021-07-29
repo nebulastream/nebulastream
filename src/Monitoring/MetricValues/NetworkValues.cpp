@@ -17,6 +17,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
@@ -57,22 +58,14 @@ SchemaPtr NetworkValues::getSchema(const std::string& prefix) {
 NetworkValues NetworkValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     NetworkValues output{};
     auto i = schema->getIndex(prefix);
-    auto nvSchemaSize = NetworkValues::getSchema("")->getSize();
 
-    if (i >= schema->getSize()) {
-        NES_THROW_RUNTIME_ERROR("NetworkValues: Prefix " + prefix + " could not be found in schema:\n" + schema->toString());
-    }
     if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is " + std::to_string(buf.getNumberOfTuples()));
+        NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is larger " + std::to_string(buf.getNumberOfTuples()));
     }
 
-    auto hasName = UtilityFunctions::endsWith(schema->fields[i]->getName(), "name");
-    auto hasLastField = UtilityFunctions::endsWith(schema->fields[i + nvSchemaSize - 1]->getName(), "tCompressed");
-
-    if (!hasName || !hasLastField) {
-        NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
+    if (!MetricUtils::validateFieldsInSchema(NetworkValues::getSchema(""), schema, i)) {
+        NES_THROW_RUNTIME_ERROR("NetworkValues: Incomplete number of fields in schema.");
     }
-
     auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 

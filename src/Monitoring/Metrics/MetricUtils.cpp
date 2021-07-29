@@ -16,6 +16,7 @@
 
 #include <Monitoring/Util/MetricUtils.hpp>
 
+#include <API/Schema.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
@@ -25,11 +26,16 @@
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/Util/SystemResourcesReader.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
-Gauge<RuntimeNesMetrics> MetricUtils::runtimeNesStats() { return Gauge<RuntimeNesMetrics>(SystemResourcesReader::readRuntimeNesMetrics); }
+Gauge<RuntimeNesMetrics> MetricUtils::runtimeNesStats() {
+    return Gauge<RuntimeNesMetrics>(SystemResourcesReader::readRuntimeNesMetrics);
+}
 
-Gauge<StaticNesMetrics> MetricUtils::staticNesStats() { return Gauge<StaticNesMetrics>(SystemResourcesReader::readStaticNesMetrics); }
+Gauge<StaticNesMetrics> MetricUtils::staticNesStats() {
+    return Gauge<StaticNesMetrics>(SystemResourcesReader::readStaticNesMetrics);
+}
 
 Gauge<CpuMetrics> MetricUtils::cpuStats() { return Gauge<CpuMetrics>(SystemResourcesReader::readCpuStats); }
 
@@ -45,6 +51,21 @@ Gauge<uint64_t> MetricUtils::cpuIdle(unsigned int cpuNo) {
         return SystemResourcesReader::readCpuStats().getValues(cpuNo).idle;
     });
     return gaugeIdle;
+}
+
+bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr bufferSchema, uint64_t i) {
+    if (i >= bufferSchema->getSize()) {
+        return false;
+    }
+
+    auto hasName = UtilityFunctions::endsWith(bufferSchema->fields[i]->getName(), metricSchema->get(0)->getName());
+    auto hasLastField = UtilityFunctions::endsWith(bufferSchema->fields[i + metricSchema->getSize() - 1]->getName(),
+                                                   metricSchema->get(metricSchema->getSize() - 1)->getName());
+
+    if (!hasName || !hasLastField) {
+        return false;
+    }
+    return true;
 }
 
 }// namespace NES
