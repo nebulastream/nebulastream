@@ -20,7 +20,8 @@ using namespace std::chrono;
 
 namespace NES {
 
-void Timer::start(){
+template<class timeUnit>
+void Timer<timeUnit>::start(){
     if (running){
         NES_DEBUG("Timer: Trying to start an already running timer so will skip this operation");
     } else {
@@ -29,32 +30,34 @@ void Timer::start(){
     }
 };
 
-void Timer::pause(){
+template<class timeUnit>
+void Timer<timeUnit>::pause(){
     if (!running){
         NES_DEBUG("Timer: Trying to stop an already stopped timer so will skip this operation");
     } else {
         running = false;
 
         stop_p = high_resolution_clock::now();
-        auto duration = duration_cast<nanoseconds>(stop_p - start_p);
+        auto duration = duration_cast<timeUnit>(stop_p - start_p);
 
         pausedDuration += duration;
         runtime += duration;
     }
 };
 
-void Timer::snapshot(std::string snapshotName){
+template<class timeUnit>
+void Timer<timeUnit>::snapshot(std::string snapshotName){
     if (!running){
         NES_DEBUG("Timer: Trying to take a snapshot of an non-running timer so will skip this operation");
     } else {
         running = true;
 
         stop_p = high_resolution_clock::now();
-        auto duration = duration_cast<nanoseconds>(stop_p - start_p);
+        auto duration = duration_cast<timeUnit>(stop_p - start_p);
 
         runtime += duration;
 
-        const std::pair<std::string, std::chrono::nanoseconds> p =
+        const std::pair<std::string, timeUnit> p =
             std::make_pair(componentName + "_" + snapshotName, duration);
         snapshots.push_back(p);
 
@@ -62,7 +65,8 @@ void Timer::snapshot(std::string snapshotName){
     }
 };
 
-void Timer::merge(Timer timer) {
+template<class timeUnit>
+void Timer<timeUnit>::merge(Timer timer) {
     if (running) {
         NES_DEBUG("Timer: Trying to merge while timer is running so will skip this operation");
     } else {
@@ -72,7 +76,8 @@ void Timer::merge(Timer timer) {
     }
 };
 
-unsigned int Timer::getRuntime() const {
+template<class timeUnit>
+unsigned int Timer<timeUnit>::getRuntime() const {
     if (!running) {
         return runtime.count();
     } else {
@@ -81,12 +86,34 @@ unsigned int Timer::getRuntime() const {
     }
 };
 
-std::ostream & operator<<(std::ostream & Str, const Timer& t) {
+template<class timeUnit>
+std::ostream& operator<<(std::ostream& Str, const Timer<timeUnit>& t) {
     Str << "overall runtime: " << t.getRuntime() << "\n";
     for (auto& s : t.getSnapshots()) {
         Str << s.first + ": " << s.second.count() << " ns" << "\n";
     }
     return Str;
 };
+
+template void Timer<nanoseconds>::start();
+template void Timer<nanoseconds>::pause();
+template void Timer<nanoseconds>::snapshot(std::string snapshotName);
+template void Timer<nanoseconds>::merge(Timer timer);
+template unsigned int Timer<nanoseconds>::getRuntime() const;
+template std::ostream& operator<<(std::ostream& Str, const Timer<nanoseconds>& t);
+
+template void Timer<milliseconds>::start();
+template void Timer<milliseconds>::pause();
+template void Timer<milliseconds>::snapshot(std::string snapshotName);
+template void Timer<milliseconds>::merge(Timer timer);
+template unsigned int Timer<milliseconds>::getRuntime() const;
+template std::ostream& operator<<(std::ostream& Str, const Timer<milliseconds>& t);
+
+template void Timer<seconds>::start();
+template void Timer<seconds>::pause();
+template void Timer<seconds>::snapshot(std::string snapshotName);
+template void Timer<seconds>::merge(Timer timer);
+template unsigned int Timer<seconds>::getRuntime() const;
+template std::ostream& operator<<(std::ostream& Str, const Timer<seconds>& t);
 
 }// namespace NES
