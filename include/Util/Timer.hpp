@@ -32,7 +32,7 @@ namespace NES {
  * @brief Util class to measure the time of NES components and sub-components
  * using snapshots
  */
-class Timer {
+template<typename timeUnit = nanoseconds> class Timer {
   public:
     Timer(std::string componentName) : componentName(componentName){};
 
@@ -67,7 +67,7 @@ class Timer {
     /**
      * @brief retruns the currently saved snapshots
      */
-    std::vector<std::pair<std::string, std::chrono::nanoseconds>>
+    std::vector<std::pair<std::string, timeUnit>>
         getSnapshots() const { return snapshots; };
 
     /**
@@ -84,7 +84,7 @@ class Timer {
     /**
      * @brief overwrites insert string operator
      */
-     friend std::ostream & operator<<(std::ostream & Str, const Timer& t);
+     friend std::ostream& operator<< (std::ostream& Str, const Timer<timeUnit>& t);
 
   private:
     /**
@@ -95,17 +95,17 @@ class Timer {
     /**
      * @brief overall measured runtime
      */
-    std::chrono::nanoseconds runtime{0};
+    timeUnit runtime{0};
 
     /**
      * @brief already passed duration after timer pause
      */
-    std::chrono::nanoseconds pausedDuration{0};
+    timeUnit pausedDuration{0};
 
     /**
      * @brief vector to store snapshots
      */
-    std::vector<std::pair<std::string, std::chrono::nanoseconds>> snapshots;
+    std::vector<std::pair<std::string, timeUnit>> snapshots;
 
     /**
      * @brief timepoint to store start point
