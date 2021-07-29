@@ -292,12 +292,11 @@ void IFCOPStrategy::initiateTopologyNodeIdToIndexMap() {
     }
 }
 
-void IFCOPStrategy::assignRemainingOperator(
-    NES::QueryPlanPtr queryPlan,
-    uint32_t topoIdx,
-    IdToIteratorIndexMapping& idToIteratorIndexMapping,
-    std::vector<OperatorId>& placedOperatorIds,
-    PlacementMatrix& placementCandidate) {
+void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr queryPlan,
+                                            uint32_t topoIdx,
+                                            IdToIteratorIndexMapping& idToIteratorIndexMapping,
+                                            std::vector<OperatorId>& placedOperatorIds,
+                                            PlacementMatrix& placementCandidate) {
     auto currentTopologyNodePtr = topology->getRoot();
 
     // iterate to all operator in the query to check for un-assinged operator

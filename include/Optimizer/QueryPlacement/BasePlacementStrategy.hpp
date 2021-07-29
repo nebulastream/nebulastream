@@ -136,9 +136,8 @@ class BasePlacementStrategy {
      * @param queryPlan query plan to place
      * @param mapping binary mapping determining whether to place an operator to a node
      */
-    bool assignMappingToTopology(const NES::TopologyPtr topologyPtr,
-                                 const NES::QueryPlanPtr queryPlan,
-                                 const PlacementMatrix mapping);
+    bool
+    assignMappingToTopology(const NES::TopologyPtr topologyPtr, const NES::QueryPlanPtr queryPlan, const PlacementMatrix mapping);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

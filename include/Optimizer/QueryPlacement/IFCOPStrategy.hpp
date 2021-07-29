@@ -88,9 +88,8 @@ class IFCOPStrategy : public BasePlacementStrategy {
      * @param queryPlan query plan to place
      * @return the network cost of a placement candidate
      */
-    double getNetworkCost(const TopologyNodePtr currentNode,
-                          const PlacementMatrix& placementCandidate,
-                          NES::QueryPlanPtr queryPlan);
+    double
+    getNetworkCost(const TopologyNodePtr currentNode, const PlacementMatrix& placementCandidate, NES::QueryPlanPtr queryPlan);
 
     /**
      * @brief assign all remaining operator, including the sink to the placementCandidate
