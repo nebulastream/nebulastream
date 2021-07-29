@@ -456,6 +456,11 @@ add_executable(config-test "UnitTests/Configurations/ConfigTest.cpp")
 target_link_libraries(config-test nes ${GTEST_LIBRARIES})
 add_test(NAME config-test COMMAND config-test)
 
+### Timer Tests ###
+add_executable(timer-test "UnitTests/Util/TimerTest.cpp")
+target_link_libraries(timer-test nes ${GTEST_LIBRARIES})
+add_test(NAME timer-test COMMAND timer-test)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
