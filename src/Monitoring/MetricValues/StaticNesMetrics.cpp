@@ -18,6 +18,7 @@
 
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -59,22 +60,15 @@ SchemaPtr StaticNesMetrics::getSchema(const std::string& prefix) {
 
 StaticNesMetrics StaticNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     StaticNesMetrics output{};
-    auto i = schema->getIndex(prefix);
-    auto rnSchema = StaticNesMetrics::getSchema("");
+    auto i = schema->getIndex(prefix + "totalMemoryBytes");
 
-    if (i >= schema->getSize()) {
-        NES_THROW_RUNTIME_ERROR("NetworkValues: Prefix " + prefix + " could not be found in schema:\n" + schema->toString());
-    }
     if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is " + std::to_string(buf.getNumberOfTuples()));
+        NES_THROW_RUNTIME_ERROR("StaticNesMetrics: Tuple size should be 1, but is larger "
+                                + std::to_string(buf.getNumberOfTuples()));
     }
 
-    auto hasName = UtilityFunctions::endsWith(schema->fields[i]->getName(), rnSchema->get(0)->getName());
-    auto hasLastField = UtilityFunctions::endsWith(schema->fields[i + rnSchema->getSize() - 1]->getName(),
-                                                   rnSchema->get(rnSchema->getSize() - 1)->getName());
-
-    if (!hasName || !hasLastField) {
-        NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
+    if (!MetricUtils::validateFieldsInSchema(StaticNesMetrics::getSchema(""), schema, i)) {
+        NES_THROW_RUNTIME_ERROR("StaticNesMetrics: Incomplete number of fields in schema.");
     }
 
     auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);

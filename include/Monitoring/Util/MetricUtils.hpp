@@ -28,6 +28,8 @@ class DiskMetrics;
 class NetworkMetrics;
 class RuntimeNesMetrics;
 class StaticNesMetrics;
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 /**
  * @brief Pre-defined metrics used for NES internally.
@@ -76,6 +78,15 @@ class MetricUtils {
      * @return the gauge metric
      */
     static Gauge<uint64_t> cpuIdle(unsigned int cpuNo);
+
+    /**
+     *
+     * @param metricSchema
+     * @param bufferSchema
+     * @param prefix
+     * @return
+     */
+    static bool validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr bufferSchema, uint64_t schemaIndex);
 
   private:
     MetricUtils() = default;
