@@ -59,7 +59,8 @@ MemoryMetrics MemoryMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleB
     auto i = schema->getIndex(prefix + "TOTAL_RAM");
 
     if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("MemoryMetrics: Tuple size should be 1, but is larger " + std::to_string(buf.getNumberOfTuples()));
+        NES_THROW_RUNTIME_ERROR("MemoryMetrics: Tuple size should be 1, but is larger "
+                                + std::to_string(buf.getNumberOfTuples()));
     }
 
     if (!MetricUtils::validateFieldsInSchema(MemoryMetrics::getSchema(""), schema, i)) {

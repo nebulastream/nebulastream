@@ -61,10 +61,10 @@ class StaticNesMetrics {
     uint64_t totalMemoryBytes;
 
     uint16_t cpuCoreNum;
-    uint64_t totalCPUJiffies; //user+idle+system (Note: This value can change everytime it is read via SystemResourcesReader)
+    uint64_t totalCPUJiffies;//user+idle+system (Note: This value can change everytime it is read via SystemResourcesReader)
 
     // Using 1.5 CPUs is equivalent to --cpu-period="100000" and --cpu-quota="150000"
-    int64_t cpuPeriodUS; //the CPU CFS scheduler period in microseconds
+    int64_t cpuPeriodUS;//the CPU CFS scheduler period in microseconds
     int64_t cpuQuotaUS; // CPU CFS quota in microseconds
 
     bool isMoving;
@@ -89,6 +89,6 @@ void writeToBuffer(const StaticNesMetrics& metrics, Runtime::TupleBuffer& buf, u
  */
 SchemaPtr getSchema(const StaticNesMetrics& metrics, const std::string& prefix);
 
-}
+}// namespace NES
 
 #endif//NES_STATICNESMETRICS_HPP

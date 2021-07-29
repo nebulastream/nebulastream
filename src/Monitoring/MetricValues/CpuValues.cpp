@@ -50,8 +50,7 @@ CpuValues CpuValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& b
     auto i = schema->getIndex(prefix + "user");
 
     if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("CpuValues: Tuple size should be 1, but is larger "
-                                + std::to_string(buf.getNumberOfTuples()));
+        NES_THROW_RUNTIME_ERROR("CpuValues: Tuple size should be 1, but is larger " + std::to_string(buf.getNumberOfTuples()));
     }
 
     if (!MetricUtils::validateFieldsInSchema(CpuValues::getSchema(""), schema, i)) {

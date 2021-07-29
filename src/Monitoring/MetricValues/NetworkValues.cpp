@@ -60,7 +60,8 @@ NetworkValues NetworkValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleB
     auto i = schema->getIndex(prefix);
 
     if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is larger " + std::to_string(buf.getNumberOfTuples()));
+        NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is larger "
+                                + std::to_string(buf.getNumberOfTuples()));
     }
 
     if (!MetricUtils::validateFieldsInSchema(NetworkValues::getSchema(""), schema, i)) {
