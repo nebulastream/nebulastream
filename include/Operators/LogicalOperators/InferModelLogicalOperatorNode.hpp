@@ -36,6 +36,7 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
     bool inferSchema() override;
     void inferStringSignature() override;
     const std::string& getModel() const;
+    const std::string getDeployedModelPath() const;
     const std::vector<ExpressionItemPtr>& getInputFieldsAsPtr();
     const std::vector<ExpressionItemPtr>& getOutputFieldsAsPtr();
 
