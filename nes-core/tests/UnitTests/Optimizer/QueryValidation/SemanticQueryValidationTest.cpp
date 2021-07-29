@@ -234,7 +234,7 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
 TEST_F(SemanticQueryValidationTest, validInferModelTest) {
     NES_INFO("Valid inferModel test");
 
-    StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
+    StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>(queryParsingService);
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
     auto query = Query::from("default_logical")

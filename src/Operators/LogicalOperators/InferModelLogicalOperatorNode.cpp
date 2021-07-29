@@ -129,6 +129,13 @@ void InferModelLogicalOperatorNode::inferStringSignature() {
 }
 const std::string& InferModelLogicalOperatorNode::getModel() const { return model; }
 
+const std::string InferModelLogicalOperatorNode::getDeployedModelPath() const {
+    int idx = model.find_last_of('/');
+    std::string path = model.substr(idx);
+    path = "/tmp" + path;
+    return path;
+}
+
 const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFieldsAsPtr() {
     return inputFieldsPtr;
 }

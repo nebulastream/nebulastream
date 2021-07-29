@@ -160,7 +160,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
             auto* mutableOutputFields = inferModelDetails.mutable_outputfields()->Add();
             ExpressionSerializationUtil::serializeExpression(exp->getExpressionNode(), mutableOutputFields);
         }
-        inferModelDetails.set_mlfilename(inferModelOperator->getModel());
+        inferModelDetails.set_mlfilename(inferModelOperator->getDeployedModelPath());
 
         std::ifstream input(inferModelOperator->getModel(), std::ios::binary);
 
@@ -375,9 +375,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         output.close();
 
         operatorNode = LogicalOperatorFactory::createInferModelOperator(serializedInferModelOperator.mlfilename(), inputFields, outputFields);
-
-
-
 
     } else if (details.Is<SerializableOperator_WindowDetails>()) {
         // de-serialize window operator
