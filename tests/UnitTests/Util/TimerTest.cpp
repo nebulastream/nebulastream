@@ -84,10 +84,10 @@ TEST(UtilFunctionTest, mergeTimers) {
 
     //std::cout << timer1;
     EXPECT_TRUE((timer1.getRuntime() >= 2000000000 - 20000000) && (timer1.getRuntime() <= 2000000000 + 20000000));
-    EXPECT_TRUE(snapshots[0].first == "testComponent1_test1");
-    EXPECT_TRUE((snapshots[0].second.count() >= 1000000000 - 10000000) && (snapshots[0].second.count() <= 1000000000 + 10000000));
-    EXPECT_TRUE(snapshots[1].first == "testComponent2_test2");
-    EXPECT_TRUE((snapshots[1].second.count() >= 1000000000 - 10000000) && (snapshots[1].second.count() <= 1000000000 + 10000000));
+    EXPECT_TRUE(snapshots[0].name == "testComponent1_test1");
+    EXPECT_TRUE((snapshots[0].duration.count() >= 1000000000 - 10000000) && (snapshots[0].duration.count() <= 1000000000 + 10000000));
+    EXPECT_TRUE(snapshots[1].name == "testComponent2_test2");
+    EXPECT_TRUE((snapshots[1].duration.count() >= 1000000000 - 10000000) && (snapshots[1].duration.count() <= 1000000000 + 10000000));
 }
 
 TEST(UtilFunctionTest, differentTimeUnits) {

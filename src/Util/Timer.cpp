@@ -57,9 +57,9 @@ void Timer<timeUnit>::snapshot(std::string snapshotName){
 
         runtime += duration;
 
-        const std::pair<std::string, timeUnit> p =
-            std::make_pair(componentName + "_" + snapshotName, duration);
-        snapshots.push_back(p);
+        const struct snapshot s = {.name = componentName + "_" + snapshotName,
+                                   .duration = duration};
+        snapshots.push_back(s);
 
         start_p = high_resolution_clock::now();
     }
@@ -90,7 +90,7 @@ template<class timeUnit>
 std::ostream& operator<<(std::ostream& Str, const Timer<timeUnit>& t) {
     Str << "overall runtime: " << t.getRuntime() << "\n";
     for (auto& s : t.getSnapshots()) {
-        Str << s.first + ": " << s.second.count() << " ns" << "\n";
+        Str << s.name + ": " << s.duration.count() << " ns" << "\n";
     }
     return Str;
 };

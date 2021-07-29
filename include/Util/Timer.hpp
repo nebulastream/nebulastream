@@ -28,12 +28,19 @@ using namespace std::chrono;
 
 namespace NES {
 
+
+
 /**
  * @brief Util class to measure the time of NES components and sub-components
  * using snapshots
  */
 template<typename timeUnit = nanoseconds> class Timer {
   public:
+    struct snapshot {
+        std::string name;
+        timeUnit duration;
+    };
+
     Timer(std::string componentName) : componentName(componentName){};
 
     /**
@@ -67,8 +74,7 @@ template<typename timeUnit = nanoseconds> class Timer {
     /**
      * @brief retruns the currently saved snapshots
      */
-    std::vector<std::pair<std::string, timeUnit>>
-        getSnapshots() const { return snapshots; };
+    std::vector<struct snapshot> getSnapshots() const { return snapshots; };
 
     /**
      * @brief returns the current runtime
@@ -105,7 +111,7 @@ template<typename timeUnit = nanoseconds> class Timer {
     /**
      * @brief vector to store snapshots
      */
-    std::vector<std::pair<std::string, timeUnit>> snapshots;
+    std::vector<struct snapshot> snapshots;
 
     /**
      * @brief timepoint to store start point
