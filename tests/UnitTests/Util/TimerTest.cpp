@@ -18,6 +18,7 @@
 #include <Util/Timer.hpp>
 #include <gtest/gtest.h>
 #include <unistd.h>
+#include <chrono>
 
 namespace NES {
 class TimerTest : public testing::Test {
@@ -71,7 +72,7 @@ TEST(UtilFunctionTest, mergeTimers) {
     sleep(1);
     timer1.snapshot("test1");
     timer1.pause();
-    std::cout << timer1;
+    //std::cout << timer1;
 
     Timer timer2 = Timer("testComponent2");
     timer2.start();
@@ -82,10 +83,30 @@ TEST(UtilFunctionTest, mergeTimers) {
     auto snapshots = timer1.getSnapshots();
 
     //std::cout << timer1;
-    EXPECT_TRUE((timer1.getRuntime() >= 2000000000 - 10000000) && (timer1.getRuntime() <= 2000000000 + 10000000));
+    EXPECT_TRUE((timer1.getRuntime() >= 2000000000 - 20000000) && (timer1.getRuntime() <= 2000000000 + 20000000));
     EXPECT_TRUE(snapshots[0].first == "testComponent1_test1");
     EXPECT_TRUE((snapshots[0].second.count() >= 1000000000 - 10000000) && (snapshots[0].second.count() <= 1000000000 + 10000000));
     EXPECT_TRUE(snapshots[1].first == "testComponent2_test2");
     EXPECT_TRUE((snapshots[1].second.count() >= 1000000000 - 10000000) && (snapshots[1].second.count() <= 1000000000 + 10000000));
+}
+
+TEST(UtilFunctionTest, differentTimeUnits) {
+    Timer timer1 = Timer<std::chrono::seconds>("testComponent");
+    timer1.start();
+    sleep(1);
+    timer1.snapshot("test");
+    timer1.pause();
+
+    //std::cout << timer1.getRuntime();
+    EXPECT_TRUE(timer1.getRuntime() == 1);
+
+    Timer timer2 = Timer<std::chrono::milliseconds>("testComponent");
+    timer2.start();
+    sleep(1);
+    timer2.snapshot("test");
+    timer2.pause();
+
+    //std::cout << timer2.getRuntime();
+    EXPECT_TRUE((timer2.getRuntime() >= 1000 - 1) && (timer2.getRuntime() <= 1000 + 1));
 }
 }
