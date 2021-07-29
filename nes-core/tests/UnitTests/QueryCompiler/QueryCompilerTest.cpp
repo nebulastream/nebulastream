@@ -57,6 +57,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+#include <filesystem>
 
 using namespace std;
 using namespace std;
@@ -170,6 +171,9 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+
+    // mock GRPC deployment process
+    std::filesystem::copy("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc.tflite", "/tmp/iris_95acc.tflite");
 
     auto query = Query::from("streamName")
                      .inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc.tflite",
