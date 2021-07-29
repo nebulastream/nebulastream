@@ -72,7 +72,7 @@ TEST_F(MonitoringStackTest, testStaticNesMetrics) {
     EXPECT_TRUE(staticMetrics.cpuPeriodUS >= -1);
     EXPECT_TRUE(staticMetrics.totalCPUJiffies > 0);
     EXPECT_TRUE(staticMetrics.cpuCoreNum > 0);
-    EXPECT_TRUE(staticMetrics.totalMemoryBytes > 0 );
+    EXPECT_TRUE(staticMetrics.totalMemoryBytes > 0);
     EXPECT_TRUE(staticMetrics.hasBattery == false);
     EXPECT_TRUE(staticMetrics.isMoving == false);
 }

@@ -56,7 +56,8 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
     auto i = schema->getIndex(prefix + "wallTimeNs");
 
     if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("RuntimeNesMetrics: Tuple size should be 1, but is larger " + std::to_string(buf.getNumberOfTuples()));
+        NES_THROW_RUNTIME_ERROR("RuntimeNesMetrics: Tuple size should be 1, but is larger "
+                                + std::to_string(buf.getNumberOfTuples()));
     }
 
     if (!MetricUtils::validateFieldsInSchema(RuntimeNesMetrics::getSchema(""), schema, i)) {
@@ -66,8 +67,7 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
     auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
-    output.wallTimeNs =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.wallTimeNs = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.memoryUsageInBytes =
         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.cpuLoadInJiffies =
@@ -75,7 +75,8 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
     output.blkioBytesRead = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.blkioBytesWritten =
         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.batteryStatusInPercent = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.batteryStatusInPercent =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.latCoord = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.longCoord = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
@@ -98,14 +99,13 @@ web::json::value RuntimeNesMetrics::toJson() const {
 }
 
 bool RuntimeNesMetrics::operator==(const RuntimeNesMetrics& rhs) const {
-    return wallTimeNs == rhs.wallTimeNs && memoryUsageInBytes == rhs.memoryUsageInBytes && cpuLoadInJiffies == rhs.cpuLoadInJiffies
-        && blkioBytesRead == rhs.blkioBytesRead && blkioBytesWritten == rhs.blkioBytesWritten
-        && batteryStatusInPercent == rhs.batteryStatusInPercent
+    return wallTimeNs == rhs.wallTimeNs && memoryUsageInBytes == rhs.memoryUsageInBytes
+        && cpuLoadInJiffies == rhs.cpuLoadInJiffies && blkioBytesRead == rhs.blkioBytesRead
+        && blkioBytesWritten == rhs.blkioBytesWritten && batteryStatusInPercent == rhs.batteryStatusInPercent
         && latCoord == rhs.latCoord && longCoord == rhs.longCoord;
 }
 
 bool RuntimeNesMetrics::operator!=(const RuntimeNesMetrics& rhs) const { return !(rhs == *this); }
-
 
 void writeToBuffer(const RuntimeNesMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
@@ -119,6 +119,5 @@ void writeToBuffer(const RuntimeNesMetrics& metric, Runtime::TupleBuffer& buf, u
 }
 
 SchemaPtr getSchema(const RuntimeNesMetrics&, const std::string& prefix) { return RuntimeNesMetrics::getSchema(prefix); }
-
 
 }// namespace NES

@@ -69,7 +69,7 @@ class MonitoringSerializationTest : public testing::Test {
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
-        bufferSize = 4096 + (numCPU+1)*sizeof(CpuValues) +sizeof(CpuMetrics);
+        bufferSize = 4096 + (numCPU + 1) * sizeof(CpuValues) + sizeof(CpuMetrics);
 
         rpcPort = rpcPort + 30;
         crdConf->setRpcPort(rpcPort);
