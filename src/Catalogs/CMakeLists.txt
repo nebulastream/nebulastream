@@ -21,4 +21,7 @@ add_source_nes(
         LogicalStream.cpp
         MemorySourceStreamConfig.cpp
         LambdaSourceStreamConfig.cpp
+        GeoLocation.cpp
+        GeoNode.cpp
+        LocationCatalog.cpp
 )

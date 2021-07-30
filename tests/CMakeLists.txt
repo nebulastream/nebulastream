@@ -433,6 +433,11 @@ add_executable(binary-operator-sort-rule-tests "UnitTests/Optimizer/QueryRewrite
 target_link_libraries(binary-operator-sort-rule-tests nes ${GTEST_LIBRARIES})
 add_test(NAME binary-operator-sort-rule-tests COMMAND binary-operator-sort-rule-tests)
 
+### Geo Location / Node Tests ###
+add_executable(geo-tests "UnitTests/Catalogs/GeoTest.cpp")
+target_link_libraries(geo-tests nes ${GTEST_LIBRARIES})
+add_test(NAME geo-tests COMMAND geo-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
