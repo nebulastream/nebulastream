@@ -535,12 +535,12 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
         code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
 
         // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
-        // We can optimize this away if the result schema is smaller thatn the input schema.
+        // We can optimize this away if the result schema is smaller than the input schema.
         if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || bufferStrategy == OMIT_OVERFLOW_CHECK)) {
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
     } else {
-        NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        NES_ERROR("inputSchema->getLayoutType() is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
     // Generate final logic to emit the last buffer to the Runtime
