@@ -33,7 +33,7 @@ BufferOptimizationPhasePtr BufferOptimizationPhase::BufferOptimizationPhase::cre
 }
 
 BufferOptimizationPhase::BufferOptimizationPhase(OutputBufferOptimizationLevel level)
-    : level(level) {}// TODO move needed for enum ?
+    : level(level) {}
 
 PipelineQueryPlanPtr BufferOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
@@ -75,7 +75,8 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     SchemaPtr inputSchema = nullptr;
     SchemaPtr outputSchema = nullptr;
     std::shared_ptr<GeneratableOperators::GeneratableBufferEmit> emitNode = nullptr;
-    bool filterOperatorFound = false;// TODO other checks required? other operators to look out for?
+    bool filterOperatorFound = false;
+    // TODO add checks when further operators are introduced that change the number of result tuples
 
     for (const auto& node : nodes) {
         if (node->instanceOf<GeneratableOperators::GeneratableBufferScan>()) {
