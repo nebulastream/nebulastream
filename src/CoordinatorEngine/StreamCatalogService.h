@@ -14,11 +14,12 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
-#define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
+#ifndef NES_SRC_COORDINATORENGINE_STREAMCATALOGSERVICE_H_
+#define NES_SRC_COORDINATORENGINE_STREAMCATALOGSERVICE_H_
 
 #include <memory>
 #include <mutex>
+
 enum NodeType : int;
 namespace NES {
 class StreamCatalog;
@@ -28,15 +29,14 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class NodeStats;
 using NodeStatsPtr = std::shared_ptr<NodeStats>;
 class TopologyManagerService;
-class StreamCatalogService;
 
-class CoordinatorEngine {
+class StreamCatalogService {
 
   public:
-    CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology);
-    ~CoordinatorEngine();
+    StreamCatalogService::StreamCatalogService(StreamCatalogPtr streamCatalog);
+    ~StreamCatalogService();
     /**
-     * @brief registers a node
+     * @brief registers a node in the StreamCatalog
      * @param address of node ip:port
      * @param cpu the cpu capacity of the worker
      * @param nodeProperties of the to be added sensor
@@ -47,8 +47,7 @@ class CoordinatorEngine {
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
-                          const NodeStatsPtr& nodeStats,
-                          NodeType type);
+                          const NodeStatsPtr& nodeStats);
 
     /**
      * @brief unregister an existing node
@@ -68,7 +67,7 @@ class CoordinatorEngine {
      * @param logicalstreamname
      * @return bool indicating success
      */
-    bool registerPhysicalStream(uint64_t nodeId,
+    bool registerPhysicalStream(TopologyNodePtr physicalNode,
                                 const std::string& sourceType,
                                 const std::string& physicalStreamname,
                                 const std::string& logicalStreamname);
@@ -80,7 +79,10 @@ class CoordinatorEngine {
      * @param physicalStreamName
      * @return bool indicating success
      */
-    bool unregisterPhysicalStream(uint64_t nodeId, const std::string& physicalStreamName, const std::string& logicalStreamName);
+    bool unregisterPhysicalStream(TopologyNodePtr physicalNode,
+                                  const std::string& physicalStreamName,
+                                  const std::string& logicalStreamName);
+
 
     /**
      * @brief method to register a logical stream
@@ -97,27 +99,9 @@ class CoordinatorEngine {
      */
     bool unregisterLogicalStream(const std::string& logicalStreamName);
 
-    /**
-     * @brief method to ad a new parent to a node
-     * @param childId
-     * @param parentId
-     * @return bool indicating success
-     */
-    bool addParent(uint64_t childId, uint64_t parentId);
-
-    /**
-     * @brief method to remove an existing parent from a node
-     * @param childId
-     * @param parentId
-     * @return bool indicating success
-     */
-    bool removeParent(uint64_t childId, uint64_t parentId);
 
   private:
-    StreamCatalogService streamCatalogService;
-    TopologyManagerService topologyManagerService;
     StreamCatalogPtr streamCatalog;
-    TopologyPtr topology;
     std::mutex registerDeregisterNode;
     std::mutex addRemoveLogicalStream;
     std::mutex addRemovePhysicalStream;
@@ -126,5 +110,4 @@ class CoordinatorEngine {
 using CoordinatorEnginePtr = std::shared_ptr<CoordinatorEngine>;
 
 }// namespace NES
-
-#endif//NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
+#endif//NES_SRC_COORDINATORENGINE_STREAMCATALOGSERVICE_H_

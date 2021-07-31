@@ -475,7 +475,7 @@ add_subdirectory(src)
 # Add Library
 get_source_nes(nes_SOURCE_FILES)
 get_header_nes(nes_HEADER_FILES)
-add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
+add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS} src/CoordinatorEngine/TopologyManagerService.cpp src/CoordinatorEngine/TopologyManagerService.h src/CoordinatorEngine/StreamCatalogService.cpp src/CoordinatorEngine/StreamCatalogService.h)
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
