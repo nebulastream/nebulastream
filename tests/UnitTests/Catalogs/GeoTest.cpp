@@ -19,6 +19,7 @@
 #include "Catalogs/GeoLocation.h"
 #include "Catalogs/GeoNode.h"
 #include "Catalogs/LocationCatalog.h"
+#include "Services/GeoSquare.h"
 
 namespace NES {
 
@@ -69,6 +70,46 @@ TEST(LocationCatalog, AddNodeAndUpdateLocation) {
     GeoNode secondNode = catalog.getNode(2);
     EXPECT_EQ(GeoLocation(2,2), secondNode.getCurrentLocation());
     EXPECT_TRUE(secondNode.getLocationHistory().empty());
+}
+
+TEST(GeoSquare, DistanceToBound) {
+    GeoLocation center(52.5128417, 13.3213595);
+    GeoSquare square(center, 1000);
+
+    EXPECT_DOUBLE_EQ(250, square.getDistanceToBound());
+}
+
+TEST(GeoSquare, TestBounds) {
+    GeoLocation center(52.5128417, 13.3213595);
+    GeoSquare square(center, 1000);
+
+    GeoLocation north = square.getNorthBound();
+    EXPECT_DOUBLE_EQ(center.getLongitude(), north.getLongitude());
+    EXPECT_TRUE(north.getLatitude() > center.getLatitude());
+
+    GeoLocation south = square.getSouthBound();
+    EXPECT_DOUBLE_EQ(center.getLongitude(), south.getLongitude());
+    EXPECT_TRUE(south.getLatitude() < center.getLatitude());
+
+    GeoLocation east = square.getEastBound();
+    EXPECT_DOUBLE_EQ(center.getLatitude(), east.getLatitude());
+    EXPECT_TRUE(east.getLongitude() > center.getLongitude());
+
+    GeoLocation west = square.getWestBound();
+    EXPECT_DOUBLE_EQ(center.getLatitude(), west.getLatitude());
+    EXPECT_TRUE(west.getLongitude() < center.getLongitude());
+}
+
+TEST(GeoSquare, TestContains) {
+    GeoLocation center(52.5128417, 13.3213595);
+    GeoSquare square(center, 1000);
+
+    EXPECT_TRUE(square.contains(center));
+    EXPECT_TRUE(    square.contains(GeoLocation(52.5128427, 13.3213395)));
+    EXPECT_TRUE(    square.contains(GeoLocation(52.51508748, 13.32504968)));
+
+    EXPECT_FALSE(    square.contains(GeoLocation(52.51508751, 13.32504971)));
+
 }
 
 
