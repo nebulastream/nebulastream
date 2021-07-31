@@ -26,10 +26,14 @@
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
+#include "TopologyManagerService.h"
+#include "StreamCatalogService.h"
+
+
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology)
-    : streamCatalog(std::move(streamCatalog)), topology(std::move(topology)) {
+    : streamCatalog(std::move(streamCatalog)), topology(std::move(topology)), streamCatalogService(streamCatalog), topologyManagerService(topology) {
     NES_DEBUG("CoordinatorEngine()");
 }
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
@@ -54,70 +58,15 @@ uint64_t CoordinatorEngine::registerNode(const std::string& address,
     }
 
     //get unique id for the new node
-    uint64_t id = UtilityFunctions::getNextTopologyNodeId();
+    uint64_t id;
 
     TopologyNodePtr physicalNode;
     if (type == NodeType::Sensor) {
-        NES_DEBUG("CoordinatorEngine::registerNode: register sensor node");
-        physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
-
-        if (!physicalNode) {
-            NES_ERROR("CoordinatorEngine::RegisterNode : node not created");
-            return 0;
-        }
-
-        //add default logical
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        //check if logical stream exists
-        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf->getLogicalStreamName())) {
-            NES_ERROR("CoordinatorEngine::registerNode: error logical stream" << streamConf->getLogicalStreamName()
-                                                                              << " does not exist when adding physical stream "
-                                                                              << streamConf->getPhysicalStreamName());
-            throw Exception("CoordinatorEngine::registerNode logical stream does not exist "
-                            + streamConf->getLogicalStreamName());
-        }
-
-        std::string sourceType = streamConf->getSourceType();
-        if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
-            NES_ERROR("CoordinatorEngine::registerNode: error source type " << sourceType << " is not supported");
-            throw Exception("CoordinatorEngine::registerNode: error source type " + sourceType + " is not supported");
-        }
-
-        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-
-        bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
-        if (!success) {
-            NES_ERROR("CoordinatorEngine::registerNode: physical stream " << streamConf->getPhysicalStreamName()
-                                                                          << " could not be added to catalog");
-            throw Exception("CoordinatorEngine::registerNode: physical stream " + streamConf->getPhysicalStreamName()
-                            + " could not be added to catalog");
-        }
-
+        id = streamCatalogService.registerNode(address, grpcPort, dataPort, numberOfSlots, nodeStats);
     } else if (type == NodeType::Worker) {
-        NES_DEBUG("CoordinatorEngine::registerNode: register worker node");
-        physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
-
-        if (!physicalNode) {
-            NES_ERROR("CoordinatorEngine::RegisterNode : node not created");
-            return 0;
-        }
+        id = topologyManagerService.registerNode(address, grpcPort, dataPort, numberOfSlots, nodeStats);
     } else {
         NES_THROW_RUNTIME_ERROR("CoordinatorEngine::registerNode type not supported ");
-    }
-
-    //TODO: this has to be refactored #1971
-    //    if (nodeStats->IsInitialized()) {
-    //        physicalNode->setNodeStats(std::make_shared<NodeStats>());
-    //    }
-
-    const TopologyNodePtr rootNode = topology->getRoot();
-
-    if (!rootNode) {
-        NES_DEBUG("CoordinatorEngine::registerNode: tree is empty so this becomes new root");
-        topology->setAsRoot(physicalNode);
-    } else {
-        NES_DEBUG("CoordinatorEngine::registerNode: add link to the root node " << rootNode->toString());
-        topology->addNewPhysicalNodeAsChild(rootNode, physicalNode);
     }
 
     NES_DEBUG("CoordinatorEngine::registerNode: topology after insert = ");
@@ -137,12 +86,12 @@ bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
     }
     NES_DEBUG("CoordinatorEngine::UnregisterNode: found sensor, try to delete it in catalog");
     //remove from catalog
-    bool successCatalog = streamCatalog->removePhysicalStreamByHashId(nodeId);
+    bool successCatalog = streamCatalogService.unregisterNode(nodeId);
     NES_DEBUG("CoordinatorEngine::UnregisterNode: success in catalog is " << successCatalog);
 
     NES_DEBUG("CoordinatorEngine::UnregisterNode: found sensor, try to delete it in toplogy");
     //remove from topology
-    bool successTopology = topology->removePhysicalNode(physicalNode);
+    bool successTopology = topologyManagerService.unregisterNode(nodeId);
     NES_DEBUG("CoordinatorEngine::UnregisterNode: success in topology is " << successTopology);
 
     return successCatalog && successTopology;
@@ -152,132 +101,33 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
                                                const std::string& sourceType,
                                                const std::string& physicalStreamName,
                                                const std::string& logicalStreamName) {
-    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id "
-              << nodeId << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);
-    std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
+
 
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
-    if (!physicalNode) {
-        NES_ERROR("CoordinatorEngine::RegisterPhysicalStream node not found");
-        return false;
-    }
-    StreamCatalogEntryPtr sce =
-        std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
-    bool success = streamCatalog->addPhysicalStream(logicalStreamName, sce);
-    return success;
+    return streamCatalogService.registerPhysicalStream(physicalNode, sourceType, physicalStreamName, logicalStreamName);
 }
 
 bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId,
                                                  const std::string& physicalStreamName,
                                                  const std::string& logicalStreamName) {
-    NES_DEBUG("CoordinatorEngine::UnregisterPhysicalStream: try to remove physical stream with name "
-              << physicalStreamName << " logical name " << logicalStreamName << " workerId=" << nodeId);
-    std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
-
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
-    if (!physicalNode) {
-        NES_DEBUG("CoordinatorEngine::UnregisterPhysicalStream: sensor not found with workerId" << nodeId);
-        return false;
-    }
-    NES_DEBUG("CoordinatorEngine: node=" << physicalNode->toString());
-
-    bool success = streamCatalog->removePhysicalStream(logicalStreamName, physicalStreamName, nodeId);
-    return success;
+    return streamCatalogService.unregisterPhysicalStream(physicalNode, physicalStreamName, logicalStreamName);
 }
 
 bool CoordinatorEngine::registerLogicalStream(const std::string& logicalStreamName, const std::string& schemaString) {
-    NES_DEBUG("CoordinatorEngine::registerLogicalStream: register logical stream=" << logicalStreamName
-                                                                                   << " schema=" << schemaString);
-    std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
-    return streamCatalog->addLogicalStream(logicalStreamName, schemaString);
+    return streamCatalogService.registerLogicalStream(logicalStreamName, schemaString);
 }
 
 bool CoordinatorEngine::unregisterLogicalStream(const std::string& logicalStreamName) {
-    std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
-    NES_DEBUG("CoordinatorEngine::unregisterLogicalStream: register logical stream=" << logicalStreamName);
-    bool success = streamCatalog->removeLogicalStream(logicalStreamName);
-    return success;
+    return streamCatalogService.unregisterLogicalStream(logicalStreamName);
 }
 
 bool CoordinatorEngine::addParent(uint64_t childId, uint64_t parentId) {
-    NES_DEBUG("CoordinatorEngine::addParent: childId=" << childId << " parentId=" << parentId);
-
-    if (childId == parentId) {
-        NES_ERROR("CoordinatorEngine::AddParent: cannot add link to itself");
-        return false;
-    }
-
-    TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
-    if (!childPhysicalNode) {
-        NES_ERROR("CoordinatorEngine::AddParent: source node " << childId << " does not exists");
-        return false;
-    }
-    NES_DEBUG("CoordinatorEngine::AddParent: source node " << childId << " exists");
-
-    TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
-    if (!parentPhysicalNode) {
-        NES_ERROR("CoordinatorEngine::AddParent: sensorParent node " << parentId << " does not exists");
-        return false;
-    }
-    NES_DEBUG("CoordinatorEngine::AddParent: sensorParent node " << parentId << " exists");
-
-    for (const auto& child : parentPhysicalNode->getChildren()) {
-        if (child->as<TopologyNode>()->getId() == childId) {
-            NES_ERROR("CoordinatorEngine::AddParent: nodes " << childId << " and " << parentId << " already exists");
-            return false;
-        }
-    }
-    bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysicalNode);
-    if (added) {
-        NES_DEBUG("CoordinatorEngine::AddParent: created link successfully new topology is=");
-        topology->print();
-        return true;
-    }
-    NES_ERROR("CoordinatorEngine::AddParent: created NOT successfully added");
-    return false;
+    return topologyManagerService.addParent(childId, parentId);
 }
 
 bool CoordinatorEngine::removeParent(uint64_t childId, uint64_t parentId) {
-    NES_DEBUG("CoordinatorEngine::removeParent: childId=" << childId << " parentId=" << parentId);
-
-    TopologyNodePtr childNode = topology->findNodeWithId(childId);
-    if (!childNode) {
-        NES_ERROR("CoordinatorEngine::removeParent: source node " << childId << " does not exists");
-        return false;
-    }
-    NES_DEBUG("CoordinatorEngine::removeParent: source node " << childId << " exists");
-
-    TopologyNodePtr parentNode = topology->findNodeWithId(parentId);
-    if (!parentNode) {
-        NES_ERROR("CoordinatorEngine::removeParent: sensorParent node " << childId << " does not exists");
-        return false;
-    }
-
-    NES_DEBUG("CoordinatorEngine::AddParent: sensorParent node " << parentId << " exists");
-
-    std::vector<NodePtr> children = parentNode->getChildren();
-    auto found = std::find_if(children.begin(), children.end(), [&](const NodePtr& node) {
-        return node->as<TopologyNode>()->getId() == childId;
-    });
-
-    if (found == children.end()) {
-        NES_ERROR("CoordinatorEngine::removeParent: nodes " << childId << " and " << parentId << " are not connected");
-        return false;
-    }
-
-    for (auto& child : children) {
-        if (child->as<TopologyNode>()->getId() == childId) {
-        }
-    }
-
-    NES_DEBUG("CoordinatorEngine::removeParent: nodes connected");
-
-    bool success = topology->removeNodeAsChild(parentNode, childNode);
-    if (!success) {
-        NES_ERROR("CoordinatorEngine::removeParent: edge between  " << childId << " and " << parentId << " could not be removed");
-        return false;
-    }
-    NES_DEBUG("CoordinatorEngine::removeParent: successful");
-    return true;
+    return topologyManagerService.removeParent(childId, parentId);
 }
+
 }// namespace NES
