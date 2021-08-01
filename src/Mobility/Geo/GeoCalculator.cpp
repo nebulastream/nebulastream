@@ -14,17 +14,19 @@
     limitations under the License.
 */
 
-#include <Services/GeoCalculator.h>
-#include "Services/MathUtils.h"
-#define _USE_MATH_DEFINES
 
+#define _USE_MATH_DEFINES
 #include <cmath>
+
+#include <Mobility/Geo/GeoCalculator.h>
+#include "Mobility/Utils/MathUtils.h"
 
 #define TOTAL_DEGREES 360
 #define WS_84_EQUATORIAL_RADIUS  6378137
 
+namespace NES::Mobility {
 
-NES::GeoLocation NES::Geo::GeoCalculator::pointFromDirection(GeoLocation source, GeoLocation direction) {
+GeoPoint GeoCalculator::pointFromDirection(GeoPoint source, GeoPoint direction) {
     double radius = cos(MathUtils::toRadians(source.getLatitude())) * WS_84_EQUATORIAL_RADIUS;
     double scaleY = (M_PI * 2 * WS_84_EQUATORIAL_RADIUS) / TOTAL_DEGREES;
     double scaleX = (M_PI * 2 * radius) / TOTAL_DEGREES;
@@ -36,4 +38,6 @@ NES::GeoLocation NES::Geo::GeoCalculator::pointFromDirection(GeoLocation source,
     double longSafe = MathUtils::toDegrees(MathUtils::wrapAnglePiPi(MathUtils::toRadians(longitude)));
 
     return {latSafe, longSafe};
+}
+
 }

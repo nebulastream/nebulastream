@@ -14,31 +14,11 @@
     limitations under the License.
 */
 
-#ifndef NES_GEONODE_H
-#define NES_GEONODE_H
+#include <Mobility/LocationCatalog.h>
+#include "Mobility/LocationService.h"
 
-#include <vector>
+namespace NES::Mobility {
 
-#include "GeoLocation.h"
-
-
-namespace NES {
-
-class GeoNode {
-  private:
-    int id;
-    GeoLocation currentLocation;
-    std::vector<GeoLocation> locationHistory;
-
-  public:
-    explicit GeoNode(int id);
-    [[nodiscard]] int getId() const;
-    [[nodiscard]] GeoLocation& getCurrentLocation();
-    [[nodiscard]] const std::vector<GeoLocation>& getLocationHistory() const;
-
-    void setCurrentLocation(GeoLocation location);
-};
+const LocationCatalog& LocationService::getLocationCatalog() const { return locationCatalog; }
 
 }
-
-#endif//NES_GEONODE_H

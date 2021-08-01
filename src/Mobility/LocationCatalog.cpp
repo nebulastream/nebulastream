@@ -14,21 +14,25 @@
     limitations under the License.
 */
 
-#include <Catalogs/LocationCatalog.h>
+#include <Mobility/LocationCatalog.h>
 
-void NES::LocationCatalog::addNode(int nodeId) {
+namespace NES::Mobility {
+
+void LocationCatalog::addNode(int nodeId) {
     this->nodes.insert(std::pair<int,GeoNode>(nodeId,GeoNode(nodeId)));
 }
 
-void NES::LocationCatalog::updateNodeLocation(int nodeId, NES::GeoLocation location) {
+void LocationCatalog::updateNodeLocation(int nodeId, GeoPoint location) {
     std::_Rb_tree_iterator<std::pair<const int, GeoNode>> it = this->nodes.find(nodeId);
     if (it != this->nodes.end()) {
-       it->second.setCurrentLocation(location);
+        it->second.setCurrentLocation(location);
     }
 }
 
-bool NES::LocationCatalog::contains(int nodeId) { return this->nodes.contains(nodeId); }
+bool LocationCatalog::contains(int nodeId) { return this->nodes.contains(nodeId); }
 
-uint64_t NES::LocationCatalog::size() { return this->nodes.size(); }
+uint64_t LocationCatalog::size() { return this->nodes.size(); }
 
-NES::GeoNode NES::LocationCatalog::getNode(int nodeId) { return this->nodes.at(nodeId); }
+GeoNode LocationCatalog::getNode(int nodeId) { return this->nodes.at(nodeId); }
+
+}

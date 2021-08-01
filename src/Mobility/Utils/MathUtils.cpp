@@ -14,30 +14,30 @@
     limitations under the License.
 */
 
-#include <Services/MathUtils.h>
+#include <Mobility/Utils//MathUtils.h>
 
 #define _USE_MATH_DEFINES
 #define CONVERSION_DEGREES 180
-
 #include <cmath>
 
-double NES::MathUtils::toDegrees(double radians) {
+namespace NES::Mobility {
+
+double MathUtils::toDegrees(double radians) {
     return ( radians * CONVERSION_DEGREES ) / M_PI ;
 }
 
-double NES::MathUtils::toRadians(double degrees) {
+double MathUtils::toRadians(double degrees) {
     return ( degrees * M_PI ) / CONVERSION_DEGREES;
 }
 
-double NES::MathUtils::clamp(double d, double min, double max) {
+double MathUtils::clamp(double d, double min, double max) {
     if (d > max) { return max; }
     if (d < min) { return min; }
 
     return d;
-
 }
 
-double NES::MathUtils::wrapAnglePiPi(double a) {
+double MathUtils::wrapAnglePiPi(double a) {
     if (a > M_PI) {
         int mul = (int) (a / M_PI) + 1;
         a -= M_PI * mul;
@@ -47,4 +47,6 @@ double NES::MathUtils::wrapAnglePiPi(double a) {
     }
 
     return a;
+}
+
 }

@@ -13,7 +13,8 @@
 # limitations under the License.
 
 add_source_nes(
-        MonitoringService.cpp
-        QueryService.cpp
-        NESRequestProcessorService.cpp
+        GeoCalculator.cpp
+        GeoNode.cpp
+        GeoPoint.cpp
+        GeoSquare.cpp
 )

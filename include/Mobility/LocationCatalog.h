@@ -14,31 +14,28 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOSQUARE_H
-#define NES_GEOSQUARE_H
+#ifndef NES_LOCATIONCATALOG_H
+#define NES_LOCATIONCATALOG_H
 
-#include "Catalogs/GeoLocation.h"
+#include <map>
 
-namespace NES {
+#include "Geo/GeoNode.h"
 
-class GeoSquare {
+namespace NES::Mobility {
 
-  private:
-    GeoLocation center;
-    double area;
+    class LocationCatalog {
 
-  public:
-    GeoSquare(const GeoLocation& center, double area);
-    [[nodiscard]] const GeoLocation& getCenter() const;
+      private:
+        std::map<int, GeoNode> nodes;
 
-    bool contains(GeoLocation location);
-    [[nodiscard]] double getDistanceToBound() const;
-    GeoLocation getNorthBound();
-    GeoLocation getSouthBound();
-    GeoLocation getEastBound();
-    GeoLocation getWestBound();
-};
-
+      public:
+        LocationCatalog()  = default;
+        void addNode(int nodeId);
+        void updateNodeLocation(int nodeId, GeoPoint location);
+        bool contains(int nodeId);
+        GeoNode getNode(int nodeId);
+        uint64_t size();
+    };
 }
 
-#endif//NES_GEOSQUARE_H
+#endif//NES_LOCATIONCATALOG_H

@@ -14,33 +14,34 @@
     limitations under the License.
 */
 
-#include <Catalogs/GeoLocation.h>
-#include "Services/GeoSquare.h"
-#include "Services/GeoCalculator.h"
+#include <Mobility/Geo/GeoSquare.h>
+#include <Mobility/Geo/GeoCalculator.h>
 
-NES::GeoSquare::GeoSquare(const NES::GeoLocation& center, double area) : center(center), area(area) {}
+namespace NES::Mobility {
 
-double NES::GeoSquare::getDistanceToBound() const { return this->area / 4; }
+GeoSquare::GeoSquare(const GeoPoint& center, double area) : center(center), area(area) {}
 
-const NES::GeoLocation& NES::GeoSquare::getCenter() const { return center; }
+double GeoSquare::getDistanceToBound() const { return this->area / 4; }
 
-NES::GeoLocation NES::GeoSquare::getNorthBound() {
-    return Geo::GeoCalculator::pointFromDirection(center, GeoLocation( - getDistanceToBound(), 0));
+const GeoPoint& GeoSquare::getCenter() const { return center; }
+
+GeoPoint GeoSquare::getNorthBound() {
+    return GeoCalculator::pointFromDirection(center, GeoPoint( - getDistanceToBound(), 0));
 }
 
-NES::GeoLocation NES::GeoSquare::getSouthBound() {
-    return Geo::GeoCalculator::pointFromDirection(center, GeoLocation(  getDistanceToBound(), 0));
+GeoPoint GeoSquare::getSouthBound() {
+    return GeoCalculator::pointFromDirection(center, GeoPoint(  getDistanceToBound(), 0));
 }
 
-NES::GeoLocation NES::GeoSquare::getEastBound() {
-    return Geo::GeoCalculator::pointFromDirection(center, GeoLocation(0, getDistanceToBound()));
+GeoPoint GeoSquare::getEastBound() {
+    return GeoCalculator::pointFromDirection(center, GeoPoint(0, getDistanceToBound()));
 }
 
-NES::GeoLocation NES::GeoSquare::getWestBound() {
-    return Geo::GeoCalculator::pointFromDirection(center, GeoLocation(0, - getDistanceToBound()));
+GeoPoint GeoSquare::getWestBound() {
+    return GeoCalculator::pointFromDirection(center, GeoPoint(0, - getDistanceToBound()));
 }
 
-bool NES::GeoSquare::contains(NES::GeoLocation location) {
+bool GeoSquare::contains(GeoPoint location) {
 
     if (location.getLatitude() > getNorthBound().getLatitude()) {
         return false;
@@ -59,4 +60,6 @@ bool NES::GeoSquare::contains(NES::GeoLocation location) {
     }
 
     return true;
+}
+
 }

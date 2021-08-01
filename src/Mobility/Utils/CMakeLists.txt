@@ -13,7 +13,5 @@
 # limitations under the License.
 
 add_source_nes(
-        MonitoringService.cpp
-        QueryService.cpp
-        NESRequestProcessorService.cpp
+        MathUtils.cpp
 )

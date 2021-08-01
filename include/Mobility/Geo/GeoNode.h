@@ -14,22 +14,30 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOCALCULATOR_H
-#define NES_GEOCALCULATOR_H
+#ifndef NES_GEONODE_H
+#define NES_GEONODE_H
 
-#include "Catalogs/GeoLocation.h"
+#include <vector>
 
-namespace NES::Geo {
+#include "Mobility/Geo/GeoPoint.h"
 
-class GeoCalculator {
+namespace NES::Mobility {
+
+class GeoNode {
+  private:
+    int id;
+    GeoPoint currentLocation;
+    std::vector<GeoPoint> locationHistory;
 
   public:
-    static GeoLocation pointFromDirection(GeoLocation source, GeoLocation direction);
+    explicit GeoNode(int id);
+    [[nodiscard]] int getId() const;
+    [[nodiscard]] GeoPoint& getCurrentLocation();
+    [[nodiscard]] const std::vector<GeoPoint>& getLocationHistory() const;
 
+    void setCurrentLocation(GeoPoint location);
 };
-
-
 
 }
 
-#endif//NES_GEOCALCULATOR_H
+#endif//NES_GEONODE_H

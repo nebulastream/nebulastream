@@ -14,28 +14,21 @@
     limitations under the License.
 */
 
-#ifndef NES_LOCATIONCATALOG_H
-#define NES_LOCATIONCATALOG_H
+#include <Mobility/Geo/GeoPoint.h>
 
-#include <map>
+namespace NES::Mobility {
 
-#include "GeoNode.h"
+GeoPoint::GeoPoint() : latitude(0), longitude(0) {}
+GeoPoint::GeoPoint(double latitude, double longitude) : latitude(latitude), longitude(longitude) {}
 
-namespace NES {
+double GeoPoint::getLatitude() const { return latitude; }
+double GeoPoint::getLongitude() const { return longitude; }
 
-    class LocationCatalog {
+bool GeoPoint::isValid() const { return latitude != 0 && longitude !=0; }
 
-      private:
-        std::map<int, GeoNode> nodes;
-
-      public:
-        LocationCatalog()  = default;
-        void addNode(int nodeId);
-        void updateNodeLocation(int nodeId, GeoLocation location);
-        bool contains(int nodeId);
-        GeoNode getNode(int nodeId);
-        uint64_t size();
-    };
+bool GeoPoint::operator==(const GeoPoint& rhs) const {
+    return latitude == rhs.latitude && longitude == rhs.longitude;
 }
+bool GeoPoint::operator!=(const GeoPoint& rhs) const { return !(rhs == *this); }
 
-#endif//NES_LOCATIONCATALOG_H
+}

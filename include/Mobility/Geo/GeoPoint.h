@@ -14,22 +14,31 @@
     limitations under the License.
 */
 
-#ifndef NES_LOCATIONSERVICE_H
-#define NES_LOCATIONSERVICE_H
+#ifndef NES_LOCATION_H
+#define NES_LOCATION_H
 
-#include "Catalogs/LocationCatalog.h"
+#include <string>
 
-namespace NES {
+namespace NES::Mobility {
 
-class LocationService {
+
+class GeoPoint {
+
   private:
-    LocationCatalog locationCatalog;
+    double latitude;
+    double longitude;
 
   public:
-    LocationService() = default;
-    [[nodiscard]] const LocationCatalog& getLocationCatalog() const;
+    GeoPoint();
+    GeoPoint(double  latitude, double longitude);
+    [[nodiscard]] double getLatitude() const;
+    [[nodiscard]] double getLongitude() const;
+    [[nodiscard]] bool isValid() const;
+
+    bool operator==(const GeoPoint& rhs) const;
+    bool operator!=(const GeoPoint& rhs) const;
 };
 
 }
 
-#endif//NES_LOCATIONSERVICE_H
+#endif//NES_LOCATION_H

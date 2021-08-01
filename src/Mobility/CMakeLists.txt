@@ -13,7 +13,9 @@
 # limitations under the License.
 
 add_source_nes(
-        MonitoringService.cpp
-        QueryService.cpp
-        NESRequestProcessorService.cpp
+        LocationCatalog.cpp
+        LocationService.cpp
 )
+
+add_subdirectory(Geo)
+add_subdirectory(Utils)

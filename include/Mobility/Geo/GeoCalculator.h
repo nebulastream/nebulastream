@@ -14,7 +14,22 @@
     limitations under the License.
 */
 
-#include <Catalogs/LocationCatalog.h>
-#include "Services/LocationService.h"
+#ifndef NES_GEOCALCULATOR_H
+#define NES_GEOCALCULATOR_H
 
-const NES::LocationCatalog& NES::LocationService::getLocationCatalog() const { return locationCatalog; }
+#include "Mobility/Geo/GeoPoint.h"
+
+namespace NES::Mobility {
+
+class GeoCalculator {
+
+  public:
+    static GeoPoint pointFromDirection(GeoPoint source, GeoPoint direction);
+
+};
+
+
+
+}
+
+#endif//NES_GEOCALCULATOR_H

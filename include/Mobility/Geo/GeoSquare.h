@@ -14,16 +14,31 @@
     limitations under the License.
 */
 
-#include <Catalogs/GeoLocation.h>
+#ifndef NES_GEOSQUARE_H
+#define NES_GEOSQUARE_H
 
-NES::GeoLocation::GeoLocation() : latitude(0), longitude(0) {}
-NES::GeoLocation::GeoLocation(double latitude, double longitude) : latitude(latitude), longitude(longitude) {}
+#include "Mobility/Geo/GeoPoint.h"
 
-double NES::GeoLocation::getLatitude() { return latitude; }
-double NES::GeoLocation::getLongitude() { return longitude; }
+namespace NES::Mobility {
 
-bool NES::GeoLocation::isValid() { return latitude != 0 && longitude !=0; }
-bool NES::GeoLocation::operator==(const NES::GeoLocation& rhs) const {
-    return latitude == rhs.latitude && longitude == rhs.longitude;
+class GeoSquare {
+
+  private:
+    GeoPoint center;
+    double area;
+
+  public:
+    GeoSquare(const GeoPoint& center, double area);
+    [[nodiscard]] const GeoPoint& getCenter() const;
+
+    bool contains(GeoPoint location);
+    [[nodiscard]] double getDistanceToBound() const;
+    GeoPoint getNorthBound();
+    GeoPoint getSouthBound();
+    GeoPoint getEastBound();
+    GeoPoint getWestBound();
+};
+
 }
-bool NES::GeoLocation::operator!=(const NES::GeoLocation& rhs) const { return !(rhs == *this); }
+
+#endif//NES_GEOSQUARE_H

@@ -14,19 +14,22 @@
     limitations under the License.
 */
 
-#ifndef NES_MATHUTILS_H
-#define NES_MATHUTILS_H
+#ifndef NES_LOCATIONSERVICE_H
+#define NES_LOCATIONSERVICE_H
 
-namespace NES {
+#include "Mobility/LocationCatalog.h"
 
-class MathUtils {
+namespace NES::Mobility {
+
+class LocationService {
+  private:
+    LocationCatalog locationCatalog;
+
   public:
-    static double toDegrees(double radians);
-    static double toRadians(double degrees);
-    static double clamp(double d, double min, double ma);
-    static double wrapAnglePiPi(double a);
+    LocationService() = default;
+    [[nodiscard]] const LocationCatalog& getLocationCatalog() const;
 };
 
 }
 
-#endif//NES_MATHUTILS_H
+#endif//NES_LOCATIONSERVICE_H

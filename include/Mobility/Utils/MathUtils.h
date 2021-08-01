@@ -14,31 +14,19 @@
     limitations under the License.
 */
 
-#ifndef NES_LOCATION_H
-#define NES_LOCATION_H
+#ifndef NES_MATHUTILS_H
+#define NES_MATHUTILS_H
 
-#include <string>
+namespace NES::Mobility {
 
-namespace NES {
-
-
-class GeoLocation {
-
-  private:
-    double latitude;
-    double longitude;
-
+class MathUtils {
   public:
-    GeoLocation();
-    GeoLocation(double  latitude, double longitude);
-    double getLatitude();
-    double getLongitude();
-    bool isValid();
-
-    bool operator==(const GeoLocation& rhs) const;
-    bool operator!=(const GeoLocation& rhs) const;
+    static double toDegrees(double radians);
+    static double toRadians(double degrees);
+    static double clamp(double d, double min, double ma);
+    static double wrapAnglePiPi(double a);
 };
 
 }
 
-#endif//NES_LOCATION_H
+#endif//NES_MATHUTILS_H

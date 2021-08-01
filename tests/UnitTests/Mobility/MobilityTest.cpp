@@ -16,19 +16,19 @@
 
 #include "gtest/gtest.h"
 
-#include "Catalogs/GeoLocation.h"
-#include "Catalogs/GeoNode.h"
-#include "Catalogs/LocationCatalog.h"
-#include "Services/GeoSquare.h"
+#include "Mobility/LocationCatalog.h"
+#include "Mobility/Geo/GeoNode.h"
+#include "Mobility/Geo/GeoPoint.h"
+#include "Mobility/Geo/GeoSquare.h"
 
-namespace NES {
+namespace NES::Mobility {
 
 TEST(GeoLocation, ValidLocation) {
 
-    GeoLocation validLocation(2,3);
+    GeoPoint validLocation(2,3);
     EXPECT_TRUE(validLocation.isValid());
 
-    GeoLocation invalidLocation;
+    GeoPoint invalidLocation;
     EXPECT_FALSE(invalidLocation.isValid());
 }
 
@@ -38,11 +38,11 @@ TEST(GeoNode, AddAndUpdateLocations) {
     EXPECT_FALSE(node.getCurrentLocation().isValid());
     EXPECT_TRUE(node.getLocationHistory().empty());
 
-    node.setCurrentLocation(GeoLocation(1,1));
-    node.setCurrentLocation(GeoLocation(2,2));
-    node.setCurrentLocation(GeoLocation(3,3));
+    node.setCurrentLocation(GeoPoint(1,1));
+    node.setCurrentLocation(GeoPoint(2,2));
+    node.setCurrentLocation(GeoPoint(3,3));
 
-    GeoLocation expectedLocation(3,3);
+    GeoPoint expectedLocation(3,3);
     EXPECT_EQ(expectedLocation, node.getCurrentLocation());
 
     const uint64_t expectedSize= 2;
@@ -59,56 +59,56 @@ TEST(LocationCatalog, AddNodeAndUpdateLocation) {
     const uint64_t expectedSize = 2;
     EXPECT_EQ(expectedSize, catalog.size());
 
-    catalog.updateNodeLocation(1, GeoLocation(1,1));
-    catalog.updateNodeLocation(1, GeoLocation(1.5,1.5));
-    catalog.updateNodeLocation(2, GeoLocation(2,2));
+    catalog.updateNodeLocation(1, GeoPoint(1,1));
+    catalog.updateNodeLocation(1, GeoPoint(1.5,1.5));
+    catalog.updateNodeLocation(2, GeoPoint(2,2));
 
     GeoNode firstNode = catalog.getNode(1);
-    EXPECT_EQ(GeoLocation(1.5,1.5), firstNode.getCurrentLocation());
+    EXPECT_EQ(GeoPoint(1.5,1.5), firstNode.getCurrentLocation());
     EXPECT_FALSE(firstNode.getLocationHistory().empty());
 
     GeoNode secondNode = catalog.getNode(2);
-    EXPECT_EQ(GeoLocation(2,2), secondNode.getCurrentLocation());
+    EXPECT_EQ(GeoPoint(2,2), secondNode.getCurrentLocation());
     EXPECT_TRUE(secondNode.getLocationHistory().empty());
 }
 
 TEST(GeoSquare, DistanceToBound) {
-    GeoLocation center(52.5128417, 13.3213595);
+    GeoPoint center(52.5128417, 13.3213595);
     GeoSquare square(center, 1000);
 
     EXPECT_DOUBLE_EQ(250, square.getDistanceToBound());
 }
 
 TEST(GeoSquare, TestBounds) {
-    GeoLocation center(52.5128417, 13.3213595);
+    GeoPoint center(52.5128417, 13.3213595);
     GeoSquare square(center, 1000);
 
-    GeoLocation north = square.getNorthBound();
+    GeoPoint north = square.getNorthBound();
     EXPECT_DOUBLE_EQ(center.getLongitude(), north.getLongitude());
     EXPECT_TRUE(north.getLatitude() > center.getLatitude());
 
-    GeoLocation south = square.getSouthBound();
+    GeoPoint south = square.getSouthBound();
     EXPECT_DOUBLE_EQ(center.getLongitude(), south.getLongitude());
     EXPECT_TRUE(south.getLatitude() < center.getLatitude());
 
-    GeoLocation east = square.getEastBound();
+    GeoPoint east = square.getEastBound();
     EXPECT_DOUBLE_EQ(center.getLatitude(), east.getLatitude());
     EXPECT_TRUE(east.getLongitude() > center.getLongitude());
 
-    GeoLocation west = square.getWestBound();
+    GeoPoint west = square.getWestBound();
     EXPECT_DOUBLE_EQ(center.getLatitude(), west.getLatitude());
     EXPECT_TRUE(west.getLongitude() < center.getLongitude());
 }
 
 TEST(GeoSquare, TestContains) {
-    GeoLocation center(52.5128417, 13.3213595);
+    GeoPoint center(52.5128417, 13.3213595);
     GeoSquare square(center, 1000);
 
     EXPECT_TRUE(square.contains(center));
-    EXPECT_TRUE(    square.contains(GeoLocation(52.5128427, 13.3213395)));
-    EXPECT_TRUE(    square.contains(GeoLocation(52.51508748, 13.32504968)));
+    EXPECT_TRUE(    square.contains(GeoPoint(52.5128427, 13.3213395)));
+    EXPECT_TRUE(    square.contains(GeoPoint(52.51508748, 13.32504968)));
 
-    EXPECT_FALSE(    square.contains(GeoLocation(52.51508751, 13.32504971)));
+    EXPECT_FALSE(    square.contains(GeoPoint(52.51508751, 13.32504971)));
 
 }
 

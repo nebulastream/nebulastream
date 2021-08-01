@@ -14,16 +14,21 @@
     limitations under the License.
 */
 
-#include <Catalogs/GeoNode.h>
-NES::GeoNode::GeoNode(int id) : id(id) {}
+#include <Mobility/Geo//GeoNode.h>
 
-int NES::GeoNode::getId() const { return id; }
-NES::GeoLocation& NES::GeoNode::getCurrentLocation() { return currentLocation; }
-const std::vector<NES::GeoLocation>& NES::GeoNode::getLocationHistory() const { return locationHistory; }
+namespace NES::Mobility {
 
-void NES::GeoNode::setCurrentLocation(NES::GeoLocation location) {
+GeoNode::GeoNode(int id) : id(id) {}
+
+int GeoNode::getId() const { return id; }
+GeoPoint& GeoNode::getCurrentLocation() { return currentLocation; }
+const std::vector<GeoPoint>& GeoNode::getLocationHistory() const { return locationHistory; }
+
+void GeoNode::setCurrentLocation(GeoPoint location) {
     if (this->getCurrentLocation().isValid()) {
         locationHistory.push_back(this->getCurrentLocation());
     }
     this->currentLocation = location;
+}
+
 }
