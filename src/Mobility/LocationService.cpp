@@ -15,10 +15,33 @@
 */
 
 #include <Mobility/LocationCatalog.h>
+
+#include <utility>
 #include "Mobility/LocationService.h"
+#include "Mobility/Geo/GeoSquare.h"
 
 namespace NES::Mobility {
 
 const LocationCatalog& LocationService::getLocationCatalog() const { return locationCatalog; }
+
+
+void LocationService::addNode(int nodeId) {
+    this->locationCatalog.addNode(nodeId);
+}
+
+bool LocationService::checkIfPointInRange(int nodeId, double area, GeoPoint location) {
+
+    if (this->locationCatalog.contains(nodeId)) {
+        GeoNode node = this->locationCatalog.getNode(nodeId);
+        GeoSquare range(node.getCurrentLocation(), area);
+        return range.contains(location);
+    }
+
+    return false;
+}
+
+void LocationService::updateNodeLocation(int nodeId, GeoPoint location) {
+    this->locationCatalog.updateNodeLocation(nodeId, location);
+}
 
 }

@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 
 #include "Mobility/LocationCatalog.h"
+#include "Mobility/LocationService.h"
 #include "Mobility/Geo/GeoNode.h"
 #include "Mobility/Geo/GeoPoint.h"
 #include "Mobility/Geo/GeoSquare.h"
@@ -109,8 +110,17 @@ TEST(GeoSquare, TestContains) {
     EXPECT_TRUE(    square.contains(GeoPoint(52.51508748, 13.32504968)));
 
     EXPECT_FALSE(    square.contains(GeoPoint(52.51508751, 13.32504971)));
-
 }
 
+TEST(LocationService, CheckIfLocationIsInRange) {
+    LocationService service;
+    GeoPoint center(52.5128417, 13.3213595);
+    service.addNode(1);
+    service.updateNodeLocation(1, center);
+
+    EXPECT_TRUE(service.checkIfPointInRange(1, 1000, GeoPoint(52.51508748, 13.32504968)));
+    EXPECT_FALSE(service.checkIfPointInRange(1, 1000, GeoPoint(52.51508751, 13.32504971)));
+
+}
 
 }

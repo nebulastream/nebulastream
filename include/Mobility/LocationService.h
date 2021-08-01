@@ -17,6 +17,8 @@
 #ifndef NES_LOCATIONSERVICE_H
 #define NES_LOCATIONSERVICE_H
 
+#include <cpprest/json.h>
+
 #include "Mobility/LocationCatalog.h"
 
 namespace NES::Mobility {
@@ -28,6 +30,9 @@ class LocationService {
   public:
     LocationService() = default;
     [[nodiscard]] const LocationCatalog& getLocationCatalog() const;
+    void addNode(int nodeId);
+    void updateNodeLocation(int nodeId, GeoPoint location);
+    bool checkIfPointInRange(int nodeId, double area, GeoPoint location);
 };
 
 }
