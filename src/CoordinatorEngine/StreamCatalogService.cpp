@@ -18,6 +18,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <CoordinatorEngine/StreamCatalogService.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <NodeStats.pb.h>
 #include <Topology/Topology.hpp>
@@ -25,8 +26,6 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
-
-#include "StreamCatalogService.h"
 
 namespace NES {
 

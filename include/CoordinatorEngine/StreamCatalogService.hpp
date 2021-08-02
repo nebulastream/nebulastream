@@ -20,12 +20,16 @@
 #include <memory>
 #include <mutex>
 
+#include <CoordinatorEngine/TopologyManagerService.hpp>
+
 enum NodeType : int;
 namespace NES {
 class StreamCatalog;
 using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class NodeStats;
 using NodeStatsPtr = std::shared_ptr<NodeStats>;
 class TopologyManagerService;
@@ -33,7 +37,7 @@ class TopologyManagerService;
 class StreamCatalogService {
 
   public:
-    StreamCatalogService::StreamCatalogService(StreamCatalogPtr streamCatalog);
+    StreamCatalogService(StreamCatalogPtr streamCatalog);
     ~StreamCatalogService();
     /**
      * @brief registers a node in the StreamCatalog
@@ -106,8 +110,6 @@ class StreamCatalogService {
     std::mutex addRemoveLogicalStream;
     std::mutex addRemovePhysicalStream;
 };
-
-using CoordinatorEnginePtr = std::shared_ptr<CoordinatorEngine>;
 
 }// namespace NES
 #endif//NES_SRC_COORDINATORENGINE_STREAMCATALOGSERVICE_H_

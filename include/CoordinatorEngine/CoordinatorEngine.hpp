@@ -19,6 +19,9 @@
 
 #include <memory>
 #include <mutex>
+#include <CoordinatorEngine/StreamCatalogService.hpp>
+#include <CoordinatorEngine/TopologyManagerService.hpp>
+
 enum NodeType : int;
 namespace NES {
 class StreamCatalog;
