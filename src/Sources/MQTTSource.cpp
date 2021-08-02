@@ -37,6 +37,13 @@ using namespace std;
 using namespace std::chrono;
 
 namespace NES {
+/*
+ the user can specify the time unit for the delay and the duration of the delay in that time unit
+ in order to avoid type switching types (different time units require different duration types), the user input for
+ the duration is treated as nanoseconds and then multiplied to 'convert' to milliseconds or seconds accordingly
+*/
+const uint32_t NANO_TO_MILLI_SECONDS_MULTIPLIER = 1000000;
+const uint32_t NANO_TO_SECONDS_MULTIPLIER = 1000000000;
 
 MQTTSource::MQTTSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
@@ -45,11 +52,13 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        const std::string& clientId,
                        const std::string& user,
                        const std::string& topic,
-                       const std::string& dataType,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
+                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
+                       MQTTSourceDescriptor::TimeUnits timeUnit,
+                       MQTTSourceDescriptor::DataType dataType,
+                       uint64_t messageDelay)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -59,6 +68,14 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  std::move(executableSuccessors)),
       connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic), dataType(dataType),
       client(std::make_shared<mqtt::async_client>(serverAddress, clientId)), tupleSize(schema->getSchemaSizeInBytes()) {
+
+    minDelayBetweenSends =
+        std::chrono::nanoseconds(messageDelay
+                                 * ((timeUnit == MQTTSourceDescriptor::TimeUnits::milliseconds)
+                                    ? NANO_TO_MILLI_SECONDS_MULTIPLIER
+                                    : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != MQTTSourceDescriptor::TimeUnits::nanoseconds)
+                                       | (timeUnit == MQTTSourceDescriptor::TimeUnits::nanoseconds))));
+
     NES_DEBUG("MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId << ".");
 }
 
@@ -94,6 +111,9 @@ std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
                     tupCnt = 1;
                     return buffer;
                 }
+                std::this_thread::sleep_for(minDelayBetweenSends);
+
+                //TODO: keep inside loop
             }
         } catch (const mqtt::exception& exc) {
             NES_ERROR("MQTTSource error: " << exc.what());
@@ -133,11 +153,11 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf, std::string& data, uint64
     }
     //init offset
     uint64_t offset = 0;
-    NES_TRACE("CSVSource line=" << tupCnt << " val=" << data);
+    NES_TRACE("MQTTSource line=" << tupCnt << " val=" << data);
 
     //init tokens
     std::vector<std::string> tokens;
-    if (strcasecmp(getDataType().c_str(), "json") == 0) {
+    if (getDataType() == MQTTSourceDescriptor::JSON) {
         std::vector<std::string> helperToken;
         helperToken = UtilityFunctions::splitWithStringDelimiter(data, ":");
         for (int i = 1; i < (int) tokens.size(); i += 2) {
@@ -152,7 +172,7 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf, std::string& data, uint64
         NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
                         "Overflow detected: buffer size = " << buf.getBufferSize() << " position = "
                                                             << (offset + tupCnt * tupleSize) << " field size " << fieldSize);
-
+        //ToDO change layout according to new memory layout
         if (field->isBasicType()) {
             NES_ASSERT2_FMT(!tokens[j].empty(), "Field cannot be empty if basic type");
             auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
@@ -271,6 +291,11 @@ const string& MQTTSource::getServerAddress() const { return serverAddress; }
 const string& MQTTSource::getClientId() const { return clientId; }
 const string& MQTTSource::getUser() const { return user; }
 const string& MQTTSource::getTopic() const { return topic; }
+MQTTSourceDescriptor::DataType MQTTSource::getDataType() const { return dataType; }
+MQTTSourceDescriptor::TimeUnits MQTTSource::getTimeUnit() const { return timeUnit; }
+uint64_t MQTTSource::getMessageDelay() const { return messageDelay; }
+uint64_t MQTTSource::getTupleSize() const { return tupleSize; }
+
 SourceType MQTTSource::getType() const { return MQTT_SOURCE; }
 
 }// namespace NES
