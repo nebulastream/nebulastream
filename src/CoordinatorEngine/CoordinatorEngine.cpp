@@ -101,8 +101,6 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
                                                const std::string& sourceType,
                                                const std::string& physicalStreamName,
                                                const std::string& logicalStreamName) {
-
-
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
     return streamCatalogService.registerPhysicalStream(physicalNode, sourceType, physicalStreamName, logicalStreamName);
 }
