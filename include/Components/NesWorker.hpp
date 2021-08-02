@@ -183,7 +183,7 @@ class NesWorker {
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
-
+    const WorkerConfigPtr workerConfig;
     PhysicalStreamConfigPtr conf;
     bool connected{false};
     bool withRegisterStream{false};
@@ -201,6 +201,10 @@ class NesWorker {
     uint32_t numberOfBuffersPerPipeline;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
+    // indicates the execution mode of the query compiler [DEBUG|OPTIMIZE].
+    std::string queryCompilerExecutionMode;
+    // indicates, which output buffer allocation strategy should be used.
+    std::string queryCompilerOutputBufferOptimizationLevel;
     NesNodeType type;
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};

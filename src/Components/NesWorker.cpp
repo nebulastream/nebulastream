@@ -26,6 +26,7 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger.hpp>
 #include <csignal>
 #include <future>
