@@ -43,6 +43,7 @@
 #include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger.hpp>
@@ -78,7 +79,7 @@ class CodeGenerationTest : public testing::Test {
     void SetUp() override {
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = Runtime::NodeEngine::create("127.0.0.1", 6262, streamConf, 1, 4096, 1024, 12, 12);
+        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 6262, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     /* Will be called before a test is executed. */

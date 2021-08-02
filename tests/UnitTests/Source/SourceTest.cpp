@@ -15,6 +15,7 @@
 */
 
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <cstring>
 #include <iostream>
 #include <limits>
@@ -435,7 +436,7 @@ class SourceTest : public testing::Test {
   public:
     void SetUp() override {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        this->nodeEngine = Runtime::create("127.0.0.1", 31337, streamConf);
+        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
         this->path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
         this->path_to_file_head = "../tests/test_data/ysb-tuples-100-campaign-100-head.csv";
         this->path_to_bin_file = "../tests/test_data/ysb-tuples-100-campaign-100.bin";

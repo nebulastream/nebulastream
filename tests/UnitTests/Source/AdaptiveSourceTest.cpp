@@ -19,7 +19,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/AdaptiveSource.hpp>
-
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
@@ -137,7 +137,7 @@ DataSourcePtr createMockCSVAdaptiveSource(const SchemaPtr& schema,
  */
 TEST_F(AdaptiveSourceTest, testSamplingChange) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::create("127.0.0.1", 3133, streamConf);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3133, streamConf);
 
     std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
 
@@ -169,7 +169,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
  */
 TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::create("127.0.0.1", 3133, streamConf);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3133, streamConf);
 
     std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
 

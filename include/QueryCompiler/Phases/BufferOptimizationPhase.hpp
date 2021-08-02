@@ -20,6 +20,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <vector>
 
 namespace NES {
@@ -34,12 +35,12 @@ public:
     /**
      * @brief Constructor to create a BufferOptimizationPhase
      */
-    explicit BufferOptimizationPhase(OutputBufferOptimizationLevel level);
+    explicit BufferOptimizationPhase(QueryCompilerOptions::OutputBufferOptimizationLevel level);
 
     /**
      * @brief Create a BufferOptimizationPhase
      */
-    static BufferOptimizationPhasePtr create(OutputBufferOptimizationLevel level);
+    static BufferOptimizationPhasePtr create(QueryCompilerOptions::OutputBufferOptimizationLevel level);
 
     /**
      * @brief Applies the phase on a pipelined query plan. Analyzes every pipeline to see if buffer optimization can be applied.
@@ -55,7 +56,7 @@ public:
      */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 private:
-    OutputBufferOptimizationLevel level;
+    QueryCompilerOptions::OutputBufferOptimizationLevel level;
     /**
      * @brief Indicates if the input of this pipeline is read only.
      * For instance, if the input is shared by a sibling pipeline.

@@ -16,7 +16,24 @@
 
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <Network/PartitionManager.hpp>
+#include <Network/NetworkManager.hpp>
+#include <memory>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <State/StateManager.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 namespace NES::Runtime {
+
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
+extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
+
 NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname,
                                                                        uint16_t port,
                                                                        PhysicalStreamConfigPtr config) {
@@ -57,7 +74,8 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
-        auto compiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+        auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
+        auto compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions, phaseFactory, jitCompiler);
         if (!compiler) {
             NES_ERROR("Runtime: error while creating compiler");
             throw Exception("Error while creating compiler");

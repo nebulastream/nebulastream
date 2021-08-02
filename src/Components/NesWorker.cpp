@@ -26,6 +26,7 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger.hpp>
 #include <csignal>
@@ -129,7 +130,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     try {
-        nodeEngine = Runtime::NodeEngine::create(localWorkerIp,
+        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(localWorkerIp,
                                                  localWorkerZmqPort,
                                                  conf,
                                                  numWorkerThreads,

@@ -64,7 +64,7 @@ class MQTTTSinkTest : public testing::Test {
     void SetUp() override {
         NES_DEBUG("Setup MQTTTSinkTest test case.");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = Runtime::create("127.0.0.1", 3111, conf);
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3111, conf);
         testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     }
 

@@ -23,9 +23,9 @@ void QueryCompilerOptions::enableOperatorFusion() { this->operatorFusion = true;
 
 void QueryCompilerOptions::disableOperatorFusion() { this->operatorFusion = false; }
 
-OutputBufferOptimizationLevel QueryCompilerOptions::getOutputBufferOptimizationLevel() const { return outputBufferOptimizationLevel; };
+QueryCompilerOptions::OutputBufferOptimizationLevel QueryCompilerOptions::getOutputBufferOptimizationLevel() const { return outputBufferOptimizationLevel; };
 
-void QueryCompilerOptions::setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel level) { this->outputBufferOptimizationLevel = level; };
+void QueryCompilerOptions::setOutputBufferOptimizationLevel(QueryCompilerOptions::OutputBufferOptimizationLevel level) { this->outputBufferOptimizationLevel = level; };
 
 void QueryCompilerOptions::setNumSourceLocalBuffers(uint64_t num) { this->numSourceLocalBuffers = num; }
 
