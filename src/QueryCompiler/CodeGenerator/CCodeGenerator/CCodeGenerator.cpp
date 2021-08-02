@@ -397,6 +397,9 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             // We do not even initialize a buffer, we just use "inputBuffer" as the resultBuffer-handle for the later emit.
             // The only contents in the Scan's for loop will be map operations.
             code->varDeclarationResultBuffer = code->varDeclarationInputBuffer;
+            auto numberOfRecords =
+                VarRef(code->varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
+
         } else {
             auto recordHandler = context->getRecordHandler();
 
@@ -545,8 +548,10 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
     // Generate final logic to emit the last buffer to the Runtime
     // 1. set the number of tuples to the buffer
-    code->cleanupStmts.push_back(
-        setNumberOfTuples(code->varDeclarationResultBuffer, code->varDeclarationNumberOfResultTuples).copy());
+    if (bufferStrategy != ONLY_INPLACE_OPERATIONS) {
+        code->cleanupStmts.push_back(
+            setNumberOfTuples(code->varDeclarationResultBuffer, code->varDeclarationNumberOfResultTuples).copy());
+    }
 
     // 2. copy watermark
     code->cleanupStmts.push_back(setWatermark(code->varDeclarationResultBuffer, code->varDeclarationInputBuffer).copy());
