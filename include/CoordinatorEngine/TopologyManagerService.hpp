@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <mutex>
+#include <CoordinatorEngine/StreamCatalogService.hpp>
 
 enum NodeType : int;
 namespace NES {
@@ -28,11 +29,12 @@ class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 class NodeStats;
 using NodeStatsPtr = std::shared_ptr<NodeStats>;
+
 class TopologyManagerService {
 
   public:
     TopologyManagerService(TopologyPtr topology);
-    ~CoordinatorEngine();
+    ~TopologyManagerService();
 
     /**
     * @brief registers a node

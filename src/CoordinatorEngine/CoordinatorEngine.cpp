@@ -18,6 +18,8 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <CoordinatorEngine/StreamCatalogService.hpp>
+#include <CoordinatorEngine/TopologyManagerService.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <NodeStats.pb.h>
 #include <Topology/Topology.hpp>
@@ -26,14 +28,10 @@
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
-#include "TopologyManagerService.h"
-#include "StreamCatalogService.h"
-
-
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology)
-    : streamCatalog(std::move(streamCatalog)), topology(std::move(topology)), streamCatalogService(streamCatalog), topologyManagerService(topology) {
+    : streamCatalogService(streamCatalog), topologyManagerService(topology), streamCatalog(std::move(streamCatalog)), topology(std::move(topology)) {
     NES_DEBUG("CoordinatorEngine()");
 }
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
