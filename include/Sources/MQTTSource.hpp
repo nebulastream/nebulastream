@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 
 #include <Sources/DataSource.hpp>
 
@@ -46,6 +47,9 @@ class MQTTSource : public DataSource {
      * @param user name to connect to the mqtt broker
      * @param topic to listen to, to obtain the desired data
      * @param operatorId
+     * @param timeUnit unit for the timed delay, default = nanoseconds
+     * @param dataType data type that is send by the broker, default = JSON
+     * @param messageDelay delay units for the messages, default = 0
      */
     explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
@@ -54,11 +58,13 @@ class MQTTSource : public DataSource {
                         std::string const& clientId,
                         std::string const& user,
                         std::string const& topic,
-                        std::string const& dataType,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
-                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
+                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
+                        MQTTSourceDescriptor::TimeUnits timeUnit = MQTTSourceDescriptor::TimeUnits::nanoseconds,
+                        MQTTSourceDescriptor::DataType dataType = MQTTSourceDescriptor::DataType::JSON,
+                        uint64_t messageDelay = 0);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
@@ -109,7 +115,17 @@ class MQTTSource : public DataSource {
      * @brief getter for dataType
      * @return dataType
      */
-    std::string getDataType() const;
+    MQTTSourceDescriptor::DataType getDataType() const;
+    /**
+     * @brief getter for timeUnit
+     * @return timeUnit
+     */
+    MQTTSourceDescriptor::TimeUnits getTimeUnit() const;
+    /**
+     * @brief getter for messageDelay
+     * @return messageDelay
+     */
+    uint64_t getMessageDelay() const;
     /**
      * @brief getter for tupleSize
      * @return tupleSize
@@ -150,9 +166,13 @@ class MQTTSource : public DataSource {
     std::string clientId;
     std::string user;
     std::string topic;
-    std::string dataType;
+    MQTTSourceDescriptor::DataType dataType;
+    MQTTSourceDescriptor::TimeUnits timeUnit;
     mqtt::async_clientPtr client;
     uint64_t tupleSize;
+    std::chrono::duration<int64_t, std::ratio<1, 1000000000>> minDelayBetweenSends{};
+    uint64_t messageDelay;
+
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;

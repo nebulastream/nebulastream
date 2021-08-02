@@ -107,7 +107,8 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         NES_DEBUG("PhysicalStreamConfig: create MQTT source for " << conf << " buffers");
         const std::string delimiter = reinterpret_cast<const char*>(';');
         std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter(conf, delimiter);
-        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], mqttConfig[4]);
+        //ToDo: cast params correctly
+        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], (MQTTSourceDescriptor::DataType) mqttConfig[4], mqttConfig[5], mqttConfig[6]);
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
         return nullptr;
