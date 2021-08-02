@@ -17,6 +17,7 @@ add_source_nes(
         Controller/BaseController.cpp
         Controller/ConnectivityController.cpp
         Controller/MonitoringController.cpp
+        Controller/LocationController.cpp
         Controller/QueryCatalogController.cpp
         Controller/QueryController.cpp
         Controller/StreamCatalogController.cpp

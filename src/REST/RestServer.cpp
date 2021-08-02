@@ -37,6 +37,7 @@ RestServer::RestServer(std::string host,
                        const GlobalExecutionPlanPtr& globalExecutionPlan,
                        const QueryServicePtr& queryService,
                        const MonitoringServicePtr& monitoringService,
+                       const LocationServicePtr& locationService,
                        const GlobalQueryPlanPtr& globalQueryPlan)
     : restEngine(std::make_shared<RestEngine>(streamCatalog,
                                               coordinator,
@@ -45,6 +46,7 @@ RestServer::RestServer(std::string host,
                                               globalExecutionPlan,
                                               queryService,
                                               monitoringService,
+                                              locationService,
                                               globalQueryPlan)),
       host(std::move(host)), port(port) {}
 

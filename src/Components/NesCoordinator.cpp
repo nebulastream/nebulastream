@@ -19,6 +19,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Mobility/LocationService.h>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -63,6 +64,7 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     topology = Topology::create();
+    locationService = LocationService::create();
     streamCatalog = std::make_shared<StreamCatalog>();
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();
@@ -113,6 +115,7 @@ NesCoordinator::~NesCoordinator() {
     queryRequestProcessorService.reset();
     queryService.reset();
     monitoringService.reset();
+    locationService.reset();
     queryRequestProcessorThread.reset();
     worker.reset();
     coordinatorEngine.reset();
@@ -209,6 +212,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               globalExecutionPlan,
                                               queryService,
                                               monitoringService,
+                                              locationService,
                                               globalQueryPlan);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
@@ -309,11 +313,14 @@ QueryCatalogPtr NesCoordinator::getQueryCatalog() { return queryCatalog; }
 
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 
+LocationServicePtr NesCoordinator::getLocationService() { return locationService; }
+
 GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan; }
 
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
 CoordinatorEnginePtr NesCoordinator::getCoordinatorEngine() const { return coordinatorEngine; }
+
 
 }// namespace NES

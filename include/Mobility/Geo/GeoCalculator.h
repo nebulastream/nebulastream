@@ -19,12 +19,15 @@
 
 #include "Mobility/Geo/GeoPoint.h"
 
-namespace NES::Mobility {
+namespace NES {
+
+class GeoPoint;
+using GeoPointPtr = std::shared_ptr<GeoPoint>;
 
 class GeoCalculator {
 
   public:
-    static GeoPoint pointFromDirection(GeoPoint source, GeoPoint direction);
+    static GeoPointPtr pointFromDirection(const GeoPointPtr& source, GeoPoint direction);
 
 };
 

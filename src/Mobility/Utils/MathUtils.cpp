@@ -20,7 +20,7 @@
 #define CONVERSION_DEGREES 180
 #include <cmath>
 
-namespace NES::Mobility {
+namespace NES {
 
 double MathUtils::toDegrees(double radians) {
     return ( radians * CONVERSION_DEGREES ) / M_PI ;

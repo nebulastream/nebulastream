@@ -16,7 +16,7 @@
 
 #include <Mobility/Geo/GeoPoint.h>
 
-namespace NES::Mobility {
+namespace NES {
 
 GeoPoint::GeoPoint() : latitude(0), longitude(0) {}
 GeoPoint::GeoPoint(double latitude, double longitude) : latitude(latitude), longitude(longitude) {}
@@ -24,7 +24,9 @@ GeoPoint::GeoPoint(double latitude, double longitude) : latitude(latitude), long
 double GeoPoint::getLatitude() const { return latitude; }
 double GeoPoint::getLongitude() const { return longitude; }
 
-bool GeoPoint::isValid() const { return latitude != 0 && longitude !=0; }
+bool GeoPoint::isValid() const {
+    return this->latitude != 0 && longitude !=0;
+}
 
 bool GeoPoint::operator==(const GeoPoint& rhs) const {
     return latitude == rhs.latitude && longitude == rhs.longitude;

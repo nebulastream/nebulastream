@@ -16,6 +16,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <REST/Controller/BaseController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
+#include <REST/Controller/LocationController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/Controller/QueryController.hpp>
@@ -35,12 +36,14 @@ RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
                        const GlobalExecutionPlanPtr& globalExecutionPlan,
                        const QueryServicePtr& queryService,
                        const MonitoringServicePtr& monitoringService,
+                       const LocationServicePtr& locationService,
                        const GlobalQueryPlanPtr& globalQueryPlan) {
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator, globalQueryPlan);
     queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
     connectivityController = std::make_shared<ConnectivityController>();
     monitoringController = std::make_shared<MonitoringController>(monitoringService);
+    locationController = std::make_shared<LocationController>(locationService);
     topologyController = std::make_shared<TopologyController>(topology);
 }
 
@@ -107,6 +110,9 @@ void RestEngine::handleGet(http_request request) {
         } else if (paths[0] == "monitoring") {
             monitoringController->handleGet(paths, request);
             return;
+        } else if (paths[0] == "location") {
+            locationController->handleGet(paths, request);
+            return;
         } else if (paths[0] == "connectivity" && paths.size() == 2) {
             connectivityController->handleGet(paths, request);
             return;
@@ -132,6 +138,9 @@ void RestEngine::handlePost(http_request request) {
             return;
         } else if (paths[0] == "monitoring") {
             monitoringController->handlePost(paths, request);
+            return;
+        } else if (paths[0] == "location") {
+            locationController->handlePost(paths, request);
             return;
         }
     }

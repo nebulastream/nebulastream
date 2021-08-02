@@ -16,23 +16,25 @@
 
 #include <Mobility/LocationCatalog.h>
 
-namespace NES::Mobility {
+namespace NES {
 
-void LocationCatalog::addNode(int nodeId) {
-    this->nodes.insert(std::pair<int,GeoNode>(nodeId,GeoNode(nodeId)));
+void LocationCatalog::addNode(string nodeId) {
+    this->nodes.insert(std::pair<string, GeoNodePtr>(nodeId, std::make_shared<GeoNode>(nodeId)));
 }
 
-void LocationCatalog::updateNodeLocation(int nodeId, GeoPoint location) {
-    std::_Rb_tree_iterator<std::pair<const int, GeoNode>> it = this->nodes.find(nodeId);
+void LocationCatalog::updateNodeLocation(string nodeId, const GeoPointPtr& location) {
+    std::_Rb_tree_iterator<std::pair<const string, GeoNodePtr>> it = this->nodes.find(nodeId);
     if (it != this->nodes.end()) {
-        it->second.setCurrentLocation(location);
+        it->second->setCurrentLocation(location);
     }
 }
 
-bool LocationCatalog::contains(int nodeId) { return this->nodes.contains(nodeId); }
+bool LocationCatalog::contains(string nodeId) { return this->nodes.contains(nodeId); }
 
 uint64_t LocationCatalog::size() { return this->nodes.size(); }
 
-GeoNode LocationCatalog::getNode(int nodeId) { return this->nodes.at(nodeId); }
+GeoNodePtr LocationCatalog::getNode(string nodeId) { return this->nodes.at(nodeId); }
+
+const std::map<string, GeoNodePtr>& LocationCatalog::getNodes() const { return nodes; }
 
 }

@@ -18,24 +18,29 @@
 #define NES_GEONODE_H
 
 #include <vector>
+#include <cpprest/json.h>
 
 #include "Mobility/Geo/GeoPoint.h"
 
-namespace NES::Mobility {
+namespace NES {
+
+class GeoPoint;
+using GeoPointPtr = std::shared_ptr<GeoPoint>;
+
+using std::string;
 
 class GeoNode {
   private:
-    int id;
-    GeoPoint currentLocation;
-    std::vector<GeoPoint> locationHistory;
+    string id;
+    GeoPointPtr currentLocation;
+    std::vector<GeoPointPtr> locationHistory;
 
   public:
-    explicit GeoNode(int id);
-    [[nodiscard]] int getId() const;
-    [[nodiscard]] GeoPoint& getCurrentLocation();
-    [[nodiscard]] const std::vector<GeoPoint>& getLocationHistory() const;
-
-    void setCurrentLocation(GeoPoint location);
+    explicit GeoNode(string id);
+    [[nodiscard]] string getId() const;
+    GeoPointPtr getCurrentLocation();
+    [[nodiscard]] const std::vector<GeoPointPtr>& getLocationHistory() const;
+    void setCurrentLocation(const GeoPointPtr& currentLocation);
 };
 
 }

@@ -14,34 +14,41 @@
     limitations under the License.
 */
 
-#include <Mobility/LocationCatalog.h>
-
 #include <utility>
-#include "Mobility/LocationService.h"
+
+#include <Mobility/LocationCatalog.h>
 #include "Mobility/Geo/GeoSquare.h"
+#include "Mobility/LocationService.h"
+#include <Util/Logger.hpp>
 
-namespace NES::Mobility {
+namespace NES {
 
-const LocationCatalog& LocationService::getLocationCatalog() const { return locationCatalog; }
-
-
-void LocationService::addNode(int nodeId) {
-    this->locationCatalog.addNode(nodeId);
+LocationService::LocationService() {
+    locationCatalog = std::make_shared<LocationCatalog>();
 }
 
-bool LocationService::checkIfPointInRange(int nodeId, double area, GeoPoint location) {
 
-    if (this->locationCatalog.contains(nodeId)) {
-        GeoNode node = this->locationCatalog.getNode(nodeId);
-        GeoSquare range(node.getCurrentLocation(), area);
+void LocationService::addNode(string nodeId) {
+    this->locationCatalog->addNode(std::move(nodeId));
+}
+
+bool LocationService::checkIfPointInRange(const string& nodeId, double area, const GeoPointPtr& location) {
+
+    if (this->locationCatalog->contains(nodeId)) {
+        GeoNodePtr node = this->locationCatalog->getNode(nodeId);
+        GeoSquare range(node->getCurrentLocation(), area);
         return range.contains(location);
     }
 
     return false;
 }
 
-void LocationService::updateNodeLocation(int nodeId, GeoPoint location) {
-    this->locationCatalog.updateNodeLocation(nodeId, location);
+void LocationService::updateNodeLocation(string nodeId, const GeoPointPtr& location) {
+    this->locationCatalog->updateNodeLocation(std::move(nodeId), location);
 }
+
+LocationServicePtr LocationService::create() { return std::make_shared<LocationService>(); }
+
+const LocationCatalogPtr& LocationService::getLocationCatalog() const { return locationCatalog; }
 
 }

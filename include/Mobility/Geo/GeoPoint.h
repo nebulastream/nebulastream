@@ -18,8 +18,9 @@
 #define NES_LOCATION_H
 
 #include <string>
+#include <cpprest/json.h>
 
-namespace NES::Mobility {
+namespace NES {
 
 
 class GeoPoint {
@@ -38,6 +39,8 @@ class GeoPoint {
     bool operator==(const GeoPoint& rhs) const;
     bool operator!=(const GeoPoint& rhs) const;
 };
+
+using GeoPointPtr = std::shared_ptr<GeoPoint>;
 
 }
 

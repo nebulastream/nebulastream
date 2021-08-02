@@ -19,24 +19,26 @@
 
 #include "Mobility/Geo/GeoPoint.h"
 
-namespace NES::Mobility {
+namespace NES {
+
+class GeoPoint;
+using GeoPointPtr = std::shared_ptr<GeoPoint>;
 
 class GeoSquare {
 
   private:
-    GeoPoint center;
+    GeoPointPtr center;
     double area;
 
   public:
-    GeoSquare(const GeoPoint& center, double area);
-    [[nodiscard]] const GeoPoint& getCenter() const;
-
-    bool contains(GeoPoint location);
+    GeoSquare(GeoPointPtr  center, double area);
+    [[nodiscard]] const GeoPointPtr& getCenter() const;
     [[nodiscard]] double getDistanceToBound() const;
-    GeoPoint getNorthBound();
-    GeoPoint getSouthBound();
-    GeoPoint getEastBound();
-    GeoPoint getWestBound();
+    bool contains(const GeoPointPtr& location);
+    GeoPointPtr getNorthBound();
+    GeoPointPtr getSouthBound();
+    GeoPointPtr getEastBound();
+    GeoPointPtr getWestBound();
 };
 
 }

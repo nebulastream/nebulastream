@@ -17,25 +17,40 @@
 #ifndef NES_LOCATIONCATALOG_H
 #define NES_LOCATIONCATALOG_H
 
-#include <map>
-
 #include "Geo/GeoNode.h"
+#include <map>
+#include <cpprest/json.h>
 
-namespace NES::Mobility {
 
-    class LocationCatalog {
 
-      private:
-        std::map<int, GeoNode> nodes;
+namespace NES {
 
-      public:
-        LocationCatalog()  = default;
-        void addNode(int nodeId);
-        void updateNodeLocation(int nodeId, GeoPoint location);
-        bool contains(int nodeId);
-        GeoNode getNode(int nodeId);
-        uint64_t size();
-    };
+class GeoNode;
+using GeoNodePtr = std::shared_ptr<GeoNode>;
+
+class GeoPoint;
+using GeoPointPtr = std::shared_ptr<GeoPoint>;
+
+using std::string;
+
+
+class LocationCatalog {
+
+  private:
+    std::map<string, GeoNodePtr> nodes;
+
+  public:
+    LocationCatalog() = default;
+    void addNode(string nodeId);
+    void updateNodeLocation(string nodeId, const GeoPointPtr& location);
+    bool contains(string nodeId);
+    GeoNodePtr getNode(string nodeId);
+    [[nodiscard]] const std::map<string, GeoNodePtr>& getNodes() const;
+    uint64_t size();
+};
+
+using LocationCatalogPtr = std::shared_ptr<LocationCatalog>;
+
 }
 
 #endif//NES_LOCATIONCATALOG_H

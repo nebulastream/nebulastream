@@ -21,19 +21,32 @@
 
 #include "Mobility/LocationCatalog.h"
 
-namespace NES::Mobility {
+namespace NES {
+
+class GeoPoint;
+using GeoPointPtr = std::shared_ptr<GeoPoint>;
+
+class LocationCatalog;
+using LocationCatalogPtr = std::shared_ptr<LocationCatalog>;
+
+class LocationService;
+using LocationServicePtr = std::shared_ptr<LocationService>;
 
 class LocationService {
   private:
-    LocationCatalog locationCatalog;
+    LocationCatalogPtr locationCatalog;
 
   public:
-    LocationService() = default;
-    [[nodiscard]] const LocationCatalog& getLocationCatalog() const;
-    void addNode(int nodeId);
-    void updateNodeLocation(int nodeId, GeoPoint location);
-    bool checkIfPointInRange(int nodeId, double area, GeoPoint location);
+    static LocationServicePtr create();
+    explicit LocationService();
+
+    void addNode(string nodeId);
+    void updateNodeLocation(string nodeId, const GeoPointPtr& location);
+    bool checkIfPointInRange(const string& nodeId, double area, const GeoPointPtr& location);
+    const LocationCatalogPtr& getLocationCatalog() const;
 };
+
+using LocationServicePtr = std::shared_ptr<LocationService>;
 
 }
 

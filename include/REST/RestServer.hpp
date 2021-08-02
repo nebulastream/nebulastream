@@ -43,6 +43,9 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
 
+class LocationService;
+using LocationServicePtr = std::shared_ptr<LocationService>;
+
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
@@ -71,6 +74,7 @@ class RestServer {
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,
                const MonitoringServicePtr& monitoringService,
+               const LocationServicePtr& locationService,
                const GlobalQueryPlanPtr& globalQueryPlan);
 
     ~RestServer();

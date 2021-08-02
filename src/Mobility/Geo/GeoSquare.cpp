@@ -17,45 +17,48 @@
 #include <Mobility/Geo/GeoSquare.h>
 #include <Mobility/Geo/GeoCalculator.h>
 
-namespace NES::Mobility {
+#include <utility>
 
-GeoSquare::GeoSquare(const GeoPoint& center, double area) : center(center), area(area) {}
+namespace NES {
+
+GeoSquare::GeoSquare(GeoPointPtr  center, double area) : center(std::move(center)), area(area) {}
+
+const GeoPointPtr& GeoSquare::getCenter() const { return center; }
 
 double GeoSquare::getDistanceToBound() const { return this->area / 4; }
 
-const GeoPoint& GeoSquare::getCenter() const { return center; }
 
-GeoPoint GeoSquare::getNorthBound() {
+GeoPointPtr GeoSquare::getNorthBound() {
     return GeoCalculator::pointFromDirection(center, GeoPoint( - getDistanceToBound(), 0));
 }
 
-GeoPoint GeoSquare::getSouthBound() {
+GeoPointPtr GeoSquare::getSouthBound() {
     return GeoCalculator::pointFromDirection(center, GeoPoint(  getDistanceToBound(), 0));
 }
 
-GeoPoint GeoSquare::getEastBound() {
+GeoPointPtr GeoSquare::getEastBound() {
     return GeoCalculator::pointFromDirection(center, GeoPoint(0, getDistanceToBound()));
 }
 
-GeoPoint GeoSquare::getWestBound() {
+GeoPointPtr GeoSquare::getWestBound() {
     return GeoCalculator::pointFromDirection(center, GeoPoint(0, - getDistanceToBound()));
 }
 
-bool GeoSquare::contains(GeoPoint location) {
+bool GeoSquare::contains(const GeoPointPtr& location) {
 
-    if (location.getLatitude() > getNorthBound().getLatitude()) {
+    if (location->getLatitude() > getNorthBound()->getLatitude()) {
         return false;
     }
 
-    if (location.getLatitude() < getSouthBound().getLatitude()) {
+    if (location->getLatitude() < getSouthBound()->getLatitude()) {
         return false;
     }
 
-    if (location.getLongitude() > getEastBound().getLongitude()) {
+    if (location->getLongitude() > getEastBound()->getLongitude()) {
         return false;
     }
 
-    if (location.getLongitude() < getWestBound().getLongitude()) {
+    if (location->getLongitude() < getWestBound()->getLongitude()) {
         return false;
     }
 

@@ -17,7 +17,7 @@
 #ifndef NES_MATHUTILS_H
 #define NES_MATHUTILS_H
 
-namespace NES::Mobility {
+namespace NES {
 
 class MathUtils {
   public:
