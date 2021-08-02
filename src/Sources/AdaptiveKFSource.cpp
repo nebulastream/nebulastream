@@ -18,21 +18,24 @@
 
 namespace NES {
 
-AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                   NodeEngine::QueryManagerPtr queryManager, const uint64_t numberOfTuplesToProducePerBuffer,
-                                   uint64_t numBuffersToProcess, uint64_t initialFrequency, OperatorId operatorId)
-    : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency, operatorId), numBuffersToProcess(numBuffersToProcess),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(initialFrequency),
-      freqLastReceived(initialFrequency), freqRange(2), kfErrorWindow(20) {
+AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager,
+                                   Runtime::QueryManagerPtr queryManager, const uint64_t numberOfTuplesToProducePerBuffer,
+                                   uint64_t numBuffersToProcess, uint64_t initialFrequency,
+                                   const uint64_t numSourceLocalBuffers, OperatorId operatorId)
+    : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency,
+                     operatorId, numSourceLocalBuffers, GatheringMode::FREQUENCY_MODE),
+      numBuffersToProcess(numBuffersToProcess),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), freqRange(2),
+      frequency(initialFrequency), freqLastReceived(initialFrequency), kfErrorWindow(20) {
     calculateTotalEstimationErrorDivider(20);
 }
 
-const std::string AdaptiveKFSource::toString() const { return std::string(); }
+std::string AdaptiveKFSource::toString() const { return std::string(); }
 
-void AdaptiveKFSource::sampleSourceAndFillBuffer(NodeEngine::TupleBuffer& buffer) {
-    buffer;
-    return;
-}
+// TODO: fill up later, for now comment to stop cmake complaining
+//void AdaptiveKFSource::sampleSourceAndFillBuffer(Runtime::TupleBuffer& buffer) {
+//    return;
+//}
 
 void AdaptiveKFSource::decideNewGatheringInterval() {
     if (desiredFreqInRange()) {

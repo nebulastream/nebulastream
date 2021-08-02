@@ -21,8 +21,8 @@ KalmanFilter::KalmanFilter(){};
 
 KalmanFilter::KalmanFilter(double timeStep, const Eigen::MatrixXd F, const Eigen::MatrixXd H, const Eigen::MatrixXd Q,
                                                    const Eigen::MatrixXd R, const Eigen::MatrixXd P)
-    : F(F), H(H), Q(Q), R(R), P0(P), m(H.rows()), n(F.rows()), timeStep(timeStep), initialized(false),
-      I(n, n), x_hat(n), x_hat_new(n) { I.setIdentity(); }
+    : m(H.rows()), n(F.rows()), F(F), H(H), Q(Q), R(R), P0(P), I(n, n), x_hat(n),
+      x_hat_new(n), timeStep(timeStep), initialized(false) { I.setIdentity(); }
 
 void KalmanFilter::init() {
     x_hat.setZero();
