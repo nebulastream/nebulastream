@@ -17,7 +17,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/subprocess.hpp>
+#include <Util/subprocess/nesSubprocess.hpp>
 #include <boost/process.hpp>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/filestream.h>
@@ -74,28 +74,30 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     string coordinatorRPCPortCombined = "--coordinatorPort=" + coordinatorRPCPort;
     string restPortCombined = "--restPort=" + std::to_string(restPort);
 
-    subprocess::popen coordinatorProc("./nesCoordinator", {coordinatorRPCPortCombined.c_str(), restPortCombined.c_str()});
+    nesSubprocess::popen coordinatorProc("./nesCoordinator", {coordinatorRPCPortCombined.c_str(), restPortCombined.c_str()});
     NES_INFO(
-        "E2E CoordinatorSingleWorkerTest: Process started with pid:" << coordinatorProc.pid);//PID is private -> do we need that?
+        "E2E CoordinatorSingleWorkerTest: Process started with pid:" << coordinatorProc.subprocess.pid);//PID is private -> do we need that?
 
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
-    NES_INFO("started coordinator with pid = " << coordinatorProc.pid);
-    std::thread t([&coordinatorProc](){
-      std::cout << coordinatorProc.stdout().rdbuf();// to read out subprocess log
-    });
-    t.detach();
+    NES_INFO("started coordinator with pid = " << coordinatorProc.subprocess.pid);
+
+    coordinatorProc.forwardLogging();
+
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
 
     string workerRPCPortCombined = "--rpcPort=" + worker1RPCPort;
     string workerDataPortCombined = "--dataPort=" + worker1DataPort;
 
-    subprocess::popen workerProc(
+    nesSubprocess::popen workerProc(
         "./nesWorker",
         {coordinatorRPCPortCombined.c_str(), workerRPCPortCombined.c_str(), workerDataPortCombined.c_str()});
-    uint64_t coordinatorPid = coordinatorProc.pid;
-    uint64_t workerPid = workerProc.pid;
+    uint64_t coordinatorPid = coordinatorProc.subprocess.pid;
+    uint64_t workerPid = workerProc.subprocess.pid;
+    workerProc.forwardLogging();
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+
+
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -114,14 +116,14 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     NES_INFO("Killing worker process->PID: " << workerPid);
-    workerProc.killProcess();
+    workerProc.subprocess.killProcess();
     //workerProc.close();
 
     NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
 
 
 
-    coordinatorProc.killProcess();
+    coordinatorProc.subprocess.killProcess();
 
 }
 /*
