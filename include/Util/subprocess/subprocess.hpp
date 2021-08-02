@@ -1,3 +1,19 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 //
 // subprocess C++ library - https://github.com/tsaarni/cpp-subprocess
 //
@@ -25,6 +41,9 @@ namespace subprocess {
 
 class popen {
   public:
+    popen(){
+        // empty instructor needed for nesSubprocess.hpp
+    }
     popen(const std::string& cmd, std::vector<std::string> argv)
         : in_filebuf(nullptr), out_filebuf(nullptr), err_filebuf(nullptr), in_stream(nullptr), out_stream(nullptr),
           err_stream(nullptr) {
@@ -76,15 +95,15 @@ class popen {
         return WEXITSTATUS(status);
     };
 
-    int killProcess() {
-        return kill(pid, 9);
-    }
-
     void close() { in_filebuf->close(); }
 
     pid_t pid;
 
-  private:
+    int killProcess() {
+        return kill(pid, 9);
+    }
+
+private:
     enum ends_of_pipe { READ = 0, WRITE = 1 };
 
     struct raii_char_str {
