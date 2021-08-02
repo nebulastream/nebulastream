@@ -26,6 +26,7 @@ add_source_nes(
         NesThread.cpp
         WorkerContext.cpp
         LocalBufferPool.cpp
+        NodeEngineFactory.cpp
 )
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)

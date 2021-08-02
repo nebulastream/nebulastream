@@ -44,78 +44,7 @@ namespace NES::Runtime {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
-NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    return NodeEngine::create(hostname, port, std::move(config), 1, 4096, 1024, 128, 12);
-}
-
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
-
-NodeEnginePtr NodeEngine::create(const std::string& hostname,
-                                 uint16_t port,
-                                 const PhysicalStreamConfigPtr& config,
-                                 uint16_t numThreads,
-                                 uint64_t bufferSize,
-                                 uint64_t numberOfBuffersInGlobalBufferManager,
-                                 uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                 uint64_t numberOfBuffersPerPipeline) {
-    try {
-        auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
-        auto partitionManager = std::make_shared<Network::PartitionManager>();
-        auto bufferManager = std::make_shared<BufferManager>(bufferSize, numberOfBuffersInGlobalBufferManager);
-        auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
-        auto stateManager = std::make_shared<StateManager>(nodeEngineId);
-        if (!partitionManager) {
-            NES_ERROR("Runtime: error while creating partition manager");
-            throw Exception("Error while creating partition manager");
-        }
-        if (!bufferManager) {
-            NES_ERROR("Runtime: error while creating buffer manager");
-            throw Exception("Error while creating buffer manager");
-        }
-        if (!queryManager) {
-            NES_ERROR("Runtime: error while creating queryManager");
-            throw Exception("Error while creating queryManager");
-        }
-        if (!stateManager) {
-            NES_ERROR("Runtime: error while creating stateManager");
-            throw Exception("Error while creating stateManager");
-        }
-        auto compilerOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
-        compilerOptions->setNumSourceLocalBuffers(numberOfBuffersInSourceLocalBufferPool);
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
-        auto compiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
-        if (!compiler) {
-            NES_ERROR("Runtime: error while creating compiler");
-            throw Exception("Error while creating compiler");
-        }
-        auto engine = std::make_shared<NodeEngine>(
-            config,
-            std::move(bufferManager),
-            std::move(queryManager),
-            [hostname, port, numThreads](const std::shared_ptr<NodeEngine>& engine) {
-                return Network::NetworkManager::create(hostname,
-                                                       port,
-                                                       Network::ExchangeProtocol(engine->getPartitionManager(), engine),
-                                                       engine->getBufferManager(),
-                                                       numThreads);
-            },
-            std::move(partitionManager),
-            std::move(compiler),
-            std::move(stateManager),
-            nodeEngineId,
-            numberOfBuffersInGlobalBufferManager,
-            numberOfBuffersInSourceLocalBufferPool,
-            numberOfBuffersPerPipeline);
-        installGlobalErrorListener(engine);
-        return engine;
-    } catch (std::exception& err) {
-        NES_ERROR("Cannot start node engine " << err.what());
-        NES_THROW_RUNTIME_ERROR("Cant start node engine");
-    }
-    return nullptr;
-}
 
 NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        BufferManagerPtr&& bufferManager,

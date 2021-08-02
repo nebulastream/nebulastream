@@ -46,7 +46,6 @@ using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
 namespace NES::Runtime {
 
-NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
 
 /**
  * @brief this class represents the interface and entrance point into the
@@ -65,24 +64,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   public:
     enum NodeEngineQueryStatus { started, stopped, registered };
 
-    /**
-     * @brief this creates a new Runtime
-     * @param hostname the ip address for the network manager
-     * @param port the port for the network manager
-     * @param numThreads the number of worker threads for this nodeEngine
-     * @param bufferSize the buffer size for the buffer manager
-     * @param numBuffers the number of buffers for the buffer manager
-     * @return
-     */
-
-    static NodeEnginePtr create(const std::string& hostname,
-                                uint16_t port,
-                                const PhysicalStreamConfigPtr& config,
-                                uint16_t numThreads,
-                                uint64_t bufferSize,
-                                uint64_t numberOfBuffersInGlobalBufferManager,
-                                uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                uint64_t numberOfBuffersPerPipeline);
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
