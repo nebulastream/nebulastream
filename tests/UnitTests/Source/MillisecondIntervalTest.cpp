@@ -25,6 +25,7 @@
 #include <Components/NesWorker.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -93,7 +94,7 @@ class MillisecondIntervalTest : public testing::Test {
         rpcPort = rpcPort + 40;
 
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        this->nodeEngine = Runtime::create("127.0.0.1", 31337, streamConf);
+        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
         crdConf = CoordinatorConfig::create();
         crdConf->setRpcPort(rpcPort);

@@ -41,9 +41,6 @@
 
 namespace NES::Runtime {
 
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
 NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,

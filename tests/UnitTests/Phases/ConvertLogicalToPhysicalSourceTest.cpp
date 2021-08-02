@@ -25,6 +25,7 @@
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -42,7 +43,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
     void SetUp() override {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        engine = Runtime::NodeEngine::create("127.0.0.1", 9090, streamConf, 1, 4096, 1024, 12, 12);
+        engine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 9090, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     void TearDown() override {

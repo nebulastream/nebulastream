@@ -62,17 +62,17 @@ class QueryCompilerOptions {
     /**
      * @brief Returns if operator fusion is enabled.
      */
-    bool isOperatorFusionEnabled() const;
+    [[nodiscard]] bool isOperatorFusionEnabled() const;
 
     /**
      * @brief Sets desired buffer optimization strategy.
      */
-    void setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel level);
+    void setOutputBufferOptimizationLevel(QueryCompilerOptions::OutputBufferOptimizationLevel level);
 
     /**
      * @brief Returns desired buffer optimization strategy.
      */
-    OutputBufferOptimizationLevel getOutputBufferOptimizationLevel() const;
+    [[nodiscard]] QueryCompilerOptions::OutputBufferOptimizationLevel getOutputBufferOptimizationLevel() const;
 
     /**
      * @brief Sets the number of local buffers per source.

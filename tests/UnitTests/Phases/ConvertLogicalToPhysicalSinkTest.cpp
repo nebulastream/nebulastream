@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -38,7 +39,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 
     void SetUp() override {
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = Runtime::create("127.0.0.1", 12345, conf);
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 12345, conf);
     }
 
     void TearDown() override {

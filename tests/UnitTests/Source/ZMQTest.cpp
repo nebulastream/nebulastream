@@ -24,6 +24,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
@@ -50,7 +51,7 @@ class ZMQTest : public testing::Test {
     void SetUp() override {
         NES_DEBUG("Setup ZMQTest test case.");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = Runtime::create("127.0.0.1", 3001, conf);
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3001, conf);
 
         address = std::string("tcp://") + std::string(LOCAL_ADDRESS) + std::string(":") + std::to_string(LOCAL_PORT);
 

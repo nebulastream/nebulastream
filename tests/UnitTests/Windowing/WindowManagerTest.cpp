@@ -22,6 +22,7 @@
 
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -206,7 +207,7 @@ createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinitio
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::create("127.0.0.1", 31341, conf);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, conf);
 
     auto aggregation = Avg(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -298,7 +299,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::create("127.0.0.1", 31341, conf);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -392,7 +393,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::create("127.0.0.1", 31341, conf);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -476,7 +477,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::create("127.0.0.1", 31338, conf);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31338, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -557,7 +558,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::create("127.0.0.1", 31339, conf);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31339, conf);
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -643,7 +644,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::create("127.0.0.1", 31337, conf);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -728,7 +729,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::create("127.0.0.1", 31340, conf);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31340, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);

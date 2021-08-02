@@ -20,6 +20,8 @@
 namespace NES::Runtime {
 
 class NodeEngineFactory {
+  public:
+    static NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
     static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
 
     /**
