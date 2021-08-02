@@ -20,32 +20,32 @@
 namespace NES {
 
 AdaptiveKFSourceDescriptor::AdaptiveKFSourceDescriptor(SchemaPtr schema, uint64_t numberOfTuplesToProducePerBuffer,
-                                                       uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), operatorId), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      numBuffersToProcess(numBuffersToProcess), frequency(frequency){};
+                                                       uint64_t numBuffersToProcess, uint64_t frequency)
+    : SourceDescriptor(std::move(schema)), numBuffersToProcess(numBuffersToProcess),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(frequency){};
 
 AdaptiveKFSourceDescriptor::AdaptiveKFSourceDescriptor(SchemaPtr schema, std::string streamName,
                                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                                       uint64_t frequency, OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), std::move(streamName), operatorId),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numBuffersToProcess(numBuffersToProcess),
+                                                       uint64_t frequency)
+    : SourceDescriptor(std::move(schema), std::move(streamName)),
+      numBuffersToProcess(numBuffersToProcess), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
       frequency(frequency){};
 
 SourceDescriptorPtr AdaptiveKFSourceDescriptor::create(SchemaPtr schema, uint64_t numberOfTuplesToProducePerBuffer,
-                                                       uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId) {
+                                                       uint64_t numBuffersToProcess, uint64_t frequency) {
     return std::make_shared<AdaptiveKFSourceDescriptor>(AdaptiveKFSourceDescriptor(
-        std::move(schema), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, operatorId));
+        std::move(schema), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency));
 }
 
 SourceDescriptorPtr AdaptiveKFSourceDescriptor::create(SchemaPtr schema, std::string streamName,
                                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                                       uint64_t frequency, OperatorId operatorId) {
+                                                       uint64_t frequency) {
     return std::make_shared<AdaptiveKFSourceDescriptor>(
         AdaptiveKFSourceDescriptor(std::move(schema), std::move(streamName), numberOfTuplesToProducePerBuffer,
-                                   numBuffersToProcess, frequency, operatorId));
+                                   numBuffersToProcess, frequency));
 }
 
-bool AdaptiveKFSourceDescriptor::equal(SourceDescriptorPtr other) {
+bool AdaptiveKFSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<AdaptiveKFSourceDescriptor>()) {
         return false;
     }

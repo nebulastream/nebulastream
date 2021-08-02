@@ -23,12 +23,12 @@ namespace NES {
 class AdaptiveKFSourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numberOfTuplesToProducePerBuffer,
-                                      uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId);
+                                      uint64_t numBuffersToProcess, uint64_t frequency);
 
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                      uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId);
+                                      uint64_t numBuffersToProcess, uint64_t frequency);
 
-    bool equal(SourceDescriptorPtr other) override;
+    bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
 
     uint64_t getNumBuffersToProcess() const;
@@ -37,9 +37,9 @@ class AdaptiveKFSourceDescriptor : public SourceDescriptor {
 
   private:
     explicit AdaptiveKFSourceDescriptor(SchemaPtr schema, uint64_t numberOfTuplesToProducePerBuffer,
-                                        uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId);
+                                        uint64_t numBuffersToProcess, uint64_t frequency);
     explicit AdaptiveKFSourceDescriptor(SchemaPtr schema, std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                        uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId);
+                                        uint64_t numBuffersToProcess, uint64_t frequency);
 
     uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
