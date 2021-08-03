@@ -17,6 +17,7 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 #include <SerializableOperator.pb.h>
@@ -29,23 +30,28 @@ SerializableQueryPlan* QueryPlanSerializationUtil::serializeQueryPlan(const Quer
     auto* serializedQueryPlan = new SerializableQueryPlan();
     std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
     NES_TRACE("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
+
+    //Serialize Query Plan operators
     auto& serializedOperatorMap = *serializedQueryPlan->mutable_operatormap();
+    auto bfsIterator =  QueryPlanIterator(queryPlan);
+    for (auto itr = bfsIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+        auto visitingOp = (*itr)->as<OperatorNode>();
+        if (serializedOperatorMap.find(visitingOp->getId()) != serializedOperatorMap.end()) {
+            // skip rest of the steps as the operator is already serialized
+            continue;
+        }
+        NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
+        SerializableOperator* serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp);
+        serializedOperatorMap[visitingOp->getId()] = *serializeOperator;
+    }
+
+    //Serialize the root operator ids
     for (const auto& rootOperator : rootOperators) {
         u_int64_t rootOperatorId = rootOperator->getId();
         serializedQueryPlan->add_rootoperatorids(rootOperatorId);
-        auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-        for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
-            auto visitingOp = (*itr)->as<OperatorNode>();
-            if (serializedOperatorMap.find(visitingOp->getId()) != serializedOperatorMap.end()) {
-                // skip rest of the steps as the operator is already serialized
-                continue;
-            }
-            NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
-            SerializableOperator* pOperator = OperatorSerializationUtil::serializeOperator(visitingOp);
-            serializedOperatorMap[visitingOp->getId()] = *pOperator;
-        }
-
     }
+
+    //Serialize the sub query plan and query plan id
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
     serializedQueryPlan->set_querysubplanid(queryPlan->getQuerySubPlanId());
     serializedQueryPlan->set_queryid(queryPlan->getQueryId());
