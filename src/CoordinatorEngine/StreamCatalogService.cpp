@@ -36,7 +36,7 @@ StreamCatalogService::StreamCatalogService(StreamCatalogPtr streamCatalog)
 StreamCatalogService::~StreamCatalogService() { NES_DEBUG("~CoordinatorEngine()"); };
 
 
-uint64_t StreamCatalogService::registerNode(const std::string& address,
+TopologyNodePtr StreamCatalogService::registerNode(const std::string& address,
                                          int64_t grpcPort,
                                          int64_t dataPort,
                                          uint16_t numberOfSlots,
@@ -55,7 +55,7 @@ uint64_t StreamCatalogService::registerNode(const std::string& address,
 
     if (!physicalNode) {
         NES_ERROR("StreamCatalogService::RegisterNode : node not created");
-        return 0;
+        return nullptr;
     }
 
     //add default logical
@@ -85,7 +85,7 @@ uint64_t StreamCatalogService::registerNode(const std::string& address,
                             + " could not be added to catalog");
     }
 
-    return id;
+    return physicalNode;
 }
 
 
@@ -105,15 +105,15 @@ bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr physicalNode,
                                                const std::string& sourceType,
                                                const std::string& physicalStreamName,
                                                const std::string& logicalStreamName) {
-    NES_DEBUG("StreamCatalogService::RegisterPhysicalStream: try to register physical node id "
-                  << physicalNode->getId() << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);
-    std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
-
-    //TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
     if (!physicalNode) {
         NES_ERROR("StreamCatalogService::RegisterPhysicalStream node not found");
         return false;
     }
+
+    NES_DEBUG("StreamCatalogService::RegisterPhysicalStream: try to register physical node id "
+                  << physicalNode->getId() << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);
+    std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
+
     StreamCatalogEntryPtr sce =
         std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
     bool success = streamCatalog->addPhysicalStream(logicalStreamName, sce);
