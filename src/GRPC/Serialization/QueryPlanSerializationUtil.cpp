@@ -30,8 +30,10 @@ SerializableQueryPlan* QueryPlanSerializationUtil::serializeQueryPlan(const Quer
     std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
     NES_TRACE("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
     for (const auto& rootOperator : rootOperators) {
-        auto* serializedRootOperator = serializedQueryPlan->add_rootoperators();
-        OperatorSerializationUtil::serializeOperator(rootOperator, serializedRootOperator);
+        auto& serializedOperatorMap = *serializedQueryPlan->mutable_operatormap();
+
+        SerializableOperator* pOperator = OperatorSerializationUtil::serializeOperator(rootOperator);
+        serializedOperatorMap[rootOperator->getId()] = *pOperator;
     }
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
     serializedQueryPlan->set_querysubplanid(queryPlan->getQuerySubPlanId());
@@ -47,43 +49,48 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     //We use the already deserialized operator whenever available other wise we deserialize the operator and add it to the map.
     std::vector<OperatorNodePtr> rootOperators;
     std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
-    for (const auto& serializedRootOperator : serializedQueryPlan->rootoperators()) {
-        std::deque<SerializableOperator> operatorsToDeserialize;
-        NES_TRACE("QueryPlanSerializationUtil: Add root operator to the Queue for deserialization");
-        operatorsToDeserialize.push_back(serializedRootOperator);
-        while (!operatorsToDeserialize.empty()) {
-            auto operatorToDeserialize = operatorsToDeserialize.front();
-            operatorsToDeserialize.pop_front();
-            NES_TRACE("QueryPlanSerializationUtil: Deserialize operator " << operatorToDeserialize.DebugString());
-            uint64_t operatorId = operatorToDeserialize.operatorid();
-            OperatorNodePtr operatorNode;
-            if (operatorIdToOperatorMap[operatorId]) {
-                NES_TRACE("QueryPlanSerializationUtil: Operator was already deserialized previously");
-                operatorNode = operatorIdToOperatorMap[operatorId];
-            } else {
-                NES_TRACE("QueryPlanSerializationUtil: Deserializing the operator and inserting into map");
-                operatorNode = OperatorSerializationUtil::deserializeOperator(&operatorToDeserialize);
-                operatorIdToOperatorMap[operatorId] = operatorNode;
-            }
-            NES_TRACE("QueryPlanSerializationUtil: Deserializing the children operators");
-            for (auto childToDeserialize : operatorToDeserialize.children()) {
-                uint64_t childOperatorId = childToDeserialize.operatorid();
-                OperatorNodePtr childOperator;
-                if (operatorIdToOperatorMap[childOperatorId]) {
-                    childOperator = operatorIdToOperatorMap[childOperatorId];
-                } else {
-                    childOperator = OperatorSerializationUtil::deserializeOperator(&childToDeserialize);
-                    operatorIdToOperatorMap[childOperatorId] = childOperator;
-                }
-                operatorNode->addChild(childOperator);
-                NES_TRACE("QueryPlanSerializationUtil: Adding the children operators to the Queue in order to Deserializing its "
-                          "children operators");
-                operatorsToDeserialize.push_back(childToDeserialize);
-            }
-        }
-        NES_TRACE("QueryPlanSerializationUtil: Adding the deserialized root operator to the vector of roots for the query plan");
-        rootOperators.push_back(operatorIdToOperatorMap[serializedRootOperator.operatorid()]);
+
+    for (const auto &item : serializedQueryPlan->operatormap()){
+        operatorIdToOperatorMap[item.first] = OperatorSerializationUtil::deserializeOperator(item.second);
     }
+
+//    for (const auto& serializedRootOperator : serializedQueryPlan->rootoperators()) {
+//        std::deque<SerializableOperator> operatorsToDeserialize;
+//        NES_TRACE("QueryPlanSerializationUtil: Add root operator to the Queue for deserialization");
+//        operatorsToDeserialize.push_back(serializedRootOperator);
+//        while (!operatorsToDeserialize.empty()) {
+//            auto operatorToDeserialize = operatorsToDeserialize.front();
+//            operatorsToDeserialize.pop_front();
+//            NES_TRACE("QueryPlanSerializationUtil: Deserialize operator " << operatorToDeserialize.DebugString());
+//            uint64_t operatorId = operatorToDeserialize.operatorid();
+//            OperatorNodePtr operatorNode;
+//            if (operatorIdToOperatorMap[operatorId]) {
+//                NES_TRACE("QueryPlanSerializationUtil: Operator was already deserialized previously");
+//                operatorNode = operatorIdToOperatorMap[operatorId];
+//            } else {
+//                NES_TRACE("QueryPlanSerializationUtil: Deserializing the operator and inserting into map");
+//                operatorNode = OperatorSerializationUtil::deserializeOperator(&operatorToDeserialize);
+//                operatorIdToOperatorMap[operatorId] = operatorNode;
+//            }
+//            NES_TRACE("QueryPlanSerializationUtil: Deserializing the children operators");
+//            for (auto childToDeserialize : operatorToDeserialize.children()) {
+//                uint64_t childOperatorId = childToDeserialize.operatorid();
+//                OperatorNodePtr childOperator;
+//                if (operatorIdToOperatorMap[childOperatorId]) {
+//                    childOperator = operatorIdToOperatorMap[childOperatorId];
+//                } else {
+//                    childOperator = OperatorSerializationUtil::deserializeOperator(&childToDeserialize);
+//                    operatorIdToOperatorMap[childOperatorId] = childOperator;
+//                }
+//                operatorNode->addChild(childOperator);
+//                NES_TRACE("QueryPlanSerializationUtil: Adding the children operators to the Queue in order to Deserializing its "
+//                          "children operators");
+//                operatorsToDeserialize.push_back(childToDeserialize);
+//            }
+//        }
+//        NES_TRACE("QueryPlanSerializationUtil: Adding the deserialized root operator to the vector of roots for the query plan");
+//        rootOperators.push_back(operatorIdToOperatorMap[serializedRootOperator.operatorid()]);
+//    }
     uint64_t queryId = serializedQueryPlan->queryid();
     uint64_t querySubPlanId = serializedQueryPlan->querysubplanid();
     return QueryPlan::create(queryId, querySubPlanId, rootOperators);

@@ -88,9 +88,10 @@
 #endif
 
 namespace NES {
-SerializableOperator* OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode,
-                                                                   SerializableOperator* serializedOperator) {
+
+SerializableOperator* OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator " << operatorNode->toString());
+    SerializableOperator* serializedOperator = new SerializableOperator();
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // serialize source operator
         NES_TRACE("OperatorSerializationUtil:: serialize to SourceLogicalOperatorNode");
@@ -205,9 +206,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(const Operato
 
     // serialize and append children if the node has any
     for (const auto& child : operatorNode->getChildren()) {
-        auto* serializedChild = serializedOperator->add_children();
-        // serialize this child
-        serializeOperator(child->as<OperatorNode>(), serializedChild);
+        serializedOperator->add_childrenids(child->as<OperatorNode>()->getId());
     }
 
     NES_DEBUG("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to "
@@ -215,9 +214,9 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(const Operato
     return serializedOperator;
 }
 
-OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOperator* serializedOperator) {
-    NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator->DebugString());
-    auto details = serializedOperator->details();
+OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOperator serializedOperator) {
+    NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator.DebugString());
+    auto details = serializedOperator.details();
     LogicalOperatorNodePtr operatorNode;
     if (details.Is<SerializableOperator_SourceDetails>()) {
         // de-serialize source operator
@@ -311,21 +310,21 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     }
 
     // de-serialize operator output schema
-    operatorNode->setOutputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_outputschema()));
+    operatorNode->setOutputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.mutable_outputschema()));
     // de-serialize operator input schema
     if (!operatorNode->isBinaryOperator()) {
         if (operatorNode->isExchangeOperator()) {
             operatorNode->as<ExchangeOperatorNode>()->setInputSchema(
-                SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
+                SchemaSerializationUtil::deserializeSchema(serializedOperator.mutable_inputschema()));
         } else {
             operatorNode->as<UnaryOperatorNode>()->setInputSchema(
-                SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
+                SchemaSerializationUtil::deserializeSchema(serializedOperator.mutable_inputschema()));
         }
     } else {
         operatorNode->as<BinaryOperatorNode>()->setLeftInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_leftinputschema()));
+            SchemaSerializationUtil::deserializeSchema(serializedOperator.mutable_leftinputschema()));
         operatorNode->as<BinaryOperatorNode>()->setRightInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_rightinputschema()));
+            SchemaSerializationUtil::deserializeSchema(serializedOperator.mutable_rightinputschema()));
     }
 
     if (details.Is<SerializableOperator_JoinDetails>()) {
@@ -334,7 +333,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         joinOp->getJoinDefinition()->updateOutputDefinition(joinOp->getOutputSchema());
     }
 
-    NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator->DebugString() << " to "
+    NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator.DebugString() << " to "
                                                           << operatorNode->toString());
     return operatorNode;
 }

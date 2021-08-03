@@ -42,7 +42,7 @@ class OperatorSerializationUtil {
      * @param serializedParent The corresponding protobuff object, which is used to capture the state of the object.
      * @return the modified serializableOperator
      */
-    static SerializableOperator* serializeOperator(const OperatorNodePtr& operatorNode, SerializableOperator* serializedOperator);
+    static SerializableOperator* serializeOperator(const OperatorNodePtr& operatorNode);
 
     /**
      * @brief De-serializes the input SerializableOperator only
@@ -50,7 +50,7 @@ class OperatorSerializationUtil {
      * @param serializedOperator the serialized operator.
      * @return OperatorNodePtr
      */
-    static OperatorNodePtr deserializeOperator(SerializableOperator* serializedOperator);
+    static OperatorNodePtr deserializeOperator(SerializableOperator serializedOperator);
 
     /**
     * @brief Serializes an source operator and all its properties to a SerializableOperator_SourceDetails object.
