@@ -171,7 +171,7 @@ class SharedQueryPlan {
     [[nodiscard]] SharedQueryId getSharedQueryId() const;
 
     /**
-     * @brief Get all query ids part of the SharedMetaData
+     * @brief Get all query ids part of the SharedQueryPlan
      * @return vector of query ids
      */
     std::vector<QueryId> getQueryIds();
