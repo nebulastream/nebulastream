@@ -13,7 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/AdaptiveKFSource.hpp>
 
 namespace NES {
@@ -24,18 +26,24 @@ AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr b
                                    const uint64_t numSourceLocalBuffers, OperatorId operatorId)
     : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency,
                      operatorId, numSourceLocalBuffers, GatheringMode::FREQUENCY_MODE),
-      numBuffersToProcess(numBuffersToProcess),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), freqRange(2),
       frequency(initialFrequency), freqLastReceived(initialFrequency), kfErrorWindow(20) {
+    this->numBuffersToProcess = numBuffersToProcess;
     calculateTotalEstimationErrorDivider(20);
 }
 
 std::string AdaptiveKFSource::toString() const { return std::string(); }
 
-// TODO: fill up later, for now comment to stop cmake complaining
-//void AdaptiveKFSource::sampleSourceAndFillBuffer(Runtime::TupleBuffer& buffer) {
-//    return;
-//}
+uint64_t AdaptiveKFSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; };
+
+uint64_t AdaptiveKFSource::getFrequency() const { return frequency; }
+
+SourceType AdaptiveKFSource::getType() const { return ADAPTIVE_KF_SOURCE; }
+
+void AdaptiveKFSource::sampleSourceAndFillBuffer(Runtime::TupleBuffer& buf) {
+    buf.setNumberOfTuples(0);
+    return;
+}
 
 void AdaptiveKFSource::decideNewGatheringInterval() {
     if (desiredFreqInRange()) {

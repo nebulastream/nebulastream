@@ -15,7 +15,7 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sources/AdaptiveKFSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/KalmanFilter.hpp>
@@ -33,7 +33,7 @@ class AdaptiveKFTest : public testing::Test {
   public:
     SchemaPtr schema;
     PhysicalStreamConfigPtr streamConf;
-    NodeEngine::NodeEnginePtr nodeEngine;
+    Runtime::NodeEnginePtr nodeEngine;
     uint64_t tuple_size;
     uint64_t buffer_size;
     uint64_t num_of_buffers;
@@ -49,9 +49,9 @@ class AdaptiveKFTest : public testing::Test {
 
     void SetUp() override {
         NES_INFO("Setup AdaptiveKFTest class.");
-        streamConf = PhysicalStreamConfig::create();
+        streamConf = PhysicalStreamConfig::createEmpty();
         schema = Schema::create()->addField("temperature", UINT32);
-        nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        nodeEngine = Runtime::create("127.0.0.1", 31337, streamConf);
         tuple_size = schema->getSchemaSizeInBytes();
         buffer_size = nodeEngine->getBufferManager()->getBufferSize();
         num_of_buffers = 1;
@@ -60,7 +60,7 @@ class AdaptiveKFTest : public testing::Test {
         const DataSourcePtr source =
             createAdaptiveKFSource(schema, nodeEngine->getBufferManager(),
                                    nodeEngine->getQueryManager(), num_tuples_to_process,
-                                   num_of_buffers, 1, 1);
+                                   num_of_buffers, 1, 12, 1);
 
         // Fake measurements for y with noise
         measurements = {
