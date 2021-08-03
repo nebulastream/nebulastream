@@ -23,8 +23,9 @@ The serializable wrapper definition for query plan
  */
 message SerializableQueryPlan{
   map<uint64, SerializableOperator> operatorMap = 1;
-  uint64 queryId = 2;
-  uint64 querySubPlanId = 3;
+  repeated uint64 rootOperatorIds = 2;
+  uint64 queryId = 3;
+  uint64 querySubPlanId = 4;
 }
 
 message SubmitQueryRequest {
