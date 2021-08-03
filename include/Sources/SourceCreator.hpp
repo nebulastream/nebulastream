@@ -21,6 +21,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/MemorySource.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <chrono>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -296,7 +297,10 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                const std::string& topic,
                                OperatorId operatorId,
                                size_t numSourceLocalBuffers,
-                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                               MQTTSourceDescriptor::TimeUnits timeUnit = MQTTSourceDescriptor::TimeUnits::nanoseconds,
+                               MQTTSourceDescriptor::DataType dataType = MQTTSourceDescriptor::DataType::JSON,
+                               uint64_t messageDelay = 0);
 #endif
 
 }// namespace NES

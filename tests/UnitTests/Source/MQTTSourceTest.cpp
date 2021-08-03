@@ -26,6 +26,12 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
+#include <Runtime/NodeEngineFactory.hpp>
+#include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Sources/SourceCreator.hpp>
+#include <Util/Logger.hpp>
 #include <thread>
 
 #ifndef SERVERADDRESS
@@ -88,7 +94,8 @@ class MQTTSourceTest : public testing::Test {
  */
 TEST_F(MQTTSourceTest, MQTTSourceInit) {
 
-    auto mqttSource = createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, 1, 12, {});
+    auto mqttSource = createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, 1, 12, {}, MQTTSourceDescriptor::TimeUnits::nanoseconds,
+    MQTTSourceDescriptor::DataType::JSON, 0);
 
     SUCCEED();
 }
@@ -98,11 +105,13 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
  */
 TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 
-    auto mqttSource = createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, 1, 12, {});
+    auto mqttSource = createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, 1, 12, {}, MQTTSourceDescriptor::TimeUnits::nanoseconds,
+                                       MQTTSourceDescriptor::DataType::JSON, 0);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
-                           "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry. ";
+                           "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry, "
+                           "DATATYPE=0, TIMEUNITS=0, MESSAGEDELAY=0. ";
 
     EXPECT_EQ(mqttSource->toString(), expected);
 

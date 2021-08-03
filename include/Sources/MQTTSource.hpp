@@ -58,6 +58,8 @@ class MQTTSource : public DataSource {
                         std::string const& clientId,
                         std::string const& user,
                         std::string const& topic,
+                        uint64_t numberOfTuplesToProducePerBuffer,
+                        uint64_t numberOfBuffersToProcess,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
@@ -83,7 +85,7 @@ class MQTTSource : public DataSource {
      * @param buf buffer to be filled
      * @param data the received data as string
      */
-    void fillBuffer(Runtime::TupleBuffer& buf, std::string& data, uint64_t tupCnt);
+    void fillBuffer(Runtime::TupleBuffer& buf);
 
     /**
      * @brief override the toString method for the mqtt source
@@ -172,7 +174,8 @@ class MQTTSource : public DataSource {
     uint64_t tupleSize;
     std::chrono::duration<int64_t, std::ratio<1, 1000000000>> minDelayBetweenSends{};
     uint64_t messageDelay;
-
+    uint64_t numberOfTuplesToProducePerBuffer;
+    uint64_t numberOfBuffersToProcess;
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;
