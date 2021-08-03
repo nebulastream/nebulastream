@@ -15,6 +15,7 @@
 */
 
 #include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
+#include <string>
 
 namespace NES {
 

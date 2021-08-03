@@ -53,7 +53,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
         this->watermarkProcessor = MultiOriginWatermarkProcessor::create(this->windowDefinition->getNumberOfInputEdges());
     }
 
-    ~AbstractWindowHandler() noexcept(false) override = default;
+    ~AbstractWindowHandler() NES_NOEXCEPT(false) override = default;
 
     template<class Type>
     auto as() {

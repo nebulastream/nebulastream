@@ -23,6 +23,8 @@ namespace NES {
 // TODO this might change across OS
 #if defined(__linux__)
 static constexpr auto MANGELED_ENTRY_POINT = "_ZN3NES6createEv";
+#elif defined(__APPLE__)
+static constexpr auto MANGELED_ENTRY_POINT = "_ZN3NES6createEv";
 #else
 #error "unsupported platform/OS"
 #endif

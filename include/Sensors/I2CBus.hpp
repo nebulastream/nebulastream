@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_I2C_BUS_HPP_
 #define NES_INCLUDE_I2C_BUS_HPP_
-
+#ifdef __linux__
 #include <linux/i2c-dev.h>
 #include <linux/i2c.h>
 #include <sys/ioctl.h>
@@ -73,4 +73,5 @@ using I2CBusPtr = std::shared_ptr<I2CBus>;
 
 }//namespace Sensors
 }//namespace NES
+#endif
 #endif//NES_INCLUDE_I2C_BUS_HPP_
