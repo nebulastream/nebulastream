@@ -90,12 +90,12 @@ void NESRequestProcessorService::start() {
                 NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
                 globalQueryPlanUpdatePhase->execute(nesRequests);
 
-                auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-                for (const auto& sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
-                    SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
+                auto sharedQueryPlanToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+                for (const auto& sharedQueryPlan : sharedQueryPlanToDeploy) {
+                    SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
-                    if (!sharedQueryMetaData->isNew()) {
+                    if (!sharedQueryPlan->isNew()) {
                         NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
                         bool successful = queryUndeploymentPhase->execute(sharedQueryId);
                         if (!successful) {
@@ -103,8 +103,8 @@ void NESRequestProcessorService::start() {
                         }
                     }
 
-                    if (!sharedQueryMetaData->isEmpty()) {
-                        auto queryPlan = sharedQueryMetaData->getQueryPlan();
+                    if (!sharedQueryPlan->isEmpty()) {
+                        auto queryPlan = sharedQueryPlan->getQueryPlan();
                         NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query with shared query id : "
                                   << sharedQueryId);
 
@@ -125,8 +125,8 @@ void NESRequestProcessorService::start() {
                         }
                     }
                     //Mark the meta data as deployed
-                    sharedQueryMetaData->markAsDeployed();
-                    sharedQueryMetaData->setAsOld();
+                    sharedQueryPlan->markAsDeployed();
+                    sharedQueryPlan->setAsOld();
                 }
 
                 for (const auto& queryRequest : nesRequests) {
