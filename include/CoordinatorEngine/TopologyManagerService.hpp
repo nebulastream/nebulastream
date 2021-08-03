@@ -27,6 +27,8 @@ class StreamCatalog;
 using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class NodeStats;
 using NodeStatsPtr = std::shared_ptr<NodeStats>;
 
@@ -43,7 +45,7 @@ class TopologyManagerService {
     * @param nodeProperties of the to be added sensor
     * @return id of node
     */
-    uint64_t registerNode(const std::string& address,
+    TopologyNodePtr registerNode(const std::string& address,
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
@@ -72,7 +74,6 @@ class TopologyManagerService {
     bool removeParent(uint64_t childId, uint64_t parentId);
 
   private:
-    StreamCatalogPtr streamCatalog;
     TopologyPtr topology;
     std::mutex registerDeregisterNode;
 };

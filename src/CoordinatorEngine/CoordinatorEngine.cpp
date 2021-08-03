@@ -55,16 +55,28 @@ uint64_t CoordinatorEngine::registerNode(const std::string& address,
         return false;
     }
 
-    //get unique id for the new node
-    uint64_t id;
-
     TopologyNodePtr physicalNode;
     if (type == NodeType::Sensor) {
-        id = streamCatalogService.registerNode(address, grpcPort, dataPort, numberOfSlots, nodeStats);
+        physicalNode = streamCatalogService.registerNode(address, grpcPort, dataPort, numberOfSlots, nodeStats);
     } else if (type == NodeType::Worker) {
-        id = topologyManagerService.registerNode(address, grpcPort, dataPort, numberOfSlots, nodeStats);
+        physicalNode = topologyManagerService.registerNode(address, grpcPort, dataPort, numberOfSlots, nodeStats);
     } else {
         NES_THROW_RUNTIME_ERROR("CoordinatorEngine::registerNode type not supported ");
+    }
+    //TODO: this has to be refactored #1971
+    //    if (nodeStats->IsInitialized()) {
+    //        physicalNode->setNodeStats(std::make_shared<NodeStats>());
+    //    }
+
+    uint64_t id = physicalNode->getId();
+    const TopologyNodePtr rootNode = topology->getRoot();
+
+    if (!rootNode) {
+        NES_DEBUG("CoordinatorEngine::registerNode: tree is empty so this becomes new root");
+        topology->setAsRoot(physicalNode);
+    } else {
+        NES_DEBUG("CoordinatorEngine::registerNode: add link to the root node " << rootNode->toString());
+        topology->addNewPhysicalNodeAsChild(rootNode, physicalNode);
     }
 
     NES_DEBUG("CoordinatorEngine::registerNode: topology after insert = ");
