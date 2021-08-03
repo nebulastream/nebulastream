@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
-
+#include <Runtime/NodeEngineFactory.hpp>
 #include <API/Schema.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>

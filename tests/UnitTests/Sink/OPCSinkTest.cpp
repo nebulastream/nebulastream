@@ -31,6 +31,7 @@
 #include <string>
 #include <thread>
 
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <future>
 
