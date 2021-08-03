@@ -48,10 +48,12 @@ const uint32_t NANO_TO_SECONDS_MULTIPLIER = 1000000000;
 MQTTSource::MQTTSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
-                       const std::string& serverAddress,
-                       const std::string& clientId,
-                       const std::string& user,
-                       const std::string& topic,
+                       std::string const& serverAddress,
+                       std::string const& clientId,
+                       std::string const& user,
+                       std::string const& topic,
+                       uint64_t numberOfTuplesToProducePerBuffer,
+                       uint64_t numberOfBuffersToProcess,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
@@ -66,8 +68,10 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(executableSuccessors)),
-      connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic), dataType(dataType),
-      client(std::make_shared<mqtt::async_client>(serverAddress, clientId)), tupleSize(schema->getSchemaSizeInBytes()) {
+      connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic),
+      dataType(dataType), client(std::make_shared<mqtt::async_client>(serverAddress, clientId)),
+      tupleSize(schema->getSchemaSizeInBytes()),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numberOfBuffersToProcess(numberOfBuffersToProcess) {
 
     minDelayBetweenSends =
         std::chrono::nanoseconds(messageDelay
@@ -94,39 +98,17 @@ MQTTSource::~MQTTSource() {
 std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
     NES_DEBUG("MQTTSource  " << this << ": receiveData ");
 
+    auto buffer = bufferManager->getBufferBlocking();
     if (connect()) {
-        try {
-            NES_DEBUG("Waiting for messages on topic: '" << topic << "'");
-
-            auto buffer = bufferManager->getBufferBlocking();
-            uint64_t tupCnt = 1;
-            uint64_t tuplesToGenerate = buffer.getBufferSize() / getTupleSize();
-            while (connected) {
-                //ToDo: handle what happens if no data arrives
-                auto msg = client->consume_message();
-                NES_DEBUG("Client consume message: '" << msg->get_payload_str() << "'");
-                fillBuffer(buffer, const_cast<string&>(msg->get_payload_str()), tupCnt);
-                tupCnt++;
-                if (tuplesToGenerate == tupCnt){
-                    tupCnt = 1;
-                    return buffer;
-                }
-                std::this_thread::sleep_for(minDelayBetweenSends);
-
-                //TODO: keep inside loop
-            }
-        } catch (const mqtt::exception& exc) {
-            NES_ERROR("MQTTSource error: " << exc.what());
-            return std::nullopt;
-        } catch (...) {
-            NES_ERROR("MQTTSource general error");
-            return std::nullopt;
-        }
+            fillBuffer(buffer);
     } else {
         NES_ERROR("MQTTSource: Not connected!");
         return std::nullopt;
     }
-    return std::nullopt;
+    if (buffer.getNumberOfTuples() == 0){
+        return std::nullopt;
+    }
+    return buffer;
 }
 
 std::string MQTTSource::toString() const {
@@ -136,13 +118,24 @@ std::string MQTTSource::toString() const {
     ss << "SERVERADDRESS=" << serverAddress << ", ";
     ss << "CLIENTID=" << clientId << ", ";
     ss << "USER=" << user << ", ";
-    ss << "TOPIC=" << topic << ". ";
+    ss << "TOPIC=" << topic << ", ";
+    ss << "DATATYPE=" << dataType << ", ";
+    ss << "TIMEUNITS=" << timeUnit << ", ";
+    ss << "MESSAGEDELAY=" << messageDelay << ". ";
     return ss.str();
 }
 
-void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf, std::string& data, uint64_t tupCnt) {
+void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
 
-    NES_DEBUG("Client consume message: '" << data << "' as data type: " << dataType << ".");
+    uint64_t generatedTuplesThisPass = 0;
+    //fill buffer maximally
+    if (numberOfTuplesToProducePerBuffer == 0) {
+        generatedTuplesThisPass = buf.getBufferSize() / tupleSize;
+    } else {
+        generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
+        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buf.getBufferSize(), "Wrong parameters");
+    }
+    NES_DEBUG("MQTTSource::fillBuffer: fill buffer with #tuples=" << generatedTuplesThisPass << " of size=" << tupleSize);
 
     //init physical types
     std::vector<PhysicalTypePtr> physicalTypes;
@@ -151,71 +144,92 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf, std::string& data, uint64
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
     }
-    //init offset
-    uint64_t offset = 0;
-    NES_TRACE("MQTTSource line=" << tupCnt << " val=" << data);
 
-    //init tokens
-    std::vector<std::string> tokens;
-    if (getDataType() == MQTTSourceDescriptor::JSON) {
-        std::vector<std::string> helperToken;
-        helperToken = UtilityFunctions::splitWithStringDelimiter(data, ":");
-        for (int i = 1; i < (int) tokens.size(); i += 2) {
-            tokens.push_back(helperToken[i].substr(0, tokens.size()-1));
+    uint64_t tupCnt = 0;
+    uint64_t tuplesToGenerate = buf.getBufferSize() / getTupleSize();
+    while (tupCnt < generatedTuplesThisPass) {
+        //ToDo: handle what happens if no data arrives
+        std::string data = "";
+        try {
+            NES_DEBUG("Waiting for messages on topic: '" << topic << "'");
+            auto msg = client->consume_message();
+            NES_DEBUG("Client consume message: '" << msg->get_payload_str() << "'");
+            data = msg->get_payload_str();
+        } catch (const mqtt::exception& exc) {
+            NES_ERROR("MQTTSource error: " << exc.what());
+        } catch (...) {
+            NES_ERROR("MQTTSource general error");
         }
-    }
-
-    for (uint64_t j = 0; j < schema->getSize(); j++) {
-        auto field = physicalTypes[j];
-        uint64_t fieldSize = field->size();
-
-        NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
-                        "Overflow detected: buffer size = " << buf.getBufferSize() << " position = "
-                                                            << (offset + tupCnt * tupleSize) << " field size " << fieldSize);
-        //ToDO change layout according to new memory layout
-        if (field->isBasicType()) {
-            NES_ASSERT2_FMT(!tokens[j].empty(), "Field cannot be empty if basic type");
-            auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
-            if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_64) {
-                uint64_t val = std::stoull(tokens[j]);
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-            } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_64) {
-                int64_t val = std::stoll(tokens[j]);
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-            } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_32) {
-                uint32_t val = static_cast<uint32_t>(std::stoul(tokens[j]));
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-            } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_32) {
-                int32_t val = static_cast<int32_t>(std::stol(tokens[j]));
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-            } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_16) {
-                uint16_t val = static_cast<uint16_t>(std::stol(tokens[j]));
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-            } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_16) {
-                int16_t val = static_cast<int16_t>(std::stol(tokens[j]));
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-            } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_8) {
-                uint8_t val = static_cast<uint8_t>(std::stoi(tokens[j]));
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-            } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_8) {
-                int8_t val = static_cast<int8_t>(std::stoi(tokens[j]));
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-            } else if (basicPhysicalField->nativeType == BasicPhysicalType::DOUBLE) {
-                double val = std::stod(tokens[j]);
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-            } else if (basicPhysicalField->nativeType == BasicPhysicalType::FLOAT) {
-                float val = std::stof(tokens[j]);
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-            } else if (basicPhysicalField->nativeType == BasicPhysicalType::BOOLEAN) {
-                bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 || atoi(tokens[j].c_str()) != 0);
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+        //init offset
+        uint64_t offset = 0;
+        NES_TRACE("MQTTSource line=" << tupCnt << " val=" << data);
+        //init tokens
+        std::vector<std::string> tokens;
+        if (getDataType() == MQTTSourceDescriptor::JSON) {
+            std::vector<std::string> helperToken;
+            helperToken = UtilityFunctions::splitWithStringDelimiter(data, ":");
+            for (int i = 1; i < (int) tokens.size(); i += 2) {
+                tokens.push_back(helperToken[i].substr(0, tokens.size() - 1));
             }
-        } else {
-            memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, tokens[j].c_str(), fieldSize);
         }
 
-        offset += fieldSize;
-    }
+        for (uint64_t j = 0; j < schema->getSize(); j++) {
+            auto field = physicalTypes[j];
+            uint64_t fieldSize = field->size();
+
+            NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
+                            "Overflow detected: buffer size = " << buf.getBufferSize() << " position = "
+                                                                << (offset + tupCnt * tupleSize) << " field size " << fieldSize);
+            //ToDO change layout according to new memory layout
+            if (field->isBasicType()) {
+                NES_ASSERT2_FMT(!tokens[j].empty(), "Field cannot be empty if basic type");
+                auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
+                if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_64) {
+                    uint64_t val = std::stoull(tokens[j]);
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_64) {
+                    int64_t val = std::stoll(tokens[j]);
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_32) {
+                    uint32_t val = static_cast<uint32_t>(std::stoul(tokens[j]));
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_32) {
+                    int32_t val = static_cast<int32_t>(std::stol(tokens[j]));
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_16) {
+                    uint16_t val = static_cast<uint16_t>(std::stol(tokens[j]));
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_16) {
+                    int16_t val = static_cast<int16_t>(std::stol(tokens[j]));
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_8) {
+                    uint8_t val = static_cast<uint8_t>(std::stoi(tokens[j]));
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_8) {
+                    int8_t val = static_cast<int8_t>(std::stoi(tokens[j]));
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::DOUBLE) {
+                    double val = std::stod(tokens[j]);
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::FLOAT) {
+                    float val = std::stof(tokens[j]);
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::BOOLEAN) {
+                    bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 || atoi(tokens[j].c_str()) != 0);
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                }
+            } else {
+                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, tokens[j].c_str(), fieldSize);
+            }
+
+            offset += fieldSize;
+        }
+        tupCnt++;
+        std::this_thread::sleep_for(minDelayBetweenSends);
+    }//end of while
+    buf.setNumberOfTuples(tupCnt);
+    generatedTuples += tupCnt;
+    generatedBuffers++;
 }
 
 bool MQTTSource::connect() {
