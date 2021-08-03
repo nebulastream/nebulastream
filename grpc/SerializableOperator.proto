@@ -409,11 +409,10 @@ message SerializableOperator{
   }
 
   google.protobuf.Any details = 1;
-  repeated SerializableOperator children = 2;
+  repeated uint64 childrenIds = 2;
   SerializableSchema inputSchema = 3;
   SerializableSchema outputSchema = 4;
   SerializableSchema leftInputSchema = 5;
   SerializableSchema rightInputSchema = 6;
-
   uint64 operatorId = 7;
 }
