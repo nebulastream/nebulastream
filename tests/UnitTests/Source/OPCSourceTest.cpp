@@ -27,6 +27,7 @@
 #include <open62541/server_config_default.h>
 
 #include <API/Schema.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
