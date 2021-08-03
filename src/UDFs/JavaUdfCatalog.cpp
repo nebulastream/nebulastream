@@ -1,0 +1,67 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <string>
+
+#include "UDFs/JavaUdfCatalog.hpp"
+#include "UDFs/UdfException.hpp"
+#include "Util/Logger.hpp"
+
+using namespace NES;
+
+// TODO comment about Clang-tidy
+void JavaUdfCatalog::registerJavaUdf(const std::string& name, JavaUdfImplementationPtr implementation) {
+    NES_DEBUG("Registering Java UDF '" << name << "'");
+    if (implementation == nullptr) {
+        throw UdfException("Java UDF implementation must not be null");
+    }
+    if (auto success = udf_store_.insert({name, implementation}).second; !success) {
+        std::stringstream ss;
+        ss << "Java UDF '" << name << "' already exists";
+        throw UdfException(ss.str());
+    }
+}
+
+JavaUdfImplementationPtr JavaUdfCatalog::getUdfImplementation(const std::string& name) {
+    NES_DEBUG("Looking up implementation for Java UDF '" << name << "'");
+    auto entry = udf_store_.find(name);
+    if (entry == udf_store_.end()) {
+        NES_DEBUG("Java UDF '" << name << "' does not exist");
+        return nullptr;
+    }
+    return entry->second;
+}
+
+bool JavaUdfCatalog::removeUdf(const std::string& name) {
+    NES_DEBUG("Removing Java UDF '" << name << "'");
+    auto entry = udf_store_.find(name);
+    if (entry == udf_store_.end()) {
+        NES_DEBUG("Did not find Java UDF '" << name << "'");
+        return false;
+    }
+    udf_store_.erase(entry);
+    return true;
+}
+
+const std::vector<std::string> JavaUdfCatalog::listUdfs() const {
+    NES_DEBUG("Listing names of Java UDFs");
+    auto list = std::vector<std::string> {};
+    list.reserve(udf_store_.size());
+    for (const auto& [key, _] : udf_store_) {
+        list.push_back(key);
+    }
+    return list;
+}

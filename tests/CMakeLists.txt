@@ -81,6 +81,10 @@ message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}")
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
 
+add_executable(udf-test "UnitTests/UDFs/JavaUdfCatalogTest.cpp")
+target_link_libraries(udf-test nes ${GTEST_LIBRARIES})
+add_test(NAME udf-test COMMAND udf-test)
+
 add_executable(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
 target_link_libraries(compiler-test nes ${GTEST_LIBRARIES})
 add_test(NAME compiler-test COMMAND compiler-test)
