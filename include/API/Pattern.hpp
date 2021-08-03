@@ -85,7 +85,8 @@ class Pattern : public Query {
   private:
     // creates a new pattern object
     Pattern(QueryPlanPtr queryPlan);
-
+    // query plan containing the operators.
+    QueryPlanPtr queryPlan;
     std::string patternName;
 };
 

@@ -24,6 +24,9 @@ namespace NES {
 class Query;
 using QueryPtr = std::shared_ptr<Query>;
 
+class Pattern;
+using PatternPtr = std::shared_ptr<Pattern>;
+
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
@@ -52,6 +55,11 @@ class SyntacticQueryValidation {
      * @brief Checks the syntactic validity of a Query string and returns the created Query object
      */
     QueryPtr checkValidityAndGetQuery(const std::string& inputQuery);
+
+    /**
+     * @brief Checks the syntactic validity of a pattern string and returns the created pattern object
+     */
+    PatternPtr checkValidityAndGetPattern(const std::string& inputQuery);
 
   private:
     QueryParsingServicePtr queryParsingService;

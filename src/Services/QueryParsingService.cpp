@@ -80,30 +80,14 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
         throw InvalidQueryException("Queries are not allowed to define schemas anymore");
     }
 
-    bool pattern = queryCodeSnippet.find("Pattern::") != std::string::npos;
     bool merge = queryCodeSnippet.find(".unionWith") != std::string::npos;
     try {
-        /* translate user code to a shared library, load and execute function, then return query object */
-        std::stringstream code;
-        code << "#include <API/Query.hpp>" << std::endl;
-        code << "#include <API/Pattern.hpp>" << std::endl;
-        code << "#include <API/Schema.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
-        code << "#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
-        code << "#include <Sources/DataSource.hpp>" << std::endl;
-        code << "using namespace NES::API;" << std::endl;
-        code << "namespace NES{" << std::endl;
+        /* translate user code to a shared library*/
+        std::stringstream code = translateUserCodeToSharedLibrary("query");
         code << "Query createQuery(){" << std::endl;
-
-        std::string streamName = queryCodeSnippet.substr(queryCodeSnippet.find("::from("));
-        streamName = streamName.substr(7, streamName.find(')') - 7);
-        NES_DEBUG(" UtilityFunctions: stream name = " << streamName);
+        /* load and execute function, then return query object */
+        // get the name of the queried stream
+        std::string streamName = getStreamNameFromCodeString(queryCodeSnippet);
 
         std::string newQuery = queryCodeSnippet;
 
@@ -117,13 +101,8 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
             NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
         }
 
-        // add return statement in front of input query/pattern
-        //if pattern
-        if (pattern) {
-            UtilityFunctions::findAndReplaceAll(newQuery, "Pattern::from", "return Pattern::from");
-        } else {// if Query
-            newQuery = UtilityFunctions::replaceFirst(newQuery, "Query::from", "return Query::from");
-        }
+        // add return statement in front of input query
+        newQuery = UtilityFunctions::replaceFirst(newQuery, "Query::from", "return Query::from");
 
         NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
         code << newQuery << std::endl;
@@ -156,6 +135,69 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
     }
 }
 
+PatternPtr QueryParsingService::createPatternFromCodeString(const std::string& queryCodeSnippet){
+
+    if (queryCodeSnippet.find("Stream(") != std::string::npos || queryCodeSnippet.find("Schema::create()") != std::string::npos) {
+        NES_ERROR("QueryCatalog: queries are not allowed to specify schemas anymore.");
+        throw InvalidQueryException("Queries are not allowed to define schemas anymore");
+    }
+
+    bool merge = queryCodeSnippet.find(".unionWith") != std::string::npos;
+    try {
+        /* translate user code to a shared library*/
+        std::stringstream code = translateUserCodeToSharedLibrary("pattern");
+        code << "Pattern createPattern(){" << std::endl;
+        /* load and execute function, then return query object */
+        // get the name of the queried stream
+        std::string streamName = getStreamNameFromCodeString(queryCodeSnippet);
+
+        std::string newPattern = queryCodeSnippet;
+
+        if (merge) {//if contains merge
+            auto pos1 = queryCodeSnippet.find("unionWith(");
+            uint64_t closingLoc = findSubQueryTermination(pos1, queryCodeSnippet);
+            std::string subquery = queryCodeSnippet.substr(pos1 + 10, closingLoc - pos1 - 10);
+            NES_DEBUG("UtilityFunctions: subquery = " << subquery);
+            code << "auto subQuery = " << subquery << ";" << std::endl;
+            newPattern.replace(pos1, closingLoc - pos1, "unionWith(&subQuery");
+            NES_DEBUG("UtilityFunctions: newQuery = " << newPattern);
+        }
+
+        // add return statement in front of input pattern
+        UtilityFunctions::findAndReplaceAll(newPattern, "Pattern::from", "return Pattern::from");
+
+        NES_DEBUG("UtilityFunctions: parsed pattern = " << newPattern);
+        code << newPattern << std::endl;
+        code << "}" << std::endl;
+        code << "}" << std::endl;
+        NES_DEBUG("UtilityFunctions: pattern code \n" << code.str());
+        auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code.str());
+        auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "pattern", false, false, false, true);
+        auto result = jitCompiler->compile(std::move(request));
+        auto compiled_code = result.get().getDynamicObject();
+        if (!code) {
+            NES_ERROR("Compilation of pattern code failed! Code: " << code.str());
+        }
+
+        using CreatePatternFunctionPtr = Pattern (*)();
+        auto func = compiled_code->getInvocableMember<CreatePatternFunctionPtr>("_ZN3NES11createPatternEv");
+        if (!func) {
+            NES_ERROR("UtilityFunctions: Error retrieving function! Symbol not found!");
+        }
+        /* call loaded function to create pattern object */
+        Pattern pattern((*func)());
+
+        return std::make_shared<Pattern>(pattern);
+    } catch (std::exception& exc) {
+        NES_ERROR("UtilityFunctions: Failed to create the pattern from input code string: " << queryCodeSnippet << exc.what());
+        throw;
+    } catch (...) {
+        NES_ERROR("UtilityFunctions: Failed to create the pattern from input code string: " << queryCodeSnippet);
+        throw "Failed to create the query from input code string";
+    }
+
+}
+
 uint64_t QueryParsingService::findSubQueryTermination(uint64_t startOfUnionWith, const std::string& queryCodeSnippet) {
     uint64_t closingLoc = 0;
     uint64_t parenthesisCount = 0;
@@ -174,6 +216,36 @@ uint64_t QueryParsingService::findSubQueryTermination(uint64_t startOfUnionWith,
     }
     //return the location where the parenthesis are getting balanced
     return closingLoc;
+}
+
+std::stringstream QueryParsingService::translateUserCodeToSharedLibrary(std::string type) {
+    std::stringstream code;
+    if (type=="query"){
+        code << "#include <API/Query.hpp>" << std::endl;
+    }
+    else if(type=="pattern"){
+        code << "#include <API/Pattern.hpp>" << std::endl;
+    }
+    code << "#include <API/Schema.hpp>" << std::endl;
+    code << "#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
+    code << "#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
+    code << "#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
+    code << "#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
+    code << "#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>" << std::endl;
+    code << "#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>" << std::endl;
+    code << "#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
+    code << "#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
+    code << "#include <Sources/DataSource.hpp>" << std::endl;
+    code << "using namespace NES::API;" << std::endl;
+    code << "namespace NES{" << std::endl;
+
+    return code;
+}
+std::string QueryParsingService::getStreamNameFromCodeString(const std::string& queryCodeSnippet) {
+    std::string streamName = queryCodeSnippet.substr(queryCodeSnippet.find("::from("));
+    streamName = streamName.substr(7, streamName.find(')') - 7);
+    NES_DEBUG(" UtilityFunctions: stream name = " << streamName);
+    return streamName;
 }
 
 }// namespace NES

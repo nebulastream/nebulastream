@@ -24,11 +24,11 @@
 
 namespace NES {
 
-Pattern::Pattern(const Pattern& query) : Query(query.queryPlan) {
+Pattern::Pattern(const Pattern& pattern) : Query(pattern.queryPlan) {
     NES_DEBUG("Pattern: copy constructor: handover Pattern to Query");
 }
 
-Pattern::Pattern(QueryPlanPtr queryPlan) : Query(std::move(queryPlan)) {
+Pattern::Pattern(QueryPlanPtr queryPlan) : Query(queryPlan) {
     NES_DEBUG("Pattern: copy constructor: handover Pattern to Query");
 }
 
