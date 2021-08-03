@@ -15,7 +15,6 @@
 */
 
 #include <Exceptions/InvalidQueryException.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 
@@ -32,7 +31,13 @@ void SyntacticQueryValidation::checkValidity(const std::string& inputQuery) {
     try {
         // Compiling the query string to an object
         // If it's unsuccessful, the validity check fails
-        QueryPtr query = queryParsingService->createQueryFromCodeString(inputQuery);
+        bool pattern = inputQuery.find("Pattern::") != std::string::npos;
+        if(!pattern) {
+            QueryPtr query = queryParsingService->createQueryFromCodeString(inputQuery);
+        }
+        else{
+            PatternPtr pattern = queryParsingService->createPatternFromCodeString(inputQuery);
+        }
     } catch (const std::exception& ex) {
         handleException(ex);
     }
@@ -50,6 +55,20 @@ NES::QueryPtr SyntacticQueryValidation::checkValidityAndGetQuery(const std::stri
         handleException(ex);
     }
     return query;
+}
+
+NES::PatternPtr SyntacticQueryValidation::checkValidityAndGetPattern(const std::string& inputPattern) {
+    NES::PatternPtr pattern;
+    try {
+        // Compiling the pattern string to an object
+        // If it's unsuccessful, the validity check fails
+        // If it's successful, we return the created object
+        pattern = queryParsingService->createPatternFromCodeString(inputPattern);
+        return pattern;
+    } catch (const std::exception& ex) {
+        handleException(ex);
+    }
+    return pattern;
 }
 
 void SyntacticQueryValidation::handleException(const std::exception& ex) {
