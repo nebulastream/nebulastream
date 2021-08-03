@@ -47,13 +47,13 @@ ZmqSource::ZmqSource(SchemaPtr schema,
     NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
 }
 
-ZmqSource::~ZmqSource() noexcept(false) {
+ZmqSource::~ZmqSource() NES_NOEXCEPT(false) {
     NES_DEBUG("ZmqSource::~ZmqSource()");
     bool success = disconnect();
     if (success) {
         NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source");
     } else {
-        NES_THROW_RUNTIME_ERROR("ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected");
+        NES_ASSERT2_FMT(false, "ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected");
     }
     NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source");
 }

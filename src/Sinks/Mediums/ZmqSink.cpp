@@ -46,7 +46,7 @@ ZmqSink::~ZmqSink() {
     } else {
         /// XXX:
         NES_ERROR("ZmqSink  " << this << ": Destroy ZMQ Sink failed cause it could not be disconnected");
-        throw Exception("ZMQ Sink destruction failed");
+        NES_ASSERT2_FMT(false, "ZMQ Sink destruction failed");
     }
     NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
 }

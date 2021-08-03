@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 3.18.0)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v1)
-set(VCPKG_TARGET_TRIPLET x64-linux-nes)
+set(VCPKG_TARGET_TRIPLET x64-osx-nes)
 function(download_file url filename hash_type hash)
     message("Download: ${url}")
     if (NOT EXISTS ${filename})

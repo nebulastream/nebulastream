@@ -33,7 +33,7 @@ class DataEmitter : public detail::virtual_enable_shared_from_this<DataEmitter, 
      */
     virtual void emitWork(Runtime::TupleBuffer& buffer) = 0;
 
-    virtual ~DataEmitter() noexcept(false) = default;
+    virtual ~DataEmitter() NES_NOEXCEPT(false) = default;
 };
 }// namespace NES
 #endif//NES_INCLUDE_NODEENGINE_EXECUTION_DATAEMITTER_HPP_

@@ -27,9 +27,9 @@ namespace NES::Windowing {
  */
 class WindowOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
-    WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
+    explicit WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
 
-    WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition,
+    explicit WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition,
                           SchemaPtr resultSchema,
                           AbstractWindowHandlerPtr windowHandler);
 

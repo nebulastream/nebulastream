@@ -51,7 +51,7 @@ class ZmqSource : public DataSource {
      * @brief destructor of zmq sink that disconnects the queue before deconstruction
      * @note if queue cannot be disconnected, an assertion is raised
      */
-    ~ZmqSource() noexcept(false) override;
+    ~ZmqSource() NES_NOEXCEPT(false) override;
 
     /**
      * @brief blocking method to receive a buffer from the zmq source

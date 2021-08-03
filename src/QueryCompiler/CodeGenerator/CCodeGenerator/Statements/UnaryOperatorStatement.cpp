@@ -20,6 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <Util/Logger.hpp>
+#include <array>
 
 namespace NES::QueryCompilation {
 std::string toString(const UnaryOperatorType& type) {

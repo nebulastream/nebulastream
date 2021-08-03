@@ -47,7 +47,15 @@ void setThreadName(const char* threadNameFmt, ...) {
     MDC::put("threadName", thName);
 
 #ifdef HAS_POSIX_THREAD
+#ifdef __linux__
     pthread_setname_np(pthread_self(), resized_buffer);
+#elif defined(__APPLE__)
+    pthread_setname_np(resized_buffer);
+#else
+#error "Unsupported OS"
+#endif
+#else
+#error "Unsupported Thread Library"
 #endif
     va_end(args);
 }

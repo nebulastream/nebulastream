@@ -27,8 +27,9 @@ namespace NES::Join {
  */
 class JoinOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
-    JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema);
-    JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr joinHandler);
+    explicit JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema);
+    explicit JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr joinHandler);
+
 
     /**
     * @brief Factory to create new JoinOperatorHandler
@@ -52,8 +53,6 @@ class JoinOperatorHandler : public Runtime::Execution::OperatorHandler {
      * @param joinHandler AbstractJoinHandlerPtr
      */
     void setJoinHandler(AbstractJoinHandlerPtr joinHandler);
-
-    ~JoinOperatorHandler() override { NES_DEBUG("~JoinOperatorHandler()"); }
 
     /**
      * @brief Returns a casted join handler

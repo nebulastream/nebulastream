@@ -33,7 +33,7 @@ namespace Runtime {
 */
 class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Reconfigurable, false> {
   public:
-    ~Reconfigurable() noexcept(false) override = default;
+    ~Reconfigurable() NES_NOEXCEPT(false) override = default;
 
     /**
      * @brief reconfigure callback that will be called per thread

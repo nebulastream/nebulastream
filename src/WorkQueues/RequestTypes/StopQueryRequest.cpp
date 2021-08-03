@@ -15,7 +15,7 @@
 */
 
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
-
+#include <string>
 namespace NES {
 
 StopQueryRequest::StopQueryRequest(QueryId queryId) : NESRequest(queryId) {}

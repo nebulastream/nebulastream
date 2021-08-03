@@ -16,21 +16,28 @@
 #ifndef NES_INCLUDE_UTIL_VIRTUALENABLESHAREDFROMTHIS_HPP_
 #define NES_INCLUDE_UTIL_VIRTUALENABLESHAREDFROMTHIS_HPP_
 
+#include <cstddef>
 #include <memory>
+
+#if defined(__GLIBCXX__) || defined(__GLIBCPP__)
+#define NES_NOEXCEPT(isNoexcept) noexcept(isNoexcept)
+#else
+#define NES_NOEXCEPT(isNoexcept)
+#endif
 
 namespace NES::detail {
 /// base class for enabling enable_shared_from_this in classes with multiple super-classes that inherit enable_shared_from_this
 template<bool isNoexceptDestructible>
 struct virtual_enable_shared_from_this_base
     : std::enable_shared_from_this<virtual_enable_shared_from_this_base<isNoexceptDestructible>> {
-    virtual ~virtual_enable_shared_from_this_base() noexcept(isNoexceptDestructible) = default;
+    virtual ~virtual_enable_shared_from_this_base() NES_NOEXCEPT(isNoexceptDestructible) = default;
 };
 
 /// concrete class for enabling enable_shared_from_this in classes with multiple super-classes that inherit enable_shared_from_this
 template<typename T, bool isNoexceptDestructible = true>
 struct virtual_enable_shared_from_this : virtual virtual_enable_shared_from_this_base<isNoexceptDestructible> {
 
-    ~virtual_enable_shared_from_this() noexcept(isNoexceptDestructible) override = default;
+    ~virtual_enable_shared_from_this() NES_NOEXCEPT(isNoexceptDestructible) override = default;
 
     std::shared_ptr<T> shared_from_this() {
         return std::dynamic_pointer_cast<T>(virtual_enable_shared_from_this_base<isNoexceptDestructible>::shared_from_this());

@@ -92,7 +92,7 @@ void DataSource::setOperatorId(OperatorId operatorId) { this->operatorId = opera
 
 SchemaPtr DataSource::getSchema() const { return schema; }
 
-DataSource::~DataSource() noexcept(false) {
+DataSource::~DataSource() NES_NOEXCEPT(false) {
     executableSuccessors.clear();
     stop(false);
     NES_DEBUG("DataSource " << operatorId << ": Destroy Data Source.");
