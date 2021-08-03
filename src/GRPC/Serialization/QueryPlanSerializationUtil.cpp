@@ -32,7 +32,9 @@ SerializableQueryPlan* QueryPlanSerializationUtil::serializeQueryPlan(const Quer
     for (const auto& rootOperator : rootOperators) {
         auto& serializedOperatorMap = *serializedQueryPlan->mutable_operatormap();
         SerializableOperator* pOperator = OperatorSerializationUtil::serializeOperator(rootOperator);
-        serializedOperatorMap[rootOperator->getId()] = *pOperator;
+        u_int64_t rootOperatorId = rootOperator->getId();
+        serializedOperatorMap[rootOperatorId] = *pOperator;
+        serializedQueryPlan->add_rootoperatorids(rootOperatorId);
     }
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
     serializedQueryPlan->set_querysubplanid(queryPlan->getQuerySubPlanId());
@@ -62,7 +64,9 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     }
 
     //add root operators
-
+    for(auto rootOperatorId : serializedQueryPlan->rootoperatorids()){
+        rootOperators.emplace_back(operatorIdToOperatorMap[rootOperatorId]);
+    }
 
     //set properties of the query plan
     uint64_t queryId = serializedQueryPlan->queryid();
