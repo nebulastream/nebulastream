@@ -31,8 +31,24 @@ class AdaptiveKFSource : public AdaptiveSource {
 
     std::string toString() const override;
 
+    /**
+     * @brief Get number of tuples per buffer
+     */
+    uint64_t getNumberOfTuplesToProducePerBuffer() const;
+
+    /**
+     * @brief Get current sampling frequency
+     */
+    uint64_t getFrequency() const;
+
+    /**
+     * @brief Get source type
+     * @return source type
+     */
+    SourceType getType() const override;
+
   private:
-    void sampleSourceAndFillBuffer(Runtime::TupleBuffer& buffer) override;
+    void sampleSourceAndFillBuffer(Runtime::TupleBuffer&) override;
     void decideNewGatheringInterval() override;
 
     // paper equations as methods
@@ -40,7 +56,6 @@ class AdaptiveKFSource : public AdaptiveSource {
     long calculateTotalEstimationError();               // eq. 9
     void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider)
 
-    uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
 
     /**
@@ -67,7 +82,7 @@ class AdaptiveKFSource : public AdaptiveSource {
     float totalEstimationErrorDivider;
 };
 
-typedef std::shared_ptr<AdaptiveKFSource> AdaptiveKFSourcePtr;
+using AdaptiveKFSourcePtr = std::shared_ptr<AdaptiveKFSource>;
 
 }// namespace NES
 #endif /* INCLUDE_ADAPTIVEKFESTIMATIONSOURCE_HPP_ */
