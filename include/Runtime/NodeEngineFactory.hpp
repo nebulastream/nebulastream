@@ -21,6 +21,13 @@ namespace NES::Runtime {
 
 class NodeEngineFactory {
   public:
+    /**
+     * @brief this creates a new Runtime with some default parameters
+     * @param hostname the ip address for the network manager
+     * @param port the port for the network manager
+     * @param config
+     * @return
+     */
     static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
 
     /**
