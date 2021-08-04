@@ -249,12 +249,12 @@ IntConfigOption WorkerConfig::getBufferSizeInBytes() { return bufferSizeInBytes;
 
 void WorkerConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
 
-const StringConfigOption& WorkerConfig::getQueryCompilerExecutionMode() const { return queryCompilerExecutionMode; }
+const StringConfigOption WorkerConfig::getQueryCompilerExecutionMode() const { return queryCompilerExecutionMode; }
 
 void WorkerConfig::setQueryCompilerExecutionMode(std::string queryCompilerExecutionMode) {
     this->queryCompilerExecutionMode->setValue(std::move(queryCompilerExecutionMode));
 }
-const StringConfigOption& WorkerConfig::getQueryCompilerOutputBufferAllocationStrategy() const {
+const StringConfigOption WorkerConfig::getQueryCompilerOutputBufferAllocationStrategy() const {
     return queryCompilerOutputBufferOptimizationLevel;
 }
 void WorkerConfig::setQueryCompilerOutputBufferAllocationStrategy(std::string queryCompilerOutputBufferAllocationStrategy) {
