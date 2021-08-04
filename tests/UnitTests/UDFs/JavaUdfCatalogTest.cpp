@@ -31,7 +31,11 @@ class JavaUdfCatalogTest : public testing::Test {
     }
 
     static std::shared_ptr<JavaUdfImplementation> createImplementation() {
-        return std::make_shared<JavaUdfImplementation>();
+        auto fq_name = "some_package.my_udf"s;
+        auto method_name = "udf_method"s;
+        auto instance = JavaSerializedInstance { 1 }; // byte-array containing 1 byte
+        auto byte_code_list = JavaUdfByteCodeList { {"some_package.my_udf"s, JavaByteCode{1} } };
+        return std::make_shared<JavaUdfImplementation>(fq_name, method_name, instance, byte_code_list);
     }
 
   protected:

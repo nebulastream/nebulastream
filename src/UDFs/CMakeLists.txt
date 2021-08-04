@@ -14,5 +14,6 @@
 
 add_source_nes(
         JavaUdfCatalog.cpp
+        JavaUdfImplementation.cpp
         UdfException.cpp
 )
