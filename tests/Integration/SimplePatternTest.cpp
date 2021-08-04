@@ -26,6 +26,7 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <API/Pattern.hpp>
 
 //used tests: QueryCatalogTest, QueryTest
 namespace fs = std::filesystem;
