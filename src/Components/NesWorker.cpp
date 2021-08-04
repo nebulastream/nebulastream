@@ -25,9 +25,9 @@
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger.hpp>
 #include <csignal>
 #include <future>
@@ -52,7 +52,10 @@ NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
       numberOfBuffersInGlobalBufferManager(workerConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
       numberOfBuffersPerPipeline(workerConfig->getNumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
-      bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()), type(type) {
+      bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
+      queryCompilerExecutionMode(workerConfig->getQueryCompilerExecutionMode()->getValue()),
+      queryCompilerOutputBufferOptimizationLevel(workerConfig->getQueryCompilerOutputBufferAllocationStrategy()->getValue()),
+      type(type) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
 }
@@ -122,7 +125,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                 << " coordinatorPort=" << coordinatorPort << " localWorkerIp=" << localWorkerIp
                                                 << " localWorkerRpcPort=" << localWorkerRpcPort
                                                 << " localWorkerZmqPort=" << localWorkerZmqPort << " type=" << type);
-
     NES_DEBUG("NesWorker::start: start Runtime");
     auto expected = false;
     if (!isRunning.compare_exchange_strong(expected, true)) {
@@ -131,13 +133,15 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     try {
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(localWorkerIp,
-                                                 localWorkerZmqPort,
-                                                 conf,
-                                                 numWorkerThreads,
-                                                 bufferSizeInBytes,
-                                                 numberOfBuffersInGlobalBufferManager,
-                                                 numberOfBuffersInSourceLocalBufferPool,
-                                                 numberOfBuffersPerPipeline);
+                                                                  localWorkerZmqPort,
+                                                                  conf,
+                                                                  numWorkerThreads,
+                                                                  bufferSizeInBytes,
+                                                                  numberOfBuffersInGlobalBufferManager,
+                                                                  numberOfBuffersInSourceLocalBufferPool,
+                                                                  numberOfBuffersPerPipeline,
+                                                                  queryCompilerExecutionMode,
+                                                                  queryCompilerOutputBufferOptimizationLevel);
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create();
         NES_DEBUG("NesWorker: MonitoringAgent configured with default values");

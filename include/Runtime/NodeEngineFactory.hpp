@@ -21,7 +21,6 @@ namespace NES::Runtime {
 
 class NodeEngineFactory {
   public:
-    static NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
     static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
 
     /**
@@ -40,7 +39,13 @@ class NodeEngineFactory {
                                           uint64_t bufferSize,
                                           uint64_t numberOfBuffersInGlobalBufferManager,
                                           uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                          uint64_t numberOfBuffersPerPipeline);
+                                          uint64_t numberOfBuffersPerPipeline,
+                                          const std::string& queryCompilerExecutionMode = "DEBUG",
+                                          const std::string& queryCompilerOutputBufferOptimizationLevel = "ALL");
+
+  private:
+    static QueryCompilation::QueryCompilerOptionsPtr
+    createQueryCompilationOptions(std::string queryCompilerExecutionMode, std::string queryCompilerOutputBufferOptimizationLevel);
 };
 
 }// namespace NES::Runtime

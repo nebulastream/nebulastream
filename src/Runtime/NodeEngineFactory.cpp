@@ -14,30 +14,29 @@
     limitations under the License.
 */
 
-#include <Runtime/NodeEngineFactory.hpp>
-#include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <Network/PartitionManager.hpp>
-#include <Network/NetworkManager.hpp>
-#include <memory>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <State/StateManager.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Network/NetworkManager.hpp>
+#include <Network/PartitionManager.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <State/StateManager.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <memory>
 namespace NES::Runtime {
 
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
-NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname,
-                                                                       uint16_t port,
-                                                                       PhysicalStreamConfigPtr config) {
-    return createNodeEngine(hostname, port, std::move(config), 1, 4096, 1024, 128, 12);
+NodeEnginePtr
+NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
+    return createNodeEngine(hostname, port, std::move(config), 1, 4096, 1024, 128, 12, "DEBUG", "ALL");
 }
 
 NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
@@ -47,7 +46,9 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t bufferSize,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
                                                   const uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                                  const uint64_t numberOfBuffersPerPipeline) {
+                                                  const uint64_t numberOfBuffersPerPipeline,
+                                                  const std::string& queryCompilerExecutionMode,
+                                                  const std::string& queryCompilerOutputBufferOptimizationLevel) {
 
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
@@ -74,7 +75,8 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
-        auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
+        auto queryCompilationOptions =
+            createQueryCompilationOptions(queryCompilerExecutionMode, queryCompilerOutputBufferOptimizationLevel);
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions, phaseFactory, jitCompiler);
         if (!compiler) {
             NES_ERROR("Runtime: error while creating compiler");
@@ -90,14 +92,14 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                        Network::ExchangeProtocol(engine->getPartitionManager(), engine),
                                                        engine->getBufferManager(),
                                                        numThreads);
-                },
-                std::move(partitionManager),
-                std::move(compiler),
-                std::move(stateManager),
-                nodeEngineId,
-                numberOfBuffersInGlobalBufferManager,
-                numberOfBuffersInSourceLocalBufferPool,
-                numberOfBuffersPerPipeline);
+            },
+            std::move(partitionManager),
+            std::move(compiler),
+            std::move(stateManager),
+            nodeEngineId,
+            numberOfBuffersInGlobalBufferManager,
+            numberOfBuffersInSourceLocalBufferPool,
+            numberOfBuffersPerPipeline);
         installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {
@@ -105,6 +107,34 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
     }
     return nullptr;
+}
+QueryCompilation::QueryCompilerOptionsPtr
+NodeEngineFactory::createQueryCompilationOptions(std::string, std::string queryCompilerOutputBufferOptimizationLevel) {
+    auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
+    // set output buffer optimization level
+    if (queryCompilerOutputBufferOptimizationLevel == "ALL") {
+        queryCompilationOptions->setOutputBufferOptimizationLevel(QueryCompilation::QueryCompilerOptions::ALL);
+    } else if (queryCompilerOutputBufferOptimizationLevel == "NO") {
+        queryCompilationOptions->setOutputBufferOptimizationLevel(QueryCompilation::QueryCompilerOptions::NO);
+    } else if (queryCompilerOutputBufferOptimizationLevel == "REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK") {
+        queryCompilationOptions->setOutputBufferOptimizationLevel(
+            QueryCompilation::QueryCompilerOptions::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK);
+    } else if (queryCompilerOutputBufferOptimizationLevel == "ONLY_INPLACE_OPERATIONS_NO_FALLBACK") {
+        queryCompilationOptions->setOutputBufferOptimizationLevel(
+            QueryCompilation::QueryCompilerOptions::ONLY_INPLACE_OPERATIONS_NO_FALLBACK);
+    } else if (queryCompilerOutputBufferOptimizationLevel == "REUSE_INPUT_BUFFER_NO_FALLBACK") {
+        queryCompilationOptions->setOutputBufferOptimizationLevel(
+            QueryCompilation::QueryCompilerOptions::REUSE_INPUT_BUFFER_NO_FALLBACK);
+    } else if (queryCompilerOutputBufferOptimizationLevel == "OMIT_OVERFLOW_CHECK_NO_FALLBACK") {
+        queryCompilationOptions->setOutputBufferOptimizationLevel(
+            QueryCompilation::QueryCompilerOptions::OMIT_OVERFLOW_CHECK_NO_FALLBACK);
+    } else if (queryCompilerOutputBufferOptimizationLevel == "NO") {
+        queryCompilationOptions->setOutputBufferOptimizationLevel(QueryCompilation::QueryCompilerOptions::NO);
+    } else {
+        NES_FATAL_ERROR("queryCompilerOutputBufferOptimizationLevel " << queryCompilerOutputBufferOptimizationLevel
+                                                                      << " not supported");
+    }
+    return queryCompilationOptions;
 }
 
 }// namespace NES::Runtime
