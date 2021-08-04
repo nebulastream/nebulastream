@@ -25,14 +25,14 @@
 
 namespace NES {
 
-SerializableQueryPlanPtr QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPlan) {
+void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPlan,
+                                                                        SerializableQueryPlan* serializableQueryPlan) {
     NES_INFO("QueryPlanSerializationUtil: serializing query plan " << queryPlan->toString());
-    auto serializedQueryPlanPtr = std::make_unique<SerializableQueryPlan>();
     std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
     NES_TRACE("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
     //Serialize Query Plan operators
-    auto& serializedOperatorMap = *serializedQueryPlanPtr->mutable_operatormap();
+    auto& serializedOperatorMap = *serializableQueryPlan->mutable_operatormap();
     auto bfsIterator =  QueryPlanIterator(queryPlan);
     for (auto itr = bfsIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
@@ -48,14 +48,13 @@ SerializableQueryPlanPtr QueryPlanSerializationUtil::serializeQueryPlan(const Qu
     //Serialize the root operator ids
     for (const auto& rootOperator : rootOperators) {
         u_int64_t rootOperatorId = rootOperator->getId();
-        serializedQueryPlanPtr->add_rootoperatorids(rootOperatorId);
+        serializableQueryPlan->add_rootoperatorids(rootOperatorId);
     }
 
     //Serialize the sub query plan and query plan id
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
-    serializedQueryPlanPtr->set_querysubplanid(queryPlan->getQuerySubPlanId());
-    serializedQueryPlanPtr->set_queryid(queryPlan->getQueryId());
-    return serializedQueryPlanPtr;
+    serializableQueryPlan->set_querysubplanid(queryPlan->getQuerySubPlanId());
+    serializableQueryPlan->set_queryid(queryPlan->getQueryId());
 }
 
 QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan) {

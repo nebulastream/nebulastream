@@ -168,12 +168,12 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     QueryPlanPtr queryPlan = QueryPlan::create();
 
     //make a Protobuff object
-    auto plan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
-    //convert it to string for the request function
     SubmitQueryRequest request;
+    auto serializedQueryPlan = request.mutable_queryplan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    //convert it to string for the request function
     request.set_querystring("");
     request.set_placement("");
-    request.set_allocated_queryplan(plan.get());
 
     std::string msg = request.SerializeAsString();
 
@@ -254,11 +254,11 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     //make a Protobuff object
-    auto plan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
     SubmitQueryRequest request;
+    auto serializedQueryPlan = request.mutable_queryplan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
     request.set_querystring("default_logical");
     request.set_placement("");
-    request.set_allocated_queryplan(plan.get());
 
     std::string msg = request.SerializeAsString();
 
