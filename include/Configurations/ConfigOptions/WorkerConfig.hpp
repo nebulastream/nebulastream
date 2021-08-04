@@ -184,10 +184,28 @@ class WorkerConfig {
      * @brief set the value for logLevel with the appropriate data format
      */
     void setLogLevel(std::string logLevel);
-    const StringConfigOption& getQueryCompilerExecutionMode() const;
+
+    /**
+     * @brief gets the configuration for the query compiler execution mode
+     */
+    [[nodiscard]] const StringConfigOption getQueryCompilerExecutionMode() const;
+
+    /**
+     * @brief sets the configuration for the query compiler execution mode
+     * @param queryCompilerExecutionMode
+     */
     void setQueryCompilerExecutionMode(std::string queryCompilerExecutionMode);
-    const StringConfigOption& getQueryCompilerOutputBufferAllocationStrategy() const;
-    void setQueryCompilerOutputBufferAllocationStrategy(std::string  queryCompilerOutputBufferAllocationStrategy);
+
+    /**
+    * @brief gets the configuration for the query compiler buffer allocation strategy
+    */
+    [[nodiscard]] const StringConfigOption getQueryCompilerOutputBufferAllocationStrategy() const;
+
+    /**
+    * @brief sets the configuration for the query compiler buffer allocation strategy
+    * @param queryCompilerExecutionMode
+    */
+    void setQueryCompilerOutputBufferAllocationStrategy(std::string queryCompilerOutputBufferAllocationStrategy);
 
   private:
     /**
