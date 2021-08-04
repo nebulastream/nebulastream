@@ -281,7 +281,6 @@ MemoryMetrics SystemResourcesReader::readMemoryStats() {
         NES_THROW_RUNTIME_ERROR("SystemResourcesReader: Error reading memory stats");
     }
 
-    MemoryMetrics output{};
     output.TOTAL_RAM = sinfo->totalram;
     output.TOTAL_SWAP = sinfo->totalswap;
     output.FREE_RAM = sinfo->freeram;
