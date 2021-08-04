@@ -65,6 +65,14 @@ class Pattern : public Query {
     static Pattern from(std::string const& sourceStreamName);
 
     /**
+    * @brief: Filter records according to the predicate.
+    * @example filter(Attribute("f1" < 10))
+    * @param predicate as expression node
+    * @return the query
+    */
+    Pattern& filter(ExpressionNodePtr const& filterExpression);
+
+    /**
      * @brief: Monitors a condition from a particular source stream. The source stream is identified by its name.
      * During processing the underlying source descriptor is retrieved from the stream catalog.
      * @param sourceStreamName name of the stream to monitor. This name has to be registered in the query catalog.
@@ -85,8 +93,7 @@ class Pattern : public Query {
   private:
     // creates a new pattern object
     Pattern(QueryPlanPtr queryPlan);
-    // query plan containing the operators.
-    QueryPlanPtr queryPlan;
+
     std::string patternName;
 };
 

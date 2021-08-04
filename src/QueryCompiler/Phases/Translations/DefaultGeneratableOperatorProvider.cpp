@@ -22,6 +22,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/CEP/GeneratableCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableAvgAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
@@ -33,6 +34,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
@@ -52,6 +54,7 @@
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
+class PhysicalCEPIterationOperator;
 namespace NES::QueryCompilation {
 
 GeneratableOperatorProviderPtr DefaultGeneratableOperatorProvider::create() {
@@ -74,6 +77,8 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         lowerFilter(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapOperator>()) {
         lowerMap(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalIterationCEPOperator>()) {
+        lowerCEPIteration(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()) {
         lowerWatermarkAssignment(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()) {
@@ -243,6 +248,18 @@ void DefaultGeneratableOperatorProvider::lowerJoinSink(const QueryPlanPtr& query
                                                                                              physicalJoinSink->getOutputSchema(),
                                                                                              physicalJoinSink->getJoinHandler());
     queryPlan->replaceOperator(operatorNode, generatableJoinOperator);
+}
+
+void DefaultGeneratableOperatorProvider::lowerCEPIteration(QueryPlanPtr queryPlan,
+                                                           PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+    auto physicalCEPIterationOperator = operatorNode->as<PhysicalOperators::PhysicalIterationCEPOperator>();
+    auto generatableCEPIterationOperator =
+        GeneratableOperators::GeneratableCEPIterationOperator::create(physicalCEPIterationOperator->getInputSchema(),
+                                                                      physicalCEPIterationOperator->getOutputSchema(),
+                                                                      physicalCEPIterationOperator->getMinIterations(),
+                                                                      physicalCEPIterationOperator->getMaxIterations());
+    queryPlan->replaceOperator(physicalCEPIterationOperator, generatableCEPIterationOperator);
+
 }
 
 }// namespace NES::QueryCompilation

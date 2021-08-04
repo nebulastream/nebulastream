@@ -39,6 +39,13 @@ Pattern Pattern::from(const std::string& sourceStreamName) {
     return Pattern(queryPlan);
 }
 
+Pattern& Pattern::filter(const ExpressionNodePtr& filterExpression) {
+    NES_DEBUG("Pattern: add filter operator to pattern");
+    OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+}
+
 Pattern Pattern::iter(const uint64_t minIteration, const uint64_t maxIteration) {
     NES_DEBUG("Pattern: enter iteration function with (min, max)" << minIteration << "," << maxIteration);
     OperatorNodePtr op = LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration);

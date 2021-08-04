@@ -56,20 +56,10 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
 
     NES_INFO("QueryService: Executing Syntactic validation");
     QueryPtr query;
-    PatternPtr patternPtr;
-    bool pattern = queryString.find("Pattern::") != std::string::npos;
-    try {
-        // Checking the syntactic validity and compiling the query string to an object
-        // differentiate between a pattern query and an analytical query
-        if (pattern){
-            NES_INFO("QueryService: check validation of a pattern query");
-            patternPtr = syntacticQueryValidation->checkValidityAndGetPattern(queryString);
-        }
-        else{
-            NES_INFO("QueryService: check validation of a analytical query");
-            query = syntacticQueryValidation->checkValidityAndGetQuery(queryString);
-        }
 
+    try {
+        NES_INFO("QueryService: check validation of a analytical query");
+        query = syntacticQueryValidation->checkValidityAndGetQuery(queryString);
     } catch (const std::exception& exc) {
         NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
         // On compilation error we record the query to the catalog as failed
@@ -84,14 +74,7 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
         throw InvalidArgumentException("placementStrategyName", placementStrategyName);
     }
 
-    QueryPlanPtr queryPlan;
-    if (pattern){
-        queryPlan = patternPtr->getQueryPlan();
-    }
-    else{
-        queryPlan = query->getQueryPlan();
-    }
-
+    QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
 
     // Execute only if the semantic validation flag is enabled
