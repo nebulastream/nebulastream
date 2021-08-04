@@ -370,6 +370,12 @@ add_executable(global-query-plan-tests "UnitTests/Plans/Global/Query/GlobalQuery
 target_link_libraries(global-query-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-query-plan-tests COMMAND global-query-plan-tests)
 
+### Choose MemLayout Phase Tests ###
+add_executable(choose-mem-layout-phase-tests "UnitTests/Optimizer/Phases/QueryChooseMemLayoutPhaseTest.cpp")
+target_link_libraries(choose-mem-layout-phase-tests nes ${GTEST_LIBRARIES})
+add_test(NAME choose-mem-layout-phase-tests COMMAND choose-mem-layout-phase-tests)
+
+
 ### Query Merger Phase Tests ###
 add_executable(global-query-plan-update-phase-tests "UnitTests/Optimizer/Phases/GlobalQueryPlanUpdatePhaseTest.cpp")
 target_link_libraries(global-query-plan-update-phase-tests nes ${GTEST_LIBRARIES})
