@@ -90,9 +90,11 @@ std::filesystem::path recursiveFindFileReverse(std::filesystem::path currentPath
 std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_shared<CPPCompiler>(); }
 
 CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
+#ifdef __APPLE__
     libNesPath = detail::recursiveFindFileReverse(detail::getExecutablePath(), "libnes.dylib");
     NES_ASSERT2_FMT(std::filesystem::is_regular_file(libNesPath), "Invalid libnes.dylib file found at " << libNesPath);
     NES_DEBUG("Library libnes.dylib found at: " << libNesPath.parent_path());
+#endif
 }
 
 std::string CPPCompiler::getLanguage() const { return "cpp"; }
