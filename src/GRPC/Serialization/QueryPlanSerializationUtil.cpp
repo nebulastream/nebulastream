@@ -17,23 +17,22 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
 
 namespace NES {
 
-void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPlan,
-                                                                        SerializableQueryPlan* serializableQueryPlan) {
+void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPlan, SerializableQueryPlan* serializableQueryPlan) {
     NES_INFO("QueryPlanSerializationUtil: serializing query plan " << queryPlan->toString());
     std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
     NES_TRACE("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
     //Serialize Query Plan operators
     auto& serializedOperatorMap = *serializableQueryPlan->mutable_operatormap();
-    auto bfsIterator =  QueryPlanIterator(queryPlan);
+    auto bfsIterator = QueryPlanIterator(queryPlan);
     for (auto itr = bfsIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
         if (serializedOperatorMap.find(visitingOp->getId()) != serializedOperatorMap.end()) {
@@ -79,7 +78,7 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     }
 
     //add root operators
-    for(auto rootOperatorId : serializedQueryPlan->rootoperatorids()){
+    for (auto rootOperatorId : serializedQueryPlan->rootoperatorids()) {
         rootOperators.emplace_back(operatorIdToOperatorMap[rootOperatorId]);
     }
 
