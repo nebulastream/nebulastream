@@ -21,6 +21,9 @@
 
 namespace NES {
 
+class WorkerConfig;
+using WorkerConfigPtr = std::shared_ptr<WorkerConfig>;
+
 class PhysicalStreamConfig;
 using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
@@ -129,6 +132,8 @@ using DynamicRowLayoutBufferPtr = std::shared_ptr<DynamicRowLayoutBuffer>;
 namespace QueryCompilation {
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
+class QueryCompilerOptions;
+using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 }// namespace QueryCompilation
 
 }// namespace NES
