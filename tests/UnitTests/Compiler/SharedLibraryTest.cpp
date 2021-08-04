@@ -31,7 +31,13 @@ class SharedLibraryTest : public testing::Test {
 
 TEST(SharedLibraryTest, loadSharedLib) {
     using FunctionType = uint64_t (*)();
+#ifdef __linux__
     auto sharedLib = SharedLibrary::load("libnes.so");
+#elif defined(__APPLE__)
+    auto sharedLib = SharedLibrary::load("libnes.dylib");
+#else
+#error "Unknown error"
+#endif
     auto function = sharedLib->getInvocableMember<FunctionType>("_ZN3NES16UtilityFunctions17getNextOperatorIdEv");
     EXPECT_EQ(function(), 1ULL);
     EXPECT_EQ(function(), 2ULL);
@@ -42,7 +48,13 @@ TEST(SharedLibraryTest, loadSharedLibERROR) { EXPECT_ANY_THROW(SharedLibrary::lo
 
 TEST(SharedLibraryTest, loadSymbleERROR) {
     using FunctionType = uint64_t (*)();
+#ifdef __linux__
     auto sharedLib = SharedLibrary::load("libnes.so");
+#elif defined(__APPLE__)
+    auto sharedLib = SharedLibrary::load("libnes.dylib");
+#else
+#error "Unknown error"
+#endif
     EXPECT_ANY_THROW(sharedLib->getInvocableMember<FunctionType>("NotExisting"));
 }
 

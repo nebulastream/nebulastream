@@ -19,6 +19,7 @@
 
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
+#include <string>
 
 namespace NES::Runtime {
 

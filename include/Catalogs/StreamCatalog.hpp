@@ -182,7 +182,6 @@ class StreamCatalog {
     bool updatedLogicalStream(std::string& streamName, std::string& streamSchema);
 
     StreamCatalog(QueryParsingServicePtr queryParsingService);
-    ~StreamCatalog();
 
   private:
     QueryParsingServicePtr queryParsingService;

@@ -66,8 +66,6 @@ StreamCatalog::StreamCatalog(QueryParsingServicePtr queryParsingService) : query
     NES_DEBUG("StreamCatalog: construct stream catalog successfully");
 }
 
-StreamCatalog::~StreamCatalog() { NES_DEBUG("~StreamCatalog:"); }
-
 bool StreamCatalog::addLogicalStream(const std::string& streamName, const std::string& streamSchema) {
     std::unique_lock lock(catalogMutex);
     SchemaPtr schema = queryParsingService->createSchemaFromCode(streamSchema);

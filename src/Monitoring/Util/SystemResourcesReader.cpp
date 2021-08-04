@@ -28,14 +28,20 @@
 #include <chrono>
 #include <fstream>
 #include <iterator>
+#ifdef __linux__
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>
+#elif defined(__APPLE__)
+#else
+#error "Uknown platform"
+#endif
 #include <thread>
 #include <vector>
 
 namespace NES {
 
 RuntimeNesMetrics SystemResourcesReader::readRuntimeNesMetrics() {
+#ifdef __linux__
     RuntimeNesMetrics output{};
     output.wallTimeNs = SystemResourcesReader::getWallTimeInNs();
 
@@ -88,10 +94,14 @@ RuntimeNesMetrics SystemResourcesReader::readRuntimeNesMetrics() {
     }
 
     return output;
+#else
+    return RuntimeNesMetrics();
+#endif
 }
 
 StaticNesMetrics SystemResourcesReader::readStaticNesMetrics() {
     StaticNesMetrics output{false, false};
+#ifdef __linux__
 
     std::vector<std::string> metricLocations{"/sys/fs/cgroup/memory/memory.limit_in_bytes",
                                              "/sys/fs/cgroup/cpuacct/cpu.cfs_period_us",
@@ -122,11 +132,12 @@ StaticNesMetrics SystemResourcesReader::readStaticNesMetrics() {
     std::ifstream quotaLoc(metricLocations[2]);
     std::string quotaStr((std::istreambuf_iterator<char>(quotaLoc)), std::istreambuf_iterator<char>());
     output.cpuQuotaUS = std::stoll(quotaStr);
-
+#endif
     return output;
 }
 
 CpuMetrics SystemResourcesReader::readCpuStats() {
+#ifdef __linux__
     std::ifstream fileStat("/proc/stat");
     std::string line;
     unsigned int numCPU = std::thread::hardware_concurrency();
@@ -170,11 +181,16 @@ CpuMetrics SystemResourcesReader::readCpuStats() {
     }
     NES_DEBUG("SystemResourcesReader: CPU stats read for number of CPUs " << i - 1);
     return CpuMetrics{totalCpu, numCPU, std::move(cpu)};
+#else
+    return CpuMetrics();
+#endif
 }
 
 NetworkMetrics SystemResourcesReader::readNetworkStats() {
-    // alternatively also /sys/class/net/intf/statistics can be parsed
     auto output = NetworkMetrics();
+#ifdef __linux__
+    // alternatively also /sys/class/net/intf/statistics can be parsed
+
 
     FILE* fp = fopen("/proc/net/dev", "re");
     char buf[200];
@@ -251,11 +267,13 @@ NetworkMetrics SystemResourcesReader::readNetworkStats() {
         output.addNetworkValues(std::move(outputValue));
     }
     fclose(fp);
-
+#endif
     return output;
 }
 
 MemoryMetrics SystemResourcesReader::readMemoryStats() {
+    auto output = MemoryMetrics();
+#ifdef __linux__
     auto* sinfo = (struct sysinfo*) malloc(sizeof(struct sysinfo));
 
     int ret = sysinfo(sinfo);
@@ -279,11 +297,13 @@ MemoryMetrics SystemResourcesReader::readMemoryStats() {
     output.LOADS_15MIN = sinfo->loads[2];
 
     delete[] sinfo;
+#endif
     return output;
 }
 
 DiskMetrics SystemResourcesReader::readDiskStats() {
     DiskMetrics output{};
+#ifdef __linux__
     auto* svfs = (struct statvfs*) malloc(sizeof(struct statvfs));
 
     int ret = statvfs("/", svfs);
@@ -296,7 +316,7 @@ DiskMetrics SystemResourcesReader::readDiskStats() {
     output.fBlocks = svfs->f_blocks;
     output.fBfree = svfs->f_bfree;
     output.fBavail = svfs->f_bavail;
-
+#endif
     return output;
 }
 

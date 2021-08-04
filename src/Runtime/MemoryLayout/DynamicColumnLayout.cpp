@@ -54,7 +54,7 @@ DynamicColumnLayoutBufferPtr DynamicColumnLayout::bind(const TupleBuffer& tupleB
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
     uint64_t offsetCounter = 0;
-    for (unsigned long& fieldSize : fieldSizes) {
+    for (auto& fieldSize : fieldSizes) {
         columnOffsets.emplace_back(offsetCounter);
         offsetCounter += fieldSize * capacity;
     }

@@ -24,8 +24,8 @@
 #include <sys/ioctl.h>
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>
-
 #elif defined(__APPLE__) || defined(__MACH__)
+#include <NodeStats.pb.h>
 #else
 #error "Unsupported platform"
 #endif
@@ -50,7 +50,7 @@ void NodeStatsProvider::update() {
 }
 
 void NodeStatsProvider::readCpuStats() {
-
+#ifdef __linux__
     auto* cpuStats = nodeStats->mutable_cpustats();
     cpuStats->Clear();
 
@@ -87,6 +87,9 @@ void NodeStatsProvider::readCpuStats() {
         }
     }
     this->nbrProcessors = numberOfPreccessors;
+#elif defined (__APPLE__)
+    this->nbrProcessors = 0;
+#endif
 }
 
 void NodeStatsProvider::setClientName(std::string clientName) { this->clientName = std::move(clientName); };
