@@ -559,8 +559,9 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
 
     auto queryPlan = QueryPlan::create(1, 1, {sink});
 
-    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
-    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan.get());
+    auto serializedQueryPlan = new SerializableQueryPlan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
     EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
@@ -606,8 +607,9 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
 
     auto queryPlan = QueryPlan::create(1, 1, {sink1, sink2});
 
-    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
-    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan.get());
+    auto serializedQueryPlan = new SerializableQueryPlan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
     EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
@@ -640,8 +642,9 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
 
     auto queryPlan = QueryPlan::create(1, 1, {sink1, sink2});
 
-    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
-    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan.get());
+    auto serializedQueryPlan = new SerializableQueryPlan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
     EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());

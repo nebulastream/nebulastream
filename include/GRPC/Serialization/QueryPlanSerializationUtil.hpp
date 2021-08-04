@@ -25,16 +25,16 @@ class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class SerializableQueryPlan;
-using SerializableQueryPlanPtr = std::unique_ptr<SerializableQueryPlan>;
 
 class QueryPlanSerializationUtil {
   public:
     /**
      * @brief Serializes a Query Plan and all its root operators to a SerializableQueryPlan object.
      * @param queryPlan: The query plan
+     * @param serializableQueryPlan: pointer to the serializable query Plan object
      * @return the pointer to serialized SerializableQueryPlan
      */
-    static SerializableQueryPlanPtr serializeQueryPlan(const QueryPlanPtr& queryPlan);
+    static void serializeQueryPlan(const QueryPlanPtr& queryPlan, SerializableQueryPlan* serializableQueryPlan);
 
     /**
      * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr
