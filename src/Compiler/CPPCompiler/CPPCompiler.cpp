@@ -25,25 +25,93 @@
 #include <chrono>
 #include <iostream>
 #include <sstream>
-
+#include <string>
 namespace NES::Compiler {
 
 const std::string NESIncludePath = PATH_TO_NES_SOURCE_CODE "/include/";
 const std::string DEBSIncludePath = PATH_TO_DEB_SOURCE_CODE "/include/";
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+
+namespace detail {
+std::filesystem::path getExecutablePath() {
+    typedef std::vector<char> char_vector;
+    char_vector buf(1024, 0);
+    uint32_t size = static_cast<uint32_t>(buf.size());
+    bool havePath = false;
+    bool shouldContinue = true;
+    do {
+        int result = _NSGetExecutablePath(&buf[0], &size);
+        if (result == -1) {
+            buf.resize(size + 1);
+            std::fill(std::begin(buf), std::end(buf), 0);
+        } else {
+            shouldContinue = false;
+            if (buf.at(0) != 0) {
+                havePath = true;
+            }
+        }
+    } while (shouldContinue);
+    if (!havePath) {
+        return std::filesystem::current_path();
+    }
+    std::error_code ec;
+    std::string path(&buf[0], size);
+    std::filesystem::path p(std::filesystem::canonical(path, ec));
+    if (!ec) {
+        return p.make_preferred();
+    }
+    return std::filesystem::current_path();
+}
+std::filesystem::path recursiveFindFileReverse(std::filesystem::path currentPath, const std::string targetFileName) {
+    while (!std::filesystem::is_directory(currentPath)) {
+        currentPath = currentPath.parent_path();
+    }
+    while (currentPath != currentPath.root_directory()) {
+        for (const auto& entry : std::filesystem::directory_iterator(currentPath)) {
+            if (entry.is_directory()) {
+                continue;
+            }
+            auto path = entry.path();
+            auto fname = path.filename();
+            if (fname.string().compare(targetFileName) == 0) {
+                return path;
+            }
+        }
+        currentPath = currentPath.parent_path();
+    }
+    return currentPath;
+}
+
+}// namespace detail
+#endif
+
 std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_shared<CPPCompiler>(); }
 
-CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {}
+CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
+    libNesPath = detail::recursiveFindFileReverse(detail::getExecutablePath(), "libnes.dylib");
+    NES_ASSERT2_FMT(std::filesystem::is_regular_file(libNesPath), "Invalid libnes.dylib file found at " << libNesPath);
+    NES_DEBUG("Library libnes.dylib found at: " << libNesPath.parent_path());
+}
 
 std::string CPPCompiler::getLanguage() const { return "cpp"; }
 
 CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
     auto start = std::chrono::steady_clock::now();
     auto sourceFileName = request->getName() + ".cpp";
-    auto libraryFileName = request->getName() + ".so";
+    auto libraryFileName = request->getName() +
+#ifdef __linux__
+        ".so";
+#elif defined(__APPLE__)
+        ".dylib";
+#else
+#error "Unknown platform"
+#endif
 
-    auto file = File::createFile(sourceFileName, request->getSourceCode()->getCode());
-
+    auto& sourceCode = request->getSourceCode()->getCode();
+    NES_ASSERT2_FMT(sourceCode.size(), "empty source code for " << sourceFileName);
+    auto file = File::createFile(sourceFileName, sourceCode);
     auto compilationFlags = CPPCompilerFlags::createDefaultCompilerFlags();
     if (request->enableOptimizations()) {
         compilationFlags.enableOptimizationFlags();
@@ -53,8 +121,15 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         format->formatFile(file);
         file->print();
     }
-
+#ifdef __linux__
     compilationFlags.addFlag("--shared");
+#elif defined(__APPLE__)
+    compilationFlags.addFlag("-shared");
+    compilationFlags.addFlag("-lnes");
+    compilationFlags.addFlag(std::string("-L") + libNesPath.parent_path().string());
+#else
+#error "Unknown platform"
+#endif
     // add header of NES Source
     compilationFlags.addFlag("-I" + NESIncludePath);
     // add header of all dependencies

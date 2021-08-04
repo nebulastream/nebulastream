@@ -28,6 +28,23 @@
 
 namespace NES::Compiler {
 
+static constexpr auto TEST_FILE_BODY = "/*\n"
+                                       "    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)\n"
+                                       "\n"
+                                       "    Licensed under the Apache License, Version 2.0 (the \"License\");\n"
+                                       "    you may not use this file except in compliance with the License.\n"
+                                       "    You may obtain a copy of the License at\n"
+                                       "\n"
+                                       "        https://www.apache.org/licenses/LICENSE-2.0\n"
+                                       "\n"
+                                       "    Unless required by applicable law or agreed to in writing, software\n"
+                                       "    distributed under the License is distributed on an \"AS IS\" BASIS,\n"
+                                       "    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+                                       "    See the License for the specific language governing permissions and\n"
+                                       "    limitations under the License.\n"
+                                       "*/\n"
+                                       "int mul(int x, int y) { return x * y; }";
+
 class JITCompilerTest : public testing::Test {
   public:
     uint64_t waitForCompilation = 10;
@@ -59,9 +76,7 @@ class JITCompilerTest : public testing::Test {
  * @brief This test compiles a test CPP File
  */
 TEST_F(JITCompilerTest, compileCppCode) {
-    auto f = File("../tests/test_data/test_sourceCode/test1.cpp");
-    auto content = f.read();
-    auto sourceCode = std::make_unique<SourceCode>("cpp", content);
+    auto sourceCode = std::make_unique<SourceCode>("cpp", TEST_FILE_BODY);
     auto request = CompilationRequest::create(std::move(sourceCode), "test_1", false, false, true, true);
 
     auto result = compiler->compile(std::move(request));

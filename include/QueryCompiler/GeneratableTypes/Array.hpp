@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <array>
+#include <string>
 #include <cstring>
 #include <stdexcept>
 #include <utility>

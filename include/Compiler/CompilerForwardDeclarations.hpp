@@ -16,6 +16,7 @@
 #ifndef NES_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
 #define NES_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
 #include <memory>
+#include <string>
 namespace NES::Compiler {
 
 class SourceCode;

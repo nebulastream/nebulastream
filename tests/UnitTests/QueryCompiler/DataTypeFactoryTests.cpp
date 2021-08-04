@@ -60,7 +60,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     // increase lower bound
     {
         auto stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypeFactory::createInt32(), -200.0);
-        stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, -100L);
+        stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, (int64_t) -100L);
         ASSERT_TRUE(stamp->isInteger());
         const auto intStamp = DataType::as<Integer>(stamp);
         ASSERT_EQ(intStamp->getBits(), 32);
@@ -69,7 +69,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     }
     {
         auto stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypeFactory::createFloat(), -200.0);
-        stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, -100L);
+        stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, (int64_t) -100L);
         ASSERT_TRUE(stamp->isFloat());
         const auto floatStamp = DataType::as<Float>(stamp);
         ASSERT_EQ(floatStamp->getBits(), 32);
@@ -80,7 +80,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     // decrease upper bound
     {
         auto stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypeFactory::createInt32(), 200.0);
-        stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(stamp, 100L);
+        stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(stamp, (int64_t) 100L);
         ASSERT_TRUE(stamp->isInteger());
         const auto intStamp = DataType::as<Integer>(stamp);
         ASSERT_EQ(intStamp->getBits(), 32);
@@ -89,7 +89,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     }
     {
         auto stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypeFactory::createFloat(), 200.0);
-        stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(stamp, 100L);
+        stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(stamp, (int64_t) 100L);
         ASSERT_TRUE(stamp->isFloat());
         const auto floatStamp = DataType::as<Float>(stamp);
         ASSERT_EQ(floatStamp->getBits(), 32);
@@ -100,7 +100,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     // tighten both bounds at once
     // test behavior of integer stamp
     {
-        auto stamp = DataTypeFactory::copyTypeAndTightenBounds(DataTypeFactory::createInt32(), -100L, 100L);
+        auto stamp = DataTypeFactory::copyTypeAndTightenBounds(DataTypeFactory::createInt32(), -100LL, 100LL);
         ASSERT_TRUE(stamp->isInteger());
         const auto intStamp = DataType::as<Integer>(stamp);
         ASSERT_EQ(intStamp->getBits(), 32);
@@ -127,9 +127,9 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
         // check if calls where only one of two bounds get tightened work
         auto stamp = DataTypeFactory::createInt32();
         ASSERT_TRUE(stamp->isInteger());
-        stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, -100L, 100L);
-        stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, -200L, 99L);
-        stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, -99L, 200L);
+        stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, -100LL, 100LL);
+        stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, -200LL, 99LL);
+        stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, -99LL, 200LL);
         ASSERT_TRUE(stamp->isInteger());
         const auto intStamp = DataType::as<Integer>(stamp);
         ASSERT_EQ(intStamp->getBits(), 32);
@@ -147,7 +147,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
         ASSERT_EQ(floatStamp->upperBound, 100.5);
     }
     {
-        auto stamp = DataTypeFactory::copyTypeAndTightenBounds(DataTypeFactory::createFloat(), -100L, 100L);
+        auto stamp = DataTypeFactory::copyTypeAndTightenBounds(DataTypeFactory::createFloat(), -100LL, 100LL);
         ASSERT_TRUE(stamp->isFloat());
         const auto floatStamp = DataType::as<Float>(stamp);
         ASSERT_EQ(floatStamp->getBits(), 32);
@@ -157,7 +157,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     {
         // check if calls where only one of two bounds get tightened works
         auto stamp = DataTypeFactory::createFloat();
-        stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, -100L, 100L);
+        stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, -100LL, 100LL);
         stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, -200, 99.9);
         stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, -99.9, 200);
         ASSERT_TRUE(stamp->isFloat());

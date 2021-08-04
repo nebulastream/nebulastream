@@ -14,12 +14,16 @@
 cmake_minimum_required(VERSION 3.18.0)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v1)
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    set(VCPKG_TARGET_TRIPLET x64-linux-nes)
-endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+
+if(APPLE)
+    # for MacOS X or iOS, watchOS, tvOS (since 3.10.3)
     set(VCPKG_TARGET_TRIPLET x64-osx-nes)
+    set(VCPKG_BINARY_VERSION v3)
+endif()
+if(UNIX AND NOT APPLE)
+    # for Linux, BSD, Solaris, Minix
+    set(VCPKG_TARGET_TRIPLET x64-linux-nes)
+    set(VCPKG_BINARY_VERSION v2)
 endif()
 
 function(download_file url filename hash_type hash)
@@ -147,7 +151,6 @@ else (NES_LOGGING_LEVEL)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -Werror=unused-variable -Werror=unused-parameter -DNES_LOGGING_TRACE_LEVEL=1")
     message("---Everything will be logged")
 endif (NES_LOGGING_LEVEL)
-
 # Set Optimization Flags
 set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare")
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
@@ -217,8 +220,14 @@ if (CMAKE_ENABLE_JEMALLOC)
     set(LIBRARIES ${LIBRARIES} ${JEMALLOC_LIBRARIES})
 endif ()
 # lcryto is required for asio to communicate
-set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
-
+if(APPLE)
+    find_library(SSL_LIB libssl.a REQUIRED)
+    find_library(CRYPTO_LIB libcrypto.a REQUIRED)
+    set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
+endif()
+if(UNIX AND NOT APPLE)
+    set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
+endif()
 
 # folly
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
@@ -424,6 +433,9 @@ add_definitions(-D 'CLANG_FORMAT_EXECUTABLE=\"${CLANG_FORMAT_EXECUTABLE}\"')
 add_definitions(-D 'GENERATED_CODE_DIRECTORY=\"${GENERATED_CODE_DIRECTORY}\"')
 add_definitions(-D 'PATH_TO_NES_SOURCE_CODE=\"${PATH_TO_NES_SOURCE_CODE}\"')
 add_definitions(-D 'PATH_TO_DEB_SOURCE_CODE=\"${PATH_TO_DEB_SOURCE_CODE}\"')
+if(APPLE)
+    add_definitions(-D 'NES_OSX_SYSROOT=\"${CMAKE_OSX_SYSROOT}\"')
+endif()
 
 add_definitions(-D 'QUERY_COMPILATION_CC=\"${QUERY_COMPILATION_CC}\"')
 add_definitions(-D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"')
@@ -433,9 +445,10 @@ add_definitions(-D '__STDC_CONSTANT_MACROS')
 add_definitions(-D '__STDC_LIMIT_MACROS')
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 # $ORIGIN is to read the shared object from the installation directory
+if(ORIGIN)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
+endif()
 #https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")

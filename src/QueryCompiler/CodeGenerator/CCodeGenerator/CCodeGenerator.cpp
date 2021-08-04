@@ -734,7 +734,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
             .copy());
     // 2.1 reset the numberOfResultTuples to 0 -> numberOfResultTuples = 0;
     thenStatement->addStatement(VarRef(code->varDeclarationNumberOfResultTuples)
-                                    .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0UL))))
+                                    .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(static_cast<uint64_t>(0)))))
                                     .copy());
     // 2.2 allocate a new buffer -> resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
     thenStatement->addStatement(
@@ -1824,7 +1824,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
         context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
     } else {
         auto defaultKeyAssignment =
-            VarDeclStatement(keyVariableDeclaration).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0L))));
+            VarDeclStatement(keyVariableDeclaration).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(uint64_t(0)))));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(defaultKeyAssignment));
     }
 
@@ -1841,7 +1841,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     // access window slice state from state variable via key
     auto windowStateVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
-    getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(0L))));
+    getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(uint64_t(0)))));
     auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
                                             .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
     context->code->currentCodeInsertionPoint->addStatement(

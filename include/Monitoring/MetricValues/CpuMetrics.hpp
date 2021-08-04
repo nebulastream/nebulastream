@@ -28,7 +28,9 @@ namespace NES {
  */
 class CpuMetrics {
   public:
-    CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues>&& arr);
+    explicit CpuMetrics() = default;
+
+    explicit CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues>&& arr);
 
     /**
      * @brief Returns the cpu metrics for a given core
@@ -69,7 +71,7 @@ class CpuMetrics {
 
   private:
     CpuValues total;
-    uint16_t numCores;
+    uint16_t numCores = 0;
     std::vector<CpuValues> cpuValues;
 } __attribute__((packed));
 

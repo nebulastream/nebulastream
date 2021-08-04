@@ -23,6 +23,8 @@
 #include <memory>
 #include <random>
 #include <utility>
+#include <sstream>
+
 namespace NES::Compiler {
 
 CompilationRequest::CompilationRequest(std::unique_ptr<SourceCode> sourceCode,
