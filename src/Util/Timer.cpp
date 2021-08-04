@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2021 by the NebulaStream project (https://nebula.stream)
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,29 +16,27 @@
 
 #include <Util/Timer.hpp>
 
-using namespace std::chrono;
-
 namespace NES {
 
 template<class timeUnit>
-void Timer<timeUnit>::start(){
-    if (running){
+void Timer<timeUnit>::start() {
+    if (running) {
         NES_DEBUG("Timer: Trying to start an already running timer so will skip this operation");
     } else {
         running = true;
-        start_p = high_resolution_clock::now();
+        start_p = std::chrono::high_resolution_clock::now();
     }
 };
 
 template<class timeUnit>
-void Timer<timeUnit>::pause(){
-    if (!running){
+void Timer<timeUnit>::pause() {
+    if (!running) {
         NES_DEBUG("Timer: Trying to stop an already stopped timer so will skip this operation");
     } else {
         running = false;
 
-        stop_p = high_resolution_clock::now();
-        auto duration = duration_cast<timeUnit>(stop_p - start_p);
+        stop_p = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<timeUnit>(stop_p - start_p);
 
         pausedDuration += duration;
         runtime += duration;
@@ -46,22 +44,23 @@ void Timer<timeUnit>::pause(){
 };
 
 template<class timeUnit>
-void Timer<timeUnit>::snapshot(std::string snapshotName){
-    if (!running){
+void Timer<timeUnit>::snapshot(std::string snapshotName) {
+    if (!running) {
         NES_DEBUG("Timer: Trying to take a snapshot of an non-running timer so will skip this operation");
     } else {
         running = true;
 
-        stop_p = high_resolution_clock::now();
-        auto duration = duration_cast<timeUnit>(stop_p - start_p);
+        stop_p = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<timeUnit>(stop_p - start_p);
 
         runtime += duration;
 
-        const struct snapshot s = {.name = componentName + "_" + snapshotName,
-                                   .duration = duration};
+        const struct snapshot s = {.name = componentName + '_' + snapshotName,
+                                   .runtime = duration,
+                                   .children = std::vector<struct snapshot>()};
         snapshots.push_back(s);
 
-        start_p = high_resolution_clock::now();
+        start_p = std::chrono::high_resolution_clock::now();
     }
 };
 
@@ -70,9 +69,14 @@ void Timer<timeUnit>::merge(Timer timer) {
     if (running) {
         NES_DEBUG("Timer: Trying to merge while timer is running so will skip this operation");
     } else {
+
         this->runtime += timer.runtime;
-        for (auto& s : timer.getSnapshots())
-            snapshots.push_back(s);
+
+        const struct snapshot s = {.name = componentName + '_' + timer.getComponentName(),
+                                   .runtime = timer.runtime,
+                                   .children = timer.getSnapshots()};
+
+        this->snapshots.push_back(s);
     }
 };
 
@@ -87,33 +91,34 @@ unsigned int Timer<timeUnit>::getRuntime() const {
 };
 
 template<class timeUnit>
-std::ostream& operator<<(std::ostream& Str, const Timer<timeUnit>& t) {
-    Str << "overall runtime: " << t.getRuntime() << "\n";
-    for (auto& s : t.getSnapshots()) {
-        Str << s.name + ": " << s.duration.count() << " ns" << "\n";
+std::string Timer<timeUnit>::printHelper(std::string str, struct snapshot s) {
+    std::ostringstream ostr;
+    ostr << str;
+    ostr << s.name + ": " << s.getRuntime() << '\n';
+    for (auto& c : s.children) {
+        ostr << printHelper(str, c);
     }
-    return Str;
-};
+    return ostr.str();
+}
 
-template void Timer<nanoseconds>::start();
-template void Timer<nanoseconds>::pause();
-template void Timer<nanoseconds>::snapshot(std::string snapshotName);
-template void Timer<nanoseconds>::merge(Timer timer);
-template unsigned int Timer<nanoseconds>::getRuntime() const;
-template std::ostream& operator<<(std::ostream& Str, const Timer<nanoseconds>& t);
+template void Timer<std::chrono::nanoseconds>::start();
+template void Timer<std::chrono::nanoseconds>::pause();
+template void Timer<std::chrono::nanoseconds>::snapshot(std::string snapshotName);
+template void Timer<std::chrono::nanoseconds>::merge(Timer timer);
+template unsigned int Timer<std::chrono::nanoseconds>::getRuntime() const;
+template std::string Timer<std::chrono::nanoseconds>::printHelper(std::string str, struct snapshot s);
 
-template void Timer<milliseconds>::start();
-template void Timer<milliseconds>::pause();
-template void Timer<milliseconds>::snapshot(std::string snapshotName);
-template void Timer<milliseconds>::merge(Timer timer);
-template unsigned int Timer<milliseconds>::getRuntime() const;
-template std::ostream& operator<<(std::ostream& Str, const Timer<milliseconds>& t);
+template void Timer<std::chrono::milliseconds>::start();
+template void Timer<std::chrono::milliseconds>::pause();
+template void Timer<std::chrono::milliseconds>::snapshot(std::string snapshotName);
+template void Timer<std::chrono::milliseconds>::merge(Timer timer);
+template unsigned int Timer<std::chrono::milliseconds>::getRuntime() const;
+template std::string Timer<std::chrono::milliseconds>::printHelper(std::string str, struct snapshot s);
 
-template void Timer<seconds>::start();
-template void Timer<seconds>::pause();
-template void Timer<seconds>::snapshot(std::string snapshotName);
-template void Timer<seconds>::merge(Timer timer);
-template unsigned int Timer<seconds>::getRuntime() const;
-template std::ostream& operator<<(std::ostream& Str, const Timer<seconds>& t);
-
+template void Timer<std::chrono::seconds>::start();
+template void Timer<std::chrono::seconds>::pause();
+template void Timer<std::chrono::seconds>::snapshot(std::string snapshotName);
+template void Timer<std::chrono::seconds>::merge(Timer timer);
+template unsigned int Timer<std::chrono::seconds>::getRuntime() const;
+template std::string Timer<std::chrono::seconds>::printHelper(std::string str, struct snapshot s);
 }// namespace NES
