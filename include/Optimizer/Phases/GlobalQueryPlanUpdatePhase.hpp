@@ -18,6 +18,7 @@
 #define NES_INCLUDE_OPTIMIZER_PHASES_GLOBAL_QUERY_PLAN_UPDATE_PHASE_HPP_
 
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
+#include <Optimizer/Phases/QueryChooseMemLayoutPhase.hpp>
 #include <memory>
 #include <vector>
 
@@ -62,6 +63,9 @@ using SignatureInferencePhasePtr = std::shared_ptr<SignatureInferencePhase>;
 class QueryMergerPhase;
 using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 
+class QueryChooseMemLayoutPhase;
+using QueryChooseMemLayoutPhasePtr = std::shared_ptr<QueryChooseMemLayoutPhase>;
+
 /**
  * @brief This class is responsible for accepting a batch of query requests and then updating the Global Query Plan accordingly.
  */
@@ -103,6 +107,7 @@ class GlobalQueryPlanUpdatePhase {
     TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
     Optimizer::QueryMergerPhasePtr queryMergerPhase;
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
+    QueryChooseMemLayoutPhasePtr queryChooseMemLayoutPtr;
     z3::ContextPtr z3Context;
 };
 }// namespace NES::Optimizer
