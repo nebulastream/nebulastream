@@ -19,9 +19,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 /**
  * @brief Generates the emit operator, which outputs a tuple buffer to the next pipeline.
@@ -35,8 +33,6 @@ class GeneratableBufferEmit : public GeneratableOperator {
      */
     static GeneratableOperatorPtr create(SchemaPtr outputSchema);
 
-    ~GeneratableBufferEmit() noexcept override = default;
-
     /**
     * @brief Creates a new generatable emit buffer, which emits record according to a specific output schema.
     * @param id operator id
@@ -44,18 +40,28 @@ class GeneratableBufferEmit : public GeneratableOperator {
     * @return GeneratableOperatorPtr
     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr outputSchema);
+
+    /**
+     * @brief get the output buffer allocation strategy
+     * @return OutputBufferAllocationStrategy
+     */
+    OutputBufferAllocationStrategy getOutputBufferAllocationStrategy() const;
+
+    /**
+     * @brief sets the output buffer allocation strategy
+     * @param strategy
+     */
+    void setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy strategy);
+
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
-    OutputBufferAllocationStrategy getOutputBufferAllocationStrategy() const;
-    void setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy strategy);
+    ~GeneratableBufferEmit() noexcept override = default;
 
   private:
     GeneratableBufferEmit(OperatorId id, const SchemaPtr& outputSchema);
     OutputBufferAllocationStrategy bufferStrategy;
 
 };
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEBUFFEREMIT_HPP_

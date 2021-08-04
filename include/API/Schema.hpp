@@ -195,7 +195,16 @@ class Schema {
      */
     void clear();
 
-    MemoryLayoutType getLayoutType() const;
+    /**
+     * @brief method to get the type of the memory layout
+     * @return MemoryLayoutType
+     */
+    [[nodiscard]] MemoryLayoutType getLayoutType() const;
+
+    /**
+     * @brief method to set the memory layout
+     * @param layoutType
+     */
     void setLayoutType(MemoryLayoutType layoutType);
 
 
