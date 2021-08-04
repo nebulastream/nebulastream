@@ -135,6 +135,12 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      */
     static GeneratableOperators::GeneratableWindowAggregationPtr
     lowerWindowAggregation(const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor);
+    /**
+   * @brief Lowers a cep iteration operator.
+   * @param queryPlan the query plan
+   * @param operatorNode the current operator node.
+   */
+    void lowerCEPIteration(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 };
 
 }// namespace QueryCompilation

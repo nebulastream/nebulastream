@@ -647,7 +647,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
 
     //register query
     std::string query =
-        R"(Pattern::from("QnV").filter(Attribute("quantity") > 100).iter(3,10).sink(FileSinkDescriptor::create(")"
+        R"(Pattern::from("QnV").filter(Attribute("velocity") > 80).iter(3,10).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -663,12 +663,12 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
 
     //TODO Patternname waiting for String support in map operator
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|QnV$start:UINT64|QnV$end:UINT64|QnV$sensor_id:UINT64|QnV$quantity:UINT64|QnV$PatternId:INT32|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1543622400000|1543623300000|2000073|107|1|\n"
-                             "|1543623600000|1543624500000|2000073|107|1|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|QnV$sensor_id:UINT64|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$PatternId:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|2000070|1543625280000|108.166664|5|1|\n"
+        "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
