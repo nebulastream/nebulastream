@@ -25,14 +25,14 @@
 
 namespace NES {
 
-SerializableQueryPlan* QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPlan) {
+SerializableQueryPlanPtr QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPlan) {
     NES_INFO("QueryPlanSerializationUtil: serializing query plan " << queryPlan->toString());
-    auto* serializedQueryPlan = new SerializableQueryPlan();
+    auto serializedQueryPlanPtr = std::make_unique<SerializableQueryPlan>();
     std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
     NES_TRACE("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
     //Serialize Query Plan operators
-    auto& serializedOperatorMap = *serializedQueryPlan->mutable_operatormap();
+    auto& serializedOperatorMap = *serializedQueryPlanPtr->mutable_operatormap();
     auto bfsIterator =  QueryPlanIterator(queryPlan);
     for (auto itr = bfsIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
@@ -41,21 +41,21 @@ SerializableQueryPlan* QueryPlanSerializationUtil::serializeQueryPlan(const Quer
             continue;
         }
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
-        SerializableOperator* serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp);
-        serializedOperatorMap[visitingOp->getId()] = *serializeOperator;
+        SerializableOperator serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp);
+        serializedOperatorMap[visitingOp->getId()] = serializeOperator;
     }
 
     //Serialize the root operator ids
     for (const auto& rootOperator : rootOperators) {
         u_int64_t rootOperatorId = rootOperator->getId();
-        serializedQueryPlan->add_rootoperatorids(rootOperatorId);
+        serializedQueryPlanPtr->add_rootoperatorids(rootOperatorId);
     }
 
     //Serialize the sub query plan and query plan id
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
-    serializedQueryPlan->set_querysubplanid(queryPlan->getQuerySubPlanId());
-    serializedQueryPlan->set_queryid(queryPlan->getQueryId());
-    return serializedQueryPlan;
+    serializedQueryPlanPtr->set_querysubplanid(queryPlan->getQuerySubPlanId());
+    serializedQueryPlanPtr->set_queryid(queryPlan->getQueryId());
+    return serializedQueryPlanPtr;
 }
 
 QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan) {
