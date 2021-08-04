@@ -40,8 +40,8 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     RegisterQueryRequest request;
 
     // serialize query plan.
-    auto* serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
-    request.set_allocated_queryplan(serializedQueryPlan);
+    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    request.set_allocated_queryplan(serializedQueryPlan.get());
 
     NES_TRACE("WorkerRPCClient:registerQuery -> " << request.DebugString());
     RegisterQueryReply reply;
@@ -72,8 +72,8 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
     // serialize query plan.
-    auto* serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
-    request.set_allocated_queryplan(serializedQueryPlan);
+    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    request.set_allocated_queryplan(serializedQueryPlan.get());
 
     NES_TRACE("WorkerRPCClient:registerQuery -> " << request.DebugString());
     RegisterQueryReply reply;

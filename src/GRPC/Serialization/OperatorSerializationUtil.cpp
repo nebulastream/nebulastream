@@ -89,19 +89,19 @@
 
 namespace NES {
 
-SerializableOperator* OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode) {
+SerializableOperator OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator " << operatorNode->toString());
-    SerializableOperator* serializedOperator = new SerializableOperator();
+    SerializableOperator serializedOperator = SerializableOperator();
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // serialize source operator
         NES_TRACE("OperatorSerializationUtil:: serialize to SourceLogicalOperatorNode");
         auto sourceDetails = serializeSourceOperator(operatorNode->as<SourceLogicalOperatorNode>());
-        serializedOperator->mutable_details()->PackFrom(sourceDetails);
+        serializedOperator.mutable_details()->PackFrom(sourceDetails);
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         // serialize sink operator
         NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperatorNode");
         auto sinkDetails = serializeSinkOperator(operatorNode->as<SinkLogicalOperatorNode>());
-        serializedOperator->mutable_details()->PackFrom(sinkDetails);
+        serializedOperator.mutable_details()->PackFrom(sinkDetails);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         // serialize filter operator
         NES_TRACE("OperatorSerializationUtil:: serialize to FilterLogicalOperatorNode");
@@ -109,7 +109,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(const Operato
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
         // serialize filter expression
         ExpressionSerializationUtil::serializeExpression(filterOperator->getPredicate(), filterDetails.mutable_predicate());
-        serializedOperator->mutable_details()->PackFrom(filterDetails);
+        serializedOperator.mutable_details()->PackFrom(filterDetails);
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         // serialize projection operator
         NES_TRACE("OperatorSerializationUtil:: serialize to ProjectionLogicalOperatorNode");
@@ -119,17 +119,17 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(const Operato
             auto* mutableExpression = projectionDetail.mutable_expression()->Add();
             ExpressionSerializationUtil::serializeExpression(exp, mutableExpression);
         }
-        serializedOperator->mutable_details()->PackFrom(projectionDetail);
+        serializedOperator.mutable_details()->PackFrom(projectionDetail);
     } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         // serialize union operator
         NES_TRACE("OperatorSerializationUtil:: serialize to UnionLogicalOperatorNode");
         auto unionDetails = SerializableOperator_UnionDetails();
-        serializedOperator->mutable_details()->PackFrom(unionDetails);
+        serializedOperator.mutable_details()->PackFrom(unionDetails);
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
         // serialize broadcast operator
         NES_TRACE("OperatorSerializationUtil:: serialize to BroadcastLogicalOperatorNode");
         auto broadcastDetails = SerializableOperator_BroadcastDetails();
-        serializedOperator->mutable_details()->PackFrom(broadcastDetails);
+        serializedOperator.mutable_details()->PackFrom(broadcastDetails);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         // serialize map operator
         NES_TRACE("OperatorSerializationUtil:: serialize to MapLogicalOperatorNode");
@@ -137,7 +137,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(const Operato
         auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
         // serialize map expression
         ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
-        serializedOperator->mutable_details()->PackFrom(mapDetails);
+        serializedOperator.mutable_details()->PackFrom(mapDetails);
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         // serialize CEPIteration operator
         NES_TRACE("OperatorSerializationUtil:: serialize to CEPIterationLogicalOperatorNode");
@@ -146,38 +146,38 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(const Operato
         // serialize CEP iteration iteration
         iterationDetails.set_miniteration(iterationOperator->getMinIterations());
         iterationDetails.set_maxiteration(iterationOperator->getMaxIterations());
-        serializedOperator->mutable_details()->PackFrom(iterationDetails);
+        serializedOperator.mutable_details()->PackFrom(iterationDetails);
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // serialize window operator
         NES_TRACE("OperatorSerializationUtil:: serialize to CentralWindowOperator");
         auto windowDetails = serializeWindowOperator(operatorNode->as<CentralWindowOperator>());
-        serializedOperator->mutable_details()->PackFrom(windowDetails);
+        serializedOperator.mutable_details()->PackFrom(windowDetails);
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
         // serialize window operator
         NES_TRACE("OperatorSerializationUtil:: serialize to SliceCreationOperator");
         auto windowDetails = serializeWindowOperator(operatorNode->as<SliceCreationOperator>());
-        serializedOperator->mutable_details()->PackFrom(windowDetails);
+        serializedOperator.mutable_details()->PackFrom(windowDetails);
     } else if (operatorNode->instanceOf<SliceMergingOperator>()) {
         // serialize window operator
         NES_TRACE("OperatorSerializationUtil:: serialize to SliceMergingOperator");
         auto windowDetails = serializeWindowOperator(operatorNode->as<SliceMergingOperator>());
-        serializedOperator->mutable_details()->PackFrom(windowDetails);
+        serializedOperator.mutable_details()->PackFrom(windowDetails);
     } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
         // serialize window operator
         NES_TRACE("OperatorSerializationUtil:: serialize to WindowComputationOperator");
         auto windowDetails = serializeWindowOperator(operatorNode->as<WindowComputationOperator>());
-        serializedOperator->mutable_details()->PackFrom(windowDetails);
+        serializedOperator.mutable_details()->PackFrom(windowDetails);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         // serialize window operator
         NES_TRACE("OperatorSerializationUtil:: serialize to JoinLogicalOperatorNode");
         auto joinDetails = serializeJoinOperator(operatorNode->as<JoinLogicalOperatorNode>());
-        serializedOperator->mutable_details()->PackFrom(joinDetails);
+        serializedOperator.mutable_details()->PackFrom(joinDetails);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         // serialize watermarkAssigner operator
         NES_TRACE("OperatorSerializationUtil:: serialize to WatermarkAssignerLogicalOperatorNode");
         auto watermarkAssignerDetail =
             serializeWatermarkAssignerOperator(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
-        serializedOperator->mutable_details()->PackFrom(watermarkAssignerDetail);
+        serializedOperator.mutable_details()->PackFrom(watermarkAssignerDetail);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
     }
@@ -186,31 +186,31 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(const Operato
     if (!operatorNode->isBinaryOperator()) {
         if (operatorNode->isExchangeOperator()) {
             SchemaSerializationUtil::serializeSchema(operatorNode->as<ExchangeOperatorNode>()->getInputSchema(),
-                                                     serializedOperator->mutable_inputschema());
+                                                     serializedOperator.mutable_inputschema());
         } else {
             SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperatorNode>()->getInputSchema(),
-                                                     serializedOperator->mutable_inputschema());
+                                                     serializedOperator.mutable_inputschema());
         }
     } else {
         SchemaSerializationUtil::serializeSchema(operatorNode->as<BinaryOperatorNode>()->getLeftInputSchema(),
-                                                 serializedOperator->mutable_leftinputschema());
+                                                 serializedOperator.mutable_leftinputschema());
         SchemaSerializationUtil::serializeSchema(operatorNode->as<BinaryOperatorNode>()->getRightInputSchema(),
-                                                 serializedOperator->mutable_rightinputschema());
+                                                 serializedOperator.mutable_rightinputschema());
     }
 
     // serialize output schema
-    SchemaSerializationUtil::serializeSchema(operatorNode->getOutputSchema(), serializedOperator->mutable_outputschema());
+    SchemaSerializationUtil::serializeSchema(operatorNode->getOutputSchema(), serializedOperator.mutable_outputschema());
 
     // serialize operator id
-    serializedOperator->set_operatorid(operatorNode->getId());
+    serializedOperator.set_operatorid(operatorNode->getId());
 
     // serialize and append children if the node has any
     for (const auto& child : operatorNode->getChildren()) {
-        serializedOperator->add_childrenids(child->as<OperatorNode>()->getId());
+        serializedOperator.add_childrenids(child->as<OperatorNode>()->getId());
     }
 
     NES_DEBUG("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to "
-                                                       << serializedOperator->details().type_url());
+                                                       << serializedOperator.details().type_url());
     return serializedOperator;
 }
 

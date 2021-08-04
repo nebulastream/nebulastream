@@ -64,6 +64,7 @@
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
+#include <SerializableQueryPlan.pb.h>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <google/protobuf/util/json_util.h>
@@ -466,62 +467,62 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(source);
-        auto sourceOperator = OperatorSerializationUtil::deserializeOperator(*serializedOperator);
+        auto sourceOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(source->equal(sourceOperator));
     }
 
     {
         auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
-        auto* serializedOperator = OperatorSerializationUtil::serializeOperator(filter);
-        auto filterOperator = OperatorSerializationUtil::deserializeOperator(*serializedOperator);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(filter);
+        auto filterOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(filter->equal(filterOperator));
     }
 
     {
         auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
-        auto* serializedOperator = OperatorSerializationUtil::serializeOperator(map);
-        auto mapOperator = OperatorSerializationUtil::deserializeOperator(*serializedOperator);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(map);
+        auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(map->equal(mapOperator));
     }
 
     {
         auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = MOD(2, Attribute("f3")));
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(map);
-        auto mapOperator = OperatorSerializationUtil::deserializeOperator(*serializedOperator);
+        auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(map->equal(mapOperator));
     }
 
     {
         auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = POWER(2, Attribute("f3")));
-        auto* serializedOperator = OperatorSerializationUtil::serializeOperator(map);
-        auto mapOperator = OperatorSerializationUtil::deserializeOperator(*serializedOperator);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(map);
+        auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(map->equal(mapOperator));
     }
 
     {
         auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = ABS(Attribute("f3")));
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(map);
-        auto mapOperator = OperatorSerializationUtil::deserializeOperator(*serializedOperator);
+        auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(map->equal(mapOperator));
     }
     {
         auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-        auto* serializedOperator = OperatorSerializationUtil::serializeOperator(sink);
-        auto sinkOperator = OperatorSerializationUtil::deserializeOperator(*serializedOperator);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(sink);
+        auto sinkOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(sink->equal(sinkOperator));
     }
 
     {
         auto unionOp = LogicalOperatorFactory::createUnionOperator();
-        auto* serializedOperator = OperatorSerializationUtil::serializeOperator(unionOp);
-        auto unionOperator = OperatorSerializationUtil::deserializeOperator(*serializedOperator);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(unionOp);
+        auto unionOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(unionOp->equal(unionOperator));
     }
 
     {
         auto broadcast = LogicalOperatorFactory::createBroadcastOperator();
-        auto* serializedOperator = OperatorSerializationUtil::serializeOperator(broadcast);
-        auto broadcastOperator = OperatorSerializationUtil::deserializeOperator(*serializedOperator);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(broadcast);
+        auto broadcastOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(broadcast->equal(broadcastOperator));
     }
 
@@ -540,8 +541,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
             1);
 
         auto join = LogicalOperatorFactory::createJoinOperator(joinDef);
-        auto* serializedOperator = OperatorSerializationUtil::serializeOperator(join);
-        auto joinOperator = OperatorSerializationUtil::deserializeOperator(*serializedOperator);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
+        auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(join->equal(joinOperator));
     }
 }
@@ -558,8 +559,8 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
 
     auto queryPlan = QueryPlan::create(1, 1, {sink});
 
-    auto* serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
-    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
+    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan.get());
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
     EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
@@ -605,8 +606,8 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
 
     auto queryPlan = QueryPlan::create(1, 1, {sink1, sink2});
 
-    auto* serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
-    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
+    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan.get());
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
     EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
@@ -639,8 +640,8 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
 
     auto queryPlan = QueryPlan::create(1, 1, {sink1, sink2});
 
-    auto* serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
-    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
+    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan.get());
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
     EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
