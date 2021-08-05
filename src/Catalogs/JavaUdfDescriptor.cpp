@@ -17,7 +17,7 @@
 #include <Catalogs/JavaUdfDescriptor.hpp>
 #include <Exceptions/UdfException.hpp>
 
-namespace NES {
+namespace NES::Catalogs {
 
 JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
                                      const std::string& methodName,
@@ -49,4 +49,4 @@ JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
     }
 }
 
-} // namespace NES
+} // namespace NES::Catalogs

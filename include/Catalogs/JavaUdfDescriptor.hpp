@@ -21,7 +21,7 @@
 #include <vector>
 #include <unordered_map>
 
-namespace NES {
+namespace NES::Catalogs {
 
 // Utility types
 using JavaSerializedInstance = std::vector<char>;
@@ -98,4 +98,4 @@ class JavaUdfDescriptor {
 // and then return shared_ptrs when the implementation is retrieved.
 using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
 
-} // namespace NES
+} // namespace NES::Catalogs
