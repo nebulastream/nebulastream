@@ -18,13 +18,13 @@
 
 using namespace std::string_literals;
 
-#include <UDFs/JavaUdfCatalog.hpp>
+#include <UDFs/UdfCatalog.hpp>
 #include <UDFs/UdfException.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-class JavaUdfCatalogTest : public testing::Test {
+class UdfCatalogTest : public testing::Test {
   protected:
     static void SetUpTestCase() {
         NES::setupLogging("UdfTest.log", NES::LOG_DEBUG);
@@ -39,12 +39,12 @@ class JavaUdfCatalogTest : public testing::Test {
     }
 
   protected:
-    JavaUdfCatalog udfCatalog{};
+    UdfCatalog udfCatalog{};
 };
 
 // RegisterJavaUdf
 
-TEST_F(JavaUdfCatalogTest, RetrieveRegisteredUdfDescriptor)
+TEST_F(UdfCatalogTest, RetrieveRegisteredUdfDescriptor)
 {
     // given
     auto udfName = "my_udf"s;
@@ -55,11 +55,11 @@ TEST_F(JavaUdfCatalogTest, RetrieveRegisteredUdfDescriptor)
     ASSERT_EQ(udfDescriptor, udfCatalog.getUdfDescriptor(udfName));
 }
 
-TEST_F(JavaUdfCatalogTest, RegisteredDescriptorMustNotBeNull) {
+TEST_F(UdfCatalogTest, RegisteredDescriptorMustNotBeNull) {
     EXPECT_THROW(udfCatalog.registerJavaUdf("my_udf", nullptr), UdfException);
 }
 
-TEST_F(JavaUdfCatalogTest, CannotRegisterUdfUnderExistingName) {
+TEST_F(UdfCatalogTest, CannotRegisterUdfUnderExistingName) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor1 = createDescriptor();
@@ -71,17 +71,17 @@ TEST_F(JavaUdfCatalogTest, CannotRegisterUdfUnderExistingName) {
 
 // GetUdfDescriptor
 
-TEST_F(JavaUdfCatalogTest, ReturnNullptrIfUdfIsNotKnown) {
+TEST_F(UdfCatalogTest, ReturnNullptrIfUdfIsNotKnown) {
     ASSERT_EQ(udfCatalog.getUdfDescriptor("unknown_udf"), nullptr);
 }
 
 // RemoveUdf
 
-TEST_F(JavaUdfCatalogTest, CannotRemoveUnknownUdf) {
+TEST_F(UdfCatalogTest, CannotRemoveUnknownUdf) {
     ASSERT_EQ(udfCatalog.removeUdf("unknown_udf"), false);
 }
 
-TEST_F(JavaUdfCatalogTest, SignalRemovalOfUdf) {
+TEST_F(UdfCatalogTest, SignalRemovalOfUdf) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor = createDescriptor();
@@ -90,7 +90,7 @@ TEST_F(JavaUdfCatalogTest, SignalRemovalOfUdf) {
     ASSERT_EQ(udfCatalog.removeUdf(udfName), true);
 }
 
-TEST_F(JavaUdfCatalogTest, AfterRemovalTheUdfDoesNotExist) {
+TEST_F(UdfCatalogTest, AfterRemovalTheUdfDoesNotExist) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor = createDescriptor();
@@ -100,7 +100,7 @@ TEST_F(JavaUdfCatalogTest, AfterRemovalTheUdfDoesNotExist) {
     ASSERT_EQ(udfCatalog.getUdfDescriptor(udfName), nullptr);
 }
 
-TEST_F(JavaUdfCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
+TEST_F(UdfCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor1 = createDescriptor();
@@ -113,7 +113,7 @@ TEST_F(JavaUdfCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
 
 // RemoveUdf
 
-TEST_F(JavaUdfCatalogTest, ReturnListOfKnownUds) {
+TEST_F(UdfCatalogTest, ReturnListOfKnownUds) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor1 = createDescriptor();

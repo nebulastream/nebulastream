@@ -16,18 +16,18 @@
 
 #include <string>
 
-#include <UDFs/JavaUdfCatalog.hpp>
+#include <UDFs/UdfCatalog.hpp>
 #include <UDFs/UdfException.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-std::unique_ptr<JavaUdfCatalog> JavaUdfCatalog::create() {
-    return std::make_unique<JavaUdfCatalog>();
+std::unique_ptr<UdfCatalog> UdfCatalog::create() {
+    return std::make_unique<UdfCatalog>();
 }
 
 // TODO comment about Clang-tidy
-void JavaUdfCatalog::registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor) {
+void UdfCatalog::registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor) {
     NES_DEBUG("Registering Java UDF '" << name << "'");
     if (descriptor == nullptr) {
         throw UdfException("Java UDF descriptor must not be null");
@@ -39,7 +39,7 @@ void JavaUdfCatalog::registerJavaUdf(const std::string& name, JavaUdfDescriptorP
     }
 }
 
-JavaUdfDescriptorPtr JavaUdfCatalog::getUdfDescriptor(const std::string& name) {
+JavaUdfDescriptorPtr UdfCatalog::getUdfDescriptor(const std::string& name) {
     NES_DEBUG("Looking up descriptor for Java UDF '" << name << "'");
     auto entry = udfStore.find(name);
     if (entry == udfStore.end()) {
@@ -49,7 +49,7 @@ JavaUdfDescriptorPtr JavaUdfCatalog::getUdfDescriptor(const std::string& name) {
     return entry->second;
 }
 
-bool JavaUdfCatalog::removeUdf(const std::string& name) {
+bool UdfCatalog::removeUdf(const std::string& name) {
     NES_DEBUG("Removing Java UDF '" << name << "'");
     auto entry = udfStore.find(name);
     if (entry == udfStore.end()) {
@@ -63,7 +63,7 @@ bool JavaUdfCatalog::removeUdf(const std::string& name) {
     return true;
 }
 
-const std::vector<std::string> JavaUdfCatalog::listUdfs() const {
+const std::vector<std::string> UdfCatalog::listUdfs() const {
     NES_DEBUG("Listing names of Java UDFs");
     auto list = std::vector<std::string> {};
     list.reserve(udfStore.size());

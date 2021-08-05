@@ -27,7 +27,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Services/NESRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
-#include <UDFs/JavaUdfCatalog.hpp>
+#include <UDFs/UdfCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
 #include <grpcpp/server_builder.h>
@@ -105,7 +105,7 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
                                                   queryParsingService,
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 
-    javaUdfCatalog = JavaUdfCatalog::create();
+    udfCatalog = UdfCatalog::create();
 }
 
 NesCoordinator::~NesCoordinator() {

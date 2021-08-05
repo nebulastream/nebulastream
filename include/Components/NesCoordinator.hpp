@@ -73,8 +73,8 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-class JavaUdfCatalog;
-using JavaUdfCatalogPtr = std::unique_ptr<JavaUdfCatalog>;
+class UdfCatalog;
+using UdfCatalogPtr = std::unique_ptr<UdfCatalog>;
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
@@ -196,7 +196,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     WorkerRPCClientPtr workerRpcClient;
     NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
-    JavaUdfCatalogPtr javaUdfCatalog;
+    UdfCatalogPtr udfCatalog;
 };
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 
