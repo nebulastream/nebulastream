@@ -33,7 +33,7 @@
 #include <sys/sysinfo.h>
 #elif defined(__APPLE__)
 #else
-#error "Uknown platform"
+#error "Unknown platform"
 #endif
 #include <thread>
 #include <vector>
