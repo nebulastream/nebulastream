@@ -43,7 +43,7 @@ class JavaUdfDescriptor {
      * @throws UdfException If byteCodeList does not contain an entry for getClassName.
      * @throws UdfException If serializedInstance or any of the bytecode entries in byteCodeList are a 0-size byte array.
      */
-    // TODO Signature could be improved with move semantics?
+    // TODO #2079 Signature could be improved with move semantics?
     JavaUdfDescriptor(const std::string& className,
                       const std::string& methodName,
                       const JavaSerializedInstance& serializedInstance,
@@ -89,6 +89,7 @@ class JavaUdfDescriptor {
     const JavaUdfByteCodeList byteCodeList;
 };
 
+// TODO #2079 Change to unique_ptr?
 // This is a shared_ptr for now.
 // The UDF implementation is owned by the UDF catalog, but it is passed to a query operator during query rewrite.
 // If the UDF is removed from the catalog while a query that uses the UDF is still active in the system,
