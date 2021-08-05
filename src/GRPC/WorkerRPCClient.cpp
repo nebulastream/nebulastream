@@ -107,6 +107,7 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
 bool WorkerRPCClient::registerQueryForReconfigurationAsync(const std::string& address,
                                                            const QueryPlanPtr& queryPlan,
                                                            const CompletionQueuePtr& cq) {
+
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_DEBUG("WorkerRPCClient::registerQueryForReconfigurationAsync: address=" << address << " queryId=" << queryId
@@ -115,8 +116,8 @@ bool WorkerRPCClient::registerQueryForReconfigurationAsync(const std::string& ad
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
     // serialize query plan.
-    auto* serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
-    request.set_allocated_queryplan(serializedQueryPlan);
+    auto serializableQueryPlan = request.mutable_queryplan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializableQueryPlan);
 
     NES_TRACE("WorkerRPCClient:registerQueryForReconfigurationAsync -> " << request.DebugString());
     RegisterQueryReply reply;

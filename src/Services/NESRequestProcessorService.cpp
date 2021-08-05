@@ -98,7 +98,7 @@ void NESRequestProcessorService::start() {
                     SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
-                    if (!queryReconfiguration || sharedQueryMetaData->isNew()) {
+                    if (!queryReconfiguration || sharedQueryPlan->isNew()) {
                         if (!sharedQueryPlan->isNew()) {
                             NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
                             bool successful = queryUndeploymentPhase->execute(sharedQueryId);
@@ -131,7 +131,7 @@ void NESRequestProcessorService::start() {
                             }
                         }
                     } else {
-                        if (sharedQueryMetaData->isEmpty()) {
+                        if (sharedQueryPlan->isEmpty()) {
                             NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
                             bool successful = queryUndeploymentPhase->execute(sharedQueryId);
                             if (!successful) {
@@ -139,11 +139,11 @@ void NESRequestProcessorService::start() {
                                                                  + std::to_string(sharedQueryId));
                             }
                         } else {
-                            auto queryPlan = sharedQueryMetaData->getQueryPlan();
+                            auto queryPlan = sharedQueryPlan->getQueryPlan();
                             NES_DEBUG(
                                 "QueryProcessingService: Performing Query Operator placement for query with shared query id : "
                                 << sharedQueryId);
-                            if (!sharedQueryMetaData->getChangeLog()->getAddedSinks().empty()) {
+                            if (!sharedQueryPlan->getChangeLog()->getAddedSinks().empty()) {
 
                                 bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
                                 if (!placementSuccessful) {
@@ -154,7 +154,7 @@ void NESRequestProcessorService::start() {
                                 }
                             }
 
-                            bool successful = queryReconfigurationPhase->execute(sharedQueryMetaData);
+                            bool successful = queryReconfigurationPhase->execute(sharedQueryPlan);
                             if (!successful) {
                                 throw QueryDeploymentException(
                                     sharedQueryId,

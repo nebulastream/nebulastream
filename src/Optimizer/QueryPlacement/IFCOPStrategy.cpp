@@ -91,6 +91,11 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     return runTypeInferencePhase(queryPlan->getQueryId());
 }
 
+bool IFCOPStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) {
+    NES_NOT_IMPLEMENTED();
+    return false;
+}
+
 PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan) {
 
     PlacementMatrix placementCandidate;
