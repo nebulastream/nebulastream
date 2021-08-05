@@ -105,7 +105,7 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
                                                   queryParsingService,
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 
-    javaUdfCatalog = std::make_unique<JavaUdfCatalog>();
+    javaUdfCatalog = JavaUdfCatalog::create();
 }
 
 NesCoordinator::~NesCoordinator() {

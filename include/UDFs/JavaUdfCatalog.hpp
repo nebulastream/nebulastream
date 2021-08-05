@@ -34,6 +34,12 @@ namespace NES {
 class JavaUdfCatalog {
   public:
     /**
+     * @brief Create a JavaUdfCatalog instance.
+     * @return JavaUdfCatalog instance.
+     */
+    static std::unique_ptr<JavaUdfCatalog> create();
+
+    /**
      * @brief Register the descriptor data of a Java UDF.
      * @param name The name of the UDF as it is used in queries.
      * @param descriptor The implementation data of the UDF.
