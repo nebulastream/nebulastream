@@ -23,20 +23,20 @@
 using namespace NES;
 
 // TODO comment about Clang-tidy
-void JavaUdfCatalog::registerJavaUdf(const std::string& name, JavaUdfImplementationPtr implementation) {
+void JavaUdfCatalog::registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor) {
     NES_DEBUG("Registering Java UDF '" << name << "'");
-    if (implementation == nullptr) {
-        throw UdfException("Java UDF implementation must not be null");
+    if (descriptor == nullptr) {
+        throw UdfException("Java UDF descriptor must not be null");
     }
-    if (auto success = udfStore.insert({name, implementation}).second; !success) {
+    if (auto success = udfStore.insert({name, descriptor}).second; !success) {
         std::stringstream ss;
         ss << "Java UDF '" << name << "' already exists";
         throw UdfException(ss.str());
     }
 }
 
-JavaUdfImplementationPtr JavaUdfCatalog::getUdfImplementation(const std::string& name) {
-    NES_DEBUG("Looking up implementation for Java UDF '" << name << "'");
+JavaUdfDescriptorPtr JavaUdfCatalog::getUdfDescriptor(const std::string& name) {
+    NES_DEBUG("Looking up descriptor for Java UDF '" << name << "'");
     auto entry = udfStore.find(name);
     if (entry == udfStore.end()) {
         NES_DEBUG("Java UDF '" << name << "' does not exist");

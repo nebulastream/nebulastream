@@ -31,7 +31,7 @@ using JavaUdfByteCodeList = std::unordered_map<std::string, JavaByteCode>;
 /**
  * @brief Container for all the data required to execute a Java UDF inside an embedded JVM.
  */
-class JavaUdfImplementation {
+class JavaUdfDescriptor {
   public:
     /**
      * @brief Construct a container of the data required to execute a Java UDF inside an embedded JVM.
@@ -44,10 +44,10 @@ class JavaUdfImplementation {
      * @throws UdfException If getSerializedInstance or any of the bytecode entries in byteCodeList are a 0-size byte array.
      */
     // TODO Signature could be improved with move semantics?
-    JavaUdfImplementation(const std::string& fqName,
-                          const std::string& methodName,
-                          const JavaSerializedInstance& serializedInstance,
-                          const JavaUdfByteCodeList& byteCodeList);
+    JavaUdfDescriptor(const std::string& fqName,
+                      const std::string& methodName,
+                      const JavaSerializedInstance& serializedInstance,
+                      const JavaUdfByteCodeList& byteCodeList);
 
     /**
      * @brief Return the fully-qualified class name of the class implementing the UDF.
@@ -95,6 +95,6 @@ class JavaUdfImplementation {
 // the pointer to the UDF must stay valid.
 // It would be better to have the UDF catalog consume a unique_ptr to signal that it owns the implementation object
 // and then return shared_ptrs when the implementation is retrieved.
-using JavaUdfImplementationPtr = std::shared_ptr<JavaUdfImplementation>;
+using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
 
 }

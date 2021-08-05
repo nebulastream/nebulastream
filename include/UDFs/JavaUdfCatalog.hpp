@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <UDFs/JavaUdfImplementation.hpp>
+#include <UDFs/JavaUdfDescriptor.hpp>
 
 namespace NES {
 
@@ -34,20 +34,20 @@ namespace NES {
 class JavaUdfCatalog {
   public:
     /**
-     * @brief Register the implementation data of a Java UDF.
+     * @brief Register the descriptor data of a Java UDF.
      * @param name The name of the UDF as it is used in queries.
-     * @param implementation The implementation data of the UDF.
-     * @throws UdfException If implementation is nullptr or if a UDF under the name is already registered.
+     * @param descriptor The implementation data of the UDF.
+     * @throws UdfException If descriptor is nullptr or if a UDF under the name is already registered.
      */
-    // TODO use unique_ptr here to make sure that JavaUdfCatalog takes ownership of the implementation object
-    void registerJavaUdf(const std::string& name, JavaUdfImplementationPtr implementation);
+    // TODO use unique_ptr here to make sure that JavaUdfCatalog takes ownership of the descriptor object
+    void registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor);
 
     /**
      * @brief Retrieve the implementation data for a Java UDF.
      * @param name The name of the UDF as it is used in queries.
      * @return The implementation data of the UDF, or nullptr if the UDF is not registered.
      */
-    JavaUdfImplementationPtr getUdfImplementation(const std::string& name);
+    JavaUdfDescriptorPtr getUdfDescriptor(const std::string& name);
 
     /**
      * @brief Remove the UDF from the catalog.
@@ -71,7 +71,7 @@ class JavaUdfCatalog {
     const std::vector<std::string> listUdfs() const;
 
   private:
-    std::unordered_map<std::string, JavaUdfImplementationPtr> udfStore;
+    std::unordered_map<std::string, JavaUdfDescriptorPtr> udfStore;
 };
 
 }

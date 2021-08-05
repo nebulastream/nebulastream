@@ -14,15 +14,15 @@
     limitations under the License.
 */
 
-#include <UDFs/JavaUdfImplementation.hpp>
+#include <UDFs/JavaUdfDescriptor.hpp>
 #include <UDFs/UdfException.hpp>
 
 using namespace NES;
 
-JavaUdfImplementation::JavaUdfImplementation(const std::string& fqName,
-                                             const std::string& methodName,
-                                             const JavaSerializedInstance& serializedInstance,
-                                             const JavaUdfByteCodeList& byteCodeList)
+JavaUdfDescriptor::JavaUdfDescriptor(const std::string& fqName,
+                                     const std::string& methodName,
+                                     const JavaSerializedInstance& serializedInstance,
+                                     const JavaUdfByteCodeList& byteCodeList)
     : fqName(fqName), methodName(methodName), serializedInstance(serializedInstance), byteCodeList(byteCodeList)
 {
     if (fqName.empty()) {
