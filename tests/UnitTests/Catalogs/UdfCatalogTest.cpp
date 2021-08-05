@@ -42,7 +42,7 @@ class UdfCatalogTest : public testing::Test {
     UdfCatalog udfCatalog{};
 };
 
-// RegisterJavaUdf
+// Test behavior of RegisterJavaUdf
 
 TEST_F(UdfCatalogTest, RetrieveRegisteredUdfDescriptor)
 {
@@ -69,13 +69,13 @@ TEST_F(UdfCatalogTest, CannotRegisterUdfUnderExistingName) {
     EXPECT_THROW(udfCatalog.registerJavaUdf(udfName, udfDescriptor2), UdfException);
 }
 
-// GetUdfDescriptor
+// Test behavior of GetUdfDescriptor
 
 TEST_F(UdfCatalogTest, ReturnNullptrIfUdfIsNotKnown) {
     ASSERT_EQ(udfCatalog.getUdfDescriptor("unknown_udf"), nullptr);
 }
 
-// RemoveUdf
+// Test behavior of RemoveUdf
 
 TEST_F(UdfCatalogTest, CannotRemoveUnknownUdf) {
     ASSERT_EQ(udfCatalog.removeUdf("unknown_udf"), false);
@@ -111,7 +111,7 @@ TEST_F(UdfCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
     EXPECT_NO_THROW(udfCatalog.registerJavaUdf(udfName, udfDescriptor2));
 }
 
-// RemoveUdf
+// Test behavior of RemoveUdf
 
 TEST_F(UdfCatalogTest, ReturnListOfKnownUds) {
     // given
