@@ -38,13 +38,23 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param clientId identifies the client connecting to the server, each server has aunique clientID
      * @param user to connect to server
      * @param topic to subscribe to
+     * @param numberOfTuplesToProducePerBuffer
+     * @param numberOfBuffersToProcess
      * @param timeUnits unit for the timed delay, default = nanoseconds
      * @param dataType data type that is send by the broker, default = JSON
      * @param messageDelay delay units for the messages, default = 0
      * @return source descriptor pointer to mqtt source
      */
-    static SourceDescriptorPtr
-    create(SchemaPtr schema, std::string serverAddress, std::string clientId, std::string user, std::string topic, DataType dataType, TimeUnits timeUnits, uint64_t messageDelay);
+    static SourceDescriptorPtr create(SchemaPtr schema,
+                                      std::string serverAddress,
+                                      std::string clientId,
+                                      std::string user,
+                                      std::string topic,
+                                      uint64_t numberOfTuplesToProducePerBuffer,
+                                      uint64_t numberOfBuffersToProcess,
+                                      DataType dataType,
+                                      TimeUnits timeUnits,
+                                      uint64_t messageDelay);
     /**
      * @brief create a source descriptor pointer for MQTT source
      * @param logicalStreamName Name of the logical data stream
@@ -53,6 +63,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param clientId identifies the client connecting to the server, each server has aunique clientID
      * @param user to connect to server
      * @param topic to subscribe to
+     * @param numberOfTuplesToProducePerBuffer
+     * @param numberOfBuffersToProcess
      * @param timeUnits unit for the timed delay, default = nanoseconds
      * @param dataType data type that is send by the broker, default = JSON
      * @param messageDelay delay units for the messages, default = 0
@@ -64,6 +76,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                       std::string clientId,
                                       std::string user,
                                       std::string topic,
+                                      uint64_t numberOfTuplesToProducePerBuffer,
+                                      uint64_t numberOfBuffersToProcess,
                                       DataType dataType,
                                       TimeUnits timeUnits,
                                       uint64_t messageDelay);
@@ -91,6 +105,18 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @return topic
      */
     std::string getTopic() const;
+
+    /**
+     * @brief get numberOfTuplesToProducePerBuffer
+     * @return numberOfTuplesToProducePerBuffer
+     */
+    uint64_t getNumberOfTuplesToProducePerBuffer() const;
+
+    /**
+     * @brief get numberOfBuffersToProcess
+     * @return numberOfBuffersToProcess
+     */
+    uint64_t getNumberOfBuffersToProcess() const;
 
     /**
      * @brief getter for dataType
@@ -125,6 +151,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param clientId unique server id
      * @param user to connect to server
      * @param topic to subscribe to
+     * @param numberOfTuplesToProducePerBuffer
+     * @param numberOfBuffersToProcess
      * @param timeUnits unit for the timed delay, default = nanoseconds
      * @param dataType data type that is send by the broker, default = JSON
      * @param messageDelay delay units for the messages, default = 0
@@ -134,6 +162,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                   std::string clientId,
                                   std::string user,
                                   std::string topic,
+                                  uint64_t numberOfTuplesToProducePerBuffer,
+                                  uint64_t numberOfBuffersToProcess,
                                   DataType dataType,
                                   TimeUnits timeUnits,
                                   uint64_t messageDelay);
@@ -145,6 +175,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param clientId unique server id
      * @param user to connect to server
      * @param topic to subscribe to
+     * @param numberOfTuplesToProducePerBuffer
+     * @param numberOfBuffersToProcess
      * @param timeUnits unit for the timed delay, default = nanoseconds
      * @param dataType data type that is send by the broker, default = JSON
      * @param messageDelay delay units for the messages, default = 0
@@ -155,6 +187,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                   std::string clientId,
                                   std::string user,
                                   std::string topic,
+                                  uint64_t numberOfTuplesToProducePerBuffer,
+                                  uint64_t numberOfBuffersToProcess,
                                   DataType dataType,
                                   TimeUnits timeUnits,
                                   uint64_t messageDelay);
@@ -164,6 +198,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
     std::string user;
     std::string password;
     std::string topic;
+    uint64_t numberOfTuplesToProducePerBuffer;
+    uint64_t numberOfBuffersToProcess;
     DataType dataType;
     TimeUnits timeUnits;
     uint64_t messageDelay;

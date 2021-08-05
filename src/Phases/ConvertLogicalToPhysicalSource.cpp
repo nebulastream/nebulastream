@@ -139,6 +139,8 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                 mqttSourceDescriptor->getClientId(),
                                 mqttSourceDescriptor->getUser(),
                                 mqttSourceDescriptor->getTopic(),
+                                0,
+                                0,
                                 operatorId,
                                 numSourceLocalBuffers,
                                 successors);

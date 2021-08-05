@@ -105,8 +105,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     } else if (type == "MQTTSource") {
         NES_DEBUG("PhysicalStreamConfig: create MQTT source with configurations: " << conf << ".");
-        const std::string delimiter = reinterpret_cast<const char*>(';');
-        std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter(conf, delimiter);
+        std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter(conf,";");
 
         //init dataType to default value (JSON). Since only JSON is implemented currently,
         //no other checks needed.
@@ -125,7 +124,8 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         //Places in mqttConfig provide:
         //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = dataType (conversion to enum above)
         //5 = timeUnits (conversion to enum above); 6 = messageDelay
-        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], dataType, timeUnits, std::stoi(mqttConfig[6]));
+        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3],
+                                            newNumberOfTuplesToProducePerBuffer, numBuffers, dataType, timeUnits, std::stoi(mqttConfig[6]));
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
         return nullptr;

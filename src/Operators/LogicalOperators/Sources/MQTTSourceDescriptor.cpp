@@ -28,6 +28,8 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  std::string clientId,
                                                  std::string user,
                                                  std::string topic,
+                                                 uint64_t numberOfTuplesToProducePerBuffer,
+                                                 uint64_t numberOfBuffersToProcess,
                                                  DataType dataType,
                                                  TimeUnits timeUnits,
                                                  uint64_t messageDelay) {
@@ -36,6 +38,8 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                                        std::move(clientId),
                                                                        std::move(user),
                                                                        std::move(topic),
+                                                                       numberOfTuplesToProducePerBuffer,
+                                                                       numberOfBuffersToProcess,
                                                                        dataType,
                                                                        timeUnits,
                                                                        messageDelay));
@@ -47,6 +51,8 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  std::string clientId,
                                                  std::string user,
                                                  std::string topic,
+                                                 uint64_t numberOfTuplesToProducePerBuffer,
+                                                 uint64_t numberOfBuffersToProcess,
                                                  DataType dataType,
                                                  TimeUnits timeUnits,
                                                  uint64_t messageDelay) {
@@ -56,6 +62,8 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                                        std::move(clientId),
                                                                        std::move(user),
                                                                        std::move(topic),
+                                                                       numberOfTuplesToProducePerBuffer,
+                                                                       numberOfBuffersToProcess,
                                                                        dataType,
                                                                        timeUnits,
                                                                        messageDelay));
@@ -66,11 +74,14 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string clientId,
                                            std::string user,
                                            std::string topic,
+                                           uint64_t numberOfTuplesToProducePerBuffer,
+                                           uint64_t numberOfBuffersToProcess,
                                            DataType dataType,
                                            TimeUnits timeUnits,
                                            uint64_t messageDelay)
     : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)),
-      user(std::move(user)), topic(std::move(topic)), dataType(dataType), timeUnits(timeUnits), messageDelay(messageDelay) {}
+      user(std::move(user)), topic(std::move(topic)), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numberOfBuffersToProcess(numberOfBuffersToProcess),
+      dataType(dataType), timeUnits(timeUnits), messageDelay(messageDelay) {}
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string logicalStreamName,
@@ -78,11 +89,14 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string clientId,
                                            std::string user,
                                            std::string topic,
+                                           uint64_t numberOfTuplesToProducePerBuffer,
+                                           uint64_t numberOfBuffersToProcess,
                                            DataType dataType,
                                            TimeUnits timeUnits,
                                            uint64_t messageDelay)
     : SourceDescriptor(std::move(schema), std::move(logicalStreamName)), serverAddress(std::move(serverAddress)),
-      clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), dataType(dataType), timeUnits(timeUnits),
+      clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numberOfBuffersToProcess(numberOfBuffersToProcess), dataType(dataType), timeUnits(timeUnits),
       messageDelay(messageDelay) {}
 
 std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
@@ -92,6 +106,12 @@ std::string MQTTSourceDescriptor::getClientId() const { return clientId; }
 std::string MQTTSourceDescriptor::getUser() const { return user; }
 
 std::string MQTTSourceDescriptor::getTopic() const { return topic; }
+
+std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor()"; }
+
+uint64_t MQTTSourceDescriptor::getNumberOfBuffersToProcess() const { return numberOfBuffersToProcess; }
+
+uint64_t MQTTSourceDescriptor::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 
 MQTTSourceDescriptor::DataType MQTTSourceDescriptor::getDataType() const { return dataType; }
 
@@ -108,11 +128,11 @@ bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     NES_DEBUG("URL= " << serverAddress << " == " << otherMQTTSource->getServerAddress());
     return serverAddress == otherMQTTSource->getServerAddress() && clientId == otherMQTTSource->getClientId()
         && user == otherMQTTSource->getUser() && topic == otherMQTTSource->getTopic()
+        && numberOfTuplesToProducePerBuffer == otherMQTTSource->getNumberOfTuplesToProducePerBuffer()
+        && numberOfBuffersToProcess == otherMQTTSource->getNumberOfBuffersToProcess()
         && dataType == otherMQTTSource->getDataType() && timeUnits == otherMQTTSource->getTimeUnit()
         && messageDelay == otherMQTTSource->getMessageDelay();
 }
-
-std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor()"; }
 
 }// namespace NES
 

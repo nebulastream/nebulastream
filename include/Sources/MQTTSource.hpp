@@ -46,6 +46,8 @@ class MQTTSource : public DataSource {
      * @param clientId identifies the client connecting to the server, each server has aunique clientID
      * @param user name to connect to the mqtt broker
      * @param topic to listen to, to obtain the desired data
+     * @param numberOfTuplesToProducePerBuffer
+     * @param numberOfBuffersToProcess
      * @param operatorId
      * @param timeUnit unit for the timed delay, default = nanoseconds
      * @param dataType data type that is send by the broker, default = JSON
@@ -113,6 +115,17 @@ class MQTTSource : public DataSource {
      * @return topic
      */
     std::string const& getTopic() const;
+    /**
+     * @brief get numberOfTuplesToProducePerBuffer
+     * @return numberOfTuplesToProducePerBuffer
+     */
+    uint64_t getNumberOfTuplesToProducePerBuffer() const;
+
+    /**
+     * @brief get numberOfBuffersToProcess
+     * @return numberOfBuffersToProcess
+     */
+    uint64_t getNumberOfBuffersToProcess() const;
     /**
      * @brief getter for dataType
      * @return dataType
