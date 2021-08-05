@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <UDFs/JavaUdfDescriptor.hpp>
-#include <UDFs/UdfException.hpp>
+#include <Catalogs/JavaUdfDescriptor.hpp>
+#include <Exceptions/UdfException.hpp>
 
 namespace NES {
 

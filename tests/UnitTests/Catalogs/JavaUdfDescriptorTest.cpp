@@ -18,8 +18,8 @@
 
 using namespace std::string_literals;
 
-#include <UDFs/JavaUdfDescriptor.hpp>
-#include <UDFs/UdfException.hpp>
+#include <Catalogs/JavaUdfDescriptor.hpp>
+#include <Exceptions/UdfException.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

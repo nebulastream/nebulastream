@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <UDFs/UdfException.hpp>
+#include <Exceptions/UdfException.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
