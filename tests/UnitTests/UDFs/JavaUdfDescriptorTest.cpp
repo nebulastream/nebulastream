@@ -18,13 +18,13 @@
 
 using namespace std::string_literals;
 
-#include <UDFs/JavaUdfImplementation.hpp>
+#include <UDFs/JavaUdfDescriptor.hpp>
 #include <UDFs/UdfException.hpp>
 #include <Util/Logger.hpp>
 
 using namespace NES;
 
-class JavaUdfImplementationTest : public testing::Test {
+class JavaUdfDescriptorTest : public testing::Test {
   protected:
     static void SetUpTestCase() {
         NES::setupLogging("UdfTest.log", NES::LOG_DEBUG);
@@ -36,39 +36,39 @@ class JavaUdfImplementationTest : public testing::Test {
     const JavaUdfByteCodeList byteCodeList{ {"some_package.fq_name"s, JavaByteCode{1} } };
 };
 
-TEST_F(JavaUdfImplementationTest, TheFullyQualifiedNameMustNotBeEmpty) {
-    EXPECT_THROW(JavaUdfImplementation(""s, methodName, serializedInstance, byteCodeList), UdfException);
+TEST_F(JavaUdfDescriptorTest, TheFullyQualifiedNameMustNotBeEmpty) {
+    EXPECT_THROW(JavaUdfDescriptor(""s, methodName, serializedInstance, byteCodeList), UdfException);
 }
 
-TEST_F(JavaUdfImplementationTest, TheMethodNameMustNotBeEmtpy) {
-    EXPECT_THROW(JavaUdfImplementation(fqName, ""s, serializedInstance, byteCodeList), UdfException);
+TEST_F(JavaUdfDescriptorTest, TheMethodNameMustNotBeEmtpy) {
+    EXPECT_THROW(JavaUdfDescriptor(fqName, ""s, serializedInstance, byteCodeList), UdfException);
 }
 
-TEST_F(JavaUdfImplementationTest, TheInstanceMustNotBeEmpty) {
+TEST_F(JavaUdfDescriptorTest, TheInstanceMustNotBeEmpty) {
     // when
     auto emptyInstance = JavaSerializedInstance {}; // empty byte array
     // then
-    EXPECT_THROW(JavaUdfImplementation(fqName, methodName, emptyInstance, byteCodeList), UdfException);
+    EXPECT_THROW(JavaUdfDescriptor(fqName, methodName, emptyInstance, byteCodeList), UdfException);
 }
 
-TEST_F(JavaUdfImplementationTest, TheListOfByteCodeDefinitionsMustNotBeEmpty) {
+TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustNotBeEmpty) {
     // when
     auto emptyByteCodeList = JavaUdfByteCodeList {}; // empty list
     // then
-    EXPECT_THROW(JavaUdfImplementation(fqName, methodName, serializedInstance, emptyByteCodeList), UdfException);
+    EXPECT_THROW(JavaUdfDescriptor(fqName, methodName, serializedInstance, emptyByteCodeList), UdfException);
 }
 
-TEST_F(JavaUdfImplementationTest, TheListOfByteCodeDefinitionsMustContainTheFullyQualifiedNameOfTheUdfClass) {
+TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustContainTheFullyQualifiedNameOfTheUdfClass) {
     // when
     auto unknownFqName = "some_other_package.some_other_fq_name"s;
     auto byteCodeList = JavaUdfByteCodeList { {"some_package.unknownFqName"s, JavaByteCode{1} } };
     // then
-    EXPECT_THROW(JavaUdfImplementation(unknownFqName, methodName, serializedInstance, byteCodeList), UdfException);
+    EXPECT_THROW(JavaUdfDescriptor(unknownFqName, methodName, serializedInstance, byteCodeList), UdfException);
 }
 
-TEST_F(JavaUdfImplementationTest, TheListOfByteCodeDefinitionsMustNotContainEmptyByteCode) {
+TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustNotContainEmptyByteCode) {
     // when
     auto byteCodeListWithEmptyByteCode = JavaUdfByteCodeList { {fqName, JavaByteCode {} } }; // empty byte array
     // then
-    EXPECT_THROW(JavaUdfImplementation(fqName, methodName, serializedInstance, byteCodeListWithEmptyByteCode), UdfException);
+    EXPECT_THROW(JavaUdfDescriptor(fqName, methodName, serializedInstance, byteCodeListWithEmptyByteCode), UdfException);
 }
