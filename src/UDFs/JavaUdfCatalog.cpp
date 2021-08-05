@@ -50,6 +50,9 @@ bool JavaUdfCatalog::removeUdf(const std::string& name) {
     auto entry = udfStore.find(name);
     if (entry == udfStore.end()) {
         NES_DEBUG("Did not find Java UDF '" << name << "'");
+        // Removing an unregistered UDF is not an error condition
+        // because it could have been removed by another user.
+        // We just notify the user by returning false.
         return false;
     }
     udfStore.erase(entry);
