@@ -39,7 +39,7 @@ class JavaUdfCatalog {
      * @param descriptor The implementation data of the UDF.
      * @throws UdfException If descriptor is nullptr or if a UDF under the name is already registered.
      */
-    // TODO use unique_ptr here to make sure that JavaUdfCatalog takes ownership of the descriptor object
+    // TODO #2079 use unique_ptr here to make sure that JavaUdfCatalog takes ownership of the descriptor object
     void registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor);
 
     /**
