@@ -16,8 +16,8 @@
 
 #include <string>
 
-#include <UDFs/UdfCatalog.hpp>
-#include <UDFs/UdfException.hpp>
+#include <Catalogs/UdfCatalog.hpp>
+#include <Exceptions/UdfException.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

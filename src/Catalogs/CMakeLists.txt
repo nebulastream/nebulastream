@@ -21,4 +21,6 @@ add_source_nes(
         LogicalStream.cpp
         MemorySourceStreamConfig.cpp
         LambdaSourceStreamConfig.cpp
+        UdfCatalog.cpp
+        JavaUdfDescriptor.cpp
 )
