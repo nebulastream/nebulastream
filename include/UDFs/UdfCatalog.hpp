@@ -25,19 +25,19 @@
 namespace NES {
 
 /**
- * @brief The Java UDF catalog stores all the data required to execute a Java UDF inside an embedded JVM.
+ * @brief The UDF catalog stores all the data required to execute a Java UDF inside an embedded JVM.
  *
  * It provides an API to register and remove UDFs from a client,
  * to retrieve the implementation data during query rewrite,
  * and to retrieve a list of registered UDFs for visualization.
  */
-class JavaUdfCatalog {
+class UdfCatalog {
   public:
     /**
-     * @brief Create a JavaUdfCatalog instance.
-     * @return JavaUdfCatalog instance.
+     * @brief Create a UdfCatalog instance.
+     * @return UdfCatalog instance.
      */
-    static std::unique_ptr<JavaUdfCatalog> create();
+    static std::unique_ptr<UdfCatalog> create();
 
     /**
      * @brief Register the descriptor data of a Java UDF.
@@ -45,7 +45,7 @@ class JavaUdfCatalog {
      * @param descriptor The implementation data of the UDF.
      * @throws UdfException If descriptor is nullptr or if a UDF under the name is already registered.
      */
-    // TODO #2079 use unique_ptr here to make sure that JavaUdfCatalog takes ownership of the descriptor object
+    // TODO #2079 use unique_ptr here to make sure that UdfCatalog takes ownership of the descriptor object
     void registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor);
 
     /**

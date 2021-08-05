@@ -13,7 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        JavaUdfCatalog.cpp
+        UdfCatalog.cpp
         JavaUdfDescriptor.cpp
         UdfException.cpp
 )
