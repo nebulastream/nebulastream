@@ -81,7 +81,8 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, PipelineContextPtr context) override;
+    bool
+    generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, PipelineContextPtr context) override;
 
     /**
      * @brief Code generation for a watermark assigner operator.

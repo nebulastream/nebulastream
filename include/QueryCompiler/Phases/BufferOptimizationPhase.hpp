@@ -18,8 +18,8 @@
 
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <vector>
 
@@ -31,7 +31,7 @@ namespace QueryCompilation {
  * It then notes the correct OutputBufferAllocationStrategy in the Emit operator of the pipeline.
  */
 class BufferOptimizationPhase {
-public:
+  public:
     /**
      * @brief Constructor to create a BufferOptimizationPhase
      */
@@ -55,7 +55,8 @@ public:
      * @return OperatorPipelinePtr
      */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
-private:
+
+  private:
     QueryCompilerOptions::OutputBufferOptimizationLevel level;
     /**
      * @brief Indicates if the input of this pipeline is read only.

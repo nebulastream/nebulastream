@@ -207,12 +207,10 @@ class Schema {
      */
     void setLayoutType(MemoryLayoutType layoutType);
 
-
     std::vector<AttributeFieldPtr> fields;
 
   private:
     MemoryLayoutType layoutType;
-
 };
 
 AttributeFieldPtr createField(std::string name, BasicType type);

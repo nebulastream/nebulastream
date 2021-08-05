@@ -19,11 +19,12 @@
 #include <sstream>
 
 namespace NES::QueryCompilation {
-    IfElseStatement::IfElseStatement(const Statement& cond_expr, const Statement& cond_true_stmt, const Statement& cond_false_stmt)
-    : conditionalExpression(cond_expr.createCopy()), trueCaseStatement(new CompoundStatement()), falseCaseStatement(new CompoundStatement()) {
-        trueCaseStatement->addStatement(cond_true_stmt.createCopy());
-        falseCaseStatement->addStatement(cond_false_stmt.createCopy());
-    }
+IfElseStatement::IfElseStatement(const Statement& cond_expr, const Statement& cond_true_stmt, const Statement& cond_false_stmt)
+    : conditionalExpression(cond_expr.createCopy()), trueCaseStatement(new CompoundStatement()),
+      falseCaseStatement(new CompoundStatement()) {
+    trueCaseStatement->addStatement(cond_true_stmt.createCopy());
+    falseCaseStatement->addStatement(cond_false_stmt.createCopy());
+}
 
 StatementType IfElseStatement::getStamentType() const { return IF_ELSE_STMT; }
 CodeExpressionPtr IfElseStatement::getCode() const {
@@ -37,7 +38,6 @@ CodeExpressionPtr IfElseStatement::getCode() const {
 }
 
 StatementPtr IfElseStatement::createCopy() const { return std::make_shared<IfElseStatement>(*this); }
-
 
 CompoundStatementPtr IfElseStatement::getTrueCaseCompoundStatement() { return trueCaseStatement; }
 CompoundStatementPtr IfElseStatement::getFalseCaseCompoundStatement() { return falseCaseStatement; }

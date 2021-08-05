@@ -439,7 +439,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* generate code for scanning input buffer */
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context);
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", DataTypeFactory::createUInt64()), QueryCompilation::NO_OPTIMIZATION, context);
+    codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", DataTypeFactory::createUInt64()),
+                                       QueryCompilation::NO_OPTIMIZATION,
+                                       context);
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
 
