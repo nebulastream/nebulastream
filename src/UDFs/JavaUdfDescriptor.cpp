@@ -17,7 +17,7 @@
 #include <UDFs/JavaUdfDescriptor.hpp>
 #include <UDFs/UdfException.hpp>
 
-using namespace NES;
+namespace NES {
 
 JavaUdfDescriptor::JavaUdfDescriptor(const std::string& fqName,
                                      const std::string& methodName,
@@ -48,3 +48,5 @@ JavaUdfDescriptor::JavaUdfDescriptor(const std::string& fqName,
         }
     }
 }
+
+} // namespace NES

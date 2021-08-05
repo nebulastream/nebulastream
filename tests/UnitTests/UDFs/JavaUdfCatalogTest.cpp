@@ -22,7 +22,7 @@ using namespace std::string_literals;
 #include <UDFs/UdfException.hpp>
 #include <Util/Logger.hpp>
 
-using namespace NES;
+namespace NES {
 
 class JavaUdfCatalogTest : public testing::Test {
   protected:
@@ -124,3 +124,5 @@ TEST_F(JavaUdfCatalogTest, ReturnListOfKnownUds) {
     ASSERT_EQ(udfs.size(), 1U);
     ASSERT_EQ(udfs.front(), udfName);
 }
+
+} // namespace NES

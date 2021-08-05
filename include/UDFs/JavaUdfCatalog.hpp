@@ -74,4 +74,4 @@ class JavaUdfCatalog {
     std::unordered_map<std::string, JavaUdfDescriptorPtr> udfStore;
 };
 
-}
+} // namespace NES
