@@ -19,33 +19,30 @@
 
 using namespace NES;
 
-JavaUdfImplementation::JavaUdfImplementation(const std::string& fq_name,
-                                             const std::string& method_name,
-                                             const JavaSerializedInstance& serialized_instance,
-                                             const JavaUdfByteCodeList& byte_code_list)
-    : fq_name_(fq_name),
-      method_name_(method_name),
-      serialized_instance_(serialized_instance),
-      byte_code_list_(byte_code_list)
+JavaUdfImplementation::JavaUdfImplementation(const std::string& fqName,
+                                             const std::string& methodName,
+                                             const JavaSerializedInstance& serializedInstance,
+                                             const JavaUdfByteCodeList& byteCodeList)
+    : fqName(fqName), methodName(methodName), serializedInstance(serializedInstance), byteCodeList(byteCodeList)
 {
-    if (fq_name.empty()) {
+    if (fqName.empty()) {
         throw UdfException("The fully-qualified name of a Java UDF must not be empty");
     }
-    if (method_name.empty()) {
+    if (methodName.empty()) {
         throw UdfException("The method name of a Java UDF must not be empty");
     }
-    if (serialized_instance.empty()) {
+    if (serializedInstance.empty()) {
         throw UdfException("The serialized instance of a Java UDF must not be empty");
     }
     // This check is implied by the check that the FQ name of the UDF is contained.
     // We keep it here for clarity of the error message.
-    if (byte_code_list.empty()) {
+    if (byteCodeList.empty()) {
         throw UdfException("The bytecode list of classes implementing the UDF must not be empty");
     }
-    if (byte_code_list.find(fq_name) == byte_code_list.end()) {
+    if (byteCodeList.find(fqName) == byteCodeList.end()) {
         throw UdfException("The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF");
     }
-    for (const auto& [_, value] : byte_code_list) {
+    for (const auto& [_, value] : byteCodeList) {
         if (value.empty()) {
             throw UdfException("The bytecode of a class must not not be empty");
         }

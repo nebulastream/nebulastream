@@ -35,37 +35,37 @@ class JavaUdfImplementation {
   public:
     /**
      * @brief Construct a container of the data required to execute a Java UDF inside an embedded JVM.
-     * @param fq_name The fully-qualified class name of the UDF implementing the UDF.
-     * @param method_name The method name of the UDF function.
-     * @param serialized_instance A serialized instance of the UDF class which stores captured free variables.
-     * @param byte_code_list A list of fully-qualified class names and their bytecode required to execute the UDF.
-     * @throws UdfException If fq_name is empty or method_name is empty.
-     * @throws UdfException If byte_code_list does not contain an entry for fq_name.
-     * @throws UdfException If serialized_instance or any of the bytecode entries in byte_code_list are a 0-size byte array.
+     * @param fqName The fully-qualified class name of the UDF implementing the UDF.
+     * @param methodName The method name of the UDF function.
+     * @param serializedInstance A serialized instance of the UDF class which stores captured free variables.
+     * @param byteCodeList A list of fully-qualified class names and their bytecode required to execute the UDF.
+     * @throws UdfException If getFqName is empty or getMethodName is empty.
+     * @throws UdfException If byteCodeList does not contain an entry for getFqName.
+     * @throws UdfException If getSerializedInstance or any of the bytecode entries in byteCodeList are a 0-size byte array.
      */
     // TODO Signature could be improved with move semantics?
-    JavaUdfImplementation(const std::string& fq_name,
-                          const std::string& method_name,
-                          const JavaSerializedInstance& serialized_instance,
-                          const JavaUdfByteCodeList& byte_code_list);
+    JavaUdfImplementation(const std::string& fqName,
+                          const std::string& methodName,
+                          const JavaSerializedInstance& serializedInstance,
+                          const JavaUdfByteCodeList& byteCodeList);
 
     /**
      * @brief Return the fully-qualified class name of the class implementing the UDF.
      * @return Fully-qualified class name of the class implementing the UDF.
      */
-    const std::string& fqName() const { return fq_name_; }
+    const std::string& getFqName() const { return fqName; }
 
     /**
      * @brief Return the name of the UDF method.
      * @return The name of the UDF method.
      */
-    const std::string& methodName() const { return method_name_; }
+    const std::string& getMethodName() const { return methodName; }
 
     /**
      * @brief Return the serialized instance of the UDF class which stores captured free variables.
      * @return Serialized instance of the UDF class.
      */
-    const JavaSerializedInstance& serializedInstance() const { return serialized_instance_; }
+    const JavaSerializedInstance& getSerializedInstance() const { return serializedInstance; }
 
     /**
      * @brief Return the start of an iterator over the list of classes and bytecode required to execute the UDF.
@@ -74,19 +74,19 @@ class JavaUdfImplementation {
     // When the UDF is loaded into a JVM, the entire list of bytecode is simply injected into a JVM.
     // We never need to look up the bytecode of an individual class.
     // So we don't need to return the underlying storage of the class bytecode and an iterator is enough.
-    JavaUdfByteCodeList::const_iterator begin() const { return byte_code_list_.begin(); }
+    JavaUdfByteCodeList::const_iterator begin() const { return byteCodeList.begin(); }
 
     /**
      * @brief Return the end of an iterator over the list of classes and bytecode required to execute the UDF.
      * @return Const-iterator to byte_code_list.
      */
-    JavaUdfByteCodeList::const_iterator end() const { return byte_code_list_.end(); }
+    JavaUdfByteCodeList::const_iterator end() const { return byteCodeList.end(); }
 
   private:
-    const std::string fq_name_;
-    const std::string method_name_;
-    const JavaSerializedInstance serialized_instance_;
-    const JavaUdfByteCodeList byte_code_list_;
+    const std::string fqName;
+    const std::string methodName;
+    const JavaSerializedInstance serializedInstance;
+    const JavaUdfByteCodeList byteCodeList;
 };
 
 // This is a shared_ptr for now.

@@ -28,7 +28,7 @@ void JavaUdfCatalog::registerJavaUdf(const std::string& name, JavaUdfImplementat
     if (implementation == nullptr) {
         throw UdfException("Java UDF implementation must not be null");
     }
-    if (auto success = udf_store_.insert({name, implementation}).second; !success) {
+    if (auto success = udfStore.insert({name, implementation}).second; !success) {
         std::stringstream ss;
         ss << "Java UDF '" << name << "' already exists";
         throw UdfException(ss.str());
@@ -37,8 +37,8 @@ void JavaUdfCatalog::registerJavaUdf(const std::string& name, JavaUdfImplementat
 
 JavaUdfImplementationPtr JavaUdfCatalog::getUdfImplementation(const std::string& name) {
     NES_DEBUG("Looking up implementation for Java UDF '" << name << "'");
-    auto entry = udf_store_.find(name);
-    if (entry == udf_store_.end()) {
+    auto entry = udfStore.find(name);
+    if (entry == udfStore.end()) {
         NES_DEBUG("Java UDF '" << name << "' does not exist");
         return nullptr;
     }
@@ -47,20 +47,20 @@ JavaUdfImplementationPtr JavaUdfCatalog::getUdfImplementation(const std::string&
 
 bool JavaUdfCatalog::removeUdf(const std::string& name) {
     NES_DEBUG("Removing Java UDF '" << name << "'");
-    auto entry = udf_store_.find(name);
-    if (entry == udf_store_.end()) {
+    auto entry = udfStore.find(name);
+    if (entry == udfStore.end()) {
         NES_DEBUG("Did not find Java UDF '" << name << "'");
         return false;
     }
-    udf_store_.erase(entry);
+    udfStore.erase(entry);
     return true;
 }
 
 const std::vector<std::string> JavaUdfCatalog::listUdfs() const {
     NES_DEBUG("Listing names of Java UDFs");
     auto list = std::vector<std::string> {};
-    list.reserve(udf_store_.size());
-    for (const auto& [key, _] : udf_store_) {
+    list.reserve(udfStore.size());
+    for (const auto& [key, _] : udfStore) {
         list.push_back(key);
     }
     return list;

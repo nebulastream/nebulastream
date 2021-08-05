@@ -195,7 +195,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     WorkerRPCClientPtr workerRpcClient;
     NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
-    std::unique_ptr<JavaUdfCatalog> java_udf_catalog_;
+    std::unique_ptr<JavaUdfCatalog> javaUdfCatalog;
 };
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 

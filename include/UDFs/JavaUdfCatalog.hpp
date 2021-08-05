@@ -71,7 +71,7 @@ class JavaUdfCatalog {
     const std::vector<std::string> listUdfs() const;
 
   private:
-    std::unordered_map<std::string, JavaUdfImplementationPtr> udf_store_;
+    std::unordered_map<std::string, JavaUdfImplementationPtr> udfStore;
 };
 
 }
