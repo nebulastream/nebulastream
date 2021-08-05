@@ -31,11 +31,11 @@ class JavaUdfCatalogTest : public testing::Test {
     }
 
     static std::shared_ptr<JavaUdfDescriptor> createDescriptor() {
-        auto fqName = "some_package.my_udf"s;
+        auto className = "some_package.my_udf"s;
         auto methodName = "udf_method"s;
         auto instance = JavaSerializedInstance { 1 }; // byte-array containing 1 byte
         auto byteCodeList = JavaUdfByteCodeList { {"some_package.my_udf"s, JavaByteCode{1} } };
-        return std::make_shared<JavaUdfDescriptor>(fqName, methodName, instance, byteCodeList);
+        return std::make_shared<JavaUdfDescriptor>(className, methodName, instance, byteCodeList);
     }
 
   protected:

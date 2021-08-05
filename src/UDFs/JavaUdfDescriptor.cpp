@@ -19,14 +19,14 @@
 
 namespace NES {
 
-JavaUdfDescriptor::JavaUdfDescriptor(const std::string& fqName,
+JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
                                      const std::string& methodName,
                                      const JavaSerializedInstance& serializedInstance,
                                      const JavaUdfByteCodeList& byteCodeList)
-    : fqName(fqName), methodName(methodName), serializedInstance(serializedInstance), byteCodeList(byteCodeList)
+    : className(className), methodName(methodName), serializedInstance(serializedInstance), byteCodeList(byteCodeList)
 {
-    if (fqName.empty()) {
-        throw UdfException("The fully-qualified name of a Java UDF must not be empty");
+    if (className.empty()) {
+        throw UdfException("The class name of a Java UDF must not be empty");
     }
     if (methodName.empty()) {
         throw UdfException("The method name of a Java UDF must not be empty");
@@ -34,12 +34,12 @@ JavaUdfDescriptor::JavaUdfDescriptor(const std::string& fqName,
     if (serializedInstance.empty()) {
         throw UdfException("The serialized instance of a Java UDF must not be empty");
     }
-    // This check is implied by the check that the FQ name of the UDF is contained.
+    // This check is implied by the check that the class name of the UDF is contained.
     // We keep it here for clarity of the error message.
     if (byteCodeList.empty()) {
         throw UdfException("The bytecode list of classes implementing the UDF must not be empty");
     }
-    if (byteCodeList.find(fqName) == byteCodeList.end()) {
+    if (byteCodeList.find(className) == byteCodeList.end()) {
         throw UdfException("The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF");
     }
     for (const auto& [_, value] : byteCodeList) {

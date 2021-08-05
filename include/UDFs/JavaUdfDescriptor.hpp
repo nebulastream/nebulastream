@@ -35,16 +35,16 @@ class JavaUdfDescriptor {
   public:
     /**
      * @brief Construct a container of the data required to execute a Java UDF inside an embedded JVM.
-     * @param fqName The fully-qualified class name of the UDF implementing the UDF.
+     * @param className The fully-qualified class name of the UDF implementing the UDF.
      * @param methodName The method name of the UDF function.
      * @param serializedInstance A serialized instance of the UDF class which stores captured free variables.
      * @param byteCodeList A list of fully-qualified class names and their bytecode required to execute the UDF.
-     * @throws UdfException If getFqName is empty or getMethodName is empty.
-     * @throws UdfException If byteCodeList does not contain an entry for getFqName.
-     * @throws UdfException If getSerializedInstance or any of the bytecode entries in byteCodeList are a 0-size byte array.
+     * @throws UdfException If className is empty or methodName is empty.
+     * @throws UdfException If byteCodeList does not contain an entry for getClassName.
+     * @throws UdfException If serializedInstance or any of the bytecode entries in byteCodeList are a 0-size byte array.
      */
     // TODO Signature could be improved with move semantics?
-    JavaUdfDescriptor(const std::string& fqName,
+    JavaUdfDescriptor(const std::string& className,
                       const std::string& methodName,
                       const JavaSerializedInstance& serializedInstance,
                       const JavaUdfByteCodeList& byteCodeList);
@@ -53,7 +53,7 @@ class JavaUdfDescriptor {
      * @brief Return the fully-qualified class name of the class implementing the UDF.
      * @return Fully-qualified class name of the class implementing the UDF.
      */
-    const std::string& getFqName() const { return fqName; }
+    const std::string& getClassName() const { return className; }
 
     /**
      * @brief Return the name of the UDF method.
@@ -83,7 +83,7 @@ class JavaUdfDescriptor {
     JavaUdfByteCodeList::const_iterator end() const { return byteCodeList.end(); }
 
   private:
-    const std::string fqName;
+    const std::string className;
     const std::string methodName;
     const JavaSerializedInstance serializedInstance;
     const JavaUdfByteCodeList byteCodeList;
