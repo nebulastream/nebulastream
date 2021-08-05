@@ -16,9 +16,9 @@
 
 #include <string>
 
-#include "UDFs/JavaUdfCatalog.hpp"
-#include "UDFs/UdfException.hpp"
-#include "Util/Logger.hpp"
+#include <UDFs/JavaUdfCatalog.hpp>
+#include <UDFs/UdfException.hpp>
+#include <Util/Logger.hpp>
 
 using namespace NES;
 

@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "UDFs/JavaUdfImplementation.hpp"
+#include <UDFs/JavaUdfImplementation.hpp>
 
 namespace NES {
 

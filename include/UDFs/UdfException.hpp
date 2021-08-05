@@ -17,7 +17,8 @@
 #pragma once
 
 // #include "Exceptions/NesRuntimeException.hpp"
-#include <exception>
+#include <stdexcept>
+#include <string>
 
 namespace NES {
 
