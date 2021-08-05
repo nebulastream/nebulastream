@@ -69,8 +69,7 @@ MQTTSink::~MQTTSink() {
     if (success) {
         NES_TRACE("MQTTSink::~MQTTSink " << this << ": MQTT Sink Destroyed");
     } else {
-        NES_ERROR("MQTTSink::~MQTTSink " << this << ": Destroy MQTT Sink failed cause it could not be disconnected");
-        throw Exception("MQTT Sink destruction failed");
+        NES_ASSERT2_FMT(false, "MQTTSink::~MQTTSink " << this << ": Destroy MQTT Sink failed cause it could not be disconnected");
     }
 }
 

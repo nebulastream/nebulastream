@@ -43,7 +43,7 @@ class OPCSource : public DataSource {
      * @param user name if connecting with a server with authentication
      * @param password for authentication if needed
      */
-    OPCSource(const SchemaPtr& schema,
+    explicit OPCSource(const SchemaPtr& schema,
               Runtime::BufferManagerPtr bufferManager,
               Runtime::QueryManagerPtr queryManager,
               const std::string& url,

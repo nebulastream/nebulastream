@@ -52,7 +52,7 @@ class OPCSink : public SinkMedium {
     /**
      * @brief dtor
      */
-    ~OPCSink() override;
+    ~OPCSink() NES_NOEXCEPT(false) override;
 
     /**
      * @brief method to write a TupleBuffer

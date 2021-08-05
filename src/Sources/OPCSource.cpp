@@ -43,7 +43,7 @@ namespace NES {
 OPCSource::OPCSource(const SchemaPtr& schema,
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
-                     std::string url,
+                     const std::string& url,
                      UA_NodeId nodeId,
                      std::string password,
                      std::string user,
