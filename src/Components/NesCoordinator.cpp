@@ -27,9 +27,11 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Services/NESRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
+#include "UDFs/JavaUdfCatalog.hpp"
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
 #include <grpcpp/server_builder.h>
+#include <memory>
 #include <thread>
 
 //GRPC Includes
@@ -102,6 +104,8 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
                                                   streamCatalog,
                                                   queryParsingService,
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
+
+    java_udf_catalog_ = std::make_unique<JavaUdfCatalog>();
 }
 
 NesCoordinator::~NesCoordinator() {
