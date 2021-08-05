@@ -19,6 +19,9 @@
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 namespace NES::Runtime {
 
+/**
+ * @brief A general factory to create a node engine given some configuration.
+ */
 class NodeEngineFactory {
   public:
     /**

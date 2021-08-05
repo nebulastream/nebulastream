@@ -17,26 +17,24 @@
 #ifndef OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP
 #define OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 enum OutputBufferAllocationStrategy : uint8_t {
-    // If all records and all fields match up in input and result buffer we can simply emit the input buffer.
-    // For this no filter can be applied and no new fields can be added.
-    // The only typical operations possible are inplace-maps, e.g. "id = id + 1".
+    /// If all records and all fields match up in input and result buffer we can simply emit the input buffer.
+    /// For this no filter can be applied and no new fields can be added.
+    /// The only typical operations possible are inplace-maps, e.g. "id = id + 1".
     ONLY_INPLACE_OPERATIONS,
-    // Output schema is smaller or equal (bytes) than input schema.
-    // We can reuse the buffer and omit size checks.
+    /// Output schema is smaller or equal (bytes) than input schema.
+    /// We can reuse the buffer and omit size checks.
     REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK,
-    // enable the two optimizations individually (benchmarking only)
+    /// enable the two optimizations individually (benchmarking only)
     REUSE_INPUT_BUFFER,
     OMIT_OVERFLOW_CHECK,
-    // create separate result buffer and copy everything over after all operations are applied.
-    // Check size after every written tuple.
+    /// create separate result buffer and copy everything over after all operations are applied.
+    /// Check size after every written tuple.
     NO_OPTIMIZATION
 };
 
-}// namespace QueryCompilation
 }// namespace NES
 
 #endif//OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP
