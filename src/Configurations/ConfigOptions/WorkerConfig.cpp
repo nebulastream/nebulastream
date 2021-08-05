@@ -112,6 +112,9 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             if (!config["logLevel"].As<std::string>().empty() && config["logLevel"].As<std::string>() != "\n") {
                 setLogLevel(config["logLevel"].As<std::string>());
             }
+            if (!config["bufferSizeInBytes"].As<std::string>().empty() && config["bufferSizeInBytes"].As<std::string>() != "\n") {
+                setBufferSizeInBytes(config["bufferSizeInBytes"].As<uint32_t>());
+            }
             if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty()
                 && config["numberOfBuffersInGlobalBufferManager"].As<std::string>() != "\n") {
                 setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
@@ -180,6 +183,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setNumberOfBuffersPerPipeline(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool" && !it->second.empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
+            } else if (it->first == "--bufferSizeInBytes" && !it->second.empty()) {
+                setBufferSizeInBytes(stoi(it->second));
             } else if (it->first == "--parentId" && !it->second.empty()) {
                 setParentId(it->second);
             } else if (it->first == "--queryCompilerExecutionMode" && !it->second.empty()) {

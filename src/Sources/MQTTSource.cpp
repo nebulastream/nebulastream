@@ -32,6 +32,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <stdlib.h>
 
 using namespace std;
 using namespace std::chrono;
@@ -69,9 +70,12 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  gatheringMode,
                  std::move(executableSuccessors)),
       connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic),
-      dataType(dataType), client(std::make_shared<mqtt::async_client>(serverAddress, clientId)),
+      dataType(dataType),
       tupleSize(schema->getSchemaSizeInBytes()),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numberOfBuffersToProcess(numberOfBuffersToProcess) {
+
+    uint64_t i = random();
+    client = std::make_shared<mqtt::async_client>(serverAddress, clientId + std::to_string(i));
 
     minDelayBetweenSends =
         std::chrono::nanoseconds(messageDelay
@@ -184,10 +188,16 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
             NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
                             "Overflow detected: buffer size = " << buf.getBufferSize() << " position = "
                                                                 << (offset + tupCnt * tupleSize) << " field size " << fieldSize);
+
+            NES_DEBUG("MQTTSource::fillBuffer: tokens at j " << tokens[j]);
+
             //ToDO change according to new memory layout
             if (field->isBasicType()) {
                 NES_ASSERT2_FMT(!tokens[j].empty(), "Field cannot be empty if basic type");
                 auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
+
+                NES_DEBUG("MQTTSource::fillBuffer: tokens at j " << tokens[j] << "field type " << basicPhysicalField->nativeType);
+
                 if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_64) {
                     uint64_t val = std::stoull(tokens[j]);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
@@ -221,12 +231,19 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
                 } else if (basicPhysicalField->nativeType == BasicPhysicalType::BOOLEAN) {
                     bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 || atoi(tokens[j].c_str()) != 0);
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                } else if (basicPhysicalField->nativeType == BasicPhysicalType::CHAR) {
+                    std::string val;
+                    if (getDataType() == MQTTSourceDescriptor::JSON){
+                        val = tokens[j].substr(2, tokens[j].size() - 2);
+                    }
+                    memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, val.c_str(), fieldSize);
                 }
             } else {
                 std::string val;
                 if (getDataType() == MQTTSourceDescriptor::JSON){
-                    val = tokens[j].substr(2, tokens[j].size() - 2);
+                    val = tokens[j].substr(1, tokens[j].size() - 2);
                 }
+                std::cout << "This value is: " << val << std::endl;
                 memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, val.c_str(), fieldSize);
             }
 
@@ -248,7 +265,6 @@ bool MQTTSource::connect() {
             auto connOpts = mqtt::connect_options_builder()
                                 .user_name(user)
                                 .clean_session(true)
-                                .connect_timeout(std::chrono::nanoseconds(30 * 500 * 1000000))//15 seconds
                                 .finalize();
 
             // Start consumer before connecting to make sure to not miss messages
