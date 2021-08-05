@@ -60,7 +60,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     // increase lower bound
     {
         auto stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypeFactory::createInt32(), -200.0);
-        stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, (int64_t) -100L);
+        stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, int64_t(-100L));
         ASSERT_TRUE(stamp->isInteger());
         const auto intStamp = DataType::as<Integer>(stamp);
         ASSERT_EQ(intStamp->getBits(), 32);
@@ -69,7 +69,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     }
     {
         auto stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypeFactory::createFloat(), -200.0);
-        stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, (int64_t) -100L);
+        stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, int64_t(-100L));
         ASSERT_TRUE(stamp->isFloat());
         const auto floatStamp = DataType::as<Float>(stamp);
         ASSERT_EQ(floatStamp->getBits(), 32);
@@ -80,7 +80,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     // decrease upper bound
     {
         auto stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypeFactory::createInt32(), 200.0);
-        stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(stamp, (int64_t) 100L);
+        stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(stamp, int64_t(100L));
         ASSERT_TRUE(stamp->isInteger());
         const auto intStamp = DataType::as<Integer>(stamp);
         ASSERT_EQ(intStamp->getBits(), 32);
@@ -89,7 +89,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     }
     {
         auto stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypeFactory::createFloat(), 200.0);
-        stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(stamp, (int64_t) 100L);
+        stamp = DataTypeFactory::copyTypeAndDecreaseUpperBound(stamp, int64_t(100L));
         ASSERT_TRUE(stamp->isFloat());
         const auto floatStamp = DataType::as<Float>(stamp);
         ASSERT_EQ(floatStamp->getBits(), 32);
