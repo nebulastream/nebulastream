@@ -46,7 +46,6 @@ using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
 namespace NES::Runtime {
 
-
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality

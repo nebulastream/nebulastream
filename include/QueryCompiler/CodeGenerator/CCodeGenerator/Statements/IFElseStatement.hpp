@@ -32,7 +32,7 @@ class IfElseStatement : public Statement {
 
     ~IfElseStatement() noexcept override = default;
 
-private:
+  private:
     const StatementPtr conditionalExpression;
     CompoundStatementPtr trueCaseStatement;
     CompoundStatementPtr falseCaseStatement;

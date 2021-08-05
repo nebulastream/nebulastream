@@ -15,11 +15,11 @@
 */
 
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/AdaptiveSource.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 

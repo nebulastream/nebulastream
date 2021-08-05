@@ -35,6 +35,6 @@ enum OutputBufferAllocationStrategy : uint8_t {
     NO_OPTIMIZATION
 };
 
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif//OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP

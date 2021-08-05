@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <Runtime/QueryManager.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <cstring>
 #include <iostream>
 #include <limits>

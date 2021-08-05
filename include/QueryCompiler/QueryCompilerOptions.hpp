@@ -15,8 +15,8 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <cstdint>
 namespace NES {
 namespace QueryCompilation {

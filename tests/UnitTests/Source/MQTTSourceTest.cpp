@@ -15,17 +15,17 @@
 */
 
 #ifdef ENABLE_MQTT_BUILD
+#include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
+#include <Sources/SourceCreator.hpp>
+#include <Util/Logger.hpp>
 #include <cstring>
 #include <future>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
-#include <Runtime/NodeEngineFactory.hpp>
-#include <API/Schema.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
 #include <thread>
 
 #ifndef SERVERADDRESS
