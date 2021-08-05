@@ -42,7 +42,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
      * @Note must be public because of boost serialize
      */
-    ~SinkMedium() override;
+    ~SinkMedium() NES_NOEXCEPT(false) override;
 
     /**
      * @brief virtual method to setup sink

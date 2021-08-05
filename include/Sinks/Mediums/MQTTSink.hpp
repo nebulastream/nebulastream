@@ -45,7 +45,7 @@ class MQTTSink : public SinkMedium {
      * @return MQTT sink
      */
     // TODO change MSGS to Messages
-    MQTTSink(SinkFormatPtr sinkFormat,
+    explicit MQTTSink(SinkFormatPtr sinkFormat,
              QuerySubPlanId parentPlanId,
              std::string const& address,
              std::string const& clientId,
@@ -56,7 +56,7 @@ class MQTTSink : public SinkMedium {
              uint64_t messageDelay,
              MQTTSinkDescriptor::ServiceQualities qualityOfService,
              bool asynchronousClient);
-    ~MQTTSink() override;
+    ~MQTTSink() NES_NOEXCEPT(false) override;
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
     void setup() override { connect(); };

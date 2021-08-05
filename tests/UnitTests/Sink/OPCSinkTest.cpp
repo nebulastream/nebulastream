@@ -56,7 +56,7 @@ class OPCSinkTest : public testing::Test {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         test_schema = Schema::create()->addField("var", UINT32);
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
+        nodeEngine = Runtime::create("127.0.0.1", 31337, conf);
     }
 
     /* Will be called after a test is executed. */
@@ -74,14 +74,14 @@ class OPCSinkTest : public testing::Test {
         UA_VariableAttributes attr = UA_VariableAttributes_default;
         UA_Int32 myInteger = 42;
         UA_Variant_setScalar(&attr.value, &myInteger, &UA_TYPES[UA_TYPES_INT32]);
-        attr.description = UA_LOCALIZEDTEXT("en-US", "the answer");
-        attr.displayName = UA_LOCALIZEDTEXT("en-US", "the answer");
+        attr.description = UA_LOCALIZEDTEXT((char*) "en-US", (char*) "the answer");
+        attr.displayName = UA_LOCALIZEDTEXT((char*) "en-US", (char*) "the answer");
         attr.dataType = UA_TYPES[UA_TYPES_INT32].typeId;
         attr.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
 
         /* Add the variable node to the information model */
-        UA_NodeId myIntegerNodeId = UA_NODEID_STRING(1, "the.answer");
-        UA_QualifiedName myIntegerName = UA_QUALIFIEDNAME(1, "the answer");
+        UA_NodeId myIntegerNodeId = UA_NODEID_STRING(1, (char*) "the answer");
+        UA_QualifiedName myIntegerName = UA_QUALIFIEDNAME(1, (char*) "the answer");
         UA_NodeId parentNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER);
         UA_NodeId parentReferenceNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES);
         UA_Server_addVariableNode(server,
@@ -96,7 +96,7 @@ class OPCSinkTest : public testing::Test {
     }
 
     static void writeVariable(UA_Server* server) {
-        UA_NodeId myIntegerNodeId = UA_NODEID_STRING(1, "the.answer");
+        UA_NodeId myIntegerNodeId = UA_NODEID_STRING(1, (char*) "the answer");
 
         /* Write a different integer value */
         UA_Int32 myInteger = 43;
@@ -140,7 +140,7 @@ class OPCSinkTest : public testing::Test {
     uint64_t buffer_size;
 
   protected:
-    UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
+    UA_NodeId nodeId = UA_NODEID_STRING(1,  (char*) "the answer");
     const std::string user = "";
     const std::string password = "";
 };
@@ -159,7 +159,7 @@ TEST_F(OPCSinkTest, OPCSourceInit) {
 TEST_F(OPCSinkTest, OPCSourcePrint) {
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
     std::string expected =
-        "OPC_SINK(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
+        "OPC_SINK(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the answer. ";
     EXPECT_EQ(opcSink->toString(), expected);
     std::cout << opcSink->toString() << std::endl;
     SUCCEED();
@@ -189,7 +189,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
     write_buffer.release();
 
-    auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31338, PhysicalStreamConfig::createEmpty());
+    auto nodeEngine1 = Runtime::create("127.0.0.1", 31338, PhysicalStreamConfig::createEmpty());
     auto opcSource = createOPCSource(test_schema,
                                      nodeEngine1->getBufferManager(),
                                      nodeEngine1->getQueryManager(),

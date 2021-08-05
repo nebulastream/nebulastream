@@ -36,7 +36,7 @@
 namespace NES {
 
 OPCSink::OPCSink(SinkFormatPtr format,
-                 std::string url,
+                 const std::string& url,
                  UA_NodeId nodeId,
                  std::string user,
                  std::string password,
@@ -52,8 +52,7 @@ OPCSink::~OPCSink() {
     if (success) {
         NES_DEBUG("OPCSink  " << this << ": Destroy OPC Sink");
     } else {
-        NES_ERROR("OPCSink  " << this << ": Destroy OPC Sink failed because it could not be disconnected");
-        throw Exception("OPC Sink destruction failed");
+        NES_ASSERT2_FMT(false, "OPCSink  " << this << ": Destroy OPC Sink failed because it could not be disconnected");
     }
     NES_DEBUG("OPCSink  " << this << ": Destroy OPC Sink");
 }
