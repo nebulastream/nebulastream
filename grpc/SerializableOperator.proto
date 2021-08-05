@@ -138,10 +138,12 @@ message SerializableOperator{
       string clientId = 2;
       string user = 3;
       string topic = 4;
-      DataType dataType = 5;
-      TimeUnits timeUnit = 6;
-      uint64 msgDelay = 7;
-      SerializableSchema sourceSchema = 8;
+      uint64 numberOfTuplesToProducePerBuffer = 5;
+      uint64 numberOfBuffersToProcess = 6;
+      DataType dataType = 7;
+      TimeUnits timeUnit = 8;
+      uint64 msgDelay = 9;
+      SerializableSchema sourceSchema = 10;
     }
 
     message SerializableNetworkSourceDescriptor {

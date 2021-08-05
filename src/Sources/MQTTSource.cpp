@@ -146,7 +146,6 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
     }
 
     uint64_t tupCnt = 0;
-    uint64_t tuplesToGenerate = buf.getBufferSize() / getTupleSize();
     while (tupCnt < generatedTuplesThisPass) {
         //ToDo: handle what happens if no data arrives
         std::string data = "";
@@ -168,8 +167,13 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
         if (getDataType() == MQTTSourceDescriptor::JSON) {
             std::vector<std::string> helperToken;
             helperToken = UtilityFunctions::splitWithStringDelimiter(data, ":");
-            for (int i = 1; i < (int) tokens.size(); i += 2) {
-                tokens.push_back(helperToken[i].substr(0, tokens.size() - 1));
+            std::string value;
+            for (int i = 1; i < (int) helperToken.size(); i++) {
+                value = UtilityFunctions::splitWithStringDelimiter(helperToken[i],",")[0];
+                if (i == (int) helperToken.size() - 1){
+                    value = value.substr(0, value.size() - 1);
+                }
+                tokens.push_back(value);
             }
         }
 
@@ -180,7 +184,7 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
             NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
                             "Overflow detected: buffer size = " << buf.getBufferSize() << " position = "
                                                                 << (offset + tupCnt * tupleSize) << " field size " << fieldSize);
-            //ToDO change layout according to new memory layout
+            //ToDO change according to new memory layout
             if (field->isBasicType()) {
                 NES_ASSERT2_FMT(!tokens[j].empty(), "Field cannot be empty if basic type");
                 auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
@@ -219,7 +223,11 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
                     memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 }
             } else {
-                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, tokens[j].c_str(), fieldSize);
+                std::string val;
+                if (getDataType() == MQTTSourceDescriptor::JSON){
+                    val = tokens[j].substr(2, tokens[j].size() - 2);
+                }
+                memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, val.c_str(), fieldSize);
             }
 
             offset += fieldSize;
@@ -311,6 +319,8 @@ uint64_t MQTTSource::getMessageDelay() const { return messageDelay; }
 uint64_t MQTTSource::getTupleSize() const { return tupleSize; }
 
 SourceType MQTTSource::getType() const { return MQTT_SOURCE; }
+uint64_t MQTTSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+uint64_t MQTTSource::getNumberOfBuffersToProcess() const { return numberOfBuffersToProcess; }
 
 }// namespace NES
 #endif
