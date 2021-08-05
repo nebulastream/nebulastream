@@ -18,9 +18,9 @@
 
 using namespace std::string_literals;
 
-#include "UDFs/JavaUdfImplementation.hpp"
-#include "UDFs/UdfException.hpp"
-#include "Util/Logger.hpp"
+#include <UDFs/JavaUdfImplementation.hpp>
+#include <UDFs/UdfException.hpp>
+#include <Util/Logger.hpp>
 
 using namespace NES;
 

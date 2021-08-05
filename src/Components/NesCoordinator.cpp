@@ -27,7 +27,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Services/NESRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
-#include "UDFs/JavaUdfCatalog.hpp"
+#include <UDFs/JavaUdfCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
 #include <grpcpp/server_builder.h>
