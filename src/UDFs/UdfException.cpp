@@ -17,10 +17,12 @@
 #include <UDFs/UdfException.hpp>
 #include <Util/Logger.hpp>
 
-using namespace NES;
+namespace NES {
 
 UdfException::UdfException(const std::string& message)
     : std::runtime_error(message)
 {
     NES_ERROR(message);
 }
+
+} // namespace NES

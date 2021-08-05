@@ -20,7 +20,7 @@
 #include <UDFs/UdfException.hpp>
 #include <Util/Logger.hpp>
 
-using namespace NES;
+namespace NES {
 
 // TODO comment about Clang-tidy
 void JavaUdfCatalog::registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor) {
@@ -65,3 +65,5 @@ const std::vector<std::string> JavaUdfCatalog::listUdfs() const {
     }
     return list;
 }
+
+} // namespace NES
