@@ -14,16 +14,14 @@
 cmake_minimum_required(VERSION 3.18.0)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-
+set(VCPKG_BINARY_VERSION v3)
 if(APPLE)
     # for MacOS X or iOS, watchOS, tvOS (since 3.10.3)
     set(VCPKG_TARGET_TRIPLET x64-osx-nes)
-    set(VCPKG_BINARY_VERSION v3)
 endif()
 if(UNIX AND NOT APPLE)
     # for Linux, BSD, Solaris, Minix
     set(VCPKG_TARGET_TRIPLET x64-linux-nes)
-    set(VCPKG_BINARY_VERSION v2)
 endif()
 
 function(download_file url filename hash_type hash)

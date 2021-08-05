@@ -17,9 +17,9 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_ARRAYTYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_ARRAYTYPE_HPP_
 
+#include <string>
 #include <algorithm>
 #include <array>
-#include <string>
 #include <cstring>
 #include <stdexcept>
 #include <utility>
