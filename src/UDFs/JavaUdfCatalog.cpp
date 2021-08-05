@@ -22,6 +22,10 @@
 
 namespace NES {
 
+std::unique_ptr<JavaUdfCatalog> JavaUdfCatalog::create() {
+    return std::make_unique<JavaUdfCatalog>();
+}
+
 // TODO comment about Clang-tidy
 void JavaUdfCatalog::registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor) {
     NES_DEBUG("Registering Java UDF '" << name << "'");
