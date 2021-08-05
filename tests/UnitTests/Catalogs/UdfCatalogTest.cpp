@@ -22,7 +22,7 @@ using namespace std::string_literals;
 #include <Exceptions/UdfException.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::Catalogs {
 
 class UdfCatalogTest : public testing::Test {
   protected:
@@ -125,4 +125,4 @@ TEST_F(UdfCatalogTest, ReturnListOfKnownUds) {
     ASSERT_EQ(udfs.front(), udfName);
 }
 
-} // namespace NES
+} // namespace NES::Catalogs

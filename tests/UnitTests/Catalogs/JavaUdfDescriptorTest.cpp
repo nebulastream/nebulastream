@@ -22,7 +22,7 @@ using namespace std::string_literals;
 #include <Exceptions/UdfException.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::Catalogs {
 
 class JavaUdfDescriptorTest : public testing::Test {
   protected:
@@ -73,4 +73,4 @@ TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustNotContainEmptyByt
     EXPECT_THROW(JavaUdfDescriptor(className, methodName, serializedInstance, byteCodeListWithEmptyByteCode), UdfException);
 }
 
-} // namespace NES
+} // namespace NES::Catalogs

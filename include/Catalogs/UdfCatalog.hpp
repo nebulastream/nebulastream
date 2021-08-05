@@ -22,7 +22,7 @@
 
 #include <Catalogs/JavaUdfDescriptor.hpp>
 
-namespace NES {
+namespace NES::Catalogs {
 
 /**
  * @brief The UDF catalog stores all the data required to execute a Java UDF inside an embedded JVM.
@@ -80,4 +80,4 @@ class UdfCatalog {
     std::unordered_map<std::string, JavaUdfDescriptorPtr> udfStore;
 };
 
-} // namespace NES
+} // namespace NES::Catalogs

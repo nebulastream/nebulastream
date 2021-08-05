@@ -105,7 +105,7 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
                                                   queryParsingService,
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 
-    udfCatalog = UdfCatalog::create();
+    udfCatalog = Catalogs::UdfCatalog::create();
 }
 
 NesCoordinator::~NesCoordinator() {
