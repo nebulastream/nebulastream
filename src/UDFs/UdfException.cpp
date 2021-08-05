@@ -20,7 +20,7 @@
 namespace NES {
 
 UdfException::UdfException(const std::string& message)
-    : std::runtime_error(message)
+    : NesRuntimeException(message, NES::Runtime::collectAndPrintStacktrace())
 {
     NES_ERROR(message);
 }

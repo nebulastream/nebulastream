@@ -16,13 +16,13 @@
 
 #pragma once
 
-// #include "Exceptions/NesRuntimeException.hpp"
-#include <stdexcept>
+#include <Exceptions/NesRuntimeException.hpp>
+
 #include <string>
 
 namespace NES {
 
-class UdfException : public std::runtime_error {
+class UdfException : public NesRuntimeException {
   public:
     explicit UdfException(const std::string& message);
 };
