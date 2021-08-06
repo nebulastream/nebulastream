@@ -37,13 +37,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @brief public constructor for data sink
      */
     explicit SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId);
-
-    /**
-     * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
-     * @Note must be public because of boost serialize
-     */
-    ~SinkMedium() NES_NOEXCEPT(false) override;
-
+    
     /**
      * @brief virtual method to setup sink
      * @Note this method will be overwritten by derived classes

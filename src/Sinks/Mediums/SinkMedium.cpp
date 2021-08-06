@@ -36,8 +36,6 @@ uint64_t SinkMedium::getNumberOfWrittenOutTuples() {
     return sentTuples;
 }
 
-SinkMedium::~SinkMedium() { NES_DEBUG("Destroy Data Sink  " << this); }
-
 SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); }
 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
