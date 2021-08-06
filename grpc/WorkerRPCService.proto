@@ -34,7 +34,7 @@ service WorkerRPCService {
 
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
 
-  rpc UpdateNetworkSinks(UpdateNetworkSinksRequest) returns (UpdateNetworkSinksReply){}
+  rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
 }
 
 message DeployQueryRequest {
@@ -99,24 +99,21 @@ message MonitoringDataRequest {
 message MonitoringDataReply {
   bytes buffer = 1;
 }
-message NetworkSinks{
-  repeated uint64 networkSinkId = 1;
-}
-message UpdateNetworkSinksRequest{
+message UpdateNetworkSinkRequest{
   uint64 newNodeId = 1;
   string newHostname = 2;
   uint32 newPort = 3;
-  repeated uint64 querySubPlanIds = 4;
-  repeated NetworkSinks networkSinkIds = 5;
+  uint64 querySubPlanId = 4;
+  uint64 networkSinkId = 5;
 
 }
 
-message UpdateNetworkSinksReply{
+message UpdateNetworkSinkReply{
   bool success = 1;
 }
 message BufferRequest {
-  repeated uint64 querySubPlanIds = 4;
-  repeated NetworkSinks networkSinkIds = 5;
+  uint64 querySubPlanId = 1;
+  uint64 networkSinkId = 2;
 }
 
 message BufferReply{

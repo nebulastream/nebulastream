@@ -361,25 +361,17 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
 
     return false;
 }
-bool WorkerRPCClient::bufferData(std::string address, std::map<QuerySubPlanId, std::vector<uint64_t>> querySubPlanIdToNetworkSinksMap) {
-    NES_DEBUG("WorkerRPCClient::stopQuery address=" << address);
-
+bool WorkerRPCClient::bufferData(std::string address, QuerySubPlanId querySubPlanId, uint64_t globalSinkId) {
+    NES_DEBUG("WorkerRPCClient::buffering Data on address=" << address);
     BufferRequest request;
-    for(auto& pair: querySubPlanIdToNetworkSinksMap){
-        request.add_querysubplanids(pair.first);
-        auto networkSinkMessage = request.add_networksinkids();
-        for(auto& id : pair.second){
-            networkSinkMessage->add_networksinkid(id);
-        }
-    }
-
+    request.set_querysubplanid(querySubPlanId);
+    request.set_networksinkid(globalSinkId);
     BufferReply reply;
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->BeginBuffer(&context, request, &reply);
-
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
         return reply.success();
@@ -391,33 +383,22 @@ bool WorkerRPCClient::bufferData(std::string address, std::map<QuerySubPlanId, s
     }
     return false;
 }
-bool WorkerRPCClient::updateNetworkSinks(const std::string& address,
+bool WorkerRPCClient::updateNetworkSink(const std::string& address,
                                          uint64_t newNodeId,const std::string& newHostname,
-                                         uint32_t newPort,std::map<QuerySubPlanId, std::vector<uint64_t>> querySubPlanIdToNetworkSinksMap)
+                                         uint32_t newPort,QuerySubPlanId querySubPlanId, OperatorId globalSinkId)
 {
-    UpdateNetworkSinksRequest request;
+    UpdateNetworkSinkRequest request;
     request.set_newnodeid(newNodeId);
     request.set_newhostname(newHostname);
     request.set_newport(newPort);
-    for(auto& pair: querySubPlanIdToNetworkSinksMap){
-        request.add_querysubplanids(pair.first);
-        auto networkSinkMessage = request.add_networksinkids();
-        for(auto& id : pair.second){
-            networkSinkMessage->add_networksinkid(id);
-        }
-    }
+    request.set_querysubplanid(querySubPlanId);
+    request.set_networksinkid(globalSinkId);
 
-
-
-
-
-    UpdateNetworkSinksReply reply;
+    UpdateNetworkSinkReply reply;
     ClientContext context;
-
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->UpdateNetworkSinks(&context, request, &reply);
-
+    Status status = workerStub->UpdateNetworkSink(&context, request, &reply);
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
         return reply.success();
@@ -427,8 +408,5 @@ bool WorkerRPCClient::updateNetworkSinks(const std::string& address,
                       << status.error_code() << ": " << status.error_message());
         throw Exception("Error while WorkerRPCClient::stopQuery");
     }
-
-
 }
-
 }// namespace NES
