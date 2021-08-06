@@ -11,7 +11,7 @@ RUN mkdir -p /nebulastream/build && \
 FROM nebulastream/nes-build-image:latest AS execimg
 
 COPY --from=buildimg /nes.deb .
-COPY --from=buildimg /nebulastream/build/nes-dependencies-v3-x64-linux-nes/installed/x64-linux-nes/ /nebulastream/build/nes-dependencies-v1-x64-linux-nes/installed/x64-linux-nes/
+COPY --from=buildimg /nebulastream/build/nes-dependencies-v3-x64-linux-nes/installed/x64-linux-nes/ /nebulastream/build/nes-dependencies-v3-x64-linux-nes/installed/x64-linux-nes/
 
 RUN mv /nebulastream/build/nes-dependencies-v3-x64-linux-nes/installed/x64-linux-nes/lib/libpaho*so* /usr/local/lib/ && \
 ldconfig && dpkg -i /nes.deb && apt install iproute2 ifupdown net-tools --no-install-recommends -y -qq && \
