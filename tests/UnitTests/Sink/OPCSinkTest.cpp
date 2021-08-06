@@ -140,7 +140,7 @@ class OPCSinkTest : public testing::Test {
     uint64_t buffer_size;
 
   protected:
-    UA_NodeId nodeId = UA_NODEID_STRING(1,  (char*) "the answer");
+    UA_NodeId nodeId = UA_NODEID_STRING(1, (char*) "the answer");
     const std::string user = "";
     const std::string password = "";
 };

@@ -87,7 +87,7 @@ void NodeStatsProvider::readCpuStats() {
         }
     }
     this->nbrProcessors = numberOfPreccessors;
-#elif defined (__APPLE__)
+#elif defined(__APPLE__)
     this->nbrProcessors = 0;
 #endif
 }
