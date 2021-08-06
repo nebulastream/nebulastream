@@ -442,26 +442,20 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
     std::cerr << "Exception: " << exception->what() << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;
 }
-bool NodeEngine::bufferData(const std::map<QuerySubPlanId, std::vector<uint64_t>>& queryToNetworkSinkIdsMap) {
+bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t globalSinkId) {
     //TODO: add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Received request to buffer Data on network Sinks");
     NodeEnginePtr self = this->inherited1::shared_from_this();
     std::unique_lock lock(engineMutex);
-    for (auto& entry : queryToNetworkSinkIdsMap) {
-        NES_DEBUG(entry.first);
-        auto qep = deployedQEPs[entry.first];
-        auto networkSinks = qep->getSinks();
-
-        for(auto sinkId: entry.second){
-            auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[sinkId](const DataSinkPtr& dataSink){
-              return dataSink->getOperatorId() == sinkId;
+    auto qep = deployedQEPs[querySubPlanId];
+    auto networkSinks = qep->getSinks();
+    auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[globalSinkId](const DataSinkPtr& dataSink){
+              return dataSink->getOperatorId() == globalSinkId;
             });
-            if(it != networkSinks.end()){
-                auto networkSink = *it;
-                ReconfigurationMessage message = ReconfigurationMessage(entry.first,BufferData,networkSink);
-                queryManager->addReconfigurationMessage(entry.first,message,true);
-            }
-        }
+    if(it != networkSinks.end()){
+        auto networkSink = *it;
+        ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,BufferData,networkSink);
+        queryManager->addReconfigurationMessage(querySubPlanId,message,true);
     }
     return true;
 }
