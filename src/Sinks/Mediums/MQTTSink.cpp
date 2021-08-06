@@ -63,7 +63,7 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
     NES_TRACE("MQTTSink::MQTTSink " << this->toString() << ": Init MQTT Sink to " << address);
 }
 
-MQTTSink::~MQTTSink() {
+MQTTSink::~MQTTSink() NES_NOEXCEPT(false) {
     NES_TRACE("MQTTSink::~MQTTSink: destructor called");
     bool success = disconnect();
     if (success) {
