@@ -191,7 +191,6 @@ NetworkMetrics SystemResourcesReader::readNetworkStats() {
 #ifdef __linux__
     // alternatively also /sys/class/net/intf/statistics can be parsed
 
-
     FILE* fp = fopen("/proc/net/dev", "re");
     char buf[200];
     char ifname[20];

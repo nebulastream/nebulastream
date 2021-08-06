@@ -28,8 +28,9 @@ namespace NES::Join {
 class JoinOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
     explicit JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema);
-    explicit JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr joinHandler);
-
+    explicit JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition,
+                                 SchemaPtr resultSchema,
+                                 AbstractJoinHandlerPtr joinHandler);
 
     /**
     * @brief Factory to create new JoinOperatorHandler

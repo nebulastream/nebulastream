@@ -22,8 +22,8 @@
 #include <iostream>
 #include <memory>
 #include <random>
-#include <utility>
 #include <sstream>
+#include <utility>
 
 namespace NES::Compiler {
 

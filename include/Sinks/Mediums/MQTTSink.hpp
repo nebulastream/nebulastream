@@ -46,16 +46,16 @@ class MQTTSink : public SinkMedium {
      */
     // TODO change MSGS to Messages
     explicit MQTTSink(SinkFormatPtr sinkFormat,
-             QuerySubPlanId parentPlanId,
-             std::string const& address,
-             std::string const& clientId,
-             std::string const& topic,
-             std::string const& user,
-             uint64_t maxBufferedMSGs,
-             MQTTSinkDescriptor::TimeUnits timeUnit,
-             uint64_t messageDelay,
-             MQTTSinkDescriptor::ServiceQualities qualityOfService,
-             bool asynchronousClient);
+                      QuerySubPlanId parentPlanId,
+                      std::string const& address,
+                      std::string const& clientId,
+                      std::string const& topic,
+                      std::string const& user,
+                      uint64_t maxBufferedMSGs,
+                      MQTTSinkDescriptor::TimeUnits timeUnit,
+                      uint64_t messageDelay,
+                      MQTTSinkDescriptor::ServiceQualities qualityOfService,
+                      bool asynchronousClient);
     ~MQTTSink() NES_NOEXCEPT(false) override;
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;

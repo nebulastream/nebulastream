@@ -104,9 +104,7 @@ QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId
     reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
 }
 
-QueryManager::~QueryManager() NES_NOEXCEPT(false) {
-    destroy();
-}
+QueryManager::~QueryManager() NES_NOEXCEPT(false) { destroy(); }
 
 bool QueryManager::startThreadPool() {
     NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId << " with numThreads=" << numThreads);

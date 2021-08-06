@@ -44,16 +44,16 @@ class OPCSource : public DataSource {
      * @param password for authentication if needed
      */
     explicit OPCSource(const SchemaPtr& schema,
-              Runtime::BufferManagerPtr bufferManager,
-              Runtime::QueryManagerPtr queryManager,
-              const std::string& url,
-              UA_NodeId nodeId,
-              std::string password,
-              std::string user,
-              OperatorId operatorId,
-              size_t numSourceLocalBuffers,
-              GatheringMode gatheringMode,
-              std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
+                       Runtime::BufferManagerPtr bufferManager,
+                       Runtime::QueryManagerPtr queryManager,
+                       const std::string& url,
+                       UA_NodeId nodeId,
+                       std::string password,
+                       std::string user,
+                       OperatorId operatorId,
+                       size_t numSourceLocalBuffers,
+                       GatheringMode gatheringMode,
+                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**
      * @brief destructor of OPC source that disconnects the queue before deconstruction

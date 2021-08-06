@@ -30,8 +30,8 @@ class WindowOperatorHandler : public Runtime::Execution::OperatorHandler {
     explicit WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
 
     explicit WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition,
-                          SchemaPtr resultSchema,
-                          AbstractWindowHandlerPtr windowHandler);
+                                   SchemaPtr resultSchema,
+                                   AbstractWindowHandlerPtr windowHandler);
 
     /**
      * @brief Factory to create new WindowOperatorHandler
