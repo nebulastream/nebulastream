@@ -56,11 +56,6 @@ class SyntacticQueryValidation {
      */
     QueryPtr checkValidityAndGetQuery(const std::string& inputQuery);
 
-    /**
-     * @brief Checks the syntactic validity of a pattern string and returns the created pattern object
-     */
-    PatternPtr checkValidityAndGetPattern(const std::string& inputQuery);
-
   private:
     QueryParsingServicePtr queryParsingService;
     /**
