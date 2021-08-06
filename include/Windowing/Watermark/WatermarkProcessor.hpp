@@ -19,6 +19,7 @@
 
 #include <mutex>
 #include <queue>
+#include <atomic>
 
 namespace NES {
 using WatermarkTs = uint64_t;
@@ -60,7 +61,7 @@ class WatermarkProcessor {
         }
     };
     mutable std::mutex watermarkLatch;
-    WatermarkTs currentWatermark{0};
+    std::atomic<WatermarkTs> currentWatermark{0};
     SequenceNumber currentSequenceNumber{0};
     // Use a priority queue to keep track of all in flight transactions.
     std::priority_queue<std::tuple<WatermarkTs, SequenceNumber>,
