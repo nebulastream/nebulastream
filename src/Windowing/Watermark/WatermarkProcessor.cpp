@@ -42,7 +42,6 @@ void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequence
 }
 
 WatermarkTs WatermarkProcessor::getCurrentWatermark() const {
-    std::unique_lock lock(watermarkLatch);
     return currentWatermark;
 }
 
