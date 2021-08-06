@@ -56,9 +56,9 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
 
     NES_INFO("QueryService: Executing Syntactic validation");
     QueryPtr query;
-
     try {
-        NES_INFO("QueryService: check validation of a analytical query");
+        // Checking the syntactic validity and compiling the query string to an object
+        NES_INFO("QueryService: check validation of a query");
         query = syntacticQueryValidation->checkValidityAndGetQuery(queryString);
     } catch (const std::exception& exc) {
         NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
