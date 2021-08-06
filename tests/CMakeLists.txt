@@ -488,9 +488,9 @@ target_link_libraries(window-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME window-deployment-test COMMAND window-deployment-test)
 
 ### windowDeploymentTest ###
-#add_executable(concurrent-window-deployment-test "Integration/ConcurrentWindowDeploymentTest.cpp")
-#target_link_libraries(concurrent-window-deployment-test nes ${GTEST_LIBRARIES})
-#add_test(NAME concurrent-window-deployment-test COMMAND concurrent-window-deployment-test)
+add_executable(concurrent-window-deployment-test "Integration/ConcurrentWindowDeploymentTest.cpp")
+target_link_libraries(concurrent-window-deployment-test nes ${GTEST_LIBRARIES})
+add_test(NAME concurrent-window-deployment-test COMMAND concurrent-window-deployment-test)
 
 ### MultipleWindowsTest ###
 add_executable(multi-window-test "Integration/MultipleWindowsTest.cpp")
