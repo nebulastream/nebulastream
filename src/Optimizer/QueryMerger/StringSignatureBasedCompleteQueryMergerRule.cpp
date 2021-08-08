@@ -45,8 +45,8 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
     //Iterate over all shared query metadata to identify equal shared metadata
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
-        auto hostSharedQueryPlan = globalQueryPlan->fetchSharedQueryPlanConsumingSources(targetQueryPlan->getSourceConsumed());
-        if (hostSharedQueryPlan) {
+        auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
+        for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
@@ -97,6 +97,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data
                 merged = true;
+                break;
             }
         }
 

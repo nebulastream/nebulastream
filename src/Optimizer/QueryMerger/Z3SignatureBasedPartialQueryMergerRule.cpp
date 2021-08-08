@@ -51,8 +51,8 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
-        auto hostSharedQueryPlan = globalQueryPlan->fetchSharedQueryPlanConsumingSources(targetQueryPlan->getSourceConsumed());
-        if (hostSharedQueryPlan) {
+        auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
+        for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
 
             //Fetch the host query plan to merge
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
@@ -175,6 +175,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data
                 matched = true;
+                break;
             }
         }
 
