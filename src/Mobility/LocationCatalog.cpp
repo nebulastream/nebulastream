@@ -18,23 +18,53 @@
 
 namespace NES {
 
-void LocationCatalog::addNode(string nodeId) {
-    this->nodes.insert(std::pair<string, GeoNodePtr>(nodeId, std::make_shared<GeoNode>(nodeId)));
+void LocationCatalog::addSource(const string& nodeId) {
+    this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId)));
 }
 
-void LocationCatalog::updateNodeLocation(string nodeId, const GeoPointPtr& location) {
-    std::_Rb_tree_iterator<std::pair<const string, GeoNodePtr>> it = this->nodes.find(nodeId);
-    if (it != this->nodes.end()) {
-        it->second->setCurrentLocation(location);
+void LocationCatalog::addSink(const string& nodeId, const double movingRangeArea) {
+    this->sinks.insert(std::pair<string, GeoSinkPtr>(nodeId, std::make_shared<GeoSink>(nodeId, movingRangeArea)));
+}
+
+void LocationCatalog::enableSource(const string& nodeId) {
+    if (this->sources.contains(nodeId)) {
+        this->sources.at(nodeId)->setEnabled(true);
     }
 }
 
-bool LocationCatalog::contains(string nodeId) { return this->nodes.contains(nodeId); }
+void LocationCatalog::disableSource(const string& nodeId) {
+    if (this->sources.contains(nodeId)) {
+        this->sources.at(nodeId)->setEnabled(false);
+    }
 
-uint64_t LocationCatalog::size() { return this->nodes.size(); }
+}
 
-GeoNodePtr LocationCatalog::getNode(string nodeId) { return this->nodes.at(nodeId); }
+const std::map<string, GeoSinkPtr>& LocationCatalog::getSinks() const { return sinks; }
 
-const std::map<string, GeoNodePtr>& LocationCatalog::getNodes() const { return nodes; }
+const std::map<string, GeoSourcePtr>& LocationCatalog::getSources() const { return sources; }
+
+void LocationCatalog::updateNodeLocation(const string& nodeId, const GeoPointPtr& location) {
+    if (sinks.contains(nodeId)) {
+        std::_Rb_tree_iterator<std::pair<const string, GeoSinkPtr>> it = this->sinks.find(nodeId);
+        if (it != this->sinks.end()) {
+            it->second->setCurrentLocation(location);
+        }
+    }
+
+    if (sources.contains(nodeId)) {
+        std::_Rb_tree_iterator<std::pair<const string, GeoSourcePtr>> it = this->sources.find(nodeId);
+        if (it != this->sources.end()) {
+            it->second->setCurrentLocation(location);
+        }
+    }
+}
+
+bool LocationCatalog::contains(const string& nodeId) {
+    return this->sinks.contains(nodeId) || this->sources.contains(nodeId);
+}
+
+uint64_t LocationCatalog::size() {
+    return this->sinks.size() + this->sources.size();
+}
 
 }

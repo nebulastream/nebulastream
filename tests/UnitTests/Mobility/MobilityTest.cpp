@@ -59,24 +59,29 @@ TEST(GeoNode, AddAndUpdateLocations) {
 TEST(LocationCatalog, AddNodeAndUpdateLocation) {
     LocationCatalog catalog{};
 
-    catalog.addNode("1");
-    catalog.addNode("2");
+    catalog.addSource("1");
+    catalog.addSource("2");
+    catalog.addSink("3", 1000);
 
-    const uint64_t expectedSize = 2;
-    EXPECT_EQ(expectedSize, catalog.size());
+    EXPECT_EQ(3U, catalog.size());
 
     catalog.updateNodeLocation("1", std::make_shared<GeoPoint>(1,1));
     catalog.updateNodeLocation("1", std::make_shared<GeoPoint>(1.5,1.5));
     catalog.updateNodeLocation("2", std::make_shared<GeoPoint>(2,2));
+    catalog.updateNodeLocation("3", std::make_shared<GeoPoint>(3,3));
 
-    GeoNodePtr firstNode = catalog.getNode("1");
+    GeoSourcePtr firstNode = catalog.getSources().at("1");
 
     EXPECT_EQ_GEOPOINTS(GeoPoint(1.5,1.5), firstNode->getCurrentLocation());
     EXPECT_FALSE(firstNode->getLocationHistory().empty());
 
-    GeoNodePtr secondNode = catalog.getNode("2");
+    GeoSourcePtr secondNode = catalog.getSources().at("2");
     EXPECT_EQ_GEOPOINTS(GeoPoint(2,2), secondNode->getCurrentLocation());
     EXPECT_TRUE(secondNode->getLocationHistory().empty());
+
+    GeoSinkPtr sink = catalog.getSinks().at("3");
+    EXPECT_EQ_GEOPOINTS(GeoPoint(3,3), sink->getCurrentLocation());
+    EXPECT_TRUE(sink->getLocationHistory().empty());
 }
 
 TEST(GeoSquare, DistanceToBound) {
@@ -121,11 +126,11 @@ TEST(GeoSquare, TestContains) {
 TEST(LocationService, CheckIfLocationIsInRange) {
     LocationService service;
     GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
-    service.addNode("1");
+    service.addSink("1", 1000);
     service.updateNodeLocation("1", center);
 
-    EXPECT_TRUE(service.checkIfPointInRange("1", 1000, std::make_shared<GeoPoint>(52.51508748, 13.32504968)));
-    EXPECT_FALSE(service.checkIfPointInRange("1", 1000, std::make_shared<GeoPoint>(52.51508751, 13.32504971)));
+    EXPECT_TRUE(service.checkIfPointInRange(std::make_shared<GeoPoint>(52.51508748, 13.32504968)));
+    EXPECT_FALSE(service.checkIfPointInRange(std::make_shared<GeoPoint>(52.51508751, 13.32504971)));
 
 }
 

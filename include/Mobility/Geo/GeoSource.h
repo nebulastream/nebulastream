@@ -14,32 +14,36 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOSQUARE_H
-#define NES_GEOSQUARE_H
+#ifndef NES_GEOSOURCE_H
+#define NES_GEOSOURCE_H
 
 #include <Mobility/Geo/GeoArea.h>
-#include "Mobility/Geo/GeoPoint.h"
+#include <Mobility/Geo/GeoNode.h>
 
 namespace NES {
 
-class GeoPoint;
-using GeoPointPtr = std::shared_ptr<GeoPoint>;
+class GeoSource : public GeoNode {
 
-class GeoSquare : public GeoArea {
+  private:
+    GeoAreaPtr range;
+    bool hasRange;
+    bool enabled;
 
   public:
-    GeoSquare(GeoPointPtr  center, double area);
-    [[nodiscard]] double getDistanceToBound() const override;
-    bool contains(const GeoPointPtr& location) override;
+    explicit GeoSource(const string& id);
+    explicit GeoSource(const string& id, GeoAreaPtr  range);
 
-    GeoPointPtr getNorthBound();
-    GeoPointPtr getSouthBound();
-    GeoPointPtr getEastBound();
-    GeoPointPtr getWestBound();
+    [[nodiscard]] const GeoAreaPtr& getRange() const;
+    [[nodiscard]] bool isHasRange() const;
+    [[nodiscard]] bool isEnabled() const;
 
-    virtual ~GeoSquare();
+    void setEnabled(bool flag);
+
+    virtual ~GeoSource();
 };
+
+using GeoSourcePtr = std::shared_ptr<GeoSource>;
 
 }
 
-#endif//NES_GEOSQUARE_H
+#endif//NES_GEOSOURCE_H

@@ -40,10 +40,11 @@ class LocationService {
     static LocationServicePtr create();
     explicit LocationService();
 
-    void addNode(string nodeId);
-    void updateNodeLocation(string nodeId, const GeoPointPtr& location);
-    bool checkIfPointInRange(const string& nodeId, double area, const GeoPointPtr& location);
-    const LocationCatalogPtr& getLocationCatalog() const;
+    void addSink(const string& nodeId, const double movingRangeArea);
+    void addSource(const string& nodeId);
+    void updateNodeLocation(const string& nodeId, const GeoPointPtr& location);
+    bool checkIfPointInRange(const GeoPointPtr& location);
+    [[nodiscard]] const LocationCatalogPtr& getLocationCatalog() const;
 };
 
 using LocationServicePtr = std::shared_ptr<LocationService>;

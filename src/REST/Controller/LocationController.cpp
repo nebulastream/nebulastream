@@ -69,7 +69,7 @@ void LocationController::handlePost(std::vector<utility::string_t> path, web::ht
 void LocationController::handleGetLocations(web::http::http_request message) {
     NES_DEBUG("LocationController: Getting information about all nodes");
     std::vector<web::json::value> nodes = {};
-    for (auto const& [nodeId, node] : locationService->getLocationCatalog()->getNodes()) {
+    for (auto const& [nodeId, node] : locationService->getLocationCatalog()->getSources()) {
         web::json::value currentNodeJsonValue{};
         currentNodeJsonValue["id"] = web::json::value::string(node->getId());
         currentNodeJsonValue["latitude"] = web::json::value::number(node->getCurrentLocation()->getLatitude());
@@ -89,7 +89,7 @@ void LocationController::handleAddNode(web::http::http_request message) {
         NES_DEBUG("LocationController: userRequest: " + userRequest);
         json::value req = json::value::parse(userRequest);
         std::string nodeId = req.at("nodeId").as_string();
-        this->locationService->addNode(nodeId);
+        this->locationService->addSource(nodeId);
         successMessageImpl(message, "New node added!");
     })
     .wait();

@@ -17,31 +17,28 @@
 #include <Mobility/Geo/GeoSquare.h>
 #include <Mobility/Geo/GeoCalculator.h>
 
-#include <utility>
-
 namespace NES {
 
-GeoSquare::GeoSquare(GeoPointPtr  center, double area) : center(std::move(center)), area(area) {}
+GeoSquare::GeoSquare(GeoPointPtr  center, double area) : GeoArea(std::move(center), area) {}
 
-const GeoPointPtr& GeoSquare::getCenter() const { return center; }
 
-double GeoSquare::getDistanceToBound() const { return this->area / 4; }
+double GeoSquare::getDistanceToBound() const { return this->getArea() / 4; }
 
 
 GeoPointPtr GeoSquare::getNorthBound() {
-    return GeoCalculator::pointFromDirection(center, GeoPoint( - getDistanceToBound(), 0));
+    return GeoCalculator::pointFromDirection(this->getCenter(), GeoPoint( - getDistanceToBound(), 0));
 }
 
 GeoPointPtr GeoSquare::getSouthBound() {
-    return GeoCalculator::pointFromDirection(center, GeoPoint(  getDistanceToBound(), 0));
+    return GeoCalculator::pointFromDirection(this->getCenter(), GeoPoint(  getDistanceToBound(), 0));
 }
 
 GeoPointPtr GeoSquare::getEastBound() {
-    return GeoCalculator::pointFromDirection(center, GeoPoint(0, getDistanceToBound()));
+    return GeoCalculator::pointFromDirection(this->getCenter(), GeoPoint(0, getDistanceToBound()));
 }
 
 GeoPointPtr GeoSquare::getWestBound() {
-    return GeoCalculator::pointFromDirection(center, GeoPoint(0, - getDistanceToBound()));
+    return GeoCalculator::pointFromDirection(this->getCenter(), GeoPoint(0, - getDistanceToBound()));
 }
 
 bool GeoSquare::contains(const GeoPointPtr& location) {
@@ -64,5 +61,7 @@ bool GeoSquare::contains(const GeoPointPtr& location) {
 
     return true;
 }
+
+GeoSquare::~GeoSquare() = default;
 
 }

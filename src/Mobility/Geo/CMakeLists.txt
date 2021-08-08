@@ -15,6 +15,9 @@
 add_source_nes(
         GeoCalculator.cpp
         GeoNode.cpp
+        GeoSink.cpp
+        GeoSource.cpp
         GeoPoint.cpp
+        GeoArea.cpp
         GeoSquare.cpp
 )

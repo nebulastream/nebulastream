@@ -17,16 +17,13 @@
 #ifndef NES_LOCATIONCATALOG_H
 #define NES_LOCATIONCATALOG_H
 
-#include "Geo/GeoNode.h"
 #include <map>
 #include <cpprest/json.h>
-
+#include <Mobility/Geo/GeoSink.h>
+#include <Mobility/Geo/GeoSource.h>
 
 
 namespace NES {
-
-class GeoNode;
-using GeoNodePtr = std::shared_ptr<GeoNode>;
 
 class GeoPoint;
 using GeoPointPtr = std::shared_ptr<GeoPoint>;
@@ -37,15 +34,20 @@ using std::string;
 class LocationCatalog {
 
   private:
-    std::map<string, GeoNodePtr> nodes;
+    std::map<string, GeoSinkPtr> sinks;
+    std::map<string, GeoSourcePtr> sources;
 
   public:
     LocationCatalog() = default;
-    void addNode(string nodeId);
-    void updateNodeLocation(string nodeId, const GeoPointPtr& location);
-    bool contains(string nodeId);
-    GeoNodePtr getNode(string nodeId);
-    [[nodiscard]] const std::map<string, GeoNodePtr>& getNodes() const;
+    void addSource(const string& nodeId);
+    void addSink(const string& nodeId, const double movingRangeArea);
+    void enableSource(const string& nodeId);
+    void disableSource(const string& nodeId);
+    [[nodiscard]] const std::map<string, GeoSinkPtr>& getSinks() const;
+    [[nodiscard]] const std::map<string, GeoSourcePtr>& getSources() const;
+    void updateNodeLocation(const string& nodeId, const GeoPointPtr& location);
+
+    bool contains(const string& nodeId);
     uint64_t size();
 };
 

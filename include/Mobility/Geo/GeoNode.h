@@ -40,7 +40,9 @@ class GeoNode {
     [[nodiscard]] string getId() const;
     GeoPointPtr getCurrentLocation();
     [[nodiscard]] const std::vector<GeoPointPtr>& getLocationHistory() const;
-    void setCurrentLocation(const GeoPointPtr& currentLocation);
+    virtual void setCurrentLocation(const GeoPointPtr& currentLocation);
+
+    GeoNode() = delete;
 };
 
 }

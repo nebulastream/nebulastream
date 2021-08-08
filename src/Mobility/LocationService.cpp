@@ -23,28 +23,25 @@
 
 namespace NES {
 
-LocationService::LocationService() {
-    locationCatalog = std::make_shared<LocationCatalog>();
+LocationService::LocationService() { locationCatalog = std::make_shared<LocationCatalog>(); }
+
+void LocationService::addSink(const string& nodeId, const double movingRangeArea) {
+    this->locationCatalog->addSink(nodeId, movingRangeArea);
 }
 
+void LocationService::addSource(const string& nodeId) { this->locationCatalog->addSource(nodeId); }
 
-void LocationService::addNode(string nodeId) {
-    this->locationCatalog->addNode(std::move(nodeId));
-}
-
-bool LocationService::checkIfPointInRange(const string& nodeId, double area, const GeoPointPtr& location) {
-
-    if (this->locationCatalog->contains(nodeId)) {
-        GeoNodePtr node = this->locationCatalog->getNode(nodeId);
-        GeoSquare range(node->getCurrentLocation(), area);
-        return range.contains(location);
+bool LocationService::checkIfPointInRange(const GeoPointPtr& location) {
+    for (auto const& [nodeId, sink] : locationCatalog->getSinks()){
+        if (sink->getMovingRange()->contains(location)) {
+            return true;
+        }
     }
-
     return false;
 }
 
-void LocationService::updateNodeLocation(string nodeId, const GeoPointPtr& location) {
-    this->locationCatalog->updateNodeLocation(std::move(nodeId), location);
+void LocationService::updateNodeLocation(const string& nodeId, const GeoPointPtr& location) {
+    this->locationCatalog->updateNodeLocation(nodeId, location);
 }
 
 LocationServicePtr LocationService::create() { return std::make_shared<LocationService>(); }
