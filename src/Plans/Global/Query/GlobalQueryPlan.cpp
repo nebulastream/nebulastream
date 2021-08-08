@@ -164,6 +164,7 @@ bool GlobalQueryPlan::createNewSharedQueryPlan(const QueryPlanPtr& queryPlan) {
     SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
     queryIdToSharedQueryIdMap[inputQueryPlanId] = sharedQueryId;
     sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
+    sourceNamesToSharedQueryPlanMap[queryPlan->getSourceConsumed()] = sharedQueryPlan;
     return true;
 }
 
@@ -172,6 +173,14 @@ const std::vector<QueryPlanPtr>& GlobalQueryPlan::getQueryPlansToAdd() const { r
 bool GlobalQueryPlan::clearQueryPlansToAdd() {
     queryPlansToAdd.clear();
     return true;
+}
+
+SharedQueryPlanPtr GlobalQueryPlan::fetchSharedQueryPlanConsumingSources(std::string sourceNames) {
+    auto item = sourceNamesToSharedQueryPlanMap.find(sourceNames);
+    if (item != sourceNamesToSharedQueryPlanMap.end()) {
+        return item->second;
+    }
+    return nullptr;
 }
 
 }// namespace NES

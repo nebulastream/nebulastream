@@ -87,6 +87,7 @@ Query Query::from(const std::string& sourceStreamName) {
     NES_DEBUG("Query: create query for input stream " << sourceStreamName);
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceOperator);
+    queryPlan->setSourceConsumed(sourceStreamName);
     return Query(queryPlan);
 }
 
@@ -105,8 +106,16 @@ Query& Query::as(const std::string& newStreamName) {
 Query& Query::unionWith(Query* subQuery) {
     NES_DEBUG("Query: unionWith the subQuery to current query");
     OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
-    queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
+    const QueryPlanPtr& subQueryPlan = subQuery->getQueryPlan();
+    queryPlan->addRootOperator(subQueryPlan->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
+    //Update the Source names by sorting and then concatenating the source names from the sub query plan
+    std::vector<std::string> sourceNames;
+    sourceNames.emplace_back(subQueryPlan->getSourceConsumed());
+    sourceNames.emplace_back(queryPlan->getSourceConsumed());
+    std::sort(sourceNames.begin(), sourceNames.end());
+    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
+    queryPlan->setSourceConsumed(updatedSourceName);
     return *this;
 }
 
@@ -190,6 +199,13 @@ Query& Query::joinWith(const Query& subQueryRhs,
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
+    //Update the Source names by sorting and then concatenating the source names from the sub query plan
+    std::vector<std::string> sourceNames;
+    sourceNames.emplace_back(rightQueryPlan->getSourceConsumed());
+    sourceNames.emplace_back(queryPlan->getSourceConsumed());
+    std::sort(sourceNames.begin(), sourceNames.end());
+    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
+    queryPlan->setSourceConsumed(updatedSourceName);
     return *this;
 }
 

@@ -127,9 +127,9 @@ if (NES_BUILD_BENCHMARKS)
     #add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
 
     ### Query Merger Benchmark ###
-#    add_executable(query-merger-benchmark "src/Micro-Benchmarks/Query-Merger/BenchmarkQueryMerger.cpp")
-#    target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
-#    add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=query-merger-benchmark.log --benchmark_out_format=json)
+    add_executable(query-merger-benchmark "src/Micro-Benchmarks/Query-Merger/BenchmarkQueryMerger.cpp")
+    target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=query-merger-benchmark.log --benchmark_out_format=json)
 
     message("---Done building benchmarks")
 
