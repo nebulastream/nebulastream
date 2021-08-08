@@ -50,8 +50,8 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
-        std::vector<SharedQueryPlanPtr> allSharedQueryPlans = globalQueryPlan->getAllSharedQueryPlans();
-        for (auto& hostSharedQueryPlan : allSharedQueryPlans) {
+        auto hostSharedQueryPlan = globalQueryPlan->fetchSharedQueryPlanConsumingSources(targetQueryPlan->getSourceConsumed());
+        if (hostSharedQueryPlan) {
 
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             // Prepare a map of matching address and target sink global query nodes

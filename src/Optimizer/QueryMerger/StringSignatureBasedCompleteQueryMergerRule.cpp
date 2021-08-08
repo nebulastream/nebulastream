@@ -45,8 +45,8 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
     //Iterate over all shared query metadata to identify equal shared metadata
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
-        auto allSharedQueryPlans = globalQueryPlan->getAllSharedQueryPlans();
-        for (auto& hostSharedQueryPlan : allSharedQueryPlans) {
+        auto hostSharedQueryPlan = globalQueryPlan->fetchSharedQueryPlanConsumingSources(targetQueryPlan->getSourceConsumed());
+        if (hostSharedQueryPlan) {
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
@@ -104,6 +104,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
             merged = true;
             break;
         }
+
         if (!merged) {
             NES_DEBUG("SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
