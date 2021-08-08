@@ -130,7 +130,7 @@ class GlobalQueryPlan {
      * @param sourceNames: the concatenated names of the logical sources
      * @return pointer to the Shared Query Plan or nullptr
      */
-    SharedQueryPlanPtr fetchSharedQueryPlanConsumingSources(std::string sourceNames);
+    std::vector<SharedQueryPlanPtr> getSharedQueryPlansConsumingSources(std::string sourceNames);
 
   private:
     GlobalQueryPlan();
@@ -138,7 +138,7 @@ class GlobalQueryPlan {
     std::vector<QueryPlanPtr> queryPlansToAdd;
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
     std::map<SharedQueryId, SharedQueryPlanPtr> sharedQueryIdToPlanMap;
-    std::map<std::string, SharedQueryPlanPtr> sourceNamesToSharedQueryPlanMap;
+    std::map<std::string, std::vector<SharedQueryPlanPtr>> sourceNamesToSharedQueryPlanMap;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP
