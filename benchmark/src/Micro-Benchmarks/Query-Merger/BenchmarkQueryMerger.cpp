@@ -23,8 +23,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
-#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -138,9 +138,9 @@ int main(int argc, const char* argv[]) {
     std::map<std::string, std::string> commandLineParams;
 
     for (int i = 1; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<std::string, std::string>(std::string(argv[i]).substr(0, std::string(argv[i]).find("=")),
-                                                std::string(argv[i]).substr(std::string(argv[i]).find("=") + 1, std::string(argv[i]).length() - 1)));
+        commandLineParams.insert(std::pair<std::string, std::string>(
+            std::string(argv[i]).substr(0, std::string(argv[i]).find("=")),
+            std::string(argv[i]).substr(std::string(argv[i]).find("=") + 1, std::string(argv[i]).length() - 1)));
     }
 
     auto configPath = commandLineParams.find("--configPath");
@@ -148,7 +148,8 @@ int main(int argc, const char* argv[]) {
     if (configPath != commandLineParams.end()) {
         loadConfigFromYAMLFile(configPath->second.c_str());
     } else {
-        loadConfigFromYAMLFile("/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
+        loadConfigFromYAMLFile(
+            "/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
     }
 
     for (const auto& file : directory_iterator(querySetLocation)) {
@@ -205,8 +206,8 @@ int main(int argc, const char* argv[]) {
                 benchmarkOutput << endTime << "," << file.path().filename() << ","
                                 << (enableQueryMerging[configNum] ? queryMergerRules[configNum] : "NoMerging") << ","
                                 << noOfPhysicalSources[configNum] << "," << noOfQueries << ","
-                                << globalQueryPlan->getAllSharedQueryPlans().size() << "," << NES_VERSION << "," << expRun
-                                << "," << startTime << "," << endTime << "," << endTime - startTime << std::endl;
+                                << globalQueryPlan->getAllSharedQueryPlans().size() << "," << NES_VERSION << "," << expRun << ","
+                                << startTime << "," << endTime << "," << endTime - startTime << std::endl;
                 std::cout << "Finished Run " << expRun << "/" << noOfMeasurementsToCollect << std::endl;
                 coordinator->stopCoordinator(true);
             }
