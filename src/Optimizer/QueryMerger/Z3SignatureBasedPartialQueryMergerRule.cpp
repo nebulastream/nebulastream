@@ -149,38 +149,33 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                 }
             }
 
-            //Not all sinks found an equivalent entry in the target shared query metadata
-            if (matchedTargetToHostOperatorMap.empty()) {
-                NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Target and Host Shared Query MetaData are not equal");
-                continue;
-            }
+            if (!matchedTargetToHostOperatorMap.empty()) {
+                NES_TRACE("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
 
-            NES_TRACE("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
+                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
-            hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
-
-            //Iterate over all matched pairs of operators and merge the query plan
-            for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
-                for (const auto& targetParent : targetOperator->getParents()) {
-                    bool addedNewParent = hostOperator->addParent(targetParent);
-                    if (!addedNewParent) {
-                        NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
+                //Iterate over all matched pairs of operators and merge the query plan
+                for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
+                    for (const auto& targetParent : targetOperator->getParents()) {
+                        bool addedNewParent = hostOperator->addParent(targetParent);
+                        if (!addedNewParent) {
+                            NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
+                        }
+                        hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
+                        targetOperator->removeParent(targetParent);
                     }
-                    hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
-                    targetOperator->removeParent(targetParent);
                 }
-            }
 
-            //Add all root operators from target query plan to host query plan
-            for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
-                hostQueryPlan->addRootOperator(targetRootOperator);
-            }
+                //Add all root operators from target query plan to host query plan
+                for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
+                    hostQueryPlan->addRootOperator(targetRootOperator);
+                }
 
-            //Update the shared query meta data
-            globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
-            // exit the for loop as we found a matching address shared query meta data
-            matched = true;
-            break;
+                //Update the shared query meta data
+                globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
+                // exit the for loop as we found a matching address shared query meta data
+                matched = true;
+            }
         }
 
         if (!matched) {
