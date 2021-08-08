@@ -125,6 +125,13 @@ class GlobalQueryPlan {
     std::vector<SharedQueryPlanPtr> getAllNewSharedQueryPlans();
     std::vector<SharedQueryPlanPtr> getAllOldSharedQueryPlans();
 
+    /**
+     * Fetch the Shared query plan consuming the sources with the input source names
+     * @param sourceNames: the concatenated names of the logical sources
+     * @return pointer to the Shared Query Plan or nullptr
+     */
+    SharedQueryPlanPtr fetchSharedQueryPlanConsumingSources(std::string sourceNames);
+
   private:
     GlobalQueryPlan();
 

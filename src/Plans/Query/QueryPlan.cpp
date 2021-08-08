@@ -260,4 +260,9 @@ QueryPlanPtr QueryPlan::copy() {
     operatorIdToOperatorMap.clear();
     return QueryPlan::create(queryId, INVALID_QUERY_ID, duplicateRootOperators);
 }
+
+const std::string& QueryPlan::getSourceConsumed() const { return sourceConsumed; }
+
+void QueryPlan::setSourceConsumed(const std::string& sourceName) { sourceConsumed = sourceName; }
+
 }// namespace NES

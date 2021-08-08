@@ -219,6 +219,10 @@ class QueryPlan {
      */
     QueryPlanPtr copy();
 
+    [[nodiscard]] const std::string& getSourceConsumed() const;
+
+    void setSourceConsumed(const std::string& sourceName);
+
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
@@ -242,6 +246,7 @@ class QueryPlan {
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
+    std::string sourceConsumed;
 };
 }// namespace NES
 #endif//NES_INCLUDE_PLANS_QUERY_HPP_

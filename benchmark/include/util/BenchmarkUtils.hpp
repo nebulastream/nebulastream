@@ -17,7 +17,7 @@
 #ifndef NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
 #define NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
 
-#include "SimpleBenchmarkSink.hpp"
+//#include "SimpleBenchmarkSink.hpp"
 #include <API/Query.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -106,20 +106,20 @@ class BenchmarkUtils {
 
     static void printOutConsole(Runtime::QueryStatistics* statistic, SchemaPtr schema);
 
-    /**
-     * @brief runs a benchmark with the given ingestion rate, given query, and a benchmark schema. The statistics (processedTuples)
-     * of this benchmark run are also saved.
-     * @param benchmarkSchema
-     * @param statisticsVec
-     * @param query
-     * @param ingestionRate
-     */
-
-    static void runBenchmark(std::vector<Runtime::QueryStatistics*>& statisticsVec,
-                             std::vector<DataSourcePtr> benchmarkSource,
-                             std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
-                             Runtime::NodeEnginePtr nodeEngine,
-                             NES::Query query);
+//    /**
+//     * @brief runs a benchmark with the given ingestion rate, given query, and a benchmark schema. The statistics (processedTuples)
+//     * of this benchmark run are also saved.
+//     * @param benchmarkSchema
+//     * @param statisticsVec
+//     * @param query
+//     * @param ingestionRate
+//     */
+//
+//    static void runBenchmark(std::vector<Runtime::QueryStatistics*>& statisticsVec,
+//                             std::vector<DataSourcePtr> benchmarkSource,
+//                             std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
+//                             Runtime::NodeEnginePtr nodeEngine,
+//                             NES::Query query);
 };
 
 //12,12 in the node engine are the new for source and pipeline local buffers, please change them accordingly

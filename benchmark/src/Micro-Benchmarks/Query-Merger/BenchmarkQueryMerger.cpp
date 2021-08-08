@@ -14,10 +14,21 @@
     limitations under the License.
 */
 
-#include <E2EBenchmarks/E2EBase.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/QueryCatalogEntry.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/StreamCatalogEntry.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <filesystem>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Services/QueryParsingService.hpp>
+#include <Services/QueryService.hpp>
+#include <Topology/TopologyNode.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <util/BenchmarkUtils.hpp>
 
 using namespace NES;
@@ -43,9 +54,9 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource,
                                 ->addField("X", NES::UINT64)
                                 ->addField("Y", NES::UINT64);
 
-    for (int j = 0; j < noOfDistinctSources; j++) {
+    for (uint64_t j = 0; j < noOfDistinctSources; j++) {
         streamCatalog->addLogicalStream("example", schema);
-        for (int i = 1; i <= noOfPhysicalSource; i++) {
+        for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
             auto topoNode = TopologyNode::create(i, "", i, i, 2);
             auto streamCat = StreamCatalogEntry::create("CSV", "example", "benchmark" + std::to_string(i), topoNode);
             streamCatalog->addPhysicalStream("example", streamCat);
@@ -53,10 +64,9 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource,
     }
 }
 
-void setUp(std::string queryMergerRule, bool enableQueryMerging, uint64_t noOfPhysicalSources) {
+void setUp(std::string queryMergerRule, uint64_t noOfPhysicalSources) {
     std::cout << "setup and start coordinator" << std::endl;
     NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
-    crdConf->setEnableQueryMerging(enableQueryMerging);
     crdConf->setQueryMergerRule(queryMergerRule);
     coordinator = std::make_shared<NES::NesCoordinator>(crdConf);
     coordinator->startCoordinator(/**blocking**/ false);
@@ -125,12 +135,12 @@ int main(int argc, const char* argv[]) {
                        "Time,End_Time,Total_Run_Time"
                     << std::endl;
 
-    std::map<string, string> commandLineParams;
+    std::map<std::string, std::string> commandLineParams;
 
     for (int i = 1; i < argc; ++i) {
         commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find("=")),
-                                      string(argv[i]).substr(string(argv[i]).find("=") + 1, string(argv[i]).length() - 1)));
+            std::pair<std::string, std::string>(std::string(argv[i]).substr(0, std::string(argv[i]).find("=")),
+                                                std::string(argv[i]).substr(std::string(argv[i]).find("=") + 1, std::string(argv[i]).length() - 1)));
     }
 
     auto configPath = commandLineParams.find("--configPath");
@@ -138,7 +148,7 @@ int main(int argc, const char* argv[]) {
     if (configPath != commandLineParams.end()) {
         loadConfigFromYAMLFile(configPath->second.c_str());
     } else {
-        loadConfigFromYAMLFile("/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/Z3MergeConfig.yaml");
+        loadConfigFromYAMLFile("/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
     }
 
     for (const auto& file : directory_iterator(querySetLocation)) {
@@ -156,16 +166,20 @@ int main(int argc, const char* argv[]) {
         uint64_t noOfQueries = queries.size();
         QueryPtr queryObjects[noOfQueries];
 
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        auto queryParsingService = QueryParsingService::create(jitCompiler);
+
 #pragma omp parallel for
         for (uint64_t i = 0; i < queries.size(); i++) {
-            auto queryObj = Util::createQueryFromCodeString(queries[i]);
+            auto queryObj = queryParsingService->createQueryFromCodeString(queries[i]);
             queryObjects[i] = queryObj;
         }
 
-        for (auto configNum = 0; configNum < queryMergerRules.size(); configNum++) {
+        for (size_t configNum = 0; configNum < queryMergerRules.size(); configNum++) {
 
-            for (int expRun = 1; expRun <= noOfMeasurementsToCollect; expRun++) {
-                setUp(queryMergerRules[configNum], enableQueryMerging[configNum], noOfPhysicalSources[configNum]);
+            for (uint64_t expRun = 1; expRun <= noOfMeasurementsToCollect; expRun++) {
+                setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum]);
                 NES::QueryServicePtr queryService = coordinator->getQueryService();
                 NES::QueryCatalogPtr queryCatalog = coordinator->getQueryCatalog();
                 auto globalQueryPlan = coordinator->getGlobalQueryPlan();
@@ -174,10 +188,10 @@ int main(int argc, const char* argv[]) {
                 auto startTime =
                     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                for (int i = 1; i <= noOfQueries; i++) {
+                for (uint64_t i = 1; i <= noOfQueries; i++) {
                     const QueryPlanPtr queryPlan = queryObjects[i - 1]->getQueryPlan();
                     queryPlan->setQueryId(i);
-                    queryService->addQueryRequest(queries[i - 1], queryObjects[i - 1], "TopDown");
+                    queryService->addQueryRequest(queries[i - 1], queryPlan, "TopDown");
                 }
 
                 auto lastQuery = queryCatalog->getQueryCatalogEntry(noOfQueries);
@@ -191,7 +205,7 @@ int main(int argc, const char* argv[]) {
                 benchmarkOutput << endTime << "," << file.path().filename() << ","
                                 << (enableQueryMerging[configNum] ? queryMergerRules[configNum] : "NoMerging") << ","
                                 << noOfPhysicalSources[configNum] << "," << noOfQueries << ","
-                                << globalQueryPlan->getAllSharedQueryMetaData().size() << "," << NES_VERSION << "," << expRun
+                                << globalQueryPlan->getAllSharedQueryPlans().size() << "," << NES_VERSION << "," << expRun
                                 << "," << startTime << "," << endTime << "," << endTime - startTime << std::endl;
                 std::cout << "Finished Run " << expRun << "/" << noOfMeasurementsToCollect << std::endl;
                 coordinator->stopCoordinator(true);
