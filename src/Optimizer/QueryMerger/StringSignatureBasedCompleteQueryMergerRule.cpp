@@ -68,41 +68,36 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
                 }
             }
 
-            //Not all sinks found an equivalent entry in the target shared query metadata
-            if (!foundMatch) {
-                NES_WARNING("SignatureBasedCompleteQueryMergerRule: Target and Host Shared Query MetaData are not equal");
-                continue;
-            }
+            if (foundMatch) {
+                NES_TRACE("SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
-            NES_TRACE("SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
-
-            //Iterate over all matched pairs of sink operators and merge the query plan
-            for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
-                //Get children of target and host sink operators
-                auto targetSinkChildren = targetSinkOperator->getChildren();
-                auto hostSinkChildren = hostSinkOperator->getChildren();
-                //Iterate over target children operators and migrate their parents to the host children operators.
-                // Once done, remove the target parent from the target children.
-                for (auto& targetSinkChild : targetSinkChildren) {
-                    for (auto& hostChild : hostSinkChildren) {
-                        bool addedNewParent = hostChild->addParent(targetSinkOperator);
-                        if (!addedNewParent) {
-                            NES_WARNING("SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                //Iterate over all matched pairs of sink operators and merge the query plan
+                for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
+                    //Get children of target and host sink operators
+                    auto targetSinkChildren = targetSinkOperator->getChildren();
+                    auto hostSinkChildren = hostSinkOperator->getChildren();
+                    //Iterate over target children operators and migrate their parents to the host children operators.
+                    // Once done, remove the target parent from the target children.
+                    for (auto& targetSinkChild : targetSinkChildren) {
+                        for (auto& hostChild : hostSinkChildren) {
+                            bool addedNewParent = hostChild->addParent(targetSinkOperator);
+                            if (!addedNewParent) {
+                                NES_WARNING("SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                            }
+                            hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSinkOperator);
                         }
-                        hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSinkOperator);
+                        targetSinkChild->removeParent(targetSinkOperator);
                     }
-                    targetSinkChild->removeParent(targetSinkOperator);
+                    //Add target sink operator as root to the host query plan.
+                    hostQueryPlan->addRootOperator(targetSinkOperator);
                 }
-                //Add target sink operator as root to the host query plan.
-                hostQueryPlan->addRootOperator(targetSinkOperator);
-            }
 
-            hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
-            //Update the shared query meta data
-            globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
-            // exit the for loop as we found a matching address shared query meta data
-            merged = true;
-            break;
+                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
+                //Update the shared query meta data
+                globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
+                // exit the for loop as we found a matching address shared query meta data
+                merged = true;
+            }
         }
 
         if (!merged) {

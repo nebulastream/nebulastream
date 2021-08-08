@@ -37,6 +37,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
         this->queryPlan->addRootOperator(rootOperator);
     }
     this->queryPlan->setQueryId(sharedQueryId);
+    this->queryPlan->setSourceConsumed(queryPlan->getSourceConsumed());
     queryIdToSinkOperatorMap[queryId] = rootOperators;
     changeLog = SharedQueryPlanChangeLog::create();
     sinkOperators = rootOperators;
