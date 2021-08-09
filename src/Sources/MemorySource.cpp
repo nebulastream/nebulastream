@@ -13,8 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef NES_BUILD_BENCHMARKS
 #include <Runtime/internal/rte_memory.h>
 #include <Runtime/internal/apex_memmove.hpp>
+#endif
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -102,10 +104,12 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
         case copyBuffer: {
             buffer = bufferManager->getBufferBlocking();
+#ifdef NES_BUILD_BENCHMARKS
 #if 1
             apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
 #else
             rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+#endif
 #endif
             break;
         }
