@@ -32,8 +32,12 @@ namespace NES {
 template<typename TimeUnit = std::chrono::nanoseconds, typename ClockType = std::chrono::high_resolution_clock>
 class Timer {
   public:
-    struct Snapshot {
+    class Snapshot {
+      public:
+        Snapshot(std::string name, TimeUnit runtime, std::vector<Snapshot> children)
+            : name(name), runtime(runtime), children(children){};
         unsigned int getRuntime() { return runtime.count(); }
+
         std::string name;
         TimeUnit runtime;
         std::vector<Snapshot> children;
@@ -89,9 +93,9 @@ class Timer {
 
             runtime += duration;
 
-            const struct Snapshot s = {.name = componentName + '_' + snapshotName,
-                                       .runtime = duration,
-                                       .children = std::vector<struct Snapshot>()};
+            const Snapshot s = Snapshot(componentName + '_' + snapshotName,
+                                       duration,
+                                       std::vector<Snapshot>());
             snapshots.push_back(s);
 
             start_p = ClockType::now();
@@ -111,9 +115,9 @@ class Timer {
 
             this->runtime += timer.runtime;
 
-            const struct Snapshot s = {.name = componentName + '_' + timer.getComponentName(),
-                                       .runtime = timer.runtime,
-                                       .children = timer.getSnapshots()};
+            const Snapshot s = Snapshot(componentName + '_' + timer.getComponentName(),
+                                       timer.runtime,
+                                       timer.getSnapshots());
 
             this->snapshots.push_back(s);
         }
@@ -156,7 +160,7 @@ class Timer {
     /**
      * @brief helper function for insert string operator
      */
-    std::string printHelper(std::string str, struct Snapshot s) {
+    std::string printHelper(std::string str, Snapshot s) {
         std::ostringstream ostr;
         ostr << str;
         ostr << s.name + ": " << s.getRuntime() << '\n';
