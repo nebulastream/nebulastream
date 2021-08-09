@@ -31,6 +31,10 @@ class TimerTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("TimerTest test class TearDownTestCase."); }
 };
 
+/**
+ * @brief Test if start and stop commands work properly.
+ * @result Measured runtime is 2 sec with 0.1 sec slack
+ */
 TEST(UtilFunctionTest, startAndPause) {
     Timer timer = Timer("testComponent");
     timer.start();
@@ -45,6 +49,10 @@ TEST(UtilFunctionTest, startAndPause) {
     EXPECT_TRUE((timer.getRuntime() >= 2000000000 - 100000000) && (timer.getRuntime() <= 2000000000 + 100000000));
 }
 
+/**
+ * @brief Test if snapshot taking works properly.
+ * @result Measured runtime and snapshot runtime is 1 sec with 0.05 sec slack
+ */
 TEST(UtilFunctionTest, snapshotTaking) {
     Timer timer = Timer("testComponent");
     timer.start();
@@ -53,9 +61,16 @@ TEST(UtilFunctionTest, snapshotTaking) {
     timer.pause();
 
     //std::cout << timer.getRuntime();
+    auto snapshots = timer.getSnapshots();
     EXPECT_TRUE((timer.getRuntime() >= 1000000000 - 50000000) && (timer.getRuntime() <= 1000000000 + 50000000));
+    EXPECT_TRUE(snapshots[0].name == "testComponent_test");
+    EXPECT_TRUE((snapshots[0].getRuntime() >= 1000000000 - 50000000) && (snapshots[0].getRuntime() <= 1000000000 + 50000000));
 }
 
+/**
+ * @brief Test if timer merging works properly.
+ * @result Measured runtime is 2 sec with 0.1 sec slack. Snapshot runtime is 1 sec with 0.05 sec slack
+ */
 TEST(UtilFunctionTest, mergeTimers) {
     Timer timer1 = Timer("testComponent1");
     timer1.start();
@@ -70,9 +85,9 @@ TEST(UtilFunctionTest, mergeTimers) {
     timer2.snapshot("test2");
     timer2.pause();
     timer1.merge(timer2);
-    auto snapshots = timer1.getSnapshots();
 
     //std::cout << timer1;
+    auto snapshots = timer1.getSnapshots();
     EXPECT_TRUE((timer1.getRuntime() >= 2000000000 - 100000000) && (timer1.getRuntime() <= 2000000000 + 100000000));
     EXPECT_TRUE(snapshots[0].name == "testComponent1_test1");
     EXPECT_TRUE((snapshots[0].getRuntime() >= 1000000000 - 50000000) && (snapshots[0].getRuntime() <= 1000000000 + 50000000));
@@ -83,15 +98,16 @@ TEST(UtilFunctionTest, mergeTimers) {
                 && (snapshots[1].children[0].getRuntime() <= 1000000000 + 50000000));
 }
 
+/**
+ * @brief Test if sec and millisec measures work properly.
+ * @result Measured runtime is 1 sec with 0.05 sec slack
+ */
 TEST(UtilFunctionTest, differentTimeUnits) {
     Timer timer1 = Timer<std::chrono::seconds>("testComponent");
     timer1.start();
     sleep(1);
     timer1.snapshot("test");
     timer1.pause();
-
-    //std::cout << timer1.getRuntime();
-    EXPECT_TRUE(timer1.getRuntime() == 1);
 
     Timer timer2 = Timer<std::chrono::milliseconds>("testComponent");
     timer2.start();
@@ -100,6 +116,8 @@ TEST(UtilFunctionTest, differentTimeUnits) {
     timer2.pause();
 
     //std::cout << timer2.getRuntime();
+    //std::cout << timer1.getRuntime();
+    EXPECT_TRUE(timer1.getRuntime() == 1);
     EXPECT_TRUE((timer2.getRuntime() >= 1000 - 50) && (timer2.getRuntime() <= 1000 + 50));
 }
 }// namespace NES
