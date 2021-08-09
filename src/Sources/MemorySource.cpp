@@ -14,8 +14,8 @@
     limitations under the License.
 */
 #ifdef NES_BUILD_BENCHMARKS
-#include <Runtime/internal/rte_memory.h>
 #include <Runtime/internal/apex_memmove.hpp>
+#include <Runtime/internal/rte_memory.h>
 #endif
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
