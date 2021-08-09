@@ -110,6 +110,8 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
 #else
             rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
 #endif
+#else
+            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
 #endif
             break;
         }
