@@ -528,6 +528,11 @@ add_executable(worker-coordinator-starter-tests "Integration/WorkerCoordinatorSt
 target_link_libraries(worker-coordinator-starter-tests nes ${GTEST_LIBRARIES})
 add_test(NAME worker-coordinator-starter-tests COMMAND worker-coordinator-starter-tests)
 
+# MobilityRESTEndpointTest
+add_executable(mobility-endpoint-test "Integration/MobilityRESTEndpointTest.cpp")
+target_link_libraries(mobility-endpoint-test nes ${GTEST_LIBRARIES})
+add_test(NAME mobility-endpoint-test COMMAND mobility-endpoint-test)
+
 # RESTEndpointTest
 add_executable(rest-endpoint-test "Integration/RESTEndpointTest.cpp")
 target_link_libraries(rest-endpoint-test nes ${GTEST_LIBRARIES})

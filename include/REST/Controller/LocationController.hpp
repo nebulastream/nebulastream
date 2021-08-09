@@ -33,7 +33,8 @@ class LocationController : public BaseController {
   private:
     LocationServicePtr locationService;
     void handleGetLocations(web::http::http_request message);
-    void handleAddNode(web::http::http_request message);
+    void handleGetNode(web::http::http_request message, const std::string& path);
+    void handleAddNode(web::http::http_request message, const std::string& path);
     void handleUpdateLocation(web::http::http_request message);
 
   public:

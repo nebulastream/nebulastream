@@ -19,20 +19,24 @@
 namespace NES {
 
 void LocationCatalog::addSource(const string& nodeId) {
+    std::unique_lock lock(catalogLock);
     this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId)));
 }
 
 void LocationCatalog::addSink(const string& nodeId, const double movingRangeArea) {
+    std::unique_lock lock(catalogLock);
     this->sinks.insert(std::pair<string, GeoSinkPtr>(nodeId, std::make_shared<GeoSink>(nodeId, movingRangeArea)));
 }
 
 void LocationCatalog::enableSource(const string& nodeId) {
+    std::unique_lock lock(catalogLock);
     if (this->sources.contains(nodeId)) {
         this->sources.at(nodeId)->setEnabled(true);
     }
 }
 
 void LocationCatalog::disableSource(const string& nodeId) {
+    std::unique_lock lock(catalogLock);
     if (this->sources.contains(nodeId)) {
         this->sources.at(nodeId)->setEnabled(false);
     }
@@ -44,6 +48,7 @@ const std::map<string, GeoSinkPtr>& LocationCatalog::getSinks() const { return s
 const std::map<string, GeoSourcePtr>& LocationCatalog::getSources() const { return sources; }
 
 void LocationCatalog::updateNodeLocation(const string& nodeId, const GeoPointPtr& location) {
+    std::unique_lock lock(catalogLock);
     if (sinks.contains(nodeId)) {
         std::_Rb_tree_iterator<std::pair<const string, GeoSinkPtr>> it = this->sinks.find(nodeId);
         if (it != this->sinks.end()) {
@@ -60,10 +65,12 @@ void LocationCatalog::updateNodeLocation(const string& nodeId, const GeoPointPtr
 }
 
 bool LocationCatalog::contains(const string& nodeId) {
+    std::unique_lock lock(catalogLock);
     return this->sinks.contains(nodeId) || this->sources.contains(nodeId);
 }
 
 uint64_t LocationCatalog::size() {
+    std::unique_lock lock(catalogLock);
     return this->sinks.size() + this->sources.size();
 }
 

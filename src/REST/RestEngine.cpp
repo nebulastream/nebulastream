@@ -110,7 +110,7 @@ void RestEngine::handleGet(http_request request) {
         } else if (paths[0] == "monitoring") {
             monitoringController->handleGet(paths, request);
             return;
-        } else if (paths[0] == "location") {
+        } else if (paths[0] == "geo") {
             locationController->handleGet(paths, request);
             return;
         } else if (paths[0] == "connectivity" && paths.size() == 2) {
@@ -139,7 +139,7 @@ void RestEngine::handlePost(http_request request) {
         } else if (paths[0] == "monitoring") {
             monitoringController->handlePost(paths, request);
             return;
-        } else if (paths[0] == "location") {
+        } else if (paths[0] == "geo") {
             locationController->handlePost(paths, request);
             return;
         }

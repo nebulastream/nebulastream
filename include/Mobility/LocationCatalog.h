@@ -18,6 +18,7 @@
 #define NES_LOCATIONCATALOG_H
 
 #include <map>
+#include <mutex>
 #include <cpprest/json.h>
 #include <Mobility/Geo/GeoSink.h>
 #include <Mobility/Geo/GeoSource.h>
@@ -36,6 +37,8 @@ class LocationCatalog {
   private:
     std::map<string, GeoSinkPtr> sinks;
     std::map<string, GeoSourcePtr> sources;
+
+    std::mutex catalogLock;
 
   public:
     LocationCatalog() = default;
