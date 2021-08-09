@@ -36,7 +36,7 @@ class Timer {
       public:
         Snapshot(std::string name, TimeUnit runtime, std::vector<Snapshot> children)
             : name(name), runtime(runtime), children(children){};
-        unsigned int getRuntime() { return runtime.count(); }
+        int64_t getRuntime() { return runtime.count(); }
 
         std::string name;
         TimeUnit runtime;
@@ -65,7 +65,6 @@ class Timer {
             NES_DEBUG("Timer: Trying to stop an already stopped timer so will skip this operation");
         } else {
             running = false;
-
             stop_p = ClockType::now();
             auto duration = std::chrono::duration_cast<TimeUnit>(stop_p - start_p);
 
@@ -87,16 +86,13 @@ class Timer {
             NES_DEBUG("Timer: Trying to take a snapshot of an non-running timer so will skip this operation");
         } else {
             running = true;
-
             stop_p = ClockType::now();
             auto duration = std::chrono::duration_cast<TimeUnit>(stop_p - start_p);
 
             runtime += duration;
-
-            const Snapshot s = Snapshot(componentName + '_' + snapshotName,
-                                       duration,
-                                       std::vector<Snapshot>());
-            snapshots.push_back(s);
+            snapshots.emplace_back(Snapshot(componentName + '_' + snapshotName,
+                                           duration,
+                                           std::vector<Snapshot>()));
 
             start_p = ClockType::now();
         }
@@ -112,27 +108,23 @@ class Timer {
         if (running) {
             NES_DEBUG("Timer: Trying to merge while timer is running so will skip this operation");
         } else {
-
             this->runtime += timer.runtime;
-
-            const Snapshot s = Snapshot(componentName + '_' + timer.getComponentName(),
-                                       timer.runtime,
-                                       timer.getSnapshots());
-
-            this->snapshots.push_back(s);
+            snapshots.emplace_back(Snapshot(componentName + '_' + timer.getComponentName(),
+                                               timer.runtime,
+                                               timer.getSnapshots()));
         }
     };
 
     /**
      * @brief retruns the currently saved snapshots
      */
-    std::vector<Snapshot> getSnapshots() const { return snapshots; };
+    std::vector<Snapshot> &getSnapshots() { return snapshots; };
 
     /**
      * @brief returns the current runtime
      * @note will return zero if timer is not paused
      */
-    unsigned int getRuntime() const {
+    int64_t getRuntime() const {
         if (!running) {
             return runtime.count();
         } else {
