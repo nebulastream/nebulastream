@@ -29,14 +29,14 @@ namespace NES {
  * @brief Util class to measure the time of NES components and sub-components
  * using snapshots
  */
-template<typename timeUnit = std::chrono::nanoseconds>
+template<typename TimeUnit = std::chrono::nanoseconds, typename ClockType = std::chrono::high_resolution_clock>
 class Timer {
   public:
-    struct snapshot {
+    struct Snapshot {
         unsigned int getRuntime() { return runtime.count(); }
         std::string name;
-        timeUnit runtime;
-        std::vector<snapshot> children;
+        TimeUnit runtime;
+        std::vector<Snapshot> children;
     };
 
     Timer(std::string componentName) : componentName(componentName){};
@@ -44,12 +44,31 @@ class Timer {
     /**
      * @brief starts the timer or resumes it after a pause
      */
-    void start();
+    void start() {
+        if (running) {
+            NES_DEBUG("Timer: Trying to start an already running timer so will skip this operation");
+        } else {
+            running = true;
+            start_p = ClockType::now();
+        }
+    };
 
     /**
      * @brief pauses the timer
      */
-    void pause();
+    void pause() {
+        if (!running) {
+            NES_DEBUG("Timer: Trying to stop an already stopped timer so will skip this operation");
+        } else {
+            running = false;
+
+            stop_p = ClockType::now();
+            auto duration = std::chrono::duration_cast<TimeUnit>(stop_p - start_p);
+
+            pausedDuration += duration;
+            runtime += duration;
+        }
+    };
 
     /**
      * @brief saves current runtime as a snapshot. Usefull for
@@ -59,7 +78,25 @@ class Timer {
      * it is the time from the start call till now.
      * @param snapshotName the of the snapshot
      */
-    void snapshot(std::string snapshotName);
+    void snapshot(std::string snapshotName) {
+        if (!running) {
+            NES_DEBUG("Timer: Trying to take a snapshot of an non-running timer so will skip this operation");
+        } else {
+            running = true;
+
+            stop_p = ClockType::now();
+            auto duration = std::chrono::duration_cast<TimeUnit>(stop_p - start_p);
+
+            runtime += duration;
+
+            const struct Snapshot s = {.name = componentName + '_' + snapshotName,
+                                       .runtime = duration,
+                                       .children = std::vector<struct Snapshot>()};
+            snapshots.push_back(s);
+
+            start_p = ClockType::now();
+        }
+    };
 
     /**
      * @brief includes snapshots of another timer
@@ -67,18 +104,38 @@ class Timer {
      * runtime.
      * @param timer to be merged with
      */
-    void merge(Timer timer);
+    void merge(Timer timer) {
+        if (running) {
+            NES_DEBUG("Timer: Trying to merge while timer is running so will skip this operation");
+        } else {
+
+            this->runtime += timer.runtime;
+
+            const struct Snapshot s = {.name = componentName + '_' + timer.getComponentName(),
+                                       .runtime = timer.runtime,
+                                       .children = timer.getSnapshots()};
+
+            this->snapshots.push_back(s);
+        }
+    };
 
     /**
      * @brief retruns the currently saved snapshots
      */
-    std::vector<struct snapshot> getSnapshots() const { return snapshots; };
+    std::vector<Snapshot> getSnapshots() const { return snapshots; };
 
     /**
      * @brief returns the current runtime
      * @note will return zero if timer is not paused
      */
-    unsigned int getRuntime() const;
+    unsigned int getRuntime() const {
+        if (!running) {
+            return runtime.count();
+        } else {
+            NES_DEBUG("Timer: Trying get runtime while timer is running so will return zero");
+            return 0;
+        }
+    };
 
     /**
     * @brief returns the component name to measure
@@ -91,7 +148,7 @@ class Timer {
     friend std::ostream& operator<<(std::ostream& str, const Timer& t) {
         str << "overall runtime: " << t.getRuntime() << '\n';
         for (auto& s : t.getSnapshots()) {
-            str << Timer<timeUnit>::printHelper(std::string(), s);
+            str << Timer<TimeUnit>::printHelper(std::string(), s);
         }
         return str;
     };
@@ -99,7 +156,15 @@ class Timer {
     /**
      * @brief helper function for insert string operator
      */
-    static std::string printHelper(std::string str, struct snapshot s);
+    std::string printHelper(std::string str, struct Snapshot s) {
+        std::ostringstream ostr;
+        ostr << str;
+        ostr << s.name + ": " << s.getRuntime() << '\n';
+        for (auto& c : s.children) {
+            ostr << printHelper(str, c);
+        }
+        return ostr.str();
+    }
 
   private:
     /**
@@ -110,27 +175,27 @@ class Timer {
     /**
      * @brief overall measured runtime
      */
-    timeUnit runtime{0};
+    TimeUnit runtime{0};
 
     /**
      * @brief already passed runtime after timer pause
      */
-    timeUnit pausedDuration{0};
+    TimeUnit pausedDuration{0};
 
     /**
      * @brief vector to store snapshots
      */
-    std::vector<struct snapshot> snapshots;
+    std::vector<Snapshot> snapshots;
 
     /**
      * @brief timepoint to store start point
      */
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_p;
+    std::chrono::time_point<ClockType> start_p;
 
     /**
       * @brief timepoint to store start point
       */
-    std::chrono::time_point<std::chrono::high_resolution_clock> stop_p;
+    std::chrono::time_point<ClockType> stop_p;
 
     /**
      * @brief helper parameters
