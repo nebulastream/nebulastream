@@ -168,7 +168,7 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
         NES_TRACE("MQTTSource line=" << tupCnt << " val=" << data);
         //init tokens
         std::vector<std::string> tokens;
-        if (getDataType() == MQTTSourceDescriptor::JSON) {
+        if (dataType == MQTTSourceDescriptor::JSON) {
             std::vector<std::string> helperToken;
             helperToken = UtilityFunctions::splitWithStringDelimiter(data, ":");
             std::string value;
@@ -188,15 +188,10 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
             NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
                             "Overflow detected: buffer size = " << buf.getBufferSize() << " position = "
                                                                 << (offset + tupCnt * tupleSize) << " field size " << fieldSize);
-
-            NES_DEBUG("MQTTSource::fillBuffer: tokens at j " << tokens[j]);
-
             //ToDO change according to new memory layout
             if (field->isBasicType()) {
                 NES_ASSERT2_FMT(!tokens[j].empty(), "Field cannot be empty if basic type");
                 auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
-
-                NES_DEBUG("MQTTSource::fillBuffer: tokens at j " << tokens[j] << "field type " << basicPhysicalField->nativeType);
 
                 if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_64) {
                     uint64_t val = std::stoull(tokens[j]);
@@ -240,10 +235,10 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
                 }
             } else {
                 std::string val;
-                if (getDataType() == MQTTSourceDescriptor::JSON){
+                if (dataType == MQTTSourceDescriptor::JSON){
                     val = tokens[j].substr(1, tokens[j].size() - 2);
                 }
-                std::cout << "This value is: " << val << std::endl;
+                NES_DEBUG("This value is: " << val);
                 memcpy(buf.getBuffer<char>() + offset + tupCnt * tupleSize, val.c_str(), fieldSize);
             }
 
