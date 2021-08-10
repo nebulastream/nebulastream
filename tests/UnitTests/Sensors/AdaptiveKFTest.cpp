@@ -16,6 +16,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Sources/AdaptiveKFSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/KalmanFilter.hpp>
@@ -51,7 +52,7 @@ class AdaptiveKFTest : public testing::Test {
         NES_INFO("Setup AdaptiveKFTest class.");
         streamConf = PhysicalStreamConfig::createEmpty();
         schema = Schema::create()->addField("temperature", UINT32);
-        nodeEngine = Runtime::create("127.0.0.1", 31337, streamConf);
+        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
         tuple_size = schema->getSchemaSizeInBytes();
         buffer_size = nodeEngine->getBufferManager()->getBufferSize();
         num_of_buffers = 1;
