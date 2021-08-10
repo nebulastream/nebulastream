@@ -47,10 +47,17 @@ class alignas(64) Task {
     ExecutionResult operator()(WorkerContext& workerContext);
 
     /**
-     * @brief return the number of tuples in the input buffer (for statistics)
-     * @return number of input tuples in buffer
+     * @brief return the number of tuples in the working buffer
+     * @return number of input tuples in working buffer
      */
     uint64_t getNumberOfTuples();
+
+    /**
+    * @brief return the number of tuples in the input buffer (for statistics)
+    * @return number of input tuples in input buffer
+    */
+    uint64_t getNumberOfInputTuples();
+
 
     /**
      * @brief method to return the qep of a task
@@ -88,6 +95,7 @@ class alignas(64) Task {
     Execution::SuccessorExecutablePipeline pipeline{};
     TupleBuffer buf{};
     uint64_t id{std::numeric_limits<decltype(id)>::max()};
+    uint64_t inputTupleCount = 0;
 };
 static_assert(sizeof(Task) == 64);
 }// namespace NES::Runtime
