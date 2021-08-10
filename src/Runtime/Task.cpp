@@ -29,7 +29,7 @@ namespace NES::Runtime {
 Task::Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer buffer)
     : pipeline(std::move(pipeline)), buf(std::move(buffer)) {
     id = UtilityFunctions::getNextTaskId();
-    inputTupleCount = buffer.getNumberOfTuples();
+    inputTupleCount = buf.getNumberOfTuples();
 }
 
 ExecutionResult Task::operator()(WorkerContextRef workerContext) {
