@@ -879,7 +879,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);
 #endif
-        statistics->incProcessedTuple(task.getNumberOfTuples());
+        statistics->incProcessedTuple(task.getNumberOfInputTuples());
     } else {
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
