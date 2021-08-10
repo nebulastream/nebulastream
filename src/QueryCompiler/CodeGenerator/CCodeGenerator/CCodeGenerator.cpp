@@ -410,10 +410,10 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                 VarRef(code->varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
 
         } else {
-            auto recordHandler = context->getRecordHandler();
+            // Here we handle weaker optimizations.
 
-            // The following lines are moved here from generateCodeForScan:
-            auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");// duplicate
+            auto recordHandler = context->getRecordHandler();
+            auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
             auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
             code->varDeclarationResultBuffer = varDeclarationResultBuffer;
 
@@ -477,7 +477,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                 // Get current field from record handler.
                 auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
 
-                // use regular assing for types which are not arrays, as fixed char arrays support
+                // use regular assign for types which are not arrays, as fixed char arrays support
                 // assignment by operator.
                 auto const copyFieldStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)]
                                                     .accessRef(VarRef(resultRecordFieldVariableDeclaration))
@@ -489,12 +489,14 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             // increment number of tuples in buffer -> ++numberOfResultTuples;
             code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
 
-            // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
-            generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
+            // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
+            // We can optimize this away if the result schema is smaller than the input schema.
+            if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || bufferStrategy == OMIT_OVERFLOW_CHECK)) {
+                generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
+            }
         }
     } else if (sinkSchema->getLayoutType() == Schema::COL_LAYOUT) {
-        // The following lines are moved here from generateCodeForScan:
-        auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");// duplicate
+        auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
         auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
         code->varDeclarationResultBuffer = varDeclarationResultBuffer;
 
@@ -552,7 +554,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
     } else {
-        NES_ERROR("inputSchema->getLayoutType() is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        NES_ERROR("CCodeGenerator: inputSchema->getLayoutType() is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
     // Generate final logic to emit the last buffer to the Runtime
