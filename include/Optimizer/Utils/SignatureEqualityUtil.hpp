@@ -53,6 +53,8 @@ class SignatureEqualityUtil {
      */
     bool checkEquality(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
 
+    bool resetSolver();
+
   private:
     z3::ContextPtr context;
     z3::SolverPtr solver;
