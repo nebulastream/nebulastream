@@ -41,8 +41,6 @@ void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequence
     }
 }
 
-WatermarkTs WatermarkProcessor::getCurrentWatermark() const {
-    return currentWatermark;
-}
+WatermarkTs WatermarkProcessor::getCurrentWatermark() const { return currentWatermark; }
 
 }// namespace NES::Windowing
