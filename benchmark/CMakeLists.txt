@@ -72,7 +72,7 @@ if (NES_BUILD_BENCHMARKS)
     ### MemorySource Benchmark ###
     add_executable(memorysource-benchmark "src/Micro-Benchmarks/BenchmarkMemorySource.cpp")
     target_link_libraries(memorysource-benchmark nes ${GBENCHMARK_LIBRARIES})
-    add_test(NAME memorysource-benchmark COMMAND memorysource-benchmark --benchmark_out=memorysource-benchmark.log --benchmark_out_format=json)
+    add_test(NAME memorysource-benchmark COMMAND memorysource-benchmark --benchmark_out=memorysource-benchmark.log --benchmark_out_format=csv)
 
 #
 #    ### Benchmark Uniform Data Benchmark ###
