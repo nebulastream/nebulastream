@@ -21,8 +21,8 @@
 
 static constexpr auto RANGE_MIN = 16 * 1024;      // 16kb
 static constexpr auto RANGE_MAX = 8 * 1024 * 1024;// 8MB
-static constexpr auto ITERATIONS = 5;
-static constexpr auto REPETITIONS = 5;
+static constexpr auto ITERATIONS = 10;
+static constexpr auto REPETITIONS = 10;
 
 static void BM_MemorySource_default_memcpy(benchmark::State& state) {
     for (auto _ : state) {
