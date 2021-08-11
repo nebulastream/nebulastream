@@ -19,6 +19,12 @@
 #include <benchmark/benchmark.h>
 #include <random>
 
+static constexpr auto RANGE_MIN = 16 * 1024; // 16kb
+static constexpr auto RANGE_MAX = 8 * 1024 * 1024; // 8MB
+static constexpr auto ITERATIONS = 5;
+static constexpr auto REPETITIONS = 5;
+
+
 static void BM_MemorySource_default_memcpy(benchmark::State& state) {
     for (auto _ : state) {
         state.PauseTiming();
@@ -85,26 +91,26 @@ static void BM_MemorySource_rte_memcpy(benchmark::State& state) {
 BENCHMARK(BM_MemorySource_default_memcpy)
     //Number of Updates, Number of Keys
     ->RangeMultiplier(2)
-    ->Range(16 * 1024, 8 * 1024 * 1024)
-    ->Repetitions(1)
-    ->Iterations(1)
+    ->Range(RANGE_MIN, RANGE_MAX)
+    ->Repetitions(REPETITIONS)
+    ->Iterations(ITERATIONS)
     ->ReportAggregatesOnly(true)
     ->Unit(benchmark::kNanosecond);
 
 BENCHMARK(BM_MemorySource_apex_memcpy)
     //Number of Updates, Number of Keys
     ->RangeMultiplier(2)
-    ->Range(16 * 1024, 8 * 1024 * 1024)
-    ->Repetitions(1)
-    ->Iterations(1)
+    ->Range(RANGE_MIN, RANGE_MAX)
+    ->Repetitions(REPETITIONS)
+    ->Iterations(ITERATIONS)
     ->ReportAggregatesOnly(true)
     ->Unit(benchmark::kNanosecond);
 
 BENCHMARK(BM_MemorySource_rte_memcpy)
     //Number of Updates, Number of Keys
     ->RangeMultiplier(2)
-    ->Range(16 * 1024, 8 * 1024 * 1024)
-    ->Repetitions(1)
-    ->Iterations(1)
+    ->Range(RANGE_MIN, RANGE_MAX)
+    ->Repetitions(REPETITIONS)
+    ->Iterations(ITERATIONS)
     ->ReportAggregatesOnly(true)
     ->Unit(benchmark::kNanosecond);
