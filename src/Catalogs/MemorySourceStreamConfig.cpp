@@ -57,6 +57,8 @@ MemorySource::SourceMode MemorySourceStreamConfig::getSourceModeFromString(const
         return MemorySource::WRAP_BUFFER;
     } else if (mode == "copyBuffer") {
         return MemorySource::COPY_BUFFER;
+    } else if (mode == "copyBufferSimd") {
+        return MemorySource::COPY_BUFFER_SIMD;
     } else {
         NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
     }
