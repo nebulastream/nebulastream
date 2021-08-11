@@ -63,7 +63,7 @@ WorkerConfig::WorkerConfig() {
     queryCompilerOutputBufferOptimizationLevel =
         ConfigOption<std::string>::create("OutputBufferOptimizationLevel",
 //                                          "ALL",
-                                          "No",
+                                          "NO",
                                           "Indicates the OutputBufferAllocationStrategy "
                                           "[ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,"
                                           "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"
