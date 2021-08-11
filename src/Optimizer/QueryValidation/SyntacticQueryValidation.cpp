@@ -32,7 +32,7 @@ void SyntacticQueryValidation::checkValidity(const std::string& inputQuery) {
         // Compiling the query string to an object
         // If it's unsuccessful, the validity check fails
         QueryPtr query = queryParsingService->createQueryFromCodeString(inputQuery);
-     } catch (const std::exception& ex) {
+    } catch (const std::exception& ex) {
         handleException(ex);
     }
 }

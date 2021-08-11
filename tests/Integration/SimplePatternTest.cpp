@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <API/Pattern.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
@@ -26,7 +27,6 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <API/Pattern.hpp>
 
 //used tests: QueryCatalogTest, QueryTest
 namespace fs = std::filesystem;
@@ -647,8 +647,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     remove(outputFilePath.c_str());
 
     //register query
-    std::string query =
-        R"(Pattern::from("QnV").filter(Attribute("velocity") > 80).iter(3,10).sink(FileSinkDescriptor::create(")"
+    std::string query = R"(Pattern::from("QnV").filter(Attribute("velocity") > 80).iter(3,10).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
