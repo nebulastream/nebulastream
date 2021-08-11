@@ -54,7 +54,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
 
-    Status UpdateNetworkSinks(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) override;
+    Status UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) override;
 
   private:
     Runtime::NodeEnginePtr nodeEngine;

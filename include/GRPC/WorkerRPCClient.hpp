@@ -156,7 +156,7 @@ class WorkerRPCClient {
     */
     bool bufferData(std::string address,QuerySubPlanId querySubPlanId, uint64_t globalSinkId);
 
-    bool updateNetworkSink(const std::string& address,uint64_t newNodeId,const std::string& newHostname, uint32_t newPort,QuerySubPlanId querySubPlanId, OperatorId globalSinkId);
+    bool updateNetworkSink(const std::string& address,uint64_t newNodeId,const std::string& newHostname, uint32_t newPort,QuerySubPlanId querySubPlanId, uint64_t globalSinkId);
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return

@@ -141,26 +141,18 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
         return Status::CANCELLED;
     }
 }
-Status WorkerRPCServer::UpdateNetworkSinks(ServerContext*, const UpdateNetworkSinksRequest* request,
-                                           UpdateNetworkSinksReply* reply) {
-    uint32_t querySubPlanNumber = request->querysubplanids_size();
-    uint32_t networkSinkIdMessageNumber = request->networksinkids_size();
-    NES_ASSERT(querySubPlanNumber == networkSinkIdMessageNumber, "NodeEngine: UpdateNetworkSinks: Different amount of entries QSP and network Ids ");
-    std::map<QuerySubPlanId , std::vector<uint64_t>> queryToSinkIdsMap;
-    for(uint32_t i = 0; i<querySubPlanNumber; i++){
-        queryToSinkIdsMap.insert(std::pair<uint64_t, std::vector<uint64_t>> (request->querysubplanids(i), {}));
-        for(uint32_t j = 0; j<networkSinkIdMessageNumber; j++){
-            if(!(queryToSinkIdsMap.find(request->querysubplanids(i)) == queryToSinkIdsMap.end())){
-                queryToSinkIdsMap[request->querysubplanids(i)].push_back(request->networksinkids(i).networksinkid(j));
-            }
-        }
-    }
+Status WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request,
+                                           UpdateNetworkSinkReply* reply) {
 
+
+
+    uint64_t querySubPlanId = request->querysubplanid();
+    uint64_t networkSinkId = request->networksinkid();
     uint64_t newNodeId = request->newnodeid();
     std::string newHostname = request->newhostname();
     uint32_t newPort = request->newport();
 
-    bool success = nodeEngine->updateNetworkSinks(newNodeId,newHostname,newPort,queryToSinkIdsMap);
+    bool success = nodeEngine->updateNetworkSink(newNodeId,newHostname,newPort,querySubPlanId,networkSinkId);
     if (success) {
         NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: success");
         reply->set_success(true);

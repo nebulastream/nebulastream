@@ -385,7 +385,7 @@ bool WorkerRPCClient::bufferData(std::string address, QuerySubPlanId querySubPla
 }
 bool WorkerRPCClient::updateNetworkSink(const std::string& address,
                                          uint64_t newNodeId,const std::string& newHostname,
-                                         uint32_t newPort,QuerySubPlanId querySubPlanId, OperatorId globalSinkId)
+                                         uint32_t newPort,QuerySubPlanId querySubPlanId, uint64_t globalSinkId)
 {
     UpdateNetworkSinkRequest request;
     request.set_newnodeid(newNodeId);

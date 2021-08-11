@@ -460,30 +460,24 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t globalSinkId
     return true;
 }
 
-bool NodeEngine::updateNetworkSinks(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort,
-                                    const std::map<QuerySubPlanId, std::vector<uint64_t>>& queryToNetworkSinkIdsMap) {
+bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort,
+                                    QuerySubPlanId querySubPlanId, uint64_t globalSinkId) {
 
     //TODO: add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Recieved request to update Network Sinks");
     NodeEnginePtr self = this->inherited1::shared_from_this();
     NodeLocationPOD pod{newNodeId, newHostname, newPort};
     std::unique_lock lock(engineMutex);
-    for (auto& entry : queryToNetworkSinkIdsMap) {
-        NES_DEBUG(entry.first);
-        auto qep = deployedQEPs[entry.first];
-        auto networkSinks = qep->getSinks();
-
-        for(auto sinkId: entry.second){
-            auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[sinkId](const DataSinkPtr& dataSink){
-                                return dataSink->getOperatorId() == sinkId;
+    auto qep = deployedQEPs[querySubPlanId];
+    auto networkSinks = qep->getSinks();
+    auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[globalSinkId](const DataSinkPtr& dataSink){
+                                return dataSink->getOperatorId() == globalSinkId;
                             });
-            if(it != networkSinks.end()){
-                auto networkSink = *it;
-                ReconfigurationMessage message = ReconfigurationMessage(entry.first,UpdateSinks,networkSink, pod);
-                queryManager->addReconfigurationMessage(entry.first,message,true);
+    if(it != networkSinks.end()){
+        auto networkSink = *it;
+        ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,networkSink, pod);
+        queryManager->addReconfigurationMessage(querySubPlanId,message,true);
             }
-        }
-    }
     return true;
 }
 void NodeEngine::onRemoveQEP(Network::Messages::RemoveQEPMessage msg) {
