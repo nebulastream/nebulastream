@@ -17,9 +17,9 @@
 #ifndef NES_INCLUDE_WINDOWING_WATERMARK_WATERMARKPROCESSOR_HPP_
 #define NES_INCLUDE_WINDOWING_WATERMARK_WATERMARKPROCESSOR_HPP_
 
+#include <atomic>
 #include <mutex>
 #include <queue>
-#include <atomic>
 
 namespace NES {
 using WatermarkTs = uint64_t;
