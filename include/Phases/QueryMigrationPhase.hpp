@@ -60,6 +60,9 @@ typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
+class SourceLogicalOperatorNode;
+typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+
 class QueryMigrationPhase{
 
   public:
@@ -76,7 +79,7 @@ class QueryMigrationPhase{
      * @param migrateQueryRequest, contains QueryId, TopologyNode and withBuffer boolean
      * @return true if successful else false
      */
-    bool execute(MigrateQueryRequestPtr migrateQueryRequest);
+    bool execute(const MigrateQueryRequestPtr& migrateQueryRequest);
 
     /**
  * finds all child execution nodes of the execution node corresponding to the topology node and query
@@ -95,19 +98,33 @@ class QueryMigrationPhase{
     std::vector<TopologyNodePtr> findParentExecutionNodesAsTopologyNodes(QueryId queryId, TopologyNodeId topologyNodeId);
 
   private:
+    struct InformationForFindingSink{
+        TopologyNodeId sinkTopologyNode;
+        QuerySubPlanId querySubPlanOfNetworkSink;
+        uint64_t globalOperatorIdOfNetworkSink;
+    } __attribute__((aligned(32)));
 
-    bool executeMigrationWithBuffer(std::vector<QueryPlanPtr>& queryPlans, ExecutionNodePtr markedNode);
+    bool executeMigrationWithBuffer(std::vector<QueryPlanPtr>& queryPlans, const ExecutionNodePtr& markedNode);
 
-    bool executeMigrationWithoutBuffer(const std::vector<QueryPlanPtr>& queryPlans, ExecutionNodePtr markedNode);
+    bool executeMigrationWithoutBuffer(const std::vector<QueryPlanPtr>& queryPlans, const ExecutionNodePtr& markedNode);
 
     explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient, Optimizer::QueryPlacementPhasePtr queryPlacementPhase);
+
+    std::map<OperatorId,QueryMigrationPhase::InformationForFindingSink> getInfoForAllSinks(const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators, QueryId queryId);
+
+    bool sendBufferRequests(std::map<OperatorId,QueryMigrationPhase::InformationForFindingSink>& map);
+
+    bool sendReconfigurationRequests(std::map<OperatorId,QueryMigrationPhase::InformationForFindingSink>& map, uint64_t queryId, std::vector<ExecutionNodePtr>& exeNodes);
+
+    std::vector<ExecutionNodePtr> executePartialPlacement(QueryPlanPtr queryPlan);
+
 
 /**
     * @brief method send query to nodes
     * @param queryId
     * @return bool indicating success
     */
-    bool deployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
 
     TopologyNodePtr findNewNodeLocationOfNetworkSource(QueryId queryId, OperatorId sourceOperatorIds,std::vector<ExecutionNodePtr>& potentialLocations);
 
@@ -124,7 +141,7 @@ class QueryMigrationPhase{
      * @param queryId
      * @return bool indicating success
      */
-    bool startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
 
     WorkerRPCClientPtr  workerRPCClient;
     TopologyPtr topology;
