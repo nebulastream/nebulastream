@@ -319,5 +319,10 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr queryPlan,
         }
     }
 }
+std::unordered_set<ExecutionNodePtr> IFCOPStrategy::updateGlobalExecutionPlanPartial(QueryPlanPtr queryPlan) {
+    NES_DEBUG("IFCOPStrategy: Partial placement currently not implemented for IFCOP Strategy");
+    NES_DEBUG(queryPlan);
+    return std::unordered_set<ExecutionNodePtr>();
+}
 
 }// namespace NES::Optimizer
