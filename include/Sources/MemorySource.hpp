@@ -33,7 +33,7 @@ class MemorySegment;
  */
 class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
-    enum SourceMode { emptyBuffer, wrapBuffer, copyBuffer };
+    enum SourceMode { EMPTY_BUFFER, WRAP_BUFFER, COPY_BUFFER, COPY_BUFFER_SIMD };
 
     /**
      * @brief The constructor of a MemorySource

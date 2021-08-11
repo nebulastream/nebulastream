@@ -52,11 +52,11 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
 MemorySource::SourceMode MemorySourceStreamConfig::getSourceModeFromString(const std::string& mode) {
     UtilityFunctions::trim(mode);
     if (mode == "emptyBuffer") {
-        return MemorySource::emptyBuffer;
+        return MemorySource::EMPTY_BUFFER;
     } else if (mode == "wrapBuffer") {
-        return MemorySource::wrapBuffer;
+        return MemorySource::WRAP_BUFFER;
     } else if (mode == "copyBuffer") {
-        return MemorySource::copyBuffer;
+        return MemorySource::COPY_BUFFER;
     } else {
         NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
     }

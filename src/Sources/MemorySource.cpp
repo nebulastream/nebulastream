@@ -13,10 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef NES_BUILD_BENCHMARKS
 #include <Runtime/internal/apex_memmove.hpp>
 #include <Runtime/internal/rte_memory.h>
-#endif
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -98,24 +96,25 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
 
     Runtime::TupleBuffer buffer;
     switch (sourceMode) {
-        case emptyBuffer: {
+        case EMPTY_BUFFER: {
             buffer = bufferManager->getBufferBlocking();
             break;
         }
-        case copyBuffer: {
+        case COPY_BUFFER_SIMD: {
             buffer = bufferManager->getBufferBlocking();
-#ifdef NES_BUILD_BENCHMARKS
 #if 1
             apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
 #else
             rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
 #endif
-#else
-            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
-#endif
             break;
         }
-        case wrapBuffer: {
+        case COPY_BUFFER: {
+            buffer = bufferManager->getBufferBlocking();
+            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+            break;
+        }
+        case WRAP_BUFFER: {
             buffer = Runtime::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, bufferSize, this);
             break;
         }

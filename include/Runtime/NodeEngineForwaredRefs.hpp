@@ -18,6 +18,7 @@
 #define NES_INCLUDE_NODEENGINE_NODEENGINEFORWAREDREFS_HPP_
 #include <memory>
 #include <variant>
+#include <string>
 
 namespace NES {
 
