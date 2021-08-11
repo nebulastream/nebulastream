@@ -68,6 +68,12 @@ if (NES_BUILD_BENCHMARKS)
 #    add_executable(statemanager-benchmark "src/Micro-Benchmarks/StatemanagerBenchmark.cpp")
 #    target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
 #    add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
+
+    ### MemorySource Benchmark ###
+    add_executable(memorysource-benchmark "src/Micro-Benchmarks/BenchmarkMemorySource.cpp")
+    target_link_libraries(memorysource-benchmark nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME memorysource-benchmark COMMAND memorysource-benchmark --benchmark_out=memorysource-benchmark.log --benchmark_out_format=json)
+
 #
 #    ### Benchmark Uniform Data Benchmark ###
 #    add_executable(uniformdata-benchmark "src/Micro-Benchmarks/BenchmarkCreateUniformData.cpp")
