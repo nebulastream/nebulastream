@@ -49,6 +49,9 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
     NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
+        if (targetQueryPlan->getQueryId() % 50 == 0) {
+            signatureEqualityUtil->resetSolver();
+        }
         bool matched = false;
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
@@ -62,12 +65,12 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
             for (auto& targetSink : targetSinks) {
                 auto hostSinks = hostQueryPlan->getSinkOperators();
                 for (auto& hostSink : hostSinks) {
-                    //Check if the address and target sink operator signatures match each other
+                    //Check if the host and target sink operator signatures match each other
                     if (signatureEqualityUtil->checkEquality(hostSink->getZ3Signature(), targetSink->getZ3Signature())) {
                         targetToHostSinkOperatorMap[targetSink] = hostSink;
                         foundMatch = true;
-                        break;
                     }
+                    break;
                 }
                 if (!foundMatch) {
                     NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: There are no matching host sink for target sink "

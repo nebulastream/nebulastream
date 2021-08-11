@@ -42,7 +42,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
     }
 
     NES_DEBUG("SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
-    //Iterate over all shared query metadata to identify equal shared metadata
+    //Iterate over all query plans to identify the potential sharing opportunities
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
@@ -62,7 +62,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
                     }
                 }
                 if (!foundMatch) {
-                    NES_WARNING("SignatureBasedCompleteQueryMergerRule: There are matching host sink for target sink "
+                    NES_WARNING("SignatureBasedCompleteQueryMergerRule: There are no matching host sink for target sink "
                                 << targetSink->toString());
                     break;
                 }
@@ -108,7 +108,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
     }
     //Remove all empty shared query metadata
     globalQueryPlan->removeEmptySharedQueryPlans();
-    return true;
+    return globalQueryPlan->clearQueryPlansToAdd();
 }
 
 }// namespace NES::Optimizer

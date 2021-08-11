@@ -3,12 +3,14 @@
 #Location of query set
 # For each query set we will run the experiments
 querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
+#querySetLocation: '/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
 
 # Parameter that are changed per run with comma separated list
-queryMergerRule: DefaultQueryMergerRule,StringSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule,Z3SignatureBasedCompleteQueryMergerRule
-noOfPhysicalSources: 1,1,1,1
+queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule
+noOfPhysicalSources: 1,1,1,1,1
 
 #benchmark internal parameter
-logLevel: LOG_TRACE
+logLevel: LOG_NONE
+numberOfDistinctSources: 10
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 3

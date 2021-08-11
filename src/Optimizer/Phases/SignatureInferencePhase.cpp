@@ -34,7 +34,8 @@ SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr contex
 
 void SignatureInferencePhase::execute(const QueryPlanPtr& queryPlan) {
     if (queryMergerRule == QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule
-        || queryMergerRule == QueryMergerRule::StringSignatureBasedPartialQueryMergerRule) {
+        || queryMergerRule == QueryMergerRule::StringSignatureBasedPartialQueryMergerRule
+        || queryMergerRule == QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule) {
         NES_INFO("SignatureInferencePhase: computing String based signature for the query " << queryPlan->getQueryId());
         auto sinkOperators = queryPlan->getRootOperators();
         for (auto& sinkOperator : sinkOperators) {

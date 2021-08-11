@@ -24,9 +24,11 @@
 #include <Util/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <string>
+
 namespace NES::Compiler {
 
 const std::string NESIncludePath = PATH_TO_NES_SOURCE_CODE "/include/";
@@ -102,7 +104,6 @@ std::string CPPCompiler::getLanguage() const { return "cpp"; }
 
 CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
     Timer timer("CPPCompiler");
-
     timer.start();
     std::string fileName = (std::filesystem::temp_directory_path() / request->getName());
     auto sourceFileName = fileName + ".cpp";
@@ -184,7 +185,8 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         std::filesystem::remove(sourceFileName);
     }
     NES_INFO("CPPCompiler Runtime: " << (double) timer.getRuntime() / (double) 1000000 << "ms");// print runtime
-
+    std::filesystem::remove(sourceFileName);
+    std::filesystem::remove(libraryFileName);
     return CompilationResult(sharedLibrary, std::move(timer));
 }
 

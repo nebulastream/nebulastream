@@ -38,6 +38,7 @@ using std::filesystem::directory_iterator;
 uint64_t sourceCnt;
 std::vector<uint64_t> noOfPhysicalSources;
 uint64_t noOfMeasurementsToCollect;
+uint64_t numberOfDistinctSources;
 uint64_t startupSleepIntervalInSeconds;
 std::vector<std::string> queryMergerRules;
 std::vector<bool> enableQueryMerging;
@@ -45,7 +46,7 @@ std::string querySetLocation;
 std::chrono::nanoseconds Runtime;
 NES::NesCoordinatorPtr coordinator;
 
-void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource, uint64_t noOfDistinctSources = 1) {
+void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource) {
     NES::StreamCatalogPtr streamCatalog = nesCoordinator->getStreamCatalog();
     //register logical stream qnv
     NES::SchemaPtr schema = NES::Schema::create()
@@ -54,12 +55,15 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource,
                                 ->addField("X", NES::UINT64)
                                 ->addField("Y", NES::UINT64);
 
-    for (uint64_t j = 0; j < noOfDistinctSources; j++) {
-        streamCatalog->addLogicalStream("example", schema);
+    for (uint64_t j = 0; j < numberOfDistinctSources; j++) {
+        streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema);
         for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
             auto topoNode = TopologyNode::create(i, "", i, i, 2);
-            auto streamCat = StreamCatalogEntry::create("CSV", "example", "benchmark" + std::to_string(i), topoNode);
-            streamCatalog->addPhysicalStream("example", streamCat);
+            auto streamCat = StreamCatalogEntry::create("CSV",
+                                                        "example" + std::to_string(j + 1) + std::to_string(i),
+                                                        "example" + std::to_string(j + 1),
+                                                        topoNode);
+            streamCatalog->addPhysicalStream("example" + std::to_string(j + 1), streamCat);
         }
     }
 }
@@ -83,6 +87,7 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
             noOfMeasurementsToCollect = config["numberOfMeasurementsToCollect"].As<uint64_t>();
             querySetLocation = config["querySetLocation"].As<std::string>();
             startupSleepIntervalInSeconds = config["startupSleepIntervalInSeconds"].As<uint64_t>();
+            numberOfDistinctSources = config["numberOfDistinctSources"].As<uint64_t>();
 
             auto configuredQueryMergerRules = config["queryMergerRule"].As<std::string>();
             {
@@ -148,6 +153,8 @@ int main(int argc, const char* argv[]) {
     if (configPath != commandLineParams.end()) {
         loadConfigFromYAMLFile(configPath->second.c_str());
     } else {
+        //        loadConfigFromYAMLFile(
+        //            "/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
         loadConfigFromYAMLFile(
             "/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
     }
@@ -155,7 +162,7 @@ int main(int argc, const char* argv[]) {
     for (const auto& file : directory_iterator(querySetLocation)) {
 
         std::ifstream infile(file.path());
-        NES_ERROR(file.path().filename());
+        NES_INFO(file.path().filename());
         std::vector<std::string> queries;
         std::string line;
 
@@ -167,12 +174,11 @@ int main(int argc, const char* argv[]) {
         uint64_t noOfQueries = queries.size();
         QueryPtr queryObjects[noOfQueries];
 
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        auto queryParsingService = QueryParsingService::create(jitCompiler);
-
 #pragma omp parallel for
         for (uint64_t i = 0; i < queries.size(); i++) {
+            auto cppCompiler = Compiler::CPPCompiler::create();
+            auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+            auto queryParsingService = QueryParsingService::create(jitCompiler);
             auto queryObj = queryParsingService->createQueryFromCodeString(queries[i]);
             queryObjects[i] = queryObj;
         }
@@ -203,8 +209,7 @@ int main(int argc, const char* argv[]) {
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                benchmarkOutput << endTime << "," << file.path().filename() << ","
-                                << (enableQueryMerging[configNum] ? queryMergerRules[configNum] : "NoMerging") << ","
+                benchmarkOutput << endTime << "," << file.path().filename() << "," << queryMergerRules[configNum] << ","
                                 << noOfPhysicalSources[configNum] << "," << noOfQueries << ","
                                 << globalQueryPlan->getAllSharedQueryPlans().size() << "," << NES_VERSION << "," << expRun << ","
                                 << startTime << "," << endTime << "," << endTime - startTime << std::endl;

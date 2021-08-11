@@ -258,7 +258,9 @@ QueryPlanPtr QueryPlan::copy() {
         duplicateRootOperators.push_back(operatorIdToOperatorMap[rootOperator->getId()]);
     }
     operatorIdToOperatorMap.clear();
-    return QueryPlan::create(queryId, INVALID_QUERY_ID, duplicateRootOperators);
+    auto newQueryPlan = QueryPlan::create(queryId, INVALID_QUERY_ID, duplicateRootOperators);
+    newQueryPlan->setSourceConsumed(sourceConsumed);
+    return newQueryPlan;
 }
 
 const std::string& QueryPlan::getSourceConsumed() const { return sourceConsumed; }
