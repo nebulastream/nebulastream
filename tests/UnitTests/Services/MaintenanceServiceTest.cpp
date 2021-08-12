@@ -19,11 +19,14 @@
 
 #include <Catalogs/QueryCatalog.hpp>
 #include <Services/MaintenanceService.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
 
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -47,23 +50,24 @@
 namespace NES{
 class MaintenanceServiceTest : public ::testing::Test {
   public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
+    TopologyPtr topology;
+    std::shared_ptr<StreamCatalog> streamCatalog;
 
-    /* Will be called before a test is executed. */
-    void SetUp() {
-        NES::setupLogging("QueryPlacementTest.log", NES::LOG_DEBUG);
-        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-        std::cout << "Setup QueryPlacementTest test case." << std::endl;
-    }
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+      NES::setupLogging("StreamCatalogTest.log", NES::LOG_DEBUG);
+      NES_INFO("Setup StreamCatalogTest test class.");
+  }
 
-    /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Setup QueryPlacementTest test case." << std::endl; }
+  /* Will be called before a test is executed. */
+  void TearDown() override { NES_INFO("Tear down StreamCatalogTest test case."); }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down QueryPlacementTest test class." << std::endl; }
+  void setupTopologyAndStreamCatalog() {
 
-    void setupTopologyAndStreamCatalog() {
+      auto cppCompiler = Compiler::CPPCompiler::create();
+      auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+      auto queryParsingService = QueryParsingService::create(jitCompiler);
+      streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
 
         topology = Topology::create();
 
@@ -83,7 +87,6 @@ class MaintenanceServiceTest : public ::testing::Test {
                              "->addField(\"value\", BasicType::UINT64);";
         const std::string streamName = "car";
 
-        streamCatalog = std::make_shared<StreamCatalog>();
         streamCatalog->addLogicalStream(streamName, schema);
 
         SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -100,8 +103,7 @@ class MaintenanceServiceTest : public ::testing::Test {
 
     }
 
-    StreamCatalogPtr streamCatalog;
-    TopologyPtr topology;
+
 };
 
 TEST_F(MaintenanceServiceTest, DISABLED_findPathBetweenIgnoresNodesMakredForMaintenanceTest) {
