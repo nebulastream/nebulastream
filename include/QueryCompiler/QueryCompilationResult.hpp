@@ -18,6 +18,7 @@
 
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Util/Timer.hpp>
 #include <optional>
 
 namespace NES {
@@ -30,7 +31,7 @@ namespace QueryCompilation {
  */
 class QueryCompilationResult {
   public:
-    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep);
+    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep, std::shared_ptr<Timer<>> timer);
     static QueryCompilationResultPtr create(std::exception_ptr exception);
     /**
      * @brief Returns the query execution plan if hasError() == false.
@@ -52,10 +53,12 @@ class QueryCompilationResult {
     std::exception_ptr getError();
 
   private:
-    explicit QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan);
+    explicit QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan,
+                                    std::shared_ptr<Timer<>> timer);
     explicit QueryCompilationResult(std::exception_ptr exception);
     std::optional<Runtime::Execution::ExecutableQueryPlanPtr> executableQueryPlan;
     std::optional<std::exception_ptr> exception;
+    std::shared_ptr<Timer<>> timer;
 };
 }// namespace QueryCompilation
 }// namespace NES

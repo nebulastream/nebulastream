@@ -17,7 +17,7 @@
 #define NES_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_
 
 #include <Compiler/CompilerForwardDeclarations.hpp>
-#include <chrono>
+#include <Util/Timer.hpp>
 
 namespace NES::Compiler {
 
@@ -32,7 +32,7 @@ class CompilationResult {
      * @param dynamicObject The dynamic object created by the @LanguageCompiler
      * @param compileTime the time it take to handle the @CompilationRequest
      */
-    CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, uint64_t compileTime);
+    CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, std::shared_ptr<Timer<>> timer);
     /**
      * @brief Returns the dynamic object created by the Compiler
      * @return std::shared_ptr<DynamicObject>
@@ -47,7 +47,7 @@ class CompilationResult {
 
   private:
     const std::shared_ptr<DynamicObject> dynamicObject;
-    const uint64_t compileTime;
+    const std::shared_ptr<Timer<>> timer;
 };
 
 }// namespace NES::Compiler

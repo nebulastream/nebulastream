@@ -43,7 +43,7 @@ class Timer {
         std::vector<Snapshot> children;
     };
 
-    Timer(std::string componentName) : componentName(componentName){};
+    static std::shared_ptr<Timer> create(std::string componentName) { return std::make_shared(Timer(componentName)); };
 
     /**
      * @brief starts the timer or resumes it after a pause
@@ -159,6 +159,8 @@ class Timer {
     }
 
   private:
+    explicit Timer(std::string componentName) : componentName(componentName){};
+
     /**
      * @brief component name to measure
      */
