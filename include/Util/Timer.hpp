@@ -90,9 +90,7 @@ class Timer {
             auto duration = std::chrono::duration_cast<TimeUnit>(stop_p - start_p);
 
             runtime += duration;
-            snapshots.emplace_back(Snapshot(componentName + '_' + snapshotName,
-                                           duration,
-                                           std::vector<Snapshot>()));
+            snapshots.emplace_back(Snapshot(componentName + '_' + snapshotName, duration, std::vector<Snapshot>()));
 
             start_p = ClockType::now();
         }
@@ -109,16 +107,14 @@ class Timer {
             NES_DEBUG("Timer: Trying to merge while timer is running so will skip this operation");
         } else {
             this->runtime += timer.runtime;
-            snapshots.emplace_back(Snapshot(componentName + '_' + timer.getComponentName(),
-                                               timer.runtime,
-                                               timer.getSnapshots()));
+            snapshots.emplace_back(Snapshot(componentName + '_' + timer.getComponentName(), timer.runtime, timer.getSnapshots()));
         }
     };
 
     /**
      * @brief retruns the currently saved snapshots
      */
-    std::vector<Snapshot> &getSnapshots() { return snapshots; };
+    std::vector<Snapshot>& getSnapshots() { return snapshots; };
 
     /**
      * @brief returns the current runtime
