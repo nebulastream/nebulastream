@@ -14,17 +14,20 @@
     limitations under the License.
 */
 #include <QueryCompiler/QueryCompilationResult.hpp>
+#include <Util/Timer.hpp>
 #include <exception>
 #include <utility>
 
 namespace NES::QueryCompilation {
 
-QueryCompilationResult::QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan)
-    : executableQueryPlan(executableQueryPlan) {}
+QueryCompilationResult::QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan,
+                                               std::shared_ptr<Timer<>> timer)
+    : executableQueryPlan(executableQueryPlan), timer(timer) {}
 QueryCompilationResult::QueryCompilationResult(std::exception_ptr exception) : exception(exception) {}
 
-QueryCompilationResultPtr QueryCompilationResult::create(Runtime::Execution::ExecutableQueryPlanPtr qep) {
-    return std::make_shared<QueryCompilationResult>(QueryCompilationResult(std::move(qep)));
+QueryCompilationResultPtr QueryCompilationResult::create(Runtime::Execution::ExecutableQueryPlanPtr qep,
+                                                         std::shared_ptr<Timer<>> timer) {
+    return std::make_shared<QueryCompilationResult>(QueryCompilationResult(std::move(qep), std::move(timer)));
 }
 QueryCompilationResultPtr QueryCompilationResult::create(std::exception_ptr exception) {
     return std::make_shared<QueryCompilationResult>(QueryCompilationResult(std::move(exception)));

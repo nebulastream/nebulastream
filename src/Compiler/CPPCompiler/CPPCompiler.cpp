@@ -22,6 +22,7 @@
 #include <Compiler/Util/File.hpp>
 #include <Compiler/Util/SharedLibrary.hpp>
 #include <Util/Logger.hpp>
+#include <Util/Timer.hpp>
 #include <chrono>
 #include <iostream>
 #include <sstream>
@@ -100,7 +101,8 @@ CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
 std::string CPPCompiler::getLanguage() const { return "cpp"; }
 
 CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
-    auto start = std::chrono::steady_clock::now();
+    auto timer = Timer.create("CPPCompiler");
+    timer.start();
     auto sourceFileName = request->getName() + ".cpp";
     auto libraryFileName = request->getName() +
 #ifdef __linux__
@@ -166,10 +168,8 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compileSharedLib(compilationFlags, file, libraryFileName);
     // load shared lib
     auto sharedLibrary = SharedLibrary::load(libraryFileName);
-    auto end = std::chrono::steady_clock::now();
-    // TODO replace by timer util with issue #2062
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    return CompilationResult(sharedLibrary, duration);
+    timer.stop();
+    return CompilationResult(sharedLibrary, timer);
 }
 
 void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File> sourceFile, std::string libraryFileName) const {
