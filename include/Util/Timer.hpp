@@ -136,7 +136,7 @@ class Timer {
     /**
     * @brief returns the component name to measure
     */
-    std::string getComponentName() const { return componentName; };
+    const std::string& getComponentName() const { return componentName; };
 
     /**
      * @brief overwrites insert string operator
@@ -151,11 +151,11 @@ class Timer {
 
     /**
      * @brief helper function for insert string operator
+     * recursively goes through the (probability) nested snapshots and prints them
      */
-    std::string printHelper(std::string str, Snapshot s) {
+    static std::string printHelper(std::string str, Snapshot s) {
         std::ostringstream ostr;
-        ostr << str;
-        ostr << s.name + ": " << s.getRuntime() << '\n';
+        ostr << str << s.name + ": " << s.getRuntime() << '\n';
         for (auto& c : s.children) {
             ostr << printHelper(str, c);
         }
