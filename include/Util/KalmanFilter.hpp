@@ -36,8 +36,9 @@ class KalmanFilter {
                 const Eigen::MatrixXd& A); // update using new timestep and dynamics
 
     double getCurrentStep() { return currentTime; }
-    Eigen::VectorXd getState() { return x_hat; }
+    Eigen::VectorXd getState() { return xHat; }
     Eigen::MatrixXd getError() { return P; }
+    Eigen::MatrixXd getInnovationError() { return innovationError; }
 
   private:
     int m, n; // system model dimensions
@@ -57,7 +58,8 @@ class KalmanFilter {
     Eigen::MatrixXd I; // identity matrix, on size n
 
     // estimated state, estimated state +1
-    Eigen::VectorXd x_hat, x_hat_new;
+    Eigen::VectorXd xHat, xHatNew;
+    Eigen::VectorXd innovationError; // eq. 3
 
     double timeStep;
     double initialTimestamp;
