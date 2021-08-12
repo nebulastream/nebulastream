@@ -169,6 +169,8 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     // load shared lib
     auto sharedLibrary = SharedLibrary::load(libraryFileName);
     timer->pause();
+    NES_INFO("CPPCompiler Runtime: " << timer->getRuntime() << "ns");// print runtime
+
     return CompilationResult(sharedLibrary, *timer);
 }
 
