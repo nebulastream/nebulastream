@@ -100,13 +100,14 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
             buffer = bufferManager->getBufferBlocking();
             break;
         }
-        case COPY_BUFFER_SIMD: {
+        case COPY_BUFFER_SIMD_RTE: {
             buffer = bufferManager->getBufferBlocking();
-#if 1
-            apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
-#else
             rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
-#endif
+            break;
+        }
+        case COPY_BUFFER_SIMD_APEX: {
+            buffer = bufferManager->getBufferBlocking();
+            apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
             break;
         }
         case COPY_BUFFER: {
