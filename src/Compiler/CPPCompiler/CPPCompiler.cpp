@@ -101,8 +101,8 @@ CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
 std::string CPPCompiler::getLanguage() const { return "cpp"; }
 
 CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
-    auto timer = Timer.create("CPPCompiler");
-    timer.start();
+    auto timer = new Timer("CPPCompiler");
+    timer->start();
     auto sourceFileName = request->getName() + ".cpp";
     auto libraryFileName = request->getName() +
 #ifdef __linux__
@@ -168,8 +168,8 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compileSharedLib(compilationFlags, file, libraryFileName);
     // load shared lib
     auto sharedLibrary = SharedLibrary::load(libraryFileName);
-    timer.stop();
-    return CompilationResult(sharedLibrary, timer);
+    timer->pause();
+    return CompilationResult(sharedLibrary, *timer);
 }
 
 void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File> sourceFile, std::string libraryFileName) const {
