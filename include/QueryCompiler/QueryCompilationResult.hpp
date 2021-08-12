@@ -31,7 +31,7 @@ namespace QueryCompilation {
  */
 class QueryCompilationResult {
   public:
-    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep, std::shared_ptr<Timer<>> timer);
+    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<>& timer);
     static QueryCompilationResultPtr create(std::exception_ptr exception);
     /**
      * @brief Returns the query execution plan if hasError() == false.
@@ -39,6 +39,12 @@ class QueryCompilationResult {
      * @return NewExecutableQueryPlanPtr
      */
     Runtime::Execution::ExecutableQueryPlanPtr getExecutableQueryPlan();
+
+    /**
+    * @brief Returns the compilation time
+    * @return compilation time
+    */
+    [[nodiscard]] uint64_t getCompilationTime() const;
 
     /**
      * @brief Indicates if the query compilation succeeded.
@@ -53,12 +59,11 @@ class QueryCompilationResult {
     std::exception_ptr getError();
 
   private:
-    explicit QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan,
-                                    std::shared_ptr<Timer<>> timer);
+    explicit QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan, Timer<> timer);
     explicit QueryCompilationResult(std::exception_ptr exception);
     std::optional<Runtime::Execution::ExecutableQueryPlanPtr> executableQueryPlan;
     std::optional<std::exception_ptr> exception;
-    std::shared_ptr<Timer<>> timer;
+    std::optional<Timer<>> timer;
 };
 }// namespace QueryCompilation
 }// namespace NES
