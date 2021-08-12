@@ -20,6 +20,7 @@
 
 namespace NES {
 
+// TODO: change/parameterize the size of the kf-window to other than 20
 AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager,
                                    Runtime::QueryManagerPtr queryManager, const uint64_t numberOfTuplesToProducePerBuffer,
                                    uint64_t numBuffersToProcess, uint64_t initialFrequency,
@@ -29,7 +30,7 @@ AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr b
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), freqRange(2),
       frequency(initialFrequency), freqLastReceived(initialFrequency), kfErrorWindow(20) {
     this->numBuffersToProcess = numBuffersToProcess;
-    calculateTotalEstimationErrorDivider(20);
+    calculateTotalEstimationErrorDivider(20); // calculate once at init
 }
 
 std::string AdaptiveKFSource::toString() const { return std::string(); }
@@ -53,6 +54,10 @@ void AdaptiveKFSource::decideNewGatheringInterval() {
 
 bool AdaptiveKFSource::desiredFreqInRange() {
     return freqDesired >= (freqLastReceived - (freqRange / 2)) && freqDesired <= (freqLastReceived + (freqRange / 2));
+}
+
+long AdaptiveKFSource::calculateCurrentEstimationError() {
+    return 0;
 }
 
 long AdaptiveKFSource::calculateTotalEstimationError() {

@@ -53,8 +53,9 @@ class AdaptiveKFSource : public AdaptiveSource {
 
     // paper equations as methods
     bool desiredFreqInRange();                          // eq. 7
+    long calculateCurrentEstimationError();// eq. 8 (after insertion to kf)
     long calculateTotalEstimationError();               // eq. 9
-    void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider)
+    void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calculated at init)
 
     uint64_t numberOfTuplesToProducePerBuffer;
 
