@@ -31,8 +31,8 @@ namespace NES {
 
 StreamCatalogService::StreamCatalogService(StreamCatalogPtr streamCatalog)
     : streamCatalog(std::move(streamCatalog)) {
-    NES_DEBUG("StreamCatalogeService()");
-    NES_ASSERT(streamCatalog, "streamCatalogPtr has to be valid");
+    NES_DEBUG("StreamCatalogService()");
+    NES_ASSERT(this->streamCatalog, "streamCatalogPtr has to be valid");
 }
 
 bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr physicalNode,
