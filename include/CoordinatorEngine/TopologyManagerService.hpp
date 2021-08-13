@@ -32,24 +32,29 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class NodeStats;
 using NodeStatsPtr = std::shared_ptr<NodeStats>;
 
+/**
+ * @brief: This class is responsible for registering/unregistering nodes and adding and removing parentNodes.
+ */
 class TopologyManagerService {
 
   public:
-    TopologyManagerService(TopologyPtr topology);
-    ~TopologyManagerService();
+    TopologyManagerService(TopologyPtr topology, StreamCatalogPtr streamCatalog);
 
     /**
-    * @brief registers a node
-    * @param address of node ip:port
-    * @param cpu the cpu capacity of the worker
-    * @param nodeProperties of the to be added sensor
-    * @return id of node
-    */
-    TopologyNodePtr registerNode(const std::string& address,
+     * @brief registers a node
+     * @param address of node ip:port
+     * @param cpu the cpu capacity of the worker
+     * @param nodeProperties of the to be added sensor
+     * @param node type
+     * @return id of node
+     */
+    uint64_t registerNode(const std::string& address,
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
-                          const NodeStatsPtr& nodeStats);
+                          const NodeStatsPtr& nodeStats,
+                          NodeType type);
+
     /**
     * @brief unregister an existing node
     * @param nodeId
@@ -75,6 +80,7 @@ class TopologyManagerService {
 
   private:
     TopologyPtr topology;
+    StreamCatalogPtr streamCatalog;
     std::mutex registerDeregisterNode;
 };
 }//namespace NES

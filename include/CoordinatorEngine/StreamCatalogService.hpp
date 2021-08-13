@@ -34,31 +34,13 @@ class NodeStats;
 using NodeStatsPtr = std::shared_ptr<NodeStats>;
 class TopologyManagerService;
 
+/**
+ * @brief: This class is responsible for registering/unregistering physical and logical streams.
+ */
 class StreamCatalogService {
 
   public:
     StreamCatalogService(StreamCatalogPtr streamCatalog);
-    ~StreamCatalogService();
-    /**
-     * @brief registers a node in the StreamCatalog
-     * @param address of node ip:port
-     * @param cpu the cpu capacity of the worker
-     * @param nodeProperties of the to be added sensor
-     * @param node type
-     * @return id of node
-     */
-    TopologyNodePtr registerNode(const std::string& address,
-                          int64_t grpcPort,
-                          int64_t dataPort,
-                          uint16_t numberOfSlots,
-                          const NodeStatsPtr& nodeStats);
-
-    /**
-     * @brief unregister an existing node
-     * @param nodeId
-     * @return bool indicating success
-     */
-    bool unregisterNode(uint64_t nodeId);
 
     /**
      * @brief method to register a physical stream
@@ -106,7 +88,6 @@ class StreamCatalogService {
 
   private:
     StreamCatalogPtr streamCatalog;
-    std::mutex registerDeregisterNode;
     std::mutex addRemoveLogicalStream;
     std::mutex addRemovePhysicalStream;
 };
