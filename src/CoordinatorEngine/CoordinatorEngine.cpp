@@ -31,7 +31,7 @@
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology)
-    : streamCatalogService(streamCatalog), topologyManagerService(topology), streamCatalog(std::move(streamCatalog)), topology(std::move(topology)) {
+    : streamCatalogService(streamCatalog), topologyManagerService(topology, streamCatalog), streamCatalog(std::move(streamCatalog)), topology(std::move(topology)) {
     NES_DEBUG("CoordinatorEngine()");
 }
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
@@ -42,69 +42,11 @@ uint64_t CoordinatorEngine::registerNode(const std::string& address,
                                          uint16_t numberOfSlots,
                                          const NodeStatsPtr& nodeStats,
                                          NodeType type) {
-    NES_TRACE("CoordinatorEngine: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
-                                                          << " nodeProperties=" << nodeStats->DebugString() << " type=" << type);
-    std::unique_lock<std::mutex> lock(registerDeregisterNode);
-
-    NES_DEBUG("CoordinatorEngine::registerNode: topology before insert");
-    topology->print();
-
-    if (topology->nodeExistsWithIpAndPort(address, grpcPort)) {
-        NES_ERROR("CoordinatorEngine::registerNode: node with address " << address << " and grpc port " << grpcPort
-                                                                        << " already exists");
-        return false;
-    }
-
-    TopologyNodePtr physicalNode;
-    if (type == NodeType::Sensor) {
-        physicalNode = streamCatalogService.registerNode(address, grpcPort, dataPort, numberOfSlots, nodeStats);
-    } else if (type == NodeType::Worker) {
-        physicalNode = topologyManagerService.registerNode(address, grpcPort, dataPort, numberOfSlots, nodeStats);
-    } else {
-        NES_THROW_RUNTIME_ERROR("CoordinatorEngine::registerNode type not supported ");
-    }
-    //TODO: this has to be refactored #1971
-    //    if (nodeStats->IsInitialized()) {
-    //        physicalNode->setNodeStats(std::make_shared<NodeStats>());
-    //    }
-
-    uint64_t id = physicalNode->getId();
-    const TopologyNodePtr rootNode = topology->getRoot();
-
-    if (!rootNode) {
-        NES_DEBUG("CoordinatorEngine::registerNode: tree is empty so this becomes new root");
-        topology->setAsRoot(physicalNode);
-    } else {
-        NES_DEBUG("CoordinatorEngine::registerNode: add link to the root node " << rootNode->toString());
-        topology->addNewPhysicalNodeAsChild(rootNode, physicalNode);
-    }
-
-    NES_DEBUG("CoordinatorEngine::registerNode: topology after insert = ");
-    topology->print();
-    return id;
+    return topologyManagerService.registerNode(address, grpcPort, dataPort, numberOfSlots, nodeStats, type);
 }
 
 bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
-    NES_DEBUG("CoordinatorEngine::UnregisterNode: try to disconnect sensor with id " << nodeId);
-    std::unique_lock<std::mutex> lock(registerDeregisterNode);
-
-    TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
-
-    if (!physicalNode) {
-        NES_ERROR("CoordinatorActor: node with id not found " << nodeId);
-        return false;
-    }
-    NES_DEBUG("CoordinatorEngine::UnregisterNode: found sensor, try to delete it in catalog");
-    //remove from catalog
-    bool successCatalog = streamCatalogService.unregisterNode(nodeId);
-    NES_DEBUG("CoordinatorEngine::UnregisterNode: success in catalog is " << successCatalog);
-
-    NES_DEBUG("CoordinatorEngine::UnregisterNode: found sensor, try to delete it in toplogy");
-    //remove from topology
-    bool successTopology = topologyManagerService.unregisterNode(nodeId);
-    NES_DEBUG("CoordinatorEngine::UnregisterNode: success in topology is " << successTopology);
-
-    return successCatalog && successTopology;
+    return topologyManagerService.unregisterNode(nodeId);
 }
 
 bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,

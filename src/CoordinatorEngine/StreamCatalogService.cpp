@@ -31,74 +31,8 @@ namespace NES {
 
 StreamCatalogService::StreamCatalogService(StreamCatalogPtr streamCatalog)
     : streamCatalog(std::move(streamCatalog)) {
-    NES_DEBUG("CoordinatorEngine()");
-}
-StreamCatalogService::~StreamCatalogService() { NES_DEBUG("~CoordinatorEngine()"); };
-
-
-TopologyNodePtr StreamCatalogService::registerNode(const std::string& address,
-                                         int64_t grpcPort,
-                                         int64_t dataPort,
-                                         uint16_t numberOfSlots,
-                                         const NodeStatsPtr& nodeStats) {
-    NES_TRACE("StreamCatalogService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
-                                                          << " nodeProperties=" << nodeStats->DebugString());
-    std::unique_lock<std::mutex> lock(registerDeregisterNode);
-
-    //get unique id for the new node
-    uint64_t id = UtilityFunctions::getNextTopologyNodeId();
-
-    TopologyNodePtr physicalNode;
-
-    NES_DEBUG("StreamCatalogService::registerNode: register sensor node");
-    physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
-
-    if (!physicalNode) {
-        NES_ERROR("StreamCatalogService::RegisterNode : node not created");
-        return nullptr;
-    }
-
-    //add default logical
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    //check if logical stream exists
-    if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf->getLogicalStreamName())) {
-        NES_ERROR("StreamCatalogService::registerNode: error logical stream" << streamConf->getLogicalStreamName()
-                                                                          << " does not exist when adding physical stream "
-                                                                          << streamConf->getPhysicalStreamName());
-        throw Exception("StreamCatalogService::registerNode logical stream does not exist "
-                            + streamConf->getLogicalStreamName());
-    }
-
-    std::string sourceType = streamConf->getSourceType();
-    if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
-        NES_ERROR("StreamCatalogService::registerNode: error source type " << sourceType << " is not supported");
-        throw Exception("StreamCatalogService::registerNode: error source type " + sourceType + " is not supported");
-    }
-
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-
-    bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
-    if (!success) {
-        NES_ERROR("StreamCatalogService::registerNode: physical stream " << streamConf->getPhysicalStreamName()
-                                                                      << " could not be added to catalog");
-        throw Exception("StreamCatalogService::registerNode: physical stream " + streamConf->getPhysicalStreamName()
-                            + " could not be added to catalog");
-    }
-
-    return physicalNode;
-}
-
-
-bool StreamCatalogService::unregisterNode(uint64_t nodeId) {
-    NES_DEBUG("StreamCatalogService::UnregisterNode: try to disconnect sensor with id " << nodeId);
-    std::unique_lock<std::mutex> lock(registerDeregisterNode);
-
-    NES_DEBUG("StreamCatalogService::UnregisterNode: found sensor, try to delete it in catalog");
-    //remove from catalog
-    bool successCatalog = streamCatalog->removePhysicalStreamByHashId(nodeId);
-    NES_DEBUG("StreamCatalogService::UnregisterNode: success in catalog is " << successCatalog);
-
-    return successCatalog;
+    NES_DEBUG("StreamCatalogeService()");
+    NES_ASSERT(streamCatalog, "streamCatalogPtr has to be valid");
 }
 
 bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr physicalNode,
@@ -117,6 +51,10 @@ bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr physicalNode,
     StreamCatalogEntryPtr sce =
         std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
     bool success = streamCatalog->addPhysicalStream(logicalStreamName, sce);
+    if (!success) {
+        NES_DEBUG("StreamCatalogService::RegisterPhysicalStream: adding physical stream was not successful.");
+        return false;
+    }
     return success;
 }
 
@@ -131,9 +69,13 @@ bool StreamCatalogService::unregisterPhysicalStream(TopologyNodePtr physicalNode
         NES_DEBUG("StreamCatalogService::UnregisterPhysicalStream: sensor not found with workerId" << physicalNode->getId());
         return false;
     }
-    NES_DEBUG("CoordinatorEngine: node=" << physicalNode->toString());
+    NES_DEBUG("StreamCatalogService: node=" << physicalNode->toString());
 
     bool success = streamCatalog->removePhysicalStream(logicalStreamName, physicalStreamName, physicalNode->getId());
+    if (!success) {
+        NES_DEBUG("StreamCatalogService::RegisterPhysicalStream: removing physical stream was not successful.");
+        return false;
+    }
     return success;
 }
 
