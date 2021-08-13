@@ -22,6 +22,11 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -51,6 +56,18 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
         operatorType = "MERGE";
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         operatorType = "WINDOW";
+    } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
+        operatorType = "JOIN";
+    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+        operatorType = "PROJECTION";
+    } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+        operatorType = "UNION";
+    } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
+        operatorType = "BROADCAST";
+    } else if (operatorNode->instanceOf<RenameStreamOperatorNode>()) {
+        operatorType = "RENAME";
+    } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+        operatorType = "WATERMARK";
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         if (operatorNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
             operatorType = "SINK_SYS";
