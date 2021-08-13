@@ -30,8 +30,8 @@
 
 namespace NES {
 
-CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology)
-    : streamCatalogService(streamCatalog), topologyManagerService(topology, streamCatalog), streamCatalog(std::move(streamCatalog)), topology(std::move(topology)) {
+CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalogPtr, TopologyPtr topologyPtr)
+    : streamCatalogService(streamCatalogPtr), topologyManagerService(topologyPtr, streamCatalogPtr), streamCatalog(std::move(streamCatalogPtr)), topology(std::move(topologyPtr)) {
     NES_DEBUG("CoordinatorEngine()");
 }
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
