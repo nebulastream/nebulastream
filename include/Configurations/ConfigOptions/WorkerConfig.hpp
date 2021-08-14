@@ -185,6 +185,16 @@ class WorkerConfig {
      */
     void setLogLevel(std::string logLevel);
 
+    /**
+     * @brief gets a ConfigOption object with workerName
+     */
+    StringConfigOption getWorkerName();
+
+    /**
+     * @brief set the value for workerName with the appropriate data format
+     */
+    void setWorkerName(std::string workerNameValue);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -203,6 +213,7 @@ class WorkerConfig {
     IntConfigOption bufferSizeInBytes;
     StringConfigOption parentId;
     StringConfigOption logLevel;
+    StringConfigOption workerName;
 };
 
 }// namespace NES

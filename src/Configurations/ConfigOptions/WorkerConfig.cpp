@@ -55,6 +55,10 @@ WorkerConfig::WorkerConfig() {
     logLevel = ConfigOption<std::string>::create("logLevel",
                                                  "LOG_DEBUG",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
+    workerName =
+        ConfigOption<std::string>::create("workerName",
+                                          "nes_worker",
+                                          "Name to identify the worker (e.g.: veh_01).");
 }
 
 void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -78,6 +82,7 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
+            setWorkerName(config["workerName"].As<std::string>());
         } catch (std::exception& e) {
             NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
                       "values. "
@@ -118,6 +123,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setParentId(it->second);
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
+            } else if (it->first == "--workerName") {
+                setWorkerName(it->second);
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -143,6 +150,7 @@ void WorkerConfig::resetWorkerOptions() {
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
     setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+    setWorkerName(workerName->getDefaultValue());
 }
 
 StringConfigOption WorkerConfig::getLocalWorkerIp() { return localWorkerIp; }
@@ -196,5 +204,9 @@ void WorkerConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) {
 IntConfigOption WorkerConfig::getBufferSizeInBytes() { return bufferSizeInBytes; }
 
 void WorkerConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
+
+StringConfigOption WorkerConfig::getWorkerName() { return workerName; }
+
+void WorkerConfig::setWorkerName(std::string workerNameValue) {workerName->setValue(std::move(workerNameValue));}
 
 }// namespace NES

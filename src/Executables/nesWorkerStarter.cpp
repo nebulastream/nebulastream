@@ -86,7 +86,8 @@ int main(int argc, char** argv) {
 
     NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort()->getValue() << " localport="
                                                   << workerConfig->getDataPort()->getValue() << " pid=" << getpid()
-                                                  << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
+                                                  << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue()
+                                                  << " workerName=" << workerConfig->getWorkerName()->getValue());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
     //register phy stream if necessary

@@ -50,7 +50,8 @@ NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
       numberOfBuffersInGlobalBufferManager(workerConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
       numberOfBuffersPerPipeline(workerConfig->getnumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
-      bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()), type(type) {
+      bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()), type(type),
+      workerName(workerConfig->getWorkerName()->getValue()) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
 }
