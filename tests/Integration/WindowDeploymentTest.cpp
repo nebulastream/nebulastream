@@ -44,7 +44,7 @@ namespace NES {
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
-class WindowDeploymentTest : public testing::Test {
+class DISABLED_WindowDeploymentTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("WindowDeploymentTest.log", NES::LOG_DEBUG);
@@ -62,7 +62,7 @@ class WindowDeploymentTest : public testing::Test {
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -145,7 +145,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testYSBWindow) {
+TEST_F(DISABLED_WindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -288,7 +288,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testCentralWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -376,7 +376,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
+TEST_F(DISABLED_WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -467,7 +467,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testCentralSlidingWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -568,7 +568,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -669,7 +669,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -770,7 +770,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
 /**
  * @brief test distributed sliding window and event time
  */
-TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEventTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -884,7 +884,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -974,7 +974,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -1070,7 +1070,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -1175,7 +1175,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -1276,7 +1276,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -1354,7 +1354,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testDistributedWindowIngestionTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -1443,7 +1443,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -1523,7 +1523,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
+TEST_F(DISABLED_WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -1617,7 +1617,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -1761,7 +1761,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -1906,7 +1906,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 /*
  * @brief Test if the avg aggregation can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
     struct Car {
         uint64_t key;
         uint64_t value1;
@@ -1956,7 +1956,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
 /*
  * @brief Test if the max aggregation can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -2004,7 +2004,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
 /*
  * @brief Test if the max aggregation of negative values can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativeValues) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativeValues) {
     struct Car {
         int32_t key;
         int32_t value;
@@ -2052,7 +2052,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
 /*
  * @brief Test if the max aggregation with uint64 data type can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64AggregatedField) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64AggregatedField) {
     struct Car {
         uint64_t key;
         uint64_t value;
@@ -2106,7 +2106,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
 /*
  * @brief Test if the min aggregation can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -2154,7 +2154,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
 /*
  * @brief Test if the min aggregation with float data type can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
     struct Car {
         uint32_t key;
         float value;
@@ -2202,7 +2202,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
 /*
  * @brief Test if the Count aggregation can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
+TEST_F(DISABLED_WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
     struct Car {
         uint64_t key;
         uint64_t value;
