@@ -73,6 +73,8 @@ class NesWorker {
      */
     bool setWithParent(std::string parentId);
 
+    void setWithRegisterLocation(bool withRegisterLocation);
+
     /**
      * @brief stop the worker
      * @return bool indicating success
@@ -188,11 +190,13 @@ class NesWorker {
     bool connected{false};
     bool withRegisterStream{false};
     bool withParent{false};
+    bool withRegisterLocation;
     std::string parentId;
     std::string rpcAddress;
     std::string coordinatorIp;
     std::string localWorkerIp;
     uint16_t coordinatorPort;
+    uint16_t coordinatorRestPort;
     uint16_t localWorkerRpcPort;
     uint16_t localWorkerZmqPort;
     uint16_t numberOfSlots;

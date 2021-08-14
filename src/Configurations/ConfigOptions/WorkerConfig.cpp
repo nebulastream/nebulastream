@@ -38,6 +38,11 @@ WorkerConfig::WorkerConfig() {
         4000,
         "RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
         "to be the same as rpcPort in Coordinator.");
+    coordinatorRestPort = ConfigOption<uint32_t>::create(
+        "coordinatorRestPort",
+        8081,
+        "REST api port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
+        "to be the same as rpcPort in Coordinator.");
     rpcPort = ConfigOption<uint32_t>::create("rpcPort", 4000, "RPC server port of the NES Worker.");
     dataPort = ConfigOption<uint32_t>::create("dataPort", 4001, "Data port of the NES Worker.");
     numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", UINT16_MAX, "Number of computing slots for the NES Worker.");
@@ -55,6 +60,7 @@ WorkerConfig::WorkerConfig() {
     logLevel = ConfigOption<std::string>::create("logLevel",
                                                  "LOG_DEBUG",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
+    registerLocation = ConfigOption<uint32_t>::create("registerLocation", 1, "Register location (0) enabled or (1) disabled.");
     workerName =
         ConfigOption<std::string>::create("workerName",
                                           "nes_worker",
@@ -71,6 +77,7 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
         Yaml::Parse(config, filePath.c_str());
         try {
             setCoordinatorPort(config["coordinatorPort"].As<uint16_t>());
+            setCoordinatorRestPort(config["coordinatorRestPort"].As<uint16_t>());
             setRpcPort(config["rpcPort"].As<uint16_t>());
             setDataPort(config["dataPort"].As<uint16_t>());
             setLocalWorkerIp(config["localWorkerIp"].As<std::string>());
@@ -82,6 +89,7 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
+            setRegisterLocation(config["registerLocation"].As<uint16_t>());
             setWorkerName(config["workerName"].As<std::string>());
         } catch (std::exception& e) {
             NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
@@ -107,6 +115,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setRpcPort(stoi(it->second));
             } else if (it->first == "--coordinatorPort") {
                 setCoordinatorPort(stoi(it->second));
+            } else if (it->first == "--coordinatorRestPort") {
+                setCoordinatorRestPort(stoi(it->second));
             } else if (it->first == "--dataPort") {
                 setDataPort(stoi(it->second));
             } else if (it->first == "--numberOfSlots") {
@@ -123,6 +133,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setParentId(it->second);
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
+            } else if (it->first == "--registerLocation") {
+                setRegisterLocation(std::stoi(it->second));
             } else if (it->first == "--workerName") {
                 setWorkerName(it->second);
             } else {
@@ -141,6 +153,7 @@ void WorkerConfig::resetWorkerOptions() {
     setLocalWorkerIp(localWorkerIp->getDefaultValue());
     setCoordinatorIp(coordinatorIp->getDefaultValue());
     setCoordinatorPort(coordinatorPort->getDefaultValue());
+    setCoordinatorRestPort(coordinatorRestPort->getDefaultValue());
     setRpcPort(rpcPort->getDefaultValue());
     setDataPort(dataPort->getDefaultValue());
     setNumberOfSlots(numberOfSlots->getDefaultValue());
@@ -150,6 +163,7 @@ void WorkerConfig::resetWorkerOptions() {
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
     setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+    setRegisterLocation(registerLocation->getDefaultValue());
     setWorkerName(workerName->getDefaultValue());
 }
 
@@ -164,6 +178,10 @@ void WorkerConfig::setCoordinatorIp(std::string coordinatorIpValue) { coordinato
 IntConfigOption WorkerConfig::getCoordinatorPort() { return coordinatorPort; }
 
 void WorkerConfig::setCoordinatorPort(uint16_t coordinatorPortValue) { coordinatorPort->setValue(coordinatorPortValue); }
+
+IntConfigOption WorkerConfig::getCoordinatorRestPort() { return coordinatorRestPort; }
+
+void WorkerConfig::setCoordinatorRestPort(uint16_t coordinatorRestPortValue) { coordinatorRestPort->setValue(coordinatorRestPortValue); }
 
 IntConfigOption WorkerConfig::getRpcPort() { return rpcPort; }
 
@@ -204,6 +222,10 @@ void WorkerConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) {
 IntConfigOption WorkerConfig::getBufferSizeInBytes() { return bufferSizeInBytes; }
 
 void WorkerConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
+
+IntConfigOption WorkerConfig::getRegisterLocation() { return registerLocation; }
+
+void WorkerConfig::setRegisterLocation(uint64_t count) { registerLocation->setValue(count); }
 
 StringConfigOption WorkerConfig::getWorkerName() { return workerName; }
 

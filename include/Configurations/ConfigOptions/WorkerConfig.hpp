@@ -86,6 +86,16 @@ class WorkerConfig {
     void setCoordinatorPort(uint16_t coordinatorPort);
 
     /**
+     * @brief gets a ConfigOption object with coordinatorRestPort
+     */
+    IntConfigOption getCoordinatorRestPort();
+
+    /**
+     * @brief set the value for coordinatorRestPort with the appropriate data format
+     */
+    void setCoordinatorRestPort(uint16_t coordinatorRestPortValue);
+
+    /**
      * @brief gets a ConfigOption object with rpcPort
      */
     IntConfigOption getRpcPort();
@@ -186,6 +196,16 @@ class WorkerConfig {
     void setLogLevel(std::string logLevel);
 
     /**
+    * @brief gets a ConfigOption object with number of registerLocation
+    */
+    IntConfigOption getRegisterLocation();
+
+    /**
+     * @brief set the value for number of registerLocation
+     */
+    void setRegisterLocation(uint64_t count);
+
+    /**
      * @brief gets a ConfigOption object with workerName
      */
     StringConfigOption getWorkerName();
@@ -203,6 +223,7 @@ class WorkerConfig {
     StringConfigOption localWorkerIp;
     StringConfigOption coordinatorIp;
     IntConfigOption coordinatorPort;
+    IntConfigOption coordinatorRestPort;
     IntConfigOption rpcPort;
     IntConfigOption dataPort;
     IntConfigOption numberOfSlots;
@@ -213,6 +234,7 @@ class WorkerConfig {
     IntConfigOption bufferSizeInBytes;
     StringConfigOption parentId;
     StringConfigOption logLevel;
+    IntConfigOption registerLocation;
     StringConfigOption workerName;
 };
 

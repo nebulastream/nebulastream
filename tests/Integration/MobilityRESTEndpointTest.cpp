@@ -166,14 +166,13 @@ TEST_F(MobilityRESTEndpointTest, testGetGeoSink) {
 }
 
 TEST_F(MobilityRESTEndpointTest, testAddGeoSink) {
-    web::http::client::http_client httpClient(apiEndpoint + "/geo/sink");
-//    web::uri_builder builder(("/geo/sink"));
+    web::http::client::http_client httpClient(apiEndpoint);
     web::json::value msg{};
     msg["nodeId"] =  web::json::value::string("new_sink");
     msg["movingRange"] =  web::json::value::number(500);
 
 
-    httpClient.request(web::http::methods::POST, "", msg)
+    httpClient.request(web::http::methods::POST, "/geo/sink", msg)
     .then([](const web::http::http_response& response) {
         NES_INFO("get first then");
         EXPECT_EQ(response.status_code(), 200);
@@ -186,7 +185,7 @@ TEST_F(MobilityRESTEndpointTest, testAddGeoSink) {
 }
 
 TEST_F(MobilityRESTEndpointTest, testAddGeoSources) {
-    web::http::client::http_client httpClient(apiEndpoint + "/geo/source");
+web::http::client::http_client httpClient(apiEndpoint + "/geo/source");
     //    web::uri_builder builder(("/geo/sink"));
     web::json::value msg{};
     msg["nodeId"] =  web::json::value::string("new_source");

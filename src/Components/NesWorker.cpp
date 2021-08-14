@@ -21,6 +21,7 @@
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
+#include <Mobility/LocationHTTPClient.h>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
@@ -42,9 +43,12 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
-    : conf(PhysicalStreamConfig::createEmpty()), coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
+    : conf(PhysicalStreamConfig::createEmpty()), withRegisterLocation(workerConfig->getRegisterLocation()->getValue() == 0),
+      coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
       localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
-      coordinatorPort(workerConfig->getCoordinatorPort()->getValue()), localWorkerRpcPort(workerConfig->getRpcPort()->getValue()),
+      coordinatorPort(workerConfig->getCoordinatorPort()->getValue()),
+      coordinatorRestPort(workerConfig->getCoordinatorRestPort()->getValue()),
+      localWorkerRpcPort(workerConfig->getRpcPort()->getValue()),
       localWorkerZmqPort(workerConfig->getDataPort()->getValue()), numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
       numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()),
       numberOfBuffersInGlobalBufferManager(workerConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
@@ -72,6 +76,10 @@ bool NesWorker::setWithParent(std::string parentId) {
     withParent = true;
     this->parentId = std::move(parentId);
     return true;
+}
+
+void NesWorker::setWithRegisterLocation(bool withRegisterLocationValue) {
+    withRegisterLocation = withRegisterLocationValue;
 }
 
 void NesWorker::handleRpcs(WorkerRPCServer& service) {
@@ -162,6 +170,13 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         bool con = connect();
         NES_DEBUG("connected= " << con);
         NES_ASSERT(con, "cannot connect");
+    }
+    if (withRegisterLocation) {
+        NES_DEBUG("NesWorker: start with register location");
+        LocationHTTPClient locationHttpClient(coordinatorIp, coordinatorRestPort);
+        bool success = locationHttpClient.addSource(workerName);
+        NES_DEBUG("registered= " << success);
+        NES_ASSERT(success, "cannot register");
     }
     if (withRegisterStream) {
         NES_DEBUG("NesWorker: start with register stream");
