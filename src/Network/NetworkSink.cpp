@@ -129,19 +129,17 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             queryManager->addReconfigurationMessage(parentPlanId, newReconf, false);
             break;
         }
+        case Runtime::RemoveQEP:{
+            NES_DEBUG("NetworkSink: postReconfigurationCallBack: injecting RemoveSink for each sink of qep");
+            auto newReconf = Runtime::ReconfigurationMessage(parentPlanId, Runtime::RemoveSink, shared_from_this());
+            queryManager->addReconfigurationMessage(parentPlanId, newReconf, false);
+            break;
+        }
         case Runtime::UpdateSinks:{
             NodeLocationPOD pod = task.getUserData<NodeLocationPOD>();
             Network::NodeLocation updatedNodeLocation(pod.nodeId, pod.hostname, pod.port);
             nodeLocation = updatedNodeLocation;
             //queryManager->getrunningQEPs()[]
-
-            break;
-
-        }
-        case Runtime::RemoveQEP:{
-            NES_DEBUG("NetworkSink: postReconfigurationCallBack: injecting RemoveSink for each sink of qep");
-            auto newReconf = Runtime::ReconfigurationMessage(parentPlanId, Runtime::RemoveSink, shared_from_this());
-            queryManager->addReconfigurationMessage(parentPlanId, newReconf, false);
             break;
         }
         default: {

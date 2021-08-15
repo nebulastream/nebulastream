@@ -221,27 +221,22 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             break;
         }
         case RemoveQEP: {
-            NES_DEBUG("Removing qep " << queryId << " " << querySubPlanId);
-            if (numOfProducers.fetch_sub(1) == 1) {
-                //NES_DEBUG("Executing HardEndOfStream and going to stop for qep " << queryId << " " << querySubPlanId);
-                for (auto sink : sinks) {
-                        sink->postReconfigurationCallback(task);
+            NES_DEBUG("QueryExecutionPlan: Remove QEP received for query plan " << queryId << " sub plan "
+            << querySubPlanId);
+            auto expected = Running;
+            if (qepStatus.compare_exchange_strong(expected, Stopped)) {
+                NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId
+                << " is marked as stopped now");
+                for (auto& sink : sinks) {
+                    sink->postReconfigurationCallback(task);
                 }
-                if(stop()){
-                    queryManager->addReconfigurationMessage(querySubPlanId,
-                                                             ReconfigurationMessage(querySubPlanId, Destroy, queryManager),
-                                                            false);
-
-                }
-                else{
-                    //TODO: add error handling
-                    NES_DEBUG("Error during removal of a qep. Stopping of qep failed!");
-                }
-            } else {
-                return;// we must not remove a qep until all sources have send notification
+                qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
+                queryManager->addReconfigurationMessage(querySubPlanId,
+                                                        ReconfigurationMessage(querySubPlanId, Destroy, queryManager),
+                                                        false);
+                return;
             }
             break;
-
         }
         default: {
             break;

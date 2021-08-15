@@ -790,7 +790,9 @@ bool QueryManager::addRemoveQEP(OperatorId sourceId){
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::unique_lock lock(workMutex);
 #endif
+    bool isSourcePipeline = sourceIdToSuccessorMap.find(sourceId) != sourceIdToSuccessorMap.end();
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
+    NES_ASSERT2_FMT(isSourcePipeline, "invalid source");
     NES_ASSERT2_FMT(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
                     "Operator id to query map for operator is empty");
     addRemoveQEPReconfiguration(sourceId);
@@ -799,6 +801,7 @@ bool QueryManager::addRemoveQEP(OperatorId sourceId){
 #endif
     return true;
 }
+
 
 
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
@@ -1139,57 +1142,51 @@ uint64_t QueryManager::getNextTaskId() { return ++taskIdCounter; }
 
 bool QueryManager::addRemoveQEPReconfiguration(OperatorId sourceId) {
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
-    auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
-    NES_ASSERT(!!optBuffer, "invalid buffer");
-    auto buffer = optBuffer.value();
-
-    //use in-place construction to create the reconfig task within a buffer
-    new (buffer.getBuffer()) ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
-                                                    RemoveQEP,
-                                                    threadPool->getNumberOfThreads(),
-                                                    executableQueryPlan);
-    NES_DEBUG("remove QEP opId=" << sourceId << " reconfType=" <<  RemoveQEP
-                                         << " queryExecutionPlanId=" << executableQueryPlan->getQuerySubPlanId()
-                                         << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
-                                         << executableQueryPlan->getQueryId() << " tasks in queue=" << taskQueue.size());
-
-    auto pipelineContext =
-        std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
-                                                                          inherited0::shared_from_this());
-    auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
-                                                          executableQueryPlan->getQuerySubPlanId(),
-                                                          pipelineContext,
-                                                          reconfigurationExecutable,
-                                                          1,
-                                                          std::vector<Execution::SuccessorExecutablePipeline>(),
-                                                          true);
-#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-    std::stack<Task> temp;
-    while (!taskQueue.empty()) {
-        Task task = taskQueue.front();
-        auto executable = task.getExecutable();
-        if (auto executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
-            if ((*executablePipeline)->isReconfiguration()) {
-                temp.push(task);
-                taskQueue.pop_front();
-            } else {
-                break;// reached a data task
-            }
+    // todo adopt this code for multiple source pipelines
+    auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
+    for (auto successor : pipelineSuccessors) {
+        auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
+        NES_ASSERT(!!optBuffer, "invalid buffer");
+        auto buffer = optBuffer.value();
+        // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
+        // If successor is a data sink we send the reconfiguration message to the query plan.
+        auto weakQep = std::make_any<std::weak_ptr<Execution::ExecutableQueryPlan>>(executableQueryPlan);
+        if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
+            new (buffer.getBuffer()) ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
+                                                            SoftEndOfStream,
+                                                            threadPool->getNumberOfThreads(),
+                                                            (*executablePipeline),
+                                                            std::move(weakQep));
         } else {
-            break;// reached a data task
+            new (buffer.getBuffer()) ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
+                                                            RemoveQEP,
+                                                            threadPool->getNumberOfThreads(),
+                                                            (executableQueryPlan),
+                                                            std::move(weakQep));
+        }
+        NES_DEBUG("soft end-of-stream opId=" << sourceId << " reconfType=" << HardEndOfStream
+        << " queryExecutionPlanId=" << executableQueryPlan->getQuerySubPlanId()
+        << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
+        << executableQueryPlan->getQueryId() << " tasks in queue=" << taskQueue.size());
+        auto pipelineContext =
+            std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
+                                                                              inherited0::shared_from_this());
+        auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
+                                                              executableQueryPlan->getQuerySubPlanId(),
+                                                              pipelineContext,
+                                                              reconfigurationExecutable,
+                                                              1,
+                                                              std::vector<Execution::SuccessorExecutablePipeline>(),
+                                                              true);
+        // emit the end of stream for each processing task
+        for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
+#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+            taskQueue.write(Task(pipeline, buffer));
+#else
+            taskQueue.emplace_back(pipeline, buffer);
+#endif
         }
     }
-    for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
-        taskQueue.emplace_front(pipeline, buffer);
-    }
-    while (!temp.empty()) {
-        taskQueue.emplace_front(temp.top());
-        temp.pop();
-    }
-#else
-    NES_ASSERT2_FMT(false, "not supported yet");
-#endif
     return true;
 }
-
 }// namespace NES::Runtime

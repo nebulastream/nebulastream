@@ -482,8 +482,9 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string& newHos
     return true;
 }
 void NodeEngine::onRemoveQEP(Network::Messages::RemoveQEPMessage msg) {
-    NES_DEBUG("Going to inject RemoveQEPMessage for " << msg.getChannelId().getNesPartition());
     NES_DEBUG("Revieved RemoveQEP Message");
+    NES_DEBUG("Going to inject RemoveQEP without message propagation for " << msg.getChannelId().getNesPartition());
+
     // propagate updateNetworkSinkMessage to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject RemoveQEP for " << msg.getChannelId().getNesPartition());
     auto sourceId = msg.getChannelId().getNesPartition().getOperatorId();

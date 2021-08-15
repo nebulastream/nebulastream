@@ -712,7 +712,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTes
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(5));
 
     maintenanceService->submitMaintenanceRequest(2,3);
-    sleep(30);
+    sleep(35);
 
 //    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
 //    ASSERT_TRUE(wrk3->getNodeEngine()->getDeployedQEP(3));
