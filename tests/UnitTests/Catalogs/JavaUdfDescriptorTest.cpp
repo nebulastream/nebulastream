@@ -26,14 +26,12 @@ namespace NES::Catalogs {
 
 class JavaUdfDescriptorTest : public testing::Test {
   protected:
-    static void SetUpTestCase() {
-        NES::setupLogging("UdfTest.log", NES::LOG_DEBUG);
-    }
+    static void SetUpTestCase() { NES::setupLogging("UdfTest.log", NES::LOG_DEBUG); }
 
     const std::string className{"some_package.class_name"};
-    const std::string methodName{ "udf_method" };
-    const JavaSerializedInstance serializedInstance{1}; // byte-array containing 1 byte
-    const JavaUdfByteCodeList byteCodeList{ {"some_package.class_name"s, JavaByteCode{1} } };
+    const std::string methodName{"udf_method"};
+    const JavaSerializedInstance serializedInstance{1};// byte-array containing 1 byte
+    const JavaUdfByteCodeList byteCodeList{{"some_package.class_name"s, JavaByteCode{1}}};
 };
 
 TEST_F(JavaUdfDescriptorTest, TheFullyQualifiedNameMustNotBeEmpty) {
@@ -46,14 +44,14 @@ TEST_F(JavaUdfDescriptorTest, TheMethodNameMustNotBeEmtpy) {
 
 TEST_F(JavaUdfDescriptorTest, TheInstanceMustNotBeEmpty) {
     // when
-    auto emptyInstance = JavaSerializedInstance {}; // empty byte array
+    auto emptyInstance = JavaSerializedInstance{};// empty byte array
     // then
     EXPECT_THROW(JavaUdfDescriptor(className, methodName, emptyInstance, byteCodeList), UdfException);
 }
 
 TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustNotBeEmpty) {
     // when
-    auto emptyByteCodeList = JavaUdfByteCodeList {}; // empty list
+    auto emptyByteCodeList = JavaUdfByteCodeList{};// empty list
     // then
     EXPECT_THROW(JavaUdfDescriptor(className, methodName, serializedInstance, emptyByteCodeList), UdfException);
 }
@@ -61,16 +59,16 @@ TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustNotBeEmpty) {
 TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustContainTheFullyQualifiedNameOfTheUdfClass) {
     // when
     auto unknownClassName = "some_other_package.some_other_class_name"s;
-    auto byteCodeList = JavaUdfByteCodeList { {"some_package.unknown_class_name"s, JavaByteCode{1} } };
+    auto byteCodeList = JavaUdfByteCodeList{{"some_package.unknown_class_name"s, JavaByteCode{1}}};
     // then
     EXPECT_THROW(JavaUdfDescriptor(unknownClassName, methodName, serializedInstance, byteCodeList), UdfException);
 }
 
 TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustNotContainEmptyByteCode) {
     // when
-    auto byteCodeListWithEmptyByteCode = JavaUdfByteCodeList { {className, JavaByteCode {} } }; // empty byte array
+    auto byteCodeListWithEmptyByteCode = JavaUdfByteCodeList{{className, JavaByteCode{}}};// empty byte array
     // then
     EXPECT_THROW(JavaUdfDescriptor(className, methodName, serializedInstance, byteCodeListWithEmptyByteCode), UdfException);
 }
 
-} // namespace NES::Catalogs
+}// namespace NES::Catalogs

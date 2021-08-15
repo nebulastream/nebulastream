@@ -27,4 +27,4 @@ class UdfException : public NesRuntimeException {
     explicit UdfException(const std::string& message);
 };
 
-} // namespace NES
+}// namespace NES

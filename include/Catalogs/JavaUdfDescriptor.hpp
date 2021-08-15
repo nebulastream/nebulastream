@@ -18,8 +18,8 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace NES::Catalogs {
 
@@ -98,4 +98,4 @@ class JavaUdfDescriptor {
 // and then return shared_ptrs when the implementation is retrieved.
 using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
 
-} // namespace NES::Catalogs
+}// namespace NES::Catalogs

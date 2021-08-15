@@ -22,9 +22,7 @@
 
 namespace NES::Catalogs {
 
-std::unique_ptr<UdfCatalog> UdfCatalog::create() {
-    return std::make_unique<UdfCatalog>();
-}
+std::unique_ptr<UdfCatalog> UdfCatalog::create() { return std::make_unique<UdfCatalog>(); }
 
 // TODO comment about Clang-tidy
 void UdfCatalog::registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor) {
@@ -65,7 +63,7 @@ bool UdfCatalog::removeUdf(const std::string& name) {
 
 const std::vector<std::string> UdfCatalog::listUdfs() const {
     NES_DEBUG("Listing names of Java UDFs");
-    auto list = std::vector<std::string> {};
+    auto list = std::vector<std::string>{};
     list.reserve(udfStore.size());
     for (const auto& [key, _] : udfStore) {
         list.push_back(key);
@@ -73,4 +71,4 @@ const std::vector<std::string> UdfCatalog::listUdfs() const {
     return list;
 }
 
-} // namespace NES::Catalogs
+}// namespace NES::Catalogs

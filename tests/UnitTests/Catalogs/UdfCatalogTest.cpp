@@ -26,15 +26,13 @@ namespace NES::Catalogs {
 
 class UdfCatalogTest : public testing::Test {
   protected:
-    static void SetUpTestCase() {
-        NES::setupLogging("UdfTest.log", NES::LOG_DEBUG);
-    }
+    static void SetUpTestCase() { NES::setupLogging("UdfTest.log", NES::LOG_DEBUG); }
 
     static std::shared_ptr<JavaUdfDescriptor> createDescriptor() {
         auto className = "some_package.my_udf"s;
         auto methodName = "udf_method"s;
-        auto instance = JavaSerializedInstance { 1 }; // byte-array containing 1 byte
-        auto byteCodeList = JavaUdfByteCodeList { {"some_package.my_udf"s, JavaByteCode{1} } };
+        auto instance = JavaSerializedInstance{1};// byte-array containing 1 byte
+        auto byteCodeList = JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}};
         return std::make_shared<JavaUdfDescriptor>(className, methodName, instance, byteCodeList);
     }
 
@@ -44,8 +42,7 @@ class UdfCatalogTest : public testing::Test {
 
 // Test behavior of RegisterJavaUdf
 
-TEST_F(UdfCatalogTest, RetrieveRegisteredUdfDescriptor)
-{
+TEST_F(UdfCatalogTest, RetrieveRegisteredUdfDescriptor) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor = createDescriptor();
@@ -71,15 +68,11 @@ TEST_F(UdfCatalogTest, CannotRegisterUdfUnderExistingName) {
 
 // Test behavior of GetUdfDescriptor
 
-TEST_F(UdfCatalogTest, ReturnNullptrIfUdfIsNotKnown) {
-    ASSERT_EQ(udfCatalog.getUdfDescriptor("unknown_udf"), nullptr);
-}
+TEST_F(UdfCatalogTest, ReturnNullptrIfUdfIsNotKnown) { ASSERT_EQ(udfCatalog.getUdfDescriptor("unknown_udf"), nullptr); }
 
 // Test behavior of RemoveUdf
 
-TEST_F(UdfCatalogTest, CannotRemoveUnknownUdf) {
-    ASSERT_EQ(udfCatalog.removeUdf("unknown_udf"), false);
-}
+TEST_F(UdfCatalogTest, CannotRemoveUnknownUdf) { ASSERT_EQ(udfCatalog.removeUdf("unknown_udf"), false); }
 
 TEST_F(UdfCatalogTest, SignalRemovalOfUdf) {
     // given
@@ -125,4 +118,4 @@ TEST_F(UdfCatalogTest, ReturnListOfKnownUds) {
     ASSERT_EQ(udfs.front(), udfName);
 }
 
-} // namespace NES::Catalogs
+}// namespace NES::Catalogs

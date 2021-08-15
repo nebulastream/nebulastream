@@ -78,7 +78,7 @@ namespace Catalogs {
 class UdfCatalog;
 using UdfCatalogPtr = std::unique_ptr<UdfCatalog>;
 
-}
+}// namespace Catalogs
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
