@@ -139,6 +139,9 @@ uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan, const std:
 uint64_t QueryService::addQueryRequest(const std::string& queryString,
                                        const QueryPlanPtr& queryPlan,
                                        const std::string& placementStrategyName) {
+    NES_BM(queryPlan->getQueryId()
+           << ", Start,"
+           << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
