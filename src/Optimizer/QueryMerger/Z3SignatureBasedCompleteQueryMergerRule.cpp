@@ -37,6 +37,10 @@ Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRu
 }
 
 bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+
+    long qmTime = 0;
+    auto startSI =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     NES_INFO(
         "Z3SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
@@ -81,6 +85,9 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
 
             //Not all sinks found an equivalent entry in the target shared query metadata
             if (foundMatch) {
+                auto startQM =
+                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                    .count();
                 NES_TRACE("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
@@ -108,6 +115,11 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data
                 matched = true;
+                auto endQM =
+                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                    .count();
+                qmTime = endQM - startQM;
+                NES_BM("Query-Merging-Time (micro)," << qmTime);
                 break;
             }
         }
@@ -119,7 +131,11 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
     }
     //Remove all empty shared query metadata
     globalQueryPlan->removeEmptySharedQueryPlans();
-    return globalQueryPlan->clearQueryPlansToAdd();
+    auto success = globalQueryPlan->clearQueryPlansToAdd();
+    auto endSI =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_BM("Sharing-Identification-Time (micro)," << (endSI - startSI - qmTime));
+    return success;
 }
 
 }// namespace NES::Optimizer

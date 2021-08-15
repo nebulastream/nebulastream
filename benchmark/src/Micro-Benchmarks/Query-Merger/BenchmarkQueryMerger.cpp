@@ -40,6 +40,7 @@ std::vector<uint64_t> noOfPhysicalSources;
 uint64_t noOfMeasurementsToCollect;
 uint64_t numberOfDistinctSources;
 uint64_t startupSleepIntervalInSeconds;
+NES::DebugLevel loglevel;
 std::vector<std::string> queryMergerRules;
 std::vector<bool> enableQueryMerging;
 std::string querySetLocation;
@@ -118,7 +119,7 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
                 }
             }
 
-            NES::setLogLevel(NES::getDebugLevelFromString(config["logLevel"].As<std::string>()));
+            loglevel = NES::getDebugLevelFromString(config["logLevel"].As<std::string>());
         } catch (std::exception& e) {
             NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file." << e.what());
         }
@@ -159,10 +160,13 @@ int main(int argc, const char* argv[]) {
             "/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
     }
 
+    NES::setupLogging("BM.log", loglevel);
     for (const auto& file : directory_iterator(querySetLocation)) {
 
         std::ifstream infile(file.path());
-        NES_INFO(file.path().filename());
+        NES_BM("*****************************************************");
+        NES_BM("Benchmark For : " << file.path().filename());
+        NES_BM("*****************************************************");
         std::vector<std::string> queries;
         std::string line;
 
@@ -184,8 +188,10 @@ int main(int argc, const char* argv[]) {
         }
 
         for (size_t configNum = 0; configNum < queryMergerRules.size(); configNum++) {
+            NES_BM("Query Merging Rule " << queryMergerRules[configNum]);
 
             for (uint64_t expRun = 1; expRun <= noOfMeasurementsToCollect; expRun++) {
+                NES_BM("Experiment " << expRun);
                 setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum]);
                 NES::QueryServicePtr queryService = coordinator->getQueryService();
                 NES::QueryCatalogPtr queryCatalog = coordinator->getQueryCatalog();
@@ -193,8 +199,8 @@ int main(int argc, const char* argv[]) {
                 sleep(startupSleepIntervalInSeconds);
 
                 auto startTime =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
+                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                    .count();
                 for (uint64_t i = 1; i <= noOfQueries; i++) {
                     const QueryPlanPtr queryPlan = queryObjects[i - 1]->getQueryPlan();
                     queryPlan->setQueryId(i);
@@ -207,7 +213,7 @@ int main(int argc, const char* argv[]) {
                 }
 
                 auto endTime =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
                 benchmarkOutput << endTime << "," << file.path().filename() << "," << queryMergerRules[configNum] << ","
                                 << noOfPhysicalSources[configNum] << "," << noOfQueries << ","
