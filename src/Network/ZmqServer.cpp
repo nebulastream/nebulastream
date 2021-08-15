@@ -247,6 +247,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                 }
                 case Messages::kEndOfStream: {
                     // if server receives a message that the stream did terminate
+                    NES_DEBUG("Recieved EoS message" << hostname);
                     zmq::message_t eosEnvelope;
                     auto optRetSize = dispatcherSocket.recv(eosEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");

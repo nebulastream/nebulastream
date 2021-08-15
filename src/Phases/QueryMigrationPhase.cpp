@@ -237,7 +237,7 @@ std::map<OperatorId,QueryMigrationPhase::InformationForFindingSink> QueryMigrati
     }
     return mapOfNetworkSourceIdToInfoForFindingNetworkSink;
 }
-bool QueryMigrationPhase::sendBufferRequests(std::map<OperatorId, QueryMigrationPhase::InformationForFindingSink>& map) {
+bool QueryMigrationPhase::sendBufferRequests(std::map<OperatorId, QueryMigrationPhase::InformationForFindingSink> map) {
     for(auto entry: map){
         auto info = entry.second;
         TopologyNodePtr sinkNode = topology->findNodeWithId(info.sinkTopologyNode);

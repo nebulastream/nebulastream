@@ -362,6 +362,7 @@ void NodeEngine::onDataBuffer(Network::NesPartition, TupleBuffer&) {
 void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
+    NES_DEBUG("Propagating EoS Message to QEPS that get data from source with id: " << msg.getChannelId().getNesPartition().getOperatorId());
     queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
 }
 
@@ -445,7 +446,7 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t globalSinkId) {
     //TODO: add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Received request to buffer Data on network Sinks");
-    NodeEnginePtr self = this->inherited1::shared_from_this();
+    //NodeEnginePtr self = this->inherited1::shared_from_this();
     std::unique_lock lock(engineMutex);
     auto qep = deployedQEPs[querySubPlanId];
     auto networkSinks = qep->getSinks();
@@ -465,7 +466,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string& newHos
 
     //TODO: add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Recieved request to update Network Sinks");
-    NodeEnginePtr self = this->inherited1::shared_from_this();
+    //NodeEnginePtr self = this->inherited1::shared_from_this();
     NodeLocationPOD pod{newNodeId, newHostname, newPort};
     std::unique_lock lock(engineMutex);
     auto qep = deployedQEPs[querySubPlanId];

@@ -112,7 +112,7 @@ class QueryMigrationPhase{
 
     std::map<OperatorId,QueryMigrationPhase::InformationForFindingSink> getInfoForAllSinks(const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators, QueryId queryId);
 
-    bool sendBufferRequests(std::map<OperatorId,QueryMigrationPhase::InformationForFindingSink>& map);
+    bool sendBufferRequests(std::map<OperatorId,QueryMigrationPhase::InformationForFindingSink> map);
 
     bool sendReconfigurationRequests(std::map<OperatorId,QueryMigrationPhase::InformationForFindingSink>& map, uint64_t queryId, std::vector<ExecutionNodePtr>& exeNodes);
 

@@ -87,7 +87,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::UpdateSinks: {
-              NES_DEBUG("NetworkSink: reconfiguring NetworkSink: " << nesPartition.toString());
+              NES_DEBUG("NetworkSink: Updating NetworkSink: " << nesPartition.toString());
 
                 NodeLocationPOD pod = task.getUserData<NodeLocationPOD>();
                 Network::NodeLocation updatedNodeLocation(pod.nodeId, pod.hostname, pod.port);

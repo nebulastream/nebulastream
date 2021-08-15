@@ -579,7 +579,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferT
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(5));
 
     maintenanceService->submitMaintenanceRequest(2,2); //doesnt work at all
-    sleep(35);
+    sleep(45);
 
 //    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
 //    ASSERT_TRUE(wrk3->getNodeEngine()->getDeployedQEP(3));
@@ -623,7 +623,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryNoBufferTes
     coConf->setRpcPort(rpcPort);
     coConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
-    wrkConf->setNumWorkerThreads(3); //breaks with only thread
+    wrkConf->setNumWorkerThreads(1); //breaks with only thread
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
