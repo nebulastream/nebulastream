@@ -119,7 +119,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
     return nullptr;
 }
 
-bool OutputChannel::sendBuffer(Runtime::TupleBuffer inputBuffer, uint64_t tupleSize) {
+bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize) {
     if(buffering){
         NES_DEBUG("OutputChannel: Buffering data intended for: " << socketAddr);
         buffer.push(std::pair<Runtime::TupleBuffer, uint64_t> {inputBuffer, tupleSize});
