@@ -49,7 +49,7 @@ class QueryChooseMemLayoutPhase {
      * @brief Perform query
      * @param queryPlan : the input query plan
      */
-    void execute(QueryPlanPtr queryPlan);
+    void execute(const QueryPlanPtr& queryPlan);
 
   private:
     /**
