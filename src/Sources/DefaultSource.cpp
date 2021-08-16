@@ -21,6 +21,8 @@
 #include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
@@ -57,68 +59,105 @@ std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
     NES_DEBUG("Source:" << this << " got buffer");
     uint64_t tupleCnt = 10;
 
-    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(std::make_shared<Schema>(schema), true);
-    Runtime::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = layout->bind(buf);
-
     auto value = 1;
     auto fields = schema->fields;
-    for (uint64_t recordIndex = 0; recordIndex < tupleCnt; recordIndex++) {
+
+    if (schema->layoutType == Schema::COL_LAYOUT) {
+        auto layout = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(std::make_shared<Schema>(schema), true);
+        Runtime::DynamicMemoryLayout::DynamicColumnLayoutBufferPtr bindedColLayout = layout->bind(buf);
+
+        if (tupleCnt >= bindedColLayout->getCapacity()) {
+            NES_THROW_RUNTIME_ERROR("DefaultSource: tupleCnt >= capacity!!!");
+        }
+
         for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
-            auto dataType = fields[fieldIndex]->getDataType();
-            auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
-            if (physicalType->isBasicType()) {
-                auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-                if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<char, true>::create(fieldIndex,
-                                                                                            bindedRowLayout)[recordIndex] = value;
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, true>::create(fieldIndex,
-                                                                                               bindedRowLayout)[recordIndex] =
-                        value;
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, true>::create(fieldIndex,
-                                                                                                bindedRowLayout)[recordIndex] =
-                        value;
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, true>::create(fieldIndex,
-                                                                                                bindedRowLayout)[recordIndex] =
-                        value;
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(fieldIndex,
-                                                                                                bindedRowLayout)[recordIndex] =
-                        value;
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, true>::create(fieldIndex,
-                                                                                              bindedRowLayout)[recordIndex] =
-                        value;
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(fieldIndex,
-                                                                                               bindedRowLayout)[recordIndex] =
-                        value;
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, true>::create(fieldIndex,
-                                                                                               bindedRowLayout)[recordIndex] =
-                        value;
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(fieldIndex,
-                                                                                               bindedRowLayout)[recordIndex] =
-                        value;
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(fieldIndex,
-                                                                                             bindedRowLayout)[recordIndex] =
-                        value;
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(fieldIndex,
-                                                                                              bindedRowLayout)[recordIndex] =
-                        value;
+            for (uint64_t recordIndex = 0; recordIndex < tupleCnt; recordIndex++) {
+                auto dataType = fields[fieldIndex]->getDataType();
+                auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+                if (physicalType->isBasicType()) {
+                    auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+                    if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
+                        ColLayoutField(char,true,fieldIndex,bindedColLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
+                        ColLayoutField(uint8_t, true, fieldIndex, bindedColLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
+                        ColLayoutField(uint16_t, true, fieldIndex, bindedColLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
+                        ColLayoutField(uint32_t, true, fieldIndex, bindedColLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
+                        ColLayoutField(uint64_t, true, fieldIndex, bindedColLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
+                        ColLayoutField(int8_t, true, fieldIndex, bindedColLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
+                        ColLayoutField(int16_t, true, fieldIndex, bindedColLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
+                        ColLayoutField(int32_t, true, fieldIndex, bindedColLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
+                        ColLayoutField(int64_t, true, fieldIndex, bindedColLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
+                        ColLayoutField(float, true, fieldIndex, bindedColLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
+                        ColLayoutField(double, true, fieldIndex, bindedColLayout)[recordIndex] = value;
+                    } else {
+                        NES_DEBUG("This data source only generates data for numeric fields");
+                    }
                 } else {
                     NES_DEBUG("This data source only generates data for numeric fields");
                 }
-            } else {
-                NES_DEBUG("This data source only generates data for numeric fields");
             }
         }
+
+
+
+    } else if (schema->layoutType == Schema::ROW_LAYOUT) {
+        auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(std::make_shared<Schema>(schema), true);
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = layout->bind(buf);
+
+        if (tupleCnt >= bindedRowLayout->getCapacity()) {
+            NES_THROW_RUNTIME_ERROR("DefaultSource: tupleCnt >= capacity!!!");
+        }
+
+        for (uint64_t recordIndex = 0; recordIndex < tupleCnt; recordIndex++) {
+            for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
+                auto dataType = fields[fieldIndex]->getDataType();
+                auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+                if (physicalType->isBasicType()) {
+                    auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+                    if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
+                        RowLayoutField(char,true,fieldIndex,bindedRowLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
+                        RowLayoutField(uint8_t, true, fieldIndex, bindedRowLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
+                        RowLayoutField(uint16_t, true, fieldIndex, bindedRowLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
+                        RowLayoutField(uint32_t, true, fieldIndex, bindedRowLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
+                        RowLayoutField(uint64_t, true, fieldIndex, bindedRowLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
+                        RowLayoutField(int8_t, true, fieldIndex, bindedRowLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
+                        RowLayoutField(int16_t, true, fieldIndex, bindedRowLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
+                        RowLayoutField(int32_t, true, fieldIndex, bindedRowLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
+                        RowLayoutField(int64_t, true, fieldIndex, bindedRowLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
+                        RowLayoutField(float, true, fieldIndex, bindedRowLayout)[recordIndex] = value;
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
+                        RowLayoutField(double, true, fieldIndex, bindedRowLayout)[recordIndex] = value;
+                    } else {
+                        NES_DEBUG("This data source only generates data for numeric fields");
+                    }
+                } else {
+                    NES_DEBUG("This data source only generates data for numeric fields");
+                }
+            }
+        }
+
+    } else {
+        NES_THROW_RUNTIME_ERROR("DefaultSource: layoutType of schema was neither col nor row!!!");
     }
+
     buf.setNumberOfTuples(tupleCnt);
     // TODO move this to trace
     NES_DEBUG("Source: id=" << operatorId << " Generated buffer with " << buf.getNumberOfTuples() << "/"

@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 
 namespace NES::Optimizer {
-void QueryChooseMemLayoutPhase::execute(QueryPlanPtr queryPlan) {
+void QueryChooseMemLayoutPhase::execute(const QueryPlanPtr& queryPlan) {
     try {
         // Getting all sources and sinks from this query plan
         auto sources = queryPlan->getSourceOperators();
