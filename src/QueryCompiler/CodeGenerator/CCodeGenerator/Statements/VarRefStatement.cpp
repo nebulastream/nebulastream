@@ -26,6 +26,6 @@ ExpressionStatementPtr VarRefStatement::copy() const { return std::make_shared<V
 VarRefStatement::VarRefStatement(const VariableDeclaration& var_decl)
     : varDeclaration(std::dynamic_pointer_cast<VariableDeclaration>(var_decl.copy())) {}
 
-VarRefStatement::VarRefStatement(VariableDeclarationPtr varDeclaration) : varDeclaration(std::move(varDeclaration)) {}
+VarRefStatement::VarRefStatement(VariableDeclarationPtr var_decl) : varDeclaration(std::move(var_decl)) {}
 
 }// namespace NES::QueryCompilation

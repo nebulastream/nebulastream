@@ -25,6 +25,7 @@ add_source_nes(
         ReturnStatement.cpp
         IFStatement.cpp
         IfElseStatement.cpp
+        PredicatedFilterStatement.cpp
         ForLoopStatement.cpp
         FunctionCallStatement.cpp
         CompoundStatement.cpp

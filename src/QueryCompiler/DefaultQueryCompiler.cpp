@@ -23,6 +23,7 @@
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
+#include <QueryCompiler/Phases/PredicationOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToGeneratableOperators.hpp>
@@ -39,12 +40,14 @@ namespace NES::QueryCompilation {
 DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const& options,
                                            Phases::PhaseFactoryPtr const& phaseFactory,
                                            Compiler::JITCompilerPtr jitCompiler)
-    : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
+    : QueryCompiler(options),
+      lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
       lowerPhysicalToGeneratableOperatorsPhase(phaseFactory->createLowerPhysicalToGeneratableOperatorsPhase(options)),
       lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
       bufferOptimizationPhase(phaseFactory->createBufferOptimizationPhase(options)),
+      predicationOptimizationPhase(phaseFactory->createPredicationOptimizationPhase(options)),
       codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options, std::move(jitCompiler))) {}
 
 QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const& options,
@@ -93,8 +96,12 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         dumpContext->dump("6. BufferOptimizationPhase", pipelinedQueryPlan);
         timer.snapshot("BufferOptimizationPhase");
 
+        predicationOptimizationPhase->apply(pipelinedQueryPlan);
+        dumpContext->dump("7. PredicationOptimizationPhase", pipelinedQueryPlan);
+        timer.snapshot("PredicationOptimizationPhase");
+
         codeGenerationPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("7. ExecutableOperatorPlan", pipelinedQueryPlan);
+        dumpContext->dump("8. ExecutableOperatorPlan", pipelinedQueryPlan);
         timer.snapshot("ExecutableOperatorPlan");
         timer.pause();
         NES_INFO("DefaultQueryCompiler Runtime:\n" << timer);

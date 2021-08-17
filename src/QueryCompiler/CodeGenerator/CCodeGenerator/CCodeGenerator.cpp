@@ -41,6 +41,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ContinueStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFElseStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/PredicatedFilterStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
@@ -242,22 +243,23 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     }
 
     auto recordHandler = context->getRecordHandler();
-    for (const AttributeFieldPtr& field : inputSchema->fields) {
-        auto variable = getVariableDeclarationForField(code->structDeclarationInputTuples[0], field);
-        if (inputSchema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (inputSchema->getLayoutType() == Schema::ROW_LAYOUT) {
+        for (const AttributeFieldPtr& field : inputSchema->fields) {
+            auto variable = getVariableDeclarationForField(code->structDeclarationInputTuples[0], field);
             auto fieldRefStatement =
                 VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                     VarRef(variable));
-
             recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
-        } else if (inputSchema->getLayoutType() == Schema::COL_LAYOUT) {
+        }
+    } else if (inputSchema->getLayoutType() == Schema::COL_LAYOUT) {
+        for (const AttributeFieldPtr& field : inputSchema->fields) {
+            auto variable = getVariableDeclarationForField(code->structDeclarationInputTuples[0], field);
             auto fieldRefStatement = VarRef(context->code->varDeclarationInputTuples)
                                          .accessRef(VarRef(variable))[VarRef(context->code->varDeclarationRecordIndex)];
-
             recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
-        } else {
-            NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
         }
+    } else {
+        NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
     code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
@@ -330,7 +332,7 @@ bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> pr
 }
 
 /**
- * generates code for predicates
+ * generates code for predicates using branching
  * @param pred - defined predicate for the query
  * @param context - includes the context of the used fields
  * @param out - sending some other information if wanted
@@ -346,7 +348,26 @@ bool CCodeGenerator::generateCodeForFilter(PredicatePtr pred, PipelineContextPtr
     // first, add the head and brackets of the if-statement
     context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
     // second, move insertion point. the rest of the pipeline will be generated within the brackets of the if-statement
-    context->code->currentCodeInsertionPoint = ifStatement.getCompoundStatement();
+    context->code->currentCodeInsertionPoint = ifStatement.getCompoundStatement(); // why does this work when we created a copy two lines above?
+
+    return true;
+}
+
+/**
+ * generates code for branchless predicates
+ * @param pred - defined predicate for the query
+ * @param context - includes the context of the used fields
+ * @param out - sending some other information if wanted
+ * @return modified query-code
+ */
+bool CCodeGenerator::generateCodeForFilterPredicated(PredicatePtr pred, PipelineContextPtr context) {
+
+    // create predicate expression from filter predicate
+    auto predicateExpression = pred->generateCode(context->code, context->getRecordHandler());
+    auto predicatedFilter = PredicatedFilter(*predicateExpression, context->code->varDeclarationNumberOfResultTuples);
+
+    context->code->currentCodeInsertionPoint->addStatement(predicatedFilter.createCopy());
+    context->code->currentCodeInsertionPoint = predicatedFilter.getCompoundStatement();
 
     return true;
 }
@@ -384,6 +405,7 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, LegacyExpressio
 
 bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                                          OutputBufferAllocationStrategy bufferStrategy,
+                                         bool increasesResultBufferWriteIndex,
                                          PipelineContextPtr context) {
 
     auto tf = getTypeFactory();
@@ -486,8 +508,12 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                 code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
             }
 
-            // increment number of tuples in buffer -> ++numberOfResultTuples;
-            code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
+            // If the pipeline uses (branchless) predicated filtering, the increase of "numberOfResultTuples" is handled by the filter operator
+            // If not we do it ourselves here:
+            if (increasesResultBufferWriteIndex) {
+                // increment number of tuples in buffer -> ++numberOfResultTuples;
+                code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
+            }
 
             // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
             // We can optimize this away if the result schema is smaller than the input schema.
@@ -511,7 +537,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
         code->variableInitStmts.push_back(varDeclResultTupleStmt.copy());
 
         // Setting the start of all fields for col layout
-        generateCodeInitStructFieldsColLayout(sinkSchema,
+        generateCodeInitStructFieldsColLayout(sinkSchema, // TODO duplicate to maxTuple?
                                               tf,
                                               code->varDeclarationResultBuffer,
                                               code->structDeclarationResultTuple,
@@ -550,7 +576,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
         // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
         // We can optimize this away if the result schema is smaller than the input schema.
-        if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || bufferStrategy == OMIT_OVERFLOW_CHECK)) {
+        if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || bufferStrategy == OMIT_OVERFLOW_CHECK)) { // todo does this work yet for col? because in the commit it was removed at row
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
     } else {
@@ -761,7 +787,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     }
 
     // Setting the start of all fields for col layout
-    if (schema->getLayoutType() == Schema::COL_LAYOUT) {
+    if (schema->getLayoutType() == Schema::COL_LAYOUT) { // TODO duplicate to maxTuple?
         std::vector<StatementPtr> statements;
         generateCodeInitStructFieldsColLayout(schema,
                                               tf,
