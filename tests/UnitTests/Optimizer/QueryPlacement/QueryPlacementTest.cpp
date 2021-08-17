@@ -1290,7 +1290,6 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1u);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->getChildWithOperatorId(1)->instanceOf<SourceLogicalOperatorNode>());
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
         } else if (executionNode->getId() == 3){
@@ -1301,10 +1300,8 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1u);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), 4);
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildWithOperatorId(2)->instanceOf<MapLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildWithOperatorId(3)->instanceOf<MapLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
         }
@@ -1355,8 +1352,6 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1u);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->getChildWithOperatorId(1)->instanceOf<SourceLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildWithOperatorId(2)->instanceOf<FilterLogicalOperatorNode>());
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1u);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
@@ -1368,9 +1363,9 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1u);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), 4);
+            //ASSERT_EQ(actualRootOperator->getId(), 4);
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildWithOperatorId(3)->instanceOf<MapLogicalOperatorNode>());
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
         }
