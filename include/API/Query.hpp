@@ -209,6 +209,16 @@ class Query {
      */
     Query& filter(ExpressionNodePtr const& filterExpression);
 
+
+    /**
+     * @brief: Adds a moving range
+     * @example movingRange("veh_01", 500)
+     * @param nodeId from the sink
+     * @param movingRange area of the spatial interest (in m2)
+     * @return the query
+     */
+    Query& movingRange(std::string nodeId, double movingRange);
+
     /**
      * @brief: Create watermark assginer operator.
      * @param onField filed to retrieve the timestamp for watermark.

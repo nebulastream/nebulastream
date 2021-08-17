@@ -16,6 +16,7 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
+#include <Mobility/LocationService.h>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
@@ -183,6 +184,13 @@ Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
     OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression);
     queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+}
+
+Query& Query::movingRange(std::string nodeId, double movingRange) {
+    NES_DEBUG("Query: add moving range to query");
+    LocationServicePtr locationService = LocationService::getInstance();
+    locationService->addSink(nodeId, movingRange);
     return *this;
 }
 

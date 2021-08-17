@@ -32,15 +32,17 @@ using LocationCatalogPtr = std::shared_ptr<LocationCatalog>;
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
 
+static LocationServicePtr instance = nullptr;
+
 class LocationService {
   private:
     LocationCatalogPtr locationCatalog;
 
   public:
-    static LocationServicePtr create();
+    static LocationServicePtr getInstance();
     explicit LocationService();
 
-    void addSink(const string& nodeId, const double movingRangeArea);
+    void addSink(const string& nodeId, double movingRangeArea);
     void addSource(const string& nodeId);
     void updateNodeLocation(const string& nodeId, const GeoPointPtr& location);
     bool checkIfPointInRange(const GeoPointPtr& location);

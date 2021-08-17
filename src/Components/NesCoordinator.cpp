@@ -64,7 +64,7 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     topology = Topology::create();
-    locationService = LocationService::create();
+    locationService = LocationService::getInstance();
     streamCatalog = std::make_shared<StreamCatalog>();
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();

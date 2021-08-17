@@ -44,8 +44,13 @@ void LocationService::updateNodeLocation(const string& nodeId, const GeoPointPtr
     this->locationCatalog->updateNodeLocation(nodeId, location);
 }
 
-LocationServicePtr LocationService::create() { return std::make_shared<LocationService>(); }
-
 const LocationCatalogPtr& LocationService::getLocationCatalog() const { return locationCatalog; }
+
+LocationServicePtr LocationService::getInstance() {
+    if (instance == nullptr) {
+        instance = std::make_shared<LocationService>();
+    }
+    return instance;
+}
 
 }
