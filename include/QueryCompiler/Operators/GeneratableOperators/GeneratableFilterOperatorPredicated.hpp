@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEFILTER_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEFILTER_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEFILTERPREDICATED_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEFILTERPREDICATED_HPP_
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
@@ -27,7 +27,7 @@ namespace GeneratableOperators {
 /**
  * @brief Generates a conditional filter operator, which evaluates a predicate on all input records.
  */
-class GeneratableFilterOperator : public GeneratableOperator {
+class GeneratableFilterOperatorPredicated : public GeneratableOperator {
   public:
     /**
      * @brief Creates a new generatable filer operator, which evaluates a predicate on all input records.
@@ -48,19 +48,14 @@ class GeneratableFilterOperator : public GeneratableOperator {
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
-    /**
-    * @brief get the filter predicate.
-    * @return PredicatePtr
-    */
-    ExpressionNodePtr getPredicate();
 
-    ~GeneratableFilterOperator() noexcept override = default;
+    ~GeneratableFilterOperatorPredicated() noexcept override = default;
 
   private:
-    GeneratableFilterOperator(OperatorId id, const SchemaPtr& inputSchema, ExpressionNodePtr predicate);
+    GeneratableFilterOperatorPredicated(OperatorId id, const SchemaPtr& inputSchema, ExpressionNodePtr predicate);
     ExpressionNodePtr predicate;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
 }// namespace NES
-#endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEFILTER_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEFILTERPREDICATED_HPP_

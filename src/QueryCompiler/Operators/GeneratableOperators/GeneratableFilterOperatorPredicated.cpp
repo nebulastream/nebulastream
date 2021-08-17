@@ -16,33 +16,31 @@
 
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperatorPredicated.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
-GeneratableFilterOperator::GeneratableFilterOperator(OperatorId id, const SchemaPtr& inputSchema, ExpressionNodePtr predicate)
+GeneratableFilterOperatorPredicated::GeneratableFilterOperatorPredicated(OperatorId id, const SchemaPtr& inputSchema, ExpressionNodePtr predicate)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, inputSchema), predicate(std::move(predicate)) {}
 
-GeneratableOperatorPtr GeneratableFilterOperator::create(SchemaPtr inputSchema, ExpressionNodePtr predicate) {
-    return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(predicate));
+GeneratableOperatorPtr GeneratableFilterOperatorPredicated::create(SchemaPtr inputSchema, ExpressionNodePtr predicate) {
+    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(predicate));
 }
-GeneratableOperatorPtr GeneratableFilterOperator::create(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate) {
-    return std::make_shared<GeneratableFilterOperator>(
-        GeneratableFilterOperator(id, std::move(inputSchema), std::move(predicate)));
+GeneratableOperatorPtr GeneratableFilterOperatorPredicated::create(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate) {
+    return std::make_shared<GeneratableFilterOperatorPredicated>(
+        GeneratableFilterOperatorPredicated(id, std::move(inputSchema), std::move(predicate)));
 }
 
-void GeneratableFilterOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableFilterOperatorPredicated::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     // todo remove if code gen can handle expressions
     auto legacyPredicate = TranslateToLegacyExpression::create()->transformExpression(predicate);
-    codegen->generateCodeForFilter(std::dynamic_pointer_cast<Predicate>(legacyPredicate), context);
+    codegen->generateCodeForFilterPredicated(std::dynamic_pointer_cast<Predicate>(legacyPredicate), context);
 }
 
-std::string GeneratableFilterOperator::toString() const { return "GeneratableFilterOperator"; }
+std::string GeneratableFilterOperatorPredicated::toString() const { return "GeneratableFilterOperatorPredicated"; }
 
-OperatorNodePtr GeneratableFilterOperator::copy() { return create(id, inputSchema, predicate); }
-
-ExpressionNodePtr GeneratableFilterOperator::getPredicate() { return predicate; }
+OperatorNodePtr GeneratableFilterOperatorPredicated::copy() { return create(id, inputSchema, predicate); }
 
 }// namespace NES::QueryCompilation::GeneratableOperators

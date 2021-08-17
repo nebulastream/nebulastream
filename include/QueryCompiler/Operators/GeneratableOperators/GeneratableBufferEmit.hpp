@@ -53,6 +53,18 @@ class GeneratableBufferEmit : public GeneratableOperator {
      */
     void setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy strategy);
 
+    /**
+     * @brief get the configuration if the emit write index is set in the emit operator or outside
+     * @return bool
+     */
+    bool getIncreasesResultBufferWriteIndex() const;
+
+    /**
+     * @brief sets the configuration if the emit write index is set in the emit operator or outside
+     * @param increasesResultBufferWriteIndex
+     */
+    void setIncreasesResultBufferWriteIndex(bool increasesResultBufferWriteIndex);
+
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
@@ -61,6 +73,7 @@ class GeneratableBufferEmit : public GeneratableOperator {
   private:
     GeneratableBufferEmit(OperatorId id, const SchemaPtr& outputSchema);
     OutputBufferAllocationStrategy bufferStrategy;
+    bool increasesResultBufferWriteIndex;
 };
 }// namespace NES::QueryCompilation::GeneratableOperators
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEBUFFEREMIT_HPP_

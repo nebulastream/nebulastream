@@ -26,7 +26,7 @@ using FIELD_SIZE = uint64_t;
 
 /**
  * @brief This abstract class is the base class for DynamicRowLayout and DynamicColumnLayout.
- * As the base class, it has multiple methods or members that are usefull for both a row and column layout.
+ * As the base class, it has multiple methods or members that are useful for both a row and column layout.
  */
 class DynamicMemoryLayout {
 

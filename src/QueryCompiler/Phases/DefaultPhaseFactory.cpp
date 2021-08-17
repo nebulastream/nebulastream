@@ -19,6 +19,7 @@
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
+#include <QueryCompiler/Phases/PredicationOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/NeverFusePolicy.hpp>
@@ -79,5 +80,9 @@ LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQ
 BufferOptimizationPhasePtr DefaultPhaseFactory::createBufferOptimizationPhase(QueryCompilerOptionsPtr options) {
     NES_DEBUG("Create buffer optimization phase");
     return BufferOptimizationPhase::create(options->getOutputBufferOptimizationLevel());
+}
+PredicationOptimizationPhasePtr DefaultPhaseFactory::createPredicationOptimizationPhase(QueryCompilerOptionsPtr options) {
+    NES_DEBUG("Create predication optimization phase");
+    return PredicationOptimizationPhase::create(options->isPredicationEnabled());
 }
 }// namespace NES::QueryCompilation::Phases

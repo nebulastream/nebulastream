@@ -22,7 +22,7 @@
 namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableBufferEmit::GeneratableBufferEmit(OperatorId id, const SchemaPtr& outputSchema)
-    : OperatorNode(id), GeneratableOperator(id, outputSchema, outputSchema), bufferStrategy(NO_OPTIMIZATION){};
+: OperatorNode(id), GeneratableOperator(id, outputSchema, outputSchema), bufferStrategy(NO_OPTIMIZATION), increasesResultBufferWriteIndex(true) {};
 
 GeneratableOperatorPtr GeneratableBufferEmit::create(OperatorId id, SchemaPtr outputSchema) {
     return std::make_shared<GeneratableBufferEmit>(GeneratableBufferEmit(id, std::move(outputSchema)));
@@ -33,7 +33,7 @@ GeneratableOperatorPtr GeneratableBufferEmit::create(SchemaPtr outputSchema) {
 }
 
 void GeneratableBufferEmit::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateCodeForEmit(outputSchema, bufferStrategy, context);
+    codegen->generateCodeForEmit(outputSchema, bufferStrategy, increasesResultBufferWriteIndex, context);
 }
 std::string GeneratableBufferEmit::toString() const { return "GeneratableBufferEmit"; }
 
@@ -44,5 +44,11 @@ OutputBufferAllocationStrategy GeneratableBufferEmit::getOutputBufferAllocationS
 void GeneratableBufferEmit::setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy strategy) {
     this->bufferStrategy = strategy;
 };
+
+bool GeneratableBufferEmit::getIncreasesResultBufferWriteIndex() const { return increasesResultBufferWriteIndex; };
+
+void GeneratableBufferEmit::setIncreasesResultBufferWriteIndex(bool increasesResultBufferWriteIndex) {
+    this->increasesResultBufferWriteIndex = increasesResultBufferWriteIndex;
+}
 
 }// namespace NES::QueryCompilation::GeneratableOperators

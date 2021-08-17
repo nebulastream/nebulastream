@@ -77,6 +77,14 @@ class CodeGenerator {
     virtual bool generateCodeForFilter(PredicatePtr predicate, PipelineContextPtr context) = 0;
 
     /**
+     * @brief Code generation for a predicated filter operator, which depends on a particular filter predicate. // TODO
+     * @param predicate The filter predicate, which selects input records.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    virtual bool generateCodeForFilterPredicated(PredicatePtr predicate, PipelineContextPtr context) = 0;
+
+    /**
      * @brief Code generation for a map operator, which depends on a particular map predicate.
      * @param field The field, which we want to manipulate with the map predicate.
      * @param predicate The map predicate.
@@ -93,7 +101,7 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool
-    generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, PipelineContextPtr context) = 0;
+    generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, bool increasesResultBufferWriteIndex, PipelineContextPtr context) = 0;
 
     /**
      * @brief Code generation for a watermark assigner operator.

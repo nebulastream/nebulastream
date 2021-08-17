@@ -20,12 +20,10 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperatorPredicated.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
-#include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <utility>
 
 namespace NES::QueryCompilation {
 
@@ -46,11 +44,11 @@ PipelineQueryPlanPtr BufferOptimizationPhase::apply(PipelineQueryPlanPtr pipelin
 }
 
 bool BufferOptimizationPhase::isReadOnlyInput(OperatorPipelinePtr pipeline) {
-    // We define the input of an pipeline as read only if it is shared with another pipeline.
-    // To this end, we check if one of our parents have more then one child.
+    // We define the input of a pipeline as read only if it is shared with another pipeline.
+    // To this end, we check if one of our parents has more than one child.
     for (const auto& parent : pipeline->getPredecessors()) {
         if (parent->getSuccessors().size() > 1) {
-            // the parent has more then one successor. So our input is read only.
+            // the parent has more than one successor. So our input is read only.
             return true;
         }
     }
@@ -86,7 +84,8 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         } else if (node->instanceOf<GeneratableOperators::GeneratableBufferEmit>()) {
             emitNode = node->as<GeneratableOperators::GeneratableBufferEmit>();
             outputSchema = emitNode->getOutputSchema();
-        } else if (node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()) {
+        } else if (node->instanceOf<GeneratableOperators::GeneratableFilterOperator>() ||
+                    node->instanceOf<GeneratableOperators::GeneratableFilterOperatorPredicated>()) {
             filterOperatorFound = true;
         } else if (node->instanceOf<GeneratableOperators::GeneratableCEPIterationOperator>()) {
             return operatorPipeline;

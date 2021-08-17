@@ -66,6 +66,21 @@ class QueryCompilerOptions {
     [[nodiscard]] bool isOperatorFusionEnabled() const;
 
     /**
+     * @brief Enables predication.
+     */
+    void enablePredication();
+
+    /**
+     * @brief Disables predication.
+     */
+    void disablePredication();
+
+    /**
+     * @brief Returns if predication is enabled.
+     */
+    [[nodiscard]] bool isPredicationEnabled() const;
+
+    /**
      * @brief Sets desired buffer optimization strategy.
      */
     void setOutputBufferOptimizationLevel(QueryCompilerOptions::OutputBufferOptimizationLevel level);
@@ -88,8 +103,9 @@ class QueryCompilerOptions {
 
   protected:
     bool operatorFusion;
-    uint64_t numSourceLocalBuffers;
+    bool predication;
     OutputBufferOptimizationLevel outputBufferOptimizationLevel;
+    uint64_t numSourceLocalBuffers;
 };
 }// namespace QueryCompilation
 }// namespace NES

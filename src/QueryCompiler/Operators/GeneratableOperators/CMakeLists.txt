@@ -17,6 +17,7 @@ add_source_nes(
         GeneratableBufferEmit.cpp
         GeneratableBufferScan.cpp
         GeneratableFilterOperator.cpp
+        GeneratableFilterOperatorPredicated.cpp
         GeneratableMapOperator.cpp
         GeneratableProjectionOperator.cpp
         GeneratableWatermarkAssignerOperator.cpp

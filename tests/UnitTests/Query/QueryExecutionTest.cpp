@@ -250,7 +250,10 @@ TEST_F(QueryExecutionTest, filterQuery) {
                                                                  std::move(successors));
         });
 
-    auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
+    auto outputSchema = Schema::create()
+            ->addField("test$id", BasicType::INT64)
+            ->addField("test$one", BasicType::INT64)
+            ->addField("test$value", BasicType::INT64);
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 

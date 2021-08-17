@@ -31,7 +31,7 @@ class VarRefStatement : public ExpressionStatement {
 
     explicit VarRefStatement(const VariableDeclaration& var_decl);
 
-    explicit VarRefStatement(VariableDeclarationPtr varDeclaration);
+    explicit VarRefStatement(VariableDeclarationPtr var_decl);
 
     ~VarRefStatement() override = default;
 };
