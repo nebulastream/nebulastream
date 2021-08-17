@@ -21,12 +21,13 @@
 #include <thread>
 #include <array>
 
-static constexpr auto RANGE_MIN = 16 * 1024 * 1024;       // 16kb
-static constexpr auto RANGE_MAX = 256 * 1024 * 1024;// 32MB
+static constexpr auto RANGE_MIN = 16 * 1024 * 1024;
+static constexpr auto RANGE_MAX = 512 * 1024 * 1024;
 static constexpr auto ITERATIONS = 1;
 static constexpr auto REPETITIONS = 10;
 static constexpr auto MIN_THREADS = 8;
 static constexpr auto MAX_THREADS = 32;
+static constexpr auto PAGE_SIZE = 4096;
 
 class MemcpyBenchmark : public benchmark::Fixture {
   public:
@@ -39,29 +40,24 @@ class MemcpyBenchmark : public benchmark::Fixture {
             src.fill(nullptr);
             dst.fill(nullptr);
             for (int i = 0; i < REPETITIONS; ++i) {
-                if (posix_memalign(&src[i], 4096, allocatedAreaSize)) {
+                if (posix_memalign(&src[i], PAGE_SIZE, allocatedAreaSize)) {
                     state.SkipWithError("Cannot allocate");
                     return;
                 }
-                if (posix_memalign(&dst[i], 4096, allocatedAreaSize)) {
+                if (posix_memalign(&dst[i], PAGE_SIZE, allocatedAreaSize)) {
                     state.SkipWithError("Cannot allocate");
                     return;
                 }
                 auto* ptr = reinterpret_cast<uint8_t*>(src[i]);
                 auto* ptr2 = reinterpret_cast<uint8_t*>(dst[i]);
-//                auto* ptr = reinterpret_cast<uint64_t*>(src[i]);
-//                auto* ptr2 = reinterpret_cast<uint64_t*>(dst[i]);
-                for (uint64_t i = 0; i < (allocatedAreaSize / 4096); ++i) {
-                    auto* a = reinterpret_cast<uint64_t*>(ptr);
-                    auto* b = reinterpret_cast<uint64_t*>(ptr2);
-                    *a = distribution(randomness);
-                    *b = distribution(randomness);
-                    ptr += 4096;
-                    ptr2 += 4096;
+                for (uint64_t i = 0; i < (allocatedAreaSize / PAGE_SIZE); ++i) {
+                    auto* srcWriter = reinterpret_cast<uint64_t*>(ptr);
+                    auto* dstWriter = reinterpret_cast<uint64_t*>(ptr2);
+                    *srcWriter = distribution(randomness);
+                    *dstWriter = distribution(randomness);
+                    ptr += PAGE_SIZE;
+                    ptr2 += PAGE_SIZE;
                 }
-//                for (uint64_t i = 0; i < allocatedAreaSize / sizeof(uint64_t); ++i) {
-//                    ptr[i] = ptr2[(allocatedAreaSize / sizeof(uint64_t)) - i] = distribution(randomness);
-//                }
             }
 
         }
@@ -89,9 +85,6 @@ class MemcpyBenchmark : public benchmark::Fixture {
 };
 
 BENCHMARK_DEFINE_F(MemcpyBenchmark, BM_default_memcpy)(benchmark::State& state) {
-
-    std::random_device randomDevice;
-    std::uniform_int_distribution<uint64_t> distribution;
     size_t chunkSize = state.range(0);
     size_t allocatedAreaSize = state.threads * chunkSize;
 
@@ -105,12 +98,6 @@ BENCHMARK_DEFINE_F(MemcpyBenchmark, BM_default_memcpy)(benchmark::State& state) 
         auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 
         state.SetIterationTime(elapsed_seconds.count());
-        // scramble again
-//        auto* it = reinterpret_cast<uint64_t*>(startSrc);
-//        auto* endIt = reinterpret_cast<uint64_t*>(startSrc + chunkSize);
-//        for (; it != endIt; ++it) {
-//            *it = distribution(randomDevice);
-//        }
         ++index;
     }
 
@@ -120,8 +107,6 @@ BENCHMARK_DEFINE_F(MemcpyBenchmark, BM_default_memcpy)(benchmark::State& state) 
 }
 
 BENCHMARK_DEFINE_F(MemcpyBenchmark, BM_apex_memcpy)(benchmark::State& state) {
-    std::random_device randomDevice;
-    std::uniform_int_distribution<uint64_t> distribution;
     size_t chunkSize = state.range(0);
     size_t allocatedAreaSize = state.threads * chunkSize;
 
@@ -135,11 +120,6 @@ BENCHMARK_DEFINE_F(MemcpyBenchmark, BM_apex_memcpy)(benchmark::State& state) {
         auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 
         state.SetIterationTime(elapsed_seconds.count());
-        // scramble again
-//        auto* it = reinterpret_cast<uint64_t*>(startSrc);
-//        auto* endIt = reinterpret_cast<uint64_t*>(startSrc + chunkSize);
-//        for (; it != endIt; ++it) {
-//            *it = distribution(randomDevice);
 //        }
         ++index;
     }
@@ -149,8 +129,6 @@ BENCHMARK_DEFINE_F(MemcpyBenchmark, BM_apex_memcpy)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(MemcpyBenchmark, BM_rte_memcpy)(benchmark::State& state) {
-    std::random_device randomDevice;
-    std::uniform_int_distribution<uint64_t> distribution;
     size_t chunkSize = state.range(0);
     size_t allocatedAreaSize = state.threads * chunkSize;
 
@@ -164,12 +142,6 @@ BENCHMARK_DEFINE_F(MemcpyBenchmark, BM_rte_memcpy)(benchmark::State& state) {
         auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 
         state.SetIterationTime(elapsed_seconds.count());
-        // scramble again
-//        auto* it = reinterpret_cast<uint64_t*>(startSrc);
-//        auto* endIt = reinterpret_cast<uint64_t*>(startSrc + chunkSize);
-//        for (; it != endIt; ++it) {
-//            *it = distribution(randomDevice);
-//        }
         ++index;
     }
 
