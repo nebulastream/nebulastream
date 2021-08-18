@@ -921,11 +921,7 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(const SourceDescripto
         mqttSerializedSourceDescriptor.set_clientid(mqttSourceDescriptor->getClientId());
         mqttSerializedSourceDescriptor.set_topic(mqttSourceDescriptor->getTopic());
         mqttSerializedSourceDescriptor.set_user(mqttSourceDescriptor->getUser());
-        mqttSerializedSourceDescriptor.set_numberoftuplestoproduceperbuffer(mqttSourceDescriptor->getNumberOfTuplesToProducePerBuffer());
-        mqttSerializedSourceDescriptor.set_numberofbufferstoprocess(mqttSourceDescriptor->getNumberOfBuffersToProcess());
         mqttSerializedSourceDescriptor.set_datatype((SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor_DataType) mqttSourceDescriptor->getDataType());
-        mqttSerializedSourceDescriptor.set_timeunit((SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor_TimeUnits) mqttSourceDescriptor->getTimeUnit());
-        mqttSerializedSourceDescriptor.set_msgdelay(mqttSourceDescriptor->getMessageDelay());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(mqttSourceDescriptor->getSchema(),
                                                  mqttSerializedSourceDescriptor.mutable_sourceschema());
@@ -1073,11 +1069,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
                                                 mqttSerializedSourceDescriptor.clientid(),
                                                 mqttSerializedSourceDescriptor.user(),
                                                 mqttSerializedSourceDescriptor.topic(),
-                                                mqttSerializedSourceDescriptor.numberoftuplestoproduceperbuffer(),
-                                                mqttSerializedSourceDescriptor.numberofbufferstoprocess(),
-                                                (MQTTSourceDescriptor::DataType) mqttSerializedSourceDescriptor.datatype(),
-                                                (MQTTSourceDescriptor::TimeUnits) mqttSerializedSourceDescriptor.timeunit(),
-                                                mqttSerializedSourceDescriptor.msgdelay());
+                                                (MQTTSourceDescriptor::DataType) mqttSerializedSourceDescriptor.datatype());
         return ret;
     }
 #endif

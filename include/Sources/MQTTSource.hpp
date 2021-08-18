@@ -30,6 +30,9 @@ using async_clientPtr = std::shared_ptr<async_client>;
 }// namespace mqtt
 
 namespace NES {
+
+const MQTTSourceDescriptor::DataType DEFAULT_DATA_TYPE_JSON = MQTTSourceDescriptor::DataType::JSON;
+
 class TupleBuffer;
 /**
  * @brief this class provides an MQTT as data source
@@ -60,15 +63,11 @@ class MQTTSource : public DataSource {
                         std::string const& clientId,
                         std::string const& user,
                         std::string const& topic,
-                        uint64_t numberOfTuplesToProducePerBuffer,
-                        uint64_t numberOfBuffersToProcess,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                        MQTTSourceDescriptor::TimeUnits timeUnit = MQTTSourceDescriptor::TimeUnits::nanoseconds,
-                        MQTTSourceDescriptor::DataType dataType = MQTTSourceDescriptor::DataType::JSON,
-                        uint64_t messageDelay = 0);
+                        MQTTSourceDescriptor::DataType dataType = DEFAULT_DATA_TYPE_JSON);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
@@ -116,40 +115,29 @@ class MQTTSource : public DataSource {
      */
     std::string const& getTopic() const;
     /**
-     * @brief get numberOfTuplesToProducePerBuffer
-     * @return numberOfTuplesToProducePerBuffer
-     */
-    uint64_t getNumberOfTuplesToProducePerBuffer() const;
-
-    /**
-     * @brief get numberOfBuffersToProcess
-     * @return numberOfBuffersToProcess
-     */
-    uint64_t getNumberOfBuffersToProcess() const;
-    /**
      * @brief getter for dataType
      * @return dataType
      */
     MQTTSourceDescriptor::DataType getDataType() const;
-    /**
-     * @brief getter for timeUnit
-     * @return timeUnit
-     */
-    MQTTSourceDescriptor::TimeUnits getTimeUnit() const;
-    /**
-     * @brief getter for messageDelay
-     * @return messageDelay
-     */
-    uint64_t getMessageDelay() const;
     /**
      * @brief getter for tupleSize
      * @return tupleSize
      */
     uint64_t getTupleSize() const;
     /**
-    * @brief Get source type
-    */
+     * @brief getter for tuplesThisPass
+     * @return tuplesThisPass
+     */
+    uint64_t getTuplesThisPass() const;
+    /**
+     * @brief Get source type
+     */
     SourceType getType() const override;
+    /**
+     * @brief get physicalTypes
+     * @return physicalTypes
+     */
+    std::vector<PhysicalTypePtr> getPhysicalTypes() const;
 
   private:
     /**
@@ -182,13 +170,11 @@ class MQTTSource : public DataSource {
     std::string user;
     std::string topic;
     MQTTSourceDescriptor::DataType dataType;
-    MQTTSourceDescriptor::TimeUnits timeUnit;
     mqtt::async_clientPtr client;
     uint64_t tupleSize;
-    std::chrono::duration<int64_t, std::ratio<1, 1000000000>> minDelayBetweenSends{};
-    uint64_t messageDelay;
-    uint64_t numberOfTuplesToProducePerBuffer;
-    uint64_t numberOfBuffersToProcess;
+    uint64_t tuplesThisPass;
+    std::vector<PhysicalTypePtr> physicalTypes;
+
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;
