@@ -18,6 +18,7 @@
 //
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
+#include <string>
 
 namespace NES {
 
