@@ -16,17 +16,18 @@
 
 #include <Runtime/internal/apex_memmove.hpp>
 #include <Runtime/internal/rte_memory.h>
+#include <array>
 #include <benchmark/benchmark.h>
 #include <random>
 #include <thread>
-#include <array>
+#include <sys/mman.h>
 
-static constexpr auto RANGE_MIN = 16 * 1024 * 1024;
-static constexpr auto RANGE_MAX = 512 * 1024 * 1024;
+static constexpr auto RANGE_MIN = 1024 * 1024 * 1024;
+static constexpr auto RANGE_MAX = 1024 * 1024 * 1024;
 static constexpr auto ITERATIONS = 1;
-static constexpr auto REPETITIONS = 10;
-static constexpr auto MIN_THREADS = 8;
-static constexpr auto MAX_THREADS = 32;
+static constexpr auto REPETITIONS = 3;
+static constexpr auto MIN_THREADS = 64;
+static constexpr auto MAX_THREADS = 128;
 static constexpr auto PAGE_SIZE = 4096;
 
 class MemcpyBenchmark : public benchmark::Fixture {
@@ -41,13 +42,17 @@ class MemcpyBenchmark : public benchmark::Fixture {
             dst.fill(nullptr);
             for (int i = 0; i < REPETITIONS; ++i) {
                 if (posix_memalign(&src[i], PAGE_SIZE, allocatedAreaSize)) {
-                    state.SkipWithError("Cannot allocate");
+                    mlock(src[i], allocatedAreaSize);
+                    state.SkipWithError("Cannot allocate mem");
                     return;
                 }
                 if (posix_memalign(&dst[i], PAGE_SIZE, allocatedAreaSize)) {
-                    state.SkipWithError("Cannot allocate");
+                    mlock(dst[i], allocatedAreaSize);
+                    state.SkipWithError("Cannot allocate mem");
                     return;
                 }
+                mlock(dst[i], allocatedAreaSize);
+                mlock(src[i], allocatedAreaSize);
                 auto* ptr = reinterpret_cast<uint8_t*>(src[i]);
                 auto* ptr2 = reinterpret_cast<uint8_t*>(dst[i]);
                 for (uint64_t i = 0; i < (allocatedAreaSize / PAGE_SIZE); ++i) {
@@ -59,20 +64,23 @@ class MemcpyBenchmark : public benchmark::Fixture {
                     ptr2 += PAGE_SIZE;
                 }
             }
-
         }
     }
 
     void TearDown(::benchmark::State& state) override {
+        size_t chunkSize = state.range(0);
+        size_t allocatedAreaSize = state.threads * chunkSize;
         if (state.thread_index == 0) {
             for (auto ptr : src) {
                 if (ptr) {
+                    munlock(ptr, allocatedAreaSize);
                     free(ptr);
                 }
             }
 
             for (auto ptr : dst) {
                 if (ptr) {
+                    munlock(ptr, allocatedAreaSize);
                     free(ptr);
                 }
             }
@@ -120,7 +128,7 @@ BENCHMARK_DEFINE_F(MemcpyBenchmark, BM_apex_memcpy)(benchmark::State& state) {
         auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 
         state.SetIterationTime(elapsed_seconds.count());
-//        }
+        //        }
         ++index;
     }
     if (state.thread_index == 0) {
@@ -150,6 +158,17 @@ BENCHMARK_DEFINE_F(MemcpyBenchmark, BM_rte_memcpy)(benchmark::State& state) {
     }
 }
 
+BENCHMARK_REGISTER_F(MemcpyBenchmark, BM_apex_memcpy)
+    //Number of Updates, Number of Keys
+    ->RangeMultiplier(2)
+    ->Range(RANGE_MIN, RANGE_MAX)
+    ->Repetitions(REPETITIONS)
+    ->Iterations(ITERATIONS)
+    ->ReportAggregatesOnly(true)
+    ->ThreadRange(MIN_THREADS, MAX_THREADS)
+    ->UseManualTime()
+    ->Unit(benchmark::kNanosecond);
+
 BENCHMARK_REGISTER_F(MemcpyBenchmark, BM_default_memcpy)
     ->RangeMultiplier(2)
     ->Range(RANGE_MIN, RANGE_MAX)
@@ -161,17 +180,6 @@ BENCHMARK_REGISTER_F(MemcpyBenchmark, BM_default_memcpy)
     ->Unit(benchmark::kNanosecond);
 
 BENCHMARK_REGISTER_F(MemcpyBenchmark, BM_rte_memcpy)
-    //Number of Updates, Number of Keys
-    ->RangeMultiplier(2)
-    ->Range(RANGE_MIN, RANGE_MAX)
-    ->Repetitions(REPETITIONS)
-    ->Iterations(ITERATIONS)
-    ->ReportAggregatesOnly(true)
-    ->ThreadRange(MIN_THREADS, MAX_THREADS)
-    ->UseManualTime()
-    ->Unit(benchmark::kNanosecond);
-
-BENCHMARK_REGISTER_F(MemcpyBenchmark, BM_apex_memcpy)
     //Number of Updates, Number of Keys
     ->RangeMultiplier(2)
     ->Range(RANGE_MIN, RANGE_MAX)
