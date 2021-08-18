@@ -109,23 +109,15 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
 
         //init dataType to default value (JSON). Since only JSON is implemented currently,
         //no other checks needed.
-        MQTTSourceDescriptor::DataType dataType = MQTTSourceDescriptor::DataType::JSON;
-
-        //convert input to appropriate enum value for time Units
-        MQTTSourceDescriptor::TimeUnits timeUnits;
-        if (strcasecmp(mqttConfig[5].c_str(), "nanoseconds") == 0){
-            timeUnits = MQTTSourceDescriptor::TimeUnits::nanoseconds;
-        } else if (strcasecmp(mqttConfig[5].c_str(), "milliseconds") == 0){
-            timeUnits = MQTTSourceDescriptor::TimeUnits::milliseconds;
-        } else {
-            timeUnits = MQTTSourceDescriptor::TimeUnits::seconds;
+        MQTTSourceDescriptor::DataType dataType = MQTTSourceDescriptor::JSON;
+        if (strcasecmp(mqttConfig[4].c_str(), "JSON") == 0){
+            dataType = MQTTSourceDescriptor::DataType::JSON;
         }
 
         //Places in mqttConfig provide:
         //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = dataType (conversion to enum above)
         //5 = timeUnits (conversion to enum above); 6 = messageDelay
-        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3],
-                                            newNumberOfTuplesToProducePerBuffer, numBuffers, dataType, timeUnits, std::stoi(mqttConfig[6]));
+        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], dataType);
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
         return nullptr;

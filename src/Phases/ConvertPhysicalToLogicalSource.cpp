@@ -102,11 +102,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
                                                                                           mqttSourcePtr->getClientId(),
                                                                                           mqttSourcePtr->getUser(),
                                                                                           mqttSourcePtr->getTopic(),
-                                                                                          mqttSourcePtr->getNumberOfTuplesToProducePerBuffer(),
-                                                                                          mqttSourcePtr->getNumBuffersToProcess(),
-                                                                                          mqttSourcePtr->getDataType(),
-                                                                                          mqttSourcePtr->getTimeUnit(),
-                                                                                          mqttSourcePtr->getMessageDelay());
+                                                                                          mqttSourcePtr->getDataType());
             return mqttSourceDescriptor;
         }
 #endif

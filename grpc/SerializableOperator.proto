@@ -126,11 +126,6 @@ message SerializableOperator{
     }
 
     message SerializableMQTTSourceDescriptor {
-      enum TimeUnits{
-        nanoseconds=0;
-        milliseconds=1;
-        seconds=2;
-      };
       enum DataType{
         JSON=0;
       };
@@ -138,12 +133,8 @@ message SerializableOperator{
       string clientId = 2;
       string user = 3;
       string topic = 4;
-      uint64 numberOfTuplesToProducePerBuffer = 5;
-      uint64 numberOfBuffersToProcess = 6;
-      DataType dataType = 7;
-      TimeUnits timeUnit = 8;
-      uint64 msgDelay = 9;
-      SerializableSchema sourceSchema = 10;
+      DataType dataType = 5;
+      SerializableSchema sourceSchema = 6;
     }
 
     message SerializableNetworkSourceDescriptor {

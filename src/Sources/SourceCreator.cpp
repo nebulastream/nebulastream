@@ -296,14 +296,10 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                const std::string& clientId,
                                const std::string& user,
                                const std::string& topic,
-                               uint64_t numberOfTuplesToProducePerBuffer,
-                               uint64_t numberOfBuffersToProcess,
                                OperatorId operatorId,
                                size_t numSourceLocalBuffers,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                               MQTTSourceDescriptor::TimeUnits timeUnit,
-                               MQTTSourceDescriptor::DataType dataType,
-                               uint64_t messageDelay) {
+                               MQTTSourceDescriptor::DataType dataType) {
     return std::make_shared<MQTTSource>(schema,
                                         bufferManager,
                                         queryManager,
@@ -311,15 +307,11 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                         clientId,
                                         user,
                                         topic,
-                                        numberOfTuplesToProducePerBuffer,
-                                        numberOfBuffersToProcess,
                                         operatorId,
                                         numSourceLocalBuffers,
                                         DataSource::FREQUENCY_MODE,
                                         successors,
-                                        timeUnit,
-                                        dataType,
-                                        messageDelay);
+                                        dataType);
 }
 #endif
 }// namespace NES

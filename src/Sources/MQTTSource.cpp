@@ -43,8 +43,6 @@ namespace NES {
  in order to avoid type switching types (different time units require different duration types), the user input for
  the duration is treated as nanoseconds and then multiplied to 'convert' to milliseconds or seconds accordingly
 */
-const uint32_t NANO_TO_MILLI_SECONDS_MULTIPLIER = 1000000;
-const uint32_t NANO_TO_SECONDS_MULTIPLIER = 1000000000;
 
 MQTTSource::MQTTSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
@@ -53,15 +51,11 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        std::string const& clientId,
                        std::string const& user,
                        std::string const& topic,
-                       uint64_t numberOfTuplesToProducePerBuffer,
-                       uint64_t numberOfBuffersToProcess,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                       MQTTSourceDescriptor::TimeUnits timeUnit,
-                       MQTTSourceDescriptor::DataType dataType,
-                       uint64_t messageDelay)
+                       MQTTSourceDescriptor::DataType dataType)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -71,18 +65,20 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  std::move(executableSuccessors)),
       connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic),
       dataType(dataType),
-      tupleSize(schema->getSchemaSizeInBytes()),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numberOfBuffersToProcess(numberOfBuffersToProcess) {
+      tupleSize(schema->getSchemaSizeInBytes()){
 
     uint64_t i = random();
     client = std::make_shared<mqtt::async_client>(serverAddress, clientId + std::to_string(i));
 
-    minDelayBetweenSends =
-        std::chrono::nanoseconds(messageDelay
-                                 * ((timeUnit == MQTTSourceDescriptor::TimeUnits::milliseconds)
-                                    ? NANO_TO_MILLI_SECONDS_MULTIPLIER
-                                    : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != MQTTSourceDescriptor::TimeUnits::nanoseconds)
-                                       | (timeUnit == MQTTSourceDescriptor::TimeUnits::nanoseconds))));
+    //fill buffer maximally
+    tuplesThisPass = bufferManager->getBufferBlocking().getBufferSize() / tupleSize;
+
+    //init physical types
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    for (const auto& field : schema->fields) {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(physicalField);
+    }
 
     NES_DEBUG("MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId << ".");
 }
@@ -123,35 +119,16 @@ std::string MQTTSource::toString() const {
     ss << "CLIENTID=" << clientId << ", ";
     ss << "USER=" << user << ", ";
     ss << "TOPIC=" << topic << ", ";
-    ss << "DATATYPE=" << dataType << ", ";
-    ss << "TIMEUNITS=" << timeUnit << ", ";
-    ss << "MESSAGEDELAY=" << messageDelay << ". ";
+    ss << "DATATYPE=" << dataType << ". ";
     return ss.str();
 }
 
 void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
 
-    uint64_t generatedTuplesThisPass = 0;
-    //fill buffer maximally
-    if (numberOfTuplesToProducePerBuffer == 0) {
-        generatedTuplesThisPass = buf.getBufferSize() / tupleSize;
-    } else {
-        generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
-        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buf.getBufferSize(), "Wrong parameters");
-    }
-    NES_DEBUG("MQTTSource::fillBuffer: fill buffer with #tuples=" << generatedTuplesThisPass << " of size=" << tupleSize);
-
-    //init physical types
-    std::vector<PhysicalTypePtr> physicalTypes;
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (const auto& field : schema->fields) {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-        physicalTypes.push_back(physicalField);
-    }
+    NES_DEBUG("MQTTSource::fillBuffer: fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
 
     uint64_t tupCnt = 0;
-    while (tupCnt < generatedTuplesThisPass) {
-        //ToDo: handle what happens if no data arrives
+    while (tupCnt < tuplesThisPass) {
         std::string data = "";
         try {
             NES_DEBUG("Waiting for messages on topic: '" << topic << "'");
@@ -245,7 +222,6 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
             offset += fieldSize;
         }
         tupCnt++;
-        std::this_thread::sleep_for(minDelayBetweenSends);
     }//end of while
     buf.setNumberOfTuples(tupCnt);
     generatedTuples += tupCnt;
@@ -325,13 +301,8 @@ const string& MQTTSource::getClientId() const { return clientId; }
 const string& MQTTSource::getUser() const { return user; }
 const string& MQTTSource::getTopic() const { return topic; }
 MQTTSourceDescriptor::DataType MQTTSource::getDataType() const { return dataType; }
-MQTTSourceDescriptor::TimeUnits MQTTSource::getTimeUnit() const { return timeUnit; }
-uint64_t MQTTSource::getMessageDelay() const { return messageDelay; }
 uint64_t MQTTSource::getTupleSize() const { return tupleSize; }
-
 SourceType MQTTSource::getType() const { return MQTT_SOURCE; }
-uint64_t MQTTSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
-uint64_t MQTTSource::getNumberOfBuffersToProcess() const { return numberOfBuffersToProcess; }
 
 }// namespace NES
 #endif

@@ -286,6 +286,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
  * @param clientId the client id of the data, we want to obtain
  * @param user name to connect to the server
  * @param topic the topic needed for a subscription
+ * @param dataType type of data we expect
  * @return a const data source pointer
  */
 DataSourcePtr createMQTTSource(const SchemaPtr& schema,
@@ -295,14 +296,10 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                const std::string& clientId,
                                const std::string& user,
                                const std::string& topic,
-                               uint64_t numberOfTuplesToProducePerBuffer,
-                               uint64_t numberOfBuffersToProcess,
                                OperatorId operatorId,
                                size_t numSourceLocalBuffers,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                               MQTTSourceDescriptor::TimeUnits timeUnit = MQTTSourceDescriptor::TimeUnits::nanoseconds,
-                               MQTTSourceDescriptor::DataType dataType = MQTTSourceDescriptor::DataType::JSON,
-                               uint64_t messageDelay = 0);
+                               MQTTSourceDescriptor::DataType dataType = MQTTSourceDescriptor::DataType::JSON);
 #endif
 
 }// namespace NES
