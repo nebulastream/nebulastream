@@ -22,7 +22,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -52,7 +52,10 @@ class QueryChooseMemLayoutPhaseTest : public testing::Test {
 
 };
 
-TEST_F(QueryChooseMemLayoutPhaseTest, executeQueryChooseMemLayoutSimple) {
+TEST_F(QueryChooseMemLayoutPhaseTest, executeQueryChooseMemLayoutSimpleColLayout) {
+    const uint64_t numbersOfBufferToProduce = 1000;
+    const uint64_t frequency = 1000;
+
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -61,7 +64,9 @@ TEST_F(QueryChooseMemLayoutPhaseTest, executeQueryChooseMemLayoutSimple) {
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
-    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
+    auto source = LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema,
+                                                                                               numbersOfBufferToProduce,
+                                                                                               frequency));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f1") * 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -72,8 +77,45 @@ TEST_F(QueryChooseMemLayoutPhaseTest, executeQueryChooseMemLayoutSimple) {
     auto phase = Optimizer::QueryChooseMemLayoutPhase::create(Schema::COL_LAYOUT);
     phase->execute(plan);
 
-    // TODO write here a simple test
+    // Check that the source has a col layout
+    EXPECT_EQ(source->getInputSchema()->layoutType, Schema::COL_LAYOUT);
+}
 
+TEST_F(QueryChooseMemLayoutPhaseTest, executeQueryChooseMemLayoutSimpleRowLayout) {
+    const uint64_t numbersOfBufferToProduce = 1000;
+    const uint64_t frequency = 1000;
+
+    auto inputSchema = Schema::create();
+    inputSchema->addField("f1", BasicType::INT32);
+    inputSchema->addField("f2", BasicType::INT8);
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    streamCatalog->removeLogicalStream("default_logical");
+    streamCatalog->addLogicalStream("default_logical", inputSchema);
+
+    auto source = LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema,
+                                                                                               numbersOfBufferToProduce,
+                                                                                               frequency));
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f1") * 42);
+    auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
+
+    auto plan = QueryPlan::create(source);
+    plan->appendOperatorAsNewRoot(map);
+    plan->appendOperatorAsNewRoot(sink);
+
+    auto phase = Optimizer::QueryChooseMemLayoutPhase::create(Schema::ROW_LAYOUT);
+    phase->execute(plan);
+
+    // Check that the source has a row layout
+    EXPECT_EQ(source->getInputSchema()->layoutType, Schema::ROW_LAYOUT);
+}
+
+TEST_F(QueryChooseMemLayoutPhaseTest, queryChoooseMemLayoutPushBuffersColLayout) {
+    // TODO test here sending data in col layout and check if query works
+}
+
+TEST_F(QueryChooseMemLayoutPhaseTest, queryChoooseMemLayoutPushBuffersRowLayout) {
+    // TODO test here sending data in row layout and check if query works
 }
 
 }

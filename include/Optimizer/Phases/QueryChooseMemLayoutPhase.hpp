@@ -46,7 +46,7 @@ class QueryChooseMemLayoutPhase {
     static QueryChooseMemLayoutPhasePtr create(Schema::MemoryLayoutType layoutType);
 
     /**
-     * @brief Perform query
+     * @brief Sets either all sources to col or row layout
      * @param queryPlan : the input query plan
      */
     void execute(const QueryPlanPtr& queryPlan);

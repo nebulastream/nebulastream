@@ -36,14 +36,14 @@ void QueryChooseMemLayoutPhase::execute(const QueryPlanPtr& queryPlan) {
 
         for (auto& source : sources) {
             // TODO is this enough? Should I maybe create a setter in schema?
-            source->getSourceDescriptor()->getSchema()->layoutType = layoutType;
+            // This does only work for now with DefaultSource as all other sources do not support col layout
+            source->getSourceDescriptor()->getSchema()->layoutType = this->layoutType;
         }
 
         for (auto& sink : sinks) {
             // TODO what should I do here?
             ((void)sink);
         }
-
 
     } catch (Exception& e) {
         NES_THROW_RUNTIME_ERROR("QueryChooseMemLayoutPhase: Exception occurred during choose memory layout phase " << e.what());
