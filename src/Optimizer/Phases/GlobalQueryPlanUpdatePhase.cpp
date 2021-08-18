@@ -54,6 +54,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog);
     signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context, queryMergerRule);
 
+    // TODO change this to a more intelligent way
+    queryChooseMemLayoutPtr = QueryChooseMemLayoutPhase::create(Schema::COL_LAYOUT);
 }
 
 GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
