@@ -70,9 +70,6 @@ MQTTSource::MQTTSource(SchemaPtr schema,
     uint64_t i = random();
     client = std::make_shared<mqtt::async_client>(serverAddress, clientId + std::to_string(i));
 
-    //fill buffer maximally
-    tuplesThisPass = bufferManager->getBufferBlocking().getBufferSize() / tupleSize;
-
     //init physical types
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const auto& field : schema->fields) {
@@ -124,6 +121,9 @@ std::string MQTTSource::toString() const {
 }
 
 void MQTTSource::fillBuffer(Runtime::TupleBuffer& buf) {
+
+    //fill buffer maximally
+    tuplesThisPass = buf.getBufferSize() / tupleSize;
 
     NES_DEBUG("MQTTSource::fillBuffer: fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
 

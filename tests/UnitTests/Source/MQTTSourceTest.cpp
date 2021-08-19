@@ -50,6 +50,22 @@
 #define USER "rfRqLGZRChg8eS30PEeR"
 #endif
 
+#ifndef OPERATORID
+#define OPERATORID 1
+#endif
+
+#ifndef NUMSOURCELOCALBUFFERS
+#define NUMSOURCELOCALBUFFERS 12
+#endif
+
+#ifndef SUCCESSORS
+#define SUCCESSORS {}
+#endif
+
+#ifndef DATATYPE
+#define DATATYPE MQTTSourceDescriptor::DataType::JSON
+#endif
+
 namespace NES {
 
 class MQTTSourceTest : public testing::Test {
@@ -101,10 +117,10 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
                                        CLIENTID,
                                        USER,
                                        TOPIC,
-                                       1,
-                                       12,
-                                       {},
-                                       MQTTSourceDescriptor::DataType::JSON);
+                                       OPERATORID,
+                                       NUMSOURCELOCALBUFFERS,
+                                       SUCCESSORS,
+                                       DATATYPE);
 
     SUCCEED();
 }
@@ -121,10 +137,10 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        CLIENTID,
                                        USER,
                                        TOPIC,
-                                       1,
-                                       12,
-                                       {},
-                                       MQTTSourceDescriptor::DataType::JSON);
+                                       OPERATORID,
+                                       NUMSOURCELOCALBUFFERS,
+                                       SUCCESSORS,
+                                       DATATYPE);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
@@ -145,7 +161,10 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 
     auto test_schema = Schema::create()->addField("var", UINT32);
     auto mqttSource =
-        createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, 1, 12, {});
+        createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, OPERATORID,
+                         NUMSOURCELOCALBUFFERS,
+                         SUCCESSORS,
+                         DATATYPE);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;

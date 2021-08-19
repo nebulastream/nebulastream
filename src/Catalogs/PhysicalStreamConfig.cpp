@@ -107,8 +107,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         NES_DEBUG("PhysicalStreamConfig: create MQTT source with configurations: " << conf << ".");
         std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter(conf,";");
 
-        //init dataType to default value (JSON). Since only JSON is implemented currently,
-        //no other checks needed.
+        //init dataType to default value (JSON). Only flat JSON format implemented currently
         MQTTSourceDescriptor::DataType dataType = MQTTSourceDescriptor::JSON;
         if (strcasecmp(mqttConfig[4].c_str(), "JSON") == 0){
             dataType = MQTTSourceDescriptor::DataType::JSON;
