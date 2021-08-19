@@ -43,7 +43,8 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
                                       uint64_t numBuffersToProcess,
                                       uint64_t gatheringValue,
                                       const std::string& gatheringMode,
-                                      const std::string& sourceMode);
+                                      const std::string& sourceMode,
+                                      uint64_t sourceAffinity);
 
     ~MemorySourceStreamConfig() noexcept override = default;
 
@@ -96,7 +97,8 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
                                                   uint64_t numBuffersToProcess,
                                                   uint64_t gatheringValue,
                                                   const std::string& gatheringMode,
-                                                  const std::string& sourceMode);
+                                                  const std::string& sourceMode,
+                                                  uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 
     static MemorySource::SourceMode getSourceModeFromString(const std::string& mode);
 
@@ -107,6 +109,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
     uint64_t gatheringValue;
     DataSource::GatheringMode gatheringMode;
     MemorySource::SourceMode sourceMode;
+    uint64_t sourceAffinity;
 };
 
 }// namespace NES

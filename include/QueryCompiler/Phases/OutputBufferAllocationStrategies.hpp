@@ -32,7 +32,8 @@ enum OutputBufferAllocationStrategy : unsigned char {
     OMIT_OVERFLOW_CHECK,
     /// create separate result buffer and copy everything over after all operations are applied.
     /// Check size after every written tuple.
-    NO_OPTIMIZATION
+    NO_OPTIMIZATION,
+    BITMASK_INPLACE_END
 };
 
 }// namespace NES::QueryCompilation

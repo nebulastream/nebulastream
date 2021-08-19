@@ -1,3 +1,4 @@
+
 /*
     Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
@@ -110,6 +111,26 @@ bool DataSource::start() {
     type = getType();
     NES_DEBUG("DataSource " << operatorId << ": Spawn thread");
     thread = std::make_shared<std::thread>([this, &prom]() {
+        // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
+        // only CPU i as set.
+        if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
+            cpu_set_t cpuset;
+            CPU_ZERO(&cpuset);
+            CPU_SET(sourceAffinity, &cpuset);
+            int rc = pthread_setaffinity_np(this->thread->native_handle(), sizeof(cpu_set_t), &cpuset);
+            if (rc != 0) {
+                NES_ERROR("Error calling pthread_setaffinity_np: " << rc );
+            }
+            else
+            {
+                NES_ERROR("source " << operatorId << " pins to core=" << sourceAffinity);
+            }
+        }
+        else
+        {
+            NES_ERROR("Use default affinity");
+        }
+
         prom.set_value(true);
         runningRoutine();
     });

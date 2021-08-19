@@ -37,6 +37,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
                            SourceMode sourceMode,
+                           uint64_t sourceAffinity,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -55,6 +56,7 @@ MemorySource::MemorySource(SchemaPtr schema,
     } else {
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
     }
+    this->sourceAffinity = sourceAffinity;
 
     //if the memory area is smaller than a buffer
     if (memoryAreaSize <= globalBufferManager->getBufferSize()) {
