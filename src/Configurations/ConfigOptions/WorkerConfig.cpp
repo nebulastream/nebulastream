@@ -68,7 +68,12 @@ WorkerConfig::WorkerConfig() {
                                           "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"
                                           "REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]. ");
 
-    numaAwareness = ConfigOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
+    sourcePinList = ConfigOption<std::string>::create("sourcePinList", "", "comma separated list of where to map the sources");
+
+    workerPinList = ConfigOption<std::string>::create("workerPinList", "", "comma separated list of where to map the worker");
+
+    numaAwareness =
+        ConfigOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
 }
 
 void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -118,6 +123,12 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()
                 && config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>() != "\n") {
                 setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
+            }
+            if (!config["sourcePinList"].As<std::string>().empty() && config["sourcePinList"].As<std::string>() != "\n") {
+                setSourcePinList(config["sourcePinList"].As<std::string>());
+            }
+            if (!config["workerPinList"].As<std::string>().empty() && config["workerPinList"].As<std::string>() != "\n") {
+                setWorkerPinList(config["setWorkerPinList"].As<std::string>());
             }
             if (!config["queryCompilerExecutionMode"].As<std::string>().empty()
                 && config["queryCompilerExecutionMode"].As<std::string>() != "\n") {
@@ -175,8 +186,12 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setQueryCompilerExecutionMode(it->second);
             } else if (it->first == "--queryCompilerOutputBufferOptimizationLevel" && !it->second.empty()) {
                 setQueryCompilerOutputBufferAllocationStrategy(it->second);
+            } else if (it->first == "--sourcePinList") {
+                setSourcePinList(it->second);
+            } else if (it->first == "--workerPinList") {
+                setWorkerPinList(it->second);
             } else if (it->first == "--numaAwareness") {
-                numaAwareness->setValue(true);
+                setNumaAware(true);
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -204,6 +219,8 @@ void WorkerConfig::resetWorkerOptions() {
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
     setQueryCompilerExecutionMode(queryCompilerExecutionMode->getDefaultValue());
     setQueryCompilerOutputBufferAllocationStrategy(queryCompilerOutputBufferOptimizationLevel->getDefaultValue());
+    setWorkerPinList(workerPinList->getDefaultValue());
+    setSourcePinList(sourcePinList->getDefaultValue());
 }
 
 StringConfigOption WorkerConfig::getLocalWorkerIp() { return localWorkerIp; }
@@ -270,6 +287,29 @@ void WorkerConfig::setQueryCompilerOutputBufferAllocationStrategy(std::string qu
     this->queryCompilerOutputBufferOptimizationLevel->setValue(std::move(queryCompilerOutputBufferAllocationStrategy));
 }
 
+const StringConfigOption& WorkerConfig::getWorkerPinList() const {
+    return workerPinList;
+}
+
+const StringConfigOption& WorkerConfig::getSourcePinList() const {
+    return sourcePinList;
+}
+
+void WorkerConfig::setWorkerPinList(const std::string list) {
+    if (!list.empty()) {
+        WorkerConfig::workerPinList->setValue(list);
+    }
+}
+
+void WorkerConfig::setSourcePinList(const std::string list) {
+    if (!list.empty()) {
+        WorkerConfig::sourcePinList->setValue(list);
+    }
+}
+
+bool WorkerConfig::isNumaAware() const {
+    return numaAwareness->getValue();
+}
 bool WorkerConfig::isNumaAware() const { return numaAwareness->getValue(); }
 
 void WorkerConfig::setNumaAware(bool status) { numaAwareness->setValue(status); }

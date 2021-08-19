@@ -127,6 +127,21 @@ std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string&
     return elems;
 }
 
+std::vector<std::uint64_t> UtilityFunctions::splitWithStringDelimiterAsInt(const std::string& s, const std::string& delim) {
+    std::string copy = s;
+    size_t pos = 0;
+    std::vector<std::uint64_t> elems;
+    while ((pos = copy.find(delim)) != std::string::npos) {
+        elems.push_back(std::atoi(copy.substr(0, pos).c_str()));
+        copy.erase(0, pos + delim.length());
+    }
+    if (!copy.substr(0, pos).empty()) {
+        elems.push_back(std::atoi(copy.substr(0, pos).c_str()));
+    }
+
+    return elems;
+}
+
 std::string UtilityFunctions::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {

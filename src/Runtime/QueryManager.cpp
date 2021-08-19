@@ -90,8 +90,8 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
 #endif
 
-QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers, uint64_t nodeEngineId, uint16_t numThreads)
-    : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads)
+QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers, uint64_t nodeEngineId, uint16_t numThreads, std::vector<uint64_t> workerToCoreMapping = {})
+    : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads), workerToCoreMapping(workerToCoreMapping)
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 
 #else
@@ -111,7 +111,7 @@ bool QueryManager::startThreadPool() {
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     auto expected = Created;
     if (queryManagerStatus.compare_exchange_strong(expected, Running)) {
-        threadPool = std::make_shared<ThreadPool>(nodeEngineId, inherited0::shared_from_this(), numThreads);
+        threadPool = std::make_shared<ThreadPool>(nodeEngineId, inherited0::shared_from_this(), numThreads, workerToCoreMapping);
         return threadPool->start();
     }
     NES_ASSERT2_FMT(false, "Cannot start query manager workers");

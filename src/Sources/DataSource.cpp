@@ -123,12 +123,12 @@ bool DataSource::start() {
             }
             else
             {
-                NES_ERROR("source " << operatorId << " pins to core=" << sourceAffinity);
+                NES_WARNING("source " << operatorId << " pins to core=" << sourceAffinity);
             }
         }
         else
         {
-            NES_ERROR("Use default affinity");
+            NES_WARNING("Use default affinity for source");
         }
 
         prom.set_value(true);
