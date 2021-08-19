@@ -212,6 +212,20 @@ class WorkerConfig {
     */
     void setQueryCompilerOutputBufferAllocationStrategy(std::string queryCompilerOutputBufferAllocationStrategy);
 
+    /**
+    * @brief getter/setter for sourcePinList
+    * @return
+    */
+    const StringConfigOption& getSourcePinList() const;
+    void setSourcePinList(const std::string list);
+
+    /**
+    * @brief getter/setter for workerPinList
+    * @return
+    */
+    const StringConfigOption& getWorkerPinList() const;
+    void setWorkerPinList(const std::string list);
+
     [[nodiscard]] bool isNumaAware() const;
 
     void setNumaAware(bool status);
@@ -236,6 +250,9 @@ class WorkerConfig {
     StringConfigOption queryCompilerOutputBufferOptimizationLevel;
     /// numa awarness
     BoolConfigOption numaAwareness;
+
+    StringConfigOption sourcePinList;
+    StringConfigOption workerPinList;
 };
 
 }// namespace NES

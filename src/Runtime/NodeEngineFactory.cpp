@@ -58,6 +58,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
                                                   const uint64_t numberOfBuffersInSourceLocalBufferPool,
                                                   const uint64_t numberOfBuffersPerPipeline,
+                                                  const std::string& workerToCodeMapping,
                                                   NumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& queryCompilerExecutionMode,
                                                   const std::string& queryCompilerOutputBufferOptimizationLevel) {
@@ -65,6 +66,17 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
+        auto bufferManager = std::make_shared<BufferManager>(bufferSize, numberOfBuffersInGlobalBufferManager);
+        QueryManagerPtr queryManager;
+        if(workerToCodeMapping != "")
+        {
+            std::vector<uint64_t> workerToCoreMapping = UtilityFunctions::splitWithStringDelimiterAsInt(workerToCodeMapping, ",");
+            queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads, workerToCoreMapping);
+        }
+        else
+        {
+            queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
+        }
         auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
         std::vector<BufferManagerPtr> bufferManagers;
 #ifdef NES_ENABLE_NUMA_SUPPORT

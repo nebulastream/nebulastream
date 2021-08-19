@@ -192,6 +192,7 @@ class NesWorker {
     std::string rpcAddress;
     std::string coordinatorIp;
     std::string localWorkerIp;
+    std::string workerToCoreMapping;
     uint16_t coordinatorPort;
     uint16_t localWorkerRpcPort;
     uint16_t localWorkerZmqPort;

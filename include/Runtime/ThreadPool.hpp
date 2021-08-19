@@ -36,7 +36,7 @@ class ThreadPool {
     /**
      * @brief default constructor
      */
-    explicit ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads);
+    explicit ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads, std::vector<uint64_t> workerToCoreMapping);
 
     /**
      * @brief default destructor
@@ -92,6 +92,7 @@ class ThreadPool {
     std::vector<std::thread> threads{};
     mutable std::recursive_mutex reconfigLock;
     std::shared_ptr<QueryManager> queryManager;
+    std::vector<uint64_t> workerToCoreMapping;
 };
 
 using ThreadPoolPtr = std::shared_ptr<ThreadPool>;

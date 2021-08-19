@@ -46,6 +46,7 @@ namespace NES {
 NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
     : conf(PhysicalStreamConfig::createEmpty()), coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
       localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
+      workerToCoreMapping(workerConfig->getWorkerPinList()->getValue()),
       coordinatorPort(workerConfig->getCoordinatorPort()->getValue()), localWorkerRpcPort(workerConfig->getRpcPort()->getValue()),
       localWorkerZmqPort(workerConfig->getDataPort()->getValue()), numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
       numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()),

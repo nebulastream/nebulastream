@@ -27,8 +27,8 @@
 #include <utility>
 namespace NES::Runtime {
 
-ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads)
-    : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)) {}
+ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads, std::vector<uint64_t> workerToCoreMapping)
+: nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)), workerToCoreMapping(workerToCoreMapping) {}
 
 ThreadPool::~ThreadPool() {
     NES_DEBUG("Threadpool: Destroying Thread Pool");
@@ -82,17 +82,37 @@ bool ThreadPool::start() {
         return false;
     }
     running = true;
+
     /* spawn threads */
     NES_DEBUG("Threadpool: Spawning " << numThreads << " threads");
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, i, barrier]() {
             setThreadName("Wrk-%d-%d", nodeId, i);
+            if(workerToCoreMapping.size() != 0)
+            {
+                cpu_set_t cpuset;
+                CPU_ZERO(&cpuset);
+                CPU_SET(workerToCoreMapping[i], &cpuset);
+                int rc = pthread_setaffinity_np(this->threads[i].native_handle(), sizeof(cpu_set_t), &cpuset);
+                if (rc != 0) {
+                    NES_ERROR("Error calling pthread_setaffinity_np: " << rc );
+                }
+                else
+                {
+                    NES_WARNING("worker " << i << " pins to core=" << workerToCoreMapping[i]);
+                }
+            }
+            else
+            {
+                NES_WARNING("Worker use default affinity");
+            }
+
             barrier->wait();
             runningRoutine(WorkerContext(NesThread::getId()));
         });
     }
     barrier->wait();
-    NES_DEBUG("Threadpool:start return from start");
+    NES_DEBUG("Threadpool: start return from start");
     return true;
 }
 
@@ -125,3 +145,5 @@ uint32_t ThreadPool::getNumberOfThreads() const {
 }
 
 }// namespace NES::Runtime
+
+#pragma clang diagnostic pop

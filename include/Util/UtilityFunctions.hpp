@@ -125,6 +125,7 @@ class UtilityFunctions {
     */
 
     static std::vector<std::string> splitWithStringDelimiter(std::string& s, const std::string& delim);
+    static std::vector<std::uint64_t> splitWithStringDelimiterAsInt(const std::string& s, const std::string& delim);
 
     static std::string prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema);
 
