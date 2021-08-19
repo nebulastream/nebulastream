@@ -137,6 +137,14 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         return operatorPipeline;
     }
 
+    if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()
+    && level == QueryCompilerOptions::BITMASK) {
+        // The optimization "omit size check" can be applied.
+        emitNode->setOutputBufferAllocationStrategy(BITMASK_INPLACE_END);
+        NES_DEBUG("BufferOptimizationPhase: Assign BITMASK_INPLACE_END optimization strategy to pipeline for bitmask.");
+        return operatorPipeline;
+    }
+
     // level != NO, but still no optimization can be applied
     NES_DEBUG("BufferOptimizationPhase: Optimization was requested, but no optimization was applied.");
 

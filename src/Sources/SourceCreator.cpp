@@ -128,7 +128,8 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  size_t numSourceLocalBuffers,
                                  DataSource::GatheringMode gatheringMode,
                                  MemorySource::SourceMode sourceMode,
-                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                                 uint64_t sourceAffinity) {
     return std::make_shared<MemorySource>(schema,
                                           memoryArea,
                                           memoryAreaSize,
@@ -140,6 +141,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                           numSourceLocalBuffers,
                                           gatheringMode,
                                           sourceMode,
+                                          sourceAffinity,
                                           successors);
 }
 

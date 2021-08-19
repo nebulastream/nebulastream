@@ -209,7 +209,8 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  size_t numSourceLocalBuffers,
                                  DataSource::GatheringMode gatheringMode,
                                  MemorySource::SourceMode sourceMode,
-                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                                 uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 
 /**
  * @brief function to create a network source

@@ -39,7 +39,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
                                     uint64_t numBuffersToProcess,
                                     uint64_t gatheringValue,
                                     DataSource::GatheringMode gatheringMode,
-                                    MemorySource::SourceMode sourceMode);
+                                    MemorySource::SourceMode sourceMode,
+                                    uint64_t sourceAffinity);
 
     /**
      * @brief Factory method to create a MemorySourceDescriptor object
@@ -54,7 +55,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
                                                           uint64_t numBuffersToProcess,
                                                           uint64_t gatheringValue,
                                                           DataSource::GatheringMode gatheringMode,
-                                                          MemorySource::SourceMode sourceMode);
+                                                          MemorySource::SourceMode sourceMode,
+                                                          uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 
     /**
      * @brief Provides the string representation of the memory source
@@ -105,6 +107,12 @@ class MemorySourceDescriptor : public SourceDescriptor {
      */
     uint64_t getGatheringValue() const;
 
+    /**
+    * @brief return the gathering value
+    * @return
+    */
+    uint64_t getSourceAffinity() const;
+
   private:
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
@@ -112,6 +120,7 @@ class MemorySourceDescriptor : public SourceDescriptor {
     uint64_t gatheringValue;
     DataSource::GatheringMode gatheringMode;
     MemorySource::SourceMode sourceMode;
+    uint64_t sourceAffinity;
 };
 }// namespace NES
 

@@ -40,6 +40,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ContinueStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFElseStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
@@ -346,6 +347,14 @@ bool CCodeGenerator::generateCodeForFilter(PredicatePtr pred, PipelineContextPtr
     // second, move insertion point. the rest of the pipeline will be generated within the brackets of the if-statement
     context->code->currentCodeInsertionPoint = ifStatement.getCompoundStatement();
 
+    //new code
+//    auto ifelseStatem = IfElseStatement(*predicateExpression, *(new CompoundStatement()), *(new CompoundStatement()));
+//    context->code->currentCodeInsertionPoint->addStatement(ifelseStatem.createCopy());
+//    // second, move insertion point. the rest of the pipeline will be generated within the brackets of the if-statement
+//    context->code->currentCodeInsertionPoint = ifelseStatem.getFalseCaseCompoundStatement();
+//    predicateExpression->get
+//    context->code->currentCodeInsertionPoint = ifelseStatem.getTrueCaseCompoundStatement();
+
     return true;
 }
 
@@ -400,7 +409,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(structDeclarationResultTuple)),
                                         "resultTuples");
         // initialize result buffer
-        if (bufferStrategy == ONLY_INPLACE_OPERATIONS) {
+        if (bufferStrategy == ONLY_INPLACE_OPERATIONS || bufferStrategy == BITMASK_INPLACE_END) {
             // We do not even initialize a buffer, we just use "inputBuffer" as the resultBuffer-handle for the later emit.
             // The only contents in the Scan's for loop will be map operations.
             code->varDeclarationResultBuffer = code->varDeclarationInputBuffer;
@@ -555,7 +564,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
     // Generate final logic to emit the last buffer to the Runtime
     // 1. set the number of tuples to the buffer
-    if (bufferStrategy != ONLY_INPLACE_OPERATIONS) {
+    if (bufferStrategy != ONLY_INPLACE_OPERATIONS || bufferStrategy == BITMASK_INPLACE_END) {
         code->cleanupStmts.push_back(
             setNumberOfTuples(code->varDeclarationResultBuffer, code->varDeclarationNumberOfResultTuples).copy());
     }

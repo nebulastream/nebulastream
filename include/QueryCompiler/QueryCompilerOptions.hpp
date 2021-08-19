@@ -41,7 +41,8 @@ class QueryCompilerOptions {
         REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,
         /// enable the two optimizations individually (benchmarking only)
         REUSE_INPUT_BUFFER_NO_FALLBACK,
-        OMIT_OVERFLOW_CHECK_NO_FALLBACK
+        OMIT_OVERFLOW_CHECK_NO_FALLBACK,
+        BITMASK
     };
     /**
      * @brief Creates the default options.
