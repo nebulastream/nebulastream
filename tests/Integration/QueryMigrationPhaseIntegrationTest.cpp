@@ -50,7 +50,7 @@ class QueryMigrationPhaseIntegrationTest : public testing::Test {
         NES_DEBUG("Setup QueryMigrationPhaseIntegrationTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }
@@ -530,40 +530,46 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondPlusOneTopologySingleQueryWith
     wrkConf->setCoordinatorPort(rpcPort);
     wrkConf->setNumWorkerThreads(3);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
-    //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
+    TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
+    ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
+    TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
+    ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
     wrkConf->setRpcPort(port + 30);
     wrkConf->setDataPort(port + 31);
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    wrk4->replaceParent(1,3);
-
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk4->replaceParent(crdTopologyNodeId,wrk3TopologyNodeId);
 
     wrkConf->setRpcPort(port + 40);
     wrkConf->setDataPort(port + 41);
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 2);
-    wrk5->addParent(4);
+    TopologyNodeId wrk5TopologyNodeId = wrk5->getTopologyNodeId();
+    ASSERT_NE(wrk5TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk5->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
+    wrk5->addParent(wrk4TopologyNodeId);
 
-    TopologyPtr topo = crd->getTopology();
     //register logical stream
     std::string testSchema = "Schema::create()->addField(createField(\"id\", UINT64));";
     std::string testSchemaFileName = "testSchema.hpp";
@@ -630,8 +636,8 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondPlusOneTopologySingleQueryWith
 
     bool success = compareDataToBaseline(filePath,ids);
     EXPECT_EQ(success , true);
-
 }
+
 TEST_F(QueryMigrationPhaseIntegrationTest, DiamondPlusOneTopologySingleQueryNoBufferTest) {
 
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
@@ -640,40 +646,47 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondPlusOneTopologySingleQueryNoBu
     coConf->setRpcPort(rpcPort);
     coConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
-    wrkConf->setNumWorkerThreads(3); //breaks with only thread
+    wrkConf->setNumWorkerThreads(3);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
-    //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
+    TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
+    ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
+    TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
+    ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
     wrkConf->setRpcPort(port + 30);
     wrkConf->setDataPort(port + 31);
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    wrk4->replaceParent(1,3);
-
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk4->replaceParent(crdTopologyNodeId,wrk3TopologyNodeId);
 
     wrkConf->setRpcPort(port + 40);
     wrkConf->setDataPort(port + 41);
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 2);
-    wrk5->addParent(4);
+    TopologyNodeId wrk5TopologyNodeId = wrk5->getTopologyNodeId();
+    ASSERT_NE(wrk5TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk5->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
+    wrk5->addParent(wrk4TopologyNodeId);
 
     //register logical stream
     std::string testSchema = "Schema::create()->addField(createField(\"id\", UINT64));";
