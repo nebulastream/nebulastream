@@ -116,7 +116,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         //Places in mqttConfig provide:
         //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = dataType (conversion to enum above)
         //5 = timeUnits (conversion to enum above); 6 = messageDelay
-        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], dataType);
+        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], dataType, stoi(mqttConfig[5]), (strcasecmp("true",mqttConfig[6].c_str()) == 0));
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
         return nullptr;

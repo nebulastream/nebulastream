@@ -30,6 +30,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
 
   public:
     enum DataType {JSON};
+
     /**
      * @brief create a source descriptor pointer for MQTT source
      * @param schema the schema of the data
@@ -37,7 +38,9 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param clientId identifies the client connecting to the server, each server has aunique clientID
      * @param user to connect to server
      * @param topic to subscribe to
-     * @param timeUnits unit for the timed delay, default = nanoseconds
+     * @param dataType data type that is send by the broker
+     * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
+     * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
      * @return source descriptor pointer to mqtt source
      */
     static SourceDescriptorPtr create(SchemaPtr schema,
@@ -45,7 +48,9 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                       std::string clientId,
                                       std::string user,
                                       std::string topic,
-                                      DataType dataType);
+                                      DataType dataType,
+                                      uint32_t qos,
+                                      bool cleanSession);
     /**
      * @brief create a source descriptor pointer for MQTT source
      * @param logicalStreamName Name of the logical data stream
@@ -54,7 +59,9 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param clientId identifies the client connecting to the server, each server has aunique clientID
      * @param user to connect to server
      * @param topic to subscribe to
-     * @param timeUnits unit for the timed delay, default = nanoseconds
+     * @param dataType data type that is send by the broker
+     * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
+     * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
      * @return source descriptor pointer to mqtt source
      */
     static SourceDescriptorPtr create(SchemaPtr schema,
@@ -63,7 +70,9 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                       std::string clientId,
                                       std::string user,
                                       std::string topic,
-                                      DataType dataType);
+                                      DataType dataType,
+                                      uint32_t qos,
+                                      bool cleanSession);
 
     /**
      * @brief get MQTT server address
@@ -90,6 +99,17 @@ class MQTTSourceDescriptor : public SourceDescriptor {
     std::string getTopic() const;
 
     /**
+     * @brief getter for Quality of Service
+     * @return Quality of Service
+     */
+    uint32_t getQos() const;
+    /**
+     * @brief getter for cleanSession
+     * @return cleanSession
+     */
+    bool getCleanSession() const;
+
+    /**
      * @brief getter for dataType
      * @return dataType
      */
@@ -112,14 +132,18 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param clientId unique server id
      * @param user to connect to server
      * @param topic to subscribe to
-     * @param timeUnits unit for the timed delay, default = nanoseconds
+     * @param dataType data type that is send by the broker
+     * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
+     * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
      */
     explicit MQTTSourceDescriptor(SchemaPtr schema,
                                   std::string serverAddress,
                                   std::string clientId,
                                   std::string user,
                                   std::string topic,
-                                  DataType dataType);
+                                  DataType dataType,
+                                  uint32_t qos,
+                                  bool cleanSession);
     /**
      * @brief mqtt source descriptor constructor
      * @param schema the schema of the data
@@ -128,7 +152,9 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param clientId unique server id
      * @param user to connect to server
      * @param topic to subscribe to
-     * @param timeUnits unit for the timed delay, default = nanoseconds
+     * @param dataType data type that is send by the broker
+     * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
+     * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
      */
     explicit MQTTSourceDescriptor(SchemaPtr schema,
                                   std::string logicalStreamName,
@@ -136,7 +162,9 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                   std::string clientId,
                                   std::string user,
                                   std::string topic,
-                                  DataType dataType);
+                                  DataType dataType,
+                                  uint32_t qos,
+                                  bool cleanSession);
 
     std::string serverAddress;
     std::string clientId;
@@ -144,6 +172,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
     std::string password;
     std::string topic;
     DataType dataType;
+    uint32_t qos;
+    bool cleanSession;
 };
 
 using MQTTSourceDescriptorPtr = std::shared_ptr<MQTTSourceDescriptor>;

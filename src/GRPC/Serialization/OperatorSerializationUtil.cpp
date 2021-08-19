@@ -1069,7 +1069,9 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
                                                 mqttSerializedSourceDescriptor.clientid(),
                                                 mqttSerializedSourceDescriptor.user(),
                                                 mqttSerializedSourceDescriptor.topic(),
-                                                (MQTTSourceDescriptor::DataType) mqttSerializedSourceDescriptor.datatype());
+                                                (MQTTSourceDescriptor::DataType) mqttSerializedSourceDescriptor.datatype(),
+                                                mqttSerializedSourceDescriptor.qos(),
+                                                mqttSerializedSourceDescriptor.cleansession());
         return ret;
     }
 #endif

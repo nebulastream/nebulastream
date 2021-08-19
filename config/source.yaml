@@ -7,12 +7,14 @@ sourceType: NoSource
 # Set source configuration. Options depend on source type.
 # DefaultSource: NoConfig (not needed)
 # CSVSource: String with path to CSV file.
-# MQTTSource: String set up as follows: "url;clientId;userId;topic;dataType"
+# MQTTSource: String set up as follows: "url;clientId;userId;topic;dataType;QoS;cleanSession"
 #            url to connect to broker
 #            clientId needed to connect to broker, system will add random number to it, to make sure it is unique per connection
 #            userId string with user name
 #            topic to connect to for data collection
 #            dataType type of data we want to receive, currently only JSON implemented
+#            qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
+#            cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
 # OPCSource (ToDo: Make source available): String set up as follows: "url;namespaceIndex;identifier;user;pwd"
 #            where the url is a string containing the full OPC server url,
 #            namespaceIndex is a uint16_t providing the namespanaceIndex for the nodeId,

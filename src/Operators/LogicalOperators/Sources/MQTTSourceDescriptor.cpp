@@ -28,13 +28,17 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  std::string clientId,
                                                  std::string user,
                                                  std::string topic,
-                                                 DataType dataType) {
+                                                 DataType dataType,
+                                                 uint32_t qos,
+                                                 bool cleanSession) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema),
                                                                        std::move(serverAddress),
                                                                        std::move(clientId),
                                                                        std::move(user),
                                                                        std::move(topic),
-                                                                       dataType));
+                                                                       dataType,
+                                                                       qos,
+                                                                       cleanSession));
 }
 
 SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
@@ -43,14 +47,18 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  std::string clientId,
                                                  std::string user,
                                                  std::string topic,
-                                                 DataType dataType) {
+                                                 DataType dataType,
+                                                 uint32_t qos,
+                                                 bool cleanSession) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema),
                                                                        std::move(logicalStreamName),
                                                                        std::move(serverAddress),
                                                                        std::move(clientId),
                                                                        std::move(user),
                                                                        std::move(topic),
-                                                                       dataType));
+                                                                       dataType,
+                                                                       qos,
+                                                                       cleanSession));
 }
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
@@ -58,9 +66,11 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string clientId,
                                            std::string user,
                                            std::string topic,
-                                           DataType dataType)
+                                           DataType dataType,
+                                           uint32_t qos,
+                                           bool cleanSession)
     : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)),
-      user(std::move(user)), topic(std::move(topic)), dataType(dataType){}
+      user(std::move(user)), topic(std::move(topic)), dataType(dataType), qos(qos), cleanSession(cleanSession){}
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string logicalStreamName,
@@ -68,9 +78,11 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string clientId,
                                            std::string user,
                                            std::string topic,
-                                           DataType dataType)
+                                           DataType dataType,
+                                           uint32_t qos,
+                                           bool cleanSession)
     : SourceDescriptor(std::move(schema), std::move(logicalStreamName)), serverAddress(std::move(serverAddress)),
-      clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), dataType(dataType){}
+      clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), dataType(dataType), qos(qos), cleanSession(cleanSession){}
 
 std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
 
@@ -79,6 +91,10 @@ std::string MQTTSourceDescriptor::getClientId() const { return clientId; }
 std::string MQTTSourceDescriptor::getUser() const { return user; }
 
 std::string MQTTSourceDescriptor::getTopic() const { return topic; }
+
+uint32_t MQTTSourceDescriptor::getQos() const { return qos; }
+
+bool MQTTSourceDescriptor::getCleanSession() const {return cleanSession;}
 
 std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor()"; }
 
@@ -93,7 +109,8 @@ bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     NES_DEBUG("URL= " << serverAddress << " == " << otherMQTTSource->getServerAddress());
     return serverAddress == otherMQTTSource->getServerAddress() && clientId == otherMQTTSource->getClientId()
         && user == otherMQTTSource->getUser() && topic == otherMQTTSource->getTopic()
-        && dataType == otherMQTTSource->getDataType();
+        && dataType == otherMQTTSource->getDataType() && qos == otherMQTTSource->getQos()
+        && cleanSession == otherMQTTSource->getCleanSession();
 }
 
 }// namespace NES

@@ -66,6 +66,14 @@
 #define DATATYPE MQTTSourceDescriptor::DataType::JSON
 #endif
 
+#ifndef QOS
+#define QOS 1
+#endif
+
+#ifndef CLEANSESSION
+#define CLEANSESSION false
+#endif
+
 namespace NES {
 
 class MQTTSourceTest : public testing::Test {
@@ -120,7 +128,9 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
-                                       DATATYPE);
+                                       DATATYPE,
+                                       QOS,
+                                       CLEANSESSION);
 
     SUCCEED();
 }
@@ -140,12 +150,14 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
-                                       DATATYPE);
+                                       DATATYPE,
+                                       QOS,
+                                       CLEANSESSION);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
                            "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry, "
-                           "DATATYPE=0. ";
+                           "DATATYPE=0, QOS=1, CLEANSESSION=0. ";
 
     EXPECT_EQ(mqttSource->toString(), expected);
 
@@ -164,7 +176,9 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
         createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, OPERATORID,
                          NUMSOURCELOCALBUFFERS,
                          SUCCESSORS,
-                         DATATYPE);
+                         DATATYPE,
+                         QOS,
+                         CLEANSESSION);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
