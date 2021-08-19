@@ -134,7 +134,9 @@ message SerializableOperator{
       string user = 3;
       string topic = 4;
       DataType dataType = 5;
-      SerializableSchema sourceSchema = 6;
+      uint32 qos = 6;
+      bool cleanSession = 7;
+      SerializableSchema sourceSchema = 8;
     }
 
     message SerializableNetworkSourceDescriptor {

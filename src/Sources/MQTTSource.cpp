@@ -55,7 +55,9 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                       MQTTSourceDescriptor::DataType dataType)
+                       MQTTSourceDescriptor::DataType dataType,
+                       uint32_t qos,
+                       bool cleanSession)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -65,10 +67,9 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  std::move(executableSuccessors)),
       connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic),
       dataType(dataType),
-      tupleSize(schema->getSchemaSizeInBytes()){
+      tupleSize(schema->getSchemaSizeInBytes()), qos(qos), cleanSession(cleanSession){
 
-    uint64_t i = random();
-    client = std::make_shared<mqtt::async_client>(serverAddress, clientId + std::to_string(i));
+    client = std::make_shared<mqtt::async_client>(serverAddress, clientId);
 
     //init physical types
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -116,7 +117,9 @@ std::string MQTTSource::toString() const {
     ss << "CLIENTID=" << clientId << ", ";
     ss << "USER=" << user << ", ";
     ss << "TOPIC=" << topic << ", ";
-    ss << "DATATYPE=" << dataType << ". ";
+    ss << "DATATYPE=" << dataType << ", ";
+    ss << "QOS=" << qos << ", ";
+    ss << "CLEANSESSION=" << cleanSession << ". ";
     return ss.str();
 }
 
@@ -235,7 +238,7 @@ bool MQTTSource::connect() {
         try {
             auto connOpts = mqtt::connect_options_builder()
                                 .user_name(user)
-                                .clean_session(true)
+                                .clean_session(cleanSession)
                                 .finalize();
 
             // Start consumer before connecting to make sure to not miss messages
@@ -253,7 +256,7 @@ bool MQTTSource::connect() {
             // there is a session, then the server remembers us and our
             // subscriptions.
             if (!rsp.is_session_present()) {
-                client->subscribe(topic, 1)->wait();
+                client->subscribe(topic, qos)->wait();
             }
             connected = client->is_connected();
         } catch (const mqtt::exception& exc) {
@@ -303,6 +306,10 @@ const string& MQTTSource::getTopic() const { return topic; }
 MQTTSourceDescriptor::DataType MQTTSource::getDataType() const { return dataType; }
 uint64_t MQTTSource::getTupleSize() const { return tupleSize; }
 SourceType MQTTSource::getType() const { return MQTT_SOURCE; }
+uint32_t MQTTSource::getQos() const {return qos;}
+uint64_t MQTTSource::getTuplesThisPass() const {return tuplesThisPass;}
+bool MQTTSource::getCleanSession() const {return cleanSession;}
+std::vector<PhysicalTypePtr> MQTTSource::getPhysicalTypes() const {return physicalTypes;}
 
 }// namespace NES
 #endif

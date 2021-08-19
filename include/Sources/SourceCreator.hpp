@@ -287,6 +287,8 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
  * @param user name to connect to the server
  * @param topic the topic needed for a subscription
  * @param dataType type of data we expect
+ * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
+ * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
  * @return a const data source pointer
  */
 DataSourcePtr createMQTTSource(const SchemaPtr& schema,
@@ -299,7 +301,9 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                OperatorId operatorId,
                                size_t numSourceLocalBuffers,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                               MQTTSourceDescriptor::DataType dataType = MQTTSourceDescriptor::DataType::JSON);
+                               MQTTSourceDescriptor::DataType dataType,
+                               uint8_t qos,
+                               bool cleanSession);
 #endif
 
 }// namespace NES

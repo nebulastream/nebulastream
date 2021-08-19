@@ -17,10 +17,10 @@
 #ifndef NES_MQTTSOURCE_HPP
 #define NES_MQTTSOURCE_HPP
 #ifdef ENABLE_MQTT_BUILD
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 
 #include <Sources/DataSource.hpp>
 
@@ -30,8 +30,6 @@ using async_clientPtr = std::shared_ptr<async_client>;
 }// namespace mqtt
 
 namespace NES {
-
-const MQTTSourceDescriptor::DataType DEFAULT_DATA_TYPE_JSON = MQTTSourceDescriptor::DataType::JSON;
 
 class TupleBuffer;
 /**
@@ -50,7 +48,9 @@ class MQTTSource : public DataSource {
      * @param user name to connect to the mqtt broker
      * @param topic to listen to, to obtain the desired data
      * @param operatorId
-     * @param dataType data type that is send by the broker, default = JSON
+     * @param dataType data type that is send by the broker
+     * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
+     * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
      */
     explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
@@ -63,7 +63,9 @@ class MQTTSource : public DataSource {
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                        MQTTSourceDescriptor::DataType dataType = DEFAULT_DATA_TYPE_JSON);
+                        MQTTSourceDescriptor::DataType dataType,
+                        uint32_t qos,
+                        bool cleanSession);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
@@ -126,6 +128,16 @@ class MQTTSource : public DataSource {
      */
     uint64_t getTuplesThisPass() const;
     /**
+     * @brief getter for Quality of Service
+     * @return Quality of Service
+     */
+    uint32_t getQos() const;
+    /**
+     * @brief getter for cleanSession
+     * @return cleanSession
+     */
+    bool getCleanSession() const;
+    /**
      * @brief Get source type
      */
     SourceType getType() const override;
@@ -169,8 +181,9 @@ class MQTTSource : public DataSource {
     mqtt::async_clientPtr client;
     uint64_t tupleSize;
     uint64_t tuplesThisPass;
+    uint32_t qos;
+    bool cleanSession;
     std::vector<PhysicalTypePtr> physicalTypes;
-
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;
