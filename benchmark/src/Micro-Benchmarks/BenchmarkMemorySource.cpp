@@ -19,8 +19,8 @@
 #include <array>
 #include <benchmark/benchmark.h>
 #include <random>
-#include <thread>
 #include <sys/mman.h>
+#include <thread>
 
 static constexpr auto RANGE_MIN = 1024 * 1024 * 1024;
 static constexpr auto RANGE_MAX = 1024 * 1024 * 1024;
