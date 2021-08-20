@@ -13,11 +13,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Runtime/internal/apex_memmove.hpp>
-#include <Runtime/internal/rte_memory.h>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/internal/apex_memmove.hpp>
+#include <Runtime/internal/rte_memory.h>
 #include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
