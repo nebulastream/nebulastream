@@ -14,24 +14,23 @@
     limitations under the License.
 */
 
-#ifndef NES_MATHUTILS_H
-#define NES_MATHUTILS_H
-
-#include <Mobility/Geo/CartesianPoint.h>
-#include <Mobility/Geo/GeoPoint.h>
+#include <Mobility/Geo/Node/GeoSource.h>
 
 namespace NES {
 
-class MathUtils {
-  public:
-    static double toDegrees(double radians);
-    static double toRadians(double degrees);
-    static double clamp(double d, double min, double max);
-    static double distance(const CartesianPointPtr& p1, const CartesianPointPtr& p2);
-    static double distance(const GeoPointPtr& p1, const GeoPointPtr& p2);
-    static double wrapAnglePiPi(double a);
-};
+GeoSource::GeoSource(const std::string& id) : GeoNode(id), range(nullptr),  hasRange(true), enabled(false) {}
+
+GeoSource::GeoSource(const std::string& id, NES::GeoAreaPtr  range) : GeoNode(id), range(std::move(range)),  hasRange(true), enabled(false) {}
+
+const GeoAreaPtr& GeoSource::getRange() const { return range; }
+
+bool GeoSource::isHasRange() const { return hasRange; }
+
+bool GeoSource::isEnabled() const { return enabled; }
+
+void GeoSource::setEnabled(bool flag) { GeoSource::enabled = flag; }
+
+GeoSource::~GeoSource() = default;
 
 }
 
-#endif//NES_MATHUTILS_H

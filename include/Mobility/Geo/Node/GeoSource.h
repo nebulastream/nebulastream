@@ -14,27 +14,36 @@
     limitations under the License.
 */
 
-#include <Mobility/Geo/GeoSink.h>
-#include <Mobility/Geo/GeoSquare.h>
+#ifndef NES_GEOSOURCE_H
+#define NES_GEOSOURCE_H
+
+#include <Mobility/Geo/Area/GeoArea.h>
+#include <Mobility/Geo/Node/GeoNode.h>
 
 namespace NES {
 
-GeoSink::GeoSink(const string& id, double movingRangeArea) : GeoNode(id), movingRangeArea(movingRangeArea) , movingRange(nullptr) {}
+class GeoSource : public GeoNode {
 
-const GeoAreaPtr& GeoSink::getMovingRange() const {
-    return movingRange;
+  private:
+    GeoAreaPtr range;
+    bool hasRange;
+    bool enabled;
+
+  public:
+    explicit GeoSource(const string& id);
+    explicit GeoSource(const string& id, GeoAreaPtr  range);
+
+    [[nodiscard]] const GeoAreaPtr& getRange() const;
+    [[nodiscard]] bool isHasRange() const;
+    [[nodiscard]] bool isEnabled() const;
+
+    void setEnabled(bool flag);
+
+    virtual ~GeoSource();
+};
+
+using GeoSourcePtr = std::shared_ptr<GeoSource>;
+
 }
 
-void GeoSink::setCurrentLocation(const GeoPointPtr& currentLocation) {
-    GeoNode::setCurrentLocation(currentLocation);
-
-    if (movingRange == nullptr) {
-        movingRange = std::make_shared<GeoSquare>(currentLocation, movingRangeArea);
-    } else {
-        movingRange->setCenter(currentLocation);
-    }
-}
-
-GeoSink::~GeoSink() = default;
-
-}
+#endif//NES_GEOSOURCE_H

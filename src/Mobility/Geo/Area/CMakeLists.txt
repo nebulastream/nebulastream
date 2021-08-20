@@ -13,5 +13,8 @@
 # limitations under the License.
 
 add_source_nes(
-        MathUtils.cpp
+        GeoArea.cpp
+        GeoAreaFactory.cpp
+        GeoCircle.cpp
+        GeoSquare.cpp
 )

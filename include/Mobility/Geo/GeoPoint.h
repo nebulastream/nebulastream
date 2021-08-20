@@ -22,7 +22,6 @@
 
 namespace NES {
 
-
 class GeoPoint {
 
   private:

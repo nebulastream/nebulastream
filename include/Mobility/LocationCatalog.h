@@ -20,8 +20,8 @@
 #include <map>
 #include <mutex>
 #include <cpprest/json.h>
-#include <Mobility/Geo/GeoSink.h>
-#include <Mobility/Geo/GeoSource.h>
+#include <Mobility/Geo/Node/GeoSink.h>
+#include <Mobility/Geo/Node/GeoSource.h>
 
 
 namespace NES {

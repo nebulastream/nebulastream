@@ -16,9 +16,12 @@
 
 #include "gtest/gtest.h"
 
-#include "Mobility/Geo/GeoNode.h"
-#include "Mobility/Geo/GeoPoint.h"
-#include "Mobility/Geo/GeoSquare.h"
+#include <Mobility/Geo/Area/GeoAreaFactory.h>
+#include "Mobility/Geo/Area/GeoCircle.h"
+#include "Mobility/Geo/Area/GeoSquare.h"
+#include <Mobility/Geo/GeoPoint.h>
+#include <Mobility/Geo/Node/GeoNode.h>
+#include "Mobility/Geo/Projection/GeoCalculator.h"
 #include "Mobility/LocationCatalog.h"
 #include "Mobility/LocationService.h"
 
@@ -30,7 +33,6 @@ void EXPECT_EQ_GEOPOINTS(GeoPoint p1, GeoPointPtr p2){
 }
 
 TEST(GeoLocation, ValidLocation) {
-
     GeoPoint validLocation(2,3);
     EXPECT_TRUE(validLocation.isValid());
 
@@ -40,7 +42,6 @@ TEST(GeoLocation, ValidLocation) {
 
 TEST(GeoNode, AddAndUpdateLocations) {
     GeoNode node("1");
-
     EXPECT_FALSE(node.getCurrentLocation()->isValid());
     EXPECT_TRUE(node.getLocationHistory().empty());
 
@@ -53,7 +54,6 @@ TEST(GeoNode, AddAndUpdateLocations) {
 
     const uint64_t expectedSize= 2;
     EXPECT_EQ(expectedSize, node.getLocationHistory().size());
-
 }
 
 TEST(LocationCatalog, AddNodeAndUpdateLocation) {
@@ -86,41 +86,72 @@ TEST(LocationCatalog, AddNodeAndUpdateLocation) {
 
 TEST(GeoSquare, DistanceToBound) {
     GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
-    GeoSquare square(center, 1000);
+    GeoSquarePtr geoSquare = GeoAreaFactory::createSquare(center, 10000);
 
-    EXPECT_DOUBLE_EQ(250, square.getDistanceToBound());
+    EXPECT_DOUBLE_EQ(50, geoSquare->getDistanceToBound());
 }
 
 TEST(GeoSquare, TestBounds) {
     GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
-    GeoSquare square(center, 1000);
+    GeoSquarePtr geoSquare = GeoAreaFactory::createSquare(center, 10000);
 
-    GeoPointPtr north = square.getNorthBound();
-    EXPECT_DOUBLE_EQ(center->getLongitude(), north->getLongitude());
-    EXPECT_TRUE(north->getLatitude() > center->getLatitude());
+    GeoPointPtr southWest = geoSquare->getGeoEdges()->getSouthWest();
+    EXPECT_TRUE(southWest->getLongitude() < center->getLongitude());
+    EXPECT_TRUE(southWest->getLatitude() < center->getLatitude());
 
-    GeoPointPtr south = square.getSouthBound();
-    EXPECT_DOUBLE_EQ(center->getLongitude(), south->getLongitude());
-    EXPECT_TRUE(south->getLatitude() < center->getLatitude());
+    GeoPointPtr southEast = geoSquare->getGeoEdges()->getSouthEast();
+    EXPECT_TRUE(southEast->getLongitude() > center->getLongitude());
+    EXPECT_TRUE(southEast->getLatitude() < center->getLatitude());
 
-    GeoPointPtr east = square.getEastBound();
-    EXPECT_DOUBLE_EQ(center->getLatitude(), east->getLatitude());
-    EXPECT_TRUE(east->getLongitude() > center->getLongitude());
+    GeoPointPtr northWest = geoSquare->getGeoEdges()->getNorthWest();
+    EXPECT_TRUE(northWest->getLongitude() < center->getLongitude());
+    EXPECT_TRUE(northWest->getLatitude() > center->getLatitude());
 
-    GeoPointPtr west = square.getWestBound();
-    EXPECT_DOUBLE_EQ(center->getLatitude(), west->getLatitude());
-    EXPECT_TRUE(west->getLongitude() < center->getLongitude());
+    GeoPointPtr northEast = geoSquare->getGeoEdges()->getNorthEast();
+    EXPECT_TRUE(northEast->getLongitude() > center->getLongitude());
+    EXPECT_TRUE(northEast->getLatitude() > center->getLatitude());
 }
 
-TEST(GeoSquare, TestContains) {
+TEST(GeoSquare, TestContainsPoint) {
     GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
-    GeoSquare square(center, 1000);
+    GeoSquarePtr geoSquare = GeoAreaFactory::createSquare(center, 10000);
 
-    EXPECT_TRUE(square.contains(center));
-    EXPECT_TRUE(    square.contains(std::make_shared<GeoPoint>(52.5128427, 13.3213395)));
-    EXPECT_TRUE(    square.contains(std::make_shared<GeoPoint>(52.51508748, 13.32504968)));
 
-    EXPECT_FALSE(    square.contains(std::make_shared<GeoPoint>(52.51508751, 13.32504971)));
+    EXPECT_TRUE(geoSquare->contains(center));
+    EXPECT_TRUE(geoSquare->contains(std::make_shared<GeoPoint>(52.5128427, 13.3213395)));
+    EXPECT_FALSE(geoSquare->contains(std::make_shared<GeoPoint>(52.4876074, 13.3206216)));
+}
+
+TEST(GeoSquare, TestContainsArea) {
+    const double area = 10000;
+    GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
+    CartesianPointPtr cartesianCenter = GeoCalculator::geographicToCartesian(center);
+    GeoSquarePtr geoSquare = GeoAreaFactory::createSquare(center, area);
+    const double circleArea = std::pow(50, 2) * M_PI;
+
+    GeoCirclePtr circle = GeoAreaFactory::createCircle(center, circleArea);
+    EXPECT_TRUE(geoSquare->contains(circle));
+
+    const double insideOffset = 40;
+    CartesianPointPtr center2 = std::make_shared<CartesianPoint>(geoSquare->getCartesianCenter()->getX() + insideOffset, geoSquare->getCartesianCenter()->getY() + insideOffset);
+    circle->setCenter(GeoCalculator::cartesianToGeographic(center2));
+    EXPECT_TRUE(geoSquare->contains(circle));
+
+    const double outsideOffset = 100;
+    CartesianPointPtr center3 = std::make_shared<CartesianPoint>(geoSquare->getCartesianCenter()->getX() + outsideOffset, cartesianCenter->getY());
+    circle->setCenter(GeoCalculator::cartesianToGeographic(center3));
+    EXPECT_FALSE(geoSquare->contains(circle));
+}
+
+TEST(GeoCircle, TestContains) {
+    GeoPointPtr center = std::make_shared<GeoPoint>(10, 10);
+    GeoCirclePtr circle = GeoAreaFactory::createCircle(center, 100);
+
+    EXPECT_TRUE(circle->contains(center));
+    EXPECT_TRUE(circle->contains(std::make_shared<GeoPoint>(6, 10)));
+    EXPECT_TRUE(circle->contains(std::make_shared<GeoPoint>(15, 10)));
+
+    EXPECT_FALSE(circle->contains(std::make_shared<GeoPoint>(16, 16)));
 }
 
 TEST(LocationService, CheckIfLocationIsInRange) {
@@ -129,9 +160,8 @@ TEST(LocationService, CheckIfLocationIsInRange) {
     service.addSink("1", 1000);
     service.updateNodeLocation("1", center);
 
-    EXPECT_TRUE(service.checkIfPointInRange(std::make_shared<GeoPoint>(52.51508748, 13.32504968)));
-    EXPECT_FALSE(service.checkIfPointInRange(std::make_shared<GeoPoint>(52.51508751, 13.32504971)));
-
+    EXPECT_TRUE(service.checkIfPointInRange(std::make_shared<GeoPoint>(52.5128427, 13.3213395)));
+    EXPECT_FALSE(service.checkIfPointInRange(std::make_shared<GeoPoint>(52.4876074, 13.3206216)));
 }
 
 }

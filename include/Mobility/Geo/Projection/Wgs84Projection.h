@@ -14,24 +14,29 @@
     limitations under the License.
 */
 
-#ifndef NES_MATHUTILS_H
-#define NES_MATHUTILS_H
+#ifndef NES_WGS84PROJECTION_H
+#define NES_WGS84PROJECTION_H
 
 #include <Mobility/Geo/CartesianPoint.h>
 #include <Mobility/Geo/GeoPoint.h>
 
+#define TOTAL_DEGREES 360
+#define WS_84_EQUATORIAL_RADIUS  6378137
+
 namespace NES {
 
-class MathUtils {
+class Wgs84Projection {
+
+  private:
+    GeoPointPtr origin;
+
   public:
-    static double toDegrees(double radians);
-    static double toRadians(double degrees);
-    static double clamp(double d, double min, double max);
-    static double distance(const CartesianPointPtr& p1, const CartesianPointPtr& p2);
-    static double distance(const GeoPointPtr& p1, const GeoPointPtr& p2);
-    static double wrapAnglePiPi(double a);
+    explicit Wgs84Projection(GeoPointPtr  origin);
+
+    GeoPointPtr  cartesianToGeographic(const CartesianPointPtr& cartesianPoint);
+    CartesianPointPtr geographicToCartesian(const GeoPointPtr& geoPoint);
 };
 
 }
 
-#endif//NES_MATHUTILS_H
+#endif//NES_WGS84PROJECTION_H

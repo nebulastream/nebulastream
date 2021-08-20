@@ -14,24 +14,27 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <Mobility/Geo/GeoNode.h>
+#include <Mobility/Geo/Area/GeoAreaFactory.h>
+#include <Mobility/Geo/Node/GeoSink.h>
 
 namespace NES {
 
+GeoSink::GeoSink(const string& id, double movingRangeArea) : GeoNode(id), movingRangeArea(movingRangeArea) , movingRange(nullptr) {}
 
-GeoNode::GeoNode(string id) : id(std::move(id)) {
-    currentLocation = std::make_shared<GeoPoint>();
+const GeoAreaPtr& GeoSink::getMovingRange() const {
+    return movingRange;
 }
 
-string GeoNode::getId() const { return id; }
-GeoPointPtr GeoNode::getCurrentLocation() { return currentLocation; }
-const std::vector<GeoPointPtr>& GeoNode::getLocationHistory() const { return locationHistory; }
-void GeoNode::setCurrentLocation(const GeoPointPtr& location) {
-    if (currentLocation->isValid()) {
-        locationHistory.push_back(currentLocation);
+void GeoSink::setCurrentLocation(const GeoPointPtr& currentLocation) {
+    GeoNode::setCurrentLocation(currentLocation);
+
+    if (movingRange == nullptr) {
+        movingRange = GeoAreaFactory::createSquare(currentLocation, movingRangeArea);
+    } else {
+        movingRange->setCenter(currentLocation);
     }
-    currentLocation = location;
 }
+
+GeoSink::~GeoSink() = default;
 
 }

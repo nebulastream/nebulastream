@@ -13,11 +13,10 @@
 # limitations under the License.
 
 add_source_nes(
-        GeoCalculator.cpp
-        GeoNode.cpp
-        GeoSink.cpp
-        GeoSource.cpp
+        CartesianPoint.cpp
         GeoPoint.cpp
-        GeoArea.cpp
-        GeoSquare.cpp
 )
+
+add_subdirectory(Area)
+add_subdirectory(Node)
+add_subdirectory(Projection)

@@ -14,24 +14,31 @@
     limitations under the License.
 */
 
-#ifndef NES_MATHUTILS_H
-#define NES_MATHUTILS_H
+#ifndef NES_GEOCIRCLE_H
+#define NES_GEOCIRCLE_H
 
-#include <Mobility/Geo/CartesianPoint.h>
-#include <Mobility/Geo/GeoPoint.h>
+#include <Mobility/Geo/Area/GeoArea.h>
 
 namespace NES {
 
-class MathUtils {
+class GeoPoint;
+using GeoPointPtr = std::shared_ptr<GeoPoint>;
+
+class GeoCircle : public GeoArea {
+
   public:
-    static double toDegrees(double radians);
-    static double toRadians(double degrees);
-    static double clamp(double d, double min, double max);
-    static double distance(const CartesianPointPtr& p1, const CartesianPointPtr& p2);
-    static double distance(const GeoPointPtr& p1, const GeoPointPtr& p2);
-    static double wrapAnglePiPi(double a);
+    GeoCircle(const GeoPointPtr& center, const CartesianPointPtr& cartesianCenter, double area);
+    [[nodiscard]] double getDistanceToBound() const override;
+    bool contains(const GeoAreaPtr & area) override;
+    bool contains(const GeoPointPtr& location) override;
+
+    bool isCircle() override;
+    bool isSquare() override;
+    virtual ~GeoCircle();
 };
+
+using GeoCirclePtr = std::shared_ptr<GeoCircle>;
 
 }
 
-#endif//NES_MATHUTILS_H
+#endif//NES_GEOCIRCLE_H

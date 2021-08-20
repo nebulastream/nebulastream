@@ -18,8 +18,7 @@
 #define NES_LOCATIONSERVICE_H
 
 #include <cpprest/json.h>
-
-#include "Mobility/LocationCatalog.h"
+#include <Mobility/LocationCatalog.h>
 
 namespace NES {
 

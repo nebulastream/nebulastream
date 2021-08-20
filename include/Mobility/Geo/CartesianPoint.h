@@ -14,34 +14,26 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOAREA_H
-#define NES_GEOAREA_H
+#ifndef NES_CARTESIANPOINT_H
+#define NES_CARTESIANPOINT_H
 
-#include <memory>
+#include <cpprest/json.h>
 
 namespace NES {
 
-class GeoPoint;
-using GeoPointPtr = std::shared_ptr<GeoPoint>;
-
-class GeoArea {
-
+class CartesianPoint {
   private:
-    GeoPointPtr center;
-    double area;
+    double x;
+    double y;
 
   public:
-    GeoArea(GeoPointPtr  center, double area);
-    [[nodiscard]] const std::shared_ptr<GeoPoint>& getCenter() const;
-    [[nodiscard]] double getArea() const;
-    void setCenter(const GeoPointPtr& location);
-
-    virtual bool contains(const GeoPointPtr& location) = 0;
-    [[nodiscard]] virtual double getDistanceToBound() const = 0;
+    CartesianPoint(double x, double y);
+    [[nodiscard]] double getX() const;
+    [[nodiscard]] double getY() const;
 };
 
-using GeoAreaPtr = std::shared_ptr<GeoArea>;
+using CartesianPointPtr = std::shared_ptr<CartesianPoint>;
 
 }
 
-#endif//NES_GEOAREA_H
+#endif//NES_CARTESIANPOINT_H

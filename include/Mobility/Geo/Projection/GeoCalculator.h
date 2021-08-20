@@ -14,23 +14,31 @@
     limitations under the License.
 */
 
-#include <Mobility/Geo/GeoSource.h>
+#ifndef NES_GEOCALCULATOR_H
+#define NES_GEOCALCULATOR_H
+
+#include <Mobility/Geo/GeoPoint.h>
+#include <Mobility/Geo/Projection/Wgs84Projection.h>
 
 namespace NES {
 
-GeoSource::GeoSource(const std::string& id) : GeoNode(id), range(nullptr),  hasRange(true), enabled(false) {}
+class GeoPoint;
+using GeoPointPtr = std::shared_ptr<GeoPoint>;
 
-GeoSource::GeoSource(const std::string& id, NES::GeoAreaPtr  range) : GeoNode(id), range(std::move(range)),  hasRange(true), enabled(false) {}
+class GeoCalculator {
 
-const GeoAreaPtr& GeoSource::getRange() const { return range; }
+  private:
+    static Wgs84Projection projection;
 
-bool GeoSource::isHasRange() const { return hasRange; }
+  public:
+    static GeoPointPtr pointFromDirection(const GeoPointPtr& source, GeoPoint direction);
+    static GeoPointPtr  cartesianToGeographic(const CartesianPointPtr& cartesianPoint);
+    static CartesianPointPtr geographicToCartesian(const GeoPointPtr& geoPoint);
 
-bool GeoSource::isEnabled() const { return enabled; }
+};
 
-void GeoSource::setEnabled(bool flag) { GeoSource::enabled = flag; }
 
-GeoSource::~GeoSource() = default;
 
 }
 
+#endif//NES_GEOCALCULATOR_H

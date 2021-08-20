@@ -20,7 +20,6 @@
 #include <string>
 #include <cpprest/http_client.h>
 
-
 namespace NES {
 
 class LocationHTTPClient {

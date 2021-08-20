@@ -14,25 +14,21 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOCALCULATOR_H
-#define NES_GEOCALCULATOR_H
+#ifndef NES_GEOAREAFACTORY_H
+#define NES_GEOAREAFACTORY_H
 
-#include "Mobility/Geo/GeoPoint.h"
+#include <Mobility/Geo/Area/GeoArea.h>
+#include <Mobility/Geo/Area/GeoCircle.h>
+#include <Mobility/Geo/Area/GeoSquare.h>
 
 namespace NES {
 
-class GeoPoint;
-using GeoPointPtr = std::shared_ptr<GeoPoint>;
-
-class GeoCalculator {
-
+class GeoAreaFactory {
   public:
-    static GeoPointPtr pointFromDirection(const GeoPointPtr& source, GeoPoint direction);
-
+    static GeoCirclePtr createCircle(const GeoPointPtr& center, double area);
+    static GeoSquarePtr createSquare(const GeoPointPtr& center, double area);
 };
-
-
 
 }
 
-#endif//NES_GEOCALCULATOR_H
+#endif//NES_GEOAREAFACTORY_H

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Mobility/Utils/GeoNodeUtils.h>
+#include <Mobility/Geo/Node/GeoNodeUtils.h>
 
 namespace NES {
 

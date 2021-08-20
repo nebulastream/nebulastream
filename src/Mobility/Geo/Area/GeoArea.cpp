@@ -14,37 +14,25 @@
     limitations under the License.
 */
 
-#ifndef NES_GEONODE_H
-#define NES_GEONODE_H
+#include <Mobility/Geo/Area/GeoArea.h>
+#include <Mobility/Geo/Projection/GeoCalculator.h>
 
-#include <vector>
-#include <cpprest/json.h>
-
-#include "Mobility/Geo/GeoPoint.h"
+#include <utility>
 
 namespace NES {
 
-class GeoPoint;
-using GeoPointPtr = std::shared_ptr<GeoPoint>;
+GeoArea::GeoArea(GeoPointPtr  center, CartesianPointPtr  cartesianCenter, double area)
+: center(std::move(center)), cartesianCenter(std::move(cartesianCenter)), area(area) {}
 
-using std::string;
+const std::shared_ptr<GeoPoint>& GeoArea::getCenter() const { return center; }
 
-class GeoNode {
-  private:
-    string id;
-    GeoPointPtr currentLocation;
-    std::vector<GeoPointPtr> locationHistory;
+CartesianPointPtr GeoArea::getCartesianCenter() const { return cartesianCenter; }
 
-  public:
-    explicit GeoNode(string id);
-    [[nodiscard]] string getId() const;
-    GeoPointPtr getCurrentLocation();
-    [[nodiscard]] const std::vector<GeoPointPtr>& getLocationHistory() const;
-    virtual void setCurrentLocation(const GeoPointPtr& currentLocation);
+double GeoArea::getArea() const { return area; }
 
-    GeoNode() = delete;
-};
-
+void GeoArea::setCenter(const GeoPointPtr& location) {
+    this->center = location;
+    this->cartesianCenter = GeoCalculator::geographicToCartesian(location);
 }
 
-#endif//NES_GEONODE_H
+}

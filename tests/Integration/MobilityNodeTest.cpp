@@ -35,7 +35,7 @@ static int sleepTime = 100;
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
-class MobilityNodesTest : public testing::Test {
+class MobilityNodeTest : public testing::Test {
   protected:
     NesCoordinatorPtr crd;
     std::string apiEndpoint;
@@ -76,7 +76,7 @@ class MobilityNodesTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down MobilityRESTEndpointTest test class."); }
 };
 
-TEST_F(MobilityNodesTest, testAddLocationEnabledWorker) {
+TEST_F(MobilityNodeTest, testAddLocationEnabledWorker) {
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
     workerConfig->setCoordinatorPort(rpcPort);
@@ -100,7 +100,7 @@ TEST_F(MobilityNodesTest, testAddLocationEnabledWorker) {
     EXPECT_TRUE(retStopWrk1);
 }
 
-TEST_F(MobilityNodesTest, testDeployOneWorker) {
+TEST_F(MobilityNodeTest, testDeployOneWorker) {
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
 

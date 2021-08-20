@@ -14,16 +14,20 @@
     limitations under the License.
 */
 
-#include <Mobility/Geo/GeoArea.h>
+#ifndef NES_JSONUTILS_H
+#define NES_JSONUTILS_H
+
+#include <Mobility/Geo/Node/GeoSink.h>
+#include <Mobility/Geo/Node/GeoSource.h>
 
 namespace NES {
 
-GeoArea::GeoArea(GeoPointPtr  center, double area) : center(std::move(center)), area(area) {}
-
-const std::shared_ptr<GeoPoint>& GeoArea::getCenter() const { return center; }
-
-double GeoArea::getArea() const { return area; }
-
-void GeoArea::setCenter(const GeoPointPtr& location) { GeoArea::center = location; }
+class GeoNodeUtils {
+  public:
+    static web::json::value generateJson(const GeoSinkPtr& sink);
+    static web::json::value generateJson(const GeoSourcePtr& source);
+};
 
 }
+
+#endif//NES_JSONUTILS_H

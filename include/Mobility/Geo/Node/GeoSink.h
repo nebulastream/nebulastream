@@ -14,20 +14,31 @@
     limitations under the License.
 */
 
-#ifndef NES_JSONUTILS_H
-#define NES_JSONUTILS_H
+#ifndef NES_GEOSINK_H
+#define NES_GEOSINK_H
 
-#include <Mobility/Geo/GeoSink.h>
-#include <Mobility/Geo/GeoSource.h>
+#include <Mobility/Geo/Area/GeoArea.h>
+#include <Mobility/Geo/Node/GeoNode.h>
 
 namespace NES {
 
-class GeoNodeUtils {
+class GeoSink: public GeoNode {
+
+  private:
+    double movingRangeArea;
+    GeoAreaPtr movingRange;
+
   public:
-    static web::json::value generateJson(const GeoSinkPtr& sink);
-    static web::json::value generateJson(const GeoSourcePtr& source);
+    GeoSink(const string& id, double movingRangeArea);
+
+    [[nodiscard]] const GeoAreaPtr& getMovingRange() const;
+
+    void setCurrentLocation(const GeoPointPtr& currentLocation);
+    virtual ~GeoSink();
 };
+
+using GeoSinkPtr = std::shared_ptr<GeoSink>;
 
 }
 
-#endif//NES_JSONUTILS_H
+#endif//NES_GEOSINK_H

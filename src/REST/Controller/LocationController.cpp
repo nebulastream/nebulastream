@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
+#include <Mobility/Geo/Node/GeoNodeUtils.h>
 #include <Mobility/LocationService.h>
-#include <Mobility/Utils/GeoNodeUtils.h>
 #include <REST/Controller/LocationController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>

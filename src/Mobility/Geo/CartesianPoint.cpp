@@ -14,32 +14,14 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOSQUARE_H
-#define NES_GEOSQUARE_H
-
-#include <Mobility/Geo/GeoArea.h>
-#include "Mobility/Geo/GeoPoint.h"
+#include <Mobility/Geo/CartesianPoint.h>
 
 namespace NES {
 
-class GeoPoint;
-using GeoPointPtr = std::shared_ptr<GeoPoint>;
+CartesianPoint::CartesianPoint(double x, double y) : x(x), y(y) {}
 
-class GeoSquare : public GeoArea {
+double CartesianPoint::getX() const { return x; }
 
-  public:
-    GeoSquare(GeoPointPtr  center, double area);
-    [[nodiscard]] double getDistanceToBound() const override;
-    bool contains(const GeoPointPtr& location) override;
-
-    GeoPointPtr getNorthBound();
-    GeoPointPtr getSouthBound();
-    GeoPointPtr getEastBound();
-    GeoPointPtr getWestBound();
-
-    virtual ~GeoSquare();
-};
+double CartesianPoint::getY() const { return y; }
 
 }
-
-#endif//NES_GEOSQUARE_H

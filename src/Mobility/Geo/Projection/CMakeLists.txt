@@ -13,5 +13,6 @@
 # limitations under the License.
 
 add_source_nes(
-        MathUtils.cpp
+        GeoCalculator.cpp
+        Wgs84Projection.cpp
 )

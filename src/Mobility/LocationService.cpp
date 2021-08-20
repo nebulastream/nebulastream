@@ -15,10 +15,7 @@
 */
 
 #include <utility>
-
-#include <Mobility/LocationCatalog.h>
-#include "Mobility/Geo/GeoSquare.h"
-#include "Mobility/LocationService.h"
+#include <Mobility/LocationService.h>
 #include <Util/Logger.hpp>
 
 namespace NES {

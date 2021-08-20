@@ -14,31 +14,24 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOSINK_H
-#define NES_GEOSINK_H
-
-#include <Mobility/Geo/GeoArea.h>
-#include <Mobility/Geo/GeoNode.h>
+#include <memory>
+#include <Mobility/Geo/Node/GeoNode.h>
 
 namespace NES {
 
-class GeoSink: public GeoNode {
 
-  private:
-    double movingRangeArea;
-    GeoAreaPtr movingRange;
-
-  public:
-    GeoSink(const string& id, double movingRangeArea);
-
-    [[nodiscard]] const GeoAreaPtr& getMovingRange() const;
-
-    void setCurrentLocation(const GeoPointPtr& currentLocation);
-    virtual ~GeoSink();
-};
-
-using GeoSinkPtr = std::shared_ptr<GeoSink>;
-
+GeoNode::GeoNode(string id) : id(std::move(id)) {
+    currentLocation = std::make_shared<GeoPoint>();
 }
 
-#endif//NES_GEOSINK_H
+string GeoNode::getId() const { return id; }
+GeoPointPtr GeoNode::getCurrentLocation() { return currentLocation; }
+const std::vector<GeoPointPtr>& GeoNode::getLocationHistory() const { return locationHistory; }
+void GeoNode::setCurrentLocation(const GeoPointPtr& location) {
+    if (currentLocation->isValid()) {
+        locationHistory.push_back(currentLocation);
+    }
+    currentLocation = location;
+}
+
+}

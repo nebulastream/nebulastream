@@ -14,36 +14,36 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOSOURCE_H
-#define NES_GEOSOURCE_H
+#ifndef NES_GEONODE_H
+#define NES_GEONODE_H
 
-#include <Mobility/Geo/GeoArea.h>
-#include <Mobility/Geo/GeoNode.h>
+#include <vector>
+#include <cpprest/json.h>
+#include <Mobility/Geo/GeoPoint.h>
 
 namespace NES {
 
-class GeoSource : public GeoNode {
+class GeoPoint;
+using GeoPointPtr = std::shared_ptr<GeoPoint>;
 
+using std::string;
+
+class GeoNode {
   private:
-    GeoAreaPtr range;
-    bool hasRange;
-    bool enabled;
+    string id;
+    GeoPointPtr currentLocation;
+    std::vector<GeoPointPtr> locationHistory;
 
   public:
-    explicit GeoSource(const string& id);
-    explicit GeoSource(const string& id, GeoAreaPtr  range);
+    explicit GeoNode(string id);
+    [[nodiscard]] string getId() const;
+    GeoPointPtr getCurrentLocation();
+    [[nodiscard]] const std::vector<GeoPointPtr>& getLocationHistory() const;
+    virtual void setCurrentLocation(const GeoPointPtr& currentLocation);
 
-    [[nodiscard]] const GeoAreaPtr& getRange() const;
-    [[nodiscard]] bool isHasRange() const;
-    [[nodiscard]] bool isEnabled() const;
-
-    void setEnabled(bool flag);
-
-    virtual ~GeoSource();
+    GeoNode() = delete;
 };
-
-using GeoSourcePtr = std::shared_ptr<GeoSource>;
 
 }
 
-#endif//NES_GEOSOURCE_H
+#endif//NES_GEONODE_H
