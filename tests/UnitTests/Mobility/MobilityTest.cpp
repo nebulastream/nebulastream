@@ -70,16 +70,16 @@ TEST(LocationCatalog, AddNodeAndUpdateLocation) {
     catalog.updateNodeLocation("2", std::make_shared<GeoPoint>(2,2));
     catalog.updateNodeLocation("3", std::make_shared<GeoPoint>(3,3));
 
-    GeoSourcePtr firstNode = catalog.getSources().at("1");
+    GeoSourcePtr firstNode = catalog.getSource("1");
 
     EXPECT_EQ_GEOPOINTS(GeoPoint(1.5,1.5), firstNode->getCurrentLocation());
     EXPECT_FALSE(firstNode->getLocationHistory().empty());
 
-    GeoSourcePtr secondNode = catalog.getSources().at("2");
+    GeoSourcePtr secondNode = catalog.getSource("2");
     EXPECT_EQ_GEOPOINTS(GeoPoint(2,2), secondNode->getCurrentLocation());
     EXPECT_TRUE(secondNode->getLocationHistory().empty());
 
-    GeoSinkPtr sink = catalog.getSinks().at("3");
+    GeoSinkPtr sink = catalog.getSink("3");
     EXPECT_EQ_GEOPOINTS(GeoPoint(3,3), sink->getCurrentLocation());
     EXPECT_TRUE(sink->getLocationHistory().empty());
 }
@@ -154,14 +154,34 @@ TEST(GeoCircle, TestContains) {
     EXPECT_FALSE(circle->contains(std::make_shared<GeoPoint>(16, 16)));
 }
 
-TEST(LocationService, CheckIfLocationIsInRange) {
-    LocationService service;
-    GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
-    service.addSink("1", 1000);
-    service.updateNodeLocation("1", center);
 
-    EXPECT_TRUE(service.checkIfPointInRange(std::make_shared<GeoPoint>(52.5128427, 13.3213395)));
-    EXPECT_FALSE(service.checkIfPointInRange(std::make_shared<GeoPoint>(52.4876074, 13.3206216)));
+TEST(LocationCatalog, UpdateSources) {
+    LocationCatalog catalog{};
+
+    // Add sink
+    catalog.addSink("test_sink", 10'000);
+    GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
+    CartesianPointPtr cartesianCenter = GeoCalculator::geographicToCartesian(center);
+    catalog.updateNodeLocation("test_sink", center);
+
+    // Add source inside range
+    catalog.addSource("test_source");
+    CartesianPointPtr cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 40, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_source", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSources();
+    EXPECT_TRUE(catalog.getSource("test_source")->isEnabled());
+
+    // Move source outside range
+    cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 60, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_source", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSources();
+    EXPECT_FALSE(catalog.getSource("test_source")->isEnabled());
+
+    // Move sink closer to the source
+    CartesianPointPtr newCenter = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 40, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(newCenter));
+    catalog.updateSources();
+    EXPECT_TRUE(catalog.getSource("test_source")->isEnabled());
 }
 
 }

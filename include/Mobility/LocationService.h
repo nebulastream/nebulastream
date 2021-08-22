@@ -36,16 +36,20 @@ static LocationServicePtr instance = nullptr;
 class LocationService {
   private:
     LocationCatalogPtr locationCatalog;
+    bool running;
 
   public:
     static LocationServicePtr getInstance();
     explicit LocationService();
-
     void addSink(const string& nodeId, double movingRangeArea);
     void addSource(const string& nodeId);
     void updateNodeLocation(const string& nodeId, const GeoPointPtr& location);
-    bool checkIfPointInRange(const GeoPointPtr& location);
+    void updateSources();
     [[nodiscard]] const LocationCatalogPtr& getLocationCatalog() const;
+
+    void start();
+    void stop();
+    [[nodiscard]] bool isRunning() const;
 };
 
 using LocationServicePtr = std::shared_ptr<LocationService>;

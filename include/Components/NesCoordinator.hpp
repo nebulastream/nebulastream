@@ -191,6 +191,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     TopologyPtr topology;
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;
+    std::shared_ptr<std::thread> locationThread;
     std::atomic<bool> isRunning{false};
     QueryRequestProcessorServicePtr queryRequestProcessorService;
     QueryServicePtr queryService;

@@ -78,23 +78,7 @@ void LocationController::handlePost(std::vector<utility::string_t> path, web::ht
 
 void LocationController::handleGetLocations(web::http::http_request message) {
     NES_DEBUG("LocationController: Getting information about all nodes");
-    std::vector<web::json::value> sinks = {};
-
-    for (auto const& [nodeId, sink] : locationService->getLocationCatalog()->getSinks()) {
-        web::json::value currentNodeJsonValue = GeoNodeUtils::generateJson(sink);
-        sinks.push_back(currentNodeJsonValue);
-    }
-
-    std::vector<web::json::value> sources = {};
-    for (auto const& [nodeId, source] : locationService->getLocationCatalog()->getSources()) {
-        web::json::value currentNodeJsonValue = GeoNodeUtils::generateJson(source);
-        sources.push_back(currentNodeJsonValue);
-    }
-
-    web::json::value responseJson{};
-    responseJson["sinks"] = web::json::value::array(sinks);
-    responseJson["sources"] = web::json::value::array(sources);
-
+    web::json::value responseJson = locationService->getLocationCatalog()->toJson();
     successMessageImpl(message, responseJson);
 }
 
@@ -117,12 +101,12 @@ void LocationController::handleGetNode(web::http::http_request message, const st
 
         web::json::value nodeJsonValue;
         if (path == "sink") {
-            GeoSinkPtr sink = locationService->getLocationCatalog()->getSinks().at(nodeId);
+            GeoSinkPtr sink = locationService->getLocationCatalog()->getSink(nodeId);
             nodeJsonValue = GeoNodeUtils::generateJson(sink);
         }
 
         if (path == "source") {
-            GeoSourcePtr source = locationService->getLocationCatalog()->getSources().at(nodeId);
+            GeoSourcePtr source = locationService->getLocationCatalog()->getSource(nodeId);
             nodeJsonValue = GeoNodeUtils::generateJson(source);
         }
 

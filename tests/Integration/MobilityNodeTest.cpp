@@ -20,11 +20,12 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Mobility/Geo/Projection/GeoCalculator.h>
 #include <Mobility/LocationService.h>
-#include <Util/Logger.hpp>
-#include <cpprest/http_client.h>
-#include <Util/TestUtils.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/Logger.hpp>
+#include <Util/TestUtils.hpp>
+#include <cpprest/http_client.h>
 
 namespace NES {
 
@@ -151,6 +152,43 @@ TEST_F(MobilityNodeTest, testDeployOneWorker) {
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
+}
+
+TEST_F(MobilityNodeTest, testLocationUpdater) {
+    const double movingRangeArea = 10'000;
+    const int timeToSleep = sleepTime * 6;
+    const int smallOffset = 40;
+    const int bigOffset = 60;
+
+    LocationServicePtr locationService = crd->getLocationService();
+
+    // Add a sink
+    GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
+    CartesianPointPtr cartesianCenter = GeoCalculator::geographicToCartesian(center);
+    locationService->addSink("test_sink", movingRangeArea);
+    locationService->updateNodeLocation("test_sink", center);
+
+    // Add source inside range
+    CartesianPointPtr cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + smallOffset, cartesianCenter->getY());
+    locationService->addSource("test_source");
+    locationService->updateNodeLocation("test_source", GeoCalculator::cartesianToGeographic(cartesianPoint));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(timeToSleep));
+    EXPECT_TRUE(locationService->getLocationCatalog()->getSource("test_source")->isEnabled());
+
+    // Move source outside range
+    cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + bigOffset, cartesianCenter->getY());
+    locationService->updateNodeLocation("test_source", GeoCalculator::cartesianToGeographic(cartesianPoint));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(timeToSleep));
+    EXPECT_FALSE(crd->getLocationService()->getLocationCatalog()->getSource("test_source")->isEnabled());
+
+    // Move sink closer to source
+    CartesianPointPtr newCenter = std::make_shared<CartesianPoint>(cartesianCenter->getX() + smallOffset, cartesianCenter->getY());
+    locationService->updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(newCenter));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(timeToSleep));
+    EXPECT_TRUE(locationService->getLocationCatalog()->getSource("test_source")->isEnabled());
 }
 
 }

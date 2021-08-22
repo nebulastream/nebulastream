@@ -18,7 +18,7 @@
 
 namespace NES {
 
-GeoSource::GeoSource(const std::string& id) : GeoNode(id), range(nullptr),  hasRange(true), enabled(false) {}
+GeoSource::GeoSource(const std::string& id) : GeoNode(id), range(nullptr),  hasRange(false), enabled(false) {}
 
 GeoSource::GeoSource(const std::string& id, NES::GeoAreaPtr  range) : GeoNode(id), range(std::move(range)),  hasRange(true), enabled(false) {}
 

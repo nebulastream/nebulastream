@@ -220,6 +220,13 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         restServer->start();//this call is blocking
         NES_DEBUG("NesCoordinator: startRestServer thread terminates");
     }));
+
+    locationThread = std::make_shared<std::thread>(([&]() {
+        setThreadName("nesLocation");
+        locationService->start();
+        NES_DEBUG("NesCoordinator: startLocationService thread terminates");
+    }));
+
     NES_DEBUG("NESWorker::startCoordinatorRESTServer: ready");
 
     if (blocking) {//blocking is for the starter to wait here for user to send query
@@ -244,6 +251,15 @@ bool NesCoordinator::stopCoordinator(bool force) {
             throw Exception("Error while stopping NesCoordinator");
         }
         NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
+
+        locationService->stop();
+        if (locationThread->joinable()){
+            NES_DEBUG("NesCoordinator: join locationThread");
+            locationThread->join();
+        } else {
+            NES_ERROR("NesCoordinator: location thread not joinable");
+            throw Exception("Error while stopping thread->join");
+        }
 
         if (restThread->joinable()) {
             NES_DEBUG("NesCoordinator: join restThread");

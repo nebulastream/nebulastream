@@ -27,12 +27,7 @@ const GeoAreaPtr& GeoSink::getMovingRange() const {
 
 void GeoSink::setCurrentLocation(const GeoPointPtr& currentLocation) {
     GeoNode::setCurrentLocation(currentLocation);
-
-    if (movingRange == nullptr) {
-        movingRange = GeoAreaFactory::createSquare(currentLocation, movingRangeArea);
-    } else {
-        movingRange->setCenter(currentLocation);
-    }
+    movingRange = GeoAreaFactory::createSquare(currentLocation, movingRangeArea);
 }
 
 GeoSink::~GeoSink() = default;

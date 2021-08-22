@@ -26,9 +26,6 @@
 
 namespace NES {
 
-class GeoPoint;
-using GeoPointPtr = std::shared_ptr<GeoPoint>;
-
 using std::string;
 
 
@@ -42,13 +39,15 @@ class LocationCatalog {
 
   public:
     LocationCatalog() = default;
+    void addSink(const string& nodeId, double movingRangeArea);
     void addSource(const string& nodeId);
-    void addSink(const string& nodeId, const double movingRangeArea);
+    GeoSinkPtr getSink(const string& nodeId);
+    GeoSourcePtr getSource(const string& nodeId);
     void enableSource(const string& nodeId);
     void disableSource(const string& nodeId);
-    [[nodiscard]] const std::map<string, GeoSinkPtr>& getSinks() const;
-    [[nodiscard]] const std::map<string, GeoSourcePtr>& getSources() const;
     void updateNodeLocation(const string& nodeId, const GeoPointPtr& location);
+    void updateSources();
+    web::json::value toJson();
 
     bool contains(const string& nodeId);
     uint64_t size();

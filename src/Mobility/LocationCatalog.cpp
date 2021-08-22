@@ -14,41 +14,47 @@
     limitations under the License.
 */
 
+#include <Mobility/Geo/Node/GeoNodeUtils.h>
 #include <Mobility/LocationCatalog.h>
 
 namespace NES {
 
-void LocationCatalog::addSource(const string& nodeId) {
-    std::unique_lock lock(catalogLock);
-    this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId)));
-}
-
 void LocationCatalog::addSink(const string& nodeId, const double movingRangeArea) {
-    std::unique_lock lock(catalogLock);
+    std::lock_guard lock(catalogLock);
     this->sinks.insert(std::pair<string, GeoSinkPtr>(nodeId, std::make_shared<GeoSink>(nodeId, movingRangeArea)));
 }
 
+void LocationCatalog::addSource(const string& nodeId) {
+    std::lock_guard lock(catalogLock);
+    this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId)));
+}
+
+GeoSinkPtr LocationCatalog::getSink(const string& nodeId) {
+    std::lock_guard lock(catalogLock);
+    return sinks.at(nodeId);
+}
+
+GeoSourcePtr LocationCatalog::getSource(const string& nodeId) {
+    std::lock_guard lock(catalogLock);
+    return sources.at(nodeId);
+}
+
 void LocationCatalog::enableSource(const string& nodeId) {
-    std::unique_lock lock(catalogLock);
+    std::lock_guard lock(catalogLock);
     if (this->sources.contains(nodeId)) {
         this->sources.at(nodeId)->setEnabled(true);
     }
 }
 
 void LocationCatalog::disableSource(const string& nodeId) {
-    std::unique_lock lock(catalogLock);
+    std::lock_guard lock(catalogLock);
     if (this->sources.contains(nodeId)) {
         this->sources.at(nodeId)->setEnabled(false);
     }
-
 }
 
-const std::map<string, GeoSinkPtr>& LocationCatalog::getSinks() const { return sinks; }
-
-const std::map<string, GeoSourcePtr>& LocationCatalog::getSources() const { return sources; }
-
 void LocationCatalog::updateNodeLocation(const string& nodeId, const GeoPointPtr& location) {
-    std::unique_lock lock(catalogLock);
+    std::lock_guard lock(catalogLock);
     if (sinks.contains(nodeId)) {
         std::_Rb_tree_iterator<std::pair<const string, GeoSinkPtr>> it = this->sinks.find(nodeId);
         if (it != this->sinks.end()) {
@@ -64,14 +70,51 @@ void LocationCatalog::updateNodeLocation(const string& nodeId, const GeoPointPtr
     }
 }
 
+void LocationCatalog::updateSources() {
+    std::unique_lock lock(catalogLock);
+
+    for (auto const& [nodeId, sink] : sinks) {
+        if (sink->getMovingRange() == nullptr) { continue; }
+
+        for (auto const& [sourceId, source] : sources) {
+            if (source->isHasRange()) {
+                source->setEnabled(sink->getMovingRange()->contains(source->getRange()));
+            } else {
+                source->setEnabled(sink->getMovingRange()->contains(source->getCurrentLocation()));
+            }
+        }
+    }
+}
+
 bool LocationCatalog::contains(const string& nodeId) {
     std::unique_lock lock(catalogLock);
     return this->sinks.contains(nodeId) || this->sources.contains(nodeId);
 }
 
 uint64_t LocationCatalog::size() {
-    std::unique_lock lock(catalogLock);
+    std::lock_guard lock(catalogLock);
     return this->sinks.size() + this->sources.size();
+}
+web::json::value LocationCatalog::toJson() {
+    std::lock_guard lock(catalogLock);
+
+    std::vector<web::json::value> sinksJson = {};
+    for (auto const& [nodeId, sink] : sinks) {
+        web::json::value currentNodeJsonValue = GeoNodeUtils::generateJson(sink);
+        sinksJson.push_back(currentNodeJsonValue);
+    }
+
+    std::vector<web::json::value> sourcesJson = {};
+    for (auto const& [nodeId, source] : sources) {
+        web::json::value currentNodeJsonValue = GeoNodeUtils::generateJson(source);
+        sourcesJson.push_back(currentNodeJsonValue);
+    }
+
+    web::json::value responseJson{};
+    responseJson["sinks"] = web::json::value::array(sinksJson);
+    responseJson["sources"] = web::json::value::array(sourcesJson);
+
+    return responseJson;
 }
 
 }

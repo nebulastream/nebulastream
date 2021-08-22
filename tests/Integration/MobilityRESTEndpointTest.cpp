@@ -220,7 +220,7 @@ TEST_F(MobilityRESTEndpointTest, testUpdateLocation) {
     })
     .wait();
 
-    GeoSinkPtr sink = catalog->getSinks().at("test_sink");
+    GeoSinkPtr sink = catalog->getSink("test_sink");
     EXPECT_EQ_GEOPOINTS(GeoPoint(66,77), sink->getCurrentLocation());
 
     msg["nodeId"] =  web::json::value::string("test_source");
@@ -235,7 +235,7 @@ TEST_F(MobilityRESTEndpointTest, testUpdateLocation) {
     })
     .wait();
 
-    GeoSourcePtr source = catalog->getSources().at("test_source");
+    GeoSourcePtr source = catalog->getSource("test_source");
     EXPECT_EQ_GEOPOINTS(GeoPoint(88,99), source->getCurrentLocation());
 }
 
