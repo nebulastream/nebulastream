@@ -33,7 +33,7 @@ class MemorySegment;
  */
 class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
-    enum SourceMode { EMPTY_BUFFER, WRAP_BUFFER, COPY_BUFFER, COPY_BUFFER_SIMD_RTE, COPY_BUFFER_SIMD_APEX };
+    enum SourceMode { EMPTY_BUFFER, WRAP_BUFFER, CACHE_COPY, COPY_BUFFER, COPY_BUFFER_SIMD_RTE, COPY_BUFFER_SIMD_APEX };
 
     /**
      * @brief The constructor of a MemorySource
@@ -88,6 +88,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
     uint64_t numberOfTuplesToProduce;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
+    void* numaLocalMemoryArea;
     uint64_t currentPositionInBytes;
     SourceMode sourceMode;
 };
