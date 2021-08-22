@@ -65,6 +65,8 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
      */
     void placeOperatorOnTopologyNode(QueryId queryId, const OperatorNodePtr& operatorNode, TopologyNodePtr candidateTopologyNode);
 
+    bool canInferModelOperatorBePlacedOnTopologyNode(TopologyNodePtr candidateTopologyNode);
+
     /**
      * @brief Get topology node where all children operators of the input operator are placed
      * @param operatorNode: the input operator

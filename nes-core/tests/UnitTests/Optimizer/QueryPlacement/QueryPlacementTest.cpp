@@ -28,6 +28,7 @@
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
@@ -216,6 +217,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
                   .inferModel("models/iris.tflite",
                                     {Attribute("value"), Attribute("id")},
                                     {Attribute("prediction")})
+                  .filter(Attribute("prediction") > 0)
                   .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -258,7 +260,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 //            OperatorNodePtr actualRootOperator = actualRootOperators[0];
 //            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
 //            for (const auto& children : actualRootOperator->getChildren()) {
-//                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+//                EXPECT_TRUE(children->instanceOf<InferModelLogicalOperatorNode>());
 //            }
 //        }
 //    }

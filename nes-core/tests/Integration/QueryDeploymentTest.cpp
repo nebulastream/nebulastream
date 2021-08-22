@@ -882,6 +882,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
     string query = R"(Query::from("default_logical").inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc_copy_3.tflite",
                         {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
                         {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                        .filter(Attribute("iris0") > 0)
                         .sink(FileSinkDescriptor::create(")"
                    + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
@@ -902,6 +903,110 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
                              "1,1,0.434282,0.312879,0.252839\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+    int response = remove("test.out");
+    EXPECT_TRUE(response == 0);
+}
+
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModelFromCsvDatasource) {
+
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    remove("test.out");
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    std::string outputFilePath = "test.out";
+
+    //register logical stream qnv
+    std::string iris =
+        R"(Schema::create()->addField(createField("id", UINT64))
+                           ->addField(createField("SepalLengthCm", FLOAT32))
+                           ->addField(createField("SepalWidthCm", FLOAT32))
+                           ->addField(createField("PetalLengthCm", FLOAT32))
+                           ->addField(createField("PetalWidthCm", FLOAT32))
+                           ->addField(createField("SpeciesCode", UINT64));)";
+    std::string testSchemaFileName = "iris.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << iris;
+    out.close();
+    wrk1->registerLogicalStream("iris", testSchemaFileName);
+
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/iris.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(10);
+    srcConf->setNumberOfBuffersToProduce(15);
+    srcConf->setPhysicalStreamName("iris_physical");
+    srcConf->setLogicalStreamName("iris");
+    srcConf->setSkipHeader(false);
+
+    //register physical stream
+    PhysicalStreamConfigPtr irisStream = PhysicalStreamConfig::create(srcConf);
+
+    wrk1->registerPhysicalStream(irisStream);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    string query = R"(Query::from("iris")
+    .inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc_copy_3.tflite",
+                        {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
+                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+    .filter((Attribute("iris0") > Attribute("iris1") && Attribute("iris0") > Attribute("iris2") && Attribute("SpeciesCode") > 0) ||
+            (Attribute("iris1") > Attribute("iris0") && Attribute("iris1") > Attribute("iris2") && (Attribute("SpeciesCode") < 1 || Attribute("SpeciesCode") > 1)) ||
+            (Attribute("iris2") > Attribute("iris0") && Attribute("iris2") > Attribute("iris1") && Attribute("SpeciesCode") < 2))
+    .sink(FileSinkDescriptor::create(")"
+    + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    string expectedContent = "iris$id:INTEGER,iris$SepalLengthCm:(Float),iris$SepalWidthCm:(Float),iris$PetalLengthCm:(Float),iris$PetalWidthCm:(Float),iris$SpeciesCode:INTEGER,iris$iris0:(Float),iris$iris1:(Float),iris$iris2:(Float)\n"
+                             "69,6.200000,2.200000,4.500000,1.500000,1,0.034006,0.443189,0.522805\n"
+                             "71,5.900000,3.200000,4.800000,1.800000,1,0.041421,0.479233,0.479346\n"
+                             "73,6.300000,2.500000,4.900000,1.500000,1,0.031014,0.463437,0.505549\n"
+                             "84,6.000000,2.700000,5.100000,1.600000,1,0.024694,0.436498,0.538808\n"
+                             "130,7.200000,3.000000,5.800000,1.600000,2,0.021355,0.489597,0.489048\n"
+                             "132,7.900000,3.800000,6.400000,2.000000,2,0.016430,0.499829,0.483741\n"
+                             "134,6.300000,2.800000,5.100000,1.500000,2,0.034108,0.493925,0.471967\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+//    std::ifstream ifs(outputFilePath);
+//    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+//    std::cout << content;
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
