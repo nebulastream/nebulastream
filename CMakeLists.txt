@@ -231,7 +231,7 @@ if(APPLE)
     set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
 endif()
 if(UNIX AND NOT APPLE)
-    set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
+    set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl -lnuma)
 endif()
 
 # folly

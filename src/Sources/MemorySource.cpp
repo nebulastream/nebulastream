@@ -24,6 +24,9 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cmath>
 #include <utility>
+#include <numa.h>
+#include <numaif.h>
+
 namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema,
@@ -75,6 +78,15 @@ MemorySource::MemorySource(SchemaPtr schema,
 
     NES_DEBUG("MemorySource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
+
+    numaLocalMemoryArea = numa_alloc_local(memoryAreaSize);
+    int newNumaNode = -1;
+    get_mempolicy(&newNumaNode, NULL, 0, (void*)numaLocalMemoryArea, MPOL_F_NODE | MPOL_F_ADDR);
+
+    int oldNumaNode = -1;
+    get_mempolicy(&oldNumaNode, NULL, 0, (void*)memoryArea.get(), MPOL_F_NODE | MPOL_F_ADDR);
+
+    NES_ERROR("Mem src move from old numa node=" << oldNumaNode << " to new numa node=" << newNumaNode);
 }
 
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
@@ -110,6 +122,12 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         case COPY_BUFFER_SIMD_APEX: {
             buffer = bufferManager->getBufferBlocking();
             apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+            break;
+        }
+        case CACHE_COPY:
+        {
+            buffer = bufferManager->getBufferBlocking();
+            memcpy(buffer.getBuffer(), memoryArea.get(), buffer.getBufferSize());
             break;
         }
         case COPY_BUFFER: {
