@@ -30,15 +30,16 @@ InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model, 
 
 std::string InferModelLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "Model: " << model << std::endl;
-    ss << "input fields:" << std::endl;
-    for (auto v : inputFieldsPtr){
-        ss << "    " << v->getExpressionNode()->toString() << std::endl;
-    }
-    ss << "output fields:" << std::endl;
-    for (auto v : outputFieldsPtr){
-        ss << "    " << v->getExpressionNode()->toString() << std::endl;
-    }
+    ss << "INFER_MODEL(" << id << ")";
+//    ss << "Model: " << model << std::endl;
+//    ss << "input fields:" << std::endl;
+//    for (auto v : inputFieldsPtr){
+//        ss << "    " << v->getExpressionNode()->toString() << std::endl;
+//    }
+//    ss << "output fields:" << std::endl;
+//    for (auto v : outputFieldsPtr){
+//        ss << "    " << v->getExpressionNode()->toString() << std::endl;
+//    }
     return ss.str();
 }
 

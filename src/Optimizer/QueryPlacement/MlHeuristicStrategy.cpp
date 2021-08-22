@@ -116,17 +116,6 @@ void MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
 
     NES_DEBUG("MlHeuristicStrategy: Place " << operatorNode);
 
-    if(operatorNode->instanceOf<InferModelLogicalOperatorNode>()){
-        NES_TRACE("MlHeuristicStrategy: Received an InferModel operator for placement.");
-
-        if(candidateTopologyNode->hasNodeProperty("tf_installed") &&
-           std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed"))) {
-            NES_TRACE("MlHeuristicStrategy: Operator can be placed here");
-        } else {
-            return;
-        }
-    }
-
     if ((operatorNode->hasMultipleChildrenOrParents() && !operatorNode->instanceOf<SourceLogicalOperatorNode>())
         || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE("MlHeuristicStrategy: Received an NAry operator for placement.");
@@ -174,16 +163,33 @@ void MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
         }
     }
 
-    if (candidateTopologyNode->getAvailableResources() == 0) {
+//    operatorNode->getChildren()
 
-        NES_DEBUG("MlHeuristicStrategy: Find the next NES node in the path where operator can be placed");
-        while (!candidateTopologyNode->getParents().empty()) {
-            //FIXME: we are considering only one root node currently
-            candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
-            if (candidateTopologyNode->getAvailableResources() > 0) {
-                NES_DEBUG(
-                    "MlHeuristicStrategy: Found NES node for placing the operators with id : " << candidateTopologyNode->getId());
-                break;
+    if(operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+        NES_TRACE("MlHeuristicStrategy: Received an InferModel operator for placement.");
+        if(!canInferModelOperatorBePlacedOnTopologyode(candidateTopologyNode)){
+            NES_DEBUG("MlHeuristicStrategy: Find the next NES node in the path where operator can be placed");
+            while (!candidateTopologyNode->getParents().empty()) {
+                candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
+                if (canInferModelOperatorBePlacedOnTopologyode(candidateTopologyNode)) {
+                    NES_DEBUG("MlHeuristicStrategy: Found NES node for placing the operators with id : "
+                    << candidateTopologyNode->getId());
+                    break;
+                }
+            }
+        }
+    } else {
+        if (candidateTopologyNode->getAvailableResources() == 0) {
+
+            NES_DEBUG("MlHeuristicStrategy: Find the next NES node in the path where operator can be placed");
+            while (!candidateTopologyNode->getParents().empty()) {
+                //FIXME: we are considering only one root node currently
+                candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
+                if (candidateTopologyNode->getAvailableResources() > 0) {
+                    NES_DEBUG("MlHeuristicStrategy: Found NES node for placing the operators with id : "
+                              << candidateTopologyNode->getId());
+                    break;
+                }
             }
         }
     }
@@ -221,6 +227,24 @@ void MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
     for (const auto& parent : operatorNode->getParents()) {
         placeOperatorOnTopologyNode(queryId, parent->as<OperatorNode>(), candidateTopologyNode);
     }
+}
+
+bool MlHeuristicStrategy::canInferModelOperatorBePlacedOnTopologyNode(TopologyNodePtr candidateTopologyNode) {
+
+    // candidateTopologyNode->getFreeDiskSpace()
+    // candidateTopologyNode->getNetworkInterfaceStats()
+
+    if(!candidateTopologyNode->hasNodeProperty("tf_installed")){
+        return false;
+    }
+    if(!std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed"))) {
+        return false;
+    }
+    if(candidateTopologyNode->getAvailableResources() == 0){
+        return false;
+    }
+    NES_TRACE("MlHeuristicStrategy: Operator can be placed here");
+    return true;
 }
 
 QueryPlanPtr MlHeuristicStrategy::getCandidateQueryPlan(QueryId queryId,
