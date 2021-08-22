@@ -86,7 +86,7 @@ MemorySource::MemorySource(SchemaPtr schema,
     int oldNumaNode = -1;
     get_mempolicy(&oldNumaNode, NULL, 0, (void*)memoryArea.get(), MPOL_F_NODE | MPOL_F_ADDR);
 
-    std::cout << "Mem src move from old numa node=" << oldNumaNode << " to new numa node=" << newNumaNode << std::endl;
+    std::cout << "Mem src move from old numa node=" << oldNumaNode << " to new numa node=" << newNumaNode << " on core=" << sched_getcpu() << std::endl;
 }
 
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
