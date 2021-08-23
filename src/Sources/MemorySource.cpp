@@ -84,6 +84,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
     if (!initialized) {
         numaLocalMemoryArea = numa_alloc_local(memoryAreaSize);
+        std::memcpy(numaLocalMemoryArea, memoryArea.get(), memoryAreaSize);
         void* numaLocalMemoryArea2 = numa_alloc_onnode(memoryAreaSize, 0);
         int newNumaNode = -1;
         get_mempolicy(&newNumaNode, NULL, 0, (void*) numaLocalMemoryArea, MPOL_F_NODE | MPOL_F_ADDR);
