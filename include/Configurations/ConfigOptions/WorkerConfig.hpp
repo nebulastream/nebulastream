@@ -29,13 +29,20 @@ template<class T>
 class ConfigOption;
 using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
 using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
-
+using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 /**
  * @brief object for storing worker configuration
  */
 class WorkerConfig {
 
   public:
+
+    /**
+     * @brief constructor to create a new coordinator option object initialized with default values as set below
+     */
+    explicit WorkerConfig();
+
+
     static WorkerConfigPtr create();
 
     /**
@@ -207,11 +214,12 @@ class WorkerConfig {
     */
     void setQueryCompilerOutputBufferAllocationStrategy(std::string queryCompilerOutputBufferAllocationStrategy);
 
+    [[nodiscard]] bool isNumaAware() const;
+
+    void setNumaAware(bool status);
+
   private:
-    /**
-     * @brief constructor to create a new coordinator option object initialized with default values as set below
-     */
-    WorkerConfig();
+
     StringConfigOption localWorkerIp;
     StringConfigOption coordinatorIp;
     IntConfigOption coordinatorPort;
@@ -229,6 +237,8 @@ class WorkerConfig {
     StringConfigOption queryCompilerExecutionMode;
     // indicates, which output buffer allocation strategy should be used.
     StringConfigOption queryCompilerOutputBufferOptimizationLevel;
+    /// numa awarness
+    BoolConfigOption numaAwareness;
 };
 
 }// namespace NES

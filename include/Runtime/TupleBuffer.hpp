@@ -79,6 +79,8 @@ class TupleBuffer {
      *
      */
     [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
+    [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment* segment, BufferRecycler* recycler)>&& recycler);
+
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
     [[nodiscard]] constexpr TupleBuffer(TupleBuffer const& other) noexcept

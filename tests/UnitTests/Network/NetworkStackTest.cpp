@@ -33,6 +33,7 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Runtime/RuntimeManager.hpp>
 
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
@@ -739,13 +740,13 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
     try {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
-        auto bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers);
-        auto queryManager = std::make_shared<Runtime::QueryManager>(bufferManager, 0, 1);
+        std::vector<Runtime::BufferManagerPtr> bufferManagers = {std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
+        auto queryManager = std::make_shared<Runtime::QueryManager>(bufferManagers, 0, 1);
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(hostname,
                                                    port,
                                                    Network::ExchangeProtocol(partitionManager, engine),
-                                                   bufferManager);
+                                                   bufferManagers[0]);
         };
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -756,7 +757,8 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory, jitCompiler);
 
         return std::make_shared<MockedNodeEngine>(std::move(streamConf),
-                                                  std::move(bufferManager),
+                                                  std::make_shared<Runtime::RuntimeManager>(),
+                                                  std::move(bufferManagers),
                                                   std::move(queryManager),
                                                   std::move(networkManagerCreator),
                                                   std::move(partitionManager),
@@ -790,7 +792,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         atomic<int>& bufferCnt;
 
         explicit MockedNodeEngine(PhysicalStreamConfigPtr streamConf,
-                                  NES::Runtime::BufferManagerPtr&& bufferManager,
+                                  Runtime::RuntimeManagerPtr runtimeManager,
+                                  std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   NES::Runtime::QueryManagerPtr&& queryManager,
                                   std::function<Network::NetworkManagerPtr(NES::Runtime::NodeEnginePtr)>&& networkManagerCreator,
                                   Network::PartitionManagerPtr&& partitionManager,
@@ -799,7 +802,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                                   NesPartition nesPartition,
                                   std::atomic<int>& bufferCnt)
             : NodeEngine(std::move(streamConf),
-                         std::move(bufferManager),
+                         std::move(runtimeManager),
+                         std::move(bufferManagers),
                          std::move(queryManager),
                          std::move(networkManagerCreator),
                          std::move(partitionManager),

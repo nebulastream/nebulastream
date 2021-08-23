@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/RuntimeManager.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -48,14 +49,24 @@ TEST_F(BufferManagerTest, initializedBufferManager) {
     ASSERT_EQ(buffers_free, buffers_managed);
 }
 
+TEST_F(BufferManagerTest, initializedBufferManagerWithNuma) {
+    auto runtimeManager = std::make_shared<Runtime::RuntimeManager>();
+    auto bufferManager = std::make_shared<Runtime::BufferManager>(buffer_size, buffers_managed, runtimeManager->getNumaAllactor(0));
+    size_t buffers_count = bufferManager->getNumOfPooledBuffers();
+    size_t buffers_free = bufferManager->getAvailableBuffers();
+    ASSERT_EQ(buffers_count, buffers_managed);
+    ASSERT_EQ(buffers_free, buffers_managed);
+}
+
+
 TEST_F(BufferManagerTest, initializedBufferManagerAlignment16) {
-    auto bufferManager = std::make_shared<Runtime::BufferManager>(buffer_size, buffers_managed, 16);
+    auto bufferManager = std::make_shared<Runtime::BufferManager>(buffer_size, buffers_managed, std::make_shared<Runtime::NesDefaultMemoryAllocator>(), 16);
     auto buffer = bufferManager->getBufferBlocking();
     ASSERT_TRUE(reinterpret_cast<uintptr_t>(buffer.getBuffer()) % 16 == 0);
 }
 
 TEST_F(BufferManagerTest, initializedBufferManagerAlignment64) {
-    auto bufferManager = std::make_shared<Runtime::BufferManager>(buffer_size, buffers_managed, 64);
+    auto bufferManager = std::make_shared<Runtime::BufferManager>(buffer_size, buffers_managed, std::make_shared<Runtime::NesDefaultMemoryAllocator>(), 64);
     auto buffer = bufferManager->getBufferBlocking();
     ASSERT_TRUE(reinterpret_cast<uintptr_t>(buffer.getBuffer()) % 64 == 0);
 }
@@ -553,7 +564,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
     }
     workQueue.clear();
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(bufferManager->getAvailableBuffers() + localPool->getAvailableBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
 TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAllocation) {
@@ -634,7 +645,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
     }
     workQueue.clear();
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(bufferManager->getAvailableBuffers() + localPool->getAvailableBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
 }// namespace NES

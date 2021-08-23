@@ -18,7 +18,10 @@
 #define NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 namespace NES::Runtime {
-
+enum class EnableNumaAwarenessFlag {
+    ENABLED,
+    DISABLED
+};
 /**
  * @brief A general factory to create a node engine given some configuration.
  */
@@ -50,6 +53,7 @@ class NodeEngineFactory {
                                           uint64_t numberOfBuffersInGlobalBufferManager,
                                           uint64_t numberOfBuffersInSourceLocalBufferPool,
                                           uint64_t numberOfBuffersPerPipeline,
+                                          EnableNumaAwarenessFlag enableNumaAwareness = EnableNumaAwarenessFlag::DISABLED,
                                           const std::string& queryCompilerExecutionMode = "DEBUG",
                                           const std::string& queryCompilerOutputBufferOptimizationLevel = "ALL");
 

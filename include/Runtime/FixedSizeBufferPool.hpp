@@ -68,7 +68,7 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
     * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
     * @return a new buffer
     */
-    TupleBuffer getBufferBlocking();
+    TupleBuffer getBufferBlocking() override;
 
     /**
      * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
@@ -76,8 +76,12 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
      * @param timeout_ms the amount of time to wait for a new buffer to be retuned
      * @return a new buffer
      */
-    std::optional<TupleBuffer> getBufferTimeout(std::chrono::seconds timeout);
-
+    std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout) override;
+    size_t getBufferSize() const override;
+    size_t getNumOfPooledBuffers() const override;
+    size_t getNumOfUnpooledBuffers() const override;
+    std::optional<TupleBuffer> getBufferNoBlocking() override;
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
     /**
      * @brief provide number of available exclusive buffers
      * @return number of available exclusive buffers

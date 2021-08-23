@@ -240,6 +240,13 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
 endif ()
 
+# Numa awareness
+find_package(NUMA)
+if(NUMA_FOUND)
+    set(LIBRARIES ${LIBRARIES} -lnuma)
+    add_compile_definitions(NES_ENABLE_NUMA_SUPPORT)
+    message(STATUS "Using Numa")
+endif()
 
 # GRPC and protobuf
 set(gRPC_RELEASE "v1.28.1")

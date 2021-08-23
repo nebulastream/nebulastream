@@ -18,6 +18,7 @@
 #define BUFFER_MANAGER_H
 
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <atomic>
@@ -59,7 +60,10 @@ class MemorySegment;
  * been returned to the BufferManager by some component.
  *
  */
-class BufferManager : public std::enable_shared_from_this<BufferManager>, public BufferRecycler, public AbstractBufferProvider {
+class BufferManager : public std::enable_shared_from_this<BufferManager>,
+                      public BufferRecycler,
+                      public AbstractBufferProvider,
+                      public AbstractPoolProvider {
     friend class TupleBuffer;
     friend class detail::MemorySegment;
 
@@ -81,6 +85,10 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
         friend bool operator<(const UnpooledBufferHolder& lhs, const UnpooledBufferHolder& rhs) { return lhs.size < rhs.size; }
     };
 
+    static constexpr auto DEFAULT_BUFFER_SIZE = 8 * 1024;
+    static constexpr auto DEFAULT_NUMBER_OF_BUFFERS = 1024;
+    static constexpr auto DEFAULT_ALIGNMENT = 64;
+
   public:
     /**
      * @brief Creates a new global buffer manager
@@ -88,13 +96,16 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
      * @param numOfBuffers the total number of buffers in the pool
      * @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
      */
-    explicit BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment = 64);
+    explicit BufferManager(uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
+                           uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
+                           std::shared_ptr<std::pmr::memory_resource> memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
+                           uint32_t withAlignment = DEFAULT_ALIGNMENT);
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
     ~BufferManager() override;
 
-    virtual BufferManagerType getBufferManagerType() const override;
+    BufferManagerType getBufferManagerType() const override;
 
   private:
     /**
@@ -109,13 +120,13 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
      * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
      * @return a new buffer
      */
-    TupleBuffer getBufferBlocking();
+    TupleBuffer getBufferBlocking() override;
 
     /**
      * @brief Returns a new TupleBuffer wrapped in an optional or an invalid option if there is no buffer.
      * @return a new buffer
      */
-    std::optional<TupleBuffer> getBufferNoBlocking();
+    std::optional<TupleBuffer> getBufferNoBlocking() override;
 
     /**
      * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
@@ -123,7 +134,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
      * @param timeout_ms the amount of time to wait for a new buffer to be retuned
      * @return a new buffer
      */
-    std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout_ms);
+    std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout_ms) override;
 
     /**
      * @brief Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
@@ -131,22 +142,22 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
      * @param bufferSize
      * @return a new buffer
      */
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize);
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
 
     /**
      * @return Configured size of the buffers
      */
-    size_t getBufferSize() const;
+    size_t getBufferSize() const override;
 
     /**
      * @return Number of total buffers in the pool
      */
-    size_t getNumOfPooledBuffers() const;
+    size_t getNumOfPooledBuffers() const override;
 
     /**
      * @return number of unpooled buffers
      */
-    size_t getNumOfUnpooledBuffers() const;
+    size_t getNumOfUnpooledBuffers() const override;
 
     /**
      * @return Number of available buffers in the pool
@@ -163,14 +174,14 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
      * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
      * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
      */
-    LocalBufferPoolPtr createLocalBufferPool(size_t numberOfReservedBuffers);
+    LocalBufferPoolPtr createLocalBufferPool(size_t numberOfReservedBuffers) override;
 
     /**
       * @brief Create a local buffer manager that is assigned to one pipeline or thread
       * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
       * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
       */
-    FixedSizeBufferPoolPtr createFixedSizeBufferPool(size_t numberOfReservedBuffers);
+    FixedSizeBufferPoolPtr createFixedSizeBufferPool(size_t numberOfReservedBuffers) override;
 
     /**
      * @brief Recycle a pooled buffer by making it available to others
@@ -208,6 +219,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
 
     mutable std::recursive_mutex localBufferPoolsMutex;
     std::vector<std::shared_ptr<AbstractBufferProvider>> localBufferPools;
+    std::shared_ptr<std::pmr::memory_resource> memoryResource;
 };
 
 }// namespace NES::Runtime

@@ -25,7 +25,7 @@
 
 namespace NES {
 
-WorkerConfigPtr WorkerConfig::create() { return std::make_shared<WorkerConfig>(WorkerConfig()); }
+WorkerConfigPtr WorkerConfig::create() { return std::make_shared<WorkerConfig>(); }
 
 WorkerConfig::WorkerConfig() {
     NES_INFO("Generated new Worker Config object. Configurations initialized with default values.");
@@ -67,6 +67,9 @@ WorkerConfig::WorkerConfig() {
                                           "[ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,"
                                           "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"
                                           "REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]. ");
+
+    numaAwareness =
+        ConfigOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
 }
 
 void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -126,6 +129,11 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
                 setQueryCompilerOutputBufferAllocationStrategy(
                     config["queryCompilerOutputBufferOptimizationLevel"].As<std::string>());
             }
+            if (!config["numaAwareness"].As<bool>()) {
+                numaAwareness->setValue(false);
+            } else {
+                numaAwareness->setValue(true);
+            }
         } catch (std::exception& e) {
             NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
                       "values. "
@@ -168,6 +176,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setQueryCompilerExecutionMode(it->second);
             } else if (it->first == "--queryCompilerOutputBufferOptimizationLevel" && !it->second.empty()) {
                 setQueryCompilerOutputBufferAllocationStrategy(it->second);
+            } else if (it->first == "--numaAwareness") {
+                numaAwareness->setValue(true);
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -259,6 +269,14 @@ const StringConfigOption WorkerConfig::getQueryCompilerOutputBufferAllocationStr
 }
 void WorkerConfig::setQueryCompilerOutputBufferAllocationStrategy(std::string queryCompilerOutputBufferAllocationStrategy) {
     this->queryCompilerOutputBufferOptimizationLevel->setValue(std::move(queryCompilerOutputBufferAllocationStrategy));
+}
+
+bool WorkerConfig::isNumaAware() const {
+    return numaAwareness->getValue();
+}
+
+void WorkerConfig::setNumaAware(bool status) {
+    numaAwareness->setValue(status);
 }
 
 }// namespace NES

@@ -20,7 +20,7 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Sources/GeneratorSource.hpp>
 namespace NES {
-namespace NodeEngine {
+namespace Runtime {
 namespace detail {
 class MemorySegment;
 }

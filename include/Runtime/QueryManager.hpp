@@ -81,7 +81,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @brief
      * @param bufferManager
      */
-    explicit QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads);
+    explicit QueryManager(std::vector<BufferManagerPtr> bufferManagers, uint64_t nodeEngineId, uint16_t numThreads);
 
     ~QueryManager() NES_NOEXCEPT(false) override;
 
@@ -268,7 +268,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     mutable std::mutex statisticsMutex;
     cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
-    BufferManagerPtr bufferManager;
+    std::vector<BufferManagerPtr> bufferManagers;
     Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
 
     uint16_t numThreads;
@@ -276,7 +276,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     mutable std::shared_mutex queryMutex;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     folly::MPMCQueue<Task> taskQueue;
-//    folly::UMPMCQueue<Task, true> taskQueue;
 #else
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;

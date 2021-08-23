@@ -89,7 +89,7 @@ size_t FixedSizeBufferPool::getAvailableBuffers() const {
 #endif
 }
 
-std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::seconds timeout) {
+std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::milliseconds timeout) {
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::unique_lock lock(mutex);
     auto pred = [this]() {
@@ -172,4 +172,9 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*) {
     NES_THROW_RUNTIME_ERROR("This feature is not supported here");
 }
+size_t FixedSizeBufferPool::getBufferSize() const { return 0; }
+size_t FixedSizeBufferPool::getNumOfPooledBuffers() const { return 0; }
+size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const { return 0; }
+std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking() { return std::optional<TupleBuffer>(); }
+std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t) { return std::optional<TupleBuffer>(); }
 }// namespace NES::Runtime

@@ -45,8 +45,6 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 
 namespace Runtime {
 
-class TupleBuffer;
-
 class PhysicalField;
 using PhysicalFieldPtr = std::shared_ptr<PhysicalField>;
 template<class ValueType>
@@ -57,6 +55,9 @@ class PhysicalSchema;
 using PhysicalSchemaPtr = std::shared_ptr<PhysicalSchema>;
 
 class TupleBuffer;
+
+class RuntimeManager;
+using RuntimeManagerPtr = std::shared_ptr<RuntimeManager>;
 
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;

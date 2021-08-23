@@ -18,6 +18,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
+#include <Runtime/RuntimeManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
@@ -30,12 +31,15 @@
 #include <unistd.h>
 namespace NES::Runtime {
 
-BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment)
+BufferManager::BufferManager(uint32_t bufferSize,
+                             uint32_t numOfBuffers,
+                             std::shared_ptr<std::pmr::memory_resource> memoryResource,
+                             uint32_t withAlignment)
     :
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
       availableBuffers(numOfBuffers),
 #endif
-      bufferSize(bufferSize), numOfBuffers(numOfBuffers) {
+      bufferSize(bufferSize), numOfBuffers(numOfBuffers), memoryResource(memoryResource) {
     initialize(withAlignment);
 }
 
@@ -91,10 +95,10 @@ void BufferManager::initialize(uint32_t withAlignment) {
     auto memorySizeInBytes = static_cast<uint64_t>(pages * page_size);
 
     uint64_t requiredMemorySpace = (uint64_t) this->bufferSize * (uint64_t) this->numOfBuffers;
-    NES_DEBUG("NES malloc " << requiredMemorySpace << " out of " << memorySizeInBytes << " available bytes");
+    NES_DEBUG("NES memory allocation requires " << requiredMemorySpace << " out of " << memorySizeInBytes << " available bytes");
 
     NES_ASSERT2_FMT(requiredMemorySpace < memorySizeInBytes,
-                    "NES tries to malloc more memory than physically available requested=" << requiredMemorySpace
+                    "NES tries to allocate more memory than physically available requested=" << requiredMemorySpace
                                                                                            << " available=" << memorySizeInBytes);
     if (withAlignment > 0) {
         if ((withAlignment & (withAlignment - 1))) {// not a pow of two
@@ -109,20 +113,25 @@ void BufferManager::initialize(uint32_t withAlignment) {
     for (size_t i = 0; i < numOfBuffers; ++i) {
         uint8_t* ptr = nullptr;
         if (withAlignment == 0) {
-            ptr = static_cast<uint8_t*>(malloc(realSize));
+            ptr = static_cast<uint8_t*>(memoryResource->allocate(realSize, std::alignment_of<uint8_t>::value));
         } else {
-            void* tmp = nullptr;
-            NES_ASSERT(posix_memalign(&tmp, withAlignment, realSize) == 0, "memory allocation failed with alignment");
-            ptr = static_cast<uint8_t*>(tmp);
+            ptr = static_cast<uint8_t*>(memoryResource->allocate(realSize, withAlignment));
         }
         if (ptr == nullptr) {
             NES_THROW_RUNTIME_ERROR("memory allocation failed");
         }
         //We touch each buffer to make sure that is really allocated
         std::memset(ptr, 0, realSize);
-        allBuffers.emplace_back(ptr, bufferSize, this, [](detail::MemorySegment* segment, BufferRecycler* recycler) {
-            recycler->recyclePooledBuffer(segment);
-        });
+        allBuffers.emplace_back(
+            ptr,
+            bufferSize,
+            this,
+            [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+                recycler->recyclePooledBuffer(segment);
+            },
+            [this](void* ptr, size_t bufferSize) {
+                memoryResource->deallocate(ptr, bufferSize);
+            });
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
         availableBuffers.emplace_back(&allBuffers.back());
 #else
@@ -133,6 +142,7 @@ void BufferManager::initialize(uint32_t withAlignment) {
 }
 
 TupleBuffer BufferManager::getBufferBlocking() {
+    //TODO: remove this
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::unique_lock lock(availableBuffersMutex);
     while (availableBuffers.empty()) {
@@ -217,16 +227,20 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
         }
     }
     // we could not find a buffer, allocate it
-    auto* ptr = static_cast<uint8_t*>(malloc(bufferSize + sizeof(detail::BufferControlBlock)));
+    auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(bufferSize + sizeof(detail::BufferControlBlock)));
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
-    auto memSegment = std::make_unique<detail::MemorySegment>(ptr,
-                                                              bufferSize,
-                                                              this,
-                                                              [](detail::MemorySegment* segment, BufferRecycler* recycler) {
-                                                                  recycler->recycleUnpooledBuffer(segment);
-                                                              });
+    auto memSegment = std::make_unique<detail::MemorySegment>(
+        ptr,
+        bufferSize,
+        this,
+        [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+            recycler->recycleUnpooledBuffer(segment);
+        },
+        [this](void* ptr, size_t size) {
+            memoryResource->deallocate(ptr, size);
+        });
     auto* leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), bufferSize);
     if (leakedMemSegment->controlBlock->prepare()) {

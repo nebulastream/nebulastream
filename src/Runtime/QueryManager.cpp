@@ -90,8 +90,10 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
 #endif
 
-QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
-    : nodeEngineId(nodeEngineId), bufferManager(std::move(bufferManager)), numThreads(numThreads)
+QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
+                           uint64_t nodeEngineId,
+                           uint16_t numThreads)
+    : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads)
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 
 #else
@@ -368,7 +370,7 @@ class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineSt
 }// namespace detail
 
 void QueryManager::poisonWorkers() {
-    auto optBuffer = bufferManager->getUnpooledBuffer(1);
+    auto optBuffer = bufferManagers[0]->getUnpooledBuffer(1); // there is always one buffer manager
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
 
@@ -503,7 +505,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
               << queryExecutionPlanId << " blocking=" << blocking << " type " << message.getType());
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
-    auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
+    auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
     auto* task = new (buffer.getBuffer())
@@ -548,7 +550,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
     // todo adopt this code for multiple source pipelines
     auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
     for (auto successor : pipelineSuccessors) {
-        auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
+        auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
         NES_ASSERT(!!optBuffer, "invalid buffer");
         auto buffer = optBuffer.value();
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
@@ -597,7 +599,7 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
 
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-    auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
+    auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(!!optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
 
@@ -870,9 +872,12 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         auto qSize = taskQueue.size();
         statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
 
-        statistics->incAvailableGlobalBufferSum(bufferManager->getAvailableBuffers());
+        for (auto& bufferManager : bufferManagers) {
+            statistics->incAvailableGlobalBufferSum(bufferManager->getAvailableBuffers());
 
-        statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
+            statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
+        }
+
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);

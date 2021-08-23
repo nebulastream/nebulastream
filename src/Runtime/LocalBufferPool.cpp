@@ -160,4 +160,12 @@ void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
 void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment*) {
     NES_THROW_RUNTIME_ERROR("This feature is not supported here");
 }
+size_t LocalBufferPool::getBufferSize() const { return 0; }
+size_t LocalBufferPool::getNumOfPooledBuffers() const { return 0; }
+size_t LocalBufferPool::getNumOfUnpooledBuffers() const { return 0; }
+std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking() { return std::optional<TupleBuffer>(); }
+std::optional<TupleBuffer> LocalBufferPool::getBufferTimeout(std::chrono::milliseconds) {
+    return std::optional<TupleBuffer>();
+}
+std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t) { return std::optional<TupleBuffer>(); }
 }// namespace NES::Runtime

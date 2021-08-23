@@ -44,7 +44,8 @@ namespace NES::Runtime {
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
 NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
-                       BufferManagerPtr&& bufferManager,
+                       RuntimeManagerPtr&& runtimeManager,
+                       std::vector<BufferManagerPtr>&& bufferManagers,
                        QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager,
@@ -54,21 +55,19 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerPipeline)
-    : nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
+    : nodeStatsProvider(std::make_shared<NodeStatsProvider>()), queryManager(std::move(queryManager)),
+      runtimeManager(std::move(runtimeManager)), bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
+      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nodeEngineId(nodeEngineId),
+      numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
 
     configs.push_back(config);
     NES_TRACE("Runtime() id=" << nodeEngineId);
-    nodeStatsProvider = std::make_shared<NodeStatsProvider>();
-    this->queryCompiler = std::move(queryCompiler);
-    this->queryManager = std::move(queryManager);
-    this->bufferManager = std::move(bufferManager);
-    this->partitionManager = std::move(partitionManager);
-    this->stateManager = std::move(stateManager);
     // here shared_from_this() does not work because of the machinery behind make_shared
     // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
     // plz make sure that ExchangeProtocol never leaks the impl pointer
+    // TODO refactor to decouple the two components!
     networkManager = networkManagerCreator(std::shared_ptr<NodeEngine>(this, [](NodeEngine*) {
         // nop
     }));
@@ -315,12 +314,17 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
     networkManager->destroy();
-    bufferManager->destroy();
+    for (auto&& bufferManager : bufferManagers) {
+        bufferManager->destroy();
+    }
     stateManager->destroy();
     return !withError;
 }
 
-BufferManagerPtr NodeEngine::getBufferManager() { return bufferManager; }
+BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const {
+    NES_ASSERT2_FMT(bufferManagerIndex < bufferManagers.size(), "invalid buffer manager index");
+    return bufferManagers[bufferManagerIndex];
+}
 
 StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
 

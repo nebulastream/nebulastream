@@ -205,6 +205,7 @@ class NesWorker {
     std::string queryCompilerExecutionMode;
     // indicates, which output buffer allocation strategy should be used.
     std::string queryCompilerOutputBufferOptimizationLevel;
+    bool enableNumaAwareness;
     NesNodeType type;
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
