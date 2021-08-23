@@ -25,10 +25,10 @@ namespace NES {
 namespace QueryCompilation {
 class PredicatedFilterStatement : public Statement {
   public:
-    explicit PredicatedFilterStatement(const Statement& cond_expr, const VariableDeclaration& index_variable);
+    explicit PredicatedFilterStatement(const Statement& condExpr, const VariableDeclaration& indexVariable);
 
-    PredicatedFilterStatement(const Statement& cond_expr, const VariableDeclaration& index_variable, const Statement& predicated_code); // todo predicated_code good name?
-    PredicatedFilterStatement(const StatementPtr cond_expr, const VariableDeclarationPtr index_variable, const StatementPtr predicated_code);
+    PredicatedFilterStatement(const Statement& condExpr, const VariableDeclaration& indexVariable, const Statement& predicatedCode);
+    PredicatedFilterStatement(const StatementPtr condExpr, const VariableDeclarationPtr indexVariable, const StatementPtr predicatedCode);
 
     [[nodiscard]] StatementType getStamentType() const override;
     [[nodiscard]] CodeExpressionPtr getCode() const override;

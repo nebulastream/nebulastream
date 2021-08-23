@@ -22,17 +22,17 @@
 
 namespace NES::QueryCompilation {
 
-PredicatedFilterStatement::PredicatedFilterStatement(const Statement& cond_expr, const VariableDeclaration& index_variable)
-: conditionalExpression(cond_expr.createCopy()), indexVariable(index_variable), predicatedCode(new CompoundStatement()) {}
+PredicatedFilterStatement::PredicatedFilterStatement(const Statement& condExpr, const VariableDeclaration& indexVariable)
+: conditionalExpression(condExpr.createCopy()), indexVariable(indexVariable), predicatedCode(std::make_shared<CompoundStatement>()) {}
 
-PredicatedFilterStatement::PredicatedFilterStatement(const Statement& cond_expr, const VariableDeclaration& index_variable, const Statement& predicated_code)
-: conditionalExpression(cond_expr.createCopy()), indexVariable(index_variable), predicatedCode(new CompoundStatement()) {
-    predicatedCode->addStatement(predicated_code.createCopy());
+PredicatedFilterStatement::PredicatedFilterStatement(const Statement& condExpr, const VariableDeclaration& indexVariable, const Statement& predicatedCode)
+: conditionalExpression(condExpr.createCopy()), indexVariable(indexVariable), predicatedCode(std::make_shared<CompoundStatement>()) {
+    this->predicatedCode->addStatement(predicatedCode.createCopy());
 }
 
-PredicatedFilterStatement::PredicatedFilterStatement(StatementPtr cond_expr, const VariableDeclarationPtr index_variable, const StatementPtr predicated_code)
-: conditionalExpression(std::move(cond_expr)), indexVariable(index_variable), predicatedCode(new CompoundStatement()) {
-    predicatedCode->addStatement(predicated_code);
+PredicatedFilterStatement::PredicatedFilterStatement(StatementPtr condExpr, const VariableDeclarationPtr indexVariable, const StatementPtr predicatedCode)
+: conditionalExpression(std::move(condExpr)), indexVariable(indexVariable), predicatedCode(std::make_shared<CompoundStatement>()) {
+    this->predicatedCode->addStatement(predicatedCode);
 }
 
 StatementType PredicatedFilterStatement::getStamentType() const { return IF_STMT; }

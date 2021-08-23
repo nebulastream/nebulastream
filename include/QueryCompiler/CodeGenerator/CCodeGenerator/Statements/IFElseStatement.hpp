@@ -21,7 +21,7 @@ namespace NES {
 namespace QueryCompilation {
 class IfElseStatement : public Statement {
   public:
-    IfElseStatement(const Statement& cond_expr, const Statement& cond_true_stmt, const Statement& cond_false_stmt);
+    IfElseStatement(const Statement& condExpr, const Statement& condTrueStmt, const Statement& condFalseStmt);
 
     [[nodiscard]] StatementType getStamentType() const override;
     [[nodiscard]] CodeExpressionPtr getCode() const override;
