@@ -77,8 +77,9 @@ TEST_F(QueryCompilerTest, filterQuery) {
     schema->addField("F1", INT32);
     auto streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addLogicalStream("streamName", schema);
+    LocationHTTPClientPtr locationHttpClient = LocationHTTPClient::create("test", 2, "test");
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, locationHttpClient, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
@@ -108,8 +109,9 @@ TEST_F(QueryCompilerTest, windowQuery) {
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addLogicalStream("streamName", schema);
+    LocationHTTPClientPtr locationHttpClient = LocationHTTPClient::create("test", 2, "test");
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, locationHttpClient, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
@@ -143,8 +145,9 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addLogicalStream("streamName", schema);
+    LocationHTTPClientPtr locationHttpClient = LocationHTTPClient::create("test", 2, "test");
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, locationHttpClient, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
@@ -179,8 +182,9 @@ TEST_F(QueryCompilerTest, unionQuery) {
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addLogicalStream("streamName", schema);
+    LocationHTTPClientPtr locationHttpClient = LocationHTTPClient::create("test", 2, "test");
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, locationHttpClient, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
@@ -213,8 +217,9 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addLogicalStream("leftStream", schema);
     streamCatalog->addLogicalStream("rightStream", schema);
+    LocationHTTPClientPtr locationHttpClient = LocationHTTPClient::create("test", 2, "test");
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, locationHttpClient, streamConf, 1, 4096, 1024, 12, 12);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);

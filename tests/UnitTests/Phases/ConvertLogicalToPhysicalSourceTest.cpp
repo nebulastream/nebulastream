@@ -42,7 +42,8 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
     void SetUp() override {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        engine = NodeEngine::NodeEngine::create("127.0.0.1", 9090, streamConf, 1, 4096, 1024, 12, 12);
+        LocationHTTPClientPtr locationHttpClient = LocationHTTPClient::create("test", 2, "test");
+        engine = NodeEngine::NodeEngine::create("127.0.0.1", 9090, locationHttpClient, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     void TearDown() override {

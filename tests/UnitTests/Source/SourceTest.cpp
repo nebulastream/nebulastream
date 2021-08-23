@@ -99,7 +99,8 @@ class SourceTest : public testing::Test {
   public:
     void SetUp() override {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        LocationHTTPClientPtr client = LocationHTTPClient::create("test", 1, "test");
+        this->nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, client, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }

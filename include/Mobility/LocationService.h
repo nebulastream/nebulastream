@@ -40,6 +40,7 @@ class LocationService {
 
   public:
     static LocationServicePtr getInstance();
+    static void cleanInstance();
     explicit LocationService();
     void addSink(const string& nodeId, double movingRangeArea);
     void addSource(const string& nodeId);

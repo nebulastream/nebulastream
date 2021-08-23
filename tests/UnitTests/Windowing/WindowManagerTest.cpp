@@ -207,7 +207,8 @@ createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinitio
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31341, conf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31341, client, conf, 1, 4096, 1024, 12, 12);
 
     auto aggregation = Avg(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -299,7 +300,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31341, conf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31341, client, conf, 1, 4096, 1024, 12, 12);
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -383,7 +385,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31338, conf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31338, client, conf, 1, 4096, 1024, 12, 12);
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -464,7 +467,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31339, conf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31339, client, conf, 1, 4096, 1024, 12, 12);
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -550,7 +554,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, client, conf, 1, 4096, 1024, 12, 12);
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -635,7 +640,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31340, conf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31340, client, conf, 1, 4096, 1024, 12, 12);
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);

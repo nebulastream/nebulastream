@@ -42,6 +42,10 @@ LocationServicePtr LocationService::getInstance() {
     return instance;
 }
 
+void LocationService::cleanInstance() {
+    instance = nullptr;
+}
+
 void LocationService::updateSources() {
     locationCatalog->updateSources();
 }

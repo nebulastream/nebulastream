@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#include <chrono>
+#include <thread>
 #include <Mobility/LocationHTTPClient.h>
 #include <Util/Logger.hpp>
 
@@ -21,44 +23,91 @@ namespace NES {
 
 const int REQUEST_SUCCESS_CODE = 200;
 
-NES::LocationHTTPClient::LocationHTTPClient(const std::string& host, int port) : httpClient(
-    "http://" + host + ":" + std::to_string(port) + "/v1/nes") {}
-
-bool LocationHTTPClient::addSink(std::string nodeId, double movingRange) {
-    NES_DEBUG("LocationHTTPClient: add sink");
-
-    web::json::value msg{};
-    msg["movingRange"] =  web::json::value::number(movingRange);
-    msg["nodeId"] =  web::json::value::string(std::move(nodeId));
-
-    int statusCode = 0;
-
-    httpClient.request(web::http::methods::POST, "/geo/sink", msg)
-    .then([&statusCode](const web::http::http_response& response) {
-        statusCode = response.status_code();
-        return response;
-    })
-    .wait();
-
-    return (statusCode == REQUEST_SUCCESS_CODE);
+LocationHTTPClientPtr LocationHTTPClient::create(const std::string& host, int port, const std::string& workerName) {
+    return  std::make_shared<LocationHTTPClient>(host, port, workerName);
 }
 
-bool LocationHTTPClient::addSource(std::string nodeId) {
-    NES_DEBUG("LocationHTTPClient: add source");
+NES::LocationHTTPClient::LocationHTTPClient(const std::string& host, int port, std::string  workerName)
+    : workerName(std::move(workerName)), sourcesEnabled(true),
+      httpClient("http://" + host + ":" + std::to_string(port) + "/v1/nes"), running(false) {}
+
+bool LocationHTTPClient::registerSource() {
+    std::lock_guard lock(clientLock);
+    NES_DEBUG("LocationHTTPClient: register source");
 
     web::json::value msg{};
-    msg["nodeId"] =  web::json::value::string(std::move(nodeId));
+    msg["nodeId"] = web::json::value::string(workerName);
 
     int statusCode = 0;
 
     httpClient.request(web::http::methods::POST, "/geo/source", msg)
-    .then([&statusCode](const web::http::http_response& response) {
-        statusCode = response.status_code();
-        return response;
-    })
-    .wait();
+        .then([&statusCode](const web::http::http_response& response) {
+            statusCode = response.status_code();
+            return response;
+        })
+        .wait();
 
     return (statusCode == REQUEST_SUCCESS_CODE);
 }
 
+bool LocationHTTPClient::fetchSourceStatus() {
+    std::lock_guard lock(clientLock);
+    NES_DEBUG("LocationHTTPClient: register source");
+
+    web::uri_builder builder("/geo/source");
+    builder.append_query(("nodeId"), workerName);
+
+    int statusCode = 0;
+    web::json::value getSourceJsonReturn;
+
+    httpClient.request(web::http::methods::GET, builder.to_string())
+        .then([&statusCode](const web::http::http_response& response) {
+            statusCode = response.status_code();
+            return response.extract_json();
+        })
+        .then([&getSourceJsonReturn](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get source: set return");
+                getSourceJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get source: error while setting return" << e.what());
+            }
+        })
+        .wait();
+
+    if (statusCode == REQUEST_SUCCESS_CODE) {
+        sourcesEnabled = getSourceJsonReturn.at("enabled").as_bool();
+    }
+
+    return (statusCode == REQUEST_SUCCESS_CODE);
 }
+
+bool LocationHTTPClient::areSourcesEnabled() {
+    std::lock_guard lock(clientLock);
+    return sourcesEnabled;
+}
+
+void LocationHTTPClient::setSourcesEnabled(bool sourcesEnabledValue) {
+    std::lock_guard lock(clientLock);
+    LocationHTTPClient::sourcesEnabled = sourcesEnabledValue;
+}
+
+void LocationHTTPClient::start() {
+    this->running = true;
+
+    while (running) {
+        NES_DEBUG("LocationClient: fetching source status ...");
+        bool success = fetchSourceStatus();
+        NES_DEBUG("LocationClient: fetching source status ... " << success);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
+    NES_DEBUG("LocationClient: stopped!");
+}
+
+void LocationHTTPClient::stop() {
+    NES_DEBUG("LocationClient: stopping ...");
+    this->running = false;
+}
+
+}// namespace NES

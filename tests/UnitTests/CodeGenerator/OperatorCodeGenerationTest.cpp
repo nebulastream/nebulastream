@@ -394,7 +394,8 @@ createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinitio
 TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
@@ -437,7 +438,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -489,7 +491,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -509,7 +512,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -551,7 +555,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -628,7 +633,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
                       ->addField(createField("window$end", UINT64))
@@ -777,7 +783,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
                       ->addField(createField("window$end", UINT64))
@@ -818,7 +825,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -871,7 +879,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -951,7 +960,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -1031,7 +1041,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
 TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -1146,7 +1157,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
     try {
         /* prepare objects for test */
         auto streamConf = PhysicalStreamConfig::createEmpty();
-        auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+        auto client = LocationHTTPClient::create("test", 1, "test");
+        auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
         NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
         auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
         auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -1233,7 +1245,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
 TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTime) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -1312,7 +1325,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
 TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 6116, client, streamConf, 1, 4096, 1024, 12, 12);
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();

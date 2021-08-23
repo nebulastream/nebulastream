@@ -64,7 +64,8 @@ class SinkTest : public testing::Test {
         path_to_bin_file = "../tests/test_data/sink.bin";
         path_to_osfile_file = "../tests/test_data/testOs.txt";
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        LocationHTTPClientPtr client = LocationHTTPClient::create("test", 1, "test");
+        this->nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, client, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     /* Called after a single test. */

@@ -42,14 +42,15 @@ namespace NES::NodeEngine {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
-NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    return NodeEngine::create(hostname, port, std::move(config), 1, 4096, 1024, 128, 12);
+NodeEnginePtr create(const std::string& hostname, uint16_t port, const LocationHTTPClientPtr& locationClient, PhysicalStreamConfigPtr config) {
+    return NodeEngine::create(hostname, port, locationClient, std::move(config), 1, 4096, 1024, 128, 12);
 }
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
 NodeEnginePtr NodeEngine::create(const std::string& hostname,
                                  uint16_t port,
+                                 const LocationHTTPClientPtr& locationClient,
                                  const PhysicalStreamConfigPtr& config,
                                  uint16_t numThreads,
                                  uint64_t bufferSize,
@@ -60,7 +61,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numberOfBuffersInGlobalBufferManager);
-        auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
+        auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, locationClient, numThreads);
         auto stateManager = std::make_shared<StateManager>(nodeEngineId);
         if (!partitionManager) {
             NES_ERROR("NodeEngine: error while creating partition manager");

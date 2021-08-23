@@ -25,7 +25,6 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <cpprest/http_client.h>
 
 namespace NES {
 
@@ -109,6 +108,7 @@ TEST_F(MobilityNodeTest, testDeployOneWorker) {
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
+    wrkConf->setCoordinatorRestPort(restPort);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
@@ -189,6 +189,92 @@ TEST_F(MobilityNodeTest, testLocationUpdater) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(timeToSleep));
     EXPECT_TRUE(locationService->getLocationCatalog()->getSource("test_source")->isEnabled());
+}
+
+TEST_F(MobilityNodeTest, testMovingSinkReceivesData) {
+    const int timeToSleep = sleepTime * 6;
+    const int smallOffset = 40;
+    const int bigOffset = 60;
+
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    LocationServicePtr locationService = crd->getLocationService();
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    // Add Source
+
+    NES_INFO("MovingSikTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setCoordinatorRestPort(restPort);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setWorkerName("test_source");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    wrk1->setWithRegisterLocation(true);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MovingSikTest: Worker1 started successfully");
+
+    NES_INFO("MovingSikTest: Updating location of source 1");
+    GeoPointPtr sourcePosition = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
+    CartesianPointPtr sourceCartesianPosition = GeoCalculator::geographicToCartesian(sourcePosition);
+    locationService->updateNodeLocation("test_source", sourcePosition);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(timeToSleep));
+
+    // Submit Query (and add geo sink -> added during query submission)
+
+    std::string outputFilePath = "testDeployOneWorker.out";
+    remove(outputFilePath.c_str());
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query = R"(Query::from("default_logical").movingRange("veh_1", 10000).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+
+    // Update sink location
+    CartesianPointPtr sinkCartesianPosition = std::make_shared<CartesianPoint>(sourceCartesianPosition->getX() - bigOffset, sourceCartesianPosition->getY());
+    GeoPointPtr sinkPosition = GeoCalculator::cartesianToGeographic(sinkCartesianPosition);
+    locationService->updateNodeLocation("veh_1", sinkPosition);
+
+    // Check query started
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
+
+    // Check result is empty
+    EXPECT_FALSE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    // Move sink closer to the source
+    sinkCartesianPosition = std::make_shared<CartesianPoint>(sourceCartesianPosition->getX() - smallOffset, sourceCartesianPosition->getY());
+    sinkPosition = GeoCalculator::cartesianToGeographic(sinkCartesianPosition);
+    locationService->updateNodeLocation("veh_1", sinkPosition);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(timeToSleep));
+
+    // Check result is not empty
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
 }
 
 }

@@ -137,8 +137,10 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     try {
+        locationClient = LocationHTTPClient::create(coordinatorIp, coordinatorRestPort, workerName);
         nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp,
                                                     localWorkerZmqPort,
+                                                    locationClient,
                                                     conf,
                                                     numWorkerThreads,
                                                     bufferSizeInBytes,
@@ -171,13 +173,22 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("connected= " << con);
         NES_ASSERT(con, "cannot connect");
     }
+
     if (withRegisterLocation) {
         NES_DEBUG("NesWorker: start with register location");
-        LocationHTTPClient locationHttpClient(coordinatorIp, coordinatorRestPort);
-        bool success = locationHttpClient.addSource(workerName);
+        bool success = locationClient->registerSource();
         NES_DEBUG("registered= " << success);
         NES_ASSERT(success, "cannot register");
+
+        locationClient->setSourcesEnabled(false);
+
+        locationThread = std::make_shared<std::thread>(([&]() {
+            NES_DEBUG("NesWorker: start LocationClient thread");
+            locationClient->start();
+            NES_DEBUG("NesWorker: LocationClient thread terminates");
+        }));
     }
+
     if (withRegisterStream) {
         NES_DEBUG("NesWorker: start with register stream");
         bool success = registerPhysicalStream(conf);
@@ -230,6 +241,17 @@ bool NesWorker::stop(bool) {
         rpcServer->Shutdown();
         //shut down the async queue
         completionQueue->Shutdown();
+
+        if (withRegisterLocation) {
+            locationClient->stop();
+            if (locationThread->joinable()){
+                NES_DEBUG("NesCoordinator: join locationThread");
+                locationThread->join();
+            } else {
+                NES_ERROR("NesCoordinator: location thread not joinable");
+                throw Exception("Error while stopping thread->join");
+            }
+        }
 
         if (rpcThread->joinable()) {
             NES_DEBUG("NesWorker: join rpcThread");

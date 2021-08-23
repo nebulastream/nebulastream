@@ -15,16 +15,16 @@
 */
 
 #ifdef ENABLE_MQTT_BUILD
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <cstring>
-#include <future>
 #include <gtest/gtest.h>
-#include <iostream>
-#include <string>
+#include <future>
+
 
 #include <API/Schema.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Mobility/LocationHTTPClient.h>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
+
 #include <Util/Logger.hpp>
 #include <thread>
 
@@ -59,15 +59,17 @@ class MQTTSourceTest : public testing::Test {
 
         test_schema = Schema::create()->addField("var", UINT32);
 
+        LocationHTTPClientPtr client = LocationHTTPClient::create("test", 1, "test");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
+        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, client, conf, 1, 4096, 1024, 12, 12);
 
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();
 
         buffer_size = bufferManager->getBufferSize();
+//        long expectedSize = 0;
 
-        ASSERT_GT(buffer_size, 0);
+        ASSERT_GT(buffer_size, 0U);
     }
 
     /* Will be called after a test is executed. */

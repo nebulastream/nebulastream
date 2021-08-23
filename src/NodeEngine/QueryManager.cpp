@@ -90,8 +90,12 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
 #endif
 
-QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
-    : nodeEngineId(nodeEngineId), bufferManager(std::move(bufferManager)), numThreads(numThreads)
+QueryManager::QueryManager(BufferManagerPtr bufferManager,
+                           uint64_t nodeEngineId,
+                           LocationHTTPClientPtr locationHttpClient,
+                           uint16_t numThreads)
+    : nodeEngineId(nodeEngineId), locationClient(std::move(locationHttpClient)), bufferManager(std::move(bufferManager)),
+      numThreads(numThreads)
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 
 #else
@@ -253,6 +257,7 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep, Stat
             continue;
             ;
         }
+        //        source->setSourceName(nodeName);
         NES_DEBUG("QueryManager: start source " << source << " str=" << source->toString());
         if (!source->start()) {
             NES_WARNING("QueryManager: source " << source << " could not started as it is already running");
@@ -966,5 +971,7 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
 uint64_t QueryManager::getNodeId() const { return nodeEngineId; }
 
 bool QueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
+
+const LocationHTTPClientPtr& QueryManager::getLocationClient() const { return locationClient; }
 
 }// namespace NES::NodeEngine

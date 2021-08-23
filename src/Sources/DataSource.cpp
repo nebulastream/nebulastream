@@ -19,6 +19,7 @@
 #include <iostream>
 #include <thread>
 
+#include <Mobility/LocationHTTPClient.h>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
@@ -205,6 +206,11 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
     while (running) {
+
+        if (!queryManager->getLocationClient()->areSourcesEnabled()) {
+            continue;
+        }
+
         //create as many tuples as requested and then sleep
         auto startPeriod =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -287,6 +293,11 @@ void DataSource::runningRoutineWithFrequency() {
     open();
     uint64_t cnt = 0;
     while (running) {
+
+        if (!queryManager->getLocationClient()->areSourcesEnabled()) {
+            continue;
+        }
+
         bool recNow = false;
         auto tsNow = std::chrono::steady_clock::now();
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());

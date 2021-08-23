@@ -17,20 +17,37 @@
 #ifndef NES_LOCATIONHTTPCLIENT_H
 #define NES_LOCATIONHTTPCLIENT_H
 
+#include <mutex>
 #include <string>
 #include <cpprest/http_client.h>
 
 namespace NES {
 
+class LocationHTTPClient;
+using LocationHTTPClientPtr = std::shared_ptr<LocationHTTPClient>;
+
 class LocationHTTPClient {
   private:
+    std::string workerName;
+    bool sourcesEnabled;
     web::http::client::http_client httpClient;
+    bool running;
+
+    std::mutex clientLock;
 
   public:
-    LocationHTTPClient(const std::string& host, int port);
-    bool addSink(std::string nodeId, double movingRange);
-    bool addSource(std::string nodeId);
+    static LocationHTTPClientPtr create(const std::string& host, int port, const std::string& workerName);
+    explicit LocationHTTPClient(const std::string& host, int port, std::string  workerName);
+    bool registerSource();
+    bool fetchSourceStatus();
+
+    void start();
+    void stop();
+
+    [[nodiscard]] bool areSourcesEnabled();
+    void setSourcesEnabled(bool sourcesEnabled);
 };
+
 
 }
 

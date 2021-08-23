@@ -17,6 +17,7 @@
 #ifndef INCLUDE_QUERY_MANAGER_HPP_
 #define INCLUDE_QUERY_MANAGER_HPP_
 
+#include <Mobility/LocationHTTPClient.h>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
@@ -81,9 +82,11 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @brief
      * @param bufferManager
      */
-    explicit QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads);
+    explicit QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, LocationHTTPClientPtr locationClient, uint16_t numThreads);
 
     ~QueryManager() noexcept(false) override;
+
+    const LocationHTTPClientPtr& getLocationClient() const;
 
     /**
      * @brief register a query by extracting sources, windows and sink and add them to
@@ -254,6 +257,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
   private:
     uint64_t nodeEngineId;
+    LocationHTTPClientPtr locationClient;
 
     ThreadPoolPtr threadPool{nullptr};
 

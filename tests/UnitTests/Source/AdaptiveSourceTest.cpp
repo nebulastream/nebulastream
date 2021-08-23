@@ -137,7 +137,8 @@ DataSourcePtr createMockCSVAdaptiveSource(const SchemaPtr& schema,
  */
 TEST_F(AdaptiveSourceTest, testSamplingChange) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 3133, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 3133, client, streamConf, 1, 4096, 1024, 12, 12);
 
     std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
 
@@ -169,7 +170,8 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
  */
 TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 3133, streamConf);
+    auto client = LocationHTTPClient::create("test", 1, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 3133, client, streamConf, 1, 4096, 1024, 12, 12);
 
     std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
 

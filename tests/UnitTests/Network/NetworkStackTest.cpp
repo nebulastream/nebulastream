@@ -675,7 +675,8 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
 TEST_F(NetworkStackTest, testNetworkSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+    LocationHTTPClientPtr locationHttpClient = LocationHTTPClient::create("test", 2, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, locationHttpClient, streamConf, 1, bufferSize, buffersManaged, 64, 64);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -698,7 +699,8 @@ TEST_F(NetworkStackTest, testNetworkSource) {
 
 TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+    LocationHTTPClientPtr locationHttpClient = LocationHTTPClient::create("test", 2, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, locationHttpClient, streamConf, 1, bufferSize, buffersManaged, 64, 64);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -733,9 +735,10 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                      ExtraParameters&&... extraParams) {
     try {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        LocationHTTPClientPtr locationHttpClient = LocationHTTPClient::create("test", 2, "test");
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<NodeEngine::BufferManager>(bufferSize, numBuffers);
-        auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
+        auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, locationHttpClient, 1);
         auto networkManagerCreator = [=](const NodeEngine::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(hostname,
                                                    port,
@@ -898,7 +901,8 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                            ->addField("test$value", DataTypeFactory::createInt64());
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 12);
+    LocationHTTPClientPtr locationHttpClient = LocationHTTPClient::create("test", 2, "test");
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, locationHttpClient, streamConf, 1, bufferSize, buffersManaged, 64, 12);
     auto netManager = nodeEngine->getNetworkManager();
     // create NetworkSink
 

@@ -260,6 +260,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_ERROR("NesCoordinator: location thread not joinable");
             throw Exception("Error while stopping thread->join");
         }
+        LocationService::cleanInstance();
 
         if (restThread->joinable()) {
             NES_DEBUG("NesCoordinator: join restThread");

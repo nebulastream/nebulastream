@@ -71,8 +71,10 @@ class QueryExecutionTest : public testing::Test {
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
+
+        LocationHTTPClientPtr client = LocationHTTPClient::create("test", 1, "test");
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+        nodeEngine =  NodeEngine::NodeEngine::create("127.0.0.1", 31337, client, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     /* Will be called before a test is executed. */

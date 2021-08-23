@@ -104,7 +104,7 @@ TEST_F(MobilityRESTEndpointTest, testGetGeoNodes) {
     NES_INFO("get nodes: try to acc return");
     NES_DEBUG("getNodes response: " << getNodesJsonReturn.serialize());
     const auto* expected =
-        R"({"sinks":[{"id":"test_sink","latitude":1,"longitude":2}],"sources":[{"enabled":0,"id":"test_source","latitude":3,"longitude":4}]})";
+        R"({"sinks":[{"id":"test_sink","latitude":1,"longitude":2}],"sources":[{"enabled":false,"id":"test_source","latitude":3,"longitude":4}]})";
     NES_DEBUG("getNodes response: expected = " << expected);
     ASSERT_EQ(getNodesJsonReturn.serialize(), expected);
 }
@@ -132,7 +132,7 @@ TEST_F(MobilityRESTEndpointTest, testGetGeoSource) {
     NES_INFO("get source: try to acc return");
     NES_DEBUG("getSource response: " << getSourceJsonReturn.serialize());
     const auto* expected =
-        R"({"enabled":0,"id":"test_source","latitude":3,"longitude":4})";
+        R"({"enabled":false,"id":"test_source","latitude":3,"longitude":4})";
     NES_DEBUG("getSource response: expected = " << expected);
     ASSERT_EQ(getSourceJsonReturn.serialize(), expected);
 }

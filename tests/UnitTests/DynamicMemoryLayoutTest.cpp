@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
+
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
@@ -23,8 +25,6 @@
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-
-#include <gtest/gtest.h>
 
 #include <cstdlib>
 #include <iostream>

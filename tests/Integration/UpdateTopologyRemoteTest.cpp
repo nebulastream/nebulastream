@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -23,7 +24,6 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <ctime>
-#include <gtest/gtest.h>
 
 using namespace std;
 namespace NES {

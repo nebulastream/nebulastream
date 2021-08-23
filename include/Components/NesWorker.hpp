@@ -19,6 +19,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Mobility/LocationHTTPClient.h>
 #include <Plans/Query/QueryId.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
@@ -180,11 +181,13 @@ class NesWorker {
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
+    std::shared_ptr<std::thread> locationThread;
     std::unique_ptr<grpc::ServerCompletionQueue> completionQueue;
 
     NodeEngine::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
+    LocationHTTPClientPtr locationClient;
 
     PhysicalStreamConfigPtr conf;
     bool connected{false};

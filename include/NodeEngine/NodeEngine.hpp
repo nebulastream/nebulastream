@@ -19,6 +19,7 @@
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
+#include <Mobility/LocationHTTPClient.h>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <NodeEngine/ErrorListener.hpp>
@@ -77,6 +78,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     static NodeEnginePtr create(const std::string& hostname,
                                 uint16_t port,
+                                const LocationHTTPClientPtr& locationClient,
                                 const PhysicalStreamConfigPtr& config,
                                 uint16_t numThreads,
                                 uint64_t bufferSize,

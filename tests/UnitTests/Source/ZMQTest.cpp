@@ -51,7 +51,8 @@ class ZMQTest : public testing::Test {
     void SetUp() override {
         NES_DEBUG("Setup ZMQTest test case.");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 3001, conf);
+        LocationHTTPClientPtr client = LocationHTTPClient::create("test", 1, "test");
+        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, client, conf, 1, 4096, 1024, 12, 12);
 
         address = std::string("tcp://") + std::string(LOCAL_ADDRESS) + std::string(":") + std::to_string(LOCAL_PORT);
 
