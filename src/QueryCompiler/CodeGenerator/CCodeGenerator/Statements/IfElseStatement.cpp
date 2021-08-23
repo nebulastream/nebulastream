@@ -19,11 +19,11 @@
 #include <sstream>
 
 namespace NES::QueryCompilation {
-IfElseStatement::IfElseStatement(const Statement& cond_expr, const Statement& cond_true_stmt, const Statement& cond_false_stmt)
-    : conditionalExpression(cond_expr.createCopy()), trueCaseStatement(new CompoundStatement()),
-      falseCaseStatement(new CompoundStatement()) {
-    trueCaseStatement->addStatement(cond_true_stmt.createCopy());
-    falseCaseStatement->addStatement(cond_false_stmt.createCopy());
+IfElseStatement::IfElseStatement(const Statement& condExpr, const Statement& condTrueStmt, const Statement& condFalseStmt)
+    : conditionalExpression(condExpr.createCopy()), trueCaseStatement(std::make_shared<CompoundStatement>()),
+      falseCaseStatement(std::make_shared<CompoundStatement>()) {
+    trueCaseStatement->addStatement(condTrueStmt.createCopy());
+    falseCaseStatement->addStatement(condFalseStmt.createCopy());
 }
 
 StatementType IfElseStatement::getStamentType() const { return IF_ELSE_STMT; }

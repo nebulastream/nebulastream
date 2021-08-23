@@ -22,16 +22,16 @@
 
 namespace NES::QueryCompilation {
 
-IFStatement::IFStatement(const Statement& cond_expr)
-    : conditionalExpression(cond_expr.createCopy()), trueCaseStatement(new CompoundStatement()) {}
-IFStatement::IFStatement(const Statement& cond_expr, const Statement& cond_true_stmt)
-    : conditionalExpression(cond_expr.createCopy()), trueCaseStatement(new CompoundStatement()) {
-    trueCaseStatement->addStatement(cond_true_stmt.createCopy());
+IFStatement::IFStatement(const Statement& condExpr)
+    : conditionalExpression(condExpr.createCopy()), trueCaseStatement(std::make_shared<CompoundStatement>()) {}
+IFStatement::IFStatement(const Statement& condExpr, const Statement& condTrueStmt)
+    : conditionalExpression(condExpr.createCopy()), trueCaseStatement(std::make_shared<CompoundStatement>()) {
+    trueCaseStatement->addStatement(condTrueStmt.createCopy());
 }
 
-IFStatement::IFStatement(StatementPtr cond_expr, const StatementPtr& cond_true_stmt)
-    : conditionalExpression(std::move(cond_expr)), trueCaseStatement(new CompoundStatement()) {
-    trueCaseStatement->addStatement(cond_true_stmt);
+IFStatement::IFStatement(StatementPtr condExpr, const StatementPtr& condTrueStmt)
+    : conditionalExpression(std::move(condExpr)), trueCaseStatement(std::make_shared<CompoundStatement>()) {
+    trueCaseStatement->addStatement(condTrueStmt);
 }
 
 StatementType IFStatement::getStamentType() const { return IF_STMT; }
