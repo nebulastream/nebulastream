@@ -133,9 +133,8 @@ void BufferManager::initialize(uint32_t withAlignment) {
 }
 
 TupleBuffer BufferManager::getBufferBlocking() {
-    std::unique_lock lock(availableBuffersMutex);
-    //TODO: remove this
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
+    std::unique_lock lock(availableBuffersMutex);
     while (availableBuffers.empty()) {
         NES_TRACE("All global Buffers are exhausted");
         availableBuffersCvar.wait(lock);
