@@ -14,6 +14,6 @@
 
 add_source_nes(
         CoordinatorEngine.cpp
-        TopologyManagerService.cpp
-        StreamCatalogService.cpp
+        ../Services/TopologyManagerService.cpp
+        ../Services/StreamCatalogService.cpp
 )

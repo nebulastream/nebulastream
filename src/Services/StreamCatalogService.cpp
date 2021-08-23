@@ -18,7 +18,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
-#include <CoordinatorEngine/StreamCatalogService.hpp>
+#include <Services/StreamCatalogService.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <NodeStats.pb.h>
 #include <Topology/Topology.hpp>
@@ -52,7 +52,7 @@ bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr physicalNode,
         std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
     bool success = streamCatalog->addPhysicalStream(logicalStreamName, sce);
     if (!success) {
-        NES_DEBUG("StreamCatalogService::RegisterPhysicalStream: adding physical stream was not successful.");
+        NES_ERROR("StreamCatalogService::RegisterPhysicalStream: adding physical stream was not successful.");
         return false;
     }
     return success;
@@ -73,7 +73,7 @@ bool StreamCatalogService::unregisterPhysicalStream(TopologyNodePtr physicalNode
 
     bool success = streamCatalog->removePhysicalStream(logicalStreamName, physicalStreamName, physicalNode->getId());
     if (!success) {
-        NES_DEBUG("StreamCatalogService::RegisterPhysicalStream: removing physical stream was not successful.");
+        NES_ERROR("StreamCatalogService::RegisterPhysicalStream: removing physical stream was not successful.");
         return false;
     }
     return success;

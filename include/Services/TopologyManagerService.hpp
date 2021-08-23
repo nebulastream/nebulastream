@@ -14,21 +14,17 @@
     limitations under the License.
 */
 
-#ifndef NES_SRC_COORDINATORENGINE_TOPOLOGYMANAGERSERVICE_H_
-#define NES_SRC_COORDINATORENGINE_TOPOLOGYMANAGERSERVICE_H_
+#ifndef NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_
+#define NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_
 
 #include <memory>
 #include <mutex>
-#include <CoordinatorEngine/StreamCatalogService.hpp>
+#include <Services/StreamCatalogService.hpp>
 
 enum NodeType : int;
 namespace NES {
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
-class TopologyNode;
-using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class NodeStats;
 using NodeStatsPtr = std::shared_ptr<NodeStats>;
 
@@ -86,4 +82,4 @@ class TopologyManagerService {
 }//namespace NES
 
 
-#endif//NES_SRC_COORDINATORENGINE_TOPOLOGYMANAGERSERVICE_H_
+#endif//NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_
