@@ -513,14 +513,19 @@ add_subdirectory(tests)
 #Add benchmarks with command
 add_subdirectory(benchmark)
 
-install(TARGETS nesCoordinator nesWorker nes
-        COMPONENT NebulaStream
-        RUNTIME DESTINATION "/opt/local/nebula-stream"
-        LIBRARY DESTINATION "/opt/local/nebula-stream"
-        DESTINATION "/opt/local/nebula-stream"
-        )
+#Change to alter behaviour of cpack and installation directory of deb package
+install(TARGETS nes
+        COMPONENT nesLibrary
+        DESTINATION lib)
 
-install(DIRECTORY "include" DESTINATION "/nebulastream" COMPONENT NebulaStream)
+install(TARGETS nesCoordinator nesWorker
+        COMPONENT nesExecutables
+        RUNTIME
+        DESTINATION "/opt/local/nebula-stream")
+
+install(DIRECTORY "include"
+        COMPONENT nesHeaders
+        DESTINATION "/nebulastream")
 
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
@@ -530,10 +535,17 @@ set(CPACK_PACKAGE_CONTACT "Team NebulaStream")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Team NebulaStream") #required
 set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+set(CPACK_COMPONENTS_ALL nesExecutables nesLibrary nesHeaders)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "cmake, libdwarf-dev, libdwarf1, binutils-dev, libdw-dev, libssl-dev")
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}.${CMAKE_SYSTEM_PROCESSOR}")
+
+##This allows call to ldconfig to load the configuration after installation
+set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_LIST_DIR}/triggers")
+set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
 INCLUDE(CPack)
 
+
+#Other configurations
 project_enable_clang_format()
 if (CMAKE_CROSSCOMPILING)
     project_enable_emulated_tests()
