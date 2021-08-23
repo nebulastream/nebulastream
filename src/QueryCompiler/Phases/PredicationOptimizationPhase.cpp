@@ -19,6 +19,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperatorPredicated.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Phases/PredicationOptimizationPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -33,6 +34,9 @@ PredicationOptimizationPhase::PredicationOptimizationPhase::create(bool predicat
 PredicationOptimizationPhase::PredicationOptimizationPhase(bool predicationEnabled) : predicationEnabled(predicationEnabled) {}
 
 PipelineQueryPlanPtr PredicationOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
+    if (!predicationEnabled)
+        return pipelinedQueryPlan;
+
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline);
@@ -50,24 +54,37 @@ OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr oper
     auto nodes = QueryPlanIterator(queryPlan).snapshot();
 
     // TODO enable predication based on a cost model and data characteristics
-    bool isPredicated = false;
+
+    std::shared_ptr<GeneratableOperators::GeneratableFilterOperator> filterOperator = nullptr;
+    std::shared_ptr<GeneratableOperators::GeneratableBufferEmit> emitOperator = nullptr;
+
+    // search for the relevant nodes; abort if windowing operator is found:
     for (const auto& node : nodes) {
-        if (!isPredicated && node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()) {
-            auto filterOperator = node->as<GeneratableOperators::GeneratableFilterOperator>();
-            auto predicatedFilterOperator =
-                    GeneratableOperators::GeneratableFilterOperatorPredicated::create(filterOperator->getInputSchema(),
-                                                                                      filterOperator->getPredicate());
-
-            NES_DEBUG("PredicationOptimizationPhase: Replaced filter operator with equivalent predicated filter operator.");
-            isPredicated = queryPlan->replaceOperator(filterOperator, predicatedFilterOperator);
-
-        } else if (isPredicated && node->instanceOf<GeneratableOperators::GeneratableBufferEmit>()) {
-            auto emitOperator = node->as<GeneratableOperators::GeneratableBufferEmit>();
-            emitOperator->setIncreasesResultBufferWriteIndex(false);
-            NES_DEBUG("PredicationOptimizationPhase: Configured following emit operator to work with predicated filter operator.");
+        if (node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()) {
+            filterOperator = node->as<GeneratableOperators::GeneratableFilterOperator>();
+        } else if (node->instanceOf<GeneratableOperators::GeneratableBufferEmit>()) {
+            emitOperator = node->as<GeneratableOperators::GeneratableBufferEmit>();
+        } else if (node->instanceOf<GeneratableOperators::GeneratableSlicePreAggregationOperator>()) {
+            NES_DEBUG("PredicationOptimizationPhase: No predication applied. Predication is not yet implemented for windowing queries.");
+            // TODO predication for windowing queries
             return operatorPipeline;
         }
     }
+
+    if (filterOperator == nullptr || emitOperator == nullptr) {
+        NES_DEBUG("PredicationOptimizationPhase: No predication applied. Filter operator or emit operator not found.");
+        return operatorPipeline;
+    }
+
+    // now, apply predication:
+    auto predicatedFilterOperator =
+            GeneratableOperators::GeneratableFilterOperatorPredicated::create(filterOperator->getInputSchema(),
+                                                                              filterOperator->getPredicate());
+    queryPlan->replaceOperator(filterOperator, predicatedFilterOperator);
+    NES_DEBUG("PredicationOptimizationPhase: Replaced filter operator with equivalent predicated filter operator.");
+
+    emitOperator->setIncreasesResultBufferWriteIndex(false);
+    NES_DEBUG("PredicationOptimizationPhase: Configured following emit operator to work with predicated filter operator.");
 
     return operatorPipeline;
 }
