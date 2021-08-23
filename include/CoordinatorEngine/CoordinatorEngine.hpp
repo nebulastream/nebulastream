@@ -17,17 +17,10 @@
 #ifndef NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 
-#include <memory>
-#include <mutex>
-#include <CoordinatorEngine/StreamCatalogService.hpp>
-#include <CoordinatorEngine/TopologyManagerService.hpp>
+#include <Services/TopologyManagerService.hpp>
 
 enum NodeType : int;
 namespace NES {
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
-class Topology;
-using TopologyPtr = std::shared_ptr<Topology>;
 class NodeStats;
 using NodeStatsPtr = std::shared_ptr<NodeStats>;
 class TopologyManagerService;
@@ -121,9 +114,6 @@ class CoordinatorEngine {
     TopologyManagerService topologyManagerService;
     StreamCatalogPtr streamCatalog;
     TopologyPtr topology;
-    std::mutex registerDeregisterNode;
-    std::mutex addRemoveLogicalStream;
-    std::mutex addRemovePhysicalStream;
 };
 
 using CoordinatorEnginePtr = std::shared_ptr<CoordinatorEngine>;

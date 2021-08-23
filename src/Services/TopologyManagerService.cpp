@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <CoordinatorEngine/TopologyManagerService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
