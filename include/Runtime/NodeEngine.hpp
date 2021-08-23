@@ -68,7 +68,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * and initialize QueryManager, BufferManager and ThreadPool
      */
     explicit NodeEngine(const PhysicalStreamConfigPtr& config,
-                        BufferManagerPtr&&,
+                        RuntimeManagerPtr&&,
+                        std::vector<BufferManagerPtr>&&,
                         QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
                         Network::PartitionManagerPtr&&,
@@ -174,7 +175,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief getter of buffer manager
      * @return bufferManager
      */
-    BufferManagerPtr getBufferManager();
+    BufferManagerPtr getBufferManager(uint32_t bufferManagerIndex = 0) const;
 
     /**
     * @brief getter of state manager
@@ -259,11 +260,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
-    Network::NetworkManagerPtr networkManager;
+    RuntimeManagerPtr runtimeManager;
+    std::vector<BufferManagerPtr> bufferManagers;
+    QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
-    QueryCompilation::QueryCompilerPtr queryCompiler;
+    Network::NetworkManagerPtr networkManager;
     std::atomic<bool> isRunning{};
     mutable std::recursive_mutex engineMutex;
     [[maybe_unused]] uint64_t nodeEngineId;

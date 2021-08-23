@@ -55,7 +55,7 @@ NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
       queryCompilerExecutionMode(workerConfig->getQueryCompilerExecutionMode()->getValue()),
       queryCompilerOutputBufferOptimizationLevel(workerConfig->getQueryCompilerOutputBufferAllocationStrategy()->getValue()),
-      type(type) {
+      enableNumaAwareness(workerConfig->isNumaAware()), type(type) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
 }
@@ -132,16 +132,18 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     try {
-        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(localWorkerIp,
-                                                                  localWorkerZmqPort,
-                                                                  conf,
-                                                                  numWorkerThreads,
-                                                                  bufferSizeInBytes,
-                                                                  numberOfBuffersInGlobalBufferManager,
-                                                                  numberOfBuffersInSourceLocalBufferPool,
-                                                                  numberOfBuffersPerPipeline,
-                                                                  queryCompilerExecutionMode,
-                                                                  queryCompilerOutputBufferOptimizationLevel);
+        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(
+            localWorkerIp,
+            localWorkerZmqPort,
+            conf,
+            numWorkerThreads,
+            bufferSizeInBytes,
+            numberOfBuffersInGlobalBufferManager,
+            numberOfBuffersInSourceLocalBufferPool,
+            numberOfBuffersPerPipeline,
+            enableNumaAwareness ? Runtime::EnableNumaAwarenessFlag::ENABLED : Runtime::EnableNumaAwarenessFlag::DISABLED,
+            queryCompilerExecutionMode,
+            queryCompilerOutputBufferOptimizationLevel);
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create();
         NES_DEBUG("NesWorker: MonitoringAgent configured with default values");

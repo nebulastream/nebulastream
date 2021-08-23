@@ -25,6 +25,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/RuntimeManager.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -36,7 +37,7 @@ extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
 NodeEnginePtr
 NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    return createNodeEngine(hostname, port, std::move(config), 1, 4096, 1024, 128, 12, "DEBUG", "ALL");
+    return createNodeEngine(hostname, port, std::move(config), 1, 4096, 1024, 128, 12, EnableNumaAwarenessFlag::DISABLED, "DEBUG", "ALL");
 }
 
 NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
@@ -47,22 +48,35 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
                                                   const uint64_t numberOfBuffersInSourceLocalBufferPool,
                                                   const uint64_t numberOfBuffersPerPipeline,
+                                                  EnableNumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& queryCompilerExecutionMode,
                                                   const std::string& queryCompilerOutputBufferOptimizationLevel) {
 
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
-        auto bufferManager = std::make_shared<BufferManager>(bufferSize, numberOfBuffersInGlobalBufferManager);
-        auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
+        auto runtimeManager = std::make_shared<Runtime::RuntimeManager>();
+        std::vector<BufferManagerPtr> bufferManagers;
+        if (enableNumaAwareness == EnableNumaAwarenessFlag::ENABLED) {
+            for (auto i = 0u; i < runtimeManager->getNumberOfNumaRegions(); ++i) {
+                bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
+                                                                         numberOfBuffersInGlobalBufferManager,
+                                                                         runtimeManager->getNumaAllactor(i)));
+            }
+        } else {
+            bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
+                                                                     numberOfBuffersInGlobalBufferManager,
+                                                                     runtimeManager->getGlobalAllocator()));
+        }
+        if (bufferManagers.empty()) {
+            NES_ERROR("Runtime: error while creating buffer manager");
+            throw Exception("Error while creating buffer manager");
+        }
+        auto queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads);
         auto stateManager = std::make_shared<StateManager>(nodeEngineId);
         if (!partitionManager) {
             NES_ERROR("Runtime: error while creating partition manager");
             throw Exception("Error while creating partition manager");
-        }
-        if (!bufferManager) {
-            NES_ERROR("Runtime: error while creating buffer manager");
-            throw Exception("Error while creating buffer manager");
         }
         if (!queryManager) {
             NES_ERROR("Runtime: error while creating queryManager");
@@ -84,7 +98,8 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         }
         auto engine = std::make_shared<NodeEngine>(
             config,
-            std::move(bufferManager),
+            std::move(runtimeManager),
+            std::move(bufferManagers),
             std::move(queryManager),
             [hostname, port, numThreads](const std::shared_ptr<NodeEngine>& engine) {
                 return Network::NetworkManager::create(hostname,

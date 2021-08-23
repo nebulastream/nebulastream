@@ -40,9 +40,10 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) = default;
 MemorySegment::MemorySegment(uint8_t* ptr,
                              uint32_t size,
                              BufferRecycler* recycler,
-                             std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
+                             std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
+                             std::function<void(void*, size_t)>&& freeCallback)
     : ptr(ptr), size(size) {
-    controlBlock = new (ptr + size) BufferControlBlock(this, recycler, std::move(recycleFunction));
+    controlBlock = new (ptr + size) BufferControlBlock(this, recycler, std::move(recycleFunction), std::move(freeCallback));
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
     }
@@ -55,11 +56,12 @@ MemorySegment::MemorySegment(uint8_t* ptr,
                              uint32_t size,
                              BufferRecycler* recycler,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
+                             std::function<void(void*, size_t)>&& freeCallback,
                              bool)
     : ptr(ptr), size(size) {
     NES_ASSERT2_FMT(this->ptr, "invalid ptr");
     NES_ASSERT2_FMT(this->size, "invalid size");
-    controlBlock = new BufferControlBlock(this, recycler, std::move(recycleFunction));
+    controlBlock = new BufferControlBlock(this, recycler, std::move(recycleFunction), std::move(freeCallback));
     controlBlock->prepare();
 }
 
@@ -77,27 +79,32 @@ MemorySegment::~MemorySegment() {
 
         // Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
         // have to call the destructor, as the memory segemnt that contains the controlBlock is managed separately.
+        auto freeImpl = controlBlock->freeCallback;
+        size_t actualBufferSize = size;
         if ((ptr + size) != reinterpret_cast<uint8_t*>(controlBlock)) {
             delete controlBlock;
         } else {
+            actualBufferSize += sizeof(BufferControlBlock);
             controlBlock->~BufferControlBlock();
         }
 
         // Free the pointer and set it to nullptr to avoid use after deallocation.
-        free(std::exchange(ptr, nullptr));
+        freeImpl(std::exchange(ptr, nullptr), actualBufferSize);
     }
 }
 
 BufferControlBlock::BufferControlBlock(MemorySegment* owner,
                                        BufferRecycler* recycler,
-                                       std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
-    : owner(owner), owningBufferRecycler(recycler), recycleCallback(recycleCallback) {}
+                                       std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback,
+                                       std::function<void(void*, size_t)>&& freeCallback)
+    : owner(owner), owningBufferRecycler(recycler), recycleCallback(std::move(recycleCallback)), freeCallback(std::move(freeCallback)) {}
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
     numberOfTuples = that.numberOfTuples;
     creationTimestamp = that.creationTimestamp;
     recycleCallback = that.recycleCallback;
+    freeCallback = that.freeCallback;
     owner = that.owner;
     watermark = that.watermark;
     originId = that.originId;
@@ -107,6 +114,7 @@ BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that
     referenceCounter.store(that.referenceCounter.load());
     numberOfTuples = that.numberOfTuples;
     recycleCallback = that.recycleCallback;
+    freeCallback = that.freeCallback;
     owner = that.owner;
     watermark = that.watermark;
     creationTimestamp = that.creationTimestamp;

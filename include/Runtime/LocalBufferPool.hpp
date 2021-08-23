@@ -63,8 +63,13 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
     * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
     * @return a new buffer
     */
-    TupleBuffer getBufferBlocking();
-
+    TupleBuffer getBufferBlocking() override;
+    size_t getBufferSize() const override;
+    size_t getNumOfPooledBuffers() const override;
+    size_t getNumOfUnpooledBuffers() const override;
+    std::optional<TupleBuffer> getBufferNoBlocking() override;
+    std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout_ms) override;
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
     /**
      * @brief provide number of available exclusive buffers
      * @return number of available exclusive buffers

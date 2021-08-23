@@ -36,7 +36,7 @@ class ThreadPool {
     /**
      * @brief default constructor
      */
-    ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads);
+    explicit ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads);
 
     /**
      * @brief default destructor
