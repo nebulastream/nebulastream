@@ -80,29 +80,28 @@ MemorySource::MemorySource(SchemaPtr schema,
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
+MemorySource::~MemorySource() {
+    numa_free(numaLocalMemoryArea, memoryAreaSize);
+}
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
     if (!initialized) {
         numaLocalMemoryArea = numa_alloc_local(memoryAreaSize);
         std::memcpy(numaLocalMemoryArea, memoryArea.get(), memoryAreaSize);
-        void* numaLocalMemoryArea2 = numa_alloc_onnode(memoryAreaSize, 0);
         int newNumaNode = -1;
         get_mempolicy(&newNumaNode, NULL, 0, (void*) numaLocalMemoryArea, MPOL_F_NODE | MPOL_F_ADDR);
 
         int oldNumaNode = -1;
         get_mempolicy(&oldNumaNode, NULL, 0, (void*) memoryArea.get(), MPOL_F_NODE | MPOL_F_ADDR);
 
-        int newFix = -1;
-        get_mempolicy(&newFix, NULL, 0, (void*) numaLocalMemoryArea2, MPOL_F_NODE | MPOL_F_ADDR);
-
-        int status[1];
-        int ret_code;
-        status[0] = -1;
-        ret_code = move_pages(0 /*self memory */, 1, &numaLocalMemoryArea, NULL, status, 0);
-        printf("Memory at %p is at %d node (retcode %d)\n", numaLocalMemoryArea, status[0], ret_code);
+        //        int status[1];
+        //        int ret_code;
+        //        status[0] = -1;
+        //        ret_code = move_pages(0 /*self memory */, 1, &numaLocalMemoryArea, NULL, status, 0);
+        //        printf("Memory at %p is at %d node (retcode %d)\n", numaLocalMemoryArea, status[0], ret_code);
 
         std::cout << "Mem src move from old numa node=" << oldNumaNode << " to new numa node=" << newNumaNode
-                  << " on core=" << sched_getcpu() << " newFix=" << newFix << std::endl;
+                  << " on core=" << sched_getcpu() << std::endl;
         initialized = true;
     }
 
