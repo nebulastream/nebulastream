@@ -26,16 +26,21 @@ namespace NES {
 namespace QueryCompilation {
 enum StatementType {
     RETURN_STMT,
+    CONTINUE_STMT,
     IF_STMT,
     IF_ELSE_STMT,
+    PREDICATED_FILTER_STMT,
     FOR_LOOP_STMT,
     FUNC_CALL_STMT,
     VAR_REF_STMT,
     VAR_DEC_STMT,
     CONSTANT_VALUE_EXPR_STMT,
+    TYPE_CAST_EXPR_STMT,
     BINARY_OP_STMT,
     UNARY_OP_STMT,
-    COMPOUND_STMT
+    COMPOUND_STMT,
+    STD_OUT_STMT,
+    COMMENT_STMT
 };
 
 enum BracketMode { NO_BRACKETS, BRACKETS };

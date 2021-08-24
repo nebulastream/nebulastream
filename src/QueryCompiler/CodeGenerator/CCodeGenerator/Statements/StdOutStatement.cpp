@@ -19,7 +19,7 @@
 #include <sstream>
 namespace NES::QueryCompilation {
 
-StatementType StdOutStatement::getStamentType() const { return RETURN_STMT; }
+StatementType StdOutStatement::getStamentType() const { return STD_OUT_STMT; }
 
 CodeExpressionPtr StdOutStatement::getCode() const {
     std::stringstream stmt;
