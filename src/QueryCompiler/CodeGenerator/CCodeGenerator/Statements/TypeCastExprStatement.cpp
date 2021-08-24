@@ -20,7 +20,7 @@
 #include <utility>
 
 namespace NES::QueryCompilation {
-StatementType TypeCastExprStatement::getStamentType() const { return CONSTANT_VALUE_EXPR_STMT; }
+StatementType TypeCastExprStatement::getStamentType() const { return TYPE_CAST_EXPR_STMT; }
 
 CodeExpressionPtr TypeCastExprStatement::getCode() const {
     CodeExpressionPtr code;

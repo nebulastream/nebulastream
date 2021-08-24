@@ -31,7 +31,7 @@ IFStatement::IFStatement(const Statement& condExpr, const Statement& condTrueStm
 
 IFStatement::IFStatement(StatementPtr condExpr, const StatementPtr& condTrueStmt)
     : conditionalExpression(std::move(condExpr)), trueCaseStatement(std::make_shared<CompoundStatement>()) {
-    trueCaseStatement->addStatement(condTrueStmt);
+    trueCaseStatement->addStatement(condTrueStmt->createCopy());
 }
 
 StatementType IFStatement::getStamentType() const { return IF_STMT; }
