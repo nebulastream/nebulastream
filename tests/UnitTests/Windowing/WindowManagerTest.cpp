@@ -30,6 +30,7 @@
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+#include <Windowing/WindowAggregations/ExecutableMedianAggregation.hpp>
 
 #include <Util/Logger.hpp>
 #include <cstdlib>
@@ -152,6 +153,30 @@ TEST_F(WindowManagerTest, testAvgAggregation) {
     auto partial2 = aggregation->lift(4L);
     auto combined = aggregation->combine(partial, partial2);
     auto result = aggregation->lower(combined);
+    ASSERT_EQ(result, 2.5);
+}
+
+TEST_F(WindowManagerTest, testMedianAggregation) {
+    auto aggregation = ExecutableMedianAggregation<int64_t>::create();
+    auto partial1 = aggregation->lift(3L);
+    auto partial2 = aggregation->lift(5L);
+    auto partial3 = aggregation->lift(2L);
+    auto combined1 = aggregation->combine(partial1, partial2);
+    auto combined2 = aggregation->combine(combined1, partial3);
+    auto result = aggregation->lower(combined2);
+    ASSERT_EQ(result, 3L);
+}
+
+TEST_F(WindowManagerTest, testMedianAggregationOfEventVector) {
+    auto aggregation = ExecutableMedianAggregation<int64_t>::create();
+    auto partial1 = aggregation->lift(3L);
+    auto partial2 = aggregation->lift(5L);
+    auto partial3 = aggregation->lift(2L);
+    auto partial4 = aggregation->lift(1L);
+    auto combined1 = aggregation->combine(partial1, partial2);
+    auto combined2 = aggregation->combine(combined1, partial3);
+    auto combined3 = aggregation->combine(combined2, partial4);
+    auto result = aggregation->lower(combined3);
     ASSERT_EQ(result, 2.5);
 }
 
