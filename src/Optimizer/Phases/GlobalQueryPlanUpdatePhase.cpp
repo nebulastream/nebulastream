@@ -160,13 +160,14 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
             }
         }
 
+        NES_BM("Benchmark Size: " << nesRequests.size());
         NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
         auto startQM =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         queryMergerPhase->execute(globalQueryPlan);
         auto endQM =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        NES_BM("Total-QM-Time (micro)," << endQM - startQM);
+        NES_BM(nesRequests[0]->getQueryId() << ",Total-QM-Time (micro)," << endQM - startQM);
         NES_DEBUG("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;
     } catch (std::exception& ex) {

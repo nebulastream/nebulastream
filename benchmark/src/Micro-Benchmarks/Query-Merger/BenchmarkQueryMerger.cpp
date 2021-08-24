@@ -43,6 +43,7 @@ uint64_t startupSleepIntervalInSeconds;
 NES::DebugLevel loglevel;
 std::vector<std::string> queryMergerRules;
 std::vector<bool> enableQueryMerging;
+std::vector<uint64_t> batchSizes;
 std::string querySetLocation;
 std::chrono::nanoseconds Runtime;
 NES::NesCoordinatorPtr coordinator;
@@ -69,10 +70,11 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
     }
 }
 
-void setUp(std::string queryMergerRule, uint64_t noOfPhysicalSources) {
+void setUp(std::string queryMergerRule, uint64_t noOfPhysicalSources, uint64_t batchSize) {
     std::cout << "setup and start coordinator" << std::endl;
     NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
     crdConf->setQueryMergerRule(queryMergerRule);
+    crdConf->setQueryBatchSize(batchSize);
     coordinator = std::make_shared<NES::NesCoordinator>(crdConf);
     coordinator->startCoordinator(/**blocking**/ false);
     setupSources(coordinator, noOfPhysicalSources);
@@ -120,6 +122,15 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
             }
 
             loglevel = NES::getDebugLevelFromString(config["logLevel"].As<std::string>());
+
+            auto configuredBatchSizes = config["batchSize"].As<std::string>();
+            {
+                std::stringstream ss(configuredBatchSizes);
+                std::string str;
+                while (getline(ss, str, ',')) {
+                    batchSizes.emplace_back(std::stoi(str));
+                }
+            }
         } catch (std::exception& e) {
             NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file." << e.what());
         }
@@ -192,7 +203,7 @@ int main(int argc, const char* argv[]) {
 
             for (uint64_t expRun = 1; expRun <= noOfMeasurementsToCollect; expRun++) {
                 NES_BM("Experiment " << expRun);
-                setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum]);
+                setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum], batchSizes[configNum]);
                 NES::QueryServicePtr queryService = coordinator->getQueryService();
                 NES::QueryCatalogPtr queryCatalog = coordinator->getQueryCatalog();
                 auto globalQueryPlan = coordinator->getGlobalQueryPlan();
@@ -200,7 +211,7 @@ int main(int argc, const char* argv[]) {
 
                 auto startTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                    .count();
+                        .count();
                 for (uint64_t i = 1; i <= noOfQueries; i++) {
                     const QueryPlanPtr queryPlan = queryObjects[i - 1]->getQueryPlan();
                     queryPlan->setQueryId(i);

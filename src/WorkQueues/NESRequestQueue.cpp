@@ -49,9 +49,8 @@ std::vector<NESRequestPtr> NESRequestQueue::getNextBatch() {
     queriesToSchedule.reserve(batchSize);
     if (!requestQueue.empty()) {
         uint64_t currentBatchSize = 1;
-        uint64_t totalQueriesToSchedule = requestQueue.size();
         //Prepare a batch of queries to schedule
-        while (currentBatchSize <= batchSize || currentBatchSize == totalQueriesToSchedule) {
+        while (currentBatchSize <= batchSize && !requestQueue.empty()) {
             queriesToSchedule.emplace_back(requestQueue.front());
             requestQueue.pop_front();
             currentBatchSize++;
