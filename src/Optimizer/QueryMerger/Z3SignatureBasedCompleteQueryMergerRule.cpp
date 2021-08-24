@@ -126,16 +126,25 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
 
         if (!matched) {
             NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
+            auto startQM =
+                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                .count();
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
+            auto endQM =
+                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                .count();
+            qmTime = endQM - startQM;
+            NES_BM("Query-Merging-Time (micro)," << qmTime);
         }
+        auto endSI =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        NES_BM("Sharing-Identification-Time (micro)," << (endSI - startSI - qmTime));
+        startSI =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     }
     //Remove all empty shared query metadata
     globalQueryPlan->removeEmptySharedQueryPlans();
-    auto success = globalQueryPlan->clearQueryPlansToAdd();
-    auto endSI =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_BM("Sharing-Identification-Time (micro)," << (endSI - startSI - qmTime));
-    return success;
+    return globalQueryPlan->clearQueryPlansToAdd();
 }
 
 }// namespace NES::Optimizer
