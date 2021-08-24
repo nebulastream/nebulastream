@@ -143,22 +143,22 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-DNES_LOGGING_TRACE_LEVEL=1");
 #endif
 #ifdef NES_LOGGING_DEBUG_LEVEL
-    flags->addFlag("-DNES_LOGGING_DEBUG_LEVEL=1");
+    compilationFlags->addFlag("-DNES_LOGGING_DEBUG_LEVEL=1");
 #endif
 #ifdef NES_LOGGING_INFO_LEVEL
-    flags->addFlag("-DNES_LOGGING_INFO_LEVEL=1");
+    compilationFlags->addFlag("-DNES_LOGGING_INFO_LEVEL=1");
 #endif
 #ifdef NES_LOGGING_WARNING_LEVEL
-    flags->addFlag("-DNES_LOGGING_WARNING_LEVEL=1");
+    compilationFlags->addFlag("-DNES_LOGGING_WARNING_LEVEL=1");
 #endif
 #ifdef NES_LOGGING_ERROR_LEVEL
-    flags->addFlag("-DNES_LOGGING_ERROR_LEVEL=1");
+    compilationFlags->addFlag("-DNES_LOGGING_ERROR_LEVEL=1");
 #endif
 #ifdef NES_LOGGING_NO_LEVEL
-    flags->addFlag("-DNES_LOGGING_NO_LEVEL=1");
+    compilationFlags->addFlag("-DNES_LOGGING_NO_LEVEL=1");
 #endif
 #ifdef NES_LOGGING_FATAL_ERROR_LEVEL
-    flags->addFlag("-DNES_LOGGING_FATAL_ERROR_LEVEL=1");
+    compilationFlags->addFlag("-DNES_LOGGING_FATAL_ERROR_LEVEL=1");
 #endif
 
     compilationFlags.addFlag(sourceFileName);
