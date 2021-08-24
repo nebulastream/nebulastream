@@ -83,7 +83,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     /**
      * @brief This methods creates the local buffer pool and is necessary because we cannot do it in the constructor
      */
-    void open();
+    virtual void open();
 
     /**
      * @brief method to start the source.
