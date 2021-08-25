@@ -306,6 +306,7 @@ message SerializableOperator{
         MIN = 2;
         COUNT = 3;
         AVG = 4;
+        MEDIAN = 5;
       }
       Type type = 1;
       SerializableExpression onField = 2;

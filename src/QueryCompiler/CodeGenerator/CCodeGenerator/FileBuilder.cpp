@@ -50,6 +50,7 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>\n"
+                          "#include <Windowing/WindowAggregations/ExecutableMedianAggregation.hpp>\n"
                           "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>\n"
                           "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>\n"
                           "using namespace NES::QueryCompilation;"

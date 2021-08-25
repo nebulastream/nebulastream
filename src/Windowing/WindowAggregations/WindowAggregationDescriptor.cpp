@@ -63,6 +63,8 @@ std::string WindowAggregationDescriptor::getTypeAsString() {
         return "Min";
     } else if (aggregationType == Sum) {
         return "Sum";
+    } else if (aggregationType == Median) {
+        return "Median";
     } else {
         return "Unknown Agg Type";
     }

@@ -810,7 +810,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 
     NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");
     NES_ASSERT((!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined()
-                || window->getWindowAggregation()->getType() == Windowing::WindowAggregationDescriptor::Avg),
+                || window->getWindowAggregation()->getType() == Windowing::WindowAggregationDescriptor::Avg
+                || window->getWindowAggregation()->getType() == Windowing::WindowAggregationDescriptor::Median),
                "window partial type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
 
@@ -862,6 +863,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     // min: initialize with the upper bound of the data type
     // count & sum: initialize with 0
     // avg : initialize with an empty AVGPartialType
+    // median: initialize with a vector of the data type
     switch (window->getWindowAggregation()->getType()) {
         case Windowing::WindowAggregationDescriptor::Min: {
             if (auto intType = DataType::as<Integer>(window->getWindowAggregation()->getPartialAggregateStamp())) {
@@ -900,6 +902,15 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
                 "initialValue");
             context->code->currentCodeInsertionPoint->addStatement(VarDeclStatement(avgInitialValueDeclaration).createCopy());
             getValueFromKeyHandle.addParameter(VarRefStatement(avgInitialValueDeclaration));
+            break;
+        }
+        case Windowing::WindowAggregationDescriptor::Median: {
+            auto aggregationInputType = tf->createDataType(window->getWindowAggregation()->getInputStamp());
+            auto medianInitialValueDeclaration = VariableDeclaration::create(
+                tf->createAnonymusDataType("std::vector<" + aggregationInputType->getCode()->code_ + ">"),
+                "initialValue");
+            context->code->currentCodeInsertionPoint->addStatement(VarDeclStatement(medianInitialValueDeclaration).createCopy());
+            getValueFromKeyHandle.addParameter(VarRefStatement(medianInitialValueDeclaration));
             break;
         }
         default: {
@@ -1991,8 +2002,14 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
                 .assign(call("Windowing::AVGPartialType<" + aggregationInputType->getCode()->code_ + ">"));
         setupScope->addStatement(partialAggregateInitStatement.copy());
         createAggregateCall = call("Windowing::ExecutableAVGAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
+    } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Median) {
+        auto partialAggregateInitStatement =
+            VarDeclStatement(partialAggregateInitialValue)
+            .assign(call("std::vector<" + aggregationInputType->getCode()->code_ + ">"));
+        setupScope->addStatement(partialAggregateInitStatement.copy());
+        createAggregateCall = call("Windowing::ExecutableMedianAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
     } else {
-        // If the the aggregate is Avg, we initialize the partialAggregate with 0
+        // If the the aggregate is not Avg or median, we initialize the partialAggregate with 0
         auto partialAggregateInitStatement =
             VarDeclStatement(partialAggregateInitialValue)
                 .assign(Constant(
@@ -2094,6 +2111,8 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     std::string partialAggregateTypeCode;
     if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Avg) {
         partialAggregateTypeCode = "Windowing::AVGPartialType<" + aggregationInputType->getCode()->code_ + ">";
+    } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Median) {
+        partialAggregateTypeCode = "std::vector<" + aggregationInputType->getCode()->code_ + ">";
     } else {
         // otherwise, get the code directly from the partialAggregateStamp
         auto partialAggregateType = tf->createDataType(aggregation->getPartialAggregateStamp());
@@ -2405,6 +2424,8 @@ CCodeGenerator::getAggregationWindowHandler(const VariableDeclaration& pipelineC
     std::string partialAggregateCode;
     if (windowAggregationDescriptor->getType() == Windowing::WindowAggregationDescriptor::Avg) {
         partialAggregateCode = "Windowing::AVGPartialType<" + TO_CODE(windowAggregationDescriptor->getInputStamp()) + ">";
+    } else if (windowAggregationDescriptor->getType() == Windowing::WindowAggregationDescriptor::Median) {
+        partialAggregateCode = "std::vector<" + TO_CODE(windowAggregationDescriptor->getInputStamp()) + ">";
     } else {
         auto partialAggregateType = tf->createDataType(windowAggregationDescriptor->getPartialAggregateStamp());
         partialAggregateCode = partialAggregateType->getCode()->code_;
