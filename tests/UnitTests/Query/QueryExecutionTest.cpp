@@ -48,9 +48,12 @@
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <gmock/gmock-matchers.h>
 
 using namespace NES;
 using Runtime::TupleBuffer;
@@ -692,6 +695,45 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     }
     nodeEngine->stopQuery(0);
     testSink->cleanupBuffers();
+}
+
+/**
+ * @brief Test if the custom field set for aggregation using "as()" is set in the sink output schema
+ * TODO: is this the correct place for this test?
+ */
+TEST_F(QueryExecutionTest, windowAggregationWithAs) {
+    // add window source and create two buffers each second one.
+    auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        windowSchema,
+        [&](OperatorId,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return WindowSource::create(windowSchema,
+                                        nodeEngine->getBufferManager(),
+                                        nodeEngine->getQueryManager(),
+                                        /*bufferCnt*/ 2,
+                                        /*frequency*/ 1000,
+                                        std::move(successors));
+        });
+    auto query = TestQuery::from(windowSourceDescriptor);
+
+    // create a query with "as" in the aggregation
+    query = query.window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(10)))
+                .byKey(Attribute("key", INT64))
+                .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                .sink(PrintSinkDescriptor::create());
+
+    // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    // get the output schema of the sink
+    const auto outputSchemaString = query.getQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString();
+    NES_DEBUG("QueryExecutionTest:: WindowAggWithAs outputSchema: " << outputSchemaString);
+
+    EXPECT_THAT(outputSchemaString, ::testing::HasSubstr("MY_OUTPUT_FIELD_NAME"));
 }
 
 /**
