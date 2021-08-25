@@ -271,7 +271,7 @@ target_link_libraries(operator-properties-tests nes ${GTEST_LIBRARIES})
 add_test(NAME operator-properties-tests COMMAND operator-properties-tests)
 
 # QueryTest
-add_executable(query-tests "UnitTests/Catalogs/QueryTest.cpp")
+add_executable(query-tests "UnitTests/API/QueryTest.cpp")
 target_link_libraries(query-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-tests COMMAND query-tests)
 

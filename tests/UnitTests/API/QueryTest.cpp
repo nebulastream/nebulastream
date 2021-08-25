@@ -34,6 +34,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -43,6 +44,7 @@
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <gmock/gmock-matchers.h>
 #include <iostream>
 
 namespace NES {
@@ -285,5 +287,34 @@ TEST_F(QueryTest, testQueryExpression) {
     ConsoleDumpHandler::create(std::cout)->dump(assignmentExpression);
     EXPECT_TRUE(assignmentExpression->instanceOf<FieldAssignmentExpressionNode>());
 }
+
+/**
+ * @brief Test if the custom field set for aggregation using "as()" is set in the sink output schema
+ */
+TEST_F(QueryTest, windowAggregationWithAs) {
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    streamCatalog->addPhysicalStream("default_logical", sce);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+
+    // create a query with "as" in the aggregation
+    auto query = Query::from("default_logical").window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
+        .byKey(Attribute("id", INT64))
+        .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+        .sink(PrintSinkDescriptor::create());
+
+    // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    // get the output schema of the sink
+    const auto outputSchemaString = query.getQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString();
+    NES_DEBUG("QueryExecutionTest:: WindowAggWithAs outputSchema: " << outputSchemaString);
+
+    EXPECT_THAT(outputSchemaString, ::testing::HasSubstr("MY_OUTPUT_FIELD_NAME"));
+}
+
 
 }// namespace NES
