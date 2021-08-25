@@ -172,9 +172,18 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*) {
     NES_THROW_RUNTIME_ERROR("This feature is not supported here");
 }
-size_t FixedSizeBufferPool::getBufferSize() const { return 0; }
-size_t FixedSizeBufferPool::getNumOfPooledBuffers() const { return 0; }
-size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const { return 0; }
-std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking() { return std::optional<TupleBuffer>(); }
-std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t) { return std::optional<TupleBuffer>(); }
+size_t FixedSizeBufferPool::getBufferSize() const { return bufferManager.lock()->getBufferSize(); }
+size_t FixedSizeBufferPool::getNumOfPooledBuffers() const { return numberOfReservedBuffers; }
+size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const {
+    NES_ASSERT2_FMT(false, "This is not supported currently");
+    return 0;
+}
+std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking() {
+    NES_ASSERT2_FMT(false, "This is not supported currently");
+    return std::optional<TupleBuffer>();
+}
+std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t) {
+    NES_ASSERT2_FMT(false, "This is not supported currently");
+    return std::optional<TupleBuffer>();
+}
 }// namespace NES::Runtime

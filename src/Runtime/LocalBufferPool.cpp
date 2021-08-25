@@ -160,12 +160,26 @@ void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
 void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment*) {
     NES_THROW_RUNTIME_ERROR("This feature is not supported here");
 }
-size_t LocalBufferPool::getBufferSize() const { return 0; }
-size_t LocalBufferPool::getNumOfPooledBuffers() const { return 0; }
-size_t LocalBufferPool::getNumOfUnpooledBuffers() const { return 0; }
-std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking() { return std::optional<TupleBuffer>(); }
-std::optional<TupleBuffer> LocalBufferPool::getBufferTimeout(std::chrono::milliseconds) {
+size_t LocalBufferPool::getBufferSize() const { return bufferManager.lock()->getBufferSize(); }
+
+size_t LocalBufferPool::getNumOfPooledBuffers() const { return numberOfReservedBuffers; }
+
+size_t LocalBufferPool::getNumOfUnpooledBuffers() const {
+    NES_ASSERT2_FMT(false, "This is not supported currently");
+    return 0;
+}
+
+std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking() {
+    NES_ASSERT2_FMT(false, "This is not supported currently");
     return std::optional<TupleBuffer>();
 }
-std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t) { return std::optional<TupleBuffer>(); }
+std::optional<TupleBuffer> LocalBufferPool::getBufferTimeout(std::chrono::milliseconds) {
+    NES_ASSERT2_FMT(false, "This is not supported currently");
+    return std::optional<TupleBuffer>();
+}
+
+std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t) {
+    NES_ASSERT2_FMT(false, "This is not supported currently");
+    return std::optional<TupleBuffer>();
+}
 }// namespace NES::Runtime
