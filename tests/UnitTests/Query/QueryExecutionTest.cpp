@@ -48,7 +48,6 @@
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
