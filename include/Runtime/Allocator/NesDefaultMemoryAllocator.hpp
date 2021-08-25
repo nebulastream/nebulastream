@@ -19,13 +19,26 @@
 
 #include <Util/Logger.hpp>
 #include <memory>
+#ifdef __linux__
 #include <memory_resource>
+#elif defined(__APPLE__)
+// TODO move non experimental when upgrading clang dep
+#include <experimental/memory_resource>
+namespace std {
+namespace pmr {
+using memory_resource = std::experimental::pmr::memory_resource;
+}
+}// namespace std
+#endif
 namespace NES::Runtime {
+/**
+ * @brief The default memory resource of nes that use posix_memalign
+ */
 class NesDefaultMemoryAllocator : public std::pmr::memory_resource {
   public:
-    explicit NesDefaultMemoryAllocator() {};
+    explicit NesDefaultMemoryAllocator() = default;
 
-    ~NesDefaultMemoryAllocator() override {}
+    ~NesDefaultMemoryAllocator() override = default;
 
   private:
     void* do_allocate(size_t bytes, size_t alignment) override {
@@ -34,14 +47,9 @@ class NesDefaultMemoryAllocator : public std::pmr::memory_resource {
         return tmp;
     }
 
-    void do_deallocate(void* p, size_t, size_t) override {
-        std::free(p);
-    }
-    bool do_is_equal(const memory_resource& other) const noexcept override {
-        return this == &other;
-    }
-
+    void do_deallocate(void* p, size_t, size_t) override { std::free(p); }
+    bool do_is_equal(const memory_resource& other) const noexcept override { return this == &other; }
 };
 using NesDefaultMemoryAllocatorPtr = std::shared_ptr<NesDefaultMemoryAllocator>;
-}
+}// namespace NES::Runtime
 #endif//NES_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_

@@ -20,7 +20,17 @@
 
 #include <Util/Logger.hpp>
 #include <memory>
+#ifdef __linux__
 #include <memory_resource>
+#elif defined(__APPLE__)
+// TODO move non experimental when upgrading clang dep
+#include <experimental/memory_resource>
+namespace std {
+namespace pmr {
+using memory_resource = std::experimental::pmr::memory_resource;
+}
+}// namespace std
+#endif
 #ifdef NES_ENABLE_NUMA_SUPPORT
 #if defined(__linux__)
 #include <sys/mman.h>
@@ -31,8 +41,15 @@
 #include <cstring>
 
 namespace NES::Runtime {
+/**
+ * @brief A numa aware memory resource
+ */
 class NumaRegionMemoryAllocator : public std::pmr::memory_resource {
   public:
+    /**
+     * @brief creates an allocator for a given numa region
+     * @param numaNodeIndex
+     */
     explicit NumaRegionMemoryAllocator(uint32_t numaNodeIndex) : numaNodeIndex(numaNodeIndex) {};
 
     ~NumaRegionMemoryAllocator() override {}
