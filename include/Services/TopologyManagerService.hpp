@@ -17,9 +17,9 @@
 #ifndef NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_
 #define NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_
 
+#include <Services/StreamCatalogService.hpp>
 #include <memory>
 #include <mutex>
-#include <Services/StreamCatalogService.hpp>
 
 enum NodeType : int;
 namespace NES {
@@ -80,6 +80,5 @@ class TopologyManagerService {
     std::mutex registerDeregisterNode;
 };
 }//namespace NES
-
 
 #endif//NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_

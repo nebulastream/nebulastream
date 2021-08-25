@@ -14,13 +14,13 @@
     limitations under the License.
 */
 
-#include <Services/TopologyManagerService.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <NodeStats.pb.h>
+#include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -35,13 +35,14 @@ TopologyManagerService::TopologyManagerService(TopologyPtr topology, StreamCatal
 }
 
 uint64_t TopologyManagerService::registerNode(const std::string& address,
-                                         int64_t grpcPort,
-                                         int64_t dataPort,
-                                         uint16_t numberOfSlots,
-                                         const NodeStatsPtr& nodeStats,
-                                         NodeType type) {
+                                              int64_t grpcPort,
+                                              int64_t dataPort,
+                                              uint16_t numberOfSlots,
+                                              const NodeStatsPtr& nodeStats,
+                                              NodeType type) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
-                                                          << " nodeProperties=" << nodeStats->DebugString() << " type=" << type);
+                                                               << " nodeProperties=" << nodeStats->DebugString()
+                                                               << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
     NES_DEBUG("TopologyManagerService::registerNode: topology before insert");
@@ -49,7 +50,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
 
     if (topology->nodeExistsWithIpAndPort(address, grpcPort)) {
         NES_ERROR("TopologyManagerService::registerNode: node with address " << address << " and grpc port " << grpcPort
-                                                                        << " already exists");
+                                                                             << " already exists");
         return false;
     }
 
@@ -70,11 +71,11 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         //check if logical stream exists
         if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf->getLogicalStreamName())) {
-            NES_ERROR("TopologyManagerService::registerNode: error logical stream" << streamConf->getLogicalStreamName()
-                                                                              << " does not exist when adding physical stream "
-                                                                              << streamConf->getPhysicalStreamName());
+            NES_ERROR("TopologyManagerService::registerNode: error logical stream"
+                      << streamConf->getLogicalStreamName() << " does not exist when adding physical stream "
+                      << streamConf->getPhysicalStreamName());
             throw Exception("TopologyManagerService::registerNode logical stream does not exist "
-                                + streamConf->getLogicalStreamName());
+                            + streamConf->getLogicalStreamName());
         }
 
         std::string sourceType = streamConf->getSourceType();
@@ -88,9 +89,9 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
         if (!success) {
             NES_ERROR("TopologyManagerService::registerNode: physical stream " << streamConf->getPhysicalStreamName()
-                                                                          << " could not be added to catalog");
+                                                                               << " could not be added to catalog");
             throw Exception("TopologyManagerService::registerNode: physical stream " + streamConf->getPhysicalStreamName()
-                                + " could not be added to catalog");
+                            + " could not be added to catalog");
         }
 
     } else if (type == NodeType::Worker) {
@@ -206,7 +207,7 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
 
     std::vector<NodePtr> children = parentNode->getChildren();
     auto found = std::find_if(children.begin(), children.end(), [&childId](const NodePtr& node) {
-      return node->as<TopologyNode>()->getId() == childId;
+        return node->as<TopologyNode>()->getId() == childId;
     });
 
     if (found == children.end()) {
@@ -223,7 +224,8 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
 
     bool success = topology->removeNodeAsChild(parentNode, childNode);
     if (!success) {
-        NES_ERROR("TopologyManagerService::removeParent: edge between  " << childId << " and " << parentId << " could not be removed");
+        NES_ERROR("TopologyManagerService::removeParent: edge between  " << childId << " and " << parentId
+                                                                         << " could not be removed");
         return false;
     }
     NES_DEBUG("TopologyManagerService::removeParent: successful");

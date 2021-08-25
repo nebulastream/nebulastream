@@ -18,10 +18,10 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
-#include <Services/StreamCatalogService.hpp>
-#include <Services/TopologyManagerService.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <NodeStats.pb.h>
+#include <Services/StreamCatalogService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -31,7 +31,8 @@
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalogPtr, TopologyPtr topologyPtr)
-    : streamCatalogService(streamCatalogPtr), topologyManagerService(topologyPtr, streamCatalogPtr), streamCatalog(std::move(streamCatalogPtr)), topology(std::move(topologyPtr)) {
+    : streamCatalogService(streamCatalogPtr), topologyManagerService(topologyPtr, streamCatalogPtr),
+      streamCatalog(std::move(streamCatalogPtr)), topology(std::move(topologyPtr)) {
     NES_DEBUG("CoordinatorEngine()");
 }
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
@@ -45,9 +46,7 @@ uint64_t CoordinatorEngine::registerNode(const std::string& address,
     return topologyManagerService.registerNode(address, grpcPort, dataPort, numberOfSlots, nodeStats, type);
 }
 
-bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
-    return topologyManagerService.unregisterNode(nodeId);
-}
+bool CoordinatorEngine::unregisterNode(uint64_t nodeId) { return topologyManagerService.unregisterNode(nodeId); }
 
 bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
                                                const std::string& sourceType,

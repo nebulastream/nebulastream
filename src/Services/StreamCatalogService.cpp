@@ -18,9 +18,9 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
-#include <Services/StreamCatalogService.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <NodeStats.pb.h>
+#include <Services/StreamCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -29,23 +29,22 @@
 
 namespace NES {
 
-StreamCatalogService::StreamCatalogService(StreamCatalogPtr streamCatalog)
-    : streamCatalog(std::move(streamCatalog)) {
+StreamCatalogService::StreamCatalogService(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
     NES_DEBUG("StreamCatalogService()");
     NES_ASSERT(this->streamCatalog, "streamCatalogPtr has to be valid");
 }
 
 bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr physicalNode,
-                                               const std::string& sourceType,
-                                               const std::string& physicalStreamName,
-                                               const std::string& logicalStreamName) {
+                                                  const std::string& sourceType,
+                                                  const std::string& physicalStreamName,
+                                                  const std::string& logicalStreamName) {
     if (!physicalNode) {
         NES_ERROR("StreamCatalogService::RegisterPhysicalStream node not found");
         return false;
     }
 
     NES_DEBUG("StreamCatalogService::RegisterPhysicalStream: try to register physical node id "
-                  << physicalNode->getId() << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);
+              << physicalNode->getId() << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
     StreamCatalogEntryPtr sce =
@@ -59,10 +58,10 @@ bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr physicalNode,
 }
 
 bool StreamCatalogService::unregisterPhysicalStream(TopologyNodePtr physicalNode,
-                                                 const std::string& physicalStreamName,
-                                                 const std::string& logicalStreamName) {
+                                                    const std::string& physicalStreamName,
+                                                    const std::string& logicalStreamName) {
     NES_DEBUG("StreamCatalogService::UnregisterPhysicalStream: try to remove physical stream with name "
-                  << physicalStreamName << " logical name " << logicalStreamName << " workerId=" << physicalNode->getId());
+              << physicalStreamName << " logical name " << logicalStreamName << " workerId=" << physicalNode->getId());
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
     if (!physicalNode) {
@@ -81,7 +80,7 @@ bool StreamCatalogService::unregisterPhysicalStream(TopologyNodePtr physicalNode
 
 bool StreamCatalogService::registerLogicalStream(const std::string& logicalStreamName, const std::string& schemaString) {
     NES_DEBUG("StreamCatalogService::registerLogicalStream: register logical stream=" << logicalStreamName
-                                                                                   << " schema=" << schemaString);
+                                                                                      << " schema=" << schemaString);
     std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
     return streamCatalog->addLogicalStream(logicalStreamName, schemaString);
 }
@@ -94,4 +93,3 @@ bool StreamCatalogService::unregisterLogicalStream(const std::string& logicalStr
 }
 
 }//namespace NES
-
