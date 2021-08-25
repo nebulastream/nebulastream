@@ -603,8 +603,9 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondPlusOneTopologySingleQueryWith
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(crd->getGlobalExecutionPlan()->checkIfExecutionNodeExists(wrk2TopologyNodeId));
 
-    maintenanceService->submitMaintenanceRequest(2,2); //doesnt work at all
+    maintenanceService->submitMaintenanceRequest(wrk2TopologyNodeId,2); //doesnt work at all
 
     NES_INFO("QueryDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
@@ -721,7 +722,9 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondPlusOneTopologySingleQueryNoBu
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    maintenanceService->submitMaintenanceRequest(2,3);
+    ASSERT_TRUE(crd->getGlobalExecutionPlan()->checkIfExecutionNodeExists(wrk2TopologyNodeId));
+
+    maintenanceService->submitMaintenanceRequest(wrk2TopologyNodeId,3);
     NES_INFO("QueryDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
@@ -753,8 +756,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondPlusOneTopologySingleQueryNoBu
     bool success = compareDataToBaseline(filePath,ids);
     EXPECT_EQ(success , true);
 }
-
-TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_test) {
+TEST_F(QueryMigrationPhaseIntegrationTest, DeepTopologySingleQueryWithBufferTest) {
 
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
@@ -762,63 +764,428 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_test) {
     coConf->setRpcPort(rpcPort);
     coConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
+    wrkConf->setNumWorkerThreads(3);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
-    //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
+    TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
+    ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
+    ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
     wrkConf->setRpcPort(port + 30);
     wrkConf->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
-    wrk3->addParent(3);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart4);
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk4->replaceParent(crdTopologyNodeId,wrk3TopologyNodeId);
 
-    TopologyPtr topo = crd->getTopology();
-    ASSERT_EQ(topo->getRoot()->getId(), 1UL);
-    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2UL);
-    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1UL);
-    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1UL);
-    NES_DEBUG(crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString());
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Worker);
+    bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart5);
+    TopologyNodeId wrk5TopologyNodeId = wrk5->getTopologyNodeId();
+    ASSERT_NE(wrk5TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
+
+
+    wrkConf->setRpcPort(port + 50);
+    wrkConf->setDataPort(port + 51);
+    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Worker);
+    bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart6);
+    TopologyNodeId wrk6TopologyNodeId = wrk6->getTopologyNodeId();
+    ASSERT_NE(wrk6TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk6->replaceParent(crdTopologyNodeId, wrk5TopologyNodeId);
+
+
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    NesWorkerPtr wrk7 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Worker);
+    bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart7);
+    TopologyNodeId wrk7TopologyNodeId = wrk7->getTopologyNodeId();
+    ASSERT_NE(wrk7TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk7->replaceParent(crdTopologyNodeId, wrk6TopologyNodeId);
+
+
+    wrkConf->setRpcPort(port + 70);
+    wrkConf->setDataPort(port + 71);
+    NesWorkerPtr wrk8 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
+    bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart8);
+    TopologyNodeId wrk8TopologyNodeId = wrk8->getTopologyNodeId();
+    ASSERT_NE(wrk8TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk8->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
+    wrk8->addParent(wrk7TopologyNodeId);
+
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
+    //register logical stream
+    std::string testSchema = "Schema::create()->addField(createField(\"id\", UINT64));";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+    wrk8->registerLogicalStream("testStream", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/exdra.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    ASSERT_TRUE(std::filesystem::exists("../tests/test_data/test_balint.csv"));
+    srcConf->setSourceConfig("../tests/test_data/test_balint.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
     srcConf->setPhysicalStreamName("test_stream");
-    srcConf->setLogicalStreamName("exdra");
+    srcConf->setLogicalStreamName("testStream");
+    //srcConf->setSkipHeader(true);
     srcConf->setNumberOfBuffersToProduce(1000);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
-    wrk3->registerPhysicalStream(conf);
-    std::string filePath = "withoutMigration.csv";
+    wrk8->registerPhysicalStream(conf);
+
+    std::string filePath = "deepTopologyWithBuffer.csv";
     remove(filePath.c_str());
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
 
-
+    NES_DEBUG("MaintenanceServiceTest: Submit query");
+    //register query
     std::string queryString =
-        R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+            R"(Query::from("testStream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(crd->getGlobalExecutionPlan()->checkIfExecutionNodeExists(wrk2TopologyNodeId));
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-    NES_DEBUG("Worker1 stopped!");
+    maintenanceService->submitMaintenanceRequest(wrk2TopologyNodeId,2);
+    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+    NES_DEBUG("Worker2 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 3");
+    bool retStopWrk3 = wrk3->stop(true);
+    EXPECT_TRUE(retStopWrk3);
+    NES_DEBUG("Worker3 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 4");
+    bool retStopWrk4 = wrk4->stop(true);
+    EXPECT_TRUE(retStopWrk4);
+    NES_DEBUG("Worker4 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 5");
+    bool retStopWrk5 = wrk5->stop(true);
+    EXPECT_TRUE(retStopWrk5);
+    NES_DEBUG("Worker5 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 6");
+    bool retStopWrk6 = wrk6->stop(true);
+    EXPECT_TRUE(retStopWrk6);
+    NES_DEBUG("Worker6 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 7");
+    bool retStopWrk7 = wrk7->stop(true);
+    EXPECT_TRUE(retStopWrk7);
+    NES_DEBUG("Worker7 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 8");
+    bool retStopWrk8 = wrk8->stop(true);
+    EXPECT_TRUE(retStopWrk8);
+    NES_DEBUG("Worker8 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+
+    std::vector<uint64_t> ids (1000);
+    std::iota(ids.begin(), ids.end(),1);
+
+    bool success = compareDataToBaseline(filePath,ids);
+    EXPECT_EQ(success , true);
+}
+TEST_F(QueryMigrationPhaseIntegrationTest, DeepTopologySingleQueryWithoutBufferTest) {
+
+    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+    coConf->setRpcPort(rpcPort);
+    coConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    wrkConf->setNumWorkerThreads(3);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
+    ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
+    ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart4);
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk4->replaceParent(crdTopologyNodeId,wrk3TopologyNodeId);
+
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Worker);
+    bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart5);
+    TopologyNodeId wrk5TopologyNodeId = wrk5->getTopologyNodeId();
+    ASSERT_NE(wrk5TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
+
+
+    wrkConf->setRpcPort(port + 50);
+    wrkConf->setDataPort(port + 51);
+    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Worker);
+    bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart6);
+    TopologyNodeId wrk6TopologyNodeId = wrk6->getTopologyNodeId();
+    ASSERT_NE(wrk6TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk6->replaceParent(crdTopologyNodeId, wrk5TopologyNodeId);
+
+
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    NesWorkerPtr wrk7 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Worker);
+    bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart7);
+    TopologyNodeId wrk7TopologyNodeId = wrk7->getTopologyNodeId();
+    ASSERT_NE(wrk7TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk7->replaceParent(crdTopologyNodeId, wrk6TopologyNodeId);
+
+
+    wrkConf->setRpcPort(port + 70);
+    wrkConf->setDataPort(port + 71);
+    NesWorkerPtr wrk8 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
+    bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart8);
+    TopologyNodeId wrk8TopologyNodeId = wrk8->getTopologyNodeId();
+    ASSERT_NE(wrk8TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk8->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
+    wrk8->addParent(wrk7TopologyNodeId);
+
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
+
+    //register logical stream
+    std::string testSchema = "Schema::create()->addField(createField(\"id\", UINT64));";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+    wrk5->registerLogicalStream("testStream", testSchemaFileName);
+
+    srcConf->setSourceType("CSVSource");
+    ASSERT_TRUE(std::filesystem::exists("../tests/test_data/test_balint.csv"));
+    srcConf->setSourceConfig("../tests/test_data/test_balint.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("testStream");
+    //srcConf->setSkipHeader(true);
+    srcConf->setNumberOfBuffersToProduce(1000);
+    //register physical stream
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    wrk5->registerPhysicalStream(conf);
+
+    std::string filePath = "deepTopologyWithoutBuffer.csv";
+    remove(filePath.c_str());
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
+
+    NES_DEBUG("MaintenanceServiceTest: Submit query");
+    //register query
+    std::string queryString =
+            R"(Query::from("testStream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(crd->getGlobalExecutionPlan()->checkIfExecutionNodeExists(wrk2TopologyNodeId));
+
+    maintenanceService->submitMaintenanceRequest(wrk2TopologyNodeId,3);
+    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+    NES_DEBUG("Worker2 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 3");
+    bool retStopWrk3 = wrk3->stop(true);
+    EXPECT_TRUE(retStopWrk3);
+    NES_DEBUG("Worker3 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 4");
+    bool retStopWrk4 = wrk4->stop(true);
+    EXPECT_TRUE(retStopWrk4);
+    NES_DEBUG("Worker4 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 5");
+    bool retStopWrk5 = wrk5->stop(true);
+    EXPECT_TRUE(retStopWrk5);
+    NES_DEBUG("Worker5 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 6");
+    bool retStopWrk6 = wrk6->stop(true);
+    EXPECT_TRUE(retStopWrk6);
+    NES_DEBUG("Worker6 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 7");
+    bool retStopWrk7 = wrk7->stop(true);
+    EXPECT_TRUE(retStopWrk7);
+    NES_DEBUG("Worker7 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 8");
+    bool retStopWrk8 = wrk8->stop(true);
+    EXPECT_TRUE(retStopWrk8);
+    NES_DEBUG("Worker8 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+
+
+    std::vector<uint64_t> ids (1000);
+    std::iota(ids.begin(), ids.end(),1);
+
+    bool success = compareDataToBaseline(filePath,ids);
+    EXPECT_EQ(success , true);
+}
+
+TEST_F(QueryMigrationPhaseIntegrationTest, SingleUnionQueryNoBufferTest) {
+
+    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+    coConf->setRpcPort(rpcPort);
+    coConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    wrkConf->setNumWorkerThreads(3);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
+    ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
+    ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart4);
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk4->replaceParent(crdTopologyNodeId,wrk3TopologyNodeId);
+    wrk4->addParent(wrk2TopologyNodeId);
+
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
+    bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart5);
+    TopologyNodeId wrk5TopologyNodeId = wrk5->getTopologyNodeId();
+    ASSERT_NE(wrk5TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    wrk5->replaceParent(crdTopologyNodeId, wrk3TopologyNodeId);
+    wrk5->addParent(wrk2TopologyNodeId);
+
+
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
+
+    //register logical stream
+    std::string testSchema = "Schema::create()->addField(createField(\"id\", UINT64));";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+
+    wrk4->registerLogicalStream("logicalStream1", testSchemaFileName);
+    srcConf->setSourceType("CSVSource");
+    ASSERT_TRUE(std::filesystem::exists("../tests/test_data/test_balint.csv"));
+    srcConf->setSourceConfig("../tests/test_data/test_balint.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
+    srcConf->setPhysicalStreamName("physicalStream1");
+    srcConf->setLogicalStreamName("logicalStream1");
+    //srcConf->setSkipHeader(true);
+    srcConf->setNumberOfBuffersToProduce(1000);
+    //register physical stream
+    PhysicalStreamConfigPtr conf1 = PhysicalStreamConfig::create(srcConf);
+    wrk4->registerPhysicalStream(conf1);
+
+    wrk5->registerLogicalStream("logicalStream2",testSchemaFileName);
+    srcConf->setPhysicalStreamName("physicalStream2");
+    srcConf->setLogicalStreamName("logicalStream2");
+    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+    wrk5->registerPhysicalStream(conf2);
+
+
+    std::string filePath = "UnionNoBuffer.csv";
+    remove(filePath.c_str());
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
+
+    NES_DEBUG("MaintenanceServiceTest: Submit query");
+    //register query
+    std::string queryString =
+            R"(Query::from("logicalStream1").unionWith(Query::from("logicalStream2")).sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(crd->getGlobalExecutionPlan()->checkIfExecutionNodeExists(wrk3TopologyNodeId));
+    sleep(5);
+    //maintenanceService->submitMaintenanceRequest(wrk2TopologyNodeId,3);
+    sleep(25);
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
@@ -830,12 +1197,29 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_test) {
     EXPECT_TRUE(retStopWrk3);
     NES_DEBUG("Worker3 stopped!");
 
+    NES_INFO("QueryDeploymentTest: Stop worker 4");
+    bool retStopWrk4 = wrk4->stop(true);
+    EXPECT_TRUE(retStopWrk4);
+    NES_DEBUG("Worker4 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 5");
+    bool retStopWrk5 = wrk5->stop(true);
+    EXPECT_TRUE(retStopWrk5);
+    NES_DEBUG("Worker5 stopped!");
+
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 
+
+//    std::vector<uint64_t> ids (1000);
+//    std::iota(ids.begin(), ids.end(),1);
+//
+//    bool success = compareDataToBaseline(filePath,ids);
+//    EXPECT_EQ(success , true);
 }
+
 
 TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_DetectionOfParentAndChildExecutionNodesOfAQuerySubPlanTest) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
