@@ -24,7 +24,7 @@
 namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableMedianAggregation::GeneratableMedianAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
-: GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
+    : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
 GeneratableWindowAggregationPtr
 GeneratableMedianAggregation::create(const Windowing::WindowAggregationDescriptorPtr& aggregationDescriptor) {
@@ -32,8 +32,8 @@ GeneratableMedianAggregation::create(const Windowing::WindowAggregationDescripto
 }
 
 void GeneratableMedianAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
-                                                   BinaryOperatorStatement partialRef,
-                                                   RecordHandlerPtr recordHandler) {
+                                                      BinaryOperatorStatement partialRef,
+                                                      RecordHandlerPtr recordHandler) {
 
     auto fieldReference =
         recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
@@ -42,9 +42,6 @@ void GeneratableMedianAggregation::compileLiftCombine(CompoundStatementPtr curre
     pushBackFunctionCall.addParameter(*fieldReference);
 
     auto updatedPartial = partialRef.accessRef(pushBackFunctionCall);
-
-    auto c = updatedPartial.getCode()->code_;
-    NES_DEBUG("GeneratableMedian: updatedPartial code: " << c.c_str());
 
     currentCode->addStatement(updatedPartial.copy());
 }

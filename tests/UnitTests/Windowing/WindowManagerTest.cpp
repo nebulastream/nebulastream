@@ -164,10 +164,10 @@ TEST_F(WindowManagerTest, testMedianAggregation) {
     auto combined1 = aggregation->combine(partial1, partial2);
     auto combined2 = aggregation->combine(combined1, partial3);
     auto result = aggregation->lower(combined2);
-    ASSERT_EQ(result, 3L);
+    ASSERT_EQ(result, 3);
 }
 
-TEST_F(WindowManagerTest, testMedianAggregationOfEventVector) {
+TEST_F(WindowManagerTest, testMedianAggregationOfEvenVector) {
     auto aggregation = ExecutableMedianAggregation<int64_t>::create();
     auto partial1 = aggregation->lift(3L);
     auto partial2 = aggregation->lift(5L);
