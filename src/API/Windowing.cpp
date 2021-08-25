@@ -22,6 +22,7 @@
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MedianAggregationDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <utility>
 
@@ -36,6 +37,8 @@ Windowing::WindowAggregationPtr Min(const ExpressionItem& onField) { return Wind
 Windowing::WindowAggregationPtr Max(const ExpressionItem& onField) { return Windowing::MaxAggregationDescriptor::on(onField); }
 
 Windowing::WindowAggregationPtr Count() { return Windowing::CountAggregationDescriptor::on(); }
+
+Windowing::WindowAggregationPtr Median(const ExpressionItem& onField) { return Windowing::MedianAggregationDescriptor::on(onField); }
 
 Windowing::TimeMeasure Milliseconds(uint64_t milliseconds) { return Windowing::TimeMeasure(milliseconds); }
 

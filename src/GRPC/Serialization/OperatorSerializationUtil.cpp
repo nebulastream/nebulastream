@@ -55,6 +55,7 @@
 #include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MedianAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 
@@ -402,6 +403,9 @@ OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& 
         case Windowing::WindowAggregationDescriptor::Avg:
             windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_AVG);
             break;
+        case Windowing::WindowAggregationDescriptor::Median:
+            windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
+            break;
         default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
     }
 
@@ -583,6 +587,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         aggregation = Windowing::CountAggregationDescriptor::create(onField, asField);
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_AVG) {
         aggregation = Windowing::AvgAggregationDescriptor::create(onField, asField);
+    } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN) {
+        aggregation = Windowing::MedianAggregationDescriptor::create(onField, asField);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: "
                         << serializedWindowAggregation.DebugString());

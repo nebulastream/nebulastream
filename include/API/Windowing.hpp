@@ -50,10 +50,16 @@ Windowing::WindowAggregationPtr Min(const ExpressionItem& onField);
 Windowing::WindowAggregationPtr Max(const ExpressionItem& onField);
 
 /**
- * @brief Defines a Cun Aggregation function on a particular field.
+ * @brief Defines a Count Aggregation function on a particular field.
  * @return A descriptor of the aggregation function.
  */
 Windowing::WindowAggregationPtr Count();
+
+/**
+ * @brief Defines a Median Aggregation function on a particular field.
+ * @return A descriptor of the aggregation function.
+ */
+Windowing::WindowAggregationPtr Median(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Agg Aggregation function on a particular field.

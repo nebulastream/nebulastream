@@ -28,6 +28,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMedianAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
@@ -179,6 +180,9 @@ GeneratableOperators::GeneratableWindowAggregationPtr DefaultGeneratableOperator
         };
         case Windowing::WindowAggregationDescriptor::Avg: {
             return GeneratableOperators::GeneratableAvgAggregation::create(windowAggregationDescriptor);
+        };
+        case Windowing::WindowAggregationDescriptor::Median: {
+            return GeneratableOperators::GeneratableMedianAggregation::create(windowAggregationDescriptor);
         };
         default:
             throw QueryCompilationException(
