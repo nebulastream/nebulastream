@@ -699,7 +699,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
 
 /**
  * @brief Test if the custom field set for aggregation using "as()" is set in the sink output schema
- * TODO: is this the correct place for this test?
+ * TODO #1577: is this the correct place for this test?
  */
 TEST_F(QueryExecutionTest, windowAggregationWithAs) {
     // add window source and create two buffers each second one.
