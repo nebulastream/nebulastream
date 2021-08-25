@@ -24,11 +24,17 @@
 
 namespace NES::Runtime {
 
+/**
+ * @brief This class is responsible to look up OS/HW specs of the underlying hardware, e.g., numa.
+ */
 class RuntimeManager {
 
   public:
 
     struct NumaDescriptor;
+    /**
+     * @brief Descriptor for a single core
+     */
     struct CpuDescriptor {
         friend struct NumaDescriptor;
 
@@ -54,27 +60,26 @@ class RuntimeManager {
         uint16_t cpuId;
     };
 
+    /**
+     * @brief Descriptor for a single numa node
+     */
     struct NumaDescriptor {
       public:
         explicit NumaDescriptor(uint32_t node_id) : nodeId(node_id), physicalCpus() {
             // nop
         }
 
+        /**
+         * @brief Adds a new cpu/code
+         * @param cpu
+         * @param core
+         */
         void addCpu(uint16_t cpu, uint16_t core) {
             if (physicalCpus.find(core) == physicalCpus.end()) {
                 physicalCpus[core] = CpuDescriptor(core, cpu);
             } else {
                 physicalCpus[core].cpuId = std::min<uint16_t>(physicalCpus[core].cpuId, cpu);
             }
-        }
-
-        std::vector<uint32_t> toCpuSet() {
-            std::vector<uint32_t> ret;
-            for (const auto& [coreId, cpuDescr] : physicalCpus) {
-                auto it = std::lower_bound(ret.begin(), ret.end(), cpuDescr.getCpuId());
-                ret.insert(it, cpuDescr.getCpuId());
-            }
-            return ret;
         }
 
         const uint32_t nodeId;
@@ -85,10 +90,23 @@ class RuntimeManager {
   public:
     explicit RuntimeManager();
 
+    /**
+     * @brief Returns the global posix-based memory allocator
+     * @return
+     */
     NesDefaultMemoryAllocatorPtr getGlobalAllocator() const;
 
+    /**
+     * @brief Returns the numa allocator for the numaNodeIndex-th numa node
+     * @param numaNodeIndex
+     * @return
+     */
     NumaRegionMemoryAllocatorPtr getNumaAllactor(uint32_t numaNodeIndex) const;
 
+    /**
+     * @brief Provides the count of available numa nodes
+     * @return
+     */
     uint32_t getNumberOfNumaRegions() const;
 
   private:
