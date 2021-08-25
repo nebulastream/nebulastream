@@ -62,7 +62,6 @@ class StreamCatalogService {
                                   const std::string& physicalStreamName,
                                   const std::string& logicalStreamName);
 
-
     /**
      * @brief method to register a logical stream
      * @param logicalStreamName
@@ -77,7 +76,6 @@ class StreamCatalogService {
      * @return bool indicating success
      */
     bool unregisterLogicalStream(const std::string& logicalStreamName);
-
 
   private:
     StreamCatalogPtr streamCatalog;
