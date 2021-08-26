@@ -135,7 +135,8 @@ bool DataSource::start() {
                 if (ret != 0) {
                     NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
                 }
-                printf("pid %d's old affinity: %08lx\n", (int) sourceAffinity, cur_mask);
+                std::cout << "source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << nodeOfCpu << " ";
+                printf("setted affinity after assignment: %08lx\n", cur_mask);
             }
         } else {
             NES_WARNING("Use default affinity for source");
