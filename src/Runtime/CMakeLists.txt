@@ -29,6 +29,8 @@ add_source_nes(
         LocalBufferPool.cpp
         NodeEngineFactory.cpp
         HardwareManager.cpp
+        Allocator/NumaRegionMemoryAllocator.cpp
+        Allocator/NesDefaultMemoryAllocator.cpp
 )
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)

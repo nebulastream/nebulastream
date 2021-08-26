@@ -41,13 +41,10 @@ class NesDefaultMemoryAllocator : public std::pmr::memory_resource {
     ~NesDefaultMemoryAllocator() override = default;
 
   private:
-    void* do_allocate(size_t bytes, size_t alignment) override {
-        void* tmp = nullptr;
-        NES_ASSERT(posix_memalign(&tmp, alignment, bytes) == 0, "memory allocation failed with alignment");
-        return tmp;
-    }
+    void* do_allocate(size_t bytes, size_t alignment) override;
 
-    void do_deallocate(void* p, size_t, size_t) override { std::free(p); }
+    void do_deallocate(void* p, size_t, size_t) override;
+
     bool do_is_equal(const memory_resource& other) const noexcept override { return this == &other; }
 };
 using NesDefaultMemoryAllocatorPtr = std::shared_ptr<NesDefaultMemoryAllocator>;
