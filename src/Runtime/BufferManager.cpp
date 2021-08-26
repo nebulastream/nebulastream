@@ -18,7 +18,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
-#include <Runtime/RuntimeManager.hpp>
+#include <Runtime/HardwareManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
@@ -44,50 +44,50 @@ BufferManager::BufferManager(uint32_t bufferSize,
 }
 
 void BufferManager::destroy() {
-    std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex, localBufferPoolsMutex);
-    auto success = true;
-    NES_DEBUG("Shutting down Buffer Manager " << this);
-    for (auto& localPool : localBufferPools) {
-        localPool->destroy();
-    }
-    localBufferPools.clear();
-    if (allBuffers.size() != (size_t) availableBuffers.size()) {
-        NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers " << availableBuffers.size());
-        success = false;
-    }
-    for (auto& buffer : allBuffers) {
-        if (!buffer.isAvailable()) {
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-            buffer.controlBlock->dumpOwningThreadInfo();
-#endif
+    bool expected = false;
+    if (isDestroyed.compare_exchange_strong(expected, true)) {
+        std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex, localBufferPoolsMutex);
+        auto success = true;
+        NES_DEBUG("Shutting down Buffer Manager " << this);
+        for (auto& localPool : localBufferPools) {
+            localPool->destroy();
+        }
+        localBufferPools.clear();
+        if (allBuffers.size() != (size_t) availableBuffers.size()) {
+            NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers " << availableBuffers.size());
             success = false;
         }
-    }
-    if (!success) {
-        NES_THROW_RUNTIME_ERROR("[BufferManager] Requested buffer manager shutdown but a buffer is still used allBuffers="
-                                << allBuffers.size() << " available=" << availableBuffers.size());
-    }
-    // RAII takes care of deallocating memory here
-    allBuffers.clear();
-#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    availableBuffers.clear();
-#else
-    availableBuffers = decltype(availableBuffers)();
+        for (auto& buffer : allBuffers) {
+            if (!buffer.isAvailable()) {
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+                buffer.controlBlock->dumpOwningThreadInfo();
 #endif
-    for (auto& holder : unpooledBuffers) {
-        if (!holder.segment || holder.segment->controlBlock->getReferenceCount() != 0) {
-            NES_THROW_RUNTIME_ERROR("Deletion of unpooled buffer invoked on used memory segment");
+                success = false;
+            }
         }
+        if (!success) {
+            NES_THROW_RUNTIME_ERROR("[BufferManager] Requested buffer manager shutdown but a buffer is still used allBuffers="
+                                    << allBuffers.size() << " available=" << availableBuffers.size());
+        }
+        // RAII takes care of deallocating memory here
+        allBuffers.clear();
+#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
+        availableBuffers.clear();
+#else
+        availableBuffers = decltype(availableBuffers)();
+#endif
+        for (auto& holder : unpooledBuffers) {
+            if (!holder.segment || holder.segment->controlBlock->getReferenceCount() != 0) {
+                NES_THROW_RUNTIME_ERROR("Deletion of unpooled buffer invoked on used memory segment");
+            }
+        }
+        unpooledBuffers.clear();
+        NES_DEBUG("Shutting down Buffer Manager completed " << this);
     }
-    unpooledBuffers.clear();
-    NES_DEBUG("Shutting down Buffer Manager completed " << this);
 }
 
 BufferManager::~BufferManager() {
-   std::unique_lock lock(availableBuffersMutex);
-   if (!allBuffers.empty()) {
-       destroy();
-   }
+   destroy();
 }
 
 void BufferManager::initialize(uint32_t withAlignment) {

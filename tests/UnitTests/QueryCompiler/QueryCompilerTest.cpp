@@ -109,36 +109,6 @@ TEST_F(QueryCompilerTest, filterQuery) {
 /**
  * @brief Input Query Plan:
  *
- * |Source| -- |Filter| -- |Sink|
- *
- */
-TEST_F(QueryCompilerTest, filterQueryBitmask) {
-    SchemaPtr schema = Schema::create();
-    schema->addField("F1", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12, Runtime::EnableNumaAwarenessFlag::DISABLED, "Release", "No");
-    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
-    auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
-
-    auto query = Query::from("streamName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
-    auto queryPlan = query.getQueryPlan();
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    queryPlan = typeInferencePhase->execute(queryPlan);
-
-    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
-    request->enableDump();
-    auto result = queryCompiler->compileQuery(request);
-
-    ASSERT_FALSE(result->hasError());
-}
-
-/**
- * @brief Input Query Plan:
- *
  * |Source| -- |window| -- |Sink|
  *
  */

@@ -91,7 +91,7 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
     virtual BufferManagerType getBufferManagerType() const override;
 
   private:
-    std::weak_ptr<BufferManager> bufferManager;
+    std::shared_ptr<BufferManager> bufferManager;
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::deque<detail::MemorySegment*> exclusiveBuffers;
 #else

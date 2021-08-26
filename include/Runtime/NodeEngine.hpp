@@ -68,7 +68,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * and initialize QueryManager, BufferManager and ThreadPool
      */
     explicit NodeEngine(const PhysicalStreamConfigPtr& config,
-                        RuntimeManagerPtr&&,
+                        HardwareManagerPtr&&,
                         std::vector<BufferManagerPtr>&&,
                         QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
@@ -172,7 +172,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     QueryManagerPtr getQueryManager();
 
     /**
-     * @brief getter of buffer manager
+     * @brief getter of buffer manager for the i-th numa region (defaul: 0)
      * @return bufferManager
      */
     BufferManagerPtr getBufferManager(uint32_t bufferManagerIndex = 0) const;
@@ -260,7 +260,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     QueryManagerPtr queryManager;
-    RuntimeManagerPtr runtimeManager;
+    HardwareManagerPtr hardwareManager;
     std::vector<BufferManagerPtr> bufferManagers;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;

@@ -14,15 +14,21 @@
     limitations under the License.
 */
 
-#include <Runtime/RuntimeManager.hpp>
+#include <Runtime/HardwareManager.hpp>
 #include <Util/UtilityFunctions.hpp>
+
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#endif
 
 namespace NES::Runtime {
 namespace detail {
 
 void readCpuConfig(uint32_t& numa_nodes_count,
                    uint32_t& num_physical_cpus,
-                   std::vector<RuntimeManager::NumaDescriptor>& cpuMapping) {
+                   std::vector<HardwareManager::NumaDescriptor>& cpuMapping) {
+#ifdef __linux__
     std::stringstream buffer;
     FILE* fp = popen("lscpu --all --extended", "r");
     NES_ASSERT2_FMT(fp != nullptr, "Cannot execute `lscpu --all --extended`");
@@ -63,27 +69,44 @@ void readCpuConfig(uint32_t& numa_nodes_count,
             num_physical_cpus = std::max<uint32_t>(num_physical_cpus, core + 1);
         }
     }
+#elif defined(__APPLE__)
+    int count;
+    size_t len = sizeof(count);
+    sysctlbyname("hw.logicalcpu", &count, &len, NULL, 0);
+    numa_nodes_count = 1;
+    num_physical_cpus = count;
+    auto ref = cpuMapping.emplace_back(0);
+    for (uint32_t i = 0; i < num_physical_cpus; ++i) {
+        ref.addCpu(0, i);
+    }
+#else
+#error "OS not supported"
+#endif
 }
 
 }// namespace detail
 
-RuntimeManager::RuntimeManager() : globalAllocator(std::make_shared<NesDefaultMemoryAllocator>()) {
+HardwareManager::HardwareManager() : globalAllocator(std::make_shared<NesDefaultMemoryAllocator>()) {
     detail::readCpuConfig(numaNodesCount, numPhysicalCpus, cpuMapping);
+#ifdef NES_ENABLE_NUMA_SUPPORT
     numaRegions.resize(numaNodesCount);
     for (uint32_t i = 0; i < numaNodesCount; ++i) {
         numaRegions[i] = std::make_shared<NumaRegionMemoryAllocator>(i);
     }
+#endif
 }
+#ifdef NES_ENABLE_NUMA_SUPPORT
+uint32_t HardwareManager::getNumberOfNumaRegions() const { return numaRegions.size(); }
 
-uint32_t RuntimeManager::getNumberOfNumaRegions() const { return numaRegions.size(); }
-
-NumaRegionMemoryAllocatorPtr RuntimeManager::getNumaAllactor(uint32_t numaNodeIndex) const {
+NumaRegionMemoryAllocatorPtr HardwareManager::getNumaAllactor(uint32_t numaNodeIndex) const {
     NES_ASSERT2_FMT(numaNodeIndex < numaRegions.size(), "Invalid numa region " << numaNodeIndex);
     return numaRegions[numaNodeIndex];
 }
+#endif
+NesDefaultMemoryAllocatorPtr HardwareManager::getGlobalAllocator() const { return globalAllocator; }
 
-NesDefaultMemoryAllocatorPtr RuntimeManager::getGlobalAllocator() const {
-    return globalAllocator;
+bool HardwareManager::bindThreadToCore(pthread_t thread, uint32_t numaIndex, uint32_t coreId) {
+    NES_ASSERT2_FMT(false, "This will implemented at some point");
 }
 
 }// namespace NES::Runtime

@@ -33,7 +33,7 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Runtime/RuntimeManager.hpp>
+#include <Runtime/HardwareManager.hpp>
 
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
@@ -757,7 +757,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory, jitCompiler);
 
         return std::make_shared<MockedNodeEngine>(std::move(streamConf),
-                                                  std::make_shared<Runtime::RuntimeManager>(),
+                                                  std::make_shared<Runtime::HardwareManager>(),
                                                   std::move(bufferManagers),
                                                   std::move(queryManager),
                                                   std::move(networkManagerCreator),
@@ -792,7 +792,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         atomic<int>& bufferCnt;
 
         explicit MockedNodeEngine(PhysicalStreamConfigPtr streamConf,
-                                  Runtime::RuntimeManagerPtr runtimeManager,
+                                  Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   NES::Runtime::QueryManagerPtr&& queryManager,
                                   std::function<Network::NetworkManagerPtr(NES::Runtime::NodeEnginePtr)>&& networkManagerCreator,
@@ -802,7 +802,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                                   NesPartition nesPartition,
                                   std::atomic<int>& bufferCnt)
             : NodeEngine(std::move(streamConf),
-                         std::move(runtimeManager),
+                         std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryManager),
                          std::move(networkManagerCreator),

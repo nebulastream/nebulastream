@@ -56,8 +56,8 @@ using PhysicalSchemaPtr = std::shared_ptr<PhysicalSchema>;
 
 class TupleBuffer;
 
-class RuntimeManager;
-using RuntimeManagerPtr = std::shared_ptr<RuntimeManager>;
+class HardwareManager;
+using HardwareManagerPtr = std::shared_ptr<HardwareManager>;
 
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
