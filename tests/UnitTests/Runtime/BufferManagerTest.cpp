@@ -589,7 +589,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
     std::deque<TupleBuffer> workQueue;
     std::condition_variable cvar;
 
-    constexpr uint32_t max_buffer = 1'000'000;
+    constexpr uint32_t max_buffer = 100'000;
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
