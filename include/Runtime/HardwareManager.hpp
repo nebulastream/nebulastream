@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_RUNTIMEMANAGER_HPP_
-#define NES_INCLUDE_RUNTIME_RUNTIMEMANAGER_HPP_
+#ifndef NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
+#define NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
 
 #include <vector>
 #include <memory>
@@ -27,7 +27,7 @@ namespace NES::Runtime {
 /**
  * @brief This class is responsible to look up OS/HW specs of the underlying hardware, e.g., numa.
  */
-class RuntimeManager {
+class HardwareManager {
 
   public:
 
@@ -39,16 +39,21 @@ class RuntimeManager {
         friend struct NumaDescriptor;
 
       public:
-         explicit CpuDescriptor() : coreId(-1), cpuId(-1) {
+
+        explicit CpuDescriptor(uint16_t coreId = -1, uint16_t cpuId = -1) : coreId(coreId), cpuId(cpuId) {
             // nop
         }
 
-        explicit CpuDescriptor(uint16_t coreId, uint16_t cpuId) : coreId(coreId), cpuId(cpuId) {
-            // nop
-        }
-
+        /**
+         * @brief Provide the logical core id
+         * @return
+         */
         uint16_t getCoreId() const { return coreId; }
 
+        /**
+         * @brief Provides the CPU id assigned to a core
+         * @return
+         */
         uint16_t getCpuId() const { return cpuId; }
 
         friend bool operator<(const CpuDescriptor& lhs, const CpuDescriptor& rhs) { return lhs.cpuId < rhs.cpuId; }
@@ -56,8 +61,8 @@ class RuntimeManager {
         friend bool operator==(const CpuDescriptor& lhs, const CpuDescriptor& rhs) { return lhs.cpuId == rhs.cpuId; }
 
       private:
-        uint16_t coreId;
-        uint16_t cpuId;
+        uint16_t coreId = -1;
+        uint16_t cpuId = -1;
     };
 
     /**
@@ -88,7 +93,7 @@ class RuntimeManager {
 
 
   public:
-    explicit RuntimeManager();
+    explicit HardwareManager();
 
     /**
      * @brief Returns the global posix-based memory allocator
@@ -97,23 +102,33 @@ class RuntimeManager {
     NesDefaultMemoryAllocatorPtr getGlobalAllocator() const;
 
     /**
+     * @brief Binds the given pthread to a specific core of a given numa region
+     * @param thread the pthread handle
+     * @param numaIndex the numa index
+     * @param coreId the core id
+     * @return true if was successful
+     */
+    bool bindThreadToCore(pthread_t thread, uint32_t numaIndex, uint32_t coreId);
+
+#ifdef NES_ENABLE_NUMA_SUPPORT
+    /**
      * @brief Returns the numa allocator for the numaNodeIndex-th numa node
      * @param numaNodeIndex
      * @return
      */
     NumaRegionMemoryAllocatorPtr getNumaAllactor(uint32_t numaNodeIndex) const;
-
+#endif
     /**
      * @brief Provides the count of available numa nodes
-     * @return
+     * @return the count of available numa nodes
      */
     uint32_t getNumberOfNumaRegions() const;
 
   private:
     NesDefaultMemoryAllocatorPtr globalAllocator;
-
+#ifdef NES_ENABLE_NUMA_SUPPORT
     std::vector<NumaRegionMemoryAllocatorPtr> numaRegions;
-
+#endif
     std::vector<NumaDescriptor> cpuMapping;
     uint32_t numaNodesCount = 0;
     uint32_t numPhysicalCpus = 0;
@@ -122,4 +137,4 @@ class RuntimeManager {
 }
 
 
-#endif//NES_INCLUDE_RUNTIME_RUNTIMEMANAGER_HPP_
+#endif//NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_

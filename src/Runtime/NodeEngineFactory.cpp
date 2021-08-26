@@ -25,7 +25,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Runtime/RuntimeManager.hpp>
+#include <Runtime/HardwareManager.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -65,10 +65,11 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
-        auto runtimeManager = std::make_shared<Runtime::RuntimeManager>();
+        auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
         std::vector<BufferManagerPtr> bufferManagers;
+#ifdef NES_ENABLE_NUMA_SUPPORT
         if (enableNumaAwareness == EnableNumaAwarenessFlag::ENABLED) {
-            auto numberOfBufferPerNumaNode = numberOfBuffersInGlobalBufferManager / runtimeManager->getNumberOfNumaRegions();
+            auto numberOfBufferPerNumaNode = numberOfBuffersInGlobalBufferManager / hardwareManager->getNumberOfNumaRegions();
             NES_ASSERT2_FMT(numberOfBuffersInSourceLocalBufferPool < numberOfBufferPerNumaNode,
                             "The number of buffer for each numa node: " << numberOfBufferPerNumaNode
                                                                         << " is lower than the fixed size pool: "
@@ -77,15 +78,21 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                             "The number of buffer for each numa node: " << numberOfBufferPerNumaNode
                                                                         << " is lower than the pipeline pool: "
                                                                         << numberOfBuffersPerPipeline);
-            for (auto i = 0u; i < runtimeManager->getNumberOfNumaRegions(); ++i) {
+            for (auto i = 0u; i < hardwareManager->getNumberOfNumaRegions(); ++i) {
                 bufferManagers.push_back(
-                    std::make_shared<BufferManager>(bufferSize, numberOfBufferPerNumaNode, runtimeManager->getNumaAllactor(i)));
+                    std::make_shared<BufferManager>(bufferSize, numberOfBufferPerNumaNode, hardwareManager->getNumaAllactor(i)));
             }
         } else {
             bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
                                                                      numberOfBuffersInGlobalBufferManager,
-                                                                     runtimeManager->getGlobalAllocator()));
+                                                                     hardwareManager->getGlobalAllocator()));
         }
+#else
+        NES_WARNING("Numa flags " << int(enableNumaAwareness) << " are ignored");
+        bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
+                                                                 numberOfBuffersInGlobalBufferManager,
+                                                                 hardwareManager->getGlobalAllocator()));
+#endif
         if (bufferManagers.empty()) {
             NES_ERROR("Runtime: error while creating buffer manager");
             throw Exception("Error while creating buffer manager");
@@ -116,7 +123,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         }
         auto engine = std::make_shared<NodeEngine>(
             config,
-            std::move(runtimeManager),
+            std::move(hardwareManager),
             std::move(bufferManagers),
             std::move(queryManager),
             [hostname, port, numThreads](const std::shared_ptr<NodeEngine>& engine) {

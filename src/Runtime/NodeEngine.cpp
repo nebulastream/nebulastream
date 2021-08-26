@@ -44,7 +44,7 @@ namespace NES::Runtime {
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
 NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
-                       RuntimeManagerPtr&& runtimeManager,
+                       HardwareManagerPtr&& hardwareManager,
                        std::vector<BufferManagerPtr>&& bufferManagers,
                        QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
@@ -56,7 +56,7 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerPipeline)
     : nodeStatsProvider(std::make_shared<NodeStatsProvider>()), queryManager(std::move(queryManager)),
-      runtimeManager(std::move(runtimeManager)), bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
+      hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),

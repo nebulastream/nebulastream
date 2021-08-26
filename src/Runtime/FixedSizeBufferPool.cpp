@@ -57,23 +57,22 @@ void FixedSizeBufferPool::destroy() {
     if (isDestroyed) {
         return;
     }
-    auto ownedBufferManager = bufferManager.lock();
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     while (!exclusiveBuffers.empty()) {
         // return exclusive buffers to the global pool
         auto* memSegment = exclusiveBuffers.front();
         exclusiveBuffers.pop_front();
-        memSegment->controlBlock->resetBufferRecycler(ownedBufferManager.get());
-        ownedBufferManager->recyclePooledBuffer(memSegment);
+        memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
+        bufferManager->recyclePooledBuffer(memSegment);
     }
-    NES_DEBUG("buffers after=" << ownedBufferManager->getAvailableBuffers()
+    NES_DEBUG("buffers after=" << bufferManager->getAvailableBuffers()
                                << " size of local buffers=" << exclusiveBuffers.size());
 #else
     detail::MemorySegment* memSegment = nullptr;
     while (exclusiveBuffers.read(memSegment)) {
         // return exclusive buffers to the global pool
-        memSegment->controlBlock->resetBufferRecycler(ownedBufferManager.get());
-        ownedBufferManager->recyclePooledBuffer(memSegment);
+        memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
+        bufferManager->recyclePooledBuffer(memSegment);
     }
 #endif
     isDestroyed = true;
@@ -151,9 +150,8 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
     NES_VERIFY(memSegment, "null memory segment");
     if (isDestroyed) {
         // return recycled buffer to the global pool
-        auto ownedBufferManager = bufferManager.lock();
-        memSegment->controlBlock->resetBufferRecycler(ownedBufferManager.get());
-        ownedBufferManager->recyclePooledBuffer(memSegment);
+        memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
+        bufferManager->recyclePooledBuffer(memSegment);
     } else {
         if (!memSegment->isAvailable()) {
             NES_THROW_RUNTIME_ERROR("Recycling buffer callback invoked on used memory segment refcnt="
@@ -172,7 +170,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*) {
     NES_THROW_RUNTIME_ERROR("This feature is not supported here");
 }
-size_t FixedSizeBufferPool::getBufferSize() const { return bufferManager.lock()->getBufferSize(); }
+size_t FixedSizeBufferPool::getBufferSize() const { return bufferManager->getBufferSize(); }
 size_t FixedSizeBufferPool::getNumOfPooledBuffers() const { return numberOfReservedBuffers; }
 size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const {
     NES_ASSERT2_FMT(false, "This is not supported currently");

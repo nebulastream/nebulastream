@@ -24,7 +24,7 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/RuntimeManager.hpp>
+#include <Runtime/HardwareManager.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -134,7 +134,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         auto queryCompiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
         auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(streamConf),
-                                                             std::make_shared<RuntimeManager>(),
+                                                             std::make_shared<HardwareManager>(),
                                                              std::move(bufferManager),
                                                              std::move(queryManager),
                                                              std::move(networkManagerCreator),
@@ -622,7 +622,7 @@ void assertKiller() {
         using Runtime::NodeEngine::NodeEngine;
 
         explicit MockedNodeEngine(PhysicalStreamConfigPtr config,
-                                  Runtime::RuntimeManagerPtr runtimeManager,
+                                  Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
@@ -633,7 +633,7 @@ void assertKiller() {
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerPipeline)
             : NodeEngine(std::move(config),
-                         std::move(runtimeManager),
+                         std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryMgr),
                          std::move(netFuncInit),
@@ -665,7 +665,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
       public:
         std::promise<bool> completedPromise;
         explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config,
-                                  Runtime::RuntimeManagerPtr runtimeManager,
+                                  Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
@@ -676,7 +676,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerPipeline)
             : NodeEngine(std::move(config),
-                         std::move(runtimeManager),
+                         std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryMgr),
                          std::move(netFuncInit),
@@ -737,7 +737,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
         std::promise<bool> completedPromise;
 
         explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config,
-                                  Runtime::RuntimeManagerPtr runtimeManager,
+                                  Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
@@ -748,7 +748,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerPipeline)
             : NodeEngine(std::move(config),
-                         std::move(runtimeManager),
+                         std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryMgr),
                          std::move(netFuncInit),

@@ -220,6 +220,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
     mutable std::recursive_mutex localBufferPoolsMutex;
     std::vector<std::shared_ptr<AbstractBufferProvider>> localBufferPools;
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
+    std::atomic<bool> isDestroyed{false};
 };
 
 }// namespace NES::Runtime
