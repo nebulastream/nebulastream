@@ -31,7 +31,7 @@ namespace QueryCompilation {
  */
 class QueryCompilationResult {
   public:
-    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<>& timer);
+    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<>&& timer);
     static QueryCompilationResultPtr create(std::exception_ptr exception);
     /**
      * @brief Returns the query execution plan if hasError() == false.
@@ -63,7 +63,7 @@ class QueryCompilationResult {
     explicit QueryCompilationResult(std::exception_ptr exception);
     std::optional<Runtime::Execution::ExecutableQueryPlanPtr> executableQueryPlan;
     std::optional<std::exception_ptr> exception;
-    std::optional<Timer<>> timer;
+    std::optional<Timer<std::chrono::nanoseconds, std::chrono::high_resolution_clock>> timer;
 };
 }// namespace QueryCompilation
 }// namespace NES

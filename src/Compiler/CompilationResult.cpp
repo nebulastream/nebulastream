@@ -18,7 +18,7 @@
 
 namespace NES::Compiler {
 
-CompilationResult::CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, Timer<>& timer)
+CompilationResult::CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, Timer<>&& timer)
     : dynamicObject(std::move(dynamicObject)), timer(std::move(timer)) {}
 
 std::shared_ptr<DynamicObject> CompilationResult::getDynamicObject() const { return dynamicObject; }

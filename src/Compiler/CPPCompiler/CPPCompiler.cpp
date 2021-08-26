@@ -169,9 +169,9 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     // load shared lib
     auto sharedLibrary = SharedLibrary::load(libraryFileName);
     timer->pause();
-    NES_INFO("CPPCompiler Runtime: " << timer->getRuntime() << "ns");// print runtime
+    NES_INFO("CPPCompiler Runtime: " << (double) timer->getRuntime() / (double) 1000000 << "ms");// print runtime
 
-    return CompilationResult(sharedLibrary, *timer);
+    return CompilationResult(sharedLibrary, std::move(*timer));
 }
 
 void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File> sourceFile, std::string libraryFileName) const {

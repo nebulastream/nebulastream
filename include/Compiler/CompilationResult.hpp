@@ -32,7 +32,7 @@ class CompilationResult {
      * @param dynamicObject The dynamic object created by the @LanguageCompiler
      * @param timer timer objext to measure the time it takes to handle the @CompilationRequest
      */
-    CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, Timer<>& timer);
+    CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, Timer<>&& timer);
 
     /**
      * @brief Returns the dynamic object created by the Compiler
@@ -48,7 +48,7 @@ class CompilationResult {
 
   private:
     const std::shared_ptr<DynamicObject> dynamicObject;
-    Timer<> timer;
+    Timer<std::chrono::nanoseconds, std::chrono::high_resolution_clock> timer;
 };
 
 }// namespace NES::Compiler
