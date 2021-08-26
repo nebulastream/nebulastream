@@ -323,7 +323,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
 }
 
 BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const {
-    NES_ASSERT2_FMT(bufferManagerIndex < bufferManagers.size(), "invalid buffer manager index");
+    NES_ASSERT2_FMT(bufferManagerIndex < bufferManagers.size(), "invalid buffer manager index=" << bufferManagerIndex);
     return bufferManagers[bufferManagerIndex];
 }
 

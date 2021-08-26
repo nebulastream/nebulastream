@@ -72,6 +72,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
 #ifdef NES_ENABLE_NUMA_SUPPORT
         if (enableNumaAwareness == NumaAwarenessFlag::ENABLED) {
             auto numberOfBufferPerNumaNode = numberOfBuffersInGlobalBufferManager / hardwareManager->getNumberOfNumaRegions();
+            std::cout << "numberOfBufferPerNumaNode=" << numberOfBufferPerNumaNode << std::endl;
             NES_ASSERT2_FMT(numberOfBuffersInSourceLocalBufferPool < numberOfBufferPerNumaNode,
                             "The number of buffer for each numa node: " << numberOfBufferPerNumaNode
                                                                         << " is lower than the fixed size pool: "
@@ -85,6 +86,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                     std::make_shared<BufferManager>(bufferSize, numberOfBufferPerNumaNode, hardwareManager->getNumaAllactor(i)));
             }
         } else {
+            std::cout << "numberOfBufferPerNumaNode 1 cause of no numa" << std::endl;
             bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
                                                                      numberOfBuffersInGlobalBufferManager,
                                                                      hardwareManager->getGlobalAllocator()));
