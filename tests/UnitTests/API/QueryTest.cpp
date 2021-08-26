@@ -300,10 +300,11 @@ TEST_F(QueryTest, windowAggregationWithAs) {
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     // create a query with "as" in the aggregation
-    auto query = Query::from("default_logical").window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
-        .byKey(Attribute("id", INT64))
-        .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
-        .sink(PrintSinkDescriptor::create());
+    auto query = Query::from("default_logical")
+                     .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
+                     .byKey(Attribute("id", INT64))
+                     .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .sink(PrintSinkDescriptor::create());
 
     // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -315,6 +316,5 @@ TEST_F(QueryTest, windowAggregationWithAs) {
 
     EXPECT_THAT(outputSchemaString, ::testing::HasSubstr("MY_OUTPUT_FIELD_NAME"));
 }
-
 
 }// namespace NES
