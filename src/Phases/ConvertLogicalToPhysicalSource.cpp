@@ -51,6 +51,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
         auto nodeOfCpu = numa_node_of_cpu(memorySourceDescriptor->getSourceAffinity());
+        std::cout << "buffer binding affinity=" << memorySourceDescriptor->getSourceAffinity() << " numaNode=" << nodeOfCpu << std::endl;
         numaNodeIndex = nodeOfCpu;
     }
 #endif
