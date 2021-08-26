@@ -30,7 +30,7 @@ class CompilationResult {
     /**
      * @brief Constructor for a Compilation result.
      * @param dynamicObject The dynamic object created by the @LanguageCompiler
-     * @param timer timer objext to measure the time it takes to handle the @CompilationRequest
+     * @param timer timer object to measure the time it takes to handle the @CompilationRequest
      */
     CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, Timer<>&& timer);
 
