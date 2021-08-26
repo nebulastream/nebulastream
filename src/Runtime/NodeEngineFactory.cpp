@@ -45,7 +45,7 @@ NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname, uint16_t
                             1024,
                             128,
                             12,
-                            EnableNumaAwarenessFlag::DISABLED,
+                            NumaAwarenessFlag::DISABLED,
                             "DEBUG",
                             "ALL");
 }
@@ -58,7 +58,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
                                                   const uint64_t numberOfBuffersInSourceLocalBufferPool,
                                                   const uint64_t numberOfBuffersPerPipeline,
-                                                  EnableNumaAwarenessFlag enableNumaAwareness,
+                                                  NumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& queryCompilerExecutionMode,
                                                   const std::string& queryCompilerOutputBufferOptimizationLevel) {
 
@@ -68,7 +68,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
         std::vector<BufferManagerPtr> bufferManagers;
 #ifdef NES_ENABLE_NUMA_SUPPORT
-        if (enableNumaAwareness == EnableNumaAwarenessFlag::ENABLED) {
+        if (enableNumaAwareness == NumaAwarenessFlag::ENABLED) {
             auto numberOfBufferPerNumaNode = numberOfBuffersInGlobalBufferManager / hardwareManager->getNumberOfNumaRegions();
             NES_ASSERT2_FMT(numberOfBuffersInSourceLocalBufferPool < numberOfBufferPerNumaNode,
                             "The number of buffer for each numa node: " << numberOfBufferPerNumaNode
