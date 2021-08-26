@@ -18,7 +18,7 @@
 #define NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 namespace NES::Runtime {
-enum class EnableNumaAwarenessFlag {
+enum class NumaAwarenessFlag {
     ENABLED,
     DISABLED
 };
@@ -53,7 +53,7 @@ class NodeEngineFactory {
                                           uint64_t numberOfBuffersInGlobalBufferManager,
                                           uint64_t numberOfBuffersInSourceLocalBufferPool,
                                           uint64_t numberOfBuffersPerPipeline,
-                                          EnableNumaAwarenessFlag enableNumaAwareness = EnableNumaAwarenessFlag::DISABLED,
+                                          NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
                                           const std::string& queryCompilerExecutionMode = "DEBUG",
                                           const std::string& queryCompilerOutputBufferOptimizationLevel = "ALL");
 
