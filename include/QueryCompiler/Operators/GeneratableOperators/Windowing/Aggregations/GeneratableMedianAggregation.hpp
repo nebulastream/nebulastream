@@ -16,7 +16,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMEDIANAGGREGATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMEDIANAGGREGATION_HPP_
 
-#include "GeneratableWindowAggregation.hpp"
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+
 namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {

@@ -34,6 +34,8 @@ GeneratableMedianAggregation::create(const Windowing::WindowAggregationDescripto
 void GeneratableMedianAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
                                                       BinaryOperatorStatement partialRef,
                                                       RecordHandlerPtr recordHandler) {
+    // generates the following code:
+    // partialAggregates[current_slice_index].push_back(inputTuples[recordIndex].car$value);
 
     auto fieldReference =
         recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
