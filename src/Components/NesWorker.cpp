@@ -143,6 +143,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   numberOfBuffersPerPipeline,
                                                                   enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED
                                                                                       : Runtime::NumaAwarenessFlag::DISABLED,
+                                                                  workerToCoreMapping,
                                                                   queryCompilerExecutionMode,
                                                                   queryCompilerOutputBufferOptimizationLevel);
         NES_DEBUG("NesWorker: Node engine started successfully");
