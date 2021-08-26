@@ -72,7 +72,7 @@ void readCpuConfig(uint32_t& numa_nodes_count,
 #elif defined(__APPLE__)
     int count;
     size_t len = sizeof(count);
-    sysctlbyname("hw.logicalcpu", &count, &len, NULL, 0);
+    sysctlbyname("hw.physicalcpu", &count, &len, NULL, 0);
     numa_nodes_count = 1;
     num_physical_cpus = count;
     auto ref = cpuMapping.emplace_back(0);
@@ -105,8 +105,9 @@ NumaRegionMemoryAllocatorPtr HardwareManager::getNumaAllactor(uint32_t numaNodeI
 #endif
 NesDefaultMemoryAllocatorPtr HardwareManager::getGlobalAllocator() const { return globalAllocator; }
 
-bool HardwareManager::bindThreadToCore(pthread_t thread, uint32_t numaIndex, uint32_t coreId) {
+bool HardwareManager::bindThreadToCore(pthread_t, uint32_t, uint32_t) {
     NES_ASSERT2_FMT(false, "This will implemented at some point");
+    return false;
 }
 
 }// namespace NES::Runtime

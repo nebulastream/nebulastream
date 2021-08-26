@@ -76,8 +76,8 @@ class HardwareManager {
 
         /**
          * @brief Adds a new cpu/code
-         * @param cpu
-         * @param core
+         * @param cpu the cpu index
+         * @param core the core index
          */
         void addCpu(uint16_t cpu, uint16_t core) {
             if (physicalCpus.find(core) == physicalCpus.end()) {
@@ -93,6 +93,9 @@ class HardwareManager {
 
 
   public:
+    /**
+     * @brief Creates a new HW manager with a mapping of the CPU/Mem topology
+     */
     explicit HardwareManager();
 
     /**
@@ -130,7 +133,9 @@ class HardwareManager {
     std::vector<NumaRegionMemoryAllocatorPtr> numaRegions;
 #endif
     std::vector<NumaDescriptor> cpuMapping;
+    /// number of numa regions
     uint32_t numaNodesCount = 0;
+    /// number of physical cores
     uint32_t numPhysicalCpus = 0;
 };
 
