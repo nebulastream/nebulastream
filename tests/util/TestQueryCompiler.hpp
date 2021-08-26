@@ -129,6 +129,13 @@ inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler() {
     return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider, jitCompiler);
 }
 
+inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(QueryCompilation::QueryCompilerOptionsPtr options) {
+    auto phaseProvider = std::make_shared<TestPhaseProvider>();
+    auto cppCompiler = Compiler::CPPCompiler::create();
+    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+    return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider, jitCompiler);
+}
+
 }// namespace TestUtils
 }// namespace NES
 

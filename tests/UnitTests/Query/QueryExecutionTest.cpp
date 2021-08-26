@@ -299,6 +299,100 @@ TEST_F(QueryExecutionTest, filterQuery) {
     plan->stop();
 }
 
+TEST_F(QueryExecutionTest, filterQueryAllQueryCompilerOptions) {
+
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+            testSchema,
+            [&](OperatorId id,
+                    const SourceDescriptorPtr&,
+                    const Runtime::NodeEnginePtr&,
+                    size_t numSourceLocalBuffers,
+                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+                return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                     nodeEngine->getBufferManager(),
+                                                                     nodeEngine->getQueryManager(),
+                                                                     id,
+                                                                     numSourceLocalBuffers,
+                                                                     std::move(successors));
+            });
+
+    auto outputSchema = Schema::create()
+            ->addField("test$id", BasicType::INT64)
+            ->addField("test$one", BasicType::INT64)
+            ->addField("test$value", BasicType::INT64);
+
+    constexpr std::array<char const*, 6> bufferOptimizationLevelNames{"ALL",
+                                                "NO",
+                                                "ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+                                                "REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK",
+                                                "REUSE_INPUT_BUFFER_NO_FALLBACK",
+                                                "OMIT_OVERFLOW_CHECK_NO_FALLBACK"};
+
+    for (uint8_t i = 0; i <= 5; i++) {      // try different OutputBufferOptimizationLevel's: enum with six states
+        for (uint8_t j = 0; j <= 1; j++) {  // try Predication on/off: bool
+            NES_DEBUG("Starting: Test filterQuery with bufferOptimizationLevel: " << bufferOptimizationLevelNames[i] << " and predication " << ((j == 0) ? "OFF" : "ON"));
+
+            auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
+
+            // set OutputBufferOptimizationLevel enum
+            QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel lvl = (QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel) i;
+            options->setOutputBufferOptimizationLevel(lvl);
+
+            // set Predication bool
+            if (j == 0) options->disablePredication();
+            else        options->enablePredication();
+
+            // now, test the query for all possible combinations
+            auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+            auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+
+            auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
+
+            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+            auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+            auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+            auto queryCompiler = TestUtils::createTestQueryCompiler(options);
+            auto result = queryCompiler->compileQuery(request);
+            auto plan = result->getExecutableQueryPlan();
+            // The plan should have one pipeline
+            ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
+            EXPECT_EQ(plan->getPipelines().size(), 1u);
+            auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+            auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+            fillBuffer(buffer, memoryLayout);
+            plan->setup();
+            ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+            plan->start(nodeEngine->getStateManager());
+            ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+            Runtime::WorkerContext workerContext{1};
+            plan->getPipelines()[0]->execute(buffer, workerContext);
+
+            // This plan should produce one output buffer
+            EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+
+            auto resultBuffer = testSink->get(0);
+            // The output buffer should contain 5 tuple;
+            EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
+
+            auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
+            auto resultRecordIndexFields =
+                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+            for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
+                // id
+                EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
+            }
+
+            testSink->cleanupBuffers();
+            buffer.release();
+            plan->stop();
+
+            NES_DEBUG("Done: Test filterQuery with bufferOptimizationLevel: " << bufferOptimizationLevelNames[i] << " and predication " << ((j == 0) ? "OFF" : "ON"));
+        }
+    }
+}
+
+
 TEST_F(QueryExecutionTest, projectionQuery) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
