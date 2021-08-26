@@ -34,20 +34,19 @@ class TupleBufferTest : public testing::Test {
     Runtime::BufferManagerPtr bufferManager;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup TupleBufferTest test class." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::setupLogging("TupleBufferTest.log", NES::LOG_DEBUG);
-        std::cout << "Setup TupleBufferTest test case." << std::endl;
-        bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1024);
+        NES_INFO("SetUpTestCase TupleBufferTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TupleBufferTest test case." << std::endl; }
+    void SetUp() override { bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1024); }
+
+    /* Will be called after a test is executed. */
+    void TearDown() override { bufferManager->destroy(); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TupleBufferTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("TearDownTestCase TupleBufferTest test case."); }
 };
 
 TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
