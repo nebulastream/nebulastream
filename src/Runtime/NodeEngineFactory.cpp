@@ -58,8 +58,8 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
                                                   const uint64_t numberOfBuffersInSourceLocalBufferPool,
                                                   const uint64_t numberOfBuffersPerPipeline,
-                                                  const std::string& workerToCodeMapping,
                                                   NumaAwarenessFlag enableNumaAwareness,
+                                                  const std::string& workerToCodeMapping,
                                                   const std::string& queryCompilerExecutionMode,
                                                   const std::string& queryCompilerOutputBufferOptimizationLevel) {
 
@@ -67,16 +67,6 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numberOfBuffersInGlobalBufferManager);
-        QueryManagerPtr queryManager;
-        if(workerToCodeMapping != "")
-        {
-            std::vector<uint64_t> workerToCoreMapping = UtilityFunctions::splitWithStringDelimiterAsInt(workerToCodeMapping, ",");
-            queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads, workerToCoreMapping);
-        }
-        else
-        {
-            queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
-        }
         auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
         std::vector<BufferManagerPtr> bufferManagers;
 #ifdef NES_ENABLE_NUMA_SUPPORT
@@ -109,7 +99,18 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             NES_ERROR("Runtime: error while creating buffer manager");
             throw Exception("Error while creating buffer manager");
         }
-        auto queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads);
+
+        QueryManagerPtr queryManager;
+        if(workerToCodeMapping != "")
+        {
+            std::vector<uint64_t> workerToCoreMapping = UtilityFunctions::splitWithStringDelimiterAsInt(workerToCodeMapping, ",");
+            queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, workerToCoreMapping);
+        }
+        else
+        {
+            queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, std::vector<uint64_t>());
+        }
+
         auto stateManager = std::make_shared<StateManager>(nodeEngineId);
         if (!partitionManager) {
             NES_ERROR("Runtime: error while creating partition manager");
