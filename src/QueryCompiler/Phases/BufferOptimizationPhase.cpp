@@ -104,6 +104,7 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     if (inputSchema->getLayoutType() != Schema::ROW_LAYOUT || outputSchema->getLayoutType() != Schema::ROW_LAYOUT) {
         NES_DEBUG("BufferOptimizationPhase: Currently buffer optimization is only possible if the input and output schema are "
                   "using a ROW layout.");
+        return operatorPipeline;
     }
 
     // Check if necessary conditions are fulfilled and set the desired strategy in the emit operator:

@@ -34,8 +34,10 @@ PredicationOptimizationPhase::PredicationOptimizationPhase::create(bool predicat
 PredicationOptimizationPhase::PredicationOptimizationPhase(bool predicationEnabled) : predicationEnabled(predicationEnabled) {}
 
 PipelineQueryPlanPtr PredicationOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
-    if (!predicationEnabled)
+    if (!predicationEnabled) {
+        NES_DEBUG("PredicationOptimizationPhase: No optimization requested or applied.");
         return pipelinedQueryPlan;
+    }
 
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
@@ -46,8 +48,10 @@ PipelineQueryPlanPtr PredicationOptimizationPhase::apply(PipelineQueryPlanPtr pi
 }
 
 OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
-    if (!predicationEnabled)
+    if (!predicationEnabled) {
+        NES_DEBUG("PredicationOptimizationPhase: No optimization requested or applied.");
         return operatorPipeline;
+    }
 
     NES_DEBUG("PredicationOptimizationPhase: Scanning pipeline for optimization potential.");
     auto queryPlan = operatorPipeline->getQueryPlan();
@@ -81,10 +85,8 @@ OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr oper
             GeneratableOperators::GeneratableFilterOperatorPredicated::create(filterOperator->getInputSchema(),
                                                                               filterOperator->getPredicate());
     queryPlan->replaceOperator(filterOperator, predicatedFilterOperator);
-    NES_DEBUG("PredicationOptimizationPhase: Replaced filter operator with equivalent predicated filter operator.");
-
     emitOperator->setIncreasesResultBufferWriteIndex(false);
-    NES_DEBUG("PredicationOptimizationPhase: Configured following emit operator to work with predicated filter operator.");
+    NES_DEBUG("PredicationOptimizationPhase: Replaced filter operator with equivalent predicated filter operator. Configured following emit operator to work with predicated filter operator.");
 
     return operatorPipeline;
 }
