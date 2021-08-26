@@ -37,7 +37,17 @@ extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
 NodeEnginePtr
 NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    return createNodeEngine(hostname, port, std::move(config), 1, 4096, 1024, 128, 12, EnableNumaAwarenessFlag::DISABLED, "DEBUG", "ALL");
+    return createNodeEngine(hostname,
+                            port,
+                            std::move(config),
+                            1,
+                            4096,
+                            1024,
+                            128,
+                            12,
+                            EnableNumaAwarenessFlag::DISABLED,
+                            "DEBUG",
+                            "ALL");
 }
 
 NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
@@ -58,10 +68,18 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto runtimeManager = std::make_shared<Runtime::RuntimeManager>();
         std::vector<BufferManagerPtr> bufferManagers;
         if (enableNumaAwareness == EnableNumaAwarenessFlag::ENABLED) {
+            auto numberOfBufferPerNumaNode = numberOfBuffersInGlobalBufferManager / runtimeManager->getNumberOfNumaRegions();
+            NES_ASSERT2_FMT(numberOfBuffersInSourceLocalBufferPool < numberOfBufferPerNumaNode,
+                            "The number of buffer for each numa node: " << numberOfBufferPerNumaNode
+                                                                        << " is lower than the fixed size pool: "
+                                                                        << numberOfBuffersInSourceLocalBufferPool);
+            NES_ASSERT2_FMT(numberOfBuffersPerPipeline < numberOfBufferPerNumaNode,
+                            "The number of buffer for each numa node: " << numberOfBufferPerNumaNode
+                                                                        << " is lower than the pipeline pool: "
+                                                                        << numberOfBuffersPerPipeline);
             for (auto i = 0u; i < runtimeManager->getNumberOfNumaRegions(); ++i) {
-                bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
-                                                                         numberOfBuffersInGlobalBufferManager,
-                                                                         runtimeManager->getNumaAllactor(i)));
+                bufferManagers.push_back(
+                    std::make_shared<BufferManager>(bufferSize, numberOfBufferPerNumaNode, runtimeManager->getNumaAllactor(i)));
             }
         } else {
             bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
