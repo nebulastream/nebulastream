@@ -118,20 +118,21 @@ bool DataSource::start() {
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
             CPU_SET(sourceAffinity, &cpuset);
-            int rc = pthread_setaffinity_np(this->thread->native_handle(), sizeof(cpu_set_t), &cpuset);
+//            int rc = pthread_setaffinity_np(this->thread->native_handle(), sizeof(cpu_set_t), &cpuset);
+            int rc = pthread_setaffinity_np(pthread_self() , sizeof(cpu_set_t), &cpuset);
 
             if (rc != 0) {
                 NES_ERROR("Error calling set pthread_setaffinity_np: " << rc);
             } else {
                 int cpu = sched_getcpu();
                 auto nodeOfCpu = numa_node_of_cpu(cpu);
-                auto rc2 = numa_run_on_node(nodeOfCpu);
-                NES_ASSERT(rc2 == 0, "Error setting numa run on node");
-                NES_WARNING("source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << nodeOfCpu);
+                //                auto rc2 = numa_run_on_node(nodeOfCpu);
+                //                NES_ASSERT(rc2 == 0, "Error setting numa run on node");
+                //                NES_WARNING("source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << nodeOfCpu);
 
                 unsigned long cur_mask;
 
-                auto ret = pthread_getaffinity_np(this->thread->native_handle(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
+                auto ret = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
                 if (ret != 0) {
                     NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
                 }
@@ -145,13 +146,13 @@ bool DataSource::start() {
         prom.set_value(true);
         runningRoutine();
 
-        cpu_set_t cpuset;
-        CPU_ZERO(&cpuset);
-        int rc = pthread_setaffinity_np(this->thread->native_handle(), sizeof(cpu_set_t), &cpuset);
-        CPU_FREE(&cpuset);
-        if (rc != 0) {
-            NES_ERROR("Error calling unset pthread_setaffinity_np: " << rc);
-        }
+//        cpu_set_t cpuset;
+//        CPU_ZERO(&cpuset);
+//        int rc = pthread_setaffinity_np(this->thread->native_handle(), sizeof(cpu_set_t), &cpuset);
+//        CPU_FREE(&cpuset);
+//        if (rc != 0) {
+//            NES_ERROR("Error calling unset pthread_setaffinity_np: " << rc);
+//        }
     });
     return prom.get_future().get();
 }

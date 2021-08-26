@@ -90,6 +90,7 @@ bool ThreadPool::start() {
             setThreadName("Wrk-%d-%d", nodeId, i);
             if(workerToCoreMapping.size() != 0)
             {
+                NES_NOT_IMPLEMENTED();
                 cpu_set_t cpuset;
                 CPU_ZERO(&cpuset);
                 CPU_SET(workerToCoreMapping[i], &cpuset);
