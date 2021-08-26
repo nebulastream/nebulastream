@@ -88,25 +88,25 @@ bool ThreadPool::start() {
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, i, barrier]() {
             setThreadName("Wrk-%d-%d", nodeId, i);
-            if(workerToCoreMapping.size() != 0)
-            {
-                NES_NOT_IMPLEMENTED();
-                cpu_set_t cpuset;
-                CPU_ZERO(&cpuset);
-                CPU_SET(workerToCoreMapping[i], &cpuset);
-                int rc = pthread_setaffinity_np(this->threads[i].native_handle(), sizeof(cpu_set_t), &cpuset);
-                if (rc != 0) {
-                    NES_ERROR("Error calling pthread_setaffinity_np: " << rc );
-                }
-                else
-                {
-                    NES_WARNING("worker " << i << " pins to core=" << workerToCoreMapping[i]);
-                }
-            }
-            else
-            {
-                NES_WARNING("Worker use default affinity");
-            }
+//            if(workerToCoreMapping.size() != 0)
+//            {
+//                NES_NOT_IMPLEMENTED();
+//                cpu_set_t cpuset;
+//                CPU_ZERO(&cpuset);
+//                CPU_SET(workerToCoreMapping[i], &cpuset);
+//                int rc = pthread_setaffinity_np(this->threads[i].native_handle(), sizeof(cpu_set_t), &cpuset);
+//                if (rc != 0) {
+//                    NES_ERROR("Error calling pthread_setaffinity_np: " << rc );
+//                }
+//                else
+//                {
+//                    NES_WARNING("worker " << i << " pins to core=" << workerToCoreMapping[i]);
+//                }
+//            }
+//            else
+//            {
+//                NES_WARNING("Worker use default affinity");
+//            }
 
             barrier->wait();
             runningRoutine(WorkerContext(NesThread::getId()));

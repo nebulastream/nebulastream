@@ -33,7 +33,9 @@
 
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
-
+#ifdef __linux__
+#include <numa.h>
+#endif
 namespace NES {
 
 DataSourcePtr
@@ -44,7 +46,15 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     NES_ASSERT(nodeEngine, "invalid engine");
     auto numaNodeIndex = 0;
-    auto bufferManager = nodeEngine->getBufferManager(numaNodeIndex);// TODO Steffen here you need to implement numa awareness
+#ifdef __linux__
+    if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
+        auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
+        auto nodeOfCpu = numa_node_of_cpu(memorySourceDescriptor->getSourceAffinity());
+        numaNodeIndex = nodeOfCpu;
+    }
+#endif
+    auto bufferManager = nodeEngine->getBufferManager(numaNodeIndex);
     auto queryManager = nodeEngine->getQueryManager();
     auto networkManager = nodeEngine->getNetworkManager();
 
