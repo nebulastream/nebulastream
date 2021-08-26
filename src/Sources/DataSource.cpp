@@ -30,9 +30,9 @@
 
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <numa.h>
 #include <utility>
 #include <zconf.h>
-#include <numa.h>
 namespace NES {
 
 std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors() {
@@ -121,19 +121,23 @@ bool DataSource::start() {
             int rc = pthread_setaffinity_np(this->thread->native_handle(), sizeof(cpu_set_t), &cpuset);
 
             if (rc != 0) {
-                NES_ERROR("Error calling set pthread_setaffinity_np: " << rc );
-            }
-            else
-            {
+                NES_ERROR("Error calling set pthread_setaffinity_np: " << rc);
+            } else {
                 int cpu = sched_getcpu();
                 auto nodeOfCpu = numa_node_of_cpu(cpu);
                 auto rc2 = numa_run_on_node(nodeOfCpu);
                 NES_ASSERT(rc2 == 0, "Error setting numa run on node");
                 NES_WARNING("source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << nodeOfCpu);
+
+                unsigned long cur_mask;
+
+                auto ret = pthread_getaffinity_np(this->thread->native_handle(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
+                if (ret != 0) {
+                    NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
+                }
+                printf("pid %d's old affinity: %08lx\n", (int) sourceAffinity, cur_mask);
             }
-        }
-        else
-        {
+        } else {
             NES_WARNING("Use default affinity for source");
         }
 
@@ -143,6 +147,7 @@ bool DataSource::start() {
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
         int rc = pthread_setaffinity_np(this->thread->native_handle(), sizeof(cpu_set_t), &cpuset);
+        CPU_FREE(&cpuset);
         if (rc != 0) {
             NES_ERROR("Error calling unset pthread_setaffinity_np: " << rc);
         }
