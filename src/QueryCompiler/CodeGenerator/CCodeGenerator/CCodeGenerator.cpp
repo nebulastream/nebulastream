@@ -896,6 +896,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
             break;
         }
         case Windowing::WindowAggregationDescriptor::Avg: {
+            // generates the following initial value (T is the aggregationInputType):
+            // Windowing::AVGPartialType<T> initialValue;
             auto aggregationInputType = tf->createDataType(window->getWindowAggregation()->getInputStamp());
             auto avgInitialValueDeclaration = VariableDeclaration::create(
                 tf->createAnonymusDataType("Windowing::AVGPartialType<" + aggregationInputType->getCode()->code_ + ">"),
@@ -905,6 +907,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
             break;
         }
         case Windowing::WindowAggregationDescriptor::Median: {
+            // generates the following initial value (T is the aggregationInputType):
+            // std::vector<T> initialValue;
             auto aggregationInputType = tf->createDataType(window->getWindowAggregation()->getInputStamp());
             auto medianInitialValueDeclaration = VariableDeclaration::create(
                 tf->createAnonymusDataType("std::vector<" + aggregationInputType->getCode()->code_ + ">"),
