@@ -84,7 +84,10 @@ void BufferManager::destroy() {
 }
 
 BufferManager::~BufferManager() {
-    // nop
+   std::unique_lock lock(availableBuffersMutex);
+   if (!allBuffers.empty()) {
+       destroy();
+   }
 }
 
 void BufferManager::initialize(uint32_t withAlignment) {
