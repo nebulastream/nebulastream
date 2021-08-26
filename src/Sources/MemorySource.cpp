@@ -141,6 +141,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
                 int node = -1;
                 get_mempolicy(&node, NULL, 0, (void*) buffer.getBuffer(), MPOL_F_NODE | MPOL_F_ADDR);
                 std::cout << "First buffer on node=" << node << " to new numa node=" << node << " on core=" << sched_getcpu() << std::endl;
+                firstRun = true;
             }
 
 
