@@ -34,6 +34,16 @@
 #include <Util/Logger.hpp>
 #include <thread>
 
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Query/QueryId.hpp>
+#include <Services/QueryService.hpp>
+#include <Util/TestUtils.hpp>
+
 #ifndef SERVERADDRESS
 #define SERVERADDRESS "tcp://127.0.0.1:1883"
 #endif
@@ -73,6 +83,9 @@
 #ifndef CLEANSESSION
 #define CLEANSESSION false
 #endif
+
+static uint64_t restPort = 8081;
+static uint64_t rpcPort = 4000;
 
 namespace NES {
 
@@ -188,6 +201,89 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
     NES_DEBUG("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: " << expected
                                                                                             << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
+}
+
+TEST_F(MQTTSourceTest, testDeployOneWorkerWithMQTTSourceConfig) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    remove("test.out");
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    //register logical stream qnv
+    std::string stream =
+        R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
+                            ->addField(createField("hospitalId", UINT64))
+                            ->addField(createField("stationId", UINT64))
+                            ->addField(createField("patientId", UINT64))
+                            ->addField(createField("time", UINT64))
+                            ->addField(createField("healthStatus", UINT8))
+                            ->addField(createField("healthStatusDuration", UINT32))
+                            ->addField(createField("recovered", BOOLEAN))
+                            ->addField(createField("dead", BOOLEAN));)";
+    std::string testSchemaFileName = "window.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << stream;
+    out.close();
+    wrk1->registerLogicalStream("stream", testSchemaFileName);
+
+    srcConf->setSourceType("MQTTSource");
+    //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = dataType (conversion to enum above)
+//    srcConf->setSourceConfig("../tests/test_data/window.csv");
+srcConf->setSourceConfig("ws://127.0.0.1:9001;testClient;testUser;demoTownSensorData;JSON;2;true");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfBuffersToProduce(10000);
+    srcConf->setSourceFrequency(1);//TODO: change this to 0 if we have the the end of stream
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("stream");
+    srcConf->setSkipHeader(true);
+    //register physical stream
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
+    wrk1->registerPhysicalStream(streamConf);
+
+    std::string outputFilePath = "test.out";
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    sleep(2);
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+//    int response = remove("test.out");
+//    EXPECT_TRUE(response == 0);
 }
 }// namespace NES
 #endif
