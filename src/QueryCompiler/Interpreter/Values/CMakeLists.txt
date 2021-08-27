@@ -13,18 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        QueryCompilerOptions.cpp
-        PipelineContext.cpp
-        CompilerTypeFactory.cpp
-        QueryCompiler.cpp
-        DefaultQueryCompiler.cpp
-        QueryCompilationRequest.cpp
-        QueryCompilationResult.cpp
+        NesInt32.cpp
+        NesValue.cpp
+        NesBool.cpp
 )
-add_subdirectory(CodeGenerator)
-add_subdirectory(Operators)
-add_subdirectory(Compiler)
-add_subdirectory(GeneratableTypes)
-add_subdirectory(Phases)
-add_subdirectory(Exceptions)
-add_subdirectory(Interpreter)
