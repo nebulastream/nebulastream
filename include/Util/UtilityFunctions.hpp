@@ -23,6 +23,7 @@
 #include <cpprest/json.h>
 #include <map>
 #include <string>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 /*
 - * The above undef ensures that NES will compile.
@@ -148,6 +149,12 @@ class UtilityFunctions {
     * @return string of the buffer content
     */
     static std::string printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffer, const SchemaPtr& schema);
+
+    /**
+    * @brief this method creates a string from the content of a tuple buffer
+    * @return string of the buffer content
+    */
+    static std::string castStringToBasicTypeAndWriteToBuffer(BasicPhysicalType::NativeType type, Runtime::TupleBuffer& tbuffer);
 
     /**
       * @brief function to obtain JSON representation of a NES Topology
