@@ -55,7 +55,7 @@ TEST_F(BufferManagerTest, initializedBufferManager) {
 TEST_F(BufferManagerTest, initializedBufferManagerWithNuma) {
     auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
     auto bufferManager =
-        std::make_shared<Runtime::BufferManager>(1024 * 1024, 64 * 1024, hardwareManager->getNumaAllactor(0));
+        std::make_shared<Runtime::BufferManager>(buffer_size, buffers_managed, hardwareManager->getNumaAllactor(0));
     size_t buffers_count = bufferManager->getNumOfPooledBuffers();
     size_t buffers_free = bufferManager->getAvailableBuffers();
     ASSERT_EQ(buffers_count, buffers_managed);
