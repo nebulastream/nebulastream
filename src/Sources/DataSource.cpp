@@ -124,20 +124,20 @@ bool DataSource::start() {
             if (rc != 0) {
                 NES_ERROR("Error calling set pthread_setaffinity_np: " << rc);
             } else {
-                int cpu = sched_getcpu();
-                auto nodeOfCpu = numa_node_of_cpu(cpu);
-                //                auto rc2 = numa_run_on_node(nodeOfCpu);
-                //                NES_ASSERT(rc2 == 0, "Error setting numa run on node");
-                //                NES_WARNING("source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << nodeOfCpu);
-
-                unsigned long cur_mask;
-
-                auto ret = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
-                if (ret != 0) {
-                    NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
-                }
-                std::cout << "source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << nodeOfCpu << " ";
-                printf("setted affinity after assignment: %08lx\n", cur_mask);
+//                int cpu = sched_getcpu();
+//                auto nodeOfCpu = numa_node_of_cpu(cpu);
+//                //                auto rc2 = numa_run_on_node(nodeOfCpu);
+//                //                NES_ASSERT(rc2 == 0, "Error setting numa run on node");
+//                //                NES_WARNING("source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << nodeOfCpu);
+//
+//                unsigned long cur_mask;
+//
+//                auto ret = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
+//                if (ret != 0) {
+//                    NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
+//                }
+//                std::cout << "source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << nodeOfCpu << " ";
+//                printf("setted affinity after assignment: %08lx\n", cur_mask);
             }
         } else {
             NES_WARNING("Use default affinity for source");
