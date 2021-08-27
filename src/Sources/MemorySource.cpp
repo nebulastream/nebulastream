@@ -83,21 +83,20 @@ MemorySource::MemorySource(SchemaPtr schema,
 void MemorySource::open() {
     DataSource::open();
 
-    numaLocalMemoryArea = numa_alloc_local(memoryAreaSize);
-    std::memcpy(numaLocalMemoryArea, memoryArea.get(), memoryAreaSize);
+    auto buffer = globalBufferManager->getUnpooledBuffer(memoryAreaSize);
+    numaLocalMemoryArea = *buffer;
+    std::memcpy(numaLocalMemoryArea.getBuffer(), memoryArea.get(), memoryAreaSize);
     int newNumaNode = -1;
-    get_mempolicy(&newNumaNode, NULL, 0, (void*) numaLocalMemoryArea, MPOL_F_NODE | MPOL_F_ADDR);
+    get_mempolicy(&newNumaNode, NULL, 0, numaLocalMemoryArea.getBuffer(), MPOL_F_NODE | MPOL_F_ADDR);
 
     int oldNumaNode = -1;
     get_mempolicy(&oldNumaNode, NULL, 0, (void*) memoryArea.get(), MPOL_F_NODE | MPOL_F_ADDR);
 
     std::cout << "Mem src move from old numa node=" << oldNumaNode << " to new numa node=" << newNumaNode
-    << " on core=" << sched_getcpu() << std::endl;
+              << " on core=" << sched_getcpu() << std::endl;
 }
 
-MemorySource::~MemorySource() {
-    numa_free(numaLocalMemoryArea, memoryAreaSize);
-}
+MemorySource::~MemorySource() {}
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
 
@@ -135,15 +134,13 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
         case CACHE_COPY: {
             buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), numaLocalMemoryArea, buffer.getBufferSize());
-            if(!firstRun)
-            {
+            memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
+            if (!firstRun) {
                 int node = -1;
                 get_mempolicy(&node, NULL, 0, (void*) buffer.getBuffer(), MPOL_F_NODE | MPOL_F_ADDR);
                 std::cout << "First buffer on node=" << node << " on core=" << sched_getcpu() << std::endl;
                 firstRun = true;
             }
-
 
             break;
         }

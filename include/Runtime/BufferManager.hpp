@@ -218,6 +218,9 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
     uint32_t bufferSize;
     uint32_t numOfBuffers;
 
+    uint8_t* basePointer{nullptr};
+    size_t allocatedAreaSize;
+
     mutable std::recursive_mutex localBufferPoolsMutex;
     std::vector<std::shared_ptr<AbstractBufferProvider>> localBufferPools;
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
