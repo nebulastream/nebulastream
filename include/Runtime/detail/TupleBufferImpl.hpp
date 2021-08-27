@@ -60,8 +60,7 @@ class BufferControlBlock {
   public:
     explicit BufferControlBlock(MemorySegment* owner,
                                 BufferRecycler* recycler,
-                                std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback,
-                                std::function<void(void*, size_t)>&& freeCallback);
+                                std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
 
     BufferControlBlock(const BufferControlBlock&);
 
@@ -171,7 +170,6 @@ class BufferControlBlock {
     MemorySegment* owner;
     std::atomic<BufferRecycler*> owningBufferRecycler{};
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
-    std::function<void(void*, size_t)> freeCallback;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
   private:
@@ -231,8 +229,7 @@ class MemorySegment {
     explicit MemorySegment(uint8_t* ptr,
                            uint32_t size,
                            BufferRecycler* recycler,
-                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
-                           std::function<void(void*, size_t)>&& freeCallback);
+                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction);
 
     ~MemorySegment();
 
@@ -248,7 +245,6 @@ class MemorySegment {
                            uint32_t size,
                            BufferRecycler* recycler,
                            std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
-                           std::function<void(void*, size_t)>&& freeCallback,
                            bool);
 
     /**

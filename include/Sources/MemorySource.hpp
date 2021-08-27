@@ -19,6 +19,7 @@
 
 #include <Runtime/BufferRecycler.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <Runtime/TupleBuffer.hpp>
 namespace NES {
 namespace Runtime {
 namespace detail {
@@ -95,7 +96,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
     uint64_t numberOfTuplesToProduce;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
-    void* numaLocalMemoryArea;
+    Runtime::TupleBuffer numaLocalMemoryArea;
     uint64_t currentPositionInBytes;
     SourceMode sourceMode;
     bool firstRun = false;

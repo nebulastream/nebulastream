@@ -84,6 +84,8 @@ void BufferManager::destroy() {
         }
         unpooledBuffers.clear();
         NES_DEBUG("Shutting down Buffer Manager completed " << this);
+
+        memoryResource->deallocate(basePointer, allocatedAreaSize);
     }
 }
 
@@ -111,34 +113,32 @@ void BufferManager::initialize(uint32_t withAlignment) {
     }
 
     allBuffers.reserve(numOfBuffers);
-    size_t realSize = bufferSize + sizeof(detail::BufferControlBlock);
+    allocatedAreaSize = bufferSize + sizeof(detail::BufferControlBlock);
+    if (allocatedAreaSize % withAlignment) {
+        // make sure that each buffer is a multiple of the alignment
+        allocatedAreaSize = allocatedAreaSize + (withAlignment - allocatedAreaSize % withAlignment);
+    }
+    size_t offsetBetweenBuffers = allocatedAreaSize;
+    allocatedAreaSize *= numOfBuffers;
+    basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));;
+    if (basePointer == nullptr) {
+        NES_THROW_RUNTIME_ERROR("memory allocation failed");
+    }
+    uint8_t* ptr = basePointer;
     for (size_t i = 0; i < numOfBuffers; ++i) {
-        uint8_t* ptr = nullptr;
-        if (withAlignment == 0) {
-            ptr = static_cast<uint8_t*>(memoryResource->allocate(realSize, std::alignment_of<uint8_t>::value));
-        } else {
-            ptr = static_cast<uint8_t*>(memoryResource->allocate(realSize, withAlignment));
-        }
-        if (ptr == nullptr) {
-            NES_THROW_RUNTIME_ERROR("memory allocation failed");
-        }
-        //We touch each buffer to make sure that is really allocated
-        std::memset(ptr, 0, realSize);
         allBuffers.emplace_back(
             ptr,
             bufferSize,
             this,
             [](detail::MemorySegment* segment, BufferRecycler* recycler) {
                 recycler->recyclePooledBuffer(segment);
-            },
-            [this](void* ptr, size_t bufferSize) {
-                memoryResource->deallocate(ptr, bufferSize);
             });
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
         availableBuffers.emplace_back(&allBuffers.back());
 #else
         availableBuffers.write(&allBuffers.back());
 #endif
+        ptr += offsetBetweenBuffers;
     }
     NES_DEBUG("BufferManager configuration bufferSize=" << this->bufferSize << " numOfBuffers=" << this->numOfBuffers);
 }
@@ -239,9 +239,6 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
         this,
         [](detail::MemorySegment* segment, BufferRecycler* recycler) {
             recycler->recycleUnpooledBuffer(segment);
-        },
-        [this](void* ptr, size_t size) {
-            memoryResource->deallocate(ptr, size);
         });
     auto* leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), bufferSize);
