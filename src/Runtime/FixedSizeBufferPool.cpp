@@ -65,8 +65,7 @@ void FixedSizeBufferPool::destroy() {
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
-    NES_DEBUG("buffers after=" << bufferManager->getAvailableBuffers()
-                               << " size of local buffers=" << exclusiveBuffers.size());
+    NES_DEBUG("buffers after=" << bufferManager->getAvailableBuffers() << " size of local buffers=" << exclusiveBuffers.size());
 #else
     detail::MemorySegment* memSegment = nullptr;
     while (exclusiveBuffers.read(memSegment)) {

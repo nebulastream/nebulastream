@@ -18,10 +18,7 @@
 #define NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 namespace NES::Runtime {
-enum class NumaAwarenessFlag {
-    ENABLED,
-    DISABLED
-};
+enum class NumaAwarenessFlag { ENABLED, DISABLED };
 /**
  * @brief A general factory to create a node engine given some configuration.
  */

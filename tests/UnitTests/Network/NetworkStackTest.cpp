@@ -22,6 +22,7 @@
 #include <Network/NetworkSource.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqServer.hpp>
+#include <Runtime/HardwareManager.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -33,7 +34,6 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Runtime/HardwareManager.hpp>
 
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
@@ -740,7 +740,8 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
     try {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
-        std::vector<Runtime::BufferManagerPtr> bufferManagers = {std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
+        std::vector<Runtime::BufferManagerPtr> bufferManagers = {
+            std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
         auto queryManager = std::make_shared<Runtime::QueryManager>(bufferManagers, 0, 1);
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(hostname,

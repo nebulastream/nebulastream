@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONALLOCATOR_HPP_
 #define NES_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONALLOCATOR_HPP_
 #ifdef NES_ENABLE_NUMA_SUPPORT
@@ -42,7 +41,7 @@ class NumaRegionMemoryAllocator : public std::pmr::memory_resource {
      * @brief creates an allocator for a given numa region
      * @param numaNodeIndex
      */
-    explicit NumaRegionMemoryAllocator(uint32_t numaNodeIndex) : numaNodeIndex(numaNodeIndex) {};
+    explicit NumaRegionMemoryAllocator(uint32_t numaNodeIndex) : numaNodeIndex(numaNodeIndex){};
 
     ~NumaRegionMemoryAllocator() override {}
 
@@ -51,15 +50,12 @@ class NumaRegionMemoryAllocator : public std::pmr::memory_resource {
 
     void do_deallocate(void* pointer, size_t sizeInBytes, size_t) override;
 
-    bool do_is_equal(const memory_resource& other) const noexcept override {
-        return this == &other;
-    }
+    bool do_is_equal(const memory_resource& other) const noexcept override { return this == &other; }
 
   private:
     const uint32_t numaNodeIndex;
-
 };
 using NumaRegionMemoryAllocatorPtr = std::shared_ptr<NumaRegionMemoryAllocator>;
-}
+}// namespace NES::Runtime
 #endif
 #endif//NES_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONALLOCATOR_HPP_

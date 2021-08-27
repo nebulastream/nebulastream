@@ -23,8 +23,8 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Runtime/HardwareManager.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>

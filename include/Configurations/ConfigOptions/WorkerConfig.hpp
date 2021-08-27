@@ -36,12 +36,10 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 class WorkerConfig {
 
   public:
-
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
      */
     explicit WorkerConfig();
-
 
     static WorkerConfigPtr create();
 
@@ -219,7 +217,6 @@ class WorkerConfig {
     void setNumaAware(bool status);
 
   private:
-
     StringConfigOption localWorkerIp;
     StringConfigOption coordinatorIp;
     IntConfigOption coordinatorPort;

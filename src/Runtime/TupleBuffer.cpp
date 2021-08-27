@@ -24,13 +24,22 @@ TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler*
     auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler) {
         recycler->recyclePooledBuffer(segment);
     };
-    auto freeCallback = [](void*, size_t) {};
+    auto freeCallback = [](void*, size_t) {
+    };
     auto* memSegment = new detail::MemorySegment(ptr, length, parent, callback, freeCallback, true);
     return TupleBuffer(memSegment->controlBlock, ptr, length);
 }
 
-TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback) {
-    auto* memSegment = new detail::MemorySegment(ptr, length, nullptr, std::move(callback), [](void*, size_t) {}, true);
+TupleBuffer
+TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback) {
+    auto* memSegment = new detail::MemorySegment(
+        ptr,
+        length,
+        nullptr,
+        std::move(callback),
+        [](void*, size_t) {
+        },
+        true);
     return TupleBuffer(memSegment->controlBlock, ptr, length);
 }
 

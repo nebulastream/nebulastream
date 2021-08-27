@@ -17,8 +17,8 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/HardwareManager.hpp>
+#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
@@ -54,7 +54,8 @@ void BufferManager::destroy() {
         }
         localBufferPools.clear();
         if (allBuffers.size() != (size_t) availableBuffers.size()) {
-            NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers " << availableBuffers.size());
+            NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers "
+                                                       << availableBuffers.size());
             success = false;
         }
         for (auto& buffer : allBuffers) {
@@ -86,9 +87,7 @@ void BufferManager::destroy() {
     }
 }
 
-BufferManager::~BufferManager() {
-   destroy();
-}
+BufferManager::~BufferManager() { destroy(); }
 
 void BufferManager::initialize(uint32_t withAlignment) {
     std::unique_lock lock(availableBuffersMutex);
@@ -101,8 +100,8 @@ void BufferManager::initialize(uint32_t withAlignment) {
     NES_DEBUG("NES memory allocation requires " << requiredMemorySpace << " out of " << memorySizeInBytes << " available bytes");
 
     NES_ASSERT2_FMT(requiredMemorySpace < memorySizeInBytes,
-                    "NES tries to allocate more memory than physically available requested=" << requiredMemorySpace
-                                                                                           << " available=" << memorySizeInBytes);
+                    "NES tries to allocate more memory than physically available requested="
+                        << requiredMemorySpace << " available=" << memorySizeInBytes);
     if (withAlignment > 0) {
         if ((withAlignment & (withAlignment - 1))) {// not a pow of two
             NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is not a pow of two");

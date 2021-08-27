@@ -90,9 +90,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
 #endif
 
-QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
-                           uint64_t nodeEngineId,
-                           uint16_t numThreads)
+QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers, uint64_t nodeEngineId, uint16_t numThreads)
     : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads)
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 
@@ -370,7 +368,7 @@ class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineSt
 }// namespace detail
 
 void QueryManager::poisonWorkers() {
-    auto optBuffer = bufferManagers[0]->getUnpooledBuffer(1); // there is always one buffer manager
+    auto optBuffer = bufferManagers[0]->getUnpooledBuffer(1);// there is always one buffer manager
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
 
@@ -877,7 +875,6 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
 
             statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
         }
-
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);
