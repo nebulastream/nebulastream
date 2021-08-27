@@ -99,7 +99,6 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
     Runtime::TupleBuffer numaLocalMemoryArea;
     uint64_t currentPositionInBytes;
     SourceMode sourceMode;
-    bool firstRun = false;
 };
 
 using MemorySourcePtr = std::shared_ptr<MemorySource>;

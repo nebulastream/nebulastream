@@ -310,7 +310,6 @@ void WorkerConfig::setSourcePinList(const std::string list) {
 bool WorkerConfig::isNumaAware() const {
     return numaAwareness->getValue();
 }
-bool WorkerConfig::isNumaAware() const { return numaAwareness->getValue(); }
 
 void WorkerConfig::setNumaAware(bool status) { numaAwareness->setValue(status); }
 
