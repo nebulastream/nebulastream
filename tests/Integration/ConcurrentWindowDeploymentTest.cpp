@@ -42,7 +42,7 @@ namespace NES {
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
 static uint64_t restPort = 8081;
-static uint64_t rpcPort = 5000;
+static uint64_t rpcPort = 4000;
 static uint64_t workerThreads = 4;
 
 class ConcurrentWindowDeploymentTest : public testing::Test {
