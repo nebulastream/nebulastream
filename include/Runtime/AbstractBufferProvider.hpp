@@ -41,7 +41,6 @@ class AbstractBufferProvider {
 
     virtual BufferManagerType getBufferManagerType() const = 0;
 
-
     /**
      * @return Configured size of the buffers
      */

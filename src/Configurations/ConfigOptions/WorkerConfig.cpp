@@ -68,8 +68,7 @@ WorkerConfig::WorkerConfig() {
                                           "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"
                                           "REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]. ");
 
-    numaAwareness =
-        ConfigOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
+    numaAwareness = ConfigOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
 }
 
 void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -271,12 +270,8 @@ void WorkerConfig::setQueryCompilerOutputBufferAllocationStrategy(std::string qu
     this->queryCompilerOutputBufferOptimizationLevel->setValue(std::move(queryCompilerOutputBufferAllocationStrategy));
 }
 
-bool WorkerConfig::isNumaAware() const {
-    return numaAwareness->getValue();
-}
+bool WorkerConfig::isNumaAware() const { return numaAwareness->getValue(); }
 
-void WorkerConfig::setNumaAware(bool status) {
-    numaAwareness->setValue(status);
-}
+void WorkerConfig::setNumaAware(bool status) { numaAwareness->setValue(status); }
 
 }// namespace NES

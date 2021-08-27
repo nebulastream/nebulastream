@@ -97,7 +97,8 @@ BufferControlBlock::BufferControlBlock(MemorySegment* owner,
                                        BufferRecycler* recycler,
                                        std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback,
                                        std::function<void(void*, size_t)>&& freeCallback)
-    : owner(owner), owningBufferRecycler(recycler), recycleCallback(std::move(recycleCallback)), freeCallback(std::move(freeCallback)) {}
+    : owner(owner), owningBufferRecycler(recycler), recycleCallback(std::move(recycleCallback)),
+      freeCallback(std::move(freeCallback)) {}
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());

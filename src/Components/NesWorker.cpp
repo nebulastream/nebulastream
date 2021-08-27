@@ -132,18 +132,18 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     try {
-        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(
-            localWorkerIp,
-            localWorkerZmqPort,
-            conf,
-            numWorkerThreads,
-            bufferSizeInBytes,
-            numberOfBuffersInGlobalBufferManager,
-            numberOfBuffersInSourceLocalBufferPool,
-            numberOfBuffersPerPipeline,
-            enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED : Runtime::NumaAwarenessFlag::DISABLED,
-            queryCompilerExecutionMode,
-            queryCompilerOutputBufferOptimizationLevel);
+        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(localWorkerIp,
+                                                                  localWorkerZmqPort,
+                                                                  conf,
+                                                                  numWorkerThreads,
+                                                                  bufferSizeInBytes,
+                                                                  numberOfBuffersInGlobalBufferManager,
+                                                                  numberOfBuffersInSourceLocalBufferPool,
+                                                                  numberOfBuffersPerPipeline,
+                                                                  enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED
+                                                                                      : Runtime::NumaAwarenessFlag::DISABLED,
+                                                                  queryCompilerExecutionMode,
+                                                                  queryCompilerOutputBufferOptimizationLevel);
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create();
         NES_DEBUG("NesWorker: MonitoringAgent configured with default values");

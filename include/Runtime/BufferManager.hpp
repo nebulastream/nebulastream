@@ -96,10 +96,11 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
      * @param numOfBuffers the total number of buffers in the pool
      * @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
      */
-    explicit BufferManager(uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
-                           uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
-                           std::shared_ptr<std::pmr::memory_resource> memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
-                           uint32_t withAlignment = DEFAULT_ALIGNMENT);
+    explicit BufferManager(
+        uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
+        uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
+        std::shared_ptr<std::pmr::memory_resource> memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
+        uint32_t withAlignment = DEFAULT_ALIGNMENT);
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;

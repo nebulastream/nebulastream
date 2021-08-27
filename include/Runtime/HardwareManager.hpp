@@ -17,10 +17,10 @@
 #ifndef NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
 #define NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
 
-#include <vector>
-#include <memory>
-#include <Runtime/Allocator/NumaRegionMemoryAllocator.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Allocator/NumaRegionMemoryAllocator.hpp>
+#include <memory>
+#include <vector>
 
 namespace NES::Runtime {
 
@@ -30,7 +30,6 @@ namespace NES::Runtime {
 class HardwareManager {
 
   public:
-
     struct NumaDescriptor;
     /**
      * @brief Descriptor for a single core
@@ -39,7 +38,6 @@ class HardwareManager {
         friend struct NumaDescriptor;
 
       public:
-
         explicit CpuDescriptor(uint16_t coreId = -1, uint16_t cpuId = -1) : coreId(coreId), cpuId(cpuId) {
             // nop
         }
@@ -91,7 +89,6 @@ class HardwareManager {
         std::map<uint16_t, CpuDescriptor> physicalCpus;
     };
 
-
   public:
     /**
      * @brief Creates a new HW manager with a mapping of the CPU/Mem topology
@@ -139,7 +136,6 @@ class HardwareManager {
     uint32_t numPhysicalCpus = 0;
 };
 
-}
-
+}// namespace NES::Runtime
 
 #endif//NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_

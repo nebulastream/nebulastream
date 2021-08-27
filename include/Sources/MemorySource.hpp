@@ -24,7 +24,7 @@ namespace Runtime {
 namespace detail {
 class MemorySegment;
 }
-}// namespace NodeEngine
+}// namespace Runtime
 /**
  * @brief Memory Source that reads from main memory and produces buffers.
  * The memory area out of which buffers will be produced must be initialized beforehand and allocated as a shared_ptr

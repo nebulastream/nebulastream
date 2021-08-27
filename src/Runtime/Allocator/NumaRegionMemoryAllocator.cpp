@@ -17,11 +17,11 @@
 #include <Runtime/Allocator/NumaRegionMemoryAllocator.hpp>
 #ifdef NES_ENABLE_NUMA_SUPPORT
 #if defined(__linux__)
-#include <sys/mman.h>
 #include <numaif.h>
+#include <sys/mman.h>
 #endif
-#include <errno.h>
 #include <cstring>
+#include <errno.h>
 namespace NES::Runtime {
 
 void* NumaRegionMemoryAllocator::do_allocate(size_t sizeInBytes, size_t) {

@@ -44,7 +44,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     NES_ASSERT(nodeEngine, "invalid engine");
     auto numaNodeIndex = 0;
-    auto bufferManager = nodeEngine->getBufferManager(numaNodeIndex); // TODO Steffen here you need to implement numa awareness
+    auto bufferManager = nodeEngine->getBufferManager(numaNodeIndex);// TODO Steffen here you need to implement numa awareness
     auto queryManager = nodeEngine->getQueryManager();
     auto networkManager = nodeEngine->getNetworkManager();
 
