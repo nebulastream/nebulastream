@@ -25,7 +25,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/StringSignatureBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/StringSignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -119,14 +119,14 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) 
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
     //assert that the sink operators have same up-stream operator
@@ -191,14 +191,14 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
     //assert that the sink operators have same up-stream operator
@@ -250,15 +250,15 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 2);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQueryPlans[1]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
@@ -275,7 +275,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with unionWith operators
+ * @brief Test applying SignatureBasedPartialQueryMergerRule on Global query plan with same queries with unionWith operators
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
     // Prepare
@@ -318,14 +318,14 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
     //assert that the sink operators have same up-stream operator
@@ -383,12 +383,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
+
+    //assert
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 2u);
 }
 
 /**
@@ -435,15 +445,15 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 2);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQueryPlans[1]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
@@ -494,28 +504,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
@@ -552,28 +556,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
@@ -611,28 +609,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
@@ -670,28 +662,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
@@ -746,28 +732,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
@@ -822,28 +802,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
@@ -898,14 +872,14 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
     //assert that the sink operators have same up-stream operator
@@ -975,12 +949,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
+
+    //assert
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
@@ -1027,14 +1011,14 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
     //assert that the sink operators have same up-stream operator
@@ -1096,12 +1080,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
+
+    //assert
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
@@ -1148,28 +1142,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
@@ -1218,14 +1206,14 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
     //assert that the sink operators have same up-stream operator
@@ -1292,28 +1280,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
@@ -1363,14 +1345,14 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
     //assert that the sink operators have same up-stream operator
@@ -1439,14 +1421,14 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest,
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
     //assert that the sink operators have same up-stream operator
@@ -1510,28 +1492,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest,
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 2u);
 }
 
 /**
@@ -1587,14 +1563,14 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
     //assert that the sink operators have same up-stream operator
@@ -1661,12 +1637,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
+
+    //assert
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 2u);
 }
 
 /**
@@ -1722,12 +1708,22 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
+
+    //assert
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 2u);
 }
 
 /**
@@ -1782,26 +1778,20 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
     globalQueryPlan->addQueryPlan(queryPlan2);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::StringSignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
     //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+    auto sourceOperators = updatedQueryPlan->getLeafOperators();
+    EXPECT_EQ(sourceOperators.size(), 2u);
 }

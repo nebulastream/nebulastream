@@ -127,7 +127,7 @@ StringSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPt
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     NES_DEBUG(
         "StringSignatureBasedPartialQueryMergerRule: check if the target and address query plans are syntactically equal or not");
-    auto targetSourceOperators = targetQueryPlan->getSinkOperators();
+    auto targetSourceOperators = targetQueryPlan->getSourceOperators();
     auto hostSourceOperators = hostQueryPlan->getSourceOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
