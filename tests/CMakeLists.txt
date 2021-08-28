@@ -439,6 +439,11 @@ add_executable(string-signature-based-equal-query-merger-rule-test "UnitTests/Op
 target_link_libraries(string-signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME string-signature-based-equal-query-merger-rule-test COMMAND string-signature-based-equal-query-merger-rule-test)
 
+### String Signature Based Partial Query Merger Rule Test ###
+add_executable(string-signature-based-partial-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/StringSignatureBasedPartialQueryMergerRuleTest.cpp")
+target_link_libraries(string-signature-based-partial-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME string-signature-based-partial-query-merger-rule-test COMMAND string-signature-based-partial-query-merger-rule-test)
+
 ### Join Handler Tests ###
 add_executable(join-handler-tests "UnitTests/JoinHandlerTest.cpp")
 target_link_libraries(join-handler-tests nes ${GTEST_LIBRARIES})
