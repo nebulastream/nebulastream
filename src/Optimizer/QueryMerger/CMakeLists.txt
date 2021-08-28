@@ -16,6 +16,7 @@ add_subdirectory(Signature)
 
 add_source_nes(
         SyntaxBasedCompleteQueryMergerRule.cpp
+        SyntaxBasedPartialQueryMergerRule.cpp
         Z3SignatureBasedCompleteQueryMergerRule.cpp
         Z3SignatureBasedPartialQueryMergerRule.cpp
         StringSignatureBasedCompleteQueryMergerRule.cpp

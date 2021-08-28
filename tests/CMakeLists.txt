@@ -369,6 +369,11 @@ add_executable(syntax-based-equal-query-merger-rule-test "UnitTests/Optimizer/Qu
 target_link_libraries(syntax-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME syntax-based-equal-query-merger-rule-test COMMAND syntax-based-equal-query-merger-rule-test)
 
+### Syntax Based Partial Query Merger Rule Test ###
+add_executable(syntax-based-partial-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SyntaxBasedPartialQueryMergerRuleTest.cpp")
+target_link_libraries(syntax-based-partial-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME syntax-based-partial-query-merger-rule-test COMMAND syntax-based-partial-query-merger-rule-test)
+
 ### Query Placement Tests ###
 add_executable(query-placement-test "UnitTests/Optimizer/QueryPlacement/QueryPlacementTest.cpp")
 target_link_libraries(query-placement-test nes ${GTEST_LIBRARIES})
