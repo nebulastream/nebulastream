@@ -17,7 +17,9 @@
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/QueryMerger/DefaultQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/StringSignatureBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/StringSignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/SyntaxBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
 #include <Util/Logger.hpp>
@@ -46,7 +48,12 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
             queryMergerRule = Z3SignatureBasedPartialQueryMergerRule::create(context);
             break;
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
-        case QueryMergerRule::StringSignatureBasedPartialQueryMergerRule: NES_NOT_IMPLEMENTED();
+            queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();
+            break;
+        case QueryMergerRule::StringSignatureBasedPartialQueryMergerRule:
+        case QueryMergerRule::ImprovedStringSignatureBasedPartialQueryMergerRule:
+            queryMergerRule = StringSignatureBasedPartialQueryMergerRule::create();
+            break;
         case QueryMergerRule::DefaultQueryMergerRule: queryMergerRule = DefaultQueryMergerRule::create();
     }
 }

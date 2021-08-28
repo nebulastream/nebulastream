@@ -19,6 +19,14 @@
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
+namespace NES {
+class LogicalOperatorNode;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+}// namespace NES
+
 namespace NES::Optimizer {
 
 class SignatureEqualityUtil;
@@ -85,13 +93,11 @@ class StringSignatureBasedPartialQueryMergerRule final : public BaseQueryMergerR
      * @return Map containing matching pair of target and host operators
      */
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
-                                                                  const QueryPlanPtr& hostQueryPlan);
+                                                                                const QueryPlanPtr& hostQueryPlan);
 
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> areOperatorEqual(const LogicalOperatorNodePtr& targetOperator,
-                                                                const LogicalOperatorNodePtr& hostOperator);
-
+                                                                              const LogicalOperatorNodePtr& hostOperator);
 };
 }// namespace NES::Optimizer
-
 
 #endif//NES_STRINGSIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP
