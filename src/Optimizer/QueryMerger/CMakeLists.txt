@@ -20,5 +20,6 @@ add_source_nes(
         Z3SignatureBasedCompleteQueryMergerRule.cpp
         Z3SignatureBasedPartialQueryMergerRule.cpp
         StringSignatureBasedCompleteQueryMergerRule.cpp
+        StringSignatureBasedPartialQueryMergerRule.cpp
         DefaultQueryMergerRule.cpp
 )
