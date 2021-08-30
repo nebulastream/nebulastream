@@ -114,16 +114,17 @@ bool DataSource::start() {
         // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
         // only CPU i as set.
         if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
+            NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(),
+                       "pinning position is out of cpu range");
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
             CPU_SET(sourceAffinity, &cpuset);
-//            int rc = pthread_setaffinity_np(this->thread->native_handle(), sizeof(cpu_set_t), &cpuset);
-            int rc = pthread_setaffinity_np(pthread_self() , sizeof(cpu_set_t), &cpuset);
+            int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 
             if (rc != 0) {
                 NES_ERROR("Error calling set pthread_setaffinity_np: " << rc);
             } else {
-#ifdef CHECK_AFFINITY
+#ifdef NES_ENABLE_NUMA_SUPPORT
                 int cpu = sched_getcpu();
                 auto nodeOfCpu = numa_node_of_cpu(cpu);
 

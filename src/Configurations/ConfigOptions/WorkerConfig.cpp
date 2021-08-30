@@ -38,8 +38,8 @@ WorkerConfig::WorkerConfig() {
         4000,
         "RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
         "to be the same as rpcPort in Coordinator.");
-    rpcPort = ConfigOption<uint32_t>::create("rpcPort", 5000, "RPC server port of the NES Worker.");
-    dataPort = ConfigOption<uint32_t>::create("dataPort", 5001, "Data port of the NES Worker.");
+    rpcPort = ConfigOption<uint32_t>::create("rpcPort", 4000, "RPC server port of the NES Worker.");
+    dataPort = ConfigOption<uint32_t>::create("dataPort", 4001, "Data port of the NES Worker.");
     numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", UINT16_MAX, "Number of computing slots for the NES Worker.");
     numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
 
@@ -60,6 +60,7 @@ WorkerConfig::WorkerConfig() {
         ConfigOption<std::string>::create("queryCompilerExecutionMode",
                                           "RELEASE",
                                           "Indicates the execution mode for the query compiler [DEBUG|RELEASE]. ");
+
     queryCompilerOutputBufferOptimizationLevel =
         ConfigOption<std::string>::create("OutputBufferOptimizationLevel",
                                           "ALL",
@@ -72,8 +73,7 @@ WorkerConfig::WorkerConfig() {
 
     workerPinList = ConfigOption<std::string>::create("workerPinList", "", "comma separated list of where to map the worker");
 
-    numaAwareness =
-        ConfigOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
+    numaAwareness = ConfigOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
 }
 
 void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -287,13 +287,9 @@ void WorkerConfig::setQueryCompilerOutputBufferAllocationStrategy(std::string qu
     this->queryCompilerOutputBufferOptimizationLevel->setValue(std::move(queryCompilerOutputBufferAllocationStrategy));
 }
 
-const StringConfigOption& WorkerConfig::getWorkerPinList() const {
-    return workerPinList;
-}
+const StringConfigOption& WorkerConfig::getWorkerPinList() const { return workerPinList; }
 
-const StringConfigOption& WorkerConfig::getSourcePinList() const {
-    return sourcePinList;
-}
+const StringConfigOption& WorkerConfig::getSourcePinList() const { return sourcePinList; }
 
 void WorkerConfig::setWorkerPinList(const std::string list) {
     if (!list.empty()) {
@@ -307,9 +303,7 @@ void WorkerConfig::setSourcePinList(const std::string list) {
     }
 }
 
-bool WorkerConfig::isNumaAware() const {
-    return numaAwareness->getValue();
-}
+bool WorkerConfig::isNumaAware() const { return numaAwareness->getValue(); }
 
 void WorkerConfig::setNumaAware(bool status) { numaAwareness->setValue(status); }
 

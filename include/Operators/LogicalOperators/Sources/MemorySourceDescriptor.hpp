@@ -108,7 +108,7 @@ class MemorySourceDescriptor : public SourceDescriptor {
     uint64_t getGatheringValue() const;
 
     /**
-    * @brief return the gathering value
+    * @brief return the source affinity thus on which core this source is mapped
     * @return
     */
     uint64_t getSourceAffinity() const;

@@ -123,9 +123,16 @@ class UtilityFunctions {
     * @param delimiter - the string that is to be split upon e.g. / or -
     * @return
     */
+    static std::vector<std::string> splitWithStringDelimiter(std::string& inputString, const std::string& delim);
 
-    static std::vector<std::string> splitWithStringDelimiter(std::string& s, const std::string& delim);
-    static std::vector<std::uint64_t> splitWithStringDelimiterAsInt(const std::string& s, const std::string& delim);
+    /**
+    * @brief splits a string given a delimiter into multiple unsigned integer stored in a std::uint64_t vector
+    * the delimiter is allowed to be a string rather than a char only.
+    * @param data - the string that is to be split
+    * @param delimiter - the string that is to be split upon e.g. / or -
+    * @return
+    */
+    static std::vector<std::uint64_t> splitWithStringDelimiterAsInt(const std::string& inputString, const std::string& delim);
 
     static std::string prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema);
 
