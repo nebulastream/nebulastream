@@ -361,7 +361,7 @@ target_link_libraries(syntax-based-equal-query-merger-rule-test nes ${GTEST_LIBR
 add_test(NAME syntax-based-equal-query-merger-rule-test COMMAND syntax-based-equal-query-merger-rule-test)
 
 ### Query Placement Tests ###
-add_executable(query-placement-test "UnitTests/Optimizer/QueryPlacement/QueryPlacementTest.cpp")
+add_executable(query-placement-test "UnitTests/Optimizer/QueryPlacement/QueryPlacementTest.cpp" UnitTests/Optimizer/QueryPlacement/GeneticAlgorithmTest.cpp)
 target_link_libraries(query-placement-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-placement-test COMMAND query-placement-test)
 

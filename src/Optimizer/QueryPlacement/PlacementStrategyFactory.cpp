@@ -18,6 +18,7 @@
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
+#include <Optimizer/QueryPlacement/GeneticAlgorithmStrategy.hpp>
 
 namespace NES::Optimizer {
 
@@ -31,6 +32,9 @@ std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(con
         case TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
         case IFCOP:
             return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+        case TopDown:
+            return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+        case GeneticAlgorithm: return GeneticAlgorithmStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
             // FIXME: enable them with issue #755
             //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
             //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
