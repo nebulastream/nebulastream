@@ -73,9 +73,9 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
 
     Placement generatePlacement(QueryPlanPtr queryPlan);
 
-    float getCost(Placement placement);
+    double getCost(Placement placement);
 
-    Placement getOptimizedPlacement(uint32_t numberOfGeneration, QueryPlanPtr queryPlan);
+    Placement getOptimizedPlacement(std::vector<Placement> population,int time, QueryPlanPtr queryPlan);
     Placement mutate(Placement placement, QueryPlanPtr queryPlan);
 
     void DFS(int s, int v, std::list<int>* adj, std::vector<bool>& tc, int numOfTopologyNodes);
@@ -85,6 +85,7 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
 
     void eliminateReachableNodes(std::vector<int>* topologyIndices);
     Placement crossOver(GeneticAlgorithmStrategy::Placement placement, GeneticAlgorithmStrategy::Placement other);
+    bool offspingExists(std::vector<GeneticAlgorithmStrategy::Placement> population, GeneticAlgorithmStrategy::Placement offpring);
 };
 }// namespace NES::Optimizer
 
