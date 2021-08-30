@@ -38,6 +38,7 @@ enum NESPlacementStrategyType {
     TopDown,
     BottomUp,
     IFCOP,
+    GeneticAlgorithm,
     // FIXME: enable them with issue #755
     LowLatency,
     HighThroughput,
@@ -49,7 +50,11 @@ enum NESPlacementStrategyType {
 static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategyType{
     {"BottomUp", BottomUp},
     {"TopDown", TopDown},
+<<<<<<< HEAD
     {"IFCOP", IFCOP},
+=======
+    {"GeneticAlgorithm", GeneticAlgorithm},
+>>>>>>> [#1965] WIP Genetic Algorithm Strategy
     // FIXME: enable them with issue #755
     //    {"Latency", LowLatency},
     //    {"HighThroughput", HighThroughput},
