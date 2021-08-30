@@ -112,9 +112,9 @@ class Timer {
     };
 
     /**
-     * @brief retruns the currently saved snapshots
+     * @brief returns the currently saved snapshots
      */
-    std::vector<Snapshot>& getSnapshots() { return snapshots; };
+    const std::vector<Snapshot>& getSnapshots() const { return snapshots; };
 
     /**
      * @brief returns the current runtime

@@ -56,7 +56,7 @@ QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const& opt
 QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationRequestPtr request) {
 
     try {
-        std::shared_ptr<Timer<>> timer_ptr(new Timer("DefaultQueryCompiler"));
+        Timer timer("DefaultQueryCompiler");
 
         auto queryId = request->getQueryPlan()->getQueryId();
         auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
@@ -67,40 +67,40 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
             dumpContext->registerDumpHandler(VizDumpHandler::create());
         }
 
-        timer_ptr.get()->start();
+        timer.start();
         NES_DEBUG("compile query with id: " << queryId << " subPlanId: " << subPlanId);
         auto logicalQueryPlan = request->getQueryPlan();
         dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
-        timer_ptr.get()->snapshot("LogicalQueryPlan");
+        timer.snapshot("LogicalQueryPlan");
 
         auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
         dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
-        timer_ptr.get()->snapshot("PhysicalQueryPlan");
+        timer.snapshot("PhysicalQueryPlan");
 
         auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
         dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
-        timer_ptr.get()->snapshot("AfterPipelinedQueryPlan");
+        timer.snapshot("AfterPipelinedQueryPlan");
 
         addScanAndEmitPhase->apply(pipelinedQueryPlan);
         dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
-        timer_ptr.get()->snapshot("AfterAddScanAndEmitPhase");
+        timer.snapshot("AfterAddScanAndEmitPhase");
 
         lowerPhysicalToGeneratableOperatorsPhase->apply(pipelinedQueryPlan);
         dumpContext->dump("5. GeneratableOperators", pipelinedQueryPlan);
-        timer_ptr.get()->snapshot("GeneratableOperators");
+        timer.snapshot("GeneratableOperators");
 
         bufferOptimizationPhase->apply(pipelinedQueryPlan);
         dumpContext->dump("6. BufferOptimizationPhase", pipelinedQueryPlan);
-        timer_ptr.get()->snapshot("BufferOptimizationPhase");
+        timer.snapshot("BufferOptimizationPhase");
 
         codeGenerationPhase->apply(pipelinedQueryPlan);
         dumpContext->dump("7. ExecutableOperatorPlan", pipelinedQueryPlan);
-        timer_ptr.get()->snapshot("ExecutableOperatorPlan");
-        timer_ptr.get()->pause();
-        NES_INFO("DefaultQueryCompiler Runtime:\n" << timer_ptr.get());
+        timer.snapshot("ExecutableOperatorPlan");
+        timer.pause();
+        NES_INFO("DefaultQueryCompiler Runtime:\n" << timer);
 
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
-        return QueryCompilationResult::create(executableQueryPlan, std::move(*timer_ptr.get()));
+        return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
     } catch (const QueryCompilationException& exception) {
         auto currentException = std::current_exception();
         return QueryCompilationResult::create(currentException);
