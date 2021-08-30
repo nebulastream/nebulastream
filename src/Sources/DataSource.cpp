@@ -29,7 +29,12 @@
 
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadNaming.hpp>
+#ifdef NES_ENABLE_NUMA_SUPPORT
+#if defined(__linux__)
 #include <numa.h>
+#include <numaif.h>
+#endif
+#endif
 #include <utility>
 #include <zconf.h>
 namespace NES {

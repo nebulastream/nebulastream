@@ -49,13 +49,15 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     NES_ASSERT(nodeEngine, "invalid engine");
     auto numaNodeIndex = 0;
-#ifdef __linux__
+#ifdef NES_ENABLE_NUMA_SUPPORT
+#if defined(__linux__)
     if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
         auto nodeOfCpu = numa_node_of_cpu(memorySourceDescriptor->getSourceAffinity());
         numaNodeIndex = nodeOfCpu;
     }
+#endif
 #endif
     auto bufferManager = nodeEngine->getBufferManager(numaNodeIndex);
     auto queryManager = nodeEngine->getQueryManager();
