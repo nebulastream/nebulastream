@@ -112,8 +112,8 @@ UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::string& input, c
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
 
-std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string& s, const std::string& delim) {
-    std::string copy = s;
+std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string& inputString, const std::string& delim) {
+    std::string copy = inputString;
     size_t pos = 0;
     std::vector<std::string> elems;
     while ((pos = copy.find(delim)) != std::string::npos) {
@@ -127,8 +127,8 @@ std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string&
     return elems;
 }
 
-std::vector<std::uint64_t> UtilityFunctions::splitWithStringDelimiterAsInt(const std::string& s, const std::string& delim) {
-    std::string copy = s;
+std::vector<std::uint64_t> UtilityFunctions::splitWithStringDelimiterAsInt(const std::string& inputString, const std::string& delim) {
+    std::string copy = inputString;
     size_t pos = 0;
     std::vector<std::uint64_t> elems;
     while ((pos = copy.find(delim)) != std::string::npos) {

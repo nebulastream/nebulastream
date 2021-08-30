@@ -33,8 +33,11 @@
 
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
-#ifdef __linux__
+
+#ifdef NES_ENABLE_NUMA_SUPPORT
+#if defined(__linux__)
 #include <numa.h>
+#endif
 #endif
 namespace NES {
 
@@ -51,7 +54,6 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
         auto nodeOfCpu = numa_node_of_cpu(memorySourceDescriptor->getSourceAffinity());
-//        std::cout << "buffer binding affinity=" << memorySourceDescriptor->getSourceAffinity() << " numaNode=" << nodeOfCpu << std::endl;
         numaNodeIndex = nodeOfCpu;
     }
 #endif

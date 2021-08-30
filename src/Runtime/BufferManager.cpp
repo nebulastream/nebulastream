@@ -84,7 +84,6 @@ void BufferManager::destroy() {
         }
         unpooledBuffers.clear();
         NES_DEBUG("Shutting down Buffer Manager completed " << this);
-
         memoryResource->deallocate(basePointer, allocatedAreaSize);
     }
 }
@@ -120,19 +119,16 @@ void BufferManager::initialize(uint32_t withAlignment) {
     }
     size_t offsetBetweenBuffers = allocatedAreaSize;
     allocatedAreaSize *= numOfBuffers;
-    basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));;
+    basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
+    ;
     if (basePointer == nullptr) {
         NES_THROW_RUNTIME_ERROR("memory allocation failed");
     }
     uint8_t* ptr = basePointer;
     for (size_t i = 0; i < numOfBuffers; ++i) {
-        allBuffers.emplace_back(
-            ptr,
-            bufferSize,
-            this,
-            [](detail::MemorySegment* segment, BufferRecycler* recycler) {
-                recycler->recyclePooledBuffer(segment);
-            });
+        allBuffers.emplace_back(ptr, bufferSize, this, [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+            recycler->recyclePooledBuffer(segment);
+        });
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
         availableBuffers.emplace_back(&allBuffers.back());
 #else
@@ -233,13 +229,12 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
-    auto memSegment = std::make_unique<detail::MemorySegment>(
-        ptr,
-        bufferSize,
-        this,
-        [](detail::MemorySegment* segment, BufferRecycler* recycler) {
-            recycler->recycleUnpooledBuffer(segment);
-        });
+    auto memSegment = std::make_unique<detail::MemorySegment>(ptr,
+                                                              bufferSize,
+                                                              this,
+                                                              [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+                                                                  recycler->recycleUnpooledBuffer(segment);
+                                                              });
     auto* leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), bufferSize);
     if (leakedMemSegment->controlBlock->prepare()) {

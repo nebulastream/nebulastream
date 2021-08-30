@@ -23,8 +23,12 @@
 #include <Util/ThreadNaming.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cmath>
+#ifdef NES_ENABLE_NUMA_SUPPORT
+#if defined(__linux__)
 #include <numa.h>
 #include <numaif.h>
+#endif
+#endif
 #include <utility>
 
 namespace NES {
@@ -86,15 +90,15 @@ void MemorySource::open() {
     auto buffer = globalBufferManager->getUnpooledBuffer(memoryAreaSize);
     numaLocalMemoryArea = *buffer;
     std::memcpy(numaLocalMemoryArea.getBuffer(), memoryArea.get(), memoryAreaSize);
-#ifdef CHECK_AFFINITY
+#ifdef NES_ENABLE_NUMA_SUPPORT
     int newNumaNode = -1;
     get_mempolicy(&newNumaNode, NULL, 0, numaLocalMemoryArea.getBuffer(), MPOL_F_NODE | MPOL_F_ADDR);
 
     int oldNumaNode = -1;
     get_mempolicy(&oldNumaNode, NULL, 0, (void*) memoryArea.get(), MPOL_F_NODE | MPOL_F_ADDR);
 
-    std::cout << "Mem src move from old numa node=" << oldNumaNode << " to new numa node=" << newNumaNode
-              << " on core=" << sched_getcpu() << std::endl;
+    NES_DEBUG("Mem src move from old numa node=" << oldNumaNode << " to new numa node=" << newNumaNode
+              << " on core=" << sched_getcpu());
 #endif
 }
 

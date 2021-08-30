@@ -57,6 +57,11 @@ using grpc::Status;
 namespace NES {
 
 NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig, WorkerConfigPtr workerConfigInput)
+    : NesCoordinator(coordinatorConfig) {
+    workerConfig = workerConfigInput;
+}
+
+NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     : restIp(coordinatorConfig->getRestIp()->getValue()), restPort(coordinatorConfig->getRestPort()->getValue()),
       rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()), rpcPort(coordinatorConfig->getRpcPort()->getValue()),
       numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
@@ -82,7 +87,6 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig, Wo
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<NESRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
-    workerConfig = workerConfigInput;
 
     std::string queryMergerRuleName = coordinatorConfig->getQueryMergerRule()->getValue();
     auto found = Optimizer::stringToMergerRuleEnum.find(queryMergerRuleName);
@@ -190,12 +194,9 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    if(workerConfig)
-    {
+    if (workerConfig) {
         NES_DEBUG("Use provided external worker config");
-    }
-    else
-    {
+    } else {
         NES_DEBUG("Use provided default worker config");
         workerConfig = WorkerConfig::create();
         workerConfig->resetWorkerOptions();

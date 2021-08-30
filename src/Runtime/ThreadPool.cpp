@@ -24,11 +24,17 @@
 #include <Util/ThreadNaming.hpp>
 #include <cstring>
 #include <functional>
+#include <thread>
 #include <utility>
+
 namespace NES::Runtime {
 
-ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads, std::vector<uint64_t> workerToCoreMapping)
-: nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)), workerToCoreMapping(workerToCoreMapping) {}
+ThreadPool::ThreadPool(uint64_t nodeId,
+                       QueryManagerPtr queryManager,
+                       uint32_t numThreads,
+                       std::vector<uint64_t> workerPinningPositionList)
+    : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)),
+      workerPinningPositionList(workerPinningPositionList) {}
 
 ThreadPool::~ThreadPool() {
     NES_DEBUG("Threadpool: Destroying Thread Pool");
@@ -89,24 +95,24 @@ bool ThreadPool::start() {
         threads.emplace_back([this, i, barrier]() {
             setThreadName("Wrk-%d-%d", nodeId, i);
 
-#ifdef CHECK_AFFINITY
-            if(workerToCoreMapping.size() != 0)
-            {
-                NES_NOT_IMPLEMENTED();
+#ifdef NES_ENABLE_NUMA_SUPPORT
+            NES_NOT_IMPLEMENTED();
+            if (workerPinningPositionList.size() != 0) {
+                int maxPosition = *std::max_element(workerPinningPositionList.begin(), workerPinningPositionList.end());
+                NES_ASSERT(maxPosition < std::thread::hardware_concurrency(),
+                           "pinning position is out of cpu range");
+
+                //TODO: will be implemented in #2137
                 cpu_set_t cpuset;
                 CPU_ZERO(&cpuset);
-                CPU_SET(workerToCoreMapping[i], &cpuset);
-                int rc = pthread_setaffinity_np(this->threads[i].native_handle(), sizeof(cpu_set_t), &cpuset);
+                CPU_SET(workerPinningPositionList[i], &cpuset);
+                int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
                 if (rc != 0) {
-                    NES_ERROR("Error calling pthread_setaffinity_np: " << rc );
+                    NES_ERROR("Error calling pthread_setaffinity_np: " << rc);
+                } else {
+                    NES_WARNING("worker " << i << " pins to core=" << workerPinningPositionList[i]);
                 }
-                else
-                {
-                    NES_WARNING("worker " << i << " pins to core=" << workerToCoreMapping[i]);
-                }
-            }
-            else
-            {
+            } else {
                 NES_WARNING("Worker use default affinity");
             }
 #endif
@@ -148,5 +154,3 @@ uint32_t ThreadPool::getNumberOfThreads() const {
 }
 
 }// namespace NES::Runtime
-
-#pragma clang diagnostic pop
