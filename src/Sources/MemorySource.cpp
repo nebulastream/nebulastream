@@ -90,19 +90,13 @@ void MemorySource::open() {
     auto buffer = globalBufferManager->getUnpooledBuffer(memoryAreaSize);
     numaLocalMemoryArea = *buffer;
     std::memcpy(numaLocalMemoryArea.getBuffer(), memoryArea.get(), memoryAreaSize);
-#ifdef NES_ENABLE_NUMA_SUPPORT
-    int newNumaNode = -1;
-    get_mempolicy(&newNumaNode, NULL, 0, numaLocalMemoryArea.getBuffer(), MPOL_F_NODE | MPOL_F_ADDR);
-
-    int oldNumaNode = -1;
-    get_mempolicy(&oldNumaNode, NULL, 0, (void*) memoryArea.get(), MPOL_F_NODE | MPOL_F_ADDR);
-
-    NES_DEBUG("Mem src move from old numa node=" << oldNumaNode << " to new numa node=" << newNumaNode
-              << " on core=" << sched_getcpu());
-#endif
 }
 
-MemorySource::~MemorySource() {}
+void MemorySource::close() {
+    DataSource::close();
+    numaLocalMemoryArea.release();
+}
+
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
 

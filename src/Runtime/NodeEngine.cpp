@@ -335,6 +335,10 @@ Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManag
 
 QueryCompilation::QueryCompilerPtr NodeEngine::getCompiler() { return queryCompiler; }
 
+HardwareManagerPtr NodeEngine::getHardwareManager() const {
+    return hardwareManager;
+}
+
 Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {

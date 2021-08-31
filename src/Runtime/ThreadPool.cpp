@@ -94,7 +94,7 @@ bool ThreadPool::start() {
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, i, barrier]() {
             setThreadName("Wrk-%d-%d", nodeId, i);
-
+#if 0
 #ifdef NES_ENABLE_NUMA_SUPPORT
             NES_NOT_IMPLEMENTED();
             if (workerPinningPositionList.size() != 0) {
@@ -115,6 +115,7 @@ bool ThreadPool::start() {
             } else {
                 NES_WARNING("Worker use default affinity");
             }
+#endif
 #endif
             barrier->wait();
             runningRoutine(WorkerContext(NesThread::getId()));

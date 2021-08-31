@@ -81,9 +81,15 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     DataSource() = delete;
 
     /**
-     * @brief This methods creates the local buffer pool and is necessary because we cannot do it in the constructor
+     * @brief This methods initializes thread-local state. For instance, it creates the local buffer pool and is necessary
+     * because we cannot do it in the constructor.
      */
     virtual void open();
+
+    /**
+     * @brief This method cleans up thread-local state for the source.
+     */
+    virtual void close();
 
     /**
      * @brief method to start the source.
