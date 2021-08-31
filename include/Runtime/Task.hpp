@@ -58,7 +58,6 @@ class alignas(64) Task {
     */
     uint64_t getNumberOfInputTuples();
 
-
     /**
      * @brief method to return the qep of a task
      * @return

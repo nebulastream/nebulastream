@@ -79,7 +79,15 @@ class CodeGenerationTest : public testing::Test {
     void SetUp() override {
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 6262, streamConf, 1, 4096, 1024, 12, 12, NES::Runtime::NumaAwarenessFlag::DISABLED);
+        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                                  6262,
+                                                                  streamConf,
+                                                                  1,
+                                                                  4096,
+                                                                  1024,
+                                                                  12,
+                                                                  12,
+                                                                  NES::Runtime::NumaAwarenessFlag::DISABLED);
     }
 
     /* Will be called before a test is executed. */

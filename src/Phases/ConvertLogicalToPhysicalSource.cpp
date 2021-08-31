@@ -36,8 +36,8 @@
 
 #ifdef NES_ENABLE_NUMA_SUPPORT
 #if defined(__linux__)
-#include <numa.h>
 #include <Runtime/HardwareManager.hpp>
+#include <numa.h>
 #endif
 #endif
 namespace NES {

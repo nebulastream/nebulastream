@@ -39,8 +39,8 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BlockScopeStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ContinueStatement.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFElseStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>

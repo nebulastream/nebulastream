@@ -910,8 +910,15 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                            ->addField("test$value", DataTypeFactory::createInt64());
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 12, NES::Runtime::NumaAwarenessFlag::DISABLED);
+    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                                   31337,
+                                                                   streamConf,
+                                                                   1,
+                                                                   bufferSize,
+                                                                   buffersManaged,
+                                                                   64,
+                                                                   12,
+                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto netManager = nodeEngine->getNetworkManager();
     // create NetworkSink
 

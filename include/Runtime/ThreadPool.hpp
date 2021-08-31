@@ -40,7 +40,10 @@ class ThreadPool {
      * @param number of threads to use
      * @param sourcePinningPositionList, a list of where to pin the sources
      */
-    explicit ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads, std::vector<uint64_t> workerPinningPositionList);
+    explicit ThreadPool(uint64_t nodeId,
+                        QueryManagerPtr queryManager,
+                        uint32_t numThreads,
+                        std::vector<uint64_t> workerPinningPositionList);
 
     /**
      * @brief default destructor

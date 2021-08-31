@@ -81,7 +81,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @brief
      * @param bufferManager
      */
-    explicit QueryManager(std::vector<BufferManagerPtr> bufferManagers, uint64_t nodeEngineId, uint16_t numThreads, std::vector<uint64_t> workerToCoreMapping = {});
+    explicit QueryManager(std::vector<BufferManagerPtr> bufferManagers,
+                          uint64_t nodeEngineId,
+                          uint16_t numThreads,
+                          std::vector<uint64_t> workerToCoreMapping = {});
 
     ~QueryManager() NES_NOEXCEPT(false) override;
 

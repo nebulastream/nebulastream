@@ -18,8 +18,8 @@
 #define NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 
 #include <Runtime/BufferRecycler.hpp>
-#include <Sources/GeneratorSource.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/GeneratorSource.hpp>
 namespace NES {
 namespace Runtime {
 namespace detail {
