@@ -136,7 +136,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-//    NES_INFO("MemorySourceIntegrationTest: content=" << content);
+    //    NES_INFO("MemorySourceIntegrationTest: content=" << content);
     EXPECT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());

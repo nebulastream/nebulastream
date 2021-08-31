@@ -28,7 +28,8 @@ TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler*
     return TupleBuffer(memSegment->controlBlock, ptr, length);
 }
 
-TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback) {
+TupleBuffer
+TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback) {
     auto* memSegment = new detail::MemorySegment(ptr, length, nullptr, std::move(callback), true);
     return TupleBuffer(memSegment->controlBlock, ptr, length);
 }

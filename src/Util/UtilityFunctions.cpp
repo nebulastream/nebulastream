@@ -127,7 +127,8 @@ std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string&
     return elems;
 }
 
-std::vector<std::uint64_t> UtilityFunctions::splitWithStringDelimiterAsInt(const std::string& inputString, const std::string& delim) {
+std::vector<std::uint64_t> UtilityFunctions::splitWithStringDelimiterAsInt(const std::string& inputString,
+                                                                           const std::string& delim) {
     std::string copy = inputString;
     size_t pos = 0;
     std::vector<std::uint64_t> elems;
