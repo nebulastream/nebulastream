@@ -37,6 +37,7 @@
 #ifdef NES_ENABLE_NUMA_SUPPORT
 #if defined(__linux__)
 #include <numa.h>
+#include <Runtime/HardwareManager.hpp>
 #endif
 #endif
 namespace NES {
@@ -48,16 +49,19 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                  size_t numSourceLocalBuffers,
                                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     NES_ASSERT(nodeEngine, "invalid engine");
-    auto numaNodeIndex = 0;
+    auto numaNodeIndex = 0u;
 #ifdef NES_ENABLE_NUMA_SUPPORT
-#if defined(__linux__)
     if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
-        auto nodeOfCpu = numa_node_of_cpu(memorySourceDescriptor->getSourceAffinity());
-        numaNodeIndex = nodeOfCpu;
+        auto sourceAffinity = memorySourceDescriptor->getSourceAffinity();
+        if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
+            auto nodeOfCpu = numa_node_of_cpu(sourceAffinity);
+            numaNodeIndex = nodeOfCpu;
+            NES_ASSERT2_FMT(0 <= numaNodeIndex && numaNodeIndex < nodeEngine->getHardwareManager()->getNumberOfNumaRegions(),
+                            "invalid numa settings");
+        }
     }
-#endif
 #endif
     auto bufferManager = nodeEngine->getBufferManager(numaNodeIndex);
     auto queryManager = nodeEngine->getQueryManager();

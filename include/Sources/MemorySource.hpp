@@ -85,12 +85,12 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      */
     virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
 
-    virtual ~MemorySource();
-
     /**
      * @brief This methods creates the local buffer pool and is necessary because we cannot do it in the constructor
      */
     void open() override;
+
+    void close() override;
 
   private:
     uint64_t numberOfTuplesToProduce;

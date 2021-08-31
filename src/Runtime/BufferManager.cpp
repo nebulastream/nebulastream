@@ -79,7 +79,7 @@ void BufferManager::destroy() {
 #endif
         for (auto& holder : unpooledBuffers) {
             if (!holder.segment || holder.segment->controlBlock->getReferenceCount() != 0) {
-                NES_THROW_RUNTIME_ERROR("Deletion of unpooled buffer invoked on used memory segment");
+                NES_ASSERT(false, "Deletion of unpooled buffer invoked on used memory segment");
             }
         }
         unpooledBuffers.clear();

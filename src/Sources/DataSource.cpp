@@ -118,6 +118,7 @@ bool DataSource::start() {
     thread = std::make_shared<std::thread>([this, &prom]() {
         // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
         // only CPU i as set.
+#ifdef __linux__
         if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
             NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(),
                        "pinning position is out of cpu range");
@@ -146,6 +147,7 @@ bool DataSource::start() {
         } else {
             NES_WARNING("Use default affinity for source");
         }
+#endif
 
         prom.set_value(true);
         runningRoutine();
@@ -213,6 +215,8 @@ bool DataSource::stop(bool graceful) {
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
 void DataSource::open() { bufferManager = globalBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
+
+void DataSource::close() {}
 
 void DataSource::runningRoutine() {
 
@@ -391,6 +395,7 @@ void DataSource::runningRoutineWithFrequency() {
         }
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
     }
+    close();
     // inject reconfiguration task containing end of stream
     NES_DEBUG("DataSource " << operatorId << ": Data Source add end of stream. Gracefully= " << wasGracefullyStopped);
     queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//

@@ -253,6 +253,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     SourceDescriptorPtr createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor);
 
+    /**
+     * @brief Provide the hardware manager
+     * @return the hardware manager
+     */
+    HardwareManagerPtr getHardwareManager() const;
+
   private:
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;
