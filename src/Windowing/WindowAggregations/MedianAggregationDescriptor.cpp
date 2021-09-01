@@ -22,16 +22,16 @@
 namespace NES::Windowing {
 
 MedianAggregationDescriptor::MedianAggregationDescriptor(FieldAccessExpressionNodePtr field)
-: WindowAggregationDescriptor(std::move(field)) {
+    : WindowAggregationDescriptor(std::move(field)) {
     this->aggregationType = Median;
 }
 MedianAggregationDescriptor::MedianAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
-: WindowAggregationDescriptor(std::move(field), std::move(asField)) {
+    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
     this->aggregationType = Median;
 }
 
 WindowAggregationPtr MedianAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
-                                                      FieldAccessExpressionNodePtr asField) {
+                                                         FieldAccessExpressionNodePtr asField) {
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
@@ -53,7 +53,8 @@ void MedianAggregationDescriptor::inferStamp(SchemaPtr schema) {
     asField->setStamp(onField->getStamp());
 }
 WindowAggregationDescriptorPtr MedianAggregationDescriptor::copy() {
-    return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(this->onField->copy(), this->asField->copy()));
+    return std::make_shared<MedianAggregationDescriptor>(
+        MedianAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
 
 DataTypePtr MedianAggregationDescriptor::getInputStamp() { return onField->getStamp(); }

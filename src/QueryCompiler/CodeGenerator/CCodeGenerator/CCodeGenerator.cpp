@@ -2007,11 +2007,11 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
         setupScope->addStatement(partialAggregateInitStatement.copy());
         createAggregateCall = call("Windowing::ExecutableAVGAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
     } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Median) {
-        auto partialAggregateInitStatement =
-            VarDeclStatement(partialAggregateInitialValue)
-            .assign(call("std::vector<" + aggregationInputType->getCode()->code_ + ">"));
+        auto partialAggregateInitStatement = VarDeclStatement(partialAggregateInitialValue)
+                                                 .assign(call("std::vector<" + aggregationInputType->getCode()->code_ + ">"));
         setupScope->addStatement(partialAggregateInitStatement.copy());
-        createAggregateCall = call("Windowing::ExecutableMedianAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
+        createAggregateCall =
+            call("Windowing::ExecutableMedianAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
     } else {
         // If the the aggregate is not Avg or median, we initialize the partialAggregate with 0
         auto partialAggregateInitStatement =
