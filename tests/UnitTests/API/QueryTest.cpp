@@ -202,7 +202,7 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
 /**
  * Merge two input stream: one with filter and one without filter.
  */
-TEST_F(QueryTest, DISABLED_testQueryMerge) {
+TEST_F(QueryTest, testQueryMerge) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
