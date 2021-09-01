@@ -54,7 +54,7 @@
 
 #include <QueryCompiler/GeneratableTypes/Array.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-
+#include <Runtime/WorkerContext.hpp>
 using namespace NES::Windowing;
 namespace NES {
 using Runtime::TupleBuffer;
@@ -263,7 +263,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                     windowOperatorHandler);
 
-    windowHandler->setup(context);
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(context, ctx);
 
     auto* windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
@@ -351,7 +352,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                     windowOperatorHandler);
 
-    windowHandler->setup(context);
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(context, ctx);
 
     NES::QueryCompilation::Array<char, 32> keyOne = {'K', 'e', 'y', ' ', 'O', 'n', 'e'};
 
@@ -444,8 +446,9 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                     windowOperatorHandler);
 
-    windowHandler->setup(context);
-
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(context, ctx);
+    
     auto* windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
@@ -525,7 +528,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                     windowOperatorHandler);
 
-    windowHandler->setup(context);
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(context, ctx);
 
     auto* windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
@@ -605,7 +609,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                     windowOperatorHandler);
 
-    windowHandler->setup(context);
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(context, ctx);
 
     auto* windowState =
         std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(windowHandler)
@@ -693,7 +698,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                     windowOperatorHandler);
 
-    windowHandler->setup(context);
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(context, ctx);
     auto* windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
@@ -775,7 +781,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                     windowOperatorHandler);
 
-    windowHandler->setup(context);
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(context, ctx);
 
     auto* windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);

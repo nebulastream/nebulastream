@@ -88,10 +88,8 @@ class ExecutableCompleteAggregationTriggerAction
             return false;
         }
 
-//        auto executionContext = this->weakExecutionContext.lock();
-//        auto tupleBuffer = executionContext->allocateTupleBuffer();
-        //TODO: has to be fixed
-        auto tupleBuffer = this->bufferManager->getBufferBlocking();
+        auto executionContext = this->weakExecutionContext.lock();
+        auto tupleBuffer = this->workerContext->allocateTupleBuffer();
         tupleBuffer.setOriginId(windowDefinition->getOriginId());
 
         // iterate over all keys in the window state
@@ -247,9 +245,7 @@ class ExecutableCompleteAggregationTriggerAction
                     //forward buffer to next  pipeline stage
                     executionContext->dispatchBuffer(tupleBuffer);
                     // request new buffer
-//                    tupleBuffer = executionContext->allocateTupleBuffer();
-                    //TODO: has to be fixed
-                    tupleBuffer = this->bufferManager->getBufferBlocking();
+                    tupleBuffer = this->workerContext->allocateTupleBuffer();
 
                     currentNumberOfTuples = 0;
                 }

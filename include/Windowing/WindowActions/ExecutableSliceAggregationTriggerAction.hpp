@@ -79,7 +79,7 @@ class ExecutableSliceAggregationTriggerAction
             return false;
         }
         auto executionContext = this->weakExecutionContext.lock();
-        auto tupleBuffer = executionContext->allocateTupleBuffer();
+        auto tupleBuffer = this->workerContext->allocateTupleBuffer();
         tupleBuffer.setOriginId(windowDefinition->getOriginId());
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
@@ -166,7 +166,7 @@ class ExecutableSliceAggregationTriggerAction
                     this->emitBuffer(tupleBuffer);
 
                     // request new buffer
-                    tupleBuffer = executionContext->allocateTupleBuffer();
+                    tupleBuffer = this->workerContext->allocateTupleBuffer();
                     tupleBuffer.setOriginId(windowDefinition->getOriginId());
                     currentNumberOfTuples = 0;
                 }

@@ -83,7 +83,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+    virtual bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, Runtime::WorkerContextPtr workerContext) = 0;
 
     /**
      * @brief Returns window manager.

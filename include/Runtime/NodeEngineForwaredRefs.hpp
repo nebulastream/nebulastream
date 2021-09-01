@@ -70,6 +70,7 @@ using FixedSizeBufferPoolPtr = std::shared_ptr<FixedSizeBufferPool>;
 
 class WorkerContext;
 using WorkerContextRef = WorkerContext&;
+using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 
 class NodeStatsProvider;
 using NodeStatsProviderPtr = std::shared_ptr<NodeStatsProvider>;

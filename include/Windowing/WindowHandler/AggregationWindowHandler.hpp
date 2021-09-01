@@ -242,12 +242,12 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
+    bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, Runtime::WorkerContextPtr workerContext) override {
         // Initialize AggregationWindowHandler Manager
         //for agg handler we create a unique id from the
         this->windowManager =
             std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness(), id);
-        executableWindowAction->setup(pipelineExecutionContext);
+        executableWindowAction->setup(pipelineExecutionContext, workerContext);
         return true;
     }
 

@@ -98,8 +98,7 @@ class OperatorCodeGenerationTest : public testing::Test {
 
 class TestPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
-                                 Runtime::Execution::OperatorHandlerPtr operatorHandler)
+    TestPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, Runtime::Execution::OperatorHandlerPtr operatorHandler)
         : TestPipelineExecutionContext(std::move(queryManager),
                                        std::vector<Runtime::Execution::OperatorHandlerPtr>{std::move(operatorHandler)}) {}
     TestPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
@@ -629,10 +628,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     windowHandler->start(nodeEngine->getStateManager(), 0);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
 
-    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                           windowOperatorHandler);
+    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), windowOperatorHandler);
 
-    windowHandler->setup(executionContext);
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(executionContext, ctx);
 
     /* prepare input tuple buffer */
     source->open();
@@ -709,10 +708,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
             windowOutputSchema);
     windowHandler->start(nodeEngine->getStateManager(), 0);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
-    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                           windowOperatorHandler);
+    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), windowOperatorHandler);
 
-    windowHandler->setup(executionContext);
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(executionContext, ctx);
 
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     {
@@ -1334,8 +1333,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(jitCompiler, context2);
 
-    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                           joinOperatorHandler);
+    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), joinOperatorHandler);
     auto context3 = QueryCompilation::PipelineContext::create();
     context3->registerOperatorHandler(joinOperatorHandler);
     context3->arity = QueryCompilation::PipelineContext::BinaryRight;
@@ -1445,8 +1443,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
                 windowOutputSchema);
         auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
 
-        auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                               windowOperatorHandler);
+        auto executionContext =
+            std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), windowOperatorHandler);
 
         auto nextPipeline = Runtime::Execution::ExecutablePipeline::create(2, 0, executionContext, stage2, 1, {});
 
@@ -1461,7 +1459,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         stage2->setup(*executionContext);
         stage2->start(*executionContext);
         windowHandler->start(nodeEngine->getStateManager(), 0);
-        windowHandler->setup(executionContext);
+        Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+        windowHandler->setup(executionContext, ctx);
         source->open();
         /* prepare input tuple buffer */
         auto inputBuffer = source->receiveData().value();
@@ -1530,8 +1529,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
             windowOutputSchema);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
 
-    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                           windowOperatorHandler);
+    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), windowOperatorHandler);
 
     auto nextPipeline = Runtime::Execution::ExecutablePipeline::create(2, 0, executionContext, stage2, 1, {});
     auto firstPipeline = Runtime::Execution::ExecutablePipeline::create(1, 0, executionContext, stage1, 1, {nextPipeline});
@@ -1545,7 +1543,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     stage2->setup(*executionContext);
     stage2->start(*executionContext);
     windowHandler->start(nodeEngine->getStateManager(), 0);
-    windowHandler->setup(executionContext);
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(executionContext, ctx);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
@@ -1610,15 +1609,14 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
             windowOutputSchema);
     windowHandler->start(nodeEngine->getStateManager(), 0);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
-    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                           windowOperatorHandler);
-    windowHandler->setup(executionContext);
+    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), windowOperatorHandler);
+    Runtime::WorkerContextPtr ctx = std::make_shared<Runtime::WorkerContext>(1, nodeEngine->getBufferManager());
+    windowHandler->setup(executionContext, ctx);
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                       windowOperatorHandler);
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), windowOperatorHandler);
     stage1->setup(*queryContext);
     stage1->start(*queryContext);
     stage1->execute(inputBuffer, *queryContext, wctx);
@@ -1665,8 +1663,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     auto inputBuffer = *optVal;
 
     /* execute Stage */
-    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                       context->getOperatorHandlers());
+    auto queryContext =
+        std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), context->getOperatorHandlers());
 
     cepOperatorHandler->start(queryContext, nodeEngine->getStateManager(), 0);
 
