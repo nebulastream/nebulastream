@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <Components/NesCoordinator.hpp>
@@ -25,6 +26,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
@@ -372,450 +374,194 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorker) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    struct Test {
+        uint32_t id;
+        uint32_t value;
+    };
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    auto defaultLogicalSchema =
+        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
 
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    string query = R"(Query::from("test"))";
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
 
-    std::string outputFilePath = "testDeployOneWorker.out";
-    remove(outputFilePath.c_str());
+    for (int i = 0; i < 10; ++i) {
+        testHarness.pushElement<Test>({1, 1}, 0);
+    }
 
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    struct Output {
+        uint32_t id;
+        uint32_t value;
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
+    };
 
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    std::vector<Output> expectedOutput = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}};
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 /**
  * @brief Test deploy query with print sink with one worker using top down strategy
  */
 TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    struct Test {
+        uint32_t id;
+        uint32_t value;
+    };
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    auto defaultLogicalSchema =
+        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
 
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    string query = R"(Query::from("test"))";
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
 
-    std::string outputFilePath = "testDeployOneWorkerUsingTopDownStrategy.out";
-    remove(outputFilePath.c_str());
+    for (int i = 0; i < 10; ++i) {
+        testHarness.pushElement<Test>({1, 1}, 0);
+    }
 
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    struct Output {
+        uint32_t id;
+        uint32_t value;
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
+    };
 
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    std::vector<Output> expectedOutput = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}};
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    struct Test {
+        uint32_t id;
+        uint32_t value;
+    };
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    auto defaultLogicalSchema =
+        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
 
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    string query = R"(Query::from("test"))";
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
+    testHarness.addNonSourceWorker();
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    for (int i = 0; i < 20; ++i) {
+        testHarness.pushElement<Test>({1, 1}, 0);
+    }
 
-    std::string outputFilePath = "testDeployTwoWorker.out";
+    struct Output {
+        uint32_t id;
+        uint32_t value;
 
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
+    };
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
+    std::vector<Output> expectedOutput = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1},
+                                          {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}};
 
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("QueryDeploymentTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    struct Test {
+        uint32_t id;
+        uint32_t value;
+    };
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    auto defaultLogicalSchema =
+        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
 
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    string query = R"(Query::from("test"))";
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
+    testHarness.addNonSourceWorker();
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    for (int i = 0; i < 20; ++i) {
+        testHarness.pushElement<Test>({1, 1}, 0);
+    }
 
-    std::string outputFilePath = "testDeployTwoWorkerUsingTopDownStrategy.out";
-    remove(outputFilePath.c_str());
+    struct Output {
+        uint32_t id;
+        uint32_t value;
 
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
+    };
 
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    std::vector<Output> expectedOutput = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1},
+                                          {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}};
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("QueryDeploymentTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+TEST_F(QueryDeploymentTest, testDeployOneWorkerWithFilter) {
+    struct Test {
+        uint32_t id;
+        uint32_t value;
+    };
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    auto defaultLogicalSchema =
+        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
 
-    remove("test.out");
+    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    string query = R"(Query::from("test").filter(Attribute("id") < 5))";
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    std::string outputFilePath = "test.out";
+    for (int i = 0; i < 5; ++i) {
+        testHarness.pushElement<Test>({1, 1}, 0);
+        testHarness.pushElement<Test>({5, 1}, 0);
+    }
 
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    struct Output {
+        uint32_t id;
+        uint32_t value;
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
+    };
 
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    std::vector<Output> expectedOutput = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}};
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
-    int response = remove("test.out");
-    EXPECT_TRUE(response == 0);
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    remove("test.out");
-
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    std::string outputFilePath = "test.out";
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("default_logical").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
-
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
-    int response = remove("test.out");
-    EXPECT_TRUE(response == 0);
-}
-
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenTwoSourcesRunning) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenTwoSourcesRunning) { /* TODO */
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -892,7 +638,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenOneSourceRunning) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenOneSourceRunning) { /* TODO */
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -972,7 +718,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenNoSourceRunning) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenNoSourceRunning) { /* TODO */
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -1053,73 +799,41 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    struct Test {
+        uint32_t id;
+        uint32_t value;
+    };
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    auto defaultLogicalSchema =
+        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
 
-    remove("test.out");
+    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    string query = R"(Query::from("test").project(Attribute("id")))";
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    std::string outputFilePath = "test.out";
+    for (int i = 0; i < 10; ++i) {
+        testHarness.pushElement<Test>({1, 1}, 0);
+    }
 
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("default_logical").project(Attribute("id")).sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    struct Output {
+        uint32_t id;
 
-    string expectedContent = "default_logical$id:INTEGER\n"
-                             "1\n"
-                             "1\n"
-                             "1\n"
-                             "1\n"
-                             "1\n"
-                             "1\n"
-                             "1\n"
-                             "1\n"
-                             "1\n"
-                             "1\n";
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (id == rhs.id); }
+    };
 
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    std::vector<Output> expectedOutput = {{1}, {1}, {1}, {1}, {1}, {1}, {1}, {1}, {1}, {1}};
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
-    int response = remove("test.out");
-    EXPECT_TRUE(response == 0);
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) { /* TODO */
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -1175,7 +889,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
+TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) { /* TODO */
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -1242,7 +956,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
+TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) { /* TODO */
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -1333,7 +1047,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput) {
+TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput) { /* TODO */
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -1440,7 +1154,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_EQ(response2, 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
+TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) { /* TODO */
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -1552,59 +1266,26 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    struct Test {
+        uint64_t value;
+        uint64_t id;
+        uint64_t timestamp;
+    };
+
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    ;
+
+    ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
+
+    string query =
+        R"(Query::from("window").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+    Milliseconds(1000))))";
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+
     SourceConfigPtr srcConf = SourceConfig::create();
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("QueryDeploymentTest: Worker2 started SUCCESSFULLY");
-
-    std::string outputFilePath = "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
-    remove(outputFilePath.c_str());
-
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window", testSchemaFileName);
-
-    //register logical stream qnv
-    std::string window2 =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName2 = "window.hpp";
-    std::ofstream out2(testSchemaFileName2);
-    out2 << window2;
-    out2.close();
-    wrk1->registerLogicalStream("window2", testSchemaFileName);
-
     srcConf->setSourceType("CSVSource");
     srcConf->setSourceConfig("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
@@ -1612,57 +1293,45 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     srcConf->setSkipHeader(true);
-    //register physical stream
-    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    wrk2->registerLogicalStream("truck", testSchemaFileName);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    testHarness.addCSVSource(conf, testSchema);
 
     srcConf->setLogicalStreamName("window2");
-    //register physical stream
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream2);
+    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+    testHarness.addCSVSource(conf2, testSchema);
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query =
-        R"(Query::from("window").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
-        Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"(", "CSV_FORMAT", "OVERWRITE"));)";
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        uint64_t key;
+        uint64_t window1Value;
+        uint64_t window1Id;
+        uint64_t window1Timestamp;
+        uint64_t window2Value;
+        uint64_t window2Id;
+        uint64_t window2Timestamp;
 
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (start == rhs.start && end == rhs.end && key == rhs.key && window1Value == rhs.window1Value
+                    && window1Id == rhs.window1Id && window1Timestamp == rhs.window1Timestamp && window2Value == rhs.window2Value
+                    && window2Id == rhs.window2Id && window2Timestamp == rhs.window2Timestamp);
+        }
+    };
 
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    std::vector<Output> expectedOutput = {{1000, 2000, 4, 1, 4, 1002, 1, 4, 1002},
+                                          {1000, 2000, 12, 1, 12, 1001, 1, 12, 1001},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2000},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2001},
+                                          {2000, 3000, 16, 2, 16, 2002, 2, 16, 2002}};
 
-    string expectedContent =
-        "windowwindow2$start:INTEGER,windowwindow2$end:INTEGER,windowwindow2$key:INTEGER,window$value:INTEGER,window$id:INTEGER,"
-        "window$timestamp:INTEGER,window2$value:INTEGER,window2$id:INTEGER,window2$timestamp:INTEGER\n"
-        "1000,2000,4,1,4,1002,1,4,1002\n"
-        "1000,2000,12,1,12,1001,1,12,1001\n"
-        "2000,3000,1,2,1,2000,2,1,2000\n"
-        "2000,3000,11,2,11,2001,2,11,2001\n"
-        "2000,3000,16,2,16,2002,2,16,2002\n";
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
-    NES_DEBUG("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    NES_DEBUG("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_DEBUG("QueryDeploymentTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
-
-    NES_DEBUG("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 }// namespace NES
