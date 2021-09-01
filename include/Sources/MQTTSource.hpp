@@ -23,6 +23,7 @@
 #include <string>
 
 #include <Sources/DataSource.hpp>
+#include <Sources/Parsers/Parser.hpp>
 
 namespace mqtt {
 class async_client;
@@ -48,9 +49,10 @@ class MQTTSource : public DataSource {
      * @param user name to connect to the mqtt broker
      * @param topic to listen to, to obtain the desired data
      * @param operatorId
-     * @param dataType data type that is send by the broker
+     * @param inputFormat data format that broker sends
      * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
      * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+     * @param flushIntervalForTupleBufferFillingInMilliseconds determine for how long to wait until buffer is flushed (before it is full)
      */
     explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
@@ -63,9 +65,10 @@ class MQTTSource : public DataSource {
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                        MQTTSourceDescriptor::DataType dataType,
+                        SourceDescriptor::InputFormat inputFormat,
                         uint32_t qos,
-                        bool cleanSession);
+                        bool cleanSession,
+                        long flushIntervalForTupleBufferFillingInMilliseconds);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
@@ -80,11 +83,11 @@ class MQTTSource : public DataSource {
     std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
-     * @brief fill buffer with appropriate data type
-     * @param buf buffer to be filled
+     * @brief fill buffer with appropriate inputFormat
+     * @param tupleBuffer buffer to be filled
      * @param data the received data as string
      */
-    void fillBuffer(Runtime::TupleBuffer& buf);
+    void fillBuffer(Runtime::TupleBuffer& tupleBuffer);
 
     /**
      * @brief override the toString method for the mqtt source
@@ -113,10 +116,10 @@ class MQTTSource : public DataSource {
      */
     std::string const& getTopic() const;
     /**
-     * @brief getter for dataType
-     * @return dataType
+     * @brief getter for inputFormat
+     * @return inputFormat
      */
-    MQTTSourceDescriptor::DataType getDataType() const;
+    SourceDescriptor::InputFormat getInputFormat() const;
     /**
      * @brief getter for tupleSize
      * @return tupleSize
@@ -177,13 +180,15 @@ class MQTTSource : public DataSource {
     std::string clientId;
     std::string user;
     std::string topic;
-    MQTTSourceDescriptor::DataType dataType;
+    SourceDescriptor::InputFormat inputFormat;
     mqtt::async_clientPtr client;
     uint64_t tupleSize;
     uint64_t tuplesThisPass;
     uint32_t qos;
     bool cleanSession;
     std::vector<PhysicalTypePtr> physicalTypes;
+    std::unique_ptr<Parser> inputParser;
+    long flushIntervalForTupleBufferFillingInMilliseconds;
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;

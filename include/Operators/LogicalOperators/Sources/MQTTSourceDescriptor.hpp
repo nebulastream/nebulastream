@@ -29,7 +29,6 @@ namespace NES {
 class MQTTSourceDescriptor : public SourceDescriptor {
 
   public:
-    enum DataType {JSON};
 
     /**
      * @brief create a source descriptor pointer for MQTT source
@@ -38,7 +37,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param clientId identifies the client connecting to the server, each server has aunique clientID
      * @param user to connect to server
      * @param topic to subscribe to
-     * @param dataType data type that is send by the broker
+     * @param inputFormat data type that is send by the broker
      * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
      * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
      * @return source descriptor pointer to mqtt source
@@ -48,9 +47,10 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                       std::string clientId,
                                       std::string user,
                                       std::string topic,
-                                      DataType dataType,
+                                      SourceDescriptor::InputFormat inputFormat,
                                       uint32_t qos,
-                                      bool cleanSession);
+                                      bool cleanSession,
+                                      long flushIntervalForTupleBufferFillingInMilliseconds = -1);
     /**
      * @brief create a source descriptor pointer for MQTT source
      * @param logicalStreamName Name of the logical data stream
@@ -59,7 +59,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param clientId identifies the client connecting to the server, each server has aunique clientID
      * @param user to connect to server
      * @param topic to subscribe to
-     * @param dataType data type that is send by the broker
+     * @param inputFormat data type that is send by the broker
      * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
      * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
      * @return source descriptor pointer to mqtt source
@@ -70,9 +70,11 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                       std::string clientId,
                                       std::string user,
                                       std::string topic,
-                                      DataType dataType,
+                                      SourceDescriptor::InputFormat inputFormat,
                                       uint32_t qos,
-                                      bool cleanSession);
+                                      bool cleanSession,
+                                      long flushIntervalForTupleBufferFillingInMilliseconds = -1);
+
 
     /**
      * @brief get MQTT server address
@@ -103,6 +105,13 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @return Quality of Service
      */
     uint32_t getQos() const;
+
+    /**
+     * @brief getter for tupleBufferFlushIntervalInMilliseconds
+     * @return tupleBufferFlushIntervalInMilliseconds
+     */
+    uint64_t getTupleBufferFlushIntervalInMilliseconds() const;
+
     /**
      * @brief getter for cleanSession
      * @return cleanSession
@@ -110,10 +119,10 @@ class MQTTSourceDescriptor : public SourceDescriptor {
     bool getCleanSession() const;
 
     /**
-     * @brief getter for dataType
-     * @return dataType
+     * @brief getter for inputFormat
+     * @return inputFormat
      */
-    MQTTSourceDescriptor::DataType getDataType() const;
+    SourceDescriptor::InputFormat getInputFormat() const;
 
     /**
      * checks if two mqtt source descriptors are the same
@@ -125,54 +134,58 @@ class MQTTSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    /**
+  /**
      * @brief mqtt source descriptor constructor
      * @param schema the schema of the data
      * @param serverAddress the server address to connect to (port included)
      * @param clientId unique server id
      * @param user to connect to server
      * @param topic to subscribe to
-     * @param dataType data type that is send by the broker
+     * @param inputFormat data type that is send by the broker
      * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
      * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
      */
-    explicit MQTTSourceDescriptor(SchemaPtr schema,
-                                  std::string serverAddress,
-                                  std::string clientId,
-                                  std::string user,
-                                  std::string topic,
-                                  DataType dataType,
-                                  uint32_t qos,
-                                  bool cleanSession);
-    /**
-     * @brief mqtt source descriptor constructor
-     * @param schema the schema of the data
-     * @param logicalStreamName name of the data stream
-     * @param serverAddress the server address to connect to (port included)
-     * @param clientId unique server id
-     * @param user to connect to server
-     * @param topic to subscribe to
-     * @param dataType data type that is send by the broker
-     * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
-     * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-     */
-    explicit MQTTSourceDescriptor(SchemaPtr schema,
-                                  std::string logicalStreamName,
-                                  std::string serverAddress,
-                                  std::string clientId,
-                                  std::string user,
-                                  std::string topic,
-                                  DataType dataType,
-                                  uint32_t qos,
-                                  bool cleanSession);
+  explicit MQTTSourceDescriptor(SchemaPtr schema,
+                                std::string serverAddress,
+                                std::string clientId,
+                                std::string user,
+                                std::string topic,
+                                SourceDescriptor::InputFormat inputFormat,
+                                uint32_t qos,
+                                bool cleanSession,
+                                long flushIntervalForTupleBufferFillingInMilliseconds);
+  /**
+   * @brief mqtt source descriptor constructor
+   * @param schema the schema of the data
+   * @param logicalStreamName name of the data stream
+   * @param serverAddress the server address to connect to (port included)
+   * @param clientId unique server id
+   * @param user to connect to server
+   * @param topic to subscribe to
+   * @param inputFormat data type that is send by the broker
+   * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
+   * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+   */
+  explicit MQTTSourceDescriptor(SchemaPtr schema,
+                                std::string logicalStreamName,
+                                std::string serverAddress,
+                                std::string clientId,
+                                std::string user,
+                                std::string topic,
+                                SourceDescriptor::InputFormat inputFormat,
+                                uint32_t qos,
+                                bool cleanSession,
+                                long flushIntervalForTupleBufferFillingInMilliseconds);
+
 
     std::string serverAddress;
     std::string clientId;
     std::string user;
     std::string password;
     std::string topic;
-    DataType dataType;
+    SourceDescriptor::InputFormat inputFormat;
     uint32_t qos;
+    long flushIntervalForTupleBufferFillingInMilliseconds;
     bool cleanSession;
 };
 

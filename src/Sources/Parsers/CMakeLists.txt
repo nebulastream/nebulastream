@@ -13,33 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        DataSource.cpp
-        GeneratorSource.cpp
-        BinarySource.cpp
-        ZmqSource.cpp
-        CSVSource.cpp
-        SourceCreator.cpp
-        DefaultSource.cpp
-        SenseSource.cpp
-        AdaptiveSource.cpp
-        MonitoringSource.cpp
-        MemorySource.cpp
-        LambdaSource.cpp
+        Parser.cpp
+        JSONParser.cpp
+        CSVParser.cpp
 )
-add_subdirectory(Parsers)
-
-if(NES_USE_KAFKA)
-    add_source_nes(
-            KafkaSource.cpp
-    )
-endif()
-if(NES_USE_OPC)
-    add_source_nes(
-            OPCSource.cpp
-    )
-endif()
-if(NES_USE_MQTT)
-    add_source_nes(
-            MQTTSource.cpp
-    )
-endif()

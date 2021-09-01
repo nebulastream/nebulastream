@@ -301,9 +301,10 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                OperatorId operatorId,
                                size_t numSourceLocalBuffers,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                               MQTTSourceDescriptor::DataType dataType,
+                               SourceDescriptor::InputFormat dataFormat,
                                uint8_t qos,
-                               bool cleanSession);
+                               bool cleanSession,
+                               long flushIntervalForTupleBufferFillingInMilliseconds);
 #endif
 
 }// namespace NES

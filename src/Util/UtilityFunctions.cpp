@@ -196,7 +196,8 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffe
         str << std::endl;
     }
     str << "+----------------------------------------------------+";
-    return str.str();
+    std::string kek = str.str();
+    return kek;
 }
 
 /**

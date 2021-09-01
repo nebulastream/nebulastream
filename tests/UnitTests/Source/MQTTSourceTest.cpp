@@ -72,8 +72,8 @@
 #define SUCCESSORS {}
 #endif
 
-#ifndef DATATYPE
-#define DATATYPE MQTTSourceDescriptor::DataType::JSON
+#ifndef INPUTFORMAT
+#define INPUTFORMAT SourceDescriptor::InputFormat::JSON
 #endif
 
 #ifndef QOS
@@ -141,9 +141,10 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
-                                       DATATYPE,
+                                       INPUTFORMAT,
                                        QOS,
-                                       CLEANSESSION);
+                                       CLEANSESSION,
+                                       -1);
 
     SUCCEED();
 }
@@ -163,9 +164,10 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
-                                       DATATYPE,
+                                       INPUTFORMAT,
                                        QOS,
-                                       CLEANSESSION);
+                                       CLEANSESSION,
+                                       -1);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
@@ -189,9 +191,10 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
         createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, OPERATORID,
                          NUMSOURCELOCALBUFFERS,
                          SUCCESSORS,
-                         DATATYPE,
+                         INPUTFORMAT,
                          QOS,
-                         CLEANSESSION);
+                         CLEANSESSION,
+                         -1);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
@@ -203,7 +206,8 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
     EXPECT_EQ(value, expected);
 }
 
-TEST_F(MQTTSourceTest, testDeployOneWorkerWithMQTTSourceConfig) {
+
+TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -249,12 +253,11 @@ TEST_F(MQTTSourceTest, testDeployOneWorkerWithMQTTSourceConfig) {
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
     srcConf->setSourceType("MQTTSource");
-    //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = dataType (conversion to enum above)
-//    srcConf->setSourceConfig("../tests/test_data/window.csv");
-srcConf->setSourceConfig("ws://127.0.0.1:9001;testClient;testUser;demoTownSensorData;JSON;2;true");
+    //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = formatType; 5 = qos; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
+    srcConf->setSourceConfig("ws://127.0.0.1:9001;testClient;testUser;demoTownSensorData;JSON;2;false;3000");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setNumberOfBuffersToProduce(10000);
-    srcConf->setSourceFrequency(1);//TODO: change this to 0 if we have the the end of stream
+    srcConf->setSourceFrequency(1);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("stream");
     srcConf->setSkipHeader(true);

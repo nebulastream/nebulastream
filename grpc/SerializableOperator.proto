@@ -126,14 +126,15 @@ message SerializableOperator{
     }
 
     message SerializableMQTTSourceDescriptor {
-      enum DataType{
+      enum InputFormat{
         JSON=0;
+        CSV=1;
       };
       string serverAddress = 1;
       string clientId = 2;
       string user = 3;
       string topic = 4;
-      DataType dataType = 5;
+      InputFormat inputFormat = 5;
       uint32 qos = 6;
       bool cleanSession = 7;
       SerializableSchema sourceSchema = 8;
