@@ -28,9 +28,9 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
+#include <Windowing/WindowAggregations/ExecutableMedianAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
-#include <Windowing/WindowAggregations/ExecutableMedianAggregation.hpp>
 
 #include <Util/Logger.hpp>
 #include <cstdlib>
