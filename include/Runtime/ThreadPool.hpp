@@ -43,6 +43,7 @@ class ThreadPool {
     explicit ThreadPool(uint64_t nodeId,
                         QueryManagerPtr queryManager,
                         uint32_t numThreads,
+                        std::vector<BufferManagerPtr> bufferManagers,
                         std::vector<uint64_t> workerPinningPositionList);
 
     /**
@@ -99,9 +100,11 @@ class ThreadPool {
     std::vector<std::thread> threads{};
     mutable std::recursive_mutex reconfigLock;
     std::shared_ptr<QueryManager> queryManager;
+    std::vector<BufferManagerPtr> bufferManagers;
 
     //this is a list of slots where we pin the worker, one after the other
     std::vector<uint64_t> workerPinningPositionList;
+
 };
 
 using ThreadPoolPtr = std::shared_ptr<ThreadPool>;

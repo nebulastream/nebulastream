@@ -15,6 +15,7 @@
 */
 
 #include <Runtime/NesThread.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/Task.hpp>
 #include <Runtime/ThreadPool.hpp>
@@ -27,13 +28,21 @@
 #include <thread>
 #include <utility>
 
+#ifdef NES_ENABLE_NUMA_SUPPORT
+#if defined(__linux__)
+#include <numa.h>
+#include <numaif.h>
+#endif
+#endif
+
 namespace NES::Runtime {
 
 ThreadPool::ThreadPool(uint64_t nodeId,
                        QueryManagerPtr queryManager,
                        uint32_t numThreads,
+                       std::vector<BufferManagerPtr> bufferManagers,
                        std::vector<uint64_t> workerPinningPositionList)
-    : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)),
+    : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)), bufferManagers(bufferManagers),
       workerPinningPositionList(workerPinningPositionList) {}
 
 ThreadPool::~ThreadPool() {
@@ -94,15 +103,15 @@ bool ThreadPool::start() {
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, i, barrier]() {
             setThreadName("Wrk-%d-%d", nodeId, i);
-#if 0
-#ifdef NES_ENABLE_NUMA_SUPPORT
-            NES_NOT_IMPLEMENTED();
-            if (workerPinningPositionList.size() != 0) {
-                int maxPosition = *std::max_element(workerPinningPositionList.begin(), workerPinningPositionList.end());
-                NES_ASSERT(maxPosition < std::thread::hardware_concurrency(),
-                           "pinning position is out of cpu range");
 
-                //TODO: will be implemented in #2137
+            BufferManagerPtr localBufferManager;
+#ifdef __linux__
+#ifdef NES_ENABLE_NUMA_SUPPORT
+            if (workerPinningPositionList.size() != 0) {
+                NES_ASSERT(numThreads < workerPinningPositionList.size(), "Not enough worker positions for pinning are provided");
+                uint64_t maxPosition = *std::max_element(workerPinningPositionList.begin(), workerPinningPositionList.end());
+                NES_ASSERT(maxPosition < std::thread::hardware_concurrency(), "pinning position is out of cpu range");
+
                 cpu_set_t cpuset;
                 CPU_ZERO(&cpuset);
                 CPU_SET(workerPinningPositionList[i], &cpuset);
@@ -112,13 +121,18 @@ bool ThreadPool::start() {
                 } else {
                     NES_WARNING("worker " << i << " pins to core=" << workerPinningPositionList[i]);
                 }
+                auto nodeOfCpu = numa_node_of_cpu(workerPinningPositionList[i]);
+                auto numaNodeIndex = nodeOfCpu;
+                localBufferManager = bufferManagers[numaNodeIndex];
+                NES_DEBUG("Worker thread " << i << " will use numa node =" << numaNodeIndex);
+
             } else {
                 NES_WARNING("Worker use default affinity");
             }
 #endif
 #endif
             barrier->wait();
-            runningRoutine(WorkerContext(NesThread::getId()));
+            runningRoutine(WorkerContext(NesThread::getId(), localBufferManager));
         });
     }
     barrier->wait();
