@@ -448,7 +448,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             } else {// Allocate a dedicated result buffer.
                 // Generates: NES::Runtime::TupleBuffer resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
                 code->variableInitStmts.push_back(VarDeclStatement(code->varDeclarationResultBuffer)
-                                                      .assign(allocateTupleBuffer(code->varDeclarationExecutionContext))
+                                                      .assign(allocateTupleBuffer(code->varDeclarationWorkerContext))
                                                       .copy());
                 // Generates: ResultTuple* resultTuples = (ResultTuple*) resultTupleBuffer.getBuffer();
                 code->variableInitStmts.push_back(
@@ -498,7 +498,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
         code->varDeclarationResultBuffer = varDeclarationResultBuffer;
 
         code->variableInitStmts.push_back(VarDeclStatement(code->varDeclarationResultBuffer)
-                                              .assign(allocateTupleBuffer(code->varDeclarationExecutionContext))
+                                              .assign(allocateTupleBuffer(code->varDeclarationWorkerContext))
                                               .copy());
         auto varDeclResultTuple =
             VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
@@ -747,7 +747,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
             .copy());
     // 2.2 allocate a new buffer -> resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
     thenStatement->addStatement(
-        VarRef(code->varDeclarationResultBuffer).assign(allocateTupleBuffer(code->varDeclarationExecutionContext)).copy());
+        VarRef(code->varDeclarationResultBuffer).assign(allocateTupleBuffer(code->varDeclarationWorkerContext)).copy());
     // 2.2 get typed result buffer from resultTupleBuffer -> resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();
     if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
         thenStatement->addStatement(VarRef(varDeclResultTuple)
@@ -2344,9 +2344,9 @@ Runtime::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(Compiler:
     return CompiledExecutablePipelineStage::create(compiledCode, arity, src);
 }
 
-BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(const VariableDeclaration& pipelineContext) {
+BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(const VariableDeclaration& workerContextVariable) {
     auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
-    return VarRef(pipelineContext).accessRef(allocateTupleBuffer);
+    return VarRef(workerContextVariable).accessRef(allocateTupleBuffer);
 }
 
 BinaryOperatorStatement CCodeGenerator::getBufferSize(const VariableDeclaration& tupleBufferVariable) {
