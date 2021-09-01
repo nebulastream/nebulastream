@@ -49,17 +49,18 @@ class BaseExecutableWindowAction {
         weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
     };
 
-    void setup(const Runtime::Execution::PipelineExecutionContextPtr& executionContext) {
+    void setup(const Runtime::Execution::PipelineExecutionContextPtr& executionContext, Runtime::WorkerContextPtr workerContext) {
         this->weakExecutionContext = executionContext;
         this->phantom = executionContext;
+        this->workerContext = workerContext;
     }
 
   protected:
     std::atomic<uint64_t> emitSequenceNumber = 0;
     std::weak_ptr<Runtime::Execution::PipelineExecutionContext> weakExecutionContext;
+    Runtime::WorkerContextPtr workerContext;
     std::shared_ptr<Runtime::Execution::PipelineExecutionContext> phantom;
     SchemaPtr windowSchema;
-    Runtime::BufferManagerPtr bufferManager;
 };
 }// namespace NES::Windowing
 
