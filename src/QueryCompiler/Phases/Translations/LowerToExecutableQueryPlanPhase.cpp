@@ -220,11 +220,9 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     auto executionContext =
         std::make_shared<Runtime::Execution::PipelineExecutionContext>(subQueryPlanId,
                                                                        nodeEngine->getQueryManager(),
-                                                                       nodeEngine->getBufferManager(),
                                                                        emitToSuccessorFunctionHandler,
                                                                        emitToQueryManagerFunctionHandler,
-                                                                       executableOperator->getOperatorHandlers(),
-                                                                       executableSuccessorPipelines.size());
+                                                                       executableOperator->getOperatorHandlers());
 
     auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
                                                                              subQueryPlanId,

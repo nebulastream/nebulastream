@@ -105,20 +105,17 @@ class CodeGenerationTest : public testing::Test {
 class TestPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
     TestPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
-                                 Runtime::BufferManagerPtr bufferManager,
                                  std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
             0,
             std::move(queryManager),
-            std::move(bufferManager),
             [this](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
             [this](Runtime::TupleBuffer& buffer) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            std::move(operatorHandlers),
-            12){
+            std::move(operatorHandlers)){
             // nop
         };
 
@@ -561,7 +558,6 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* execute code */
     auto wctx = Runtime::WorkerContext{0};
     auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                  nodeEngine->getBufferManager(),
                                                                   std::vector<Runtime::Execution::OperatorHandlerPtr>());
     stage->setup(*context);
     stage->start(*context);

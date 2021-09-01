@@ -179,7 +179,8 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
         if (sum == 10) {
             NES_DEBUG("TEST: result correct");
 
-            TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
+            //TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer(); WAS THIS CODE
+            TupleBuffer outputBuffer = wctx.allocateTupleBuffer();
 
             NES_DEBUG("TEST: got buffer");
             auto* arr = outputBuffer.getBuffer<uint32_t>();
@@ -261,20 +262,16 @@ void testOutput(const std::string& path, const std::string& expectedOutput) {
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
-                                   Runtime::BufferManagerPtr bufferManager,
-                                   const DataSinkPtr& sink)
+    MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, const DataSinkPtr& sink)
         : PipelineExecutionContext(
             0,
             std::move(queryManager),
-            std::move(bufferManager),
             [sink](TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
                 sink->writeData(buffer, worker);
             },
             [sink](TupleBuffer&) {
             },
-            std::vector<Runtime::Execution::OperatorHandlerPtr>{},
-            12){
+            std::vector<Runtime::Execution::OperatorHandlerPtr>{}){
             // nop
         };
 };
@@ -283,7 +280,7 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId) {
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
 
     DataSinkPtr sink = createTextFileSink(sch, queryId, engine, filePath, false);
-    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, queryId, context, executable, 1, {sink});
     auto source =
@@ -366,7 +363,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
 
     auto sink1 = createTextFileSink(sch1, 0, engine, "qep1.txt", false);
     auto context1 =
-        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
+        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
     auto source1 =
@@ -377,7 +374,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
     auto sink2 = createTextFileSink(sch2, 0, engine, "qep2.txt", false);
     auto context2 =
-        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink2);
+        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(0, 2, context2, executable2, 1, {sink2});
     auto source2 =
@@ -420,7 +417,7 @@ TEST_F(EngineTest, testParallelSameSource) {
 
     auto sink1 = createTextFileSink(sch1, 1, engine, "qep1.txt", true);
     auto context1 =
-        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
+        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
     auto source1 =
@@ -432,7 +429,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     DataSinkPtr sink2 = createTextFileSink(sch2, 2, engine, "qep2.txt", true);
 
     auto context2 =
-        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink2);
+        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(1, 2, context2, executable2, 1, {sink2});
     DataSourcePtr source2 =
@@ -468,7 +465,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
     auto sharedSink = createTextFileSink(sch1, 0, engine, "qep12.txt", false);
     auto context1 =
-        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sharedSink);
+        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sharedSink);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(1, 1, context1, executable1, 1, {sharedSink});
     auto source1 =
@@ -482,7 +479,7 @@ TEST_F(EngineTest, testParallelSameSink) {
                                                      engine->getBufferManager());
 
     auto context2 =
-        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sharedSink);
+        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sharedSink);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(2, 2, context2, executable2, 1, {sharedSink});
 
@@ -521,12 +518,12 @@ TEST_F(EngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
     auto sink1 = createTextFileSink(sch1, 0, engine, "qep3.txt", true);
     auto context1 =
-        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
+        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
 
     auto context2 =
-        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
+        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(1, 2, context2, executable2, 1, {sink1});
     auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
@@ -553,7 +550,7 @@ TEST_F(EngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     builder1.setBufferManager(engine->getBufferManager());
     //builder1.setCompiler(engine->getCompiler());
     auto context1 =
-        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
+        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     //auto pipeline1 = ExecutablePipeline::create(0, 1, executable1, context1, 1, nullptr, source1->getSchema(), sch1);
     //builder1.addPipeline(pipeline1);
@@ -570,7 +567,7 @@ TEST_F(EngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     //builder2.setCompiler(engine->getCompiler());
 
     auto context2 =
-        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
+        std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
         */
     // auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, 1, nullptr, source1->getSchema(), sch2);
@@ -720,7 +717,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     // builder.setBufferManager(engine->getBufferManager());
     //builder.setCompiler(engine->getCompiler());
 
-    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink);
     auto executable = std::make_shared<FailingTextExecutablePipeline>();
     //auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, 1, nullptr, source->getSchema(), sch);
     //builder.addPipeline(pipeline);
@@ -789,7 +786,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     //builder.setBufferManager(engine->getBufferManager());
     //builder.setCompiler(engine->getCompiler());
 
-    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink);
     auto executable = std::make_shared<FailingTextExecutablePipeline>();
     //auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, 1, nullptr, source->getSchema(), sch);
     //builder.addPipeline(pipeline);

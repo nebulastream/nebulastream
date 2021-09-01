@@ -41,7 +41,6 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
         : Execution::PipelineExecutionContext(
             queryExecutionPlanId,
             std::move(queryManager),
-            LocalBufferPoolPtr(),
             [](TupleBuffer&, NES::Runtime::WorkerContext&) {
             },
             [](TupleBuffer&) {

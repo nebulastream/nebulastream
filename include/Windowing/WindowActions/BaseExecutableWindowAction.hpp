@@ -59,6 +59,7 @@ class BaseExecutableWindowAction {
     std::weak_ptr<Runtime::Execution::PipelineExecutionContext> weakExecutionContext;
     std::shared_ptr<Runtime::Execution::PipelineExecutionContext> phantom;
     SchemaPtr windowSchema;
+    Runtime::BufferManagerPtr bufferManager;
 };
 }// namespace NES::Windowing
 
