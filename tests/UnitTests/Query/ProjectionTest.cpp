@@ -65,6 +65,12 @@ class ProjectionTest : public testing::Test {
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
+
+        windowSchema = Schema::create()
+                           ->addField("test$key", BasicType::INT64)
+                           ->addField("test$value", BasicType::INT64)
+                           ->addField("test$ts", BasicType::UINT64);
+
         auto streamConf = PhysicalStreamConfig::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                   31337,
@@ -88,6 +94,7 @@ class ProjectionTest : public testing::Test {
     static void TearDownTestCase() { NES_DEBUG("ProjectionTest: Tear down ProjectionTest test class."); }
 
     SchemaPtr testSchema;
+    SchemaPtr windowSchema;
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 };
 
@@ -217,6 +224,27 @@ class WindowSource : public NES::DefaultSource {
                                               timestamp,
                                               std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     }
+
+    static DataSourcePtr create(const SchemaPtr& schema,
+                                const Runtime::BufferManagerPtr& bufferManager,
+                                const Runtime::QueryManagerPtr& queryManager,
+                                const uint64_t numbersOfBufferToProduce,
+                                uint64_t frequency,
+                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                                const bool varyWatermark = false,
+                                bool decreaseTime = false,
+                                int64_t timestamp = 5) {
+
+        return std::make_shared<WindowSource>(schema,
+                                              bufferManager,
+                                              queryManager,
+                                              numbersOfBufferToProduce,
+                                              frequency,
+                                              varyWatermark,
+                                              decreaseTime,
+                                              timestamp,
+                                              successors);
+    }
 };
 
 using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
@@ -278,8 +306,8 @@ class TestSink : public SinkMedium {
 
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
-  private:
     void cleanupBuffers() { resultBuffers.clear(); }
+  private:
 
     std::mutex m;
     uint64_t expectedBuffer;
@@ -560,20 +588,31 @@ TEST_F(ProjectionTest, projectNotExistingField) {
     }
 }
 
-TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-
+TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
-    auto windowSource =
-        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+    auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        windowSchema,
+        [&](OperatorId,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return WindowSource::create(windowSchema,
+                                        nodeEngine->getBufferManager(),
+                                        nodeEngine->getQueryManager(),
+                                        /*bufferCnt*/ 2,
+                                        /*frequency*/ 0,
+                                        successors);
+        });
+    auto query = TestQuery::from(windowSourceDescriptor);
 
-    auto query = TestQuery::from(windowSource->getSchema()).project(Attribute("ts"), Attribute("value"), Attribute("key"));
     // 2. dd window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
     auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
 
-    query = query.window(windowType).byKey(Attribute("key", INT64)).apply(Sum(Attribute("value", INT64)));
+    auto aggregation = Sum(Attribute("value"));
+    query = query.window(windowType).byKey(Attribute("key")).apply(aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
@@ -584,42 +623,28 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
                                   ->addField("value", INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
-    query.sink(DummySink::create());
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    query.sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
+    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     std::cout << " plan=" << queryPlan->toString() << std::endl;
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+    nodeEngine->registerQueryInNodeEngine(plan);
+    nodeEngine->startQuery(0);
 
-    //auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    //auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
-
-    /*  std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
-        generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
-    winOps[0]->setOutputSchema(windowResultSchema);
-    std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
-        queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
-
-    auto builder = GeneratedQueryExecutionPlanBuilder::create()
-                       .setQueryManager(nodeEngine->getQueryManager())
-                       .setBufferManager(nodeEngine->getBufferManager())
-                       //      .setCompiler(nodeEngine->getCompiler())
-                       .setQueryId(1)
-                       .setQuerySubPlanId(1)
-                       .addSource(windowSource)
-                       .addSink(testSink)
-                       .addOperatorQueryPlan(generatableOperators);
-
-    auto plan = builder.build();
-    //  nodeEngine->registerQueryInNodeEngine(plan);
-    nodeEngine->startQuery(1);
-*/
     // wait till all buffers have been produced
     testSink->completed.get_future().get();
-
-    // get result buffer, which should contain two results.
+    NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
+    // get result buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+
     auto resultBuffer = testSink->get(0);
 
     NES_DEBUG("ProjectionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
@@ -643,6 +668,10 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
         // value
         EXPECT_EQ(valueFields[recordIndex], 10ULL);
     }
+
+    nodeEngine->stopQuery(0);
+    testSink->cleanupBuffers();
+    testSink->shutdown();
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
@@ -686,7 +715,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK
 // So, merge is a blocking window_scan with two children.
-TEST_F(ProjectionTest, DISABLED_mergeQueryWithWrongProjection) {
+TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
 
     EXPECT_THROW(
         {// created buffer per source * number of sources
@@ -724,93 +753,86 @@ TEST_F(ProjectionTest, DISABLED_mergeQueryWithWrongProjection) {
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK
 // So, merge is a blocking window_scan with two children.
-TEST_F(ProjectionTest, DISABLED_mergeQuery) {
+TEST_F(ProjectionTest, mergeQuery) {
     // created buffer per source * number of sources
-    uint64_t expectedBuf = 20;
+    auto streamConf = PhysicalStreamConfig::createEmpty();
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    // creating query plan
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t numSourceLocalBuffers,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 numSourceLocalBuffers,
+                                                                 std::move(successors));
+        });
 
-    //  auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-    //                                                                nodeEngine->getQueryManager(), 1, 12);
+    auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-    auto query1 = TestQuery::from(testSchema);
-
+//    auto query1 = TestQuery::from(testSchema);
+    auto query1 = TestQuery::from(testSourceDescriptor);
     query1 = query1.filter(Attribute("id") < 5);
 
     // creating P2
-    // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-    //                                                                nodeEngine->getQueryManager(), 1, 12);
-    auto query2 = TestQuery::from(testSchema).filter(Attribute("id") <= 5);
+//    auto query2 = TestQuery::from(testSchema).filter(Attribute("id") <= 5);
+    auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") <= 5);
 
     // creating P3
     // merge does not change schema
     SchemaPtr ptr = std::make_shared<Schema>(testSchema);
-    auto mergedQuery = query2.unionWith(&query1).project(Attribute("id")).sink(DummySink::create());
+    auto mergedQuery = query2.unionWith(&query1).project(Attribute("id")).sink(testSinkDescriptor);
+//    auto mergedQuery = query2.unionWith(&query1).project(Attribute("id")).sink(DummySink::create());
 
-    auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
-    auto testSink = std::make_shared<TestSink>(expectedBuf, outputSchema, nodeEngine->getBufferManager());
+//    auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("value")).sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
-    //auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
-    /*
-    auto builder = GeneratedQueryExecutionPlanBuilder::create()
-                       .setQueryManager(nodeEngine->getQueryManager())
-                       .setBufferManager(nodeEngine->getBufferManager())
-                       //.setCompiler(nodeEngine->getCompiler())
-                       .addOperatorQueryPlan(generatableOperators)
-                       .setQueryId(1)
-                       .setQuerySubPlanId(1)
-                       // .addSource(testSource1)
-                       // .addSource(testSource2)
-                       .addSink(testSink);
+    std::cout << "plan=" << queryPlan->toString() << std::endl;
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    ASSERT_FALSE(result->hasError());
+    auto plan = result->getExecutableQueryPlan();
 
-    auto plan = builder.build();
-  */  //nodeEngine->getQueryManager()->registerQuery(plan);
-
-    // The plan should have three pipeline
-    //EXPECT_EQ(plan->getNumberOfPipelines(), 3);
-
-    // TODO switch to event time if that is ready to remove sleep
-    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+    // The plan should have one pipeline
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
+    EXPECT_EQ(plan->getPipelines().size(), 3U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
-    // TODO do not rely on sleeps
-    // ingest test data
-    //plan->setup();
-    //plan->start(nodeEngine->getStateManager());
+    plan->setup();
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+    plan->start(nodeEngine->getStateManager());
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1};
-    //auto stage_0 = plan->getPipeline(0);
-    //auto stage_1 = plan->getPipeline(1);
-    for (int i = 0; i < 10; i++) {
+    plan->getPipelines()[0]->execute(buffer, workerContext);
 
-        //   stage_0->execute(buffer, workerContext);// P1
-        //   stage_1->execute(buffer, workerContext);// P2
-        // Contfext -> Context 1 and Context 2;
-        //
-        // P1 -> P2 -> P3
-        // P1 -> 10 tuples -> sum=10;
-        // P2 -> 10 tuples -> sum=10;
-        // P1 -> 10 tuples -> P2 -> sum =10;
-        // P2 -> 20 tuples -> sum=20;
-        // TODO why sleep here?
-        sleep(1);
-    }
-    testSink->completed.get_future().get();
-    //plan->stop();
+    // This plan should produce one output buffer
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5ULL);// how to interpret this?
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
     auto resultLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto recordIndexFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultRecordIndexFields =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultFields01 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
-        EXPECT_EQ(recordIndexFields[recordIndex], recordIndex);
+        std::cout << "cmp first=" << resultRecordIndexFields[recordIndex] << " seconds=" << recordIndex*2 << std::endl;
+        EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex*2);
     }
 
     testSink->shutdown();
+    plan->stop();
 }
