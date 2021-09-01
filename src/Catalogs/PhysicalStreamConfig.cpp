@@ -108,15 +108,19 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter(conf,";");
 
         //init dataType to default value (JSON). Only flat JSON format implemented currently
-        MQTTSourceDescriptor::DataType dataType = MQTTSourceDescriptor::JSON;
+        SourceDescriptor::InputFormat inputFormat = MQTTSourceDescriptor::JSON;
         if (strcasecmp(mqttConfig[4].c_str(), "JSON") == 0){
-            dataType = MQTTSourceDescriptor::DataType::JSON;
+            inputFormat = SourceDescriptor::InputFormat::JSON;
         }
 
         //Places in mqttConfig provide:
         //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = dataType (conversion to enum above)
         //5 = timeUnits (conversion to enum above); 6 = messageDelay
-        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], dataType, stoi(mqttConfig[5]), (strcasecmp("true",mqttConfig[6].c_str()) == 0));
+        long flushIntervalForTupleBufferFillingInMilliseconds = -1;
+        if(mqttConfig.size() > 7) {
+            flushIntervalForTupleBufferFillingInMilliseconds = std::stol(mqttConfig[7]);
+        }
+        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], inputFormat, stoi(mqttConfig[5]), (strcasecmp("true",mqttConfig[6].c_str()) == 0), flushIntervalForTupleBufferFillingInMilliseconds);
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
         return nullptr;

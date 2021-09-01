@@ -18,6 +18,7 @@
 #define INCLUDE_CSVSOURCE_H_
 
 #include <Sources/DataSource.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 #include <chrono>
 #include <fstream>
 #include <string>
@@ -104,9 +105,11 @@ class CSVSource : public DataSource {
     uint64_t tupleSize;
     uint64_t numberOfTuplesToProducePerBuffer;
     std::string delimiter;
-    uint64_t currentPosInFile{0};
+    uint64_t currentPositionInFile{0};
+    std::vector<PhysicalTypePtr> physicalTypes;
     size_t fileSize;
     bool skipHeader;
+    std::unique_ptr<CSVParser> inputParser;
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;

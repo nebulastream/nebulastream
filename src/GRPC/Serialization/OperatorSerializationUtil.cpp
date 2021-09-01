@@ -921,7 +921,7 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(const SourceDescripto
         mqttSerializedSourceDescriptor.set_clientid(mqttSourceDescriptor->getClientId());
         mqttSerializedSourceDescriptor.set_topic(mqttSourceDescriptor->getTopic());
         mqttSerializedSourceDescriptor.set_user(mqttSourceDescriptor->getUser());
-        mqttSerializedSourceDescriptor.set_datatype((SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor_DataType) mqttSourceDescriptor->getDataType());
+        mqttSerializedSourceDescriptor.set_inputformat((SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor_InputFormat) mqttSourceDescriptor->getInputFormat());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(mqttSourceDescriptor->getSchema(),
                                                  mqttSerializedSourceDescriptor.mutable_sourceschema());
@@ -1069,7 +1069,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
                                                 mqttSerializedSourceDescriptor.clientid(),
                                                 mqttSerializedSourceDescriptor.user(),
                                                 mqttSerializedSourceDescriptor.topic(),
-                                                (MQTTSourceDescriptor::DataType) mqttSerializedSourceDescriptor.datatype(),
+                                                (SourceDescriptor::InputFormat) mqttSerializedSourceDescriptor.inputformat(),
                                                 mqttSerializedSourceDescriptor.qos(),
                                                 mqttSerializedSourceDescriptor.cleansession());
         return ret;
