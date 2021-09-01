@@ -138,7 +138,7 @@ class Timer {
      * @brief overwrites insert string operator
      */
     friend std::ostream& operator<<(std::ostream& str, const Timer& t) {
-        str << "overall runtime: " << t.getRuntime() << '\n';
+        str << "overall runtime: " << t.getRuntime();
         for (auto& s : t.getSnapshots()) {
             str << Timer<TimeUnit>::printHelper(std::string(), s);
         }
@@ -151,7 +151,7 @@ class Timer {
      */
     static std::string printHelper(std::string str, Snapshot s) {
         std::ostringstream ostr;
-        ostr << str << s.name + ": " << s.getRuntime() << '\n';
+        ostr << str << '\n' << s.name + ": " << s.getRuntime();
         for (auto& c : s.children) {
             ostr << printHelper(str, c);
         }
