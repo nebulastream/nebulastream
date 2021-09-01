@@ -25,19 +25,17 @@ namespace NES {
 class GeoSource : public GeoNode {
 
   private:
-    GeoAreaPtr range;
-    bool hasRange;
     bool enabled;
 
   public:
     explicit GeoSource(const string& id);
-    explicit GeoSource(const string& id, GeoAreaPtr  range);
+    explicit GeoSource(const string& id, double rangeArea);
 
-    [[nodiscard]] const GeoAreaPtr& getRange() const;
-    [[nodiscard]] bool isHasRange() const;
+    [[nodiscard]] bool hasRange() const;
     [[nodiscard]] bool isEnabled() const;
 
     void setEnabled(bool flag);
+    void setCurrentLocation(const GeoPointPtr& currentLocation) override;
 
     virtual ~GeoSource();
 };

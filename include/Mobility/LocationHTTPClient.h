@@ -38,7 +38,7 @@ class LocationHTTPClient {
   public:
     static LocationHTTPClientPtr create(const std::string& host, int port, const std::string& workerName);
     explicit LocationHTTPClient(const std::string& host, int port, std::string  workerName);
-    bool registerSource();
+    bool registerSource(uint32_t sourceRange);
     bool fetchSourceStatus();
 
     void start();

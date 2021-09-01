@@ -27,7 +27,13 @@ void LocationService::addSink(const string& nodeId, const double movingRangeArea
     this->locationCatalog->addSink(nodeId, movingRangeArea);
 }
 
-void LocationService::addSource(const string& nodeId) { this->locationCatalog->addSource(nodeId); }
+void LocationService::addSource(const string& nodeId) {
+    this->locationCatalog->addSource(nodeId, 0);
+}
+
+void LocationService::addSource(const string& nodeId,  double rangeArea) {
+    this->locationCatalog->addSource(nodeId, rangeArea);
+}
 
 void LocationService::updateNodeLocation(const string& nodeId, const GeoPointPtr& location) {
     this->locationCatalog->updateNodeLocation(nodeId, location);

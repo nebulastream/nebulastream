@@ -212,6 +212,7 @@ class NesWorker {
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
     std::string workerName;
+    uint64_t workerRange;
     /**
      * @brief helper method to ensure client is connected before callin rpcs functions
      * @return

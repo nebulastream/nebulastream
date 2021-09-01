@@ -55,7 +55,8 @@ NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
       numberOfBuffersPerPipeline(workerConfig->getnumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()), type(type),
-      workerName(workerConfig->getWorkerName()->getValue()) {
+      workerName(workerConfig->getWorkerName()->getValue()),
+      workerRange(workerConfig->getWorkerRange()->getValue()) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
 }
@@ -176,7 +177,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     if (withRegisterLocation) {
         NES_DEBUG("NesWorker: start with register location");
-        bool success = locationClient->registerSource();
+        bool success = locationClient->registerSource(workerRange);
         NES_DEBUG("registered= " << success);
         NES_ASSERT(success, "cannot register");
 

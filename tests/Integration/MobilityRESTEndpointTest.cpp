@@ -202,6 +202,42 @@ web::http::client::http_client httpClient(apiEndpoint + "/geo/source");
     EXPECT_TRUE(catalog->contains("new_source"));
 }
 
+TEST_F(MobilityRESTEndpointTest, testAddGeoSourceWithRange) {
+    web::http::client::http_client httpClient(apiEndpoint + "/geo/source");
+    //    web::uri_builder builder(("/geo/sink"));
+    web::json::value msg{};
+    msg["nodeId"] =  web::json::value::string("new_source");
+    msg["range"] =  web::json::value::number(500);
+
+    httpClient.request(web::http::methods::POST, "", msg)
+    .then([](const web::http::http_response& response) {
+        NES_INFO("get first then");
+        EXPECT_EQ(response.status_code(), 200);
+        return response;
+    })
+    .wait();
+
+    LocationCatalogPtr catalog = crd->getLocationService()->getLocationCatalog();
+    EXPECT_TRUE(catalog->contains("new_source"));
+
+    httpClient = web::http::client::http_client(apiEndpoint + "/geo/location");
+    msg = {};
+
+    msg["nodeId"] =  web::json::value::string("new_source");
+    msg["latitude"] =  web::json::value::number(66);
+    msg["longitude"] =  web::json::value::number(77);
+
+    httpClient.request(web::http::methods::POST, "", msg)
+    .then([](const web::http::http_response& response) {
+        NES_INFO("get first then");
+        EXPECT_EQ(response.status_code(), 200);
+        return response;
+    })
+    .wait();
+
+    EXPECT_TRUE(catalog->getSource("new_source")->hasRange());
+}
+
 TEST_F(MobilityRESTEndpointTest, testUpdateLocation) {
     LocationCatalogPtr catalog = crd->getLocationService()->getLocationCatalog();
 

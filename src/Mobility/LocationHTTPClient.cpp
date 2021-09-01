@@ -31,12 +31,13 @@ NES::LocationHTTPClient::LocationHTTPClient(const std::string& host, int port, s
     : workerName(std::move(workerName)), sourcesEnabled(true),
       httpClient("http://" + host + ":" + std::to_string(port) + "/v1/nes"), running(false) {}
 
-bool LocationHTTPClient::registerSource() {
+bool LocationHTTPClient::registerSource(uint32_t sourceRange) {
     std::lock_guard lock(clientLock);
     NES_DEBUG("LocationHTTPClient: register source");
 
     web::json::value msg{};
     msg["nodeId"] = web::json::value::string(workerName);
+    msg["range"] = web::json::value::number(sourceRange);
 
     int statusCode = 0;
 

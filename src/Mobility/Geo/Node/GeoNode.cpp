@@ -15,23 +15,31 @@
 */
 
 #include <memory>
+#include <utility>
 #include <Mobility/Geo/Node/GeoNode.h>
 
 namespace NES {
 
 
-GeoNode::GeoNode(string id) : id(std::move(id)) {
+GeoNode::GeoNode(string id) : GeoNode(std::move(id), 0) {}
+
+GeoNode::GeoNode(string  id, double rangeArea) : id(std::move(id)), rangeArea(rangeArea), range(nullptr) {
     currentLocation = std::make_shared<GeoPoint>();
 }
 
 string GeoNode::getId() const { return id; }
+
 GeoPointPtr GeoNode::getCurrentLocation() { return currentLocation; }
+
 const std::vector<GeoPointPtr>& GeoNode::getLocationHistory() const { return locationHistory; }
+
 void GeoNode::setCurrentLocation(const GeoPointPtr& location) {
     if (currentLocation->isValid()) {
         locationHistory.push_back(currentLocation);
     }
     currentLocation = location;
 }
+
+const GeoAreaPtr& GeoNode::getRange() const { return range; }
 
 }

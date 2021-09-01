@@ -41,6 +41,7 @@ class LocationCatalog {
     LocationCatalog() = default;
     void addSink(const string& nodeId, double movingRangeArea);
     void addSource(const string& nodeId);
+    void addSource(const string& nodeId, double rangeArea);
     GeoSinkPtr getSink(const string& nodeId);
     GeoSourcePtr getSource(const string& nodeId);
     void enableSource(const string& nodeId);

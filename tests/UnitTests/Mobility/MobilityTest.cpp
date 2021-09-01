@@ -17,13 +17,13 @@
 #include "gtest/gtest.h"
 
 #include <Mobility/Geo/Area/GeoAreaFactory.h>
-#include "Mobility/Geo/Area/GeoCircle.h"
-#include "Mobility/Geo/Area/GeoSquare.h"
+#include <Mobility/Geo/Area/GeoCircle.h>
+#include <Mobility/Geo/Area/GeoSquare.h>
 #include <Mobility/Geo/GeoPoint.h>
 #include <Mobility/Geo/Node/GeoNode.h>
-#include "Mobility/Geo/Projection/GeoCalculator.h"
-#include "Mobility/LocationCatalog.h"
-#include "Mobility/LocationService.h"
+#include <Mobility/Geo/Projection/GeoCalculator.h>
+#include <Mobility/LocationCatalog.h>
+#include <Mobility/LocationService.h>
 
 namespace NES {
 
@@ -61,26 +61,37 @@ TEST(LocationCatalog, AddNodeAndUpdateLocation) {
 
     catalog.addSource("1");
     catalog.addSource("2");
-    catalog.addSink("3", 1000);
+    catalog.addSource("3", 500);
+    catalog.addSink("4", 1000);
 
-    EXPECT_EQ(3U, catalog.size());
+    EXPECT_EQ(4U, catalog.size());
 
     catalog.updateNodeLocation("1", std::make_shared<GeoPoint>(1,1));
     catalog.updateNodeLocation("1", std::make_shared<GeoPoint>(1.5,1.5));
     catalog.updateNodeLocation("2", std::make_shared<GeoPoint>(2,2));
     catalog.updateNodeLocation("3", std::make_shared<GeoPoint>(3,3));
+    catalog.updateNodeLocation("4", std::make_shared<GeoPoint>(4,4));
 
     GeoSourcePtr firstNode = catalog.getSource("1");
-
     EXPECT_EQ_GEOPOINTS(GeoPoint(1.5,1.5), firstNode->getCurrentLocation());
     EXPECT_FALSE(firstNode->getLocationHistory().empty());
+    EXPECT_FALSE(firstNode->isEnabled());
+    EXPECT_FALSE(firstNode->hasRange());
 
     GeoSourcePtr secondNode = catalog.getSource("2");
     EXPECT_EQ_GEOPOINTS(GeoPoint(2,2), secondNode->getCurrentLocation());
     EXPECT_TRUE(secondNode->getLocationHistory().empty());
+    EXPECT_FALSE(secondNode->isEnabled());
+    EXPECT_FALSE(secondNode->hasRange());
 
-    GeoSinkPtr sink = catalog.getSink("3");
-    EXPECT_EQ_GEOPOINTS(GeoPoint(3,3), sink->getCurrentLocation());
+    GeoSourcePtr sourceWithRange = catalog.getSource("3");
+    EXPECT_EQ_GEOPOINTS(GeoPoint(3,3), sourceWithRange->getCurrentLocation());
+    EXPECT_TRUE(sourceWithRange->getLocationHistory().empty());
+    EXPECT_FALSE(sourceWithRange->isEnabled());
+    EXPECT_TRUE(sourceWithRange->hasRange());
+
+    GeoSinkPtr sink = catalog.getSink("4");
+    EXPECT_EQ_GEOPOINTS(GeoPoint(4,4), sink->getCurrentLocation());
     EXPECT_TRUE(sink->getLocationHistory().empty());
 }
 
@@ -173,6 +184,35 @@ TEST(LocationCatalog, UpdateSources) {
 
     // Move source outside range
     cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 60, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_source", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSources();
+    EXPECT_FALSE(catalog.getSource("test_source")->isEnabled());
+
+    // Move sink closer to the source
+    CartesianPointPtr newCenter = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 40, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(newCenter));
+    catalog.updateSources();
+    EXPECT_TRUE(catalog.getSource("test_source")->isEnabled());
+}
+
+TEST(LocationCatalog, UpdateSourcesWithRange) {
+    LocationCatalog catalog{};
+
+    // Add sink
+    catalog.addSink("test_sink", 10'000);
+    GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
+    CartesianPointPtr cartesianCenter = GeoCalculator::geographicToCartesian(center);
+    catalog.updateNodeLocation("test_sink", center);
+
+    // Add source inside range
+    catalog.addSource("test_source", 10'000);
+    CartesianPointPtr cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 60, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_source", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSources();
+    EXPECT_TRUE(catalog.getSource("test_source")->isEnabled());
+
+    // Move source outside range
+    cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 110, cartesianCenter->getY());
     catalog.updateNodeLocation("test_source", GeoCalculator::cartesianToGeographic(cartesianPoint));
     catalog.updateSources();
     EXPECT_FALSE(catalog.getSource("test_source")->isEnabled());

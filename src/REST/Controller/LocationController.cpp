@@ -142,7 +142,13 @@ void LocationController::handleAddNode(web::http::http_request message, const st
 
     if(path == "source") {
         NES_DEBUG("LocationController: adding geo source ...");
-        this->locationService->addSource(nodeId);
+        if (req.has_field("range")) {
+            double range = req.at("range").as_double();
+            this->locationService->addSource(nodeId, range);
+        } else {
+            this->locationService->addSource(nodeId);
+        }
+
         successMessageImpl(message, "Geo source added!");
     }
 }

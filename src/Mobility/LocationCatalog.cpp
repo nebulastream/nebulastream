@@ -29,6 +29,11 @@ void LocationCatalog::addSource(const string& nodeId) {
     this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId)));
 }
 
+void LocationCatalog::addSource(const string& nodeId,  double rangeArea) {
+    std::lock_guard lock(catalogLock);
+    this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId, rangeArea)));
+}
+
 GeoSinkPtr LocationCatalog::getSink(const string& nodeId) {
     std::lock_guard lock(catalogLock);
     return sinks.at(nodeId);
@@ -74,13 +79,13 @@ void LocationCatalog::updateSources() {
     std::unique_lock lock(catalogLock);
 
     for (auto const& [nodeId, sink] : sinks) {
-        if (sink->getMovingRange() == nullptr) { continue; }
+        if (sink->getRange() == nullptr) { continue; }
 
         for (auto const& [sourceId, source] : sources) {
-            if (source->isHasRange()) {
-                source->setEnabled(sink->getMovingRange()->contains(source->getRange()));
+            if (source->hasRange()) {
+                source->setEnabled(sink->getRange()->contains(source->getRange()));
             } else {
-                source->setEnabled(sink->getMovingRange()->contains(source->getCurrentLocation()));
+                source->setEnabled(sink->getRange()->contains(source->getCurrentLocation()));
             }
         }
     }
@@ -95,6 +100,7 @@ uint64_t LocationCatalog::size() {
     std::lock_guard lock(catalogLock);
     return this->sinks.size() + this->sources.size();
 }
+
 web::json::value LocationCatalog::toJson() {
     std::lock_guard lock(catalogLock);
 

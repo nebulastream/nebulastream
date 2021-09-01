@@ -14,21 +14,28 @@
     limitations under the License.
 */
 
+#include <Mobility/Geo/Area/GeoAreaFactory.h>
 #include <Mobility/Geo/Node/GeoSource.h>
 
 namespace NES {
 
-GeoSource::GeoSource(const std::string& id) : GeoNode(id), range(nullptr),  hasRange(false), enabled(false) {}
+GeoSource::GeoSource(const std::string& id) : GeoNode(id), enabled(false) {}
 
-GeoSource::GeoSource(const std::string& id, NES::GeoAreaPtr  range) : GeoNode(id), range(std::move(range)),  hasRange(true), enabled(false) {}
+GeoSource::GeoSource(const std::string& id, double rangeArea) : GeoNode(id, rangeArea),  enabled(false) {}
 
-const GeoAreaPtr& GeoSource::getRange() const { return range; }
-
-bool GeoSource::isHasRange() const { return hasRange; }
+bool GeoSource::hasRange() const { return (range != nullptr); }
 
 bool GeoSource::isEnabled() const { return enabled; }
 
 void GeoSource::setEnabled(bool flag) { GeoSource::enabled = flag; }
+
+void GeoSource::setCurrentLocation(const GeoPointPtr& currentLocation) {
+    GeoNode::setCurrentLocation(currentLocation);
+
+    if (rangeArea > 0) {
+        range = GeoAreaFactory::createCircle(currentLocation, rangeArea);
+    }
+}
 
 GeoSource::~GeoSource() = default;
 

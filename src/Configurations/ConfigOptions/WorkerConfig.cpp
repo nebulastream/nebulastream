@@ -65,6 +65,7 @@ WorkerConfig::WorkerConfig() {
         ConfigOption<std::string>::create("workerName",
                                           "nes_worker",
                                           "Name to identify the worker (e.g.: veh_01).");
+    workerRange = ConfigOption<uint32_t>::create("workerRange", 0, "Define the range of the origin of the data (m2)");
 }
 
 void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -91,6 +92,7 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             setRegisterLocation(config["registerLocation"].As<uint16_t>());
             setWorkerName(config["workerName"].As<std::string>());
+            setWorkerRange(config["workerRange"].As<uint64_t>());
         } catch (std::exception& e) {
             NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
                       "values. "
@@ -137,6 +139,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setRegisterLocation(std::stoi(it->second));
             } else if (it->first == "--workerName") {
                 setWorkerName(it->second);
+            } else if (it->first == "--workerRange") {
+                setWorkerRange(std::stoi(it->second));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -165,6 +169,7 @@ void WorkerConfig::resetWorkerOptions() {
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
     setRegisterLocation(registerLocation->getDefaultValue());
     setWorkerName(workerName->getDefaultValue());
+    setWorkerRange(workerRange->getDefaultValue());
 }
 
 StringConfigOption WorkerConfig::getLocalWorkerIp() { return localWorkerIp; }
@@ -230,5 +235,9 @@ void WorkerConfig::setRegisterLocation(uint64_t count) { registerLocation->setVa
 StringConfigOption WorkerConfig::getWorkerName() { return workerName; }
 
 void WorkerConfig::setWorkerName(std::string workerNameValue) {workerName->setValue(std::move(workerNameValue));}
+
+IntConfigOption WorkerConfig::getWorkerRange() { return workerRange; }
+
+void WorkerConfig::setWorkerRange(uint64_t range) { workerRange->setValue(range);}
 
 }// namespace NES

@@ -19,15 +19,11 @@
 
 namespace NES {
 
-GeoSink::GeoSink(const string& id, double movingRangeArea) : GeoNode(id), movingRangeArea(movingRangeArea) , movingRange(nullptr) {}
-
-const GeoAreaPtr& GeoSink::getMovingRange() const {
-    return movingRange;
-}
+GeoSink::GeoSink(const string& id, double movingRangeArea) : GeoNode(id, movingRangeArea) {}
 
 void GeoSink::setCurrentLocation(const GeoPointPtr& currentLocation) {
     GeoNode::setCurrentLocation(currentLocation);
-    movingRange = GeoAreaFactory::createSquare(currentLocation, movingRangeArea);
+    range = GeoAreaFactory::createSquare(currentLocation, rangeArea);
 }
 
 GeoSink::~GeoSink() = default;

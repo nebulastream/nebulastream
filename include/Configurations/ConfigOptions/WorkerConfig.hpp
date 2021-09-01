@@ -215,6 +215,16 @@ class WorkerConfig {
      */
     void setWorkerName(std::string workerNameValue);
 
+    /**
+     * @brief gets a ConfigOption object with workerRange
+     */
+    IntConfigOption getWorkerRange();
+
+    /**
+     * @brief set the value for workerRange
+     */
+    void setWorkerRange(uint64_t range);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -236,6 +246,7 @@ class WorkerConfig {
     StringConfigOption logLevel;
     IntConfigOption registerLocation;
     StringConfigOption workerName;
+    IntConfigOption workerRange;
 };
 
 }// namespace NES

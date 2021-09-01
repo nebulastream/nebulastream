@@ -44,6 +44,7 @@ class LocationService {
     explicit LocationService();
     void addSink(const string& nodeId, double movingRangeArea);
     void addSource(const string& nodeId);
+    void addSource(const string& nodeId, double rangeArea);
     void updateNodeLocation(const string& nodeId, const GeoPointPtr& location);
     void updateSources();
     [[nodiscard]] const LocationCatalogPtr& getLocationCatalog() const;

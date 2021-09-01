@@ -24,16 +24,10 @@ namespace NES {
 
 class GeoSink: public GeoNode {
 
-  private:
-    double movingRangeArea;
-    GeoAreaPtr movingRange;
-
   public:
     GeoSink(const string& id, double movingRangeArea);
 
-    [[nodiscard]] const GeoAreaPtr& getMovingRange() const;
-
-    void setCurrentLocation(const GeoPointPtr& currentLocation);
+    void setCurrentLocation(const GeoPointPtr& currentLocation) override;
     virtual ~GeoSink();
 };
 
