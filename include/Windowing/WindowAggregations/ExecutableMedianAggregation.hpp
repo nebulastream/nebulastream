@@ -21,7 +21,7 @@
 
 namespace NES::Windowing {
 
-using MedianResultType = double; //use double as the result can be the average of two middle values
+using MedianResultType = double;//use double as the result can be the average of two middle values
 /**
  * @brief A executable window aggregation, which is typed for the correct input, partial, and final data types.
  * @tparam InputType input type of the aggregation
@@ -32,6 +32,10 @@ class ExecutableMedianAggregation : public ExecutableWindowAggregation<InputType
   public:
     ExecutableMedianAggregation() : ExecutableWindowAggregation<InputType, std::vector<InputType>, MedianResultType>(){};
 
+    /**
+     * @brief Factory method to create an ExecutableMedianAggregation
+     * @tparam InputType data type of the field to be aggregated
+     */
     static std::shared_ptr<ExecutableWindowAggregation<InputType, std::vector<InputType>, MedianResultType>> create() {
         return std::make_shared<ExecutableMedianAggregation<InputType>>();
     };
@@ -41,9 +45,7 @@ class ExecutableMedianAggregation : public ExecutableWindowAggregation<InputType
      * @param input value of the element
      * @return the element that mapped to PartialAggregateType
      */
-    std::vector<InputType> lift(InputType inputValue) override {
-        return {inputValue};
-    }
+    std::vector<InputType> lift(InputType inputValue) override { return {inputValue}; }
 
     /*
      * @brief combines two partial aggregates to a new partial aggregate
@@ -71,7 +73,6 @@ class ExecutableMedianAggregation : public ExecutableWindowAggregation<InputType
             // return the average of two middle value
             auto idx1 = (partialAggregateValue.size() / 2) - 1;
             auto idx2 = partialAggregateValue.size() / 2;
-
             median = (partialAggregateValue[idx1] + partialAggregateValue[idx2]) / 2.0;
         } else {
             // return the middle value
