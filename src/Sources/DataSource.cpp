@@ -119,6 +119,7 @@ bool DataSource::start() {
     // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
     // only CPU i as set.
 #ifdef __linux__
+#ifdef NES_ENABLE_NUMA_SUPPORT
         if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
             NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(), "pinning position is out of cpu range");
             cpu_set_t cpuset;
@@ -129,23 +130,21 @@ bool DataSource::start() {
             if (rc != 0) {
                 NES_ERROR("Error calling set pthread_setaffinity_np: " << rc);
             } else {
-#ifdef NES_ENABLE_NUMA_SUPPORT
                 int cpu = sched_getcpu();
                 auto nodeOfCpu = numa_node_of_cpu(cpu);
 
                 unsigned long cur_mask;
-
                 auto ret = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
                 if (ret != 0) {
                     NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
                 }
                 std::cout << "source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << nodeOfCpu << " ";
                 printf("setted affinity after assignment: %08lx\n", cur_mask);
-#endif
             }
         } else {
             NES_WARNING("Use default affinity for source");
         }
+#endif
 #endif
 
         prom.set_value(true);
