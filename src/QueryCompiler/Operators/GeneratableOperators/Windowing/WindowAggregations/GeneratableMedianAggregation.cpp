@@ -27,7 +27,7 @@ GeneratableMedianAggregation::GeneratableMedianAggregation(Windowing::WindowAggr
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
 GeneratableWindowAggregationPtr
-GeneratableMedianAggregation::create(const Windowing::WindowAggregationDescriptorPtr& aggregationDescriptor) {
+GeneratableMedianAggregation::create(const Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
     return std::make_shared<GeneratableMedianAggregation>(aggregationDescriptor);
 }
 
@@ -36,7 +36,6 @@ void GeneratableMedianAggregation::compileLiftCombine(CompoundStatementPtr curre
                                                       RecordHandlerPtr recordHandler) {
     // generates the following code:
     // partialAggregates[current_slice_index].push_back(inputTuples[recordIndex].car$value);
-
     auto fieldReference =
         recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
 

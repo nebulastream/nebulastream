@@ -2427,13 +2427,18 @@ CCodeGenerator::getAggregationWindowHandler(const VariableDeclaration& pipelineC
     // Avg aggregation uses AVGPartialType, other aggregates use their getPartialAggregateStamp
     std::string partialAggregateCode;
     if (windowAggregationDescriptor->getType() == Windowing::WindowAggregationDescriptor::Avg) {
+        // generated code : Windowing::AVGPartialType<T>
         partialAggregateCode = "Windowing::AVGPartialType<" + TO_CODE(windowAggregationDescriptor->getInputStamp()) + ">";
     } else if (windowAggregationDescriptor->getType() == Windowing::WindowAggregationDescriptor::Median) {
+        // generated code : std::vector<T>
         partialAggregateCode = "std::vector<" + TO_CODE(windowAggregationDescriptor->getInputStamp()) + ">";
     } else {
+        // generated code : T
         auto partialAggregateType = tf->createDataType(windowAggregationDescriptor->getPartialAggregateStamp());
         partialAggregateCode = partialAggregateType->getCode()->code_;
     }
+    // Let K= Key Type, T= Input Type, Partial<T>= Partial Aggregate Type (from above if else), F= Final type
+    // generated code : getWindowHandler<NES::Windowing::AggregationWindowHandler, K, Partial<T>, F>
     auto call =
         FunctionCallStatement(std::string("getWindowHandler<NES::Windowing::AggregationWindowHandler, ") + TO_CODE(keyType) + ", "
                               + TO_CODE(windowAggregationDescriptor->getInputStamp()) + "," + partialAggregateCode + ","

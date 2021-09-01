@@ -27,16 +27,18 @@ namespace NES::Windowing {
 class MedianAggregationDescriptor : public WindowAggregationDescriptor {
   public:
     /**
-    * Factory method to creates a median aggregation on a particular field.
+    * @brief Factory method to creates a median aggregation on a particular field.
+    * @param onField field on which the aggregation should be performed
     */
     static WindowAggregationPtr on(ExpressionItem onField);
 
+    /**
+     * @brief Factory method to creates a median aggregation on a particular field.
+     * @param onField field on which the aggregation should be performed
+     * @param asField expression describing how the aggregated field should be called
+     */
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
-    /**
-    * @brief Infers the stamp of the expression given the current schema.
-    * @param SchemaPtr
-    */
     void inferStamp(SchemaPtr schema) override;
 
     WindowAggregationPtr copy() override;
@@ -48,8 +50,19 @@ class MedianAggregationDescriptor : public WindowAggregationDescriptor {
     virtual ~MedianAggregationDescriptor() = default;
 
   private:
+    /**
+     * @brief Creates a new MedianAggregationDescriptor
+     * @param onField field on which the aggregation should be performed
+     */
     explicit MedianAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    MedianAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);};
-}
+
+    /**
+     * @brief Creates a new MedianAggregationDescriptor
+     * @param onField field on which the aggregation should be performed
+     * @param asField expression describing how the aggregated field should be called
+     */
+    MedianAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+};
+}// namespace NES::Windowing
 
 #endif//NES_MEDIANAGGREGATIONDESCRIPTOR_HPP
