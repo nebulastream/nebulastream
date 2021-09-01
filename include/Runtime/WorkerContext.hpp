@@ -23,7 +23,7 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
-#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 
 namespace NES::Runtime {
@@ -40,12 +40,18 @@ class WorkerContext {
 
     std::unordered_map<Network::OperatorId, Network::OutputChannelPtr> channels;
 
+    BufferManagerPtr localBufferPool;
   public:
     explicit WorkerContext(uint32_t workerId);
 
     explicit WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager);
 
-    BufferManagerPtr localBufferPool;
+    /**
+     * @brief Allocates a new tuple buffer.
+     * @return TupleBuffer
+     */
+    TupleBuffer allocateTupleBuffer();
+
     /**
      * @brief get current worker context thread id. This is assigned by calling NesThread::getId()
      * @return current worker context thread id

@@ -27,6 +27,9 @@ WorkerContext::WorkerContext(uint32_t workerId)
 
 uint32_t WorkerContext::getId() const { return workerId; }
 
+TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
+
+
 void WorkerContext::storeChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel) {
     NES_TRACE("WorkerContext: storing channel for operator " << id << " for context " << workerId);
     channels[id] = std::move(channel);
