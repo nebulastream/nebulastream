@@ -60,7 +60,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
 
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         NES_INFO("CoordinatorConfig: Using config file with path: " << filePath << " .");
-        Yaml::Node config = *(new Yaml::Node());
+        Yaml::Node config;
         Yaml::Parse(config, filePath.c_str());
         try {
             if (!config["restPort"].As<std::string>().empty() && config["restPort"].As<std::string>() != "\n") {

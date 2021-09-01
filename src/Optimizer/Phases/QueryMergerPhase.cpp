@@ -16,6 +16,7 @@
 
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/QueryMerger/DefaultQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/HybridCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/StringSignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/StringSignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
@@ -38,14 +39,14 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
             queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
             break;
         case QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule:
-            queryMergerRule = Z3SignatureBasedCompleteQueryMergerRule::create(std::move(context));
+            queryMergerRule = Z3SignatureBasedCompleteQueryMergerRule::create(context);
             break;
         case QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule:
         case QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule:
             queryMergerRule = StringSignatureBasedCompleteQueryMergerRule::create();
             break;
         case QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule:
-            queryMergerRule = Z3SignatureBasedPartialQueryMergerRule::create(context);
+            queryMergerRule = Z3SignatureBasedPartialQueryMergerRule::create(std::move(context));
             break;
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
             queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();
@@ -53,6 +54,9 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
         case QueryMergerRule::StringSignatureBasedPartialQueryMergerRule:
         case QueryMergerRule::ImprovedStringSignatureBasedPartialQueryMergerRule:
             queryMergerRule = StringSignatureBasedPartialQueryMergerRule::create();
+            break;
+        case QueryMergerRule::HybridCompleteQueryMergerRule:
+            queryMergerRule = HybridCompleteQueryMergerRule::create(std::move(context));
             break;
         case QueryMergerRule::DefaultQueryMergerRule: queryMergerRule = DefaultQueryMergerRule::create();
     }

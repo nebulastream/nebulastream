@@ -17,43 +17,40 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/QueryMerger/HybridCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
-#include <utility>
 
 namespace NES::Optimizer {
 
-Z3SignatureBasedCompleteQueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context) : BaseQueryMergerRule() {
+HybridCompleteQueryMergerRule::HybridCompleteQueryMergerRule(z3::ContextPtr context) : BaseQueryMergerRule() {
     signatureEqualityUtil = SignatureEqualityUtil::create(std::move(context));
 }
 
-Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRule::create(z3::ContextPtr context) {
-    return std::make_shared<Z3SignatureBasedCompleteQueryMergerRule>(Z3SignatureBasedCompleteQueryMergerRule(std::move(context)));
+HybridCompleteQueryMergerRulePtr HybridCompleteQueryMergerRule::create(z3::ContextPtr context) {
+    return std::make_shared<HybridCompleteQueryMergerRule>(HybridCompleteQueryMergerRule(std::move(context)));
 }
 
-bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     long qmTime = 0;
     auto startSI =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_INFO(
-        "Z3SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO("HybridCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
+        NES_WARNING("HybridCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("HybridCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
-
         bool matched = false;
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
@@ -67,7 +64,10 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
             bool foundMatch = false;
 
             //Check if the host and target sink operator signatures match each other
-            if (signatureEqualityUtil->checkEquality(hostSink->getZ3Signature(), targetSink->getZ3Signature())) {
+            if (hostSink->getStringSignature() == targetSink->getStringSignature()) {
+                targetToHostSinkOperatorMap[targetSink] = hostSink;
+                foundMatch = true;
+            } else if (signatureEqualityUtil->checkEquality(hostSink->getZ3Signature(), targetSink->getZ3Signature())) {
                 targetToHostSinkOperatorMap[targetSink] = hostSink;
                 foundMatch = true;
             }
@@ -77,7 +77,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
                 auto startQM =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                NES_TRACE("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE("HybridCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
                 //Iterate over all matched pairs of sink operators and merge the query plan
@@ -114,7 +114,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
         }
 
         if (!matched) {
-            NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG("HybridCompleteQueryMergerRule: computing a new Shared Query Plan");
             auto startQM =
                 std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                     .count();

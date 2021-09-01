@@ -25,11 +25,11 @@ SignatureEqualityUtilPtr SignatureEqualityUtil::create(const z3::ContextPtr& con
     return std::make_shared<SignatureEqualityUtil>(context);
 }
 
-SignatureEqualityUtil::SignatureEqualityUtil(const z3::ContextPtr& context) {
+SignatureEqualityUtil::SignatureEqualityUtil(const z3::ContextPtr& context) : counter(0) {
     this->context = context;
-    this->context->set("solver2_unknown", true);
-    this->context->set("ignore_solver1", true);
-    this->context->set("timeout", 1);
+    //    this->context->set("solver2_unknown", true);
+    //    this->context->set("ignore_solver1", true);
+    //    this->context->set("timeout", 1);
     solver = std::make_unique<z3::solver>(*context);
 }
 
@@ -72,10 +72,13 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
 
                 solver->push();
                 solver->add(!z3::mk_and(colChecks).simplify());
-                NES_ERROR("Solver " << *solver);
                 schemaMatched = solver->check() == z3::unsat;
                 solver->pop();
-
+//                counter++;
+                //                if (counter >= 250) {
+                //                    resetSolver();
+                //                }
+//                NES_ERROR("Z3 Equality " << counter);
                 //If schema is matched then remove the other schema from the list to avoid duplicate matching
                 if (schemaMatched) {
                     otherSchemaFieldToExprMaps.erase(otherSchemaMapItr);
@@ -120,14 +123,20 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         //Create a negation of CNF of all conditions collected till now
         solver->push();
         solver->add(!z3::mk_and(allConditions).simplify());
-        //    NES_ERROR("Solver " << *solver);
+        //NES_ERROR(counter << " : Solver " << *solver);
+        NES_ERROR("Counter: " << counter);
         bool equal = solver->check() == z3::unsat;
         solver->pop();
+//        counter++;
+        //        if (counter >= 250) {
+        //            resetSolver();
+        //        }
+//        NES_ERROR("Z3 Equality " << counter);
         return equal;
     } catch (...) {
         auto eptr = std::current_exception();
         try {
-            std::rethrow_exception (eptr);
+            std::rethrow_exception(eptr);
         } catch (const std::exception& e) {
             NES_ERROR("SignatureEqualityUtil: Exception occurred while performing equality check among queries " << e.what());
         }
@@ -136,7 +145,12 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
 }
 
 bool SignatureEqualityUtil::resetSolver() {
+    //    this->context->set("solver2_unknown", true);
+    //    this->context->set("ignore_solver1", true);
+    //    this->context->set("timeout", 1);
+    //    solver = std::make_unique<z3::solver>(*context);
     solver->reset();
+    counter = 0;
     return true;
 }
 
