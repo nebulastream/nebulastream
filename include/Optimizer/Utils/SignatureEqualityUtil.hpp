@@ -58,6 +58,7 @@ class SignatureEqualityUtil {
   private:
     z3::ContextPtr context;
     z3::SolverPtr solver;
+    uint64_t counter;
 };
 }// namespace NES::Optimizer
 #endif//NES_SIGNATUREEQUALITYUTIL_HPP

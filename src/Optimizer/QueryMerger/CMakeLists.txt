@@ -22,4 +22,5 @@ add_source_nes(
         StringSignatureBasedCompleteQueryMergerRule.cpp
         StringSignatureBasedPartialQueryMergerRule.cpp
         DefaultQueryMergerRule.cpp
+        HybridCompleteQueryMergerRule.cpp
 )

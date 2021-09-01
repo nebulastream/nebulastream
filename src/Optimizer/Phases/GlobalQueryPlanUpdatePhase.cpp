@@ -46,7 +46,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     // then apply special rewrite rules for improving the match identification
     if (queryMergerRule == Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
         || queryMergerRule == Optimizer::QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
-        || queryMergerRule == Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule) {
+        || queryMergerRule == Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
+        || queryMergerRule == Optimizer::QueryMergerRule::HybridCompleteQueryMergerRule) {
         applyRulesImprovingSharingIdentification = true;
     }
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);

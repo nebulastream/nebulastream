@@ -65,7 +65,7 @@ int main(int argc, const char* argv[]) {
     if (configPath != commandLineParams.end()) {
         coordinatorConfig->overwriteConfigWithYAMLFileInput(configPath->second);
     }
-    if (argc >= 1) {
+    if (argc > 1) {
         coordinatorConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
     NES::setLogLevel(NES::getDebugLevelFromString(coordinatorConfig->getLogLevel()->getValue()));

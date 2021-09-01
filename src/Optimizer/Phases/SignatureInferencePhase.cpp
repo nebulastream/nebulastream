@@ -35,7 +35,8 @@ SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr contex
 void SignatureInferencePhase::execute(const QueryPlanPtr& queryPlan) {
     if (queryMergerRule == QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule
         || queryMergerRule == QueryMergerRule::StringSignatureBasedPartialQueryMergerRule
-        || queryMergerRule == QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule) {
+        || queryMergerRule == QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
+        || queryMergerRule == QueryMergerRule::ImprovedStringSignatureBasedPartialQueryMergerRule) {
         NES_INFO("SignatureInferencePhase: computing String based signature for the query " << queryPlan->getQueryId());
         auto sinkOperators = queryPlan->getRootOperators();
         for (auto& sinkOperator : sinkOperators) {
@@ -47,6 +48,13 @@ void SignatureInferencePhase::execute(const QueryPlanPtr& queryPlan) {
         auto sinkOperators = queryPlan->getRootOperators();
         for (auto& sinkOperator : sinkOperators) {
             sinkOperator->as<LogicalOperatorNode>()->inferZ3Signature(context);
+        }
+    } else if (queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule) {
+        NES_INFO("SignatureInferencePhase: computing Z3 based signature for the query " << queryPlan->getQueryId());
+        auto sinkOperators = queryPlan->getRootOperators();
+        for (auto& sinkOperator : sinkOperators) {
+            sinkOperator->as<LogicalOperatorNode>()->inferZ3Signature(context);
+            sinkOperator->as<LogicalOperatorNode>()->inferStringSignature();
         }
     } else {
         NES_INFO("Skipping signature creation");

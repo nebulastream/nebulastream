@@ -114,13 +114,13 @@ void GlobalQueryPlan::removeEmptySharedQueryPlans() {
 
 std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllSharedQueryPlans() {
     NES_INFO("GlobalQueryPlan: Get all metadata information");
-    std::vector<SharedQueryPlanPtr> sharedQueryMetaDataToDeploy;
+    std::vector<SharedQueryPlanPtr> sharedQueryPlans;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
     for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToPlanMap) {
-        sharedQueryMetaDataToDeploy.emplace_back(sharedQueryMetaData);
+        sharedQueryPlans.emplace_back(sharedQueryMetaData);
     }
-    NES_TRACE("GlobalQueryPlan: Found " << sharedQueryMetaDataToDeploy.size() << "  Shared Query MetaData.");
-    return sharedQueryMetaDataToDeploy;
+    NES_TRACE("GlobalQueryPlan: Found " << sharedQueryPlans.size() << "  Shared Query MetaData.");
+    return sharedQueryPlans;
 }
 
 std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllNewSharedQueryPlans() {

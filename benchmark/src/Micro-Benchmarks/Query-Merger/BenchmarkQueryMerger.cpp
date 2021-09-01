@@ -24,7 +24,9 @@
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -148,7 +150,8 @@ int main(int argc, const char* argv[]) {
     NES::setupLogging("BenchmarkQueryMerger.log", NES::LOG_INFO);
     std::cout << "Setup BenchmarkQueryMerger test class." << std::endl;
     std::stringstream benchmarkOutput;
-    benchmarkOutput << "Time,BM_Name,Merge_Rule,Num_of_Phy_Src,Num_Of_Queries,Num_Of_SharedQueryPlans,NES_Version,Run_Num,Start_"
+    benchmarkOutput << "Time,BM_Name,Merge_Rule,Num_of_Phy_Src,Num_Of_Queries,Num_Of_SharedQueryPlans,ActualOperator,"
+                       "SharedOperators,OperatorEfficiency,NES_Version,Run_Num,Start_"
                        "Time,End_Time,Total_Run_Time"
                     << std::endl;
 
@@ -173,7 +176,6 @@ int main(int argc, const char* argv[]) {
 
     NES::setupLogging("BM.log", loglevel);
     for (const auto& file : directory_iterator(querySetLocation)) {
-
         std::ifstream infile(file.path());
         NES_BM("*****************************************************");
         NES_BM("Benchmark For : " << file.path().filename());
@@ -196,6 +198,11 @@ int main(int argc, const char* argv[]) {
             auto queryParsingService = QueryParsingService::create(jitCompiler);
             auto queryObj = queryParsingService->createQueryFromCodeString(queries[i]);
             queryObjects[i] = queryObj;
+        }
+
+        uint64_t totalOperators = 0;
+        for (auto queryObject : queryObjects) {
+            totalOperators = totalOperators + QueryPlanIterator(queryObject->getQueryPlan()).snapshot().size();
         }
 
         for (size_t configNum = 0; configNum < queryMergerRules.size(); configNum++) {
@@ -222,14 +229,24 @@ int main(int argc, const char* argv[]) {
                 while (lastQuery->getQueryStatus() != QueryStatus::Running) {
                     sleep(.1);
                 }
-
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
+
+                auto gqp = coordinator->getGlobalQueryPlan();
+                auto allSQP = gqp->getAllSharedQueryPlans();
+                uint64_t actualOperators = 0;
+                for (auto sqp : allSQP) {
+                    actualOperators = actualOperators + QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();
+                }
+
+                auto efficiency = ((totalOperators - actualOperators) / totalOperators) * 100;
+
                 benchmarkOutput << endTime << "," << file.path().filename() << "," << queryMergerRules[configNum] << ","
                                 << noOfPhysicalSources[configNum] << "," << noOfQueries << ","
-                                << globalQueryPlan->getAllSharedQueryPlans().size() << "," << NES_VERSION << "," << expRun << ","
-                                << startTime << "," << endTime << "," << endTime - startTime << std::endl;
+                                << globalQueryPlan->getAllSharedQueryPlans().size() << "," << totalOperators << ","
+                                << actualOperators << "," << efficiency << "," << NES_VERSION << "," << expRun << "," << startTime
+                                << "," << endTime << "," << endTime - startTime << std::endl;
                 std::cout << "Finished Run " << expRun << "/" << noOfMeasurementsToCollect << std::endl;
                 coordinator->stopCoordinator(true);
             }
