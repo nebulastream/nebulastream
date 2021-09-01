@@ -30,6 +30,7 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
+#include <Runtime/WorkerContext.hpp>
 
 using namespace NES::Runtime;
 using namespace NES::Runtime::Execution;
@@ -130,19 +131,16 @@ class MillisecondIntervalTest : public testing::Test {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
     MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
-                                   Runtime::BufferManagerPtr bufferManager,
                                    DataSinkPtr sink)
         : PipelineExecutionContext(
             0,
             std::move(queryManager),
-            std::move(bufferManager),
             [sink](TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
                 sink->writeData(buffer, worker);
             },
             [sink](TupleBuffer&) {
             },
-            std::vector<Runtime::Execution::OperatorHandlerPtr>(),
-            12){
+            std::vector<Runtime::Execution::OperatorHandlerPtr>()){
             // nop
         };
 };
@@ -156,7 +154,7 @@ class MockedExecutablePipeline : public ExecutablePipelineStage {
     execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& wctx) override {
         count += inputTupleBuffer.getNumberOfTuples();
 
-        TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
+        TupleBuffer outputBuffer = wctx.allocateTupleBuffer();
         auto arr = outputBuffer.getBuffer<uint32_t>();
         arr[0] = static_cast<uint32_t>(count.load());
         outputBuffer.setNumberOfTuples(count);
@@ -186,7 +184,6 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
 
     auto sink = createCSVFileSink(schema, 0, this->nodeEngine, "qep1.txt", false);
     auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(),
-                                                                    this->nodeEngine->getBufferManager(),
                                                                     sink);
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, queryId, context, executableStage, 1, {sink});

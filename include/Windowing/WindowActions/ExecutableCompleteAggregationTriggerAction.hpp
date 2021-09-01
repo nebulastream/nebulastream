@@ -36,6 +36,7 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
 #include <utility>
+#include <Runtime/BufferManager.hpp>
 
 namespace NES::Windowing {
 
@@ -86,8 +87,11 @@ class ExecutableCompleteAggregationTriggerAction
             NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
             return false;
         }
-        auto executionContext = this->weakExecutionContext.lock();
-        auto tupleBuffer = executionContext->allocateTupleBuffer();
+
+//        auto executionContext = this->weakExecutionContext.lock();
+//        auto tupleBuffer = executionContext->allocateTupleBuffer();
+        //TODO: has to be fixed
+        auto tupleBuffer = this->bufferManager->getBufferBlocking();
         tupleBuffer.setOriginId(windowDefinition->getOriginId());
 
         // iterate over all keys in the window state
@@ -243,7 +247,10 @@ class ExecutableCompleteAggregationTriggerAction
                     //forward buffer to next  pipeline stage
                     executionContext->dispatchBuffer(tupleBuffer);
                     // request new buffer
-                    tupleBuffer = executionContext->allocateTupleBuffer();
+//                    tupleBuffer = executionContext->allocateTupleBuffer();
+                    //TODO: has to be fixed
+                    tupleBuffer = this->bufferManager->getBufferBlocking();
+
                     currentNumberOfTuples = 0;
                 }
 

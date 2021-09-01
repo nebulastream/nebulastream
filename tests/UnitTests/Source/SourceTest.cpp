@@ -50,6 +50,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <Runtime/WorkerContext.hpp>
 
 namespace NES {
 
@@ -397,19 +398,16 @@ class MonitoringSourceProxy : public MonitoringSource {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
     MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
-                                   Runtime::BufferManagerPtr bufferManager,
                                    DataSinkPtr sink)
         : PipelineExecutionContext(
             0,
             std::move(queryManager),
-            std::move(bufferManager),
             [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
                 sink->writeData(buffer, worker);
             },
             [sink](Runtime::TupleBuffer&) {
             },
-            std::vector<Runtime::Execution::OperatorHandlerPtr>(),
-            12){};
+            std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
 };
 
 class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineStage {
@@ -422,7 +420,7 @@ class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineSt
                             Runtime::WorkerContext& wctx) override {
         count += inputTupleBuffer.getNumberOfTuples();
 
-        Runtime::TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
+        Runtime::TupleBuffer outputBuffer = wctx.allocateTupleBuffer();
         auto arr = outputBuffer.getBuffer<uint32_t>();
         arr[0] = static_cast<uint32_t>(count.load());
         outputBuffer.setNumberOfTuples(count);
@@ -505,7 +503,6 @@ class SourceTest : public testing::Test {
     std::shared_ptr<Runtime::Execution::ExecutablePipeline>
     createExecutablePipeline(std::shared_ptr<MockedExecutablePipeline> executableStage, std::shared_ptr<SinkMedium> sink) {
         auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(),
-                                                                        this->nodeEngine->getBufferManager(),
                                                                         sink);
         return Runtime::Execution::ExecutablePipeline::create(0, this->queryId, context, executableStage, 1, {sink});
     }

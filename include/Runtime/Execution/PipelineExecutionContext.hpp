@@ -35,40 +35,18 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
   public:
     /**
      * @brief The PipelineExecutionContext is passed to the compiled pipeline and enables interaction with the NES Runtime.
-     * @param bufferManager a reference to the buffer manager to enable allocation from within the pipeline
      * @param emitFunctionHandler an handler to receive the emitted buffers from the pipeline.
      * @param emitToQueryManagerFunctionHandler an handler to receive emitted buffers, which are then dispatched to the query manager.
      * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
      */
     explicit PipelineExecutionContext(QuerySubPlanId queryId,
                                       const QueryManagerPtr& queryManager,
-                                      const BufferManagerPtr& bufferManager,
-                                      std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
-                                      std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
-                                      std::vector<OperatorHandlerPtr> operatorHandlers,
-                                      uint64_t numberOfBuffersPerPipeline);
-
-    /**
-     * @brief The PipelineExecutionContext is passed to the compiled pipeline and enables interaction with the NES Runtime.
-     * @param bufferManager a reference to the buffer manager to enable allocation from within the pipeline
-     * @param emitFunctionHandler an handler to receive the emitted buffers from the pipeline.
-     * @param emitToQueryManagerFunctionHandler an handler to receive emitted buffers, which are then dispatched to the query manager.
-     * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
-     */
-    explicit PipelineExecutionContext(QuerySubPlanId queryId,
-                                      const QueryManagerPtr& queryManager,
-                                      LocalBufferPoolPtr bufferManager,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                       std::vector<OperatorHandlerPtr> operatorHandlers);
 
     ~PipelineExecutionContext();
 
-    /**
-     * @brief Allocates a new tuple buffer.
-     * @return TupleBuffer
-     */
-    TupleBuffer allocateTupleBuffer();
 
     /**
      * @brief Emits a output tuple buffer to the Runtime. Internally we call the emit function which is a callback to the correct handler.
@@ -122,10 +100,6 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      */
     QuerySubPlanId queryId;
 
-    /**
-     * @brief Reference to the buffer manager to enable buffer allocation
-     */
-    LocalBufferPoolPtr localBufferPool;
     /**
      * @brief The emit function handler to react on an emitted tuple buffer.
      */
