@@ -14,22 +14,21 @@
     limitations under the License.
 */
 
-#include <Sources/Parsers/JSONParser.hpp>
-#include <string>
-#include <Util/Logger.hpp>
-#include <utility>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Sources/Parsers/JSONParser.hpp>
+#include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-
+#include <string>
+#include <utility>
 
 namespace NES {
 
-JSONParser::JSONParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes):
-Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
-physicalTypes(std::move(physicalTypes)){
-}
+JSONParser::JSONParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes)
+    : Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
+      physicalTypes(std::move(physicalTypes)) {}
 
-void JSONParser::writeInputTupleToTupleBuffer(std::string jsonInput, uint64_t tupleCount,
+void JSONParser::writeInputTupleToTupleBuffer(std::string jsonInput,
+                                              uint64_t tupleCount,
                                               NES::Runtime::TupleBuffer& tupleBuffer) {
     NES_DEBUG("JSONParser::parseJSONMessage: Current TupleCount: " << tupleCount);
     uint64_t offset = 0;
@@ -39,8 +38,8 @@ void JSONParser::writeInputTupleToTupleBuffer(std::string jsonInput, uint64_t tu
 
     // extract values as strings from MQTT message - should be improved with JSON library
     std::vector<std::string> keyValuePairs = NES::UtilityFunctions::splitWithStringDelimiter(jsonInput, ",");
-    for (auto & keyValuePair : keyValuePairs) {
-        values.push_back(NES::UtilityFunctions::splitWithStringDelimiter(keyValuePair,":")[1]);
+    for (auto& keyValuePair : keyValuePairs) {
+        values.push_back(NES::UtilityFunctions::splitWithStringDelimiter(keyValuePair, ":")[1]);
     }
 
     // iterate over fields of schema and cast string values to correct type
@@ -50,7 +49,7 @@ void JSONParser::writeInputTupleToTupleBuffer(std::string jsonInput, uint64_t tu
 
         NES_ASSERT2_FMT(fieldSize + offset + tupleCount * tupleSize < tupleBuffer.getBufferSize(),
                         "Overflow detected: buffer size = " << tupleBuffer.getBufferSize() << " position = "
-                        << (offset + tupleCount * tupleSize) << " field size " << fieldSize);
+                                                            << (offset + tupleCount * tupleSize) << " field size " << fieldSize);
         writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, offset + tupleCount * tupleSize, true);
         offset += fieldSize;
     }

@@ -74,43 +74,43 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            uint32_t qos,
                                            bool cleanSession,
                                            long bufferFlushIntervalMs)
-                                           : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)),
-                                           user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qos(qos),
-                                           cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs){}
+    : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)),
+      user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qos(qos), cleanSession(cleanSession),
+      bufferFlushIntervalMs(bufferFlushIntervalMs) {}
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
-                                          std::string logicalStreamName,
-                                          std::string serverAddress,
-                                          std::string clientId,
-                                          std::string user,
-                                          std::string topic,
-                                          SourceDescriptor::InputFormat inputFormat,
-                                          uint32_t qos,
-                                          bool cleanSession,
-                                          long bufferFlushIntervalMs)
-                                          : SourceDescriptor(std::move(schema), std::move(logicalStreamName)), serverAddress(std::move(serverAddress)),
-                                          clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qos(qos),
-                                          cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs){}
+                                           std::string logicalStreamName,
+                                           std::string serverAddress,
+                                           std::string clientId,
+                                           std::string user,
+                                           std::string topic,
+                                           SourceDescriptor::InputFormat inputFormat,
+                                           uint32_t qos,
+                                           bool cleanSession,
+                                           long bufferFlushIntervalMs)
+    : SourceDescriptor(std::move(schema), std::move(logicalStreamName)), serverAddress(std::move(serverAddress)),
+      clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qos(qos),
+      cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs) {}
 
-                                                                                      std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
+std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
 
-                                                                                      std::string MQTTSourceDescriptor::getClientId() const { return clientId; }
+std::string MQTTSourceDescriptor::getClientId() const { return clientId; }
 
-                                                                                      std::string MQTTSourceDescriptor::getUser() const { return user; }
+std::string MQTTSourceDescriptor::getUser() const { return user; }
 
-                                                                                      std::string MQTTSourceDescriptor::getTopic() const { return topic; }
+std::string MQTTSourceDescriptor::getTopic() const { return topic; }
 
-                                                                                      uint32_t MQTTSourceDescriptor::getQos() const { return qos; }
+uint32_t MQTTSourceDescriptor::getQos() const { return qos; }
 
-                                                                                      uint64_t MQTTSourceDescriptor::getBufferFlushIntervalMs() const { return bufferFlushIntervalMs; }
+uint64_t MQTTSourceDescriptor::getBufferFlushIntervalMs() const { return bufferFlushIntervalMs; }
 
-                                                                                      bool MQTTSourceDescriptor::getCleanSession() const {return cleanSession;}
+bool MQTTSourceDescriptor::getCleanSession() const { return cleanSession; }
 
-                                                                                      std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor()"; }
+std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor()"; }
 
-                                                                                      SourceDescriptor::InputFormat MQTTSourceDescriptor::getInputFormat() const { return inputFormat; }
+SourceDescriptor::InputFormat MQTTSourceDescriptor::getInputFormat() const { return inputFormat; }
 
-                                                                                      bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 
     if (!other->instanceOf<MQTTSourceDescriptor>()) {
         return false;
@@ -118,9 +118,9 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
     auto otherMQTTSource = other->as<MQTTSourceDescriptor>();
     NES_DEBUG("URL= " << serverAddress << " == " << otherMQTTSource->getServerAddress());
     return serverAddress == otherMQTTSource->getServerAddress() && clientId == otherMQTTSource->getClientId()
-    && user == otherMQTTSource->getUser() && topic == otherMQTTSource->getTopic()
-    && inputFormat == otherMQTTSource->getInputFormat() && qos == otherMQTTSource->getQos()
-    && cleanSession == otherMQTTSource->getCleanSession();
+        && user == otherMQTTSource->getUser() && topic == otherMQTTSource->getTopic()
+        && inputFormat == otherMQTTSource->getInputFormat() && qos == otherMQTTSource->getQos()
+        && cleanSession == otherMQTTSource->getCleanSession();
 }
 
 }// namespace NES

@@ -17,6 +17,7 @@
 #ifdef ENABLE_MQTT_BUILD
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -26,12 +27,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
-#include <Runtime/NodeEngineFactory.hpp>
-#include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
 #include <thread>
 
 #include <Components/NesCoordinator.hpp>
@@ -69,7 +64,8 @@
 #endif
 
 #ifndef SUCCESSORS
-#define SUCCESSORS {}
+#define SUCCESSORS                                                                                                               \
+    {}
 #endif
 
 #ifndef INPUTFORMAT
@@ -147,7 +143,8 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
                                        SUCCESSORS,
                                        INPUTFORMAT,
                                        QOS,
-                                       CLEANSESSION,BUFFERFLUSHINTERVALMS);
+                                       CLEANSESSION,
+                                       BUFFERFLUSHINTERVALMS);
 
     SUCCEED();
 }
@@ -190,20 +187,20 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 
     auto test_schema = Schema::create()->addField("var", UINT32);
-    auto mqttSource =
-        createMQTTSource(test_schema,
-                         bufferManager,
-                         queryManager,
-                         SERVERADDRESS,
-                         CLIENTID,
-                         USER,
-                         TOPIC,
-                         OPERATORID,
-                         NUMSOURCELOCALBUFFERS,
-                         SUCCESSORS,
-                         INPUTFORMAT,
-                         QOS,
-                         CLEANSESSION,BUFFERFLUSHINTERVALMS);
+    auto mqttSource = createMQTTSource(test_schema,
+                                       bufferManager,
+                                       queryManager,
+                                       SERVERADDRESS,
+                                       CLIENTID,
+                                       USER,
+                                       TOPIC,
+                                       OPERATORID,
+                                       NUMSOURCELOCALBUFFERS,
+                                       SUCCESSORS,
+                                       INPUTFORMAT,
+                                       QOS,
+                                       CLEANSESSION,
+                                       BUFFERFLUSHINTERVALMS);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
@@ -214,7 +211,6 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
                                                                                             << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
 }
-
 
 // Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
 TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
@@ -277,8 +273,8 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -295,8 +291,8 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
-//    int response = remove("test.out");
-//    EXPECT_TRUE(response == 0);
+    //    int response = remove("test.out");
+    //    EXPECT_TRUE(response == 0);
 }
 }// namespace NES
 #endif

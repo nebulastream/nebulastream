@@ -19,13 +19,13 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <sstream>
-#include <utility>
 #include <string.h>
+#include <utility>
 namespace NES {
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::create(const SourceConfigPtr& sourceConfig) {
@@ -105,14 +105,13 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     } else if (type == "MQTTSource") {
         NES_DEBUG("PhysicalStreamConfig: create MQTT source with configurations: " << conf << ".");
-        std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter(conf,";");
+        std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter(conf, ";");
 
         //init inputFormat to default value (JSON). Only flat JSON and CSV format implemented currently
         SourceDescriptor::InputFormat inputFormat = MQTTSourceDescriptor::JSON;
-        if (strcasecmp(mqttConfig[4].c_str(), "JSON") == 0){
+        if (strcasecmp(mqttConfig[4].c_str(), "JSON") == 0) {
             inputFormat = SourceDescriptor::InputFormat::JSON;
-        }
-        else if (strcasecmp(mqttConfig[4].c_str(), "CSV") == 0){
+        } else if (strcasecmp(mqttConfig[4].c_str(), "CSV") == 0) {
             inputFormat = SourceDescriptor::InputFormat::CSV;
         }
 
@@ -120,10 +119,18 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat (conversion to enum above)
         //5 = qos (conversion to enum above); 6 = cleanSession; 7 = bufferFlushIntervalMs
         long bufferFlushIntervalMs = -1;
-        if(mqttConfig.size() > 7) {
+        if (mqttConfig.size() > 7) {
             bufferFlushIntervalMs = std::stol(mqttConfig[7]);
         }
-        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], inputFormat, stoi(mqttConfig[5]), (strcasecmp("true",mqttConfig[6].c_str()) == 0), bufferFlushIntervalMs);
+        return MQTTSourceDescriptor::create(schema,
+                                            mqttConfig[0],
+                                            mqttConfig[1],
+                                            mqttConfig[2],
+                                            mqttConfig[3],
+                                            inputFormat,
+                                            stoi(mqttConfig[5]),
+                                            (strcasecmp("true", mqttConfig[6].c_str()) == 0),
+                                            bufferFlushIntervalMs);
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
         return nullptr;

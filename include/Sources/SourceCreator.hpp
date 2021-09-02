@@ -18,10 +18,10 @@
 #define INCLUDE_SOURCESINK_SOURCECREATOR_HPP_
 
 #include <Network/NetworkManager.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/MemorySource.hpp>
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <chrono>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>

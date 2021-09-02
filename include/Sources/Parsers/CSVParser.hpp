@@ -23,26 +23,28 @@ namespace NES {
 
 class CSVParser : public Parser {
 
- public:
-  /**
+  public:
+    /**
    * @brief public constructor for CSV input data parser
    */
-  CSVParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes,
-            std::string const& delimiter);
+    CSVParser(uint64_t tupleSize,
+              uint64_t numberOfSchemaFields,
+              std::vector<NES::PhysicalTypePtr> physicalTypes,
+              std::string const& delimiter);
 
-  /**
+    /**
    * @brief takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer
    * @param csvInput: csv string value(one line) that is cast to the PhysicalType and written to the TupleBuffer
    * @param tupleCount: the number of tuples already written to the current TupleBuffer
    * @param buffer: the TupleBuffer to which the value is written
    */
-  void writeInputTupleToTupleBuffer(std::string csvInput, uint64_t tupleCount, NES::Runtime::TupleBuffer& tupleBuffer) override;
+    void writeInputTupleToTupleBuffer(std::string csvInput, uint64_t tupleCount, NES::Runtime::TupleBuffer& tupleBuffer) override;
 
- private:
-  uint64_t tupleSize;
-  uint64_t numberOfSchemaFields;
-  std::vector<NES::PhysicalTypePtr> physicalTypes;
-  std::string delimiter;
+  private:
+    uint64_t tupleSize;
+    uint64_t numberOfSchemaFields;
+    std::vector<NES::PhysicalTypePtr> physicalTypes;
+    std::string delimiter;
 };
-#endif //NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
+#endif//NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
 }// namespace NES

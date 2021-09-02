@@ -301,7 +301,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
                                SourceDescriptor::InputFormat inputFormat,
                                uint8_t qos,
-                               bool  cleanSession,
+                               bool cleanSession,
                                long bufferFlushIntervalMs) {
     return std::make_shared<MQTTSource>(schema,
                                         bufferManager,

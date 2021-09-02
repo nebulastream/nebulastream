@@ -164,7 +164,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffe
         offsets.push_back(physicalType->size());
         types.push_back(physicalType);
         NES_TRACE("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ")
-        + std::to_string(physicalType->size()));
+                  + std::to_string(physicalType->size()));
     }
 
     uint32_t prefix_sum = 0;
@@ -173,14 +173,14 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffe
         offsets[i] = prefix_sum;
         prefix_sum += val;
         NES_TRACE("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schema->get(i)->toString()
-        + std::string(": ") + std::to_string(offsets[i]));
+                  + std::string(": ") + std::to_string(offsets[i]));
     }
 
     str << "+----------------------------------------------------+" << std::endl;
     str << "|";
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
         str << schema->get(i)->getName() << ":"
-        << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString() << "|";
+            << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString() << "|";
     }
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;
