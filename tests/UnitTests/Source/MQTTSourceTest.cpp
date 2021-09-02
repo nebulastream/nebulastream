@@ -175,7 +175,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
                            "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry, "
-                           "DATATYPE=0, QOS=1, CLEANSESSION=0. ";
+                           "DATATYPE=0, QOS=1, CLEANSESSION=0. BUFFERFLUSHINTERVALMS=-1. ";
 
     EXPECT_EQ(mqttSource->toString(), expected);
 
@@ -264,7 +264,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
 
     srcConf->setSourceType("MQTTSource");
     //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat; 5 = qos; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
-    srcConf->setSourceConfig("ws://127.0.0.1:9001;testClient;testUser;demoTownSensorData;JSON;2;false;3000");
+    srcConf->setSourceConfig("ws://127.0.0.1:9001;testClients;testUser;demoTownSensorData;JSON;2;false;3000");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setNumberOfBuffersToProduce(10000);
     srcConf->setSourceFrequency(1);

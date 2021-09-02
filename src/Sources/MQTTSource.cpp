@@ -109,12 +109,12 @@ std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
 
     auto buffer = bufferManager->getBufferBlocking();
     if (connect()) {
-            fillBuffer(buffer);
+        fillBuffer(buffer);
     } else {
         NES_ERROR("MQTTSource: Not connected!");
         return std::nullopt;
     }
-    if (buffer.getNumberOfTuples() == 0){
+    if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }
     return buffer;
