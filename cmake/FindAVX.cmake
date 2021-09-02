@@ -57,7 +57,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
         set(AVX2_FOUND false CACHE BOOL "AVX2 available on host")
     ENDIF (AVX2_TRUE)
 
-ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
     EXEC_PROGRAM("/usr/sbin/sysctl -n machdep.cpu.features" OUTPUT_VARIABLE
             CPUINFO)
 
