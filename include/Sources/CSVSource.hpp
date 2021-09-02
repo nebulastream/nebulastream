@@ -17,14 +17,14 @@
 #ifndef INCLUDE_CSVSOURCE_H_
 #define INCLUDE_CSVSOURCE_H_
 
-#include <Sources/DataSource.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
 #include <chrono>
 #include <fstream>
 #include <string>
 
 namespace NES {
 
+class CSVParser;
+using CSVParserPtr = std::shared_ptr<CSVParser>;
 /**
  * @brief this class implement the CSV as an input source
  */
@@ -109,7 +109,7 @@ class CSVSource : public DataSource {
     std::vector<PhysicalTypePtr> physicalTypes;
     size_t fileSize;
     bool skipHeader;
-    std::unique_ptr<CSVParser> inputParser;
+    CSVParserPtr inputParser;
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;

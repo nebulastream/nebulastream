@@ -17,7 +17,7 @@
 #ifndef NES_MQTTSOURCE_HPP
 #define NES_MQTTSOURCE_HPP
 #ifdef ENABLE_MQTT_BUILD
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -28,7 +28,7 @@
 namespace mqtt {
 class async_client;
 using async_clientPtr = std::shared_ptr<async_client>;
-}// namespace mqtt
+}
 
 namespace NES {
 
@@ -52,7 +52,7 @@ class MQTTSource : public DataSource {
      * @param inputFormat data format that broker sends
      * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
      * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-     * @param flushIntervalForTupleBufferFillingInMilliseconds determine for how long to wait until buffer is flushed (before it is full)
+     * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
      */
     explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
@@ -68,7 +68,7 @@ class MQTTSource : public DataSource {
                         SourceDescriptor::InputFormat inputFormat,
                         uint32_t qos,
                         bool cleanSession,
-                        long flushIntervalForTupleBufferFillingInMilliseconds);
+                        long bufferFlushIntervalMs);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
@@ -83,9 +83,8 @@ class MQTTSource : public DataSource {
     std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
-     * @brief fill buffer with appropriate inputFormat
+     * @brief fill buffer tuple by tuple using the appropriate parser
      * @param tupleBuffer buffer to be filled
-     * @param data the received data as string
      */
     void fillBuffer(Runtime::TupleBuffer& tupleBuffer);
 
@@ -188,7 +187,7 @@ class MQTTSource : public DataSource {
     bool cleanSession;
     std::vector<PhysicalTypePtr> physicalTypes;
     std::unique_ptr<Parser> inputParser;
-    long flushIntervalForTupleBufferFillingInMilliseconds;
+    long bufferFlushIntervalMs;
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;

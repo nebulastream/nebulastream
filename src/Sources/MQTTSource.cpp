@@ -16,9 +16,8 @@
 
 #ifdef ENABLE_MQTT_BUILD
 
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -59,7 +58,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        SourceDescriptor::InputFormat inputFormat,
                        uint32_t qos,
                        bool cleanSession,
-                       long flushIntervalForTupleBufferFillingInMilliseconds)
+                       long bufferFlushIntervalMs)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -70,7 +69,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
       connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic),
       inputFormat(inputFormat),
       tupleSize(schema->getSchemaSizeInBytes()), qos(qos), cleanSession(cleanSession),
-      flushIntervalForTupleBufferFillingInMilliseconds(flushIntervalForTupleBufferFillingInMilliseconds){
+      bufferFlushIntervalMs(bufferFlushIntervalMs){
 
     client = std::make_shared<mqtt::async_client>(serverAddress, clientId);
 
@@ -82,11 +81,10 @@ MQTTSource::MQTTSource(SchemaPtr schema,
     }
 
     switch (inputFormat) {
-        case MQTTSourceDescriptor::JSON:
+        case SourceDescriptor::JSON:
             inputParser = std::make_unique<JSONParser>(tupleSize, schema->getSize(), physicalTypes);
             break;
-        case MQTTSourceDescriptor::CSV:
-            //TODO add proper delimiter
+        case SourceDescriptor::CSV:
             inputParser = std::make_unique<CSVParser>(tupleSize, schema->getSize(), physicalTypes, ",");
             break;
     }
@@ -133,6 +131,7 @@ std::string MQTTSource::toString() const {
     ss << "DATATYPE=" << inputFormat << ", ";
     ss << "QOS=" << qos << ", ";
     ss << "CLEANSESSION=" << cleanSession << ". ";
+    ss << "BUFFERFLUSHINTERVALMS=" << bufferFlushIntervalMs << ". ";
     return ss.str();
 }
 
@@ -166,10 +165,12 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         NES_TRACE("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/' << tuplesThisPass);
         tupleCount++;
 
-        // if flushInterval given, check if time limit was reached
-        if ((flushIntervalForTupleBufferFillingInMilliseconds > 0 &&
+        // if bufferFlushIntervalMs was defined by user (> 0), after every tuple written to the TupleBuffer(TB), we check whether
+        // the time spent on writing to the TB exceeds the user defined limit (bufferFlushIntervalMs) is exceeded already
+        // if so, we stop filling the TB, flush it, and proceed with the next, if not, we proceed filling the TB
+        if ((bufferFlushIntervalMs > 0 &&
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() -
-        flushIntervalTimerStart).count() >= flushIntervalForTupleBufferFillingInMilliseconds)) {
+        flushIntervalTimerStart).count() >= bufferFlushIntervalMs)) {
             NES_DEBUG("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
@@ -248,15 +249,25 @@ bool MQTTSource::disconnect() {
     return !connected;
 }
 const string& MQTTSource::getServerAddress() const { return serverAddress; }
+
 const string& MQTTSource::getClientId() const { return clientId; }
+
 const string& MQTTSource::getUser() const { return user; }
+
 const string& MQTTSource::getTopic() const { return topic; }
+
 SourceDescriptor::InputFormat MQTTSource::getInputFormat() const { return inputFormat; }
+
 uint64_t MQTTSource::getTupleSize() const { return tupleSize; }
+
 SourceType MQTTSource::getType() const { return MQTT_SOURCE; }
+
 uint32_t MQTTSource::getQos() const {return qos;}
+
 uint64_t MQTTSource::getTuplesThisPass() const {return tuplesThisPass;}
+
 bool MQTTSource::getCleanSession() const {return cleanSession;}
+
 std::vector<PhysicalTypePtr> MQTTSource::getPhysicalTypes() const {return physicalTypes;}
 
 }// namespace NES

@@ -84,6 +84,10 @@
 #define CLEANSESSION false
 #endif
 
+#ifndef BUFFERFLUSHINTERVALMS
+#define BUFFERFLUSHINTERVALMS -1
+#endif
+
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
@@ -143,8 +147,7 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
                                        SUCCESSORS,
                                        INPUTFORMAT,
                                        QOS,
-                                       CLEANSESSION,
-                                       -1);
+                                       CLEANSESSION,BUFFERFLUSHINTERVALMS);
 
     SUCCEED();
 }
@@ -167,7 +170,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        INPUTFORMAT,
                                        QOS,
                                        CLEANSESSION,
-                                       -1);
+                                       BUFFERFLUSHINTERVALMS);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
@@ -188,13 +191,19 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 
     auto test_schema = Schema::create()->addField("var", UINT32);
     auto mqttSource =
-        createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, OPERATORID,
+        createMQTTSource(test_schema,
+                         bufferManager,
+                         queryManager,
+                         SERVERADDRESS,
+                         CLIENTID,
+                         USER,
+                         TOPIC,
+                         OPERATORID,
                          NUMSOURCELOCALBUFFERS,
                          SUCCESSORS,
                          INPUTFORMAT,
                          QOS,
-                         CLEANSESSION,
-                         -1);
+                         CLEANSESSION,BUFFERFLUSHINTERVALMS);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
@@ -207,6 +216,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 }
 
 
+// Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
 TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
@@ -253,7 +263,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
     srcConf->setSourceType("MQTTSource");
-    //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = formatType; 5 = qos; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
+    //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat; 5 = qos; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
     srcConf->setSourceConfig("ws://127.0.0.1:9001;testClient;testUser;demoTownSensorData;JSON;2;false;3000");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setNumberOfBuffersToProduce(10000);

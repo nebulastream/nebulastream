@@ -31,7 +31,7 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  SourceDescriptor::InputFormat inputFormat,
                                                  uint32_t qos,
                                                  bool cleanSession,
-                                                 long flushIntervalForTupleBufferFillingInMilliseconds) {
+                                                 long bufferFlushIntervalMs) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema),
                                                                        std::move(serverAddress),
                                                                        std::move(clientId),
@@ -40,7 +40,7 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                                        inputFormat,
                                                                        qos,
                                                                        cleanSession,
-                                                                       flushIntervalForTupleBufferFillingInMilliseconds));
+                                                                       bufferFlushIntervalMs));
 }
 
 SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
@@ -52,7 +52,7 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  SourceDescriptor::InputFormat inputFormat,
                                                  uint32_t qos,
                                                  bool cleanSession,
-                                                 long flushIntervalForTupleBufferFillingInMilliseconds) {
+                                                 long bufferFlushIntervalMs) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema),
                                                                        std::move(logicalStreamName),
                                                                        std::move(serverAddress),
@@ -62,7 +62,7 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                                        inputFormat,
                                                                        qos,
                                                                        cleanSession,
-                                                                       flushIntervalForTupleBufferFillingInMilliseconds));
+                                                                       bufferFlushIntervalMs));
 }
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
@@ -73,10 +73,10 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            SourceDescriptor::InputFormat inputFormat,
                                            uint32_t qos,
                                            bool cleanSession,
-                                           long flushIntervalForTupleBufferFillingInMilliseconds)
+                                           long bufferFlushIntervalMs)
                                            : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)),
-                                           user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qos(qos), flushIntervalForTupleBufferFillingInMilliseconds(flushIntervalForTupleBufferFillingInMilliseconds),
-                                           cleanSession(cleanSession){}
+                                           user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qos(qos),
+                                           cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs){}
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                           std::string logicalStreamName,
@@ -87,10 +87,10 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                           SourceDescriptor::InputFormat inputFormat,
                                           uint32_t qos,
                                           bool cleanSession,
-                                          long flushIntervalForTupleBufferFillingInMilliseconds)
+                                          long bufferFlushIntervalMs)
                                           : SourceDescriptor(std::move(schema), std::move(logicalStreamName)), serverAddress(std::move(serverAddress)),
                                           clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qos(qos),
-                                          flushIntervalForTupleBufferFillingInMilliseconds(flushIntervalForTupleBufferFillingInMilliseconds), cleanSession(cleanSession){}
+                                          cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs){}
 
                                                                                       std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
 
@@ -102,7 +102,7 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
 
                                                                                       uint32_t MQTTSourceDescriptor::getQos() const { return qos; }
 
-                                                                                      uint64_t MQTTSourceDescriptor::getTupleBufferFlushIntervalInMilliseconds() const { return flushIntervalForTupleBufferFillingInMilliseconds; }
+                                                                                      uint64_t MQTTSourceDescriptor::getBufferFlushIntervalMs() const { return bufferFlushIntervalMs; }
 
                                                                                       bool MQTTSourceDescriptor::getCleanSession() const {return cleanSession;}
 

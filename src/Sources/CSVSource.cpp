@@ -85,7 +85,7 @@ CSVSource::CSVSource(SchemaPtr schema,
         physicalTypes.push_back(physicalField);
     }
 
-    this->inputParser = std::make_unique<CSVParser>(tupleSize, schema->getSize(), physicalTypes, delimiter);
+    this->inputParser = std::make_shared<CSVParser>(tupleSize, schema->getSize(), physicalTypes, delimiter);
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
@@ -97,7 +97,6 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }
-    NES_DEBUG("Print buffy" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema));
     return buffer;
 }
 

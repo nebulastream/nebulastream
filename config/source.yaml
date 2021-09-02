@@ -12,12 +12,13 @@ sourceType: NoSource
 #            clientId needed to connect to broker, system will add random number to it, to make sure it is unique per connection
 #            userId string with user name
 #            topic to connect to for data collection
-#            dataType type of data we want to receive, currently only JSON implemented
-#            qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
+#            inputFormat data format that we receive, currently only JSON and CSV (only ',' as delimiter) implemented
+#            qos Quality of Service (0 = at most once delivery, 1 = at least once delivery, 2 = exactly once delivery)
 #            cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+#            bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
 # OPCSource (ToDo: Make source available): String set up as follows: "url;namespaceIndex;identifier;user;pwd"
 #            where the url is a string containing the full OPC server url,
-#            namespaceIndex is a uint16_t providing the namespanaceIndex for the nodeId,
+#            namespaceIndex is a uint16_t providing the namespace Index for the nodeId,
 #            identifier is a string containing the nodeId identifier,
 #            user is a string containing the user name for server authentication ToDo: Implement server authentication.
 #            pwd is a string containing the password for server authentication
@@ -25,7 +26,7 @@ sourceType: NoSource
 #            where host is a string containing the zmq host's ip address
 #            and port is a uint16_t containing the zmq port
 # KafkaSource (ToDo: Make source available): String set up as follows: "brokers;topic;groupId;autoCommit;kafkaConnectTimeout"
-#            where brokers is a string containing the brokers's ip address,
+#            where brokers is a string containing the broker's ip address,
 #            topic is a string containing the topic,
 #            groupId is a string containing the groupId,
 #            autoCommit is a boolean value where 1 equals true, and 0 equals false,

@@ -21,13 +21,16 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+
+namespace NES {
+
 JSONParser::JSONParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes):
-               Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
-               physicalTypes(std::move(physicalTypes)){
+Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
+physicalTypes(std::move(physicalTypes)){
 }
 
 void JSONParser::writeInputTupleToTupleBuffer(std::string jsonInput, uint64_t tupleCount,
-                                                  NES::Runtime::TupleBuffer& tupleBuffer) {
+                                              NES::Runtime::TupleBuffer& tupleBuffer) {
     NES_DEBUG("JSONParser::parseJSONMessage: Current TupleCount: " << tupleCount);
     uint64_t offset = 0;
 
@@ -52,3 +55,4 @@ void JSONParser::writeInputTupleToTupleBuffer(std::string jsonInput, uint64_t tu
         offset += fieldSize;
     }
 }
+}// namespace NES

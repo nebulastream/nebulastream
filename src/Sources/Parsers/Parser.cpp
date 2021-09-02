@@ -21,11 +21,12 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <cstring>
 
+namespace NES {
 
-Parser::Parser(std::vector<NES::PhysicalTypePtr> physicalTypes): physicalTypes(std::move(physicalTypes)){}
+Parser::Parser(std::vector<PhysicalTypePtr> physicalTypes): physicalTypes(std::move(physicalTypes)){}
 
 void Parser::writeFieldValueToTupleBuffer(std::basic_string<char> inputString, uint64_t schemaFieldIndex,
-                                               NES::Runtime::TupleBuffer& tupleBuffer, uint64_t offset, bool json) {
+                                          NES::Runtime::TupleBuffer& tupleBuffer, uint64_t offset, bool json) {
     NES_ASSERT2_FMT(!inputString.empty(), "Field cannot be empty if basic type");
     uint64_t fieldSize = physicalTypes[schemaFieldIndex]->size();
     if (physicalTypes[schemaFieldIndex]->isBasicType()) {
@@ -122,8 +123,9 @@ void Parser::writeFieldValueToTupleBuffer(std::basic_string<char> inputString, u
         // improve behavior with json library
         value = (json) ? inputString.substr(1, value.size()-2) : inputString.c_str();
         memcpy(tupleBuffer.getBuffer<char>() + offset, value.c_str(), fieldSize);
-}
+    }
 }
 Parser::~Parser() {
     NES_DEBUG("Parser::Parsertroyed Parser");
 }
+}//namespace NES

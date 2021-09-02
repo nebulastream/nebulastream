@@ -286,9 +286,10 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
  * @param clientId the client id of the data, we want to obtain
  * @param user name to connect to the server
  * @param topic the topic needed for a subscription
- * @param dataType type of data we expect
- * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
+ * @param inputFormat format of input that we expect to receive
+ * @param qos Quality of Service (0 = at most once delivery, 1 = at least once delivery, 2 = exactly once delivery)
  * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+ * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
  * @return a const data source pointer
  */
 DataSourcePtr createMQTTSource(const SchemaPtr& schema,
@@ -304,7 +305,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                SourceDescriptor::InputFormat dataFormat,
                                uint8_t qos,
                                bool cleanSession,
-                               long flushIntervalForTupleBufferFillingInMilliseconds);
+                               long bufferFlushIntervalMs);
 #endif
 
 }// namespace NES
