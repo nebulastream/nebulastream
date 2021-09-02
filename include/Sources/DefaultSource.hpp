@@ -36,6 +36,7 @@ class DefaultSource : public GeneratorSource {
     SourceType getType() const override;
 
     std::optional<Runtime::TupleBuffer> receiveData() override;
+    std::vector<Schema::MemoryLayoutType> getSupportedLayouts() override;
 };
 
 using DefaultSourcePtr = std::shared_ptr<DefaultSource>;

@@ -221,6 +221,19 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
         return std::static_pointer_cast<Derived>(DataEmitter::shared_from_this());
     }
 
+    /**
+     * @brief This method returns all supported layouts.
+     * @return
+     */
+    virtual std::vector<Schema::MemoryLayoutType> getSupportedLayouts();
+
+    /**
+     * @brief This function checks if the layout of schema can be found in the implementation of getSupportedLayouts()
+     * @param schema
+     * @return
+     */
+    bool checkSupportedLayoutTypes(SchemaPtr& schema);
+
   protected:
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr localBufferManager;

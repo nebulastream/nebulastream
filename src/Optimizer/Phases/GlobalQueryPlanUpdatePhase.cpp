@@ -25,7 +25,6 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
@@ -84,6 +83,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
 
                 auto runRequest = nesRequest->as<RunQueryRequest>();
                 auto queryPlan = runRequest->getQueryPlan();
+
                 NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " << queryId);
                 queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 

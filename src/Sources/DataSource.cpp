@@ -402,6 +402,7 @@ void DataSource::runningRoutineWithFrequency() {
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
+
 // debugging
 uint64_t DataSource::getNumberOfGeneratedTuples() const { return generatedTuples; };
 uint64_t DataSource::getNumberOfGeneratedBuffers() const { return generatedBuffers; };
@@ -412,5 +413,14 @@ uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess
 
 std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
 uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
+std::vector<Schema::MemoryLayoutType> DataSource::getSupportedLayouts() {
+    return {Schema::MemoryLayoutType::ROW_LAYOUT};
+}
+
+bool DataSource::checkSupportedLayoutTypes(SchemaPtr& schema) {
+    auto supportedLayouts = getSupportedLayouts();
+    return std::find(supportedLayouts.begin(), supportedLayouts.end(), schema->getLayoutType()) != supportedLayouts.end();
+}
+
 
 }// namespace NES

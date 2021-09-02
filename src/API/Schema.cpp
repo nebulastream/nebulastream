@@ -250,13 +250,13 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
 }
 
 void Schema::clear() { fields.clear(); }
-std::string Schema::getLayoutTypeAsString(Schema::MemoryLayoutType layout) const {
-    if (layout == ROW_LAYOUT) {
+std::string Schema::getLayoutTypeAsString() const {
+    if (this->layoutType == ROW_LAYOUT) {
         return "ROW_LAYOUT";
-    } else if (layout == COL_LAYOUT) {
+    } else if (this->layoutType == COL_LAYOUT) {
         return "COL_LAYOUT";
     } else {
-        NES_THROW_RUNTIME_ERROR("layout type " << layout << " could not be parsed to string representation!");
+        NES_THROW_RUNTIME_ERROR("layout type " << layoutType << " could not be parsed to string representation!");
     }
 }
 Schema::MemoryLayoutType Schema::getLayoutType() const { return layoutType; }

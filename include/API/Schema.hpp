@@ -35,7 +35,7 @@ using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
 class Schema {
   public:
-    enum MemoryLayoutType : std::int8_t { ROW_LAYOUT = 0, COL_LAYOUT = 1 };
+    enum MemoryLayoutType : std::int8_t { ROW_LAYOUT = 1, COL_LAYOUT = 2 };
 
     Schema(MemoryLayoutType layoutType = ROW_LAYOUT);
     Schema(SchemaPtr const& query, MemoryLayoutType layoutType = ROW_LAYOUT);
@@ -174,7 +174,7 @@ class Schema {
      * @param layout
      * @return
      */
-    [[nodiscard]] std::string getLayoutTypeAsString(MemoryLayoutType layout) const;
+    [[nodiscard]] std::string getLayoutTypeAsString() const;
 
     /**
      * @brief Method to return the stream name qualifier, thus everything that is before $
@@ -193,6 +193,19 @@ class Schema {
      * @return qualifier with
      */
     std::string getQualifierNameForSystemGeneratedFieldsWithSeparator();
+
+    /**
+     * @brief getter of layoutType
+     * @return
+     */
+    [[nodiscard]] MemoryLayoutType getLayoutType() const;
+
+    /**
+     * @brief setter of layoutType
+     * @param layoutType
+     */
+    void setLayoutType(MemoryLayoutType layoutType);
+
 
     /**
      * @brief Remove all fields and qualifying name
