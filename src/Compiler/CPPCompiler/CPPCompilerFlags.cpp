@@ -36,7 +36,10 @@ void CPPCompilerFlags::enableDebugFlags() { addFlag(DEBUGGING); }
 void CPPCompilerFlags::enableOptimizationFlags() {
     addFlag(ALL_OPTIMIZATIONS);
     addFlag(TUNE);
+#if !defined(__APPLE__) || !defined(__aarch64__)
+    // -march=native is supported on Intel Macs clang but not on M1 Macs clang
     addFlag(ARCH);
+#endif
 }
 
 std::vector<std::string> CPPCompilerFlags::getFlags() const { return compilerFlags; }
