@@ -23,11 +23,11 @@
 
 namespace NES::Runtime::DynamicMemoryLayout {
 
-#define ColLayoutField(TYPE, CHECKBOUNDARIES, INDEX, LAYOUTBUFFER) Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<TYPE, \
+// These defines can be used to improve the code readability. The second one sets the checkBoundary to true
+#define ColLayoutField(TYPE, INDEX, LAYOUTBUFFER) ColLayoutField_(TYPE, true, INDEX, LAYOUTBUFFER)
+#define ColLayoutField_(TYPE, CHECKBOUNDARIES, INDEX, LAYOUTBUFFER) Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<TYPE, \
                                                                                                 CHECKBOUNDARIES>::create(INDEX, \
                                                                                                 LAYOUTBUFFER)
-
-
 /**
  * @brief This class is used for handling fields in a given DynamicColumnLayoutBuffer. It also overrides the operator[] for a more user friendly access of records for a predefined field.
  * @tparam T

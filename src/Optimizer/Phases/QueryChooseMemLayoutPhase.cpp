@@ -26,18 +26,19 @@ void QueryChooseMemLayoutPhase::execute(const QueryPlanPtr& queryPlan) {
         auto sources = queryPlan->getSourceOperators();
         auto sinks = queryPlan->getSinkOperators();
 
-        if (!sources.empty()) {
+        if (sources.empty()) {
             NES_WARNING("QueryChooseMemLayoutPhase: Sources are empty!");
         }
 
-        if (!sinks.empty()) {
+        if (sinks.empty()) {
             NES_WARNING("QueryChooseMemLayoutPhase: Sinks are empty!");
         }
 
         for (auto& source : sources) {
             // TODO is this enough? Should I maybe create a setter in schema?
             // This does only work for now with DefaultSource as all other sources do not support col layout
-            source->getSourceDescriptor()->getSchema()->layoutType = this->layoutType;
+            source->getSourceDescriptor()->getSchema()->setLayoutType(this->layoutType);
+            NES_DEBUG("QueryChooseMemLayoutPhase: source layoutType = " << source->getSourceDescriptor()->getSchema()->getLayoutTypeAsString());
         }
 
         for (auto& sink : sinks) {

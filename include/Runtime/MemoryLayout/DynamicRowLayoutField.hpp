@@ -25,10 +25,11 @@
 
 namespace NES::Runtime::DynamicMemoryLayout {
 
-#define RowLayoutField(TYPE, CHECKBOUNDARIES, INDEX, LAYOUTBUFFER) Runtime::DynamicMemoryLayout::DynamicRowLayoutField<TYPE, \
-                                                                                                CHECKBOUNDARIES>::create(INDEX, \
-                                                                                                LAYOUTBUFFER)
-
+// These defines can be used to improve the code readability. The second one sets the checkBoundary to true
+#define RowLayoutField(TYPE, INDEX, LAYOUTBUFFER) RowLayoutField_(TYPE, true, INDEX, LAYOUTBUFFER)
+#define RowLayoutField_(TYPE, CHECKBOUNDARIES, INDEX, LAYOUTBUFFER) Runtime::DynamicMemoryLayout::DynamicRowLayoutField<TYPE, \
+                                                                            CHECKBOUNDARIES>::create(INDEX, \
+                                                                            LAYOUTBUFFER)
 
 /**
  * @brief This class is used for handling fields in a given DynamicColumnLayoutBuffer. It also overrides the operator[] for a more user friendly access of records for a predefined field.
