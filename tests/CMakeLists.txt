@@ -600,6 +600,11 @@ target_link_libraries(e2e-coordinator-multi-query-test nes ${GTEST_LIBRARIES})
 add_test(NAME e2e-coordinator-multi-query-test COMMAND e2e-coordinator-multi-query-test)
 set_tests_properties(e2e-coordinator-multi-query-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
+add_executable(e2e-location-single-worker-test "E2e/E2ELocationSingleWorkerTest.cpp")
+target_link_libraries(e2e-location-single-worker-test nes ${GTEST_LIBRARIES})
+add_test(NAME e2e-location-single-worker-test COMMAND e2e-location-single-worker-test)
+set_tests_properties(e2e-location-single-worker-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
 # Custom test commands --------------------------------------------------------

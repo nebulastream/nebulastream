@@ -255,15 +255,13 @@ TEST_F(MobilityNodeTest, testMovingSinkReceivesData) {
                              "1,1\n"
                              "1,1\n";
 
-    // Check result is empty
-    EXPECT_FALSE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    // Check if result is empty
+    EXPECT_FALSE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath, 10));
 
     // Move sink closer to the source
     sinkCartesianPosition = std::make_shared<CartesianPoint>(sourceCartesianPosition->getX() - smallOffset, sourceCartesianPosition->getY());
     sinkPosition = GeoCalculator::cartesianToGeographic(sinkCartesianPosition);
     locationService->updateNodeLocation("veh_1", sinkPosition);
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(timeToSleep));
 
     // Check result is not empty
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
