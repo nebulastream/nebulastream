@@ -32,10 +32,41 @@ SourceConfig::SourceConfig() {
         ConfigOption<std::string>::create("sourceType",
                                           "DefaultSource",
                                           "Type of the Source (available options: DefaultSource, CSVSource, BinarySource).");
-    sourceConfig = ConfigOption<std::string>::create(
-        "sourceConfig",
-        "1",
-        "Source configuration. Options depend on source type. See Source Configurations on our wiki page for further details.");
+    udsf = ConfigOption<std::string>::create("udsf", "", "udsf, needed for: SenseSource");
+    filePath = ConfigOption<std::string>::create("filePath",
+                                                 "../tests/test_data/QnV_short.csv",
+                                                 "file path, needed for: CSVSource, BinarySource");
+    url = ConfigOption<std::string>::create("url",
+                                            "ws://127.0.0.1:9001",
+                                            "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource");
+    namespaceIndex = ConfigOption<uint32_t>::create("namespaceIndex", 1, "namespaceIndex for node, needed for: OPCSource");
+    nodeIdentifier = ConfigOption<std::string>::create("nodeIdentifier", "the.answer", "node identifier, needed for: OPCSource");
+    clientId = ConfigOption<std::string>::create("clientId",
+                                                 "testClient",
+                                                 "clientId, needed for: MQTTSource (needs to be unique for each connected "
+                                                 "MQTTSource), KafkaSource (use this for groupId)");
+    userName = ConfigOption<std::string>::create("userName",
+                                                 "testUser",
+                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource");
+    password = ConfigOption<std::string>::create("password", "", "password, needed for: OPCSource");
+    topic = ConfigOption<std::string>::create("topic",
+                                              "demoTownSensorData",
+                                              "topic to listen to, needed for: MQTTSource, KafkaSource");
+    inputFormat = ConfigOption<std::string>::create("inputFormat", "JSON", "input data format");
+    qos = ConfigOption<uint32_t>::create("qos", 2, "quality of service, needed for: MQTTSource");
+    cleanSession =
+        ConfigOption<bool>::create("cleanSession",
+                                   true,
+                                   "cleanSession true = clean up session after client loses connection, false = keep data for "
+                                   "client after connection loss (persistent session), needed for: MQTTSource");
+    flushIntervalMS = ConfigOption<uint32_t>::create("flushIntervalMS", 3000, "tupleBuffer flush interval in milliseconds");
+    rowLayout = ConfigOption<bool>::create("rowLayout", true, "storage layout, true = row layout, false = column layout");
+    connectionTimeout =
+        ConfigOption<uint32_t>::create("connectionTimeout", 10, "connection time out for source, needed for: KafkaSource");
+    autoCommit = ConfigOption<uint32_t>::create(
+        "autoCommit",
+        1,
+        "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource");
     sourceFrequency = ConfigOption<uint32_t>::create("sourceFrequency", 1, "Sampling frequency of the source.");
     numberOfBuffersToProduce = ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 1, "Number of buffers to produce.");
     numberOfTuplesToProducePerBuffer =
@@ -122,8 +153,23 @@ void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
 }
 
 void SourceConfig::resetSourceOptions() {
-    setSourceConfig(sourceConfig->getDefaultValue());
     setSourceType(sourceType->getDefaultValue());
+    setUdsf(udsf->getDefaultValue());
+    setFilePath(filePath->getDefaultValue());
+    setUrl(url->getDefaultValue());
+    setNamespaceIndex(namespaceIndex->getDefaultValue());
+    setNodeIdentifier(nodeIdentifier->getDefaultValue());
+    setClientId(clientId->getDefaultValue());
+    setUserName(userName->getDefaultValue());
+    setPassword(password->getDefaultValue());
+    setTopic(topic->getDefaultValue());
+    setInputFormat(inputFormat->getDefaultValue());
+    setQos(qos->getDefaultValue());
+    setCleanSession(cleanSession->getDefaultValue());
+    setFlushIntervalMs(flushIntervalMS->getDefaultValue());
+    setRowLayout(rowLayout->getDefaultValue());
+    setConnectionTimeout(connectionTimeout->getDefaultValue());
+    setAutoCommit(autoCommit->getDefaultValue());
     setSourceFrequency(sourceFrequency->getDefaultValue());
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
@@ -134,7 +180,37 @@ void SourceConfig::resetSourceOptions() {
 
 StringConfigOption SourceConfig::getSourceType() const { return sourceType; }
 
-StringConfigOption SourceConfig::getSourceConfig() const { return sourceConfig; }
+StringConfigOption SourceConfig::getUdsf() const { return udsf; }
+
+StringConfigOption SourceConfig::getFilePath() const { return filePath; }
+
+StringConfigOption SourceConfig::getUrl() const { return url; }
+
+IntConfigOption SourceConfig::getNamespaceIndex() const { return namespaceIndex; }
+
+StringConfigOption SourceConfig::getNodeIdentifier() const { return nodeIdentifier; }
+
+StringConfigOption SourceConfig::getClientId() const { return clientId; }
+
+StringConfigOption SourceConfig::getUserName() const { return userName; }
+
+StringConfigOption SourceConfig::getPassword() const { return password; }
+
+StringConfigOption SourceConfig::getTopic() const { return topic; }
+
+StringConfigOption SourceConfig::getInputFormat() const { return inputFormat; }
+
+IntConfigOption SourceConfig::getQos() const { return qos; }
+
+BoolConfigOption SourceConfig::getCleanSession() const { return cleanSession; }
+
+IntConfigOption SourceConfig::getFlushIntervalMs() const { return flushIntervalMS; }
+
+BoolConfigOption SourceConfig::getRowLayout() const { return rowLayout; }
+
+IntConfigOption SourceConfig::getConnectionTimeout() const { return connectionTimeout; }
+
+IntConfigOption SourceConfig::getAutoCommit() const { return autoCommit; }
 
 IntConfigOption SourceConfig::getSourceFrequency() const { return sourceFrequency; }
 
@@ -149,8 +225,6 @@ StringConfigOption SourceConfig::getLogicalStreamName() const { return logicalSt
 BoolConfigOption SourceConfig::getSkipHeader() const { return skipHeader; }
 
 void SourceConfig::setSourceType(std::string sourceTypeValue) { sourceType->setValue(std::move(sourceTypeValue)); }
-
-void SourceConfig::setSourceConfig(std::string sourceConfigValue) { sourceConfig->setValue(std::move(sourceConfigValue)); }
 
 void SourceConfig::setSourceFrequency(uint32_t sourceFrequencyValue) { sourceFrequency->setValue(sourceFrequencyValue); }
 
@@ -171,5 +245,37 @@ void SourceConfig::setLogicalStreamName(std::string logicalStreamNameValue) {
 }
 
 void SourceConfig::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }
+
+void SourceConfig::setUdsf(std::string udsfValue) { udsf->setValue(std::move(udsfValue)); }
+
+void SourceConfig::setFilePath(std::string filePathValue) { filePath->setValue(std::move(filePathValue)); }
+
+void SourceConfig::setUrl(std::string urlValue) { url->setValue(std::move(urlValue)); }
+
+void SourceConfig::setNamespaceIndex(uint32_t namespaceIndexValue) { namespaceIndex->setValue(namespaceIndexValue); }
+
+void SourceConfig::setNodeIdentifier(std::string nodeIdentifierValue) { nodeIdentifier->setValue(std::move(nodeIdentifierValue)); }
+
+void SourceConfig::setClientId(std::string clientIdValue) { clientId->setValue(std::move(clientIdValue)); }
+
+void SourceConfig::setUserName(std::string userNameValue) { userName->setValue(std::move(userNameValue)); }
+
+void SourceConfig::setPassword(std::string passwordValue) { password->setValue(std::move(passwordValue)); }
+
+void SourceConfig::setTopic(std::string topicValue) { topic->setValue(std::move(topicValue)); }
+
+void SourceConfig::setInputFormat(std::string inputFormatValue) { inputFormat->setValue(std::move(inputFormatValue)); }
+
+void SourceConfig::setQos(uint32_t qosValue) { qos->setValue(qosValue); }
+
+void SourceConfig::setCleanSession(bool cleanSessionValue) { cleanSession->setValue(cleanSessionValue); }
+
+void SourceConfig::setFlushIntervalMs(uint32_t flushIntervalMsValue) { flushIntervalMS->setValue(flushIntervalMsValue); }
+
+void SourceConfig::setRowLayout(bool rowLayoutValue) { rowLayout->setValue(rowLayoutValue); }
+
+void SourceConfig::setConnectionTimeout(uint32_t connectionTimeoutValue) { connectionTimeout->setValue(connectionTimeoutValue); }
+
+void SourceConfig::setAutoCommit(uint32_t autoCommitValue) { autoCommit->setValue(autoCommitValue); }
 
 }// namespace NES

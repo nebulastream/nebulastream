@@ -1,40 +1,58 @@
 # ~~~ Configurations for the Data Source ~~~
 
 # ~~ Source Handling ~~
-# Set the source type (available options: No_Source, DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
+# Set the source type (available options: No_Source, DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
+#                                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
+#                                         BinarySource (ToDo: Make source available))
 sourceType: NoSource
 
-# Set source configuration. Options depend on source type.
-# DefaultSource: NoConfig (not needed)
-# CSVSource: String with path to CSV file.
-# MQTTSource: String set up as follows: "url;clientId;userId;topic;dataType;QoS;cleanSession"
-#            url to connect to broker
-#            clientId needed to connect to broker, system will add random number to it, to make sure it is unique per connection
-#            userId string with user name
-#            topic to connect to for data collection
-#            inputFormat data format that we receive, currently only JSON and CSV (only ',' as delimiter) implemented
-#            qos Quality of Service (0 = at most once delivery, 1 = at least once delivery, 2 = exactly once delivery)
-#            cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-#            bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
-# OPCSource (ToDo: Make source available): String set up as follows: "url;namespaceIndex;identifier;user;pwd"
-#            where the url is a string containing the full OPC server url,
-#            namespaceIndex is a uint16_t providing the namespace Index for the nodeId,
-#            identifier is a string containing the nodeId identifier,
-#            user is a string containing the user name for server authentication ToDo: Implement server authentication.
-#            pwd is a string containing the password for server authentication
-# ZMQSource (ToDo: Make source available): String set up as: "host;port"
-#            where host is a string containing the zmq host's ip address
-#            and port is a uint16_t containing the zmq port
-# KafkaSource (ToDo: Make source available): String set up as follows: "brokers;topic;groupId;autoCommit;kafkaConnectTimeout"
-#            where brokers is a string containing the broker's ip address,
-#            topic is a string containing the topic,
-#            groupId is a string containing the groupId,
-#            autoCommit is a boolean value where 1 equals true, and 0 equals false,
-#            kafkaConnectTimeout is a uint16_t providing the time out for the connection
-# BinarySource: String with path to binary file.
-# SenseSource (ToDo: Make source available): String with udsf inside
-# YSBSource: NoConfig (not needed)
-sourceConfig: NoConfig
+# Set udsf, needed for: SenseSource
+udsf:
+
+# Set file path, needed for: CSVSource, BinarySource
+filePath: ../tests/test_data/QnV_short.csv
+
+# Set url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource
+url: ws://127.0.0.1:9001
+
+# Set namespaceIndex for node, needed for: OPCSource
+namespaceIndex: 1
+
+# Set node identifier, needed for: OPCSource
+nodeIdentifier: the.answer
+
+# Set clientId, needed for: MQTTSource (needs to be unique for each connected MQTTSource), KafkaSource (use this for groupId)
+clientId: testClient
+
+# Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
+userName: testUser
+
+# Set password, needed for: OPCSource
+password:
+
+# Set topic to listen to, needed for: MQTTSource, KafkaSource
+topic: demoTownSensorData
+
+# Set input data format
+inputFormat: JSON
+
+# set quality of service, needed for: MQTTSource
+qos: 2
+
+# set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session), needed for: MQTTSource
+cleanSession: true
+
+# set tupleBuffer flush interval in milliseconds
+flushIntervalMS: 3000
+
+# Set storage layout, true = row layout, false = column layout
+rowLayout: true
+
+# Set connection time out for source, needed for: KafkaSource
+connectionTimeout: 10
+
+# Set auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
+autoCommit: 1
 
 # Set sampling frequency of source
 sourceFrequency: 1
