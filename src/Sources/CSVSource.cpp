@@ -19,8 +19,8 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/DataSource.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>

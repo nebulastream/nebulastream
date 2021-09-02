@@ -29,8 +29,7 @@ namespace NES {
 class MQTTSourceDescriptor : public SourceDescriptor {
 
   public:
-
-  /**
+    /**
    * @brief create a source descriptor pointer for MQTT source
    * @param schema the schema of the data
    * @param serverAddress the server address to connect to (port included)
@@ -135,7 +134,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-  /**
+    /**
      * @brief mqtt source descriptor constructor
      * @param schema the schema of the data
      * @param serverAddress the server address to connect to (port included)
@@ -147,16 +146,16 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
      * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
      */
-  explicit MQTTSourceDescriptor(SchemaPtr schema,
-                                std::string serverAddress,
-                                std::string clientId,
-                                std::string user,
-                                std::string topic,
-                                SourceDescriptor::InputFormat inputFormat,
-                                uint32_t qos,
-                                bool cleanSession,
-                                long bufferFlushIntervalMs);
-  /**
+    explicit MQTTSourceDescriptor(SchemaPtr schema,
+                                  std::string serverAddress,
+                                  std::string clientId,
+                                  std::string user,
+                                  std::string topic,
+                                  SourceDescriptor::InputFormat inputFormat,
+                                  uint32_t qos,
+                                  bool cleanSession,
+                                  long bufferFlushIntervalMs);
+    /**
    * @brief mqtt source descriptor constructor
    * @param schema the schema of the data
    * @param logicalStreamName name of the data stream
@@ -169,17 +168,16 @@ class MQTTSourceDescriptor : public SourceDescriptor {
    * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
    * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
    */
-  explicit MQTTSourceDescriptor(SchemaPtr schema,
-                                std::string logicalStreamName,
-                                std::string serverAddress,
-                                std::string clientId,
-                                std::string user,
-                                std::string topic,
-                                SourceDescriptor::InputFormat inputFormat,
-                                uint32_t qos,
-                                bool cleanSession,
-                                long bufferFlushIntervalMs);
-
+    explicit MQTTSourceDescriptor(SchemaPtr schema,
+                                  std::string logicalStreamName,
+                                  std::string serverAddress,
+                                  std::string clientId,
+                                  std::string user,
+                                  std::string topic,
+                                  SourceDescriptor::InputFormat inputFormat,
+                                  uint32_t qos,
+                                  bool cleanSession,
+                                  long bufferFlushIntervalMs);
 
     std::string serverAddress;
     std::string clientId;

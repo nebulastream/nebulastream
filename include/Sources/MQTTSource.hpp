@@ -28,7 +28,7 @@
 namespace mqtt {
 class async_client;
 using async_clientPtr = std::shared_ptr<async_client>;
-}
+}// namespace mqtt
 
 namespace NES {
 

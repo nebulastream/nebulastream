@@ -14,22 +14,24 @@
     limitations under the License.
 */
 
-#include <Sources/Parsers/CSVParser.hpp>
-#include <string>
-#include <Util/Logger.hpp>
-#include <utility>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
+#include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <string>
+#include <utility>
 
 namespace NES {
 
-CSVParser::CSVParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes,
-                     std::string const& delimiter):
-                     Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
-                     physicalTypes(std::move(physicalTypes)), delimiter(delimiter){
-}
+CSVParser::CSVParser(uint64_t tupleSize,
+                     uint64_t numberOfSchemaFields,
+                     std::vector<NES::PhysicalTypePtr> physicalTypes,
+                     std::string const& delimiter)
+    : Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
+      physicalTypes(std::move(physicalTypes)), delimiter(delimiter) {}
 
-void CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine, uint64_t tupleCount,
+void CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine,
+                                             uint64_t tupleCount,
                                              NES::Runtime::TupleBuffer& tupleBuffer) {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount: " << tupleCount);
     uint64_t offset = 0;
@@ -43,7 +45,7 @@ void CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine, uint64_t 
 
         NES_ASSERT2_FMT(fieldSize + offset + tupleCount * tupleSize < tupleBuffer.getBufferSize(),
                         "Overflow detected: buffer size = " << tupleBuffer.getBufferSize() << " position = "
-                        << (offset + tupleCount * tupleSize) << " field size " << fieldSize);
+                                                            << (offset + tupleCount * tupleSize) << " field size " << fieldSize);
         writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, offset + tupleCount * tupleSize, false);
         offset += fieldSize;
     }

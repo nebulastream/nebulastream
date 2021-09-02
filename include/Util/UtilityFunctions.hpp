@@ -17,13 +17,13 @@
 #ifndef UTILITY_FUNCTIONS_HPP
 #define UTILITY_FUNCTIONS_HPP
 
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <cpprest/json.h>
 #include <map>
 #include <string>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 /*
 - * The above undef ensures that NES will compile.
