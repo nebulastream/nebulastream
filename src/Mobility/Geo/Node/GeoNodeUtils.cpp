@@ -31,6 +31,7 @@ web::json::value GeoNodeUtils::generateJson(const GeoSourcePtr& source) {
     sourceJsonValue["latitude"] = web::json::value::number(source->getCurrentLocation()->getLatitude());
     sourceJsonValue["longitude"] = web::json::value::number(source->getCurrentLocation()->getLongitude());
     sourceJsonValue["enabled"] = web::json::value::boolean(source->isEnabled());
+    sourceJsonValue["hasRange"] = web::json::value::boolean(source->hasRange());
     return sourceJsonValue;
 }
 
