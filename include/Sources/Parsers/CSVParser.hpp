@@ -19,6 +19,8 @@
 
 #include <Sources/Parsers/Parser.hpp>
 
+namespace NES {
+
 class CSVParser : public Parser {
 
  public:
@@ -26,7 +28,7 @@ class CSVParser : public Parser {
    * @brief public constructor for CSV input data parser
    */
   CSVParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes,
-                 std::string const& delimiter);
+            std::string const& delimiter);
 
   /**
    * @brief takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer
@@ -37,9 +39,10 @@ class CSVParser : public Parser {
   void writeInputTupleToTupleBuffer(std::string csvInput, uint64_t tupleCount, NES::Runtime::TupleBuffer& tupleBuffer) override;
 
  private:
-    uint64_t tupleSize;
-    uint64_t numberOfSchemaFields;
-    std::vector<NES::PhysicalTypePtr> physicalTypes;
-    std::string delimiter;
+  uint64_t tupleSize;
+  uint64_t numberOfSchemaFields;
+  std::vector<NES::PhysicalTypePtr> physicalTypes;
+  std::string delimiter;
 };
 #endif //NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
+}// namespace NES

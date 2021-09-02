@@ -21,14 +21,16 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+namespace NES {
+
 CSVParser::CSVParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes,
-                               std::string const& delimiter):
-Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
-physicalTypes(std::move(physicalTypes)), delimiter(delimiter){
+                     std::string const& delimiter):
+                     Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
+                     physicalTypes(std::move(physicalTypes)), delimiter(delimiter){
 }
 
 void CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine, uint64_t tupleCount,
-                                                   NES::Runtime::TupleBuffer& tupleBuffer) {
+                                             NES::Runtime::TupleBuffer& tupleBuffer) {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount: " << tupleCount);
     uint64_t offset = 0;
 
@@ -46,3 +48,4 @@ void CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine, uint64_t 
         offset += fieldSize;
     }
 }
+}// namespace NES

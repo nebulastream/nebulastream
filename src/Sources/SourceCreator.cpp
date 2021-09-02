@@ -302,7 +302,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                SourceDescriptor::InputFormat inputFormat,
                                uint8_t qos,
                                bool  cleanSession,
-                               long flushIntervalForTupleBufferFillingInMilliseconds) {
+                               long bufferFlushIntervalMs) {
     return std::make_shared<MQTTSource>(schema,
                                         bufferManager,
                                         queryManager,
@@ -317,7 +317,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                         inputFormat,
                                         qos,
                                         cleanSession,
-                                        flushIntervalForTupleBufferFillingInMilliseconds);
+                                        bufferFlushIntervalMs);
 }
 #endif
 }// namespace NES

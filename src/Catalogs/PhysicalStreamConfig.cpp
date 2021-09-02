@@ -107,20 +107,23 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         NES_DEBUG("PhysicalStreamConfig: create MQTT source with configurations: " << conf << ".");
         std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter(conf,";");
 
-        //init dataType to default value (JSON). Only flat JSON format implemented currently
+        //init inputFormat to default value (JSON). Only flat JSON and CSV format implemented currently
         SourceDescriptor::InputFormat inputFormat = MQTTSourceDescriptor::JSON;
         if (strcasecmp(mqttConfig[4].c_str(), "JSON") == 0){
             inputFormat = SourceDescriptor::InputFormat::JSON;
         }
+        else if (strcasecmp(mqttConfig[4].c_str(), "CSV") == 0){
+            inputFormat = SourceDescriptor::InputFormat::CSV;
+        }
 
         //Places in mqttConfig provide:
-        //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = dataType (conversion to enum above)
-        //5 = timeUnits (conversion to enum above); 6 = messageDelay
-        long flushIntervalForTupleBufferFillingInMilliseconds = -1;
+        //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat (conversion to enum above)
+        //5 = qos (conversion to enum above); 6 = cleanSession; 7 = bufferFlushIntervalMs
+        long bufferFlushIntervalMs = -1;
         if(mqttConfig.size() > 7) {
-            flushIntervalForTupleBufferFillingInMilliseconds = std::stol(mqttConfig[7]);
+            bufferFlushIntervalMs = std::stol(mqttConfig[7]);
         }
-        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], inputFormat, stoi(mqttConfig[5]), (strcasecmp("true",mqttConfig[6].c_str()) == 0), flushIntervalForTupleBufferFillingInMilliseconds);
+        return MQTTSourceDescriptor::create(schema, mqttConfig[0], mqttConfig[1], mqttConfig[2], mqttConfig[3], inputFormat, stoi(mqttConfig[5]), (strcasecmp("true",mqttConfig[6].c_str()) == 0), bufferFlushIntervalMs);
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
         return nullptr;

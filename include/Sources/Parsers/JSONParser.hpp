@@ -19,6 +19,8 @@
 
 #include <Sources/Parsers/Parser.hpp>
 
+
+namespace NES {
 class JSONParser : public Parser {
 
  public:
@@ -36,8 +38,9 @@ class JSONParser : public Parser {
   void writeInputTupleToTupleBuffer(std::string jsonInput, uint64_t tupleCount, NES::Runtime::TupleBuffer& tupleBuffer) override;
 
  private:
-    uint64_t tupleSize;
-    uint64_t numberOfSchemaFields;
-    std::vector<NES::PhysicalTypePtr> physicalTypes;
+  uint64_t tupleSize;
+  uint64_t numberOfSchemaFields;
+  std::vector<NES::PhysicalTypePtr> physicalTypes;
 };
 #endif //NES_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
+}// namespace NES
