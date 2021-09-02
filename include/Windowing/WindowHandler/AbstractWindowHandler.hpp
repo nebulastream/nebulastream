@@ -78,12 +78,12 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      * @brief triggers all ready windows.
      * @return
      */
-    virtual void trigger(bool forceFlush = false) = 0;
+    virtual void trigger(Runtime::WorkerContextPtr workerContext, bool forceFlush = false) = 0;
 
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, Runtime::WorkerContextPtr workerContext) = 0;
+    virtual bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
     /**
      * @brief Returns window manager.
@@ -118,7 +118,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      * @param ts
      * @param originId
      */
-    void updateMaxTs(uint64_t ts, uint64_t originId, uint64_t sequenceNumber) {
+    void updateMaxTs(uint64_t ts, uint64_t originId, uint64_t sequenceNumber, Runtime::WorkerContextPtr workerContext) {
         std::unique_lock lock(windowMutex);
         NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId);
         if (windowDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
@@ -127,7 +127,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
             auto newWatermark = watermarkProcessor->getCurrentWatermark();
             if (oldWatermark < newWatermark) {
                 NES_DEBUG("AbstractWindowHandler trigger for before=" << oldWatermark << " afterMin=" << newWatermark);
-                trigger();
+                trigger(workerContext);
             }
         } else {
             watermarkProcessor->updateWatermark(ts, sequenceNumber, originId);

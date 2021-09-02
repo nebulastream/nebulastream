@@ -37,6 +37,7 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Join {
 template<class KeyType, class InputTypeLeft, class InputTypeRight>
@@ -61,7 +62,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     bool doAction(Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
                   Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
                   uint64_t currentWatermark,
-                  uint64_t lastWatermark) override {
+                  uint64_t lastWatermark,
+                  Runtime::WorkerContextPtr workerContext) override {
 
         // get the reference to the shared ptr.
         if (this->weakExecutionContext.expired()) {
@@ -135,7 +137,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                        Windowing::WindowedJoinSliceListStore<InputTypeRight>* rightStore,
                        Runtime::TupleBuffer& tupleBuffer,
                        uint64_t currentWatermark,
-                       uint64_t lastWatermark) {
+                       uint64_t lastWatermark,
+                       Runtime::WorkerContextPtr workerContext) {
         NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":::joinWindows:leftStore currentWatermark is="
                                                            << currentWatermark << " lastWatermark=" << lastWatermark);
         size_t numberOfFlushedRecords = 0;

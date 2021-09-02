@@ -46,6 +46,7 @@ NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname, uint16_t
                             128,
                             12,
                             NumaAwarenessFlag::DISABLED,
+                            "",
                             "DEBUG",
                             "ALL");
 }
@@ -104,7 +105,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             std::vector<uint64_t> workerToCoreMapping = UtilityFunctions::splitWithStringDelimiterAsInt(workerToCodeMapping, ",");
             queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, workerToCoreMapping);
         } else {
-            queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, std::vector<uint64_t>());
+            queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads);
         }
 
         auto stateManager = std::make_shared<StateManager>(nodeEngineId);
