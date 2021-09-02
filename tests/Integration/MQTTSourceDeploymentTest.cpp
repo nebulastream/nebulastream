@@ -50,7 +50,7 @@ namespace NES {
         void TearDown() override { NES_INFO("Tear down MQTTSinkDeploymentTest class."); }
     };
 
-TEST_F(MQTTSourceDeploymentTest, testDeployOneWorker) {
+    TEST_F(MQTTSourceDeploymentTest, DISABLED_testDeployOneWorker) {
         coConf->resetCoordinatorOptions();
         wrkConf->resetWorkerOptions();
         srcConf->resetSourceOptions();
@@ -106,3 +106,5 @@ TEST_F(MQTTSourceDeploymentTest, testDeployOneWorker) {
         bool retStopCord = crd->stopCoordinator(true);
         EXPECT_TRUE(retStopCord);
         NES_INFO("MQTTSinkDeploymentTest: Test finished");
+    }
+}

@@ -1145,7 +1145,7 @@ bool QueryManager::addRemoveQEPReconfiguration(OperatorId sourceId) {
     // todo adopt this code for multiple source pipelines
     auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
     for (auto successor : pipelineSuccessors) {
-        auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
+        auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
         NES_ASSERT(!!optBuffer, "invalid buffer");
         auto buffer = optBuffer.value();
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
