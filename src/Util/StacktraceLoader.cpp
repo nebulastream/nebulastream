@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Runtime/internal/backtrace.hpp>
+#include <Runtime/internal/backward.hpp>
 #include <Util/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
 
