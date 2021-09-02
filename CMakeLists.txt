@@ -346,6 +346,7 @@ message(STATUS "Using Log4cxx: " ${Log4cxx_LIBRARY})
 
 # Boost Libraries
 set(Boost_USE_MULTITHREADED TRUE)
+set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 find_package(Boost REQUIRED system thread program_options filesystem chrono) # Only check if lib is available on system for generated code.
 message("Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIRS}")
 include_directories(${Boost_INCLUDE_DIRS})
