@@ -43,11 +43,13 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
     }
 
     NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
+//    NES_ERROR("--------------------------------------- " << queryPlansToAdd.size());
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
-
+//            counter++;
+//            NES_ERROR("SCHEMA CHK Syntax " << counter);
             //TODO: we need to check how this will pan out when we will have more than 1 sink
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
 

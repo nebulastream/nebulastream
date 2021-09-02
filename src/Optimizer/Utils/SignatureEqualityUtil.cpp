@@ -55,7 +55,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         //Check if two columns are identical
         //If column from one signature doesn't exists in other signature then they are not equal.
         auto otherSchemaFieldToExprMaps = signature2->getSchemaFieldToExprMaps();
-
+        //        NES_ERROR("SCHEMA SIZE " << otherSchemaFieldToExprMaps.size());
         //Improved Version
         for (auto schemaFieldToExpMaps : signature1->getSchemaFieldToExprMaps()) {
             bool schemaMatched = false;
@@ -74,12 +74,13 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
                 solver->add(!z3::mk_and(colChecks).simplify());
                 schemaMatched = solver->check() == z3::unsat;
                 solver->pop();
-//                counter++;
-                //                if (counter >= 250) {
-                //                    resetSolver();
-                //                }
-//                NES_ERROR("Z3 Equality " << counter);
+                                counter++;
+                                if (counter >= 20050) {
+                                    resetSolver();
+                                }
+                //                NES_ERROR("SCHEMA CHK Z3 " << counter);
                 //If schema is matched then remove the other schema from the list to avoid duplicate matching
+
                 if (schemaMatched) {
                     otherSchemaFieldToExprMaps.erase(otherSchemaMapItr);
                     break;
@@ -124,14 +125,14 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         solver->push();
         solver->add(!z3::mk_and(allConditions).simplify());
         //NES_ERROR(counter << " : Solver " << *solver);
-        NES_ERROR("Counter: " << counter);
+        //        NES_ERROR("COND CHK Z3: " << counter);
         bool equal = solver->check() == z3::unsat;
         solver->pop();
-//        counter++;
-        //        if (counter >= 250) {
-        //            resetSolver();
-        //        }
-//        NES_ERROR("Z3 Equality " << counter);
+        counter++;
+        if (counter >= 20050) {
+            resetSolver();
+        }
+        //        NES_ERROR("Z3 Equality " << counter);
         return equal;
     } catch (...) {
         auto eptr = std::current_exception();

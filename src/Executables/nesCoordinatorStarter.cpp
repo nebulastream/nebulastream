@@ -49,6 +49,8 @@ const std::string logo = "/*****************************************************
 int main(int argc, const char* argv[]) {
     std::cout << logo << std::endl;
 
+
+
     NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
 

@@ -8,11 +8,11 @@ querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query
 # Parameter that are changed per run with comma separated list
 queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
 #queryMergerRule: Z3SignatureBasedPartialQueryMergerRule,SyntaxBasedPartialQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedPartialQueryMergerRule,ImprovedStringSignatureBasedPartialQueryMergerRule
-noOfPhysicalSources: 1,1,1,1,1
-batchSize: 1,1,1,1,1
+noOfPhysicalSources: 1,1,1,1,1,1
+batchSize: 1,1,1,1,1,1
 
 #benchmark internal parameter
 logLevel: LOG_NONE
 numberOfDistinctSources: 10
 startupSleepIntervalInSeconds: 3
-numberOfMeasurementsToCollect: 1
+numberOfMeasurementsToCollect: 3

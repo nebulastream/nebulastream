@@ -18,5 +18,6 @@ add_source_nes(
         AttributeField.cpp
         Windowing.cpp
         WindowedQuery.cpp
+        Test.cpp
 )
 add_subdirectory(Expressions)
