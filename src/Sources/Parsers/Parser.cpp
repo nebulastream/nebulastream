@@ -81,13 +81,13 @@ void Parser::writeFieldValueToTupleBuffer(std::basic_string<char> inputString, u
             }
             case NES::BasicPhysicalType::FLOAT:
             {
-                auto value = static_cast<float>(std::stoi(inputString));
+                auto value = static_cast<float>(std::stof(inputString));
                 memcpy(tupleBuffer.getBuffer<char>() + offset, &value, fieldSize);
                 break;
             }
             case NES::BasicPhysicalType::DOUBLE:
             {
-                auto value = static_cast<double>(std::stoi(inputString));
+                auto value = static_cast<double>(std::stod(inputString));
                 memcpy(tupleBuffer.getBuffer<char>() + offset, &value, fieldSize);
                 break;
             }
