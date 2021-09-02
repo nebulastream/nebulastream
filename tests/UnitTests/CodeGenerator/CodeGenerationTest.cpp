@@ -459,7 +459,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto resultTupleBufferDeclaration = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
     BinaryOperatorStatement initResultTupleBufferPtr(
         VarDeclStatement(resultTupleBufferDeclaration)
-            .assign(VarRef(varDeclPipelineExecutionContext).accessRef(allocateTupleBuffer)));
+            .assign(VarRef(varDeclWorkerContext).accessRef(allocateTupleBuffer)));
 
     BinaryOperatorStatement initResultTuplePtr(
         VarRef(varDeclResultTuple)
@@ -556,7 +556,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     inputBuffer.setNumberOfTuples(100);
 
     /* execute code */
-    auto wctx = Runtime::WorkerContext{0};
+    auto wctx = Runtime::WorkerContext{0, nodeEngine->getBufferManager()};
     auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                   std::vector<Runtime::Execution::OperatorHandlerPtr>());
     stage->setup(*context);

@@ -171,7 +171,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     /**
      * @brief triggers all ready windows.
      */
-    void trigger(bool forceFlush = false) override {
+    void trigger(Runtime::WorkerContextPtr workerContext, bool forceFlush = false) override {
         std::unique_lock lock(windowMutex);
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run window trigger "
                                               << executableWindowAction->toString()
@@ -226,7 +226,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run doing with watermark=" << watermark
                                               << " lastWatermark=" << lastWatermark);
 
-        executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark);
+        executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark, workerContext);
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id
                                               << "):  set lastWatermark to=" << std::max(watermark, lastWatermark));
         lastWatermark = std::max(watermark, lastWatermark);
@@ -242,12 +242,12 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, Runtime::WorkerContextPtr workerContext) override {
+    bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
         // Initialize AggregationWindowHandler Manager
         //for agg handler we create a unique id from the
         this->windowManager =
             std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness(), id);
-        executableWindowAction->setup(pipelineExecutionContext, workerContext);
+        executableWindowAction->setup(pipelineExecutionContext);
         return true;
     }
 

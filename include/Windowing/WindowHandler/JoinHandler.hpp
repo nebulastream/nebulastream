@@ -123,7 +123,7 @@ class JoinHandler : public AbstractJoinHandler {
     /**
     * @brief triggers all ready windows.
     */
-    void trigger(bool forceFlush = false) override {
+    void trigger(Runtime::WorkerContextPtr workerContext, bool forceFlush = false) override {
         std::unique_lock lock(mutex);
         NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString()
                                  << " forceFlush=" << forceFlush);
@@ -162,7 +162,7 @@ class JoinHandler : public AbstractJoinHandler {
         lock.unlock();
 
         auto minMinWatermark = std::min(watermarkLeft, watermarkRight);
-        executableJoinAction->doAction(leftJoinState, rightJoinState, minMinWatermark, lastWatermark);
+        executableJoinAction->doAction(leftJoinState, rightJoinState, minMinWatermark, lastWatermark, workerContext);
         lock.lock();
         NES_DEBUG("JoinHandler " << id << ": set lastWatermarkLeft to=" << minMinWatermark);
         lastWatermark = minMinWatermark;
@@ -180,7 +180,7 @@ class JoinHandler : public AbstractJoinHandler {
      * @param ts
      * @param originId
      */
-    void updateMaxTs(WatermarkTs ts, OriginId originId, SequenceNumber sequenceNumber, bool isLeftSide) override {
+    void updateMaxTs(WatermarkTs ts, OriginId originId, SequenceNumber sequenceNumber, bool isLeftSide, Runtime::WorkerContextPtr workerContext) override {
         std::unique_lock lock(mutex);
         std::string side = isLeftSide ? "leftSide" : "rightSide";
         NES_TRACE("JoinHandler " << id << ": updateAllMaxTs with ts=" << ts << " originId=" << originId << " side=" << side);
@@ -199,7 +199,7 @@ class JoinHandler : public AbstractJoinHandler {
 
             NES_TRACE("JoinHandler " << id << ": updateAllMaxTs with beforeMin=" << beforeMin << " afterMin=" << afterMin);
             if (beforeMin < afterMin) {
-                trigger();
+                trigger(workerContext);
             }
         } else {
             if (isLeftSide) {

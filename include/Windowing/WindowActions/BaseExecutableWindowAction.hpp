@@ -40,7 +40,8 @@ class BaseExecutableWindowAction {
      */
     virtual bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
                           uint64_t currentWatermark,
-                          uint64_t lastWatermark) = 0;
+                          uint64_t lastWatermark,
+                          Runtime::WorkerContextPtr workerContext) = 0;
 
     virtual std::string toString() = 0;
 
@@ -49,16 +50,14 @@ class BaseExecutableWindowAction {
         weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
     };
 
-    void setup(const Runtime::Execution::PipelineExecutionContextPtr& executionContext, Runtime::WorkerContextPtr workerContext) {
+    void setup(const Runtime::Execution::PipelineExecutionContextPtr& executionContext) {
         this->weakExecutionContext = executionContext;
         this->phantom = executionContext;
-        this->workerContext = workerContext;
     }
 
   protected:
     std::atomic<uint64_t> emitSequenceNumber = 0;
     std::weak_ptr<Runtime::Execution::PipelineExecutionContext> weakExecutionContext;
-    Runtime::WorkerContextPtr workerContext;
     std::shared_ptr<Runtime::Execution::PipelineExecutionContext> phantom;
     SchemaPtr windowSchema;
 };

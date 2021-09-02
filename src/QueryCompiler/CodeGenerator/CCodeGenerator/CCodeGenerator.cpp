@@ -670,6 +670,7 @@ void CCodeGenerator::generateCodeForWatermarkUpdaterWindow(const PipelineContext
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getSequenceNumber(context->code->varDeclarationInputBuffer));
+    updateAllWatermarkTsFunctionCall.addParameter(VarRef(context->code->varDeclarationWorkerContext));
     auto updateAllWatermarkTsFunctionCallStatement = VarRef(handler).accessPtr(updateAllWatermarkTsFunctionCall);
 
     context->code->cleanupStmts.push_back(updateAllWatermarkTsFunctionCallStatement.createCopy());
@@ -682,6 +683,7 @@ void CCodeGenerator::generateCodeForWatermarkUpdaterJoin(const PipelineContextPt
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getSequenceNumber(context->code->varDeclarationInputBuffer));
+    updateAllWatermarkTsFunctionCall.addParameter(VarRef(context->code->varDeclarationWorkerContext));
     auto tf = getTypeFactory();
 
     if (leftSide) {

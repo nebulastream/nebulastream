@@ -37,6 +37,7 @@
 #include <memory>
 #include <utility>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Windowing {
 
@@ -77,7 +78,8 @@ class ExecutableCompleteAggregationTriggerAction
 
     bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
                   uint64_t currentWatermark,
-                  uint64_t lastWatermark) override {
+                  uint64_t lastWatermark,
+                  Runtime::WorkerContextPtr workerContext) override {
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id="
                   << id << " " << this->windowDefinition->getDistributionType()->toString()
                   << "): doAction for currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
@@ -89,7 +91,7 @@ class ExecutableCompleteAggregationTriggerAction
         }
 
         auto executionContext = this->weakExecutionContext.lock();
-        auto tupleBuffer = this->workerContext->allocateTupleBuffer();
+        auto tupleBuffer = workerContext.allocateTupleBuffer();
         tupleBuffer.setOriginId(windowDefinition->getOriginId());
 
         // iterate over all keys in the window state
@@ -100,7 +102,8 @@ class ExecutableCompleteAggregationTriggerAction
                              this->windowDefinition,
                              tupleBuffer,
                              currentWatermark,
-                             lastWatermark);//put key into this
+                             lastWatermark,
+                             workerContext);//put key into this
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): " << toString() << " check key=" << it.first
                                                                      << "nextEdge=" << it.second->nextEdge << " id=" << id);
@@ -137,7 +140,8 @@ class ExecutableCompleteAggregationTriggerAction
                           const LogicalWindowDefinitionPtr& windowDef,
                           Runtime::TupleBuffer& tupleBuffer,
                           uint64_t currentWatermark,
-                          uint64_t lastWatermark) {
+                          uint64_t lastWatermark,
+                          Runtime::WorkerContextPtr workerContext) {
 
         NES_DEBUG("AggregateWindows for ExecutableCompleteAggregationTriggerAction id=" << id);
         // For event time we use the maximal records ts as watermark.
@@ -244,9 +248,9 @@ class ExecutableCompleteAggregationTriggerAction
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString());
                     //forward buffer to next  pipeline stage
                     executionContext->dispatchBuffer(tupleBuffer);
-                    // request new buffer
-                    tupleBuffer = this->workerContext->allocateTupleBuffer();
 
+                    // request new buffer
+                    tupleBuffer = workerContext.allocateTupleBuffer();
                     currentNumberOfTuples = 0;
                 }
 

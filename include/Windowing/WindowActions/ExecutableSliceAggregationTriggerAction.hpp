@@ -32,6 +32,7 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <utility>
+#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Windowing {
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
@@ -69,7 +70,8 @@ class ExecutableSliceAggregationTriggerAction
 
     bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
                   uint64_t currentWatermark,
-                  uint64_t lastWatermark) {
+                  uint64_t lastWatermark,
+                  Runtime::WorkerContextPtr workerContext) {
         NES_DEBUG("ExecutableSliceAggregationTriggerAction " << id << ": doAction for currentWatermark=" << currentWatermark
                                                              << " lastWatermark=" << lastWatermark);
 
@@ -79,7 +81,7 @@ class ExecutableSliceAggregationTriggerAction
             return false;
         }
         auto executionContext = this->weakExecutionContext.lock();
-        auto tupleBuffer = this->workerContext->allocateTupleBuffer();
+        auto tupleBuffer = workerContext.allocateTupleBuffer();
         tupleBuffer.setOriginId(windowDefinition->getOriginId());
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
@@ -116,7 +118,8 @@ class ExecutableSliceAggregationTriggerAction
                           WindowSliceStore<PartialAggregateType>* store,
                           Runtime::TupleBuffer& tupleBuffer,
                           uint64_t currentWatermark,
-                          uint64_t lastWatermark) {
+                          uint64_t lastWatermark,
+                          Runtime::WorkerContextPtr workerContext) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -166,7 +169,7 @@ class ExecutableSliceAggregationTriggerAction
                     this->emitBuffer(tupleBuffer);
 
                     // request new buffer
-                    tupleBuffer = this->workerContext->allocateTupleBuffer();
+                    tupleBuffer = workerContext.allocateTupleBuffer();
                     tupleBuffer.setOriginId(windowDefinition->getOriginId());
                     currentNumberOfTuples = 0;
                 }
