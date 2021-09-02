@@ -16,14 +16,14 @@
 
 #ifdef ENABLE_MQTT_BUILD
 
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/MQTTSource.hpp>
-#include <Sources/Parsers/JSONParser.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cassert>
@@ -66,10 +66,16 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(executableSuccessors)),
-      connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic),
-      inputFormat(inputFormat),
+      connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic), inputFormat(inputFormat),
       tupleSize(schema->getSchemaSizeInBytes()), qos(qos), cleanSession(cleanSession),
-      bufferFlushIntervalMs(bufferFlushIntervalMs){
+      bufferFlushIntervalMs(bufferFlushIntervalMs) {
+
+    //Compute read timeout
+    if (bufferFlushIntervalMs > 0) {
+        readTimeout = bufferFlushIntervalMs;
+    } else {
+        readTimeout = 100;//Default to 100 ms
+    }
 
     client = std::make_shared<mqtt::async_client>(serverAddress, clientId);
 
@@ -150,11 +156,11 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         std::string data = "";
         try {
             NES_TRACE("Waiting for messages on topic: '" << topic << "'");
-            auto message = client->consume_message();
+            auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeout));
             NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
             data = message->get_payload_str();
-            if (inputFormat == MQTTSourceDescriptor::JSON) { //remove '}' at the end of message, if JSON
-                data = data.substr(0,data.size()-1);
+            if (inputFormat == MQTTSourceDescriptor::JSON) {//remove '}' at the end of message, if JSON
+                data = data.substr(0, data.size() - 1);
             }
         } catch (const mqtt::exception& exc) {
             NES_ERROR("MQTTSource error: " << exc.what());
@@ -168,9 +174,10 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         // if bufferFlushIntervalMs was defined by user (> 0), after every tuple written to the TupleBuffer(TB), we check whether
         // the time spent on writing to the TB exceeds the user defined limit (bufferFlushIntervalMs) is exceeded already
         // if so, we stop filling the TB, flush it, and proceed with the next, if not, we proceed filling the TB
-        if ((bufferFlushIntervalMs > 0 &&
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() -
-        flushIntervalTimerStart).count() >= bufferFlushIntervalMs)) {
+        if ((bufferFlushIntervalMs > 0
+             && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
+                     .count()
+                 >= bufferFlushIntervalMs)) {
             NES_DEBUG("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
@@ -185,10 +192,7 @@ bool MQTTSource::connect() {
         NES_DEBUG("MQTTSource was !connect now connect " << this << ": connected");
         // connect with user name and password
         try {
-            auto connOpts = mqtt::connect_options_builder()
-                                .user_name(user)
-                                .clean_session(cleanSession)
-                                .finalize();
+            auto connOpts = mqtt::connect_options_builder().user_name(user).clean_session(cleanSession).finalize();
 
             // Start consumer before connecting to make sure to not miss messages
             client->start_consuming();
@@ -262,13 +266,13 @@ uint64_t MQTTSource::getTupleSize() const { return tupleSize; }
 
 SourceType MQTTSource::getType() const { return MQTT_SOURCE; }
 
-uint32_t MQTTSource::getQos() const {return qos;}
+uint32_t MQTTSource::getQos() const { return qos; }
 
-uint64_t MQTTSource::getTuplesThisPass() const {return tuplesThisPass;}
+uint64_t MQTTSource::getTuplesThisPass() const { return tuplesThisPass; }
 
-bool MQTTSource::getCleanSession() const {return cleanSession;}
+bool MQTTSource::getCleanSession() const { return cleanSession; }
 
-std::vector<PhysicalTypePtr> MQTTSource::getPhysicalTypes() const {return physicalTypes;}
+std::vector<PhysicalTypePtr> MQTTSource::getPhysicalTypes() const { return physicalTypes; }
 
 }// namespace NES
 #endif
