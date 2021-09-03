@@ -1,17 +1,17 @@
 /*
-Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-    https://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #include "../../../include/Optimizer/QueryPlacement/ILPStrategy.hpp"
@@ -79,7 +79,16 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         TopologyNodePtr sourceToplogyNode = streamCatalog->getSourceNodesForLogicalStream(streamName)[0];
         std::vector<NodePtr> operatorPath = findPathToRoot(sourceNode);
         std::vector<NodePtr> topologyPath = findPathToRoot(sourceToplogyNode);
-        addPath(c, opt, operatorPath, topologyPath, operatorNodes, topologyNodes, placementVariables, positions, utilizations, milages);
+        addPath(c,
+                opt,
+                operatorPath,
+                topologyPath,
+                operatorNodes,
+                topologyNodes,
+                placementVariables,
+                positions,
+                utilizations,
+                milages);
     }
 
     // calculate network cost = sum over all operators (output of operator * distance of operator)
@@ -140,7 +149,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         NES_INFO("Operator " << operatorNode->toString() << " is executed on Topology Node " << topologyNode->toString());
     }
 
-    placeOperators(queryPlan,m, placementVariables);
+    placeOperators(queryPlan, m, placementVariables);
 
     return runTypeInferencePhase(queryPlan->getQueryId());
 }
@@ -153,7 +162,7 @@ std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode) {
     std::vector<NodePtr> path;
     path.push_back(sourceNode);
     while (!path.back()->getParents().empty()) {
-        path.push_back(path.back()->getParents()[0]); // assuming single parent.
+        path.push_back(path.back()->getParents()[0]);// assuming single parent.
     }
     return path;
 }
@@ -185,7 +194,7 @@ void ILPStrategy::computeDistanceRecursive(TopologyNodePtr node, std::map<std::s
  * @return the map of mileage parameters
  */
 std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr queryPlan) {
-    std::map<std::string, double> mileageMap; // (operatorid, M)
+    std::map<std::string, double> mileageMap;// (operatorid, M)
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
 
     for (const auto& sourceNode : sourceOperators) {
@@ -292,7 +301,7 @@ void ILPStrategy::addPath(context& c,
                 }
             }
             opt.add(path_constraint == 1);
-            break; // all following nodes already created
+            break;// all following nodes already created
         }
 
         operatorNodes[operatorID] = operatorNode;
@@ -307,7 +316,7 @@ void ILPStrategy::addPath(context& c,
             std::string variableID = operatorID + "," + topologyID;
             expr P_IJ = c.int_const(variableID.c_str());
             if (i == 0 && j == 0 || i == operatorPath.size() - 1 && j == topologyPath.size() - 1) {
-                opt.add(P_IJ == 1); // fix sources and sinks
+                opt.add(P_IJ == 1);// fix sources and sinks
             } else {
                 opt.add(P_IJ == 0 || P_IJ == 1);
             }
