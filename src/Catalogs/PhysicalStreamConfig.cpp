@@ -37,7 +37,7 @@ PhysicalStreamConfigPtr PhysicalStreamConfig::createEmpty() {
 }
 
 PhysicalStreamConfig::PhysicalStreamConfig(const SourceConfigPtr& sourceConfig)
-    : sourceType(sourceConfig->getSourceType()->getValue()), sourceConfig(sourceConfig->getSourceConfig()->getValue()),
+    : sourceType(sourceConfig->getSourceType()->getValue()), udsf(sourceConfig->getUdsf()->getValue()),
       sourceFrequency(sourceConfig->getSourceFrequency()->getValue()),
       numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue()),
       numberOfBuffersToProduce(sourceConfig->getNumberOfBuffersToProduce()->getValue()),

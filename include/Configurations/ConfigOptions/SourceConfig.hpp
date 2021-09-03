@@ -67,16 +67,6 @@ class SourceConfig {
     void setSourceType(std::string sourceTypeValue);
 
     /**
-     * @brief gets a ConfigOption object with sourceConfig
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getSourceConfig() const;
-
-    /**
-     * @brief set the value for sourceConfig with the appropriate data format
-     */
-    void setSourceConfig(std::string sourceConfigValue);
-
-    /**
      * @brief gets a ConfigOption object with sourceFrequency
      */
     [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getSourceFrequency() const;
