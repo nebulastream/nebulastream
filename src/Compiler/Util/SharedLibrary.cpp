@@ -29,10 +29,10 @@ SharedLibrary::SharedLibrary(void* shareLib, std::string soAbsolutePath)
 SharedLibrary::~SharedLibrary() {
     NES_DEBUG("~SharedLibrary()");
     auto returnCode = dlclose(shareLib);
-    std::filesystem::remove(soAbsolutePath);
     if (returnCode != 0) {
         NES_ERROR("SharedLibrary: error during dlclose. error code:" << returnCode);
     }
+    std::filesystem::remove(soAbsolutePath);
 }
 
 SharedLibraryPtr SharedLibrary::load(const std::string& absoluteFilePath) {
