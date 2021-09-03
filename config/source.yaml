@@ -43,7 +43,7 @@ qos: 2
 cleanSession: true
 
 # set tupleBuffer flush interval in milliseconds
-flushIntervalMS: 3000
+flushIntervalMS: -1
 
 # Set storage layout, true = row layout, false = column layout
 rowLayout: true

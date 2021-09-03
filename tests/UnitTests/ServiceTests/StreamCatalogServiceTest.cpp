@@ -98,7 +98,7 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("testCSV.csv");
+    sourceConfig->setFilePath("testCSV.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_test");

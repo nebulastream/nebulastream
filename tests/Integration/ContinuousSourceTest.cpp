@@ -84,7 +84,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setPhysicalStreamName("test_stream");
     sourceConfig->setLogicalStreamName("exdra");
@@ -205,7 +205,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
     sourceConfig->setSourceType("DefaultSource");
-    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_test");
@@ -273,7 +273,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
     sourceConfig->setSourceType("DefaultSource");
-    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setSourceFrequency(3);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -341,7 +341,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
     sourceConfig->setSourceType("DefaultSource");
-    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -468,7 +468,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
     sourceConfig->setSourceType("DefaultSource");
-    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setSourceFrequency(3);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -605,7 +605,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     outCsv.close();
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("testCSV.csv");
+    sourceConfig->setFilePath("testCSV.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -681,7 +681,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     outCsv.close();
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("testCSV.csv");
+    sourceConfig->setFilePath("testCSV.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
@@ -766,7 +766,7 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(5);
@@ -914,7 +914,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setSourceConfig("../tests/test_data/long_running.csv");
+    sourceConfig->setFilePath("../tests/test_data/long_running.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(numBufferToProduce);

@@ -142,7 +142,7 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     sourceConfig->resetSourceOptions();
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");
@@ -202,7 +202,7 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
 
     sourceConfig->resetSourceOptions();
     sourceConfig->setSourceType("Sensor");
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");
