@@ -185,9 +185,8 @@ endif ()
 
 # AVX detection
 find_package(AVX)
-message(STATUS "AVX found=" ${AVX_FOUND})
-message(STATUS "AVX2 found=" ${AVX2_FOUND})
 
+# Native/Generic march support
 if (NES_BUILD_NATIVE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
     if (${AVX2_FOUND})
