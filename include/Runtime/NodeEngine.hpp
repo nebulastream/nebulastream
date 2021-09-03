@@ -270,7 +270,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     HardwareManagerPtr getHardwareManager() const;
 
-    std::optional<Execution::NewExecutableQueryPlanPtr> getDeployedQEP (QuerySubPlanId id);
     std::optional<Execution::ExecutableQueryPlanPtr> getDeployedQEP (QuerySubPlanId id);
 
   private:
