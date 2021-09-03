@@ -22,9 +22,6 @@ namespace NES::Runtime {
 WorkerContext::WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager)
     : workerId(workerId), localBufferPool(bufferManager) {}
 
-WorkerContext::WorkerContext(uint32_t workerId)
-    : workerId(workerId){}
-
 uint32_t WorkerContext::getId() const { return workerId; }
 
 TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }

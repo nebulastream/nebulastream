@@ -540,7 +540,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context1 = QueryCompilation::PipelineContext::create();
@@ -637,7 +637,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
     stage1->setup(*executionContext);
     stage1->start(*executionContext);
     stage1->execute(inputBuffer, *executionContext, wctx);
@@ -654,9 +654,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
                       ->addField(createField("window$end", UINT64))
@@ -801,9 +801,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
                       ->addField(createField("window$end", UINT64))
@@ -1348,7 +1348,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
     cout << "buffer content=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, input_schema);
 
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
     stage1->setup(*executionContext);
     stage1->start(*executionContext);
     executionContext->getOperatorHandlers()[0]->start(executionContext, nodeEngine->getStateManager(), 0);
@@ -1398,7 +1398,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         /* prepare objects for test */
         auto streamConf = PhysicalStreamConfig::createEmpty();
         auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-        Runtime::WorkerContext wctx(Runtime::NesThread::getId());
+        Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
         auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
         auto codeGenerator = QueryCompilation::CCodeGenerator::create();
         auto context1 = QueryCompilation::PipelineContext::create();
@@ -1484,7 +1484,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context1 = QueryCompilation::PipelineContext::create();
@@ -1562,7 +1562,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context1 = QueryCompilation::PipelineContext::create();

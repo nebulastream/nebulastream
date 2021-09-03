@@ -72,7 +72,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         }
 
         auto executionContext = this->weakExecutionContext.lock();
-        auto tupleBuffer = executionContext->allocateTupleBuffer();
+        auto tupleBuffer = workerContext.allocateTupleBuffer();
         // iterate over all keys in both window states and perform the join
         NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: doing the nested loop join");
         size_t numberOfFlushedRecords = 0;
@@ -94,7 +94,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                               rightHashTable.second,
                                                               tupleBuffer,
                                                               currentWatermark,
-                                                              lastWatermark);
+                                                              lastWatermark,
+                                                              workerContext);
                     }
                 }
             }
@@ -223,7 +224,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                     > tupleBuffer.getBufferSize()) {
                                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                                     executionContext->dispatchBuffer(tupleBuffer);
-                                    tupleBuffer = executionContext->allocateTupleBuffer();
+                                    tupleBuffer = workerContext.allocateTupleBuffer();
                                     numberOfFlushedRecords += currentNumberOfTuples;
                                     currentNumberOfTuples = 0;
                                 }

@@ -339,7 +339,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -404,7 +404,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -500,7 +500,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -1059,7 +1059,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // ingest test data
     //plan->setup();
     // plan->start(nodeEngine->getStateManager());
-    Runtime::WorkerContext workerContext{1};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
     //auto stage_0 = plan->getPipeline(0);
     //auto stage_1 = plan->getPipeline(1);
     for (int i = 0; i < 10; i++) {
