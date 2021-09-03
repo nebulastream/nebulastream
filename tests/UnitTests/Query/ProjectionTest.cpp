@@ -782,16 +782,12 @@ TEST_F(ProjectionTest, mergeQuery) {
     query1 = query1.filter(Attribute("id") < 5);
 
     // creating P2
-//    auto query2 = TestQuery::from(testSchema).filter(Attribute("id") <= 5);
     auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") <= 5);
 
     // creating P3
     // merge does not change schema
     SchemaPtr ptr = std::make_shared<Schema>(testSchema);
     auto mergedQuery = query2.unionWith(&query1).project(Attribute("id")).sink(testSinkDescriptor);
-//    auto mergedQuery = query2.unionWith(&query1).project(Attribute("id")).sink(DummySink::create());
-
-//    auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("value")).sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
