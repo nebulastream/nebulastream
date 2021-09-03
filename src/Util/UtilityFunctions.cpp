@@ -175,27 +175,42 @@ std::string Util::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const Sch
  * @return a full string stream as string
  */
 std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffer, const SchemaPtr& schema) {
-    std::stringstream ss;
-    auto numberOfTuples = tbuffer.getNumberOfTuples();
-    auto* buffer = tbuffer.getBuffer<char>();
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (uint64_t i = 0; i < numberOfTuples; i++) {
-        uint64_t offset = 0;
-        for (uint64_t j = 0; j < schema->getSize(); j++) {
-            auto field = schema->get(j);
-            auto ptr = field->getDataType();
-            auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
-            auto fieldSize = physicalType->size();
-            auto str = physicalType->convertRawToString(buffer + offset + i * schema->getSchemaSizeInBytes());
-            ss << str.c_str();
-            if (j < schema->getSize() - 1) {
-                ss << ",";
+        std::stringstream ss;
+        auto numberOfTuples = tbuffer.getNumberOfTuples();
+        auto* buffer = tbuffer.getBuffer<char>();
+        auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+        for (uint64_t i = 0; i < numberOfTuples; i++) {
+            uint64_t offset = 0;
+            for (uint64_t j = 0; j < schema->getSize(); j++) {
+                auto field = schema->get(j);
+                auto ptr = field->getDataType();
+                auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
+                auto fieldSize = physicalType->size();
+                if (field->getName() == "mqtt$expulsion_timestamp") {
+                    auto ts = std::chrono::system_clock::now();
+                    auto expulsionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                            ts.time_since_epoch()).count();
+                    ss << std::to_string(expulsionTime);
+                    if (j < schema->getSize() - 1) {
+                        ss << ",";
+                    }
+                    offset += fieldSize;
+
+                } else {
+                    auto ptr = field->getDataType();
+                    auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
+                    auto fieldSize = physicalType->size();
+                    auto str = physicalType->convertRawToString(buffer + offset + i * schema->getSchemaSizeInBytes());
+                    ss << str.c_str();
+                    if (j < schema->getSize() - 1) {
+                        ss << ",";
+                    }
+                    offset += fieldSize;
+                }
             }
-            offset += fieldSize;
+            ss << std::endl;
         }
-        ss << std::endl;
-    }
-    return ss.str();
+        return ss.str();
 }
 
 void Util::findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
