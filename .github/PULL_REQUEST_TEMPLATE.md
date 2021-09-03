@@ -19,7 +19,7 @@
 
   - Once all items of the checklist are addressed, remove the above text and this checklist, leaving only the filled out template below.
 
--->
+
 
 ## Review Checklist
 - use meaningfully comments and variable names
@@ -28,6 +28,8 @@
 - check to adhere to the logging guidelines: https://github.com/nebulastream/nebulastream/wiki/logging
 - no _
 - remove commented code
+-->
+
 ## What is the purpose of the change
 
 *(For example: This pull request makes task deployment go through the gRPC server, rather than through CAF. That way we avoid CAF's problems them on each deployment.)*
