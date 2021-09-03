@@ -14,7 +14,7 @@
 cmake_minimum_required(VERSION 3.18.0)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v3)
+set(VCPKG_BINARY_VERSION v4)
 if(APPLE)
     # for macOS or iOS, watchOS, tvOS (since 3.10.3)
     set(VCPKG_TARGET_TRIPLET x64-osx-nes)
