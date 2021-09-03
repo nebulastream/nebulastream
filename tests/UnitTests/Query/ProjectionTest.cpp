@@ -377,7 +377,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -445,7 +445,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -512,7 +512,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -804,12 +804,14 @@ TEST_F(ProjectionTest, mergeQuery) {
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
-    plan->setup();
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-    plan->start(nodeEngine->getStateManager());
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1};
-    plan->getPipelines()[0]->execute(buffer, workerContext);
+    // TODO do not rely on sleeps
+    // ingest test data
+    //plan->setup();
+    //plan->start(nodeEngine->getStateManager());
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
+    //auto stage_0 = plan->getPipeline(0);
+    //auto stage_1 = plan->getPipeline(1);
+    for (int i = 0; i < 10; i++) {
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);

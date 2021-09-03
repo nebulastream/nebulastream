@@ -42,8 +42,6 @@ class WorkerContext {
 
     BufferManagerPtr localBufferPool;
   public:
-    explicit WorkerContext(uint32_t workerId);
-
     explicit WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager);
 
     /**

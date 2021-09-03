@@ -129,7 +129,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
      * @param ts
      * @param originId
      */
-    virtual void updateMaxTs(WatermarkTs ts, OriginId originId, SequenceNumber sequenceNumber, bool leftSide, Runtime::WorkerContextPtr workerContext) = 0;
+    virtual void updateMaxTs(WatermarkTs ts, OriginId originId, SequenceNumber sequenceNumber, Runtime::WorkerContextPtr workerContext, bool leftSide) = 0;
 
   protected:
     LogicalJoinDefinitionPtr joinDefinition;
