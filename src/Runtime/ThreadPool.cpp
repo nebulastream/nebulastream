@@ -108,7 +108,7 @@ bool ThreadPool::start() {
 #ifdef __linux__
 #ifdef NES_ENABLE_NUMA_SUPPORT
             if (workerPinningPositionList.size() != 0) {
-                NES_ASSERT(numThreads < workerPinningPositionList.size(), "Not enough worker positions for pinning are provided");
+                NES_ASSERT(numThreads <= workerPinningPositionList.size(), "Not enough worker positions for pinning are provided");
                 uint64_t maxPosition = *std::max_element(workerPinningPositionList.begin(), workerPinningPositionList.end());
                 NES_ASSERT(maxPosition < std::thread::hardware_concurrency(), "pinning position is out of cpu range");
 
