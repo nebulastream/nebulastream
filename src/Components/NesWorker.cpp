@@ -43,7 +43,7 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
-    : conf(PhysicalStreamConfig::createEmpty()), withRegisterLocation(workerConfig->getRegisterLocation()->getValue() == 0),
+    : conf(PhysicalStreamConfig::createEmpty()), withRegisterLocation(workerConfig->getRegisterLocation()->getValue()),
       coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
       localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
       coordinatorPort(workerConfig->getCoordinatorPort()->getValue()),

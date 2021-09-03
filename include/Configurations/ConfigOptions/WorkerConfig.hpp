@@ -29,6 +29,7 @@ template<class T>
 class ConfigOption;
 using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
 using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
+using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
  * @brief object for storing worker configuration
@@ -198,12 +199,12 @@ class WorkerConfig {
     /**
     * @brief gets a ConfigOption object with number of registerLocation
     */
-    IntConfigOption getRegisterLocation();
+    BoolConfigOption getRegisterLocation();
 
     /**
      * @brief set the value for number of registerLocation
      */
-    void setRegisterLocation(uint64_t count);
+    void setRegisterLocation(bool registerLocation);
 
     /**
      * @brief gets a ConfigOption object with workerName
@@ -244,7 +245,7 @@ class WorkerConfig {
     IntConfigOption bufferSizeInBytes;
     StringConfigOption parentId;
     StringConfigOption logLevel;
-    IntConfigOption registerLocation;
+    BoolConfigOption registerLocation;
     StringConfigOption workerName;
     IntConfigOption workerRange;
 };

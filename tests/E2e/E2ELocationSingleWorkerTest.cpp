@@ -133,7 +133,7 @@ TEST_F(E2ELocationSingleWorkerTest, testAddSourceAndUpdateLocation) {
     string workerCmd =
         "./nesWorker --coordinatorPort=" + std::to_string(rpcPort) + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort
         + " --coordinatorRestPort=" + std::to_string(restPort)
-        + " --registerLocation=0"
+        + " --registerLocation=true"
         + " --workerName=" + sourceName
         + " --workerRange=" + std::to_string(50);
 
@@ -183,7 +183,7 @@ TEST_F(E2ELocationSingleWorkerTest, testExecutingMovingRangeQueryWithFileOutput)
     string workerCmd =
         "./nesWorker --coordinatorPort=" + std::to_string(rpcPort) + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort
         + " --coordinatorRestPort=" + std::to_string(restPort)
-        + " --registerLocation=0"
+        + " --registerLocation=true"
         + " --workerName=" + sourceName;
 
     bp::child workerProc(workerCmd.c_str());

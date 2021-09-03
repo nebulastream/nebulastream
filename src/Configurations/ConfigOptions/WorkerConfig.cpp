@@ -60,7 +60,7 @@ WorkerConfig::WorkerConfig() {
     logLevel = ConfigOption<std::string>::create("logLevel",
                                                  "LOG_DEBUG",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
-    registerLocation = ConfigOption<uint32_t>::create("registerLocation", 1, "Register location (0) enabled or (1) disabled.");
+    registerLocation = ConfigOption<bool>::create("registerLocation", false, "Register location on startup.");
     workerName =
         ConfigOption<std::string>::create("workerName",
                                           "nes_worker",
@@ -90,7 +90,7 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
-            setRegisterLocation(config["registerLocation"].As<uint16_t>());
+            setRegisterLocation(config["registerLocation"].As<bool>());
             setWorkerName(config["workerName"].As<std::string>());
             setWorkerRange(config["workerRange"].As<uint64_t>());
         } catch (std::exception& e) {
@@ -136,7 +136,7 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
             } else if (it->first == "--registerLocation") {
-                setRegisterLocation(std::stoi(it->second));
+                setRegisterLocation((it->second == "true"));
             } else if (it->first == "--workerName") {
                 setWorkerName(it->second);
             } else if (it->first == "--workerRange") {
@@ -228,9 +228,9 @@ IntConfigOption WorkerConfig::getBufferSizeInBytes() { return bufferSizeInBytes;
 
 void WorkerConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
 
-IntConfigOption WorkerConfig::getRegisterLocation() { return registerLocation; }
+BoolConfigOption WorkerConfig::getRegisterLocation() { return registerLocation; }
 
-void WorkerConfig::setRegisterLocation(uint64_t count) { registerLocation->setValue(count); }
+void WorkerConfig::setRegisterLocation(bool registerLocationValue) { registerLocation->setValue(registerLocationValue); }
 
 StringConfigOption WorkerConfig::getWorkerName() { return workerName; }
 
