@@ -30,14 +30,15 @@ class SharedLibrary : public DynamicObject {
     /**
      * @brief Creates a new @SharedLibrary Object
      * @param shareLib
+     * @param soAbsolutePath: absolute path where so file is stored
      */
-    explicit SharedLibrary(void* shareLib);
+    explicit SharedLibrary(void* shareLib, std::string soAbsolutePath);
     /**
      * @brief Loads a shared library from a specific path.
-     * @param filePath
+     * @param absoluteFilePath: absolute path where so file is stored
      * @return SharedLibraryPtr
      */
-    static SharedLibraryPtr load(const std::string& filePath);
+    static SharedLibraryPtr load(const std::string& absoluteFilePath);
 
     /**
      * @brief Destructor for the shared library.
@@ -55,6 +56,7 @@ class SharedLibrary : public DynamicObject {
 
   private:
     void* shareLib;
+    std::string soAbsolutePath;
 };
 
 }// namespace NES::Compiler
