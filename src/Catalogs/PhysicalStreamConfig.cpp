@@ -26,6 +26,7 @@
 #include <sstream>
 #include <string.h>
 #include <utility>
+
 namespace NES {
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::create(const SourceConfigPtr& sourceConfig) {
@@ -103,12 +104,14 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     } else if (type == "SenseSource") {
         NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
-    } else if (type == "MQTTSource") {
+    }
+#ifdef ENABLE_MQTT_BUILD
+    else if (type == "MQTTSource") {
         NES_DEBUG("PhysicalStreamConfig: create MQTT source with configurations: " << conf << ".");
         std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter(conf, ";");
 
         //init inputFormat to default value (JSON). Only flat JSON and CSV format implemented currently
-        SourceDescriptor::InputFormat inputFormat = MQTTSourceDescriptor::JSON;
+        SourceDescriptor::InputFormat inputFormat = SourceDescriptor::JSON;
         if (strcasecmp(mqttConfig[4].c_str(), "JSON") == 0) {
             inputFormat = SourceDescriptor::InputFormat::JSON;
         } else if (strcasecmp(mqttConfig[4].c_str(), "CSV") == 0) {
@@ -131,9 +134,10 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
                                             stoi(mqttConfig[5]),
                                             (strcasecmp("true", mqttConfig[6].c_str()) == 0),
                                             bufferFlushIntervalMs);
-    } else {
+    }
+#endif
+    else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
-        return nullptr;
     }
 }
 void PhysicalStreamConfig::setSourceFrequency(uint32_t sf) {
