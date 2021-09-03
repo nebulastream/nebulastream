@@ -89,7 +89,7 @@ class ExecutableSliceAggregationTriggerAction
                                                                  << "nextEdge=" << it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
-            aggregateWindows(it.first, it.second, tupleBuffer, currentWatermark, lastWatermark);
+            aggregateWindows(it.first, it.second, tupleBuffer, currentWatermark, lastWatermark, workerContext);
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
