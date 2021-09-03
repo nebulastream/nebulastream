@@ -17,6 +17,8 @@
 #ifndef NES_LOCATIONSERVICE_H
 #define NES_LOCATIONSERVICE_H
 
+#define DEFAULT_UPDATE_INTERVAL 500
+
 #include <cpprest/json.h>
 #include <Mobility/LocationCatalog.h>
 
@@ -37,11 +39,13 @@ class LocationService {
   private:
     LocationCatalogPtr locationCatalog;
     bool running;
+    uint32_t updateInterval;
 
   public:
+    static void initInstance(uint32_t updateInterval = DEFAULT_UPDATE_INTERVAL);
     static LocationServicePtr getInstance();
     static void cleanInstance();
-    explicit LocationService();
+    explicit LocationService(uint32_t updateInterval = DEFAULT_UPDATE_INTERVAL);
     void addSink(const string& nodeId, double movingRangeArea);
     void addSource(const string& nodeId);
     void addSource(const string& nodeId, double rangeArea);

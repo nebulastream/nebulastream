@@ -228,6 +228,18 @@ class CoordinatorConfig {
     void setQueryMergerRule(std::string queryMergerRule);
 
     /**
+     * @brief Get the query batch size
+     * @return query batch size
+     */
+    IntConfigOption getLocationUpdateInterval();
+
+    /**
+     * @brief Set the number of queries to be processed together
+     * @param batchSize: the batch size
+     */
+    void setLocationUpdateInterval(uint32_t interval);
+
+    /**
      * @brief Get the value for enabling SemanticQueryValidation
      * @return semantic validation config option
      */
@@ -259,6 +271,7 @@ class CoordinatorConfig {
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;
     StringConfigOption queryMergerRule;
+    IntConfigOption locationUpdateInterval;
 
     // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;

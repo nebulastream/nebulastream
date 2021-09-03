@@ -53,6 +53,8 @@ CoordinatorConfig::CoordinatorConfig() {
                                                         "SyntaxBasedCompleteQueryMergerRule",
                                                         "The rule to be used for performing query merging");
 
+    locationUpdateInterval = ConfigOption<uint32_t>::create("locationUpdateInterval", 500, "Time internal (in milliseconds) to update the status of the nodes based on its location.");
+
     enableSemanticQueryValidation =
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
 }
@@ -77,6 +79,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             setQueryMergerRule(config["queryMergerRule"].As<std::string>());
+            setLocationUpdateInterval(config["locationUpdateInterval"].As<uint32_t>());
             setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
@@ -118,6 +121,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
             } else if (it->first == "--queryMergerRule") {
                 setQueryMergerRule(it->second);
+            } else if (it->first == "--locationUpdateInterval") {
+                setLocationUpdateInterval(stoi(it->second));
             } else if (it->first == "--enableSemanticQueryValidation") {
                 setEnableSemanticQueryValidation((it->second == "true"));
             } else {
@@ -213,6 +218,10 @@ StringConfigOption CoordinatorConfig::getQueryMergerRule() { return queryMergerR
 void CoordinatorConfig::setQueryMergerRule(std::string queryMergerRuleValue) {
     queryMergerRule->setValue(std::move(queryMergerRuleValue));
 }
+
+IntConfigOption CoordinatorConfig::getLocationUpdateInterval() { return locationUpdateInterval; }
+
+void CoordinatorConfig::setLocationUpdateInterval(uint32_t interval) { locationUpdateInterval->setValue(interval); }
 
 BoolConfigOption CoordinatorConfig::getEnableSemanticQueryValidation() { return enableSemanticQueryValidation; }
 

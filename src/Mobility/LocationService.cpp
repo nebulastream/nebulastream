@@ -21,7 +21,7 @@
 
 namespace NES {
 
-LocationService::LocationService() : running(false) { locationCatalog = std::make_shared<LocationCatalog>(); }
+LocationService::LocationService(uint32_t updateInterval) : running(false), updateInterval(updateInterval) { locationCatalog = std::make_shared<LocationCatalog>(); }
 
 void LocationService::addSink(const string& nodeId, const double movingRangeArea) {
     this->locationCatalog->addSink(nodeId, movingRangeArea);
@@ -41,6 +41,10 @@ void LocationService::updateNodeLocation(const string& nodeId, const GeoPointPtr
 
 const LocationCatalogPtr& LocationService::getLocationCatalog() const { return locationCatalog; }
 
+void LocationService::initInstance(uint32_t updateInterval) {
+    instance = std::make_shared<LocationService>(updateInterval);
+}
+
 LocationServicePtr LocationService::getInstance() {
     if (instance == nullptr) {
         instance = std::make_shared<LocationService>();
@@ -58,11 +62,12 @@ void LocationService::updateSources() {
 
 void LocationService::start() {
     this->running = true;
+    NES_DEBUG("LocationService: starting with time interval -> " + std::to_string(updateInterval));
 
     while (running) {
         NES_DEBUG("LocationService: updating sources ...");
         updateSources();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
     }
     NES_DEBUG("LocationService: stopped!");
 }
