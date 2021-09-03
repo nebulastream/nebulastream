@@ -183,9 +183,9 @@ target_link_libraries(zmq-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME zmq-tests COMMAND zmq-tests)
 
 ### Source Tests ###
-#add_executable(source-tests "UnitTests/Source/SourceTest.cpp")
-#target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
-#add_test(NAME source-tests COMMAND source-tests)
+add_executable(source-tests "UnitTests/Source/SourceTest.cpp")
+target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+add_test(NAME source-tests COMMAND source-tests)
 
 ### Sink Tests ###
 add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
