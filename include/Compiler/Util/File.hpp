@@ -33,11 +33,11 @@ class File {
 
     /**
      * @brief Creates a new file form a string.
-     * @param path target path of the file.
+     * @param absoluteFilePath target absoluteFilePath of the file.
      * @param content of the file
      * @return std::shared_ptr<File>
      */
-    static std::shared_ptr<File> createFile(const std::string& path, const std::string& content);
+    static std::shared_ptr<File> createFile(const std::string& absoluteFilePath, const std::string& content);
 
     /**
      * @brief Returns the path of the file

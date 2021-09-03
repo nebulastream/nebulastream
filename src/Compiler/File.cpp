@@ -25,11 +25,11 @@ File::File(std::string path) : path(std::move(path)) {}
 
 std::string File::getPath() const { return path; }
 
-std::shared_ptr<File> File::createFile(const std::string& path, const std::string& content) {
-    NES_DEBUG("Create File to file://" << path << "/" << path);
-    std::ofstream resultFile(path, std::ios::trunc | std::ios::out);
+std::shared_ptr<File> File::createFile(const std::string& absoluteFilePath, const std::string& content) {
+    NES_DEBUG("Create File to file://" << absoluteFilePath);
+    std::ofstream resultFile(absoluteFilePath, std::ios::trunc | std::ios::out);
     resultFile << content;
-    return std::make_shared<File>(path);
+    return std::make_shared<File>(absoluteFilePath);
 }
 
 std::string File::read() const {

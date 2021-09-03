@@ -104,8 +104,9 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     Timer timer("CPPCompiler");
 
     timer.start();
-    auto sourceFileName = request->getName() + ".cpp";
-    auto libraryFileName = request->getName() +
+    std::string fileName = (std::filesystem::temp_directory_path() / request->getName());
+    auto sourceFileName = fileName + ".cpp";
+    auto libraryFileName = fileName +
 #ifdef __linux__
         ".so";
 #elif defined(__APPLE__)
@@ -170,6 +171,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     // load shared lib
     auto sharedLibrary = SharedLibrary::load(libraryFileName);
     timer.pause();
+    std::filesystem::remove(sourceFileName);
     NES_INFO("CPPCompiler Runtime: " << (double) timer.getRuntime() / (double) 1000000 << "ms");// print runtime
 
     return CompilationResult(sharedLibrary, std::move(timer));
