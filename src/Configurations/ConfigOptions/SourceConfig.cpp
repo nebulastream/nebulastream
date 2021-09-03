@@ -59,7 +59,7 @@ SourceConfig::SourceConfig() {
                                    true,
                                    "cleanSession true = clean up session after client loses connection, false = keep data for "
                                    "client after connection loss (persistent session), needed for: MQTTSource");
-    flushIntervalMS = ConfigOption<uint32_t>::create("flushIntervalMS", 3000, "tupleBuffer flush interval in milliseconds");
+    flushIntervalMS = ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds");
     rowLayout = ConfigOption<bool>::create("rowLayout", true, "storage layout, true = row layout, false = column layout");
     connectionTimeout =
         ConfigOption<uint32_t>::create("connectionTimeout", 10, "connection time out for source, needed for: KafkaSource");
@@ -124,7 +124,7 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
                 setCleanSession(config["cleanSession"].As<bool>());
             }
             if (!config["flushIntervalMS"].As<std::string>().empty() && config["flushIntervalMS"].As<std::string>() != "\n"){
-                setFlushIntervalMs(config["flushIntervalMS"].As<uint32_t>());
+                setFlushIntervalMS(config["flushIntervalMS"].As<float>());
             }
             if (!config["rowLayout"].As<std::string>().empty() && config["rowLayout"].As<std::string>() != "\n"){
                 setRowLayout(config["rowLayout"].As<bool>());
@@ -197,7 +197,7 @@ void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
             } else if (it->first == "--cleanSession" && !it->second.empty()) {
                 setCleanSession((it->second == "true"));
             } else if (it->first == "--flushIntervalMS" && !it->second.empty()) {
-                setFlushIntervalMs(stoi(it->second));
+                setFlushIntervalMS(stof(it->second));
             } else if (it->first == "--rowLayout" && !it->second.empty()) {
                 setRowLayout((it->second == "true"));
             } else if (it->first == "--connectionTimeout" && !it->second.empty()) {
@@ -241,7 +241,7 @@ void SourceConfig::resetSourceOptions() {
     setInputFormat(inputFormat->getDefaultValue());
     setQos(qos->getDefaultValue());
     setCleanSession(cleanSession->getDefaultValue());
-    setFlushIntervalMs(flushIntervalMS->getDefaultValue());
+    setFlushIntervalMS(flushIntervalMS->getDefaultValue());
     setRowLayout(rowLayout->getDefaultValue());
     setConnectionTimeout(connectionTimeout->getDefaultValue());
     setAutoCommit(autoCommit->getDefaultValue());
@@ -279,7 +279,7 @@ IntConfigOption SourceConfig::getQos() const { return qos; }
 
 BoolConfigOption SourceConfig::getCleanSession() const { return cleanSession; }
 
-IntConfigOption SourceConfig::getFlushIntervalMs() const { return flushIntervalMS; }
+FloatConfigOption SourceConfig::getFlushIntervalMS() const { return flushIntervalMS; }
 
 BoolConfigOption SourceConfig::getRowLayout() const { return rowLayout; }
 
@@ -345,7 +345,7 @@ void SourceConfig::setQos(uint32_t qosValue) { qos->setValue(qosValue); }
 
 void SourceConfig::setCleanSession(bool cleanSessionValue) { cleanSession->setValue(cleanSessionValue); }
 
-void SourceConfig::setFlushIntervalMs(uint32_t flushIntervalMsValue) { flushIntervalMS->setValue(flushIntervalMsValue); }
+void SourceConfig::setFlushIntervalMS(float flushIntervalMs) { flushIntervalMS->setValue(flushIntervalMs); }
 
 void SourceConfig::setRowLayout(bool rowLayoutValue) { rowLayout->setValue(rowLayoutValue); }
 

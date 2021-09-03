@@ -27,6 +27,7 @@ using SourceConfigPtr = std::shared_ptr<SourceConfig>;
 
 template<class T>
 class ConfigOption;
+using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
 using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
 using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
@@ -249,12 +250,12 @@ class SourceConfig {
     /**
      * @brief Get tupleBuffer flush interval in milliseconds
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getFlushIntervalMs() const;
+    [[nodiscard]] std::shared_ptr<ConfigOption<float>> getFlushIntervalMS() const;
 
     /**
      * @brief Set tupleBuffer flush interval in milliseconds
      */
-    void setFlushIntervalMs(uint32_t flushIntervalMs);
+    void setFlushIntervalMS(float flushIntervalMs);
 
     /**
      * @brief Get storage layout, true = row layout, false = column layout
@@ -304,7 +305,7 @@ class SourceConfig {
     StringConfigOption inputFormat;
     IntConfigOption qos;
     BoolConfigOption cleanSession;
-    IntConfigOption flushIntervalMS;
+    FloatConfigOption flushIntervalMS;
     BoolConfigOption rowLayout;
     IntConfigOption connectionTimeout;
     IntConfigOption autoCommit;

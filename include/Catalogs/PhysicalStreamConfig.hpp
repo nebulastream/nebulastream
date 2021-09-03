@@ -66,7 +66,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     /**
      * @brief Set udsf, needed for: SenseSource
      */
-    void setUdsf(std::string udsf);
+    void setUdsf(std::string udsfV);
 
     /**
      * @brief Get file path, needed for: CSVSource, BinarySource
@@ -91,7 +91,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     /**
      * @brief Get namespaceIndex for node, needed for: OPCSource
      */
-    [[nodiscard]] ConfigOption<uint32_t getNamespaceIndex() const;
+    [[nodiscard]] uint32_t getNamespaceIndex() const;
 
     /**
      * @brief Set namespaceIndex for node, needed for: OPCSource
@@ -181,17 +181,17 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     /**
      * @brief Get tupleBuffer flush interval in milliseconds
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getFlushIntervalMs() const;
+    [[nodiscard]] uint32_t getFlushIntervalMS() const;
 
     /**
      * @brief Set tupleBuffer flush interval in milliseconds
      */
-    void setFlushIntervalMs(uint32_t flushIntervalMs);
+    void setFlushIntervalMS(uint32_t flushIntervalMS);
 
     /**
      * @brief Get storage layout, true = row layout, false = column layout
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<bool>> getRowLayout() const;
+    [[nodiscard]] bool getRowLayout() const;
 
     /**
      * @brief Set storage layout, true = row layout, false = column layout
@@ -201,7 +201,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     /**
      * @brief Get connection time out for source, needed for: KafkaSource
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getConnectionTimeout() const;
+    [[nodiscard]] uint32_t getConnectionTimeout() const;
 
     /**
      * @brief Set connection time out for source, needed for: KafkaSource
@@ -211,7 +211,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     /**
      * @brief Get auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getAutoCommit() const;
+    [[nodiscard]] uint32_t getAutoCommit() const;
 
     /**
      * @brief Set auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource

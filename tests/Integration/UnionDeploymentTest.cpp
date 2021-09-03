@@ -99,7 +99,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_car");
@@ -110,7 +110,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_truck");
@@ -286,7 +286,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_car");
@@ -297,7 +297,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_truck");
@@ -473,7 +473,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_car");
@@ -484,7 +484,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -661,7 +661,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_car");
@@ -678,7 +678,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     out2.close();
     wrk2->registerLogicalStream("truck", testSchemaFileName2);
 
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_truck");
@@ -765,7 +765,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
+    sourceConfig->setFilePath("../tests/test_data/window.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->setPhysicalStreamName("physical_ruby");
     sourceConfig->setLogicalStreamName("ruby");
@@ -933,7 +933,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
+    sourceConfig->setFilePath("../tests/test_data/window.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->setPhysicalStreamName("physical_ruby");
     sourceConfig->setLogicalStreamName("ruby");
@@ -1070,7 +1070,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
+    sourceConfig->setFilePath("../tests/test_data/window.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->setPhysicalStreamName("physical_ruby");
     sourceConfig->setLogicalStreamName("ruby");

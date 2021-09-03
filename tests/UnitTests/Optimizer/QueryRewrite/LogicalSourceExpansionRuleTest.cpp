@@ -61,7 +61,7 @@ void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");

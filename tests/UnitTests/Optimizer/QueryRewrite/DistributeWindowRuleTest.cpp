@@ -66,7 +66,7 @@ void setupSensorNodeAndStreamCatalogTwoNodes(const StreamCatalogPtr& streamCatal
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");
@@ -93,7 +93,7 @@ void setupSensorNodeAndStreamCatalogFiveNodes(const StreamCatalogPtr& streamCata
     std::cout << "topo=" << topology->toString() << std::endl;
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");

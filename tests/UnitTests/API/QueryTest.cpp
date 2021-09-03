@@ -62,7 +62,7 @@ class QueryTest : public testing::Test {
     void SetUp() override {
 
         sourceConfig = SourceConfig::create();
-        sourceConfig->setSourceConfig("");
+        sourceConfig->setFilePath("");
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setNumberOfBuffersToProduce(3);
         sourceConfig->setPhysicalStreamName("test2");

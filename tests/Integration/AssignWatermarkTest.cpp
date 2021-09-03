@@ -72,7 +72,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
 
     srcConf = SourceConfig::create();
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
     srcConf->setPhysicalStreamName("test_stream");
@@ -169,7 +169,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
 
     srcConf = SourceConfig::create();
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
     srcConf->setPhysicalStreamName("test_stream");
@@ -288,7 +288,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
 
     srcConf = SourceConfig::create();
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
     srcConf->setPhysicalStreamName("test_stream");
@@ -388,7 +388,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
 
     srcConf = SourceConfig::create();
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
     srcConf->setPhysicalStreamName("test_stream");

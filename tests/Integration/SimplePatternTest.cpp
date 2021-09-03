@@ -108,7 +108,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/QnV_short.csv");
+    srcConf->setFilePath("../tests/test_data/QnV_short.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("QnV");
@@ -191,7 +191,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/QnV_short_intID.csv");
+    srcConf->setFilePath("../tests/test_data/QnV_short_intID.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("QnV");

@@ -213,7 +213,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     /* REGISTER QUERY */
     SourceConfigPtr sourceConfig;
     sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");
