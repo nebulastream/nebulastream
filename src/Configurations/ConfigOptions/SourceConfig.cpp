@@ -84,11 +84,56 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
         Yaml::Node config;
         Yaml::Parse(config, filePath.c_str());
         try {
-            if (!config["sourceConfig"].As<std::string>().empty() && config["sourceConfig"].As<std::string>() != "\n") {
-                setSourceConfig(config["sourceConfig"].As<std::string>());
-            }
             if (!config["sourceType"].As<std::string>().empty() && config["sourceType"].As<std::string>() != "\n") {
                 setSourceType(config["sourceType"].As<std::string>());
+            }
+            if (!config["udsf"].As<std::string>().empty() && config["udsf"].As<std::string>() != "\n"){
+                setUdsf(config["udsf"].As<std::string>());
+            }
+            if (!config["filePath"].As<std::string>().empty() && config["filePath"].As<std::string>() != "\n"){
+                setFilePath(config["filePath"].As<std::string>());
+            }
+            if (!config["url"].As<std::string>().empty() && config["url"].As<std::string>() != "\n"){
+                setUrl(config["url"].As<std::string>());
+            }
+            if (!config["namespaceIndex"].As<std::string>().empty() && config["namespaceIndex"].As<std::string>() != "\n"){
+                setNamespaceIndex(config["namespaceIndex"].As<uint32_t>());
+            }
+            if (!config["nodeIdentifier"].As<std::string>().empty() && config["nodeIdentifier"].As<std::string>() != "\n"){
+                setNodeIdentifier(config["nodeIdentifier"].As<std::string>());
+            }
+            if (!config["clientId"].As<std::string>().empty() && config["clientId"].As<std::string>() != "\n"){
+                setClientId(config["clientId"].As<std::string>());
+            }
+            if (!config["userName"].As<std::string>().empty() && config["userName"].As<std::string>() != "\n"){
+                setUserName(config["userName"].As<std::string>());
+            }
+            if (!config["password"].As<std::string>().empty() && config["password"].As<std::string>() != "\n"){
+                setPassword(config["password"].As<std::string>());
+            }
+            if (!config["topic"].As<std::string>().empty() && config["topic"].As<std::string>() != "\n"){
+                setTopic(config["topic"].As<std::string>());
+            }
+            if (!config["inputFormat"].As<std::string>().empty() && config["inputFormat"].As<std::string>() != "\n"){
+                setInputFormat(config["inputFormat"].As<std::string>());
+            }
+            if (!config["qos"].As<std::string>().empty() && config["qos"].As<std::string>() != "\n"){
+                setQos(config["qos"].As<uint32_t>());
+            }
+            if (!config["cleanSession"].As<std::string>().empty() && config["cleanSession"].As<std::string>() != "\n"){
+                setCleanSession(config["cleanSession"].As<bool>());
+            }
+            if (!config["flushIntervalMS"].As<std::string>().empty() && config["flushIntervalMS"].As<std::string>() != "\n"){
+                setFlushIntervalMs(config["flushIntervalMS"].As<uint32_t>());
+            }
+            if (!config["rowLayout"].As<std::string>().empty() && config["rowLayout"].As<std::string>() != "\n"){
+                setRowLayout(config["rowLayout"].As<bool>());
+            }
+            if (!config["connectionTimeout"].As<std::string>().empty() && config["connectionTimeout"].As<std::string>() != "\n"){
+                setConnectionTimeout(config["connectionTimeout"].As<uint32_t>());
+            }
+            if (!config["autoCommit"].As<std::string>().empty() && config["autoCommit"].As<std::string>() != "\n"){
+                setAutoCommit(config["autoCommit"].As<uint32_t>());
             }
             if (!config["sourceFrequency"].As<std::string>().empty() && config["sourceFrequency"].As<std::string>() != "\n") {
                 setSourceFrequency(config["sourceFrequency"].As<uint16_t>());
@@ -127,8 +172,38 @@ void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
             if (it->first == "--sourceType" && !it->second.empty()) {
                 setSourceType(it->second);
-            } else if (it->first == "--sourceConfig" && !it->second.empty()) {
-                setSourceConfig(it->second);
+            } else if (it->first == "--udsf" && !it->second.empty()) {
+                setUdsf(it->second);
+            } else if (it->first == "--filePath" && !it->second.empty()) {
+                setFilePath(it->second);
+            } else if (it->first == "--url" && !it->second.empty()) {
+                setUrl(it->second);
+            } else if (it->first == "--namespaceIndex" && !it->second.empty()) {
+                setNamespaceIndex(stoi(it->second));
+            } else if (it->first == "--nodeIdentifier" && !it->second.empty()) {
+                setNodeIdentifier(it->second);
+            } else if (it->first == "--clientId" && !it->second.empty()) {
+                setClientId(it->second);
+            } else if (it->first == "--userName" && !it->second.empty()) {
+                setUserName(it->second);
+            } else if (it->first == "--password" && !it->second.empty()) {
+                setPassword(it->second);
+            } else if (it->first == "--topic" && !it->second.empty()) {
+                setTopic(it->second);
+            } else if (it->first == "--inputFormat" && !it->second.empty()) {
+                setInputFormat(it->second);
+            } else if (it->first == "--qos" && !it->second.empty()) {
+                setQos(stoi(it->second));
+            } else if (it->first == "--cleanSession" && !it->second.empty()) {
+                setCleanSession((it->second == "true"));
+            } else if (it->first == "--flushIntervalMS" && !it->second.empty()) {
+                setFlushIntervalMs(stoi(it->second));
+            } else if (it->first == "--rowLayout" && !it->second.empty()) {
+                setRowLayout((it->second == "true"));
+            } else if (it->first == "--connectionTimeout" && !it->second.empty()) {
+                setConnectionTimeout(stoi(it->second));
+            } else if (it->first == "--autoCommit" && !it->second.empty()) {
+                setAutoCommit(stoi(it->second));
             } else if (it->first == "--sourceFrequency" && !it->second.empty()) {
                 setSourceFrequency(stoi(it->second));
             } else if (it->first == "--numberOfBuffersToProduce" && !it->second.empty()) {
@@ -147,7 +222,7 @@ void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
         }
     } catch (std::exception& e) {
         NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from command line. " << e.what());
-        NES_WARNING("NesWorkerConfig: Keeping default values.");
+        NES_WARNING("NesWorkerConfig: Keeping default values for Source.");
         resetSourceOptions();
     }
 }

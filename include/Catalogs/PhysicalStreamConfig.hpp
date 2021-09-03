@@ -53,16 +53,170 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     std::string getSourceType() override;
 
     /**
-     * @brief get source config
-     * @return string representing source config
-     */
-    [[nodiscard]] std::string getSourceConfig() const;
-
-    /**
      * @brief get source frequency
      * @return returns the source frequency
      */
     [[nodiscard]] std::chrono::milliseconds getSourceFrequency() const;
+
+    /**
+     * @brief Get udsf, needed for: SenseSource
+     */
+    [[nodiscard]] std::string getUdsf() const;
+
+    /**
+     * @brief Set udsf, needed for: SenseSource
+     */
+    void setUdsf(std::string udsf);
+
+    /**
+     * @brief Get file path, needed for: CSVSource, BinarySource
+     */
+    [[nodiscard]] std::string getFilePath() const;
+
+    /**
+     * @brief Set file path, needed for: CSVSource, BinarySource
+     */
+    void setFilePath(std::string filePath);
+
+    /**
+     * @brief Get url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource
+     */
+    [[nodiscard]] std::string getUrl() const;
+
+    /**
+     * @brief Set url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource
+     */
+    void setUrl(std::string url);
+
+    /**
+     * @brief Get namespaceIndex for node, needed for: OPCSource
+     */
+    [[nodiscard]] ConfigOption<uint32_t getNamespaceIndex() const;
+
+    /**
+     * @brief Set namespaceIndex for node, needed for: OPCSource
+     */
+    void setNamespaceIndex(uint32_t namespaceIndex);
+
+    /**
+     * @brief Get node identifier, needed for: OPCSource
+     */
+    [[nodiscard]] std::string getNodeIdentifier() const;
+
+    /**
+     * @brief Set node identifier, needed for: OPCSource
+     */
+    void setNodeIdentifier(std::string nodeIdentifier);
+
+    /**
+     * @brief Get clientId, needed for: MQTTSource (needs to be unique for each connected MQTTSource), KafkaSource (use this for groupId)
+     */
+    [[nodiscard]] std::string getClientId() const;
+
+    /**
+     * @brief Set clientId, needed for: MQTTSource (needs to be unique for each connected MQTTSource), KafkaSource (use this for groupId)
+     */
+    void setClientId(std::string clientId);
+
+    /**
+     * @brief Get userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
+     */
+    [[nodiscard]] std::string getUserName() const;
+
+    /**
+     * @brief Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
+     */
+    void setUserName(std::string userName);
+
+    /**
+     * @brief Get password, needed for: OPCSource
+     */
+    [[nodiscard]] std::string getPassword() const;
+
+    /**
+     * @brief Set password, needed for: OPCSource
+     */
+    void setPassword(std::string password);
+
+    /**
+     * @brief Get topic to listen to, needed for: MQTTSource, KafkaSource
+     */
+    [[nodiscard]] std::string getTopic() const;
+
+    /**
+     * @brief Set topic to listen to, needed for: MQTTSource, KafkaSource
+     */
+    void setTopic(std::string topic);
+
+    /**
+     * @brief Get input data format
+     */
+    [[nodiscard]] std::string getInputFormat() const;
+
+    /**
+     * @brief Set input data format
+     */
+    void setInputFormat(std::string inputFormat);
+
+    /**
+     * @brief Get quality of service, needed for: MQTTSource
+     */
+    [[nodiscard]] uint32_t getQos() const;
+
+    /**
+     * @brief Set quality of service, needed for: MQTTSource
+     */
+    void setQos(uint32_t qos);
+
+    /**
+     * @brief Get cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session), needed for: MQTTSource
+     */
+    [[nodiscard]] bool getCleanSession() const;
+
+    /**
+     * @brief Set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session), needed for: MQTTSource
+     */
+    void setCleanSession(bool cleanSession);
+
+    /**
+     * @brief Get tupleBuffer flush interval in milliseconds
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getFlushIntervalMs() const;
+
+    /**
+     * @brief Set tupleBuffer flush interval in milliseconds
+     */
+    void setFlushIntervalMs(uint32_t flushIntervalMs);
+
+    /**
+     * @brief Get storage layout, true = row layout, false = column layout
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<bool>> getRowLayout() const;
+
+    /**
+     * @brief Set storage layout, true = row layout, false = column layout
+     */
+    void setRowLayout(bool rowLayout);
+
+    /**
+     * @brief Get connection time out for source, needed for: KafkaSource
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getConnectionTimeout() const;
+
+    /**
+     * @brief Set connection time out for source, needed for: KafkaSource
+     */
+    void setConnectionTimeout(uint32_t connectionTimeout);
+
+    /**
+     * @brief Get auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getAutoCommit() const;
+
+    /**
+     * @brief Set auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
+     */
+    void setAutoCommit(uint32_t autoCommit);
 
     /**
      * @brief get the number of tuples to produce in a buffer
@@ -102,11 +256,25 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     explicit PhysicalStreamConfig(const SourceConfigPtr& sourceConfig);
 
     std::string sourceType;
-    std::string sourceConfig;
+    std::string udsf;
+    std::string filePath;
+    std::string url;
+    uint32_t namespaceIndex;
+    std::string nodeIdentifier;
+    std::string clientId;
+    std::string userName;
+    std::string password;
+    std::string topic;
+    std::string inputFormat;
+    uint32_t qos;
+    bool cleanSession;
+    uint32_t flushIntervalMS;
+    bool rowLayout;
+    uint32_t connectionTimeout;
+    uint32_t autoCommit;
     std::chrono::milliseconds sourceFrequency;
     uint32_t numberOfTuplesToProducePerBuffer;
     uint32_t numberOfBuffersToProduce;
-
     std::string physicalStreamName;
     std::string logicalStreamName;
     bool skipHeader;
