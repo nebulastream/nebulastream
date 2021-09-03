@@ -98,6 +98,7 @@ option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free
 option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC queue for the buffer manager" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_CLANG_TIDY OFF)
+option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
 
 if (POLICY CMP0004)
     cmake_policy(SET CMP0004 OLD)
@@ -184,8 +185,8 @@ endif ()
 
 # AVX detection
 find_package(AVX)
-message("AVX found=" ${AVX_FOUND})
-message("AVX2 found=" ${AVX2_FOUND})
+message(STATUS "AVX found=" ${AVX_FOUND})
+message(STATUS "AVX2 found=" ${AVX2_FOUND})
 
 if (NES_BUILD_NATIVE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
@@ -194,25 +195,25 @@ if (NES_BUILD_NATIVE)
     endif ()
 else()
     # Compiler should produce specific code for system architecture
+    # TODO figure out what to do when building on ARM
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
     if (COMPILER_SUPPORTS_MARCH_NATIVE)
-        if (NES_BUILD_BENCHMARKS)
-        else ()
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
-            if (${AVX2_FOUND})
-                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
-            endif ()
+        message(STATUS "CMAKE detects native arch support")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
+        if (${AVX2_FOUND})
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
         endif ()
     else()
+        message(STATUS "CMAKE detects generic x86-64 arch support")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
     endif ()
 endif ()
 
 
-message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
-message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
-message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
+message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
+message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
+message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
 # jemalloc
 option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
