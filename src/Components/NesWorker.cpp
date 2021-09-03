@@ -59,6 +59,7 @@ NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
       workerRange(workerConfig->getWorkerRange()->getValue()) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
+    locationClient = LocationHTTPClient::create(coordinatorIp, coordinatorRestPort, workerName, workerConfig->getLocationUpdateInterval()->getValue());
 }
 
 NesWorker::~NesWorker() {
@@ -138,7 +139,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     try {
-        locationClient = LocationHTTPClient::create(coordinatorIp, coordinatorRestPort, workerName);
         nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp,
                                                     localWorkerZmqPort,
                                                     locationClient,
@@ -196,6 +196,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("registered= " << success);
         NES_ASSERT(success, "cannot register");
     }
+
     if (withParent) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
         bool success = addParent(atoi(parentId.c_str()));

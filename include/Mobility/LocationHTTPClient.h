@@ -17,6 +17,8 @@
 #ifndef NES_LOCATIONHTTPCLIENT_H
 #define NES_LOCATIONHTTPCLIENT_H
 
+#define DEFAULT_UPDATE_INTERVAL 500
+
 #include <mutex>
 #include <string>
 #include <cpprest/http_client.h>
@@ -32,12 +34,13 @@ class LocationHTTPClient {
     bool sourcesEnabled;
     web::http::client::http_client httpClient;
     bool running;
+    uint32_t updateInterval;
 
     std::mutex clientLock;
 
   public:
-    static LocationHTTPClientPtr create(const std::string& host, int port, const std::string& workerName);
-    explicit LocationHTTPClient(const std::string& host, int port, std::string  workerName);
+    static LocationHTTPClientPtr create(const std::string& host, int port, const std::string& workerName, uint32_t updateInterval = DEFAULT_UPDATE_INTERVAL);
+    explicit LocationHTTPClient(const std::string& host, int port, std::string  workerName, uint32_t updateInterval = DEFAULT_UPDATE_INTERVAL);
     bool registerSource(uint32_t sourceRange);
     bool fetchSourceStatus();
 

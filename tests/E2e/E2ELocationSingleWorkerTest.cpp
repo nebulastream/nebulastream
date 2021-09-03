@@ -349,5 +349,90 @@ TEST_F(E2ELocationSingleWorkerTest, testExecutingMovingRangeQueryWithFileOutputW
     workerProc.terminate();
 }
 
+TEST_F(E2ELocationSingleWorkerTest, testExecutingMovingRangeQueryWithFileOutputWithCustomSourceTimeInverval) {
+    NES_INFO(" start coordinator");
+    string cmdCoordinator = "./nesCoordinator --coordinatorPort=" + std::to_string(rpcPort)
+        + " --restPort=" + std::to_string(restPort);
+    coordinatorProc = bp::child(cmdCoordinator.c_str());
+
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+
+    // Add worker
+    string sourceName = "test_source";
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string workerCmd =
+        "./nesWorker --coordinatorPort=" + std::to_string(rpcPort) + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort
+        + " --coordinatorRestPort=" + std::to_string(restPort)
+        + " --registerLocation=true"
+        + " --locationUpdateInterval=" + std::to_string(sleepTime * 10)
+        + " --workerName=" + sourceName;
+
+    bp::child workerProc(workerCmd.c_str());
+    uint64_t workerPid = workerProc.id();
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+
+    NES_INFO("TestUtil: Execute GET request on URI " << apiEndpoint);
+
+    const double sourceLatitude = 52.5128417;
+    const double sourceLongitude = 13.3213595;
+
+    // Update source position
+    GeoPointPtr sourcePosition = std::make_shared<GeoPoint>(sourceLatitude, sourceLongitude);
+    CartesianPointPtr sourceCartesianPosition = GeoCalculator::geographicToCartesian(sourcePosition);
+    updateLocation(sourceName, sourcePosition->getLatitude(), sourcePosition->getLongitude());
+
+    // Submit moving range query
+    string sinkName = "test_sink";
+    string outputFilePath = "MovingRangeQueryWithFileOutput.txt";
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << R"("Query::from(\"default_logical\").movingRange(\")";
+    ss << sinkName;
+    ss << R"(\", 10000).sink(FileSinkDescriptor::create(\")";
+    ss << outputFilePath;
+    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ss << R"());","strategyName" : "BottomUp"})";
+    ss << endl;
+    NES_INFO("string submit=" << ss.str());
+
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    QueryId queryId = json_return.at("queryId").as_integer();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    // Update sink location
+    CartesianPointPtr sinkCartesianPosition = std::make_shared<CartesianPoint>(sourceCartesianPosition->getX() - smallOffset, sourceCartesianPosition->getY());
+    GeoPointPtr sinkPosition = GeoCalculator::cartesianToGeographic(sinkCartesianPosition);
+    updateLocation(sinkName, sinkPosition->getLatitude(), sinkPosition->getLongitude());
+
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
+
+    // Check if result is empty
+    EXPECT_FALSE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath, 1));
+
+    // Check result is not empty
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath, 4));
+
+    // Remove file
+    int response = remove(outputFilePath.c_str());
+    EXPECT_TRUE(response == 0);
+
+    NES_INFO("Killing worker process->PID: " << workerPid);
+    workerProc.terminate();
+}
+
 
 }

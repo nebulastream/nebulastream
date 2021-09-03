@@ -207,6 +207,18 @@ class WorkerConfig {
     void setRegisterLocation(bool registerLocation);
 
     /**
+     * @brief Get the query batch size
+     * @return query batch size
+     */
+    IntConfigOption getLocationUpdateInterval();
+
+    /**
+     * @brief Set the number of queries to be processed together
+     * @param batchSize: the batch size
+     */
+    void setLocationUpdateInterval(uint32_t interval);
+
+    /**
      * @brief gets a ConfigOption object with workerName
      */
     StringConfigOption getWorkerName();
@@ -246,6 +258,7 @@ class WorkerConfig {
     StringConfigOption parentId;
     StringConfigOption logLevel;
     BoolConfigOption registerLocation;
+    IntConfigOption locationUpdateInterval;
     StringConfigOption workerName;
     IntConfigOption workerRange;
 };

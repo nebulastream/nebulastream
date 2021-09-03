@@ -61,10 +61,12 @@ WorkerConfig::WorkerConfig() {
                                                  "LOG_DEBUG",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
     registerLocation = ConfigOption<bool>::create("registerLocation", false, "Register location on startup.");
-    workerName =
-        ConfigOption<std::string>::create("workerName",
-                                          "nes_worker",
-                                          "Name to identify the worker (e.g.: veh_01).");
+
+    locationUpdateInterval = ConfigOption<uint32_t>::create(
+        "locationUpdateInterval",
+        500,
+        "Time internal (in milliseconds) to update the status of the source based on its location.");
+    workerName = ConfigOption<std::string>::create("workerName", "nes_worker", "Name to identify the worker (e.g.: veh_01).");
     workerRange = ConfigOption<uint32_t>::create("workerRange", 0, "Define the range of the origin of the data (m2)");
 }
 
@@ -91,6 +93,7 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             setRegisterLocation(config["registerLocation"].As<bool>());
+            setLocationUpdateInterval(config["locationUpdateInterval"].As<uint32_t>());
             setWorkerName(config["workerName"].As<std::string>());
             setWorkerRange(config["workerRange"].As<uint64_t>());
         } catch (std::exception& e) {
@@ -137,6 +140,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setLogLevel(it->second);
             } else if (it->first == "--registerLocation") {
                 setRegisterLocation((it->second == "true"));
+            } else if (it->first == "--locationUpdateInterval") {
+                setLocationUpdateInterval(stoi(it->second));
             } else if (it->first == "--workerName") {
                 setWorkerName(it->second);
             } else if (it->first == "--workerRange") {
@@ -168,6 +173,7 @@ void WorkerConfig::resetWorkerOptions() {
     setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
     setRegisterLocation(registerLocation->getDefaultValue());
+    setLocationUpdateInterval(locationUpdateInterval->getDefaultValue());
     setWorkerName(workerName->getDefaultValue());
     setWorkerRange(workerRange->getDefaultValue());
 }
@@ -186,7 +192,9 @@ void WorkerConfig::setCoordinatorPort(uint16_t coordinatorPortValue) { coordinat
 
 IntConfigOption WorkerConfig::getCoordinatorRestPort() { return coordinatorRestPort; }
 
-void WorkerConfig::setCoordinatorRestPort(uint16_t coordinatorRestPortValue) { coordinatorRestPort->setValue(coordinatorRestPortValue); }
+void WorkerConfig::setCoordinatorRestPort(uint16_t coordinatorRestPortValue) {
+    coordinatorRestPort->setValue(coordinatorRestPortValue);
+}
 
 IntConfigOption WorkerConfig::getRpcPort() { return rpcPort; }
 
@@ -232,12 +240,16 @@ BoolConfigOption WorkerConfig::getRegisterLocation() { return registerLocation; 
 
 void WorkerConfig::setRegisterLocation(bool registerLocationValue) { registerLocation->setValue(registerLocationValue); }
 
+IntConfigOption WorkerConfig::getLocationUpdateInterval() { return locationUpdateInterval; }
+
+void WorkerConfig::setLocationUpdateInterval(uint32_t interval) { locationUpdateInterval->setValue(interval); }
+
 StringConfigOption WorkerConfig::getWorkerName() { return workerName; }
 
-void WorkerConfig::setWorkerName(std::string workerNameValue) {workerName->setValue(std::move(workerNameValue));}
+void WorkerConfig::setWorkerName(std::string workerNameValue) { workerName->setValue(std::move(workerNameValue)); }
 
 IntConfigOption WorkerConfig::getWorkerRange() { return workerRange; }
 
-void WorkerConfig::setWorkerRange(uint64_t range) { workerRange->setValue(range);}
+void WorkerConfig::setWorkerRange(uint64_t range) { workerRange->setValue(range); }
 
 }// namespace NES

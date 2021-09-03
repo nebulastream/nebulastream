@@ -150,6 +150,7 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
     setQueryMergerRule(queryMergerRule->getDefaultValue());
+    setLocationUpdateInterval(locationUpdateInterval->getDefaultValue());
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
 }
 

@@ -23,13 +23,13 @@ namespace NES {
 
 const int REQUEST_SUCCESS_CODE = 200;
 
-LocationHTTPClientPtr LocationHTTPClient::create(const std::string& host, int port, const std::string& workerName) {
-    return  std::make_shared<LocationHTTPClient>(host, port, workerName);
+LocationHTTPClientPtr LocationHTTPClient::create(const std::string& host, int port, const std::string& workerName, uint32_t updateInterval) {
+    return  std::make_shared<LocationHTTPClient>(host, port, workerName, updateInterval);
 }
 
-NES::LocationHTTPClient::LocationHTTPClient(const std::string& host, int port, std::string  workerName)
+NES::LocationHTTPClient::LocationHTTPClient(const std::string& host, int port, std::string  workerName, uint32_t updateInterval)
     : workerName(std::move(workerName)), sourcesEnabled(true),
-      httpClient("http://" + host + ":" + std::to_string(port) + "/v1/nes"), running(false) {}
+      httpClient("http://" + host + ":" + std::to_string(port) + "/v1/nes"), running(false), updateInterval(updateInterval) {}
 
 bool LocationHTTPClient::registerSource(uint32_t sourceRange) {
     std::lock_guard lock(clientLock);
@@ -100,7 +100,7 @@ void LocationHTTPClient::start() {
         NES_DEBUG("LocationClient: fetching source status ...");
         bool success = fetchSourceStatus();
         NES_DEBUG("LocationClient: fetching source status ... " << success);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
     }
 
     NES_DEBUG("LocationClient: stopped!");
