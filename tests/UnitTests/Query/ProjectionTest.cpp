@@ -307,8 +307,8 @@ class TestSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
     void cleanupBuffers() { resultBuffers.clear(); }
-  private:
 
+  private:
     std::mutex m;
     uint64_t expectedBuffer;
 
@@ -777,7 +777,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-//    auto query1 = TestQuery::from(testSchema);
+    //    auto query1 = TestQuery::from(testSchema);
     auto query1 = TestQuery::from(testSourceDescriptor);
     query1 = query1.filter(Attribute("id") < 5);
 
@@ -825,8 +825,8 @@ TEST_F(ProjectionTest, mergeQuery) {
     auto resultFields01 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
-        std::cout << "cmp first=" << resultRecordIndexFields[recordIndex] << " seconds=" << recordIndex*2 << std::endl;
-        EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex*2);
+        std::cout << "cmp first=" << resultRecordIndexFields[recordIndex] << " seconds=" << recordIndex * 2 << std::endl;
+        EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex * 2);
     }
 
     testSink->shutdown();
