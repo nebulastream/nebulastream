@@ -541,7 +541,7 @@ add_executable(query-migration-phase-integration-test "Integration/QueryMigratio
 target_link_libraries(query-migration-phase-integration-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-migration-phase-integration-test COMMAND query-migration-phase-integration-test)
 
-### MQTTSinkDepleymentTest ###
+### MQTTSourceDepleymentTest ###
 add_executable(mqtt-source-deployment-test "Integration/MQTTSourceDeploymentTest.cpp")
 target_link_libraries(mqtt-source-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME mqtt-source-deployment-test COMMAND mqtt-source-deployment-test)

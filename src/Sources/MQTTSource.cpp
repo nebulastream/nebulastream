@@ -172,7 +172,7 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
             // If connected is false, constantly check if we are reconnected again and if so, resubscribe.
             if (connected) {
                 // Using try_consume_message_for(), because it is non-blocking.
-                auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
+                auto message = client->consume_message();//client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
                 if (message) {// Check if message was received correctly (not nullptr)
                     NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
                     receivedMessageString = message->get_payload_str();
