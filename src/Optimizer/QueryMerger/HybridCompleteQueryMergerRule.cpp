@@ -60,16 +60,26 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             // if there are no matching global query nodes then the shared query metadata are not matched
             std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
             auto targetSink = targetQueryPlan->getSinkOperators()[0];
-            auto hostSink = hostQueryPlan->getSinkOperators()[0];
+            auto hostSinks = hostQueryPlan->getSinkOperators();
             bool foundMatch = false;
 
+            //            NES_ERROR("HostSink " << hostSink->getStringSignature());
+            //            NES_ERROR("TargetSink " << targetSink->getStringSignature());
             //Check if the host and target sink operator signatures match each other
-            if (hostSink->getStringSignature() == targetSink->getStringSignature()) {
-                targetToHostSinkOperatorMap[targetSink] = hostSink;
+            auto match = std::find_if(hostSinks.begin(), hostSinks.end(), [&](const SinkLogicalOperatorNodePtr& hostSink) {
+                return hostSink->getStringSignature() == targetSink->getStringSignature();
+            });
+
+            if (match != hostSinks.end()) {
+                targetToHostSinkOperatorMap[targetSink] = *match;
                 foundMatch = true;
-            } else if (signatureEqualityUtil->checkEquality(hostSink->getZ3Signature(), targetSink->getZ3Signature())) {
-                targetToHostSinkOperatorMap[targetSink] = hostSink;
+                stringComp++;
+                NES_ERROR("String Comp " << stringComp);
+            } else if (signatureEqualityUtil->checkEquality(hostSinks[0]->getZ3Signature(), targetSink->getZ3Signature())) {
+                targetToHostSinkOperatorMap[targetSink] = hostSinks[0];
                 foundMatch = true;
+                z3Comp++;
+//                NES_ERROR("Z3 Comp " << z3Comp);
             }
 
             //Not all sinks found an equivalent entry in the target shared query metadata

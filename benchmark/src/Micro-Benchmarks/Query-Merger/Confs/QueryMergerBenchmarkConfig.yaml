@@ -6,13 +6,17 @@ querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query
 #querySetLocation: '/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
 
 # Parameter that are changed per run with comma separated list
-queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
+queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule
+  #,HybridCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
+#queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
 #queryMergerRule: Z3SignatureBasedPartialQueryMergerRule,SyntaxBasedPartialQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedPartialQueryMergerRule,ImprovedStringSignatureBasedPartialQueryMergerRule
-noOfPhysicalSources: 1,1,1,1,1,1
-batchSize: 1,1,1,1,1,1
+noOfPhysicalSources: 1
+  #,1,1
+batchSize: 1
+  #,1,1
 
 #benchmark internal parameter
-logLevel: LOG_NONE
+logLevel: LOG_ERROR
 numberOfDistinctSources: 10
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 3

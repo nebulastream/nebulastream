@@ -77,6 +77,7 @@ class StringSignatureBasedCompleteQueryMergerRule final : public BaseQueryMerger
 
   private:
     SignatureEqualityUtilPtr signatureEqualityUtil{nullptr};
+    uint64_t counter = 0;
 };
 }// namespace NES::Optimizer
 

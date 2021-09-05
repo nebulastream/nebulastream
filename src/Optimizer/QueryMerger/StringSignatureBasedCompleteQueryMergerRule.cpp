@@ -61,6 +61,8 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
                     if (hostSink->getStringSignature() == targetSink->getStringSignature()) {
                         targetToHostSinkOperatorMap[targetSink] = hostSink;
                         foundMatch = true;
+                        counter++;
+                        NES_ERROR("String Based signatures "<< counter);
                         break;
                     }
                 }
