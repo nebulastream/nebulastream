@@ -52,19 +52,33 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
             return false;
         }
 
+        //Check the number of window expressions extracted from both queries
+        auto otherWindowExpressions = signature2->getWindowsExpressions();
+        auto windowsExpressions = signature1->getWindowsExpressions();
+        if (windowsExpressions.size() != otherWindowExpressions.size()) {
+            NES_WARNING("QuerySignature: Both signatures have different window expressions");
+            return false;
+        }
+
         //Check if two columns are identical
-        //If column from one signature doesn't exists in other signature then they are not equal.
         auto otherSchemaFieldToExprMaps = signature2->getSchemaFieldToExprMaps();
-        //        NES_ERROR("SCHEMA SIZE " << otherSchemaFieldToExprMaps.size());
-        //Improved Version
-        for (auto schemaFieldToExpMaps : signature1->getSchemaFieldToExprMaps()) {
+        auto schemaFieldToExprMaps = signature1->getSchemaFieldToExprMaps();
+
+        //Check both have same number of schema maps
+        if (otherSchemaFieldToExprMaps.size() != schemaFieldToExprMaps.size()) {
+            NES_WARNING("QuerySignature: Both signatures have different number of Schema Filed to Expr Maps");
+            return false;
+        }
+
+        //If column from one signature doesn't exist in other signature then they are not equal.
+        for (auto schemaFieldToExprMap : schemaFieldToExprMaps) {
             bool schemaMatched = false;
             for (auto otherSchemaMapItr = otherSchemaFieldToExprMaps.begin();
                  otherSchemaMapItr != otherSchemaFieldToExprMaps.end();
                  otherSchemaMapItr++) {
                 z3::expr_vector colChecks(*context);
                 for (uint64_t index = 0; index < columns.size(); index++) {
-                    auto colExpr = schemaFieldToExpMaps[columns[index]];
+                    auto colExpr = schemaFieldToExprMap[columns[index]];
                     auto otherColExpr = (*otherSchemaMapItr)[otherColumns[index]];
                     auto equivalenceCheck = to_expr(*context, Z3_mk_eq(*context, *colExpr, *otherColExpr));
                     colChecks.push_back(equivalenceCheck);
@@ -74,10 +88,10 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
                 solver->add(!z3::mk_and(colChecks).simplify());
                 schemaMatched = solver->check() == z3::unsat;
                 solver->pop();
-                                counter++;
-                                if (counter >= 20050) {
-                                    resetSolver();
-                                }
+                counter++;
+                if (counter >= 20050) {
+                    resetSolver();
+                }
                 //                NES_ERROR("SCHEMA CHK Z3 " << counter);
                 //If schema is matched then remove the other schema from the list to avoid duplicate matching
 
@@ -96,13 +110,6 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
 
         //Compute all CNF conditions for check
         z3::expr_vector allConditions(*context);
-        //Check the number of window expressions extracted from both queries
-        auto otherWindowExpressions = signature2->getWindowsExpressions();
-        auto windowsExpressions = signature1->getWindowsExpressions();
-        if (windowsExpressions.size() != otherWindowExpressions.size()) {
-            NES_WARNING("QuerySignature: Both signatures have different window expressions");
-            return false;
-        }
 
         //Convert window definitions from both signature into equality conditions
         //If window key from one signature doesn't exists in other signature then they are not equal.
@@ -139,7 +146,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         try {
             std::rethrow_exception(eptr);
         } catch (const std::exception& e) {
-            NES_ERROR("SignatureEqualityUtil: Exception occurred while performing equality check among queries " << e.what());
+            //            NES_ERROR("SignatureEqualityUtil: Exception occurred while performing equality check among queries " << e.what());
         }
         return false;
     }
