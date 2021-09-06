@@ -126,7 +126,7 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     }
 }
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
-    NES_DEBUG("WorkerRPCServer::BeginBuffer");
+    NES_DEBUG("WorkerRPCServer::BeginBuffer request recieved");
 
     uint64_t querySubPlanId = request->querysubplanid();
     uint64_t globalSinkId = request->networksinkid();
@@ -143,6 +143,7 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
 }
 Status WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request,
                                            UpdateNetworkSinkReply* reply) {
+    NES_DEBUG("WorkerRPCServer::Sink Reconfiguration request recieved");
     uint64_t querySubPlanId = request->querysubplanid();
     uint64_t networkSinkId = request->networksinkid();
     uint64_t newNodeId = request->newnodeid();

@@ -272,7 +272,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto optRetSize = dispatcherSocket.recv(decrementEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
                     auto decrementPartitionCounterMsg = *decrementEnvelope.data<Messages::DecrementPartitionCounterMessage>();
-                    NES_DEBUG("ZmqServer:RemoveQEPMessage received for channel " << decrementPartitionCounterMsg.getChannelId());
+                    NES_DEBUG("ZmqServer:Decrement Parititon counter received for channel " << decrementPartitionCounterMsg.getChannelId());
                     exchangeProtocol.onDecrementPartitionCounter(decrementPartitionCounterMsg);
                     break;
                 }

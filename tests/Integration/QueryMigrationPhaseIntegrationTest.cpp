@@ -1346,4 +1346,109 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_DetectionOfParentAndChildExe
     EXPECT_TRUE(retStopCord);
     NES_INFO("JoinDeploymentTest: Test finished");
 }
+
+TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferMQTTSourceTest) {
+
+        CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+        WorkerConfigPtr wrkConf = WorkerConfig::create();
+        SourceConfigPtr srcConf = SourceConfig::create();
+        coConf->setRpcPort(rpcPort);
+        coConf->setRestPort(restPort);
+        wrkConf->setCoordinatorPort(rpcPort);
+        wrkConf->setNumWorkerThreads(3);
+        NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+        uint64_t port = crd->startCoordinator(/**blocking**/ false);
+        EXPECT_NE(port, 0UL);
+        NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
+        uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+        wrkConf->setCoordinatorPort(port);
+        wrkConf->setRpcPort(port + 10);
+        wrkConf->setDataPort(port + 11);
+        NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+        bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+        EXPECT_TRUE(retStart2);
+        TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
+        ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
+        wrkConf->setRpcPort(port + 20);
+        wrkConf->setDataPort(port + 21);
+        NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+        bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+        EXPECT_TRUE(retStart3);
+        TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
+        ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
+        wrkConf->setRpcPort(port + 30);
+        wrkConf->setDataPort(port + 31);
+        NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
+        bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+        EXPECT_TRUE(retStart4);
+        TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+        ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+        wrk4->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
+        wrk4->addParent(wrk3TopologyNodeId);
+
+        //register logical stream
+        std::string mqtt =
+                R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("creation_timestamp", UINT64))->addField(createField("data", UINT64))->addField(createField("ingestion_timestamp", UINT64))->addField(createField("expulsion_timestamp", UINT64));)";
+        std::string testSchemaFileName = "mqtt.hpp";
+        std::ofstream out(testSchemaFileName);
+        out << mqtt;
+        out.close();
+        wrk4->registerLogicalStream("mqtt", testSchemaFileName);
+
+        srcConf->setSourceType("MQTTSource");
+        srcConf->setSourceConfig("tcp://127.0.0.1:1883;nes;nes;test;JSON;1;true");
+        srcConf->setPhysicalStreamName("mqttP");
+        srcConf->setLogicalStreamName("mqtt");
+        srcConf->setSkipHeader(true);
+        //srcConf->setSourceFrequency(500);
+        srcConf->setNumberOfTuplesToProducePerBuffer(1);
+        //srcConf->setNumberOfBuffersToProduce(400);
+
+        PhysicalStreamConfigPtr mqttConfig = PhysicalStreamConfig::create(srcConf);
+        wrk4->registerPhysicalStream(mqttConfig);
+
+        std::string outputFilePath = "MQTTSourceTest.csv";
+        remove(outputFilePath.c_str());
+
+        NES_INFO("MQTTSourceDeploymentTest: Submit query");
+
+        // arguments are given so that ThingsBoard accepts the messages sent by the MQTT client
+        auto query = R"(Query::from("mqtt").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+
+        QueryServicePtr queryService = crd->getQueryService();
+        QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+        MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
+
+        QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+        EXPECT_NE(queryId, INVALID_QUERY_ID);
+        EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+        ASSERT_TRUE(crd->getGlobalExecutionPlan()->checkIfExecutionNodeExists(wrk2TopologyNodeId));
+        sleep(5);
+        maintenanceService->submitMaintenanceRequest(wrk2TopologyNodeId,2); //doesnt work at all
+        sleep(10);
+        queryService->validateAndQueueStopRequest(queryId);
+        EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+        NES_INFO("QueryDeploymentTest: Stop worker 2");
+        bool retStopWrk2 = wrk2->stop(true);
+        EXPECT_TRUE(retStopWrk2);
+        NES_DEBUG("Worker2 stopped!");
+
+        NES_INFO("QueryDeploymentTest: Stop worker 3");
+        bool retStopWrk3 = wrk3->stop(true);
+        EXPECT_TRUE(retStopWrk3);
+        NES_DEBUG("Worker3 stopped!");
+
+        NES_INFO("QueryDeploymentTest: Stop worker 4");
+        bool retStopWrk4 = wrk4->stop(true);
+        EXPECT_TRUE(retStopWrk4);
+        NES_DEBUG("Worker4 stopped!");
+
+        NES_INFO("QueryDeploymentTest: Stop Coordinator");
+        bool retStopCord = crd->stopCoordinator(true);
+        EXPECT_TRUE(retStopCord);
+        NES_INFO("QueryDeploymentTest: Test finished");
+
+    }
 }//namepsace nes
