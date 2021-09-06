@@ -99,10 +99,7 @@ bool QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& 
             throw Exception("QueryMigrationPhase: Error while removing a QSP from an ExecutionNode. No such QSP found");
         }
     }
-    bool success = globalExecutionPlan->removeExecutionNodeFromQueryIdIndex(queryId,markedNode->getId());
-    if(!success){
-        throw Exception ("QueryMigrationPhase: removal of ExecutionNode from queryIdIndex not sucessful");
-    }
+    globalExecutionPlan->removeExecutionNodeFromQueryIdIndex(queryId,markedNode->getId());
     return true;
 }
 
@@ -134,10 +131,7 @@ bool QueryMigrationPhase::executeMigrationWithoutBuffer(const std::vector<QueryP
             throw Exception("QueryMigrationPhase: Error while removing a QSP from an ExecutionNode. No such QSP found");
         }
     }
-    bool success = globalExecutionPlan->removeExecutionNodeFromQueryIdIndex(queryId,markedNode->getId());
-    if(!success){
-        throw Exception ("QueryMigrationPhase: removal of ExecutionNode from queryIdIndex not sucessful");
-    }
+    globalExecutionPlan->removeExecutionNodeFromQueryIdIndex(queryId,markedNode->getId());
     return true;
 }
 
