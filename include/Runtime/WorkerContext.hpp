@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 
-
 namespace NES::Runtime {
 
 /**
@@ -75,7 +74,6 @@ class WorkerContext {
      * @return an output channel
      */
     Network::OutputChannel* getChannel(Network::OperatorId ownerId);
-
 
 };
 }// namespace NES::Runtime

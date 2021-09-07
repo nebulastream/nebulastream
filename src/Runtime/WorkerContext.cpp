@@ -20,12 +20,13 @@
 namespace NES::Runtime {
 
 WorkerContext::WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager)
-    : workerId(workerId), localBufferPool(bufferManager) {}
+    : workerId(workerId), localBufferPool(bufferManager) {
+    NES_ASSERT(localBufferPool != NULL, "Local buffer is not allowed to be null");
+}
 
 uint32_t WorkerContext::getId() const { return workerId; }
 
 TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
-
 
 void WorkerContext::storeChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel) {
     NES_TRACE("WorkerContext: storing channel for operator " << id << " for context " << workerId);
