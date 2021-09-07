@@ -37,9 +37,9 @@ void JSONParser::writeInputTupleToTupleBuffer(std::string jsonInput,
     std::vector<std::string> values;
 
     // extract values as strings from MQTT message - should be improved with JSON library
-    std::vector<std::string> keyValuePairs = NES::UtilityFunctions::splitWithStringDelimiter(jsonInput, ",");
+    std::vector<std::string> keyValuePairs = NES::UtilityFunctions::splitWithStringDelimiter<std::string>(jsonInput, ",");
     for (auto& keyValuePair : keyValuePairs) {
-        values.push_back(NES::UtilityFunctions::splitWithStringDelimiter(keyValuePair, ":")[1]);
+        values.push_back(NES::UtilityFunctions::splitWithStringDelimiter<std::string>(keyValuePair, ":")[1]);
     }
 
     // iterate over fields of schema and cast string values to correct type

@@ -117,23 +117,59 @@ class UtilityFunctions {
    * @return
    */
 
-    /**
-    * @brief splits a string given a delimiter into multiple substrings stored in a std::string vector
-    * the delimiter is allowed to be a string rather than a char only.
-    * @param data - the string that is to be split
-    * @param delimiter - the string that is to be split upon e.g. / or -
-    * @return
-    */
-    static std::vector<std::string> splitWithStringDelimiter(std::string& inputString, const std::string& delim);
 
     /**
-    * @brief splits a string given a delimiter into multiple unsigned integer stored in a std::uint64_t vector
+    * @brief splits a string given a delimiter into multiple substrings stored in a T vector
     * the delimiter is allowed to be a string rather than a char only.
     * @param data - the string that is to be split
     * @param delimiter - the string that is to be split upon e.g. / or -
+    * @param fromStringtoT - the function that converts a string to an arbitrary type T
     * @return
     */
-    static std::vector<std::uint64_t> splitWithStringDelimiterAsInt(const std::string& inputString, const std::string& delim);
+    template <typename T>
+    struct SplitFunctionHelper {
+    };
+
+    template <>
+    struct SplitFunctionHelper <std::string> {
+        static constexpr auto FUNCTION = [](std::string x) { return x; };
+    };
+
+    template <>
+    struct SplitFunctionHelper <uint64_t> {
+        static constexpr auto FUNCTION = [](std::string x) { return uint64_t(std::atoll(x.c_str())); };
+    };
+
+    template <>
+    struct SplitFunctionHelper <uint32_t> {
+        static constexpr auto FUNCTION = [](std::string x) { return uint32_t(std::atoi(x.c_str())); };
+    };
+
+    template <>
+    struct SplitFunctionHelper <int> {
+        static constexpr auto FUNCTION = [](std::string x) { return std::atoi(x.c_str()); };
+    };
+
+    template <>
+    struct SplitFunctionHelper <double> {
+        static constexpr auto FUNCTION = [](std::string x) { return std::atof(x.c_str()); };
+    };
+
+    template<typename T>
+    static std::vector<T> splitWithStringDelimiter(const std::string& inputString, const std::string& delim, std::function<T(std::string)> fromStringToT = SplitFunctionHelper<T>::FUNCTION) {
+        std::string copy = inputString;
+        size_t pos = 0;
+        std::vector<T> elems;
+        while ((pos = copy.find(delim)) != std::string::npos) {
+            elems.push_back(fromStringToT(copy.substr(0, pos)));
+            copy.erase(0, pos + delim.length());
+        }
+        if (!copy.substr(0, pos).empty()) {
+            elems.push_back(fromStringToT(copy.substr(0, pos)));
+        }
+
+        return elems;
+    }
 
     static std::string prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema);
 

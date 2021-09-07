@@ -93,7 +93,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
         while (i < generated_tuples_this_pass) {
             std::getline(input, line);
             std::vector<std::string> tokens;
-            tokens = UtilityFunctions::splitWithStringDelimiter(line, ",");
+            tokens = UtilityFunctions::splitWithStringDelimiter<std::string>(line, ",");
             uint64_t offset = 0;
             offset += sizeof(uint32_t);
             uint32_t val = std::stoul(tokens[0]);
