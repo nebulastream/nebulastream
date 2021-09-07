@@ -16,11 +16,13 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Runtime/LocalBufferPool.hpp>
 
 namespace NES::Runtime {
 
 WorkerContext::WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager)
-    : workerId(workerId), localBufferPool(bufferManager) {
+    : workerId(workerId) {
+    localBufferPool = bufferManager->createLocalBufferPool(128);
     NES_ASSERT(localBufferPool != NULL, "Local buffer is not allowed to be null");
 }
 

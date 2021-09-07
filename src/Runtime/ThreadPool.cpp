@@ -123,7 +123,7 @@ bool ThreadPool::start() {
                 }
                 auto nodeOfCpu = numa_node_of_cpu(workerPinningPositionList[i]);
                 auto numaNodeIndex = nodeOfCpu;
-                NES_ASSERT(numaNodeIndex <= bufferManagers.size(), "requested buffer manager idx is too large");
+                NES_ASSERT(numaNodeIndex <= (int)bufferManagers.size(), "requested buffer manager idx is too large");
 
                 localBufferManager = bufferManagers[numaNodeIndex];
                 NES_DEBUG("Worker thread " << i << " will use numa node =" << numaNodeIndex);
@@ -135,7 +135,7 @@ bool ThreadPool::start() {
 #endif
 #endif
             barrier->wait();
-            runningRoutine(WorkerContext(NesThread::getId(), localBufferManager->createLocalBufferPool(128)));
+            runningRoutine(WorkerContext(NesThread::getId(), localBufferManager));
         });
     }
     barrier->wait();
