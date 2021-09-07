@@ -54,10 +54,14 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
     NES::StreamCatalogPtr streamCatalog = nesCoordinator->getStreamCatalog();
     //register logical stream qnv
     NES::SchemaPtr schema = NES::Schema::create()
-                                ->addField("id", NES::UINT64)
-                                ->addField("val", NES::UINT64)
-                                ->addField("X", NES::UINT64)
-                                ->addField("Y", NES::UINT64);
+                                ->addField("a", NES::UINT64)
+                                ->addField("b", NES::UINT64)
+                                ->addField("c", NES::UINT64)
+                                ->addField("d", NES::UINT64)
+                                ->addField("e", NES::UINT64)
+                                ->addField("f", NES::UINT64)
+                                ->addField("a_time", NES::UINT64)
+                                ->addField("b_time", NES::UINT64);
 
     for (uint64_t j = 0; j < numberOfDistinctSources; j++) {
         streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema);
