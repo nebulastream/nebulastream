@@ -104,7 +104,7 @@ class MQTTTSinkTest : public testing::Test {
                                                 bool asynchronousClient,
                                                 bool printBuffer) {
         // Create MQTT Sink
-        Runtime::WorkerContext workerContext(Runtime::NesThread::getId());
+        Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
         SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
 
         /* This was originally done like the other sink tests, using the createMQTTSink() function, which returns a DataSinkPtr.
