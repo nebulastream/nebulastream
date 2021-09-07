@@ -151,7 +151,7 @@ TEST_F(E2ELocationSingleWorkerTest, testAddSourceAndUpdateLocation) {
     NES_INFO("get source: try to acc return");
     NES_DEBUG("getSource response: " << getSourceJsonReturn.serialize());
     string expected =
-        R"({"enabled":false,"hasRange":false,"id":"test_source","latitude":0,"longitude":0})";
+        R"({"enabled":false,"hasRange":false,"id":"test_source","latitude":0,"longitude":0,"rangeArea":50})";
     NES_DEBUG("getSource response: expected = " << expected);
     ASSERT_EQ(getSourceJsonReturn.serialize(), expected);
 
@@ -166,7 +166,7 @@ TEST_F(E2ELocationSingleWorkerTest, testAddSourceAndUpdateLocation) {
     NES_INFO("get source: try to acc return");
     NES_DEBUG("getSource response: " << getSourceJsonReturn.serialize());
     expected =
-        R"({"enabled":false,"hasRange":true,"id":"test_source","latitude":6,"longitude":6})";
+        R"({"enabled":false,"hasRange":true,"id":"test_source","latitude":6,"longitude":6,"rangeArea":50})";
     NES_DEBUG("getSource response: expected = " << expected);
     ASSERT_EQ(getSourceJsonReturn.serialize(), expected);
 

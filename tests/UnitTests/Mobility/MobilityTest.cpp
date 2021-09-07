@@ -148,8 +148,8 @@ TEST(GeoSquare, TestContainsArea) {
     circle->setCenter(GeoCalculator::cartesianToGeographic(center2));
     EXPECT_TRUE(geoSquare->contains(circle));
 
-    const double outsideOffset = 100;
-    CartesianPointPtr center3 = std::make_shared<CartesianPoint>(geoSquare->getCartesianCenter()->getX() + outsideOffset, cartesianCenter->getY());
+    const double outsideOffset = 101;
+    CartesianPointPtr center3 = std::make_shared<CartesianPoint>(geoSquare->getCartesianCenter()->getX() + outsideOffset, cartesianCenter->getY() + outsideOffset);
     circle->setCenter(GeoCalculator::cartesianToGeographic(center3));
     EXPECT_FALSE(geoSquare->contains(circle));
 }

@@ -37,8 +37,8 @@ double GeoSquare::getDistanceToBound() const { return std::sqrt(this->getArea())
 
 bool GeoSquare::contains(const GeoAreaPtr& area) {
     if (area->isCircle()) {
-        double x = MathUtils::clamp(area->getCenter()->getLongitude(), cartesianEdges->getSouthWest()->getX(), cartesianEdges->getSouthEast()->getX());
-        double y = MathUtils::clamp(area->getCenter()->getLatitude(), cartesianEdges->getSouthWest()->getY(), cartesianEdges->getNorthWest()->getY());
+        double x = MathUtils::clamp(area->getCartesianCenter()->getX(), cartesianEdges->getSouthWest()->getX(), cartesianEdges->getSouthEast()->getX());
+        double y = MathUtils::clamp(area->getCartesianCenter()->getY(), cartesianEdges->getSouthWest()->getY(), cartesianEdges->getNorthWest()->getY());
         CartesianPointPtr ref = std::make_shared<CartesianPoint>(x, y);
         return (MathUtils::distance(area->getCartesianCenter(), ref) <= area->getDistanceToBound());
     }

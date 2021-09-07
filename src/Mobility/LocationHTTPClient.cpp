@@ -53,7 +53,7 @@ bool LocationHTTPClient::registerSource(uint32_t sourceRange) {
 
 bool LocationHTTPClient::fetchSourceStatus() {
     std::lock_guard lock(clientLock);
-    NES_DEBUG("LocationHTTPClient: register source");
+    NES_DEBUG("LocationHTTPClient: fetching info for source -> " << workerName);
 
     web::uri_builder builder("/geo/source");
     builder.append_query(("nodeId"), workerName);
@@ -79,6 +79,8 @@ bool LocationHTTPClient::fetchSourceStatus() {
     if (statusCode == REQUEST_SUCCESS_CODE) {
         sourcesEnabled = getSourceJsonReturn.at("enabled").as_bool();
     }
+
+    NES_DEBUG("LocationHTTPClient: sourceEnabled -> " << sourcesEnabled);
 
     return (statusCode == REQUEST_SUCCESS_CODE);
 }

@@ -37,6 +37,8 @@ void GeoSource::setCurrentLocation(const GeoPointPtr& currentLocation) {
     }
 }
 
+
+
 GeoSource::~GeoSource() = default;
 
 }

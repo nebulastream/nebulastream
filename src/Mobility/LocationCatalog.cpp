@@ -16,21 +16,25 @@
 
 #include <Mobility/Geo/Node/GeoNodeUtils.h>
 #include <Mobility/LocationCatalog.h>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
 void LocationCatalog::addSink(const string& nodeId, const double movingRangeArea) {
     std::lock_guard lock(catalogLock);
+    NES_DEBUG("LocationCatalog: adding sink " << nodeId);
     this->sinks.insert(std::pair<string, GeoSinkPtr>(nodeId, std::make_shared<GeoSink>(nodeId, movingRangeArea)));
 }
 
 void LocationCatalog::addSource(const string& nodeId) {
     std::lock_guard lock(catalogLock);
+    NES_DEBUG("LocationCatalog: adding source " << nodeId);
     this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId)));
 }
 
 void LocationCatalog::addSource(const string& nodeId,  double rangeArea) {
     std::lock_guard lock(catalogLock);
+    NES_DEBUG("LocationCatalog: adding source " << nodeId << " with range " << rangeArea);
     this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId, rangeArea)));
 }
 
@@ -60,6 +64,7 @@ void LocationCatalog::disableSource(const string& nodeId) {
 
 void LocationCatalog::updateNodeLocation(const string& nodeId, const GeoPointPtr& location) {
     std::lock_guard lock(catalogLock);
+    NES_DEBUG("LocationCatalog: update location from node " << nodeId);
     if (sinks.contains(nodeId)) {
         std::_Rb_tree_iterator<std::pair<const string, GeoSinkPtr>> it = this->sinks.find(nodeId);
         if (it != this->sinks.end()) {
@@ -83,9 +88,13 @@ void LocationCatalog::updateSources() {
 
         for (auto const& [sourceId, source] : sources) {
             if (source->hasRange()) {
-                source->setEnabled(sink->getRange()->contains(source->getRange()));
+                bool enabled = sink->getRange()->contains(source->getRange());
+                NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' contains source with range '" << source->getId() << "': " << enabled);
+                source->setEnabled(enabled);
             } else {
-                source->setEnabled(sink->getRange()->contains(source->getCurrentLocation()));
+                bool enabled = sink->getRange()->contains(source->getCurrentLocation());
+                NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' contains source '" << source->getId() << "': " << enabled);
+                source->setEnabled(enabled);
             }
         }
     }

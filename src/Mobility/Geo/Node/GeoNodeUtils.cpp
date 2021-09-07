@@ -23,6 +23,7 @@ web::json::value GeoNodeUtils::generateJson(const GeoSinkPtr& sink) {
     sinkJsonValue["id"] = web::json::value::string(sink->getId());
     sinkJsonValue["latitude"] = web::json::value::number(sink->getCurrentLocation()->getLatitude());
     sinkJsonValue["longitude"] = web::json::value::number(sink->getCurrentLocation()->getLongitude());
+    sinkJsonValue["rangeArea"] = web::json::value::number(sink->getRangeArea());
     return sinkJsonValue;
 }
 web::json::value GeoNodeUtils::generateJson(const GeoSourcePtr& source) {
@@ -32,6 +33,8 @@ web::json::value GeoNodeUtils::generateJson(const GeoSourcePtr& source) {
     sourceJsonValue["longitude"] = web::json::value::number(source->getCurrentLocation()->getLongitude());
     sourceJsonValue["enabled"] = web::json::value::boolean(source->isEnabled());
     sourceJsonValue["hasRange"] = web::json::value::boolean(source->hasRange());
+    sourceJsonValue["rangeArea"] = web::json::value::number(source->getRangeArea());
+
     return sourceJsonValue;
 }
 

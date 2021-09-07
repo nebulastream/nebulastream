@@ -42,4 +42,6 @@ void GeoNode::setCurrentLocation(const GeoPointPtr& location) {
 
 const GeoAreaPtr& GeoNode::getRange() const { return range; }
 
+double GeoNode::getRangeArea() const { return rangeArea; }
+
 }

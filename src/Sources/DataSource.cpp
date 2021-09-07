@@ -208,6 +208,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     while (running) {
 
         if (!queryManager->getLocationClient()->areSourcesEnabled()) {
+            NES_DEBUG("DataSource: Source disabled based on location!");
             continue;
         }
 
@@ -295,6 +296,7 @@ void DataSource::runningRoutineWithFrequency() {
     while (running) {
 
         if (!queryManager->getLocationClient()->areSourcesEnabled()) {
+            NES_DEBUG("DataSource: Source disabled based on location!");
             continue;
         }
 

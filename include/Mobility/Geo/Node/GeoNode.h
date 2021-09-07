@@ -47,7 +47,8 @@ class GeoNode {
     GeoPointPtr getCurrentLocation();
     [[nodiscard]] const std::vector<GeoPointPtr>& getLocationHistory() const;
     virtual void setCurrentLocation(const GeoPointPtr& currentLocation);
-    const GeoAreaPtr& getRange() const;
+    [[nodiscard]] const GeoAreaPtr& getRange() const;
+    double getRangeArea() const;
 
     GeoNode() = delete;
 };
