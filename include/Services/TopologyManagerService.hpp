@@ -74,6 +74,13 @@ class TopologyManagerService {
      */
     bool removeParent(uint64_t childId, uint64_t parentId);
 
+    /**
+     * @brief calls the method findNodeWithId of Topology class
+     * @param nodeId
+     * @return TopologyNodePtr
+     */
+    TopologyNodePtr findNodeWithId(uint64_t nodeId);
+
   private:
     TopologyPtr topology;
     StreamCatalogPtr streamCatalog;

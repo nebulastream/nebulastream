@@ -14,18 +14,18 @@
     limitations under the License.
 */
 
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 using namespace NES;
 
-CoordinatorRPCServer::CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine)
-    : coordinatorEngine(std::move(coordinatorEngine)){};
+CoordinatorRPCServer::CoordinatorRPCServer(TopologyPtr topology, StreamCatalogPtr streamCatalog)
+: topologyManagerService(std::make_shared<TopologyManagerService>(topology, streamCatalog)), streamCatalogService(std::make_shared<StreamCatalogService>(streamCatalog)){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
-    NES_DEBUG("CoordinatorEngine::RegisterNode: request =" << request);
-    uint64_t id = coordinatorEngine->registerNode(request->address(),
+    NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
+    uint64_t id = topologyManagerService->registerNode(request->address(),
                                                   request->grpcport(),
                                                   request->dataport(),
                                                   request->numberofslots(),
@@ -44,7 +44,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
 Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNodeRequest* request, UnregisterNodeReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request =" << request);
 
-    bool success = coordinatorEngine->unregisterNode(request->id());
+    bool success = topologyManagerService->unregisterNode(request->id());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterNode: sensor successfully removed");
         reply->set_success(true);
@@ -59,8 +59,8 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*,
                                                     const RegisterPhysicalStreamRequest* request,
                                                     RegisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream: request =" << request);
-
-    bool success = coordinatorEngine->registerPhysicalStream(request->id(),
+    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
+    bool success = streamCatalogService->registerPhysicalStream(physicalNode,
                                                              request->sourcetype(),
                                                              request->physicalstreamname(),
                                                              request->logicalstreamname());
@@ -80,8 +80,9 @@ Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext*,
                                                       UnregisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalStream: request =" << request);
 
+    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
     bool success =
-        coordinatorEngine->unregisterPhysicalStream(request->id(), request->physicalstreamname(), request->logicalstreamname());
+        streamCatalogService->unregisterPhysicalStream(physicalNode, request->physicalstreamname(), request->logicalstreamname());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalStream success");
@@ -98,7 +99,7 @@ Status CoordinatorRPCServer::RegisterLogicalStream(ServerContext*,
                                                    RegisterLogicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterLogicalStream: request =" << request);
 
-    bool success = coordinatorEngine->registerLogicalStream(request->streamname(), request->streamschema());
+    bool success = streamCatalogService->registerLogicalStream(request->streamname(), request->streamschema());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RegisterLogicalStream success");
@@ -115,7 +116,7 @@ Status CoordinatorRPCServer::UnregisterLogicalStream(ServerContext*,
                                                      UnregisterLogicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalStream: request =" << request);
 
-    bool success = coordinatorEngine->unregisterLogicalStream(request->streamname());
+    bool success = streamCatalogService->unregisterLogicalStream(request->streamname());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalStream success");
         reply->set_success(true);
@@ -129,7 +130,7 @@ Status CoordinatorRPCServer::UnregisterLogicalStream(ServerContext*,
 Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* request, AddParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::AddParent: request =" << request);
 
-    bool success = coordinatorEngine->addParent(request->childid(), request->parentid());
+    bool success = topologyManagerService->addParent(request->childid(), request->parentid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::AddParent success");
         reply->set_success(true);
@@ -143,10 +144,10 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
 Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request =" << request);
 
-    bool success = coordinatorEngine->removeParent(request->childid(), request->oldparent());
+    bool success = topologyManagerService->removeParent(request->childid(), request->oldparent());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::ReplaceParent success removeParent");
-        bool success2 = coordinatorEngine->addParent(request->childid(), request->newparent());
+        bool success2 = topologyManagerService->addParent(request->childid(), request->newparent());
         if (success2) {
             NES_DEBUG("CoordinatorRPCServer::ReplaceParent success addParent topo=");
             reply->set_success(true);
@@ -166,7 +167,7 @@ Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRe
 Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequest* request, RemoveParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RemoveParent: request =" << request);
 
-    bool success = coordinatorEngine->removeParent(request->childid(), request->parentid());
+    bool success = topologyManagerService->removeParent(request->childid(), request->parentid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
         reply->set_success(true);
