@@ -640,11 +640,14 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         });
 
         auto networkSink = std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition, bMgr, nullptr);
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        auto nodeEngine =
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
 
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
-                Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), std::nullptr_t());
+                Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
                 auto rt = Runtime::ReconfigurationMessage(0, Runtime::Initialize, networkSink);
                 networkSink->reconfigure(rt, workerContext);
                 std::mt19937 rnd;
@@ -857,6 +860,10 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             EXPECT_TRUE(source->stop());
         });
 
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        auto nodeEngine =
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
                                                          netManager,
@@ -867,7 +874,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
-                Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), std::nullptr_t());
+                Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
                 auto rt = Runtime::ReconfigurationMessage(0, Runtime::Initialize, networkSink);
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {

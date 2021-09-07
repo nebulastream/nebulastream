@@ -446,7 +446,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                     }
                 }
             } else {// Allocate a dedicated result buffer.
-                // Generates: NES::Runtime::TupleBuffer resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
+                // Generates: NES::Runtime::TupleBuffer resultTupleBuffer = workerContext.allocateTupleBuffer();
                 code->variableInitStmts.push_back(VarDeclStatement(code->varDeclarationResultBuffer)
                                                       .assign(allocateTupleBuffer(code->varDeclarationWorkerContext))
                                                       .copy());
@@ -747,7 +747,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
         VarRef(code->varDeclarationNumberOfResultTuples)
             .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(static_cast<uint64_t>(0)))))
             .copy());
-    // 2.2 allocate a new buffer -> resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
+    // 2.2 allocate a new buffer -> resultTupleBuffer = workerContext.allocateTupleBuffer();
     thenStatement->addStatement(
         VarRef(code->varDeclarationResultBuffer).assign(allocateTupleBuffer(code->varDeclarationWorkerContext)).copy());
     // 2.2 get typed result buffer from resultTupleBuffer -> resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();

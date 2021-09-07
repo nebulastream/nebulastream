@@ -44,7 +44,7 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
             NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
             if (windowHandler != nullptr) {
-                NES_ERROR("This function should not be called");
+                NES_ASSERT(false, "This function should not be called");
 //                windowHandler->trigger(std::nullptr_t());
             }
         }
@@ -68,7 +68,7 @@ bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandl
         while (this->running) {
             NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             if (joinHandler != nullptr) {
-                NES_NOT_IMPLEMENTED();
+                NES_ASSERT(false, "This function should not be called");
 //                joinHandler->trigger(std::nullptr_t());
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
