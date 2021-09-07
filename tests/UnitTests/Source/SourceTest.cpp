@@ -686,7 +686,6 @@ TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            DataSource::GatheringMode::FREQUENCY_MODE,
                                                            {pipeline});
-    Mock::AllowLeak(mDataSource.get());
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = true;
@@ -710,7 +709,6 @@ TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
     mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
-    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
 TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
@@ -728,7 +726,6 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            DataSource::GatheringMode::INGESTION_RATE_MODE,
                                                            {pipeline});
-    Mock::AllowLeak(mDataSource.get());
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = true;
@@ -756,7 +753,6 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
-    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
 TEST_F(SourceTest, testDataSourceOpen) {
