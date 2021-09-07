@@ -25,6 +25,22 @@ class BaseExecutableWindowTriggerPolicy {
     virtual ~BaseExecutableWindowTriggerPolicy() = default;
     /**
      * @brief This function starts the trigger policy
+     * @param windowHandler
+     * @param workerContext to allocate buffers
+     * @return bool indicating success
+     */
+    virtual bool start(AbstractWindowHandlerPtr windowHandler, Runtime::WorkerContextPtr workerContext) = 0;
+
+    /**
+   * @brief This function starts the trigger policy
+    * @param windowHandler
+    * @param workerContext to allocate buffers
+   * @return bool indicating success
+   */
+    virtual bool start(Join::AbstractJoinHandlerPtr joinHandler, Runtime::WorkerContextPtr workerContext) = 0;
+
+    /**
+     * @brief This function starts the trigger policy
      * @return bool indicating success
      */
     virtual bool start(AbstractWindowHandlerPtr windowHandler) = 0;

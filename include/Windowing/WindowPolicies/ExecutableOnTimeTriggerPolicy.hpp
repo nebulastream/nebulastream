@@ -36,8 +36,10 @@ class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
      * @brief This function starts the trigger policy
      * @return bool indicating success
      */
+    bool start(AbstractWindowHandlerPtr windowHandler, Runtime::WorkerContextPtr workerContext) override;
+    bool start(Join::AbstractJoinHandlerPtr joinHandler, Runtime::WorkerContextPtr workerContext) override;
+
     bool start(AbstractWindowHandlerPtr windowHandler) override;
-    //TODO maybe we can solve this better by having a common parent class for both handler
     bool start(Join::AbstractJoinHandlerPtr joinHandler) override;
 
     /**
