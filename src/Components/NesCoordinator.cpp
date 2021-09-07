@@ -28,6 +28,8 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Services/NESRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
+#include <Services/StreamCatalogService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
 #include <grpcpp/server_builder.h>
@@ -310,7 +312,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
 void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom) {
     grpc::ServerBuilder builder;
     NES_ASSERT(coordinatorEngine, "null coordinator engine");
-    CoordinatorRPCServer service(coordinatorEngine);
+    CoordinatorRPCServer service(topology, streamCatalog);
 
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());

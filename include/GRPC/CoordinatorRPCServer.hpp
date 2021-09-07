@@ -18,6 +18,8 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <Services/TopologyManagerService.hpp>
+#include <Services/StreamCatalogService.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -28,10 +30,14 @@ namespace NES {
 
 class CoordinatorEngine;
 using CoordinatorEnginePtr = std::shared_ptr<CoordinatorEngine>;
+class TopologyManagerService;
+using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
+class StreamCatalogService;
+using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
 
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
-    explicit CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine);
+    explicit CoordinatorRPCServer(TopologyPtr topology, StreamCatalogPtr streamCatalog);
 
     /**
      * @brief RPC Call to register a node
@@ -123,6 +129,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Status RemoveParent(ServerContext* context, const RemoveParentRequest* request, RemoveParentReply* reply) override;
 
   private:
-    CoordinatorEnginePtr coordinatorEngine;
+    TopologyManagerServicePtr topologyManagerService;
+    StreamCatalogServicePtr streamCatalogService;
 };
 }// namespace NES
