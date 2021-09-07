@@ -32,7 +32,7 @@ then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
-    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=1 ..
     make -j4
     # Check if build was successful
     errorCode=$?
