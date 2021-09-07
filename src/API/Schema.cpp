@@ -215,7 +215,7 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
 AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
     //Check if the field name is with fully qualified name
     auto stringToMatch = fieldName;
-    if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+    if (stringToMatch.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
         //Add only attribute name separator
         //caution: adding the fully qualified name may result in undesired behavior
         //E.g: if schema contains car$speed and truck$speed and user wants to check if attribute speed is present then

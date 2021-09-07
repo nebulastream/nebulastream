@@ -15,6 +15,7 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
+#include <API/Schema.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
@@ -52,12 +53,23 @@ void MaxAggregationDescriptor::inferStamp(SchemaPtr schema) {
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("MaxAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
-    asField->setStamp(onField->getStamp());
+
+    //Set fully qualified name for the as Field
+    auto onFieldName = onField->as<FieldAccessExpressionNode>()->getFieldName();
+    auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
+    if (onFieldName != asFieldName) {
+        auto identifier = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        asField->as<FieldAccessExpressionNode>()->updateFieldName(identifier + asFieldName);
+    }
 }
+
 WindowAggregationPtr MaxAggregationDescriptor::copy() {
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
+
 DataTypePtr MaxAggregationDescriptor::getInputStamp() { return onField->getStamp(); }
+
 DataTypePtr MaxAggregationDescriptor::getPartialAggregateStamp() { return onField->getStamp(); }
+
 DataTypePtr MaxAggregationDescriptor::getFinalAggregateStamp() { return onField->getStamp(); }
 }// namespace NES::Windowing
