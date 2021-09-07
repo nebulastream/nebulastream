@@ -805,10 +805,17 @@ TEST_F(ProjectionTest, mergeQuery) {
     auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
+
+    plan->setup();
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+    plan->start(nodeEngine->getStateManager());
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    plan->getPipelines()[0]->execute(buffer, workerContext);
+
     // ingest test data
     //plan->setup();
     //plan->start(nodeEngine->getStateManager());
-    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
     //auto stage_0 = plan->getPipeline(0);
     //auto stage_1 = plan->getPipeline(1);
 
