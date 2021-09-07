@@ -233,8 +233,8 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     // DISABLED since they pass only with AllowLeak
     // TODO: create issue for fix without using AllowLeak
     // Issue on https://github.com/nebulastream/nebulastream/issues/2035
-    FRIEND_TEST(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue);
-    FRIEND_TEST(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue);
+    FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
+    FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
 };
 using DataSourceProxyPtr = std::shared_ptr<DataSourceProxy>;
@@ -671,7 +671,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
     mDataSource.runningRoutine();
 }
 
-TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
+TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
@@ -713,7 +713,7 @@ TEST_F(SourceTest, DISABLED_testDataSourceFrequencyRoutineBufWithValue) {
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
-TEST_F(SourceTest, DISABLED_testDataSourceIngestionRoutineBufWithValue) {
+TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
