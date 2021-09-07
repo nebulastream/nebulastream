@@ -39,7 +39,7 @@ class WorkerContext {
 
     std::unordered_map<Network::OperatorId, Network::OutputChannelPtr> channels;
 
-    BufferManagerPtr localBufferPool;
+    LocalBufferPoolPtr localBufferPool;
   public:
     explicit WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager);
 

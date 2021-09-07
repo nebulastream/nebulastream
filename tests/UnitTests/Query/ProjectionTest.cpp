@@ -811,7 +811,6 @@ TEST_F(ProjectionTest, mergeQuery) {
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
     //auto stage_0 = plan->getPipeline(0);
     //auto stage_1 = plan->getPipeline(1);
-    for (int i = 0; i < 10; i++) {
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
