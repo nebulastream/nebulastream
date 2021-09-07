@@ -61,7 +61,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterNothing) {
     test.emplace_back("This is a random test line with no delimiter.");
     std::string line = "This is a random test line with no delimiter.";
     std::string delimiter = "x";
-    tokens = UtilityFunctions::splitWithStringDelimiter(line, delimiter);
+    tokens = UtilityFunctions::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -72,7 +72,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterOnce) {
     test.emplace_back(" delimiter.");
     std::string line = "This is a random test line with x delimiter.";
     std::string delimiter = "x";
-    tokens = UtilityFunctions::splitWithStringDelimiter(line, delimiter);
+    tokens = UtilityFunctions::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -84,7 +84,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterTwice) {
     test.emplace_back(" delimiter.");
     std::string line = "This is a random x line with x delimiter.";
     std::string delimiter = "x";
-    tokens = UtilityFunctions::splitWithStringDelimiter(line, delimiter);
+    tokens = UtilityFunctions::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -96,7 +96,7 @@ TEST(UtilFunctionTest, splitWithOmittingEmptyLast) {
     test.emplace_back(" delimiter. ");
     std::string line = "This is a random x line with x delimiter. x";
     std::string delimiter = "x";
-    tokens = UtilityFunctions::splitWithStringDelimiter(line, delimiter);
+    tokens = UtilityFunctions::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
