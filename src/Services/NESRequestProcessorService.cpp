@@ -90,6 +90,9 @@ void NESRequestProcessorService::start() {
 
             if (nesRequests[0]->instanceOf<MigrateQueryRequest>()) {
                 try {
+                    auto ts = std::chrono::system_clock::now();
+                    auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
+                    std::cout << "MR Recieved: " << time;
                     bool successful = queryMigrationPhase->execute(nesRequests[0]->as<MigrateQueryRequest>());
                     if (!successful) {
                         throw QueryMigrationException(nesRequests[0]->getQueryId(),

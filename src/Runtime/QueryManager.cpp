@@ -1126,6 +1126,9 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
             std::unique_lock lock(queryMutex);
             runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
             NES_DEBUG("QueryManager: removed running QEP " << qepId << "on " << getNodeId());
+            auto ts = std::chrono::system_clock::now();
+            auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
+            std::cout << "QEP removed: " << time;
             break;
         }
         default: {

@@ -155,7 +155,7 @@ std::string MQTTSource::toString() const {
 bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
     // determine how many tuples fit into the buffer
-    tuplesThisPass = 1;//tupleBuffer.getBufferSize() / tupleSize;
+    tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
     NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
 
     uint64_t tupleCount = 0;
