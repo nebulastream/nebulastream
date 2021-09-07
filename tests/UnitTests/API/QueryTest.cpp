@@ -304,6 +304,7 @@ TEST_F(QueryTest, windowAggregationWithAs) {
                      .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
                      .byKey(Attribute("id", INT64))
                      .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
                      .sink(PrintSinkDescriptor::create());
 
     // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink

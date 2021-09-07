@@ -15,6 +15,7 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
+#include <API/Schema.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
@@ -55,7 +56,14 @@ void MinAggregationDescriptor::inferStamp(SchemaPtr schema) {
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("MinAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
-    asField->setStamp(onField->getStamp());
+
+    //Set fully qualified name for the as Field
+    auto onFieldName = onField->as<FieldAccessExpressionNode>()->getFieldName();
+    auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
+    if (onFieldName != asFieldName) {
+        auto identifier = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        asField->as<FieldAccessExpressionNode>()->updateFieldName(identifier + asFieldName);
+    }
 }
 WindowAggregationPtr MinAggregationDescriptor::copy() {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(this->onField->copy(), this->asField->copy()));

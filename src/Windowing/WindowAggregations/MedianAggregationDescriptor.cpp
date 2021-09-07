@@ -50,7 +50,13 @@ void MedianAggregationDescriptor::inferStamp(SchemaPtr schema) {
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("MedianAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
-    asField->setStamp(onField->getStamp());
+    //Set fully qualified name for the as Field
+    auto onFieldName = onField->as<FieldAccessExpressionNode>()->getFieldName();
+    auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
+    if (onFieldName != asFieldName) {
+        auto identifier = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        asField->as<FieldAccessExpressionNode>()->updateFieldName(identifier + asFieldName);
+    }
 }
 WindowAggregationDescriptorPtr MedianAggregationDescriptor::copy() {
     return std::make_shared<MedianAggregationDescriptor>(

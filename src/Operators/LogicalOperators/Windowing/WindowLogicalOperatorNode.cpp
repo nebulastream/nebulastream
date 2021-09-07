@@ -81,8 +81,8 @@ bool WindowLogicalOperatorNode::inferSchema() {
         outputSchema->addField(
             AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
     }
-    outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
+    auto asField = windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName();
+    outputSchema->addField(AttributeField::create(asField, windowAggregation->as()->getStamp()));
     return true;
 }
 

@@ -446,11 +446,11 @@ DISABLE_WARNING_UNREFERENCED_FUNCTION
 static void setupLogging(const std::string& logFileName, DebugLevel level) {
     std::cout << "Logger: SETUP_LOGGING" << std::endl;
     // create PatternLayout
-    //    log4cxx::LayoutPtr layoutPtr(
-    //        new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l [%M] %X{threadName} [%-5t] [%p] : %m%n"));
-
     log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout("%m%n"));
+        new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l [%M] %X{threadName} [%-5t] [%p] : %m%n"));
+
+//    log4cxx::LayoutPtr layoutPtr(
+//        new log4cxx::PatternLayout("%m%n"));
     // create FileAppender
     LOG4CXX_DECODE_CHAR(fileName, logFileName);
     log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
