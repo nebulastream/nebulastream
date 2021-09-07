@@ -32,17 +32,14 @@ class ExecutableOnWatermarkChangeTriggerPolicy : public BaseExecutableWindowTrig
 
     virtual ~ExecutableOnWatermarkChangeTriggerPolicy();
 
-    /**
-     * @brief This function starts the trigger policy for a window handler
-     * @return bool indicating success
-     */
+    bool start(AbstractWindowHandlerPtr windowHandler, Runtime::WorkerContextPtr workerContext) override;
+
+    bool start(Join::AbstractJoinHandlerPtr joinHandler, Runtime::WorkerContextPtr workerContext) override;
+
     bool start(AbstractWindowHandlerPtr windowHandler) override;
 
-    /**
-     * @brief This function starts the trigger policy for a join handler
-     * @return bool indicating success
-     */
     bool start(Join::AbstractJoinHandlerPtr joinHandler) override;
+
 
     /**
      * @brief This function stop the trigger policy
