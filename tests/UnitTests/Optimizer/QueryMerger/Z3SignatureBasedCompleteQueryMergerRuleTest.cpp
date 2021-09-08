@@ -1082,7 +1082,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("type") < 40)
-                       .project(Attribute("type").rename("t"), Attribute("value").rename("v"))
+                       .project(Attribute("type").as("t"), Attribute("value").as("v"))
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1150,7 +1150,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
 
     Query query1 = Query::from("car")
                        .filter(Attribute("type") < 40)
-                       .project(Attribute("type").rename("t"), Attribute("value").rename("v"))
+                       .project(Attribute("type").as("t"), Attribute("value").as("v"))
                        .filter(Attribute("v") < 30)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();

@@ -21,7 +21,7 @@
 namespace NES {
 
 /**
- * @brief A FieldRenameExpressionNode allows us to rename an attribute value via .rename in the query
+ * @brief A FieldRenameExpressionNode allows us to rename an attribute value via .as in the query
  */
 class FieldRenameExpressionNode : public ExpressionNode {
   public:
