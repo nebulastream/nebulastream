@@ -110,21 +110,10 @@ class UtilityFunctions {
    */
     static std::string getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& s1, const std::string& s2);
 
-    /**
-   * @brief Outputs a tuple buffer accordingly to a specific schema
-   * @param buffer the tuple buffer
-   * @param schema  the schema
-   * @return
-   */
-
 
     /**
-    * @brief splits a string given a delimiter into multiple substrings stored in a T vector
-    * the delimiter is allowed to be a string rather than a char only.
-    * @param data - the string that is to be split
-    * @param delimiter - the string that is to be split upon e.g. / or -
-    * @param fromStringtoT - the function that converts a string to an arbitrary type T
-    * @return
+    * @brief set of helper functions for splitting for different types
+    * @return splitting function for a given type
     */
     template <typename T>
     struct SplitFunctionHelper {
@@ -155,6 +144,14 @@ class UtilityFunctions {
         static constexpr auto FUNCTION = [](std::string x) { return std::atof(x.c_str()); };
     };
 
+        /**
+    * @brief splits a string given a delimiter into multiple substrings stored in a T vector
+    * the delimiter is allowed to be a string rather than a char only.
+    * @param data - the string that is to be split
+    * @param delimiter - the string that is to be split upon e.g. / or -
+    * @param fromStringtoT - the function that converts a string to an arbitrary type T
+    * @return
+    */
     template<typename T>
     static std::vector<T> splitWithStringDelimiter(const std::string& inputString, const std::string& delim, std::function<T(std::string)> fromStringToT = SplitFunctionHelper<T>::FUNCTION) {
         std::string copy = inputString;
@@ -170,6 +167,14 @@ class UtilityFunctions {
 
         return elems;
     }
+
+
+    /**
+   * @brief Outputs a tuple buffer accordingly to a specific schema
+   * @param buffer the tuple buffer
+   * @param schema  the schema
+   * @return
+   */
 
     static std::string prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema);
 
