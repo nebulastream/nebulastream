@@ -133,7 +133,7 @@ bool ThreadPool::start() {
                 NES_WARNING("Worker use default affinity");
                 localBufferManager = bufferManagers[0];
             }
-#elif
+#else
             localBufferManager = bufferManagers[0];
 #endif
 
