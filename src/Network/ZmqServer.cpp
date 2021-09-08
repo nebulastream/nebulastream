@@ -102,7 +102,8 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
     try {
         NES_DEBUG("ZmqServer: Trying to bind on "
                   << "tcp://" + hostname + ":" + std::to_string(port));
-        frontendSocket.set(zmq::sockopt::linger, -1);//< option of linger time until port is closed
+        //< option of linger time until port is closed
+        frontendSocket.set(zmq::sockopt::linger, -1);
         frontendSocket.bind("tcp://" + hostname + ":" + std::to_string(port));
         dispatcherSocket.bind(dispatcherPipe);
         NES_DEBUG("ZmqServer: Created socket on " << hostname << ":" << port);
