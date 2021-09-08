@@ -107,7 +107,6 @@ bool ThreadPool::start() {
             setThreadName("Wrk-%d-%d", nodeId, i);
 
             BufferManagerPtr localBufferManager;
-#ifdef __linux__
 #ifdef NES_ENABLE_NUMA_SUPPORT
             if (workerPinningPositionList.size() != 0) {
                 NES_ASSERT(numThreads <= workerPinningPositionList.size(), "Not enough worker positions for pinning are provided");
@@ -134,9 +133,12 @@ bool ThreadPool::start() {
                 NES_WARNING("Worker use default affinity");
                 localBufferManager = bufferManagers[0];
             }
+#elif
+            localBufferManager = bufferManagers[0];
 #endif
-#endif
+
             barrier->wait();
+            NES_ASSERT(localBufferManager != NULL, "localBufferManager is null");
             runningRoutine(WorkerContext(NesThread::getId(), localBufferManager, numberOfBuffersPerWorker));
         });
     }
