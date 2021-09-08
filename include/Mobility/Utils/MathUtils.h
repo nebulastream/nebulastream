@@ -28,7 +28,6 @@ class MathUtils {
     static double toRadians(double degrees);
     static double clamp(double d, double min, double max);
     static double distance(const CartesianPointPtr& p1, const CartesianPointPtr& p2);
-    static double distance(const GeoPointPtr& p1, const GeoPointPtr& p2);
     static double wrapAnglePiPi(double a);
 };
 

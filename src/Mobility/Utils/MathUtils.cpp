@@ -38,11 +38,9 @@ double MathUtils::clamp(double d, double min, double max) {
 }
 
 double MathUtils::distance(const CartesianPointPtr& p1, const CartesianPointPtr& p2) {
-    return std::sqrt(std::pow(p2->getX() - p1->getX(), 2) + std::sqrt(std::pow(p2->getY() - p2->getY(), 2)));
-}
-
-double MathUtils::distance(const GeoPointPtr& p1, const GeoPointPtr& p2) {
-    return std::sqrt(std::pow(p2->getLongitude() - p1->getLongitude(), 2) + std::sqrt(std::pow(p2->getLatitude() - p2->getLatitude(), 2)));
+    double dx = p2->getX() - p1->getX();
+    double dy = p2->getY() - p1->getY();
+    return std::sqrt(dx * dx + dy * dy);
 }
 
 double MathUtils::wrapAnglePiPi(double a) {
