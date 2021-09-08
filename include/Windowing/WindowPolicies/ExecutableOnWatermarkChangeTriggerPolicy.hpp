@@ -40,7 +40,6 @@ class ExecutableOnWatermarkChangeTriggerPolicy : public BaseExecutableWindowTrig
 
     bool start(Join::AbstractJoinHandlerPtr joinHandler) override;
 
-
     /**
      * @brief This function stop the trigger policy
      * @return bool indicating success

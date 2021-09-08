@@ -20,10 +20,10 @@
 #include <Network/NesPartition.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Runtime/NesThread.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES::Runtime {
 
@@ -40,6 +40,7 @@ class WorkerContext {
     std::unordered_map<Network::OperatorId, Network::OutputChannelPtr> channels;
 
     LocalBufferPoolPtr localBufferPool;
+
   public:
     explicit WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker = 64);
 
@@ -74,7 +75,6 @@ class WorkerContext {
      * @return an output channel
      */
     Network::OutputChannel* getChannel(Network::OperatorId ownerId);
-
 };
 }// namespace NES::Runtime
 #endif//NES_WORKERCONTEXT_HPP_

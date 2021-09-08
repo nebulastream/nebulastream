@@ -18,6 +18,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -32,7 +33,6 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <utility>
-#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Windowing {
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>

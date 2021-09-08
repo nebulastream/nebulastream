@@ -114,7 +114,12 @@ bool QueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     auto expected = Created;
     if (queryManagerStatus.compare_exchange_strong(expected, Running)) {
-        threadPool = std::make_shared<ThreadPool>(nodeEngineId, inherited0::shared_from_this(), numThreads, bufferManagers, numberOfBuffersPerWorker, workerToCoreMapping);
+        threadPool = std::make_shared<ThreadPool>(nodeEngineId,
+                                                  inherited0::shared_from_this(),
+                                                  numThreads,
+                                                  bufferManagers,
+                                                  numberOfBuffersPerWorker,
+                                                  workerToCoreMapping);
         return threadPool->start();
     }
     NES_ASSERT2_FMT(false, "Cannot start query manager workers");

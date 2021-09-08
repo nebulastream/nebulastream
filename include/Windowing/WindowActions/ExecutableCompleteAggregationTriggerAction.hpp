@@ -18,11 +18,13 @@
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -36,8 +38,6 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
 #include <utility>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Windowing {
 

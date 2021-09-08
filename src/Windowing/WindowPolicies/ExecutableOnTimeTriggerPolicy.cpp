@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -22,14 +23,11 @@
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <memory>
-#include <Runtime/WorkerContext.hpp>
 namespace NES::Windowing {
 
 ExecutableOnTimeTriggerPolicy::~ExecutableOnTimeTriggerPolicy() { NES_WARNING("~ExecutableOnTimeTriggerPolicy()"); }
 
-bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr) {
-    return true;
-}
+bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr) { return true; }
 bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler, Runtime::WorkerContextPtr workerContext) {
     std::unique_lock lock(runningTriggerMutex);
     if (this->running) {
@@ -47,7 +45,7 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
             NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
             if (windowHandler != nullptr) {
-//                NES_ASSERT(false, "This function should not be called");
+                //                NES_ASSERT(false, "This function should not be called");
                 windowHandler->trigger(workerContext);
             }
         }
@@ -55,10 +53,7 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
     return true;
 }
 
-bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr) {
-    return true;
-}
-
+bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr) { return true; }
 
 bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandler, Runtime::WorkerContextPtr workerContext) {
     std::unique_lock lock(runningTriggerMutex);
@@ -76,7 +71,7 @@ bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandl
         while (this->running) {
             NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             if (joinHandler != nullptr) {
-//                NES_ASSERT(false, "This function should not be called");
+                //                NES_ASSERT(false, "This function should not be called");
                 joinHandler->trigger(workerContext);
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
