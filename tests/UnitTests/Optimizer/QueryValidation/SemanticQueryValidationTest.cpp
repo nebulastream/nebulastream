@@ -197,7 +197,7 @@ TEST_F(SemanticQueryValidationTest, DISABLED_validProjectionTest) {
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
     auto query = Query::from("default_logical")
-                     .project(Attribute("id").rename("new_id"), Attribute("value"))
+                     .project(Attribute("id").as("new_id"), Attribute("value"))
                      .filter(Attribute("new_id") < 42)
                      .map(Attribute("value") = Attribute("value") + 2)
                      .sink(FileSinkDescriptor::create(""));
@@ -215,7 +215,7 @@ TEST_F(SemanticQueryValidationTest, DISABLED_invalidProjectionTest) {
 
     auto query = Query::from("default_logical")
                      .map(Attribute("value") = Attribute("value") + 2)
-                     .project(Attribute("id").rename("new_id"), Attribute("value"))
+                     .project(Attribute("id").as("new_id"), Attribute("value"))
                      .filter(Attribute("id") < 42)
                      .sink(FileSinkDescriptor::create(""));
 

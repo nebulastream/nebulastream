@@ -80,7 +80,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("RenameTest: Submit query");
-    string query = "Query::from(\"default_logical\").project(Attribute(\"id\").rename(\"NewName\")).sink(FileSinkDescriptor::"
+    string query = "Query::from(\"default_logical\").project(Attribute(\"id\").as(\"NewName\")).sink(FileSinkDescriptor::"
                    "create(\"test.out\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -159,9 +159,9 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
 
     NES_INFO("RenameTest: Submit query");
     string query = "Query::from(\"default_logical\")"
-                   ".project(Attribute(\"id\").rename(\"NewName\"))"
+                   ".project(Attribute(\"id\").as(\"NewName\"))"
                    ".map(Attribute(\"NewName\") = Attribute(\"NewName\") * 2u)"
-                   ".project(Attribute(\"NewName\").rename(\"id\"))"
+                   ".project(Attribute(\"NewName\").as(\"id\"))"
                    ".sink(FileSinkDescriptor::create(\"test.out\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -240,7 +240,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
 
     NES_INFO("RenameTest: Submit query");
     std::string query =
-        R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").rename("NewName"), Attribute("value")).sink(FileSinkDescriptor::create("test.out", "CSV_FORMAT", "APPEND"));)";
+        R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").as("NewName"), Attribute("value")).sink(FileSinkDescriptor::create("test.out", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -331,7 +331,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
 
     string query =
         "Query::from(\"window\")"
-        ".project(Attribute(\"id\").rename(\"newId\"), Attribute(\"timestamp\"), Attribute(\"value\").rename(\"newValue\"))"
+        ".project(Attribute(\"id\").as(\"newId\"), Attribute(\"timestamp\"), Attribute(\"value\").as(\"newValue\"))"
         ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Seconds(1)))"
         ".byKey(Attribute(\"newId\")).apply(Sum(Attribute(\"newValue\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -449,8 +449,8 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     NES_INFO("RenameTest: Submit query");
     string query =
         R"(Query::from("window1")
-            .project(Attribute("id1").rename("id1New"), Attribute("timestamp"))
-            .joinWith(Query::from("window2").project(Attribute("id2").rename("id2New"), Attribute("timestamp")))
+            .project(Attribute("id1").as("id1New"), Attribute("timestamp"))
+            .joinWith(Query::from("window2").project(Attribute("id2").as("id2New"), Attribute("timestamp")))
             .where(Attribute("id1New")).equalsTo(Attribute("id2New")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
             Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";

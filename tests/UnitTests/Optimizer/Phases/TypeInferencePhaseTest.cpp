@@ -203,7 +203,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     inputSchema->addField("f2", BasicType::INT8);
 
     auto query = Query::from("default_logical")
-                     .project(Attribute("f3").rename("f5"))
+                     .project(Attribute("f3").as("f5"))
                      .map(Attribute("f4") = Attribute("f5") * 42)
                      .sink(FileSinkDescriptor::create(""));
 
@@ -221,7 +221,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
 }
 
 /**
- * @brief In this test we test the rename operator
+ * @brief In this test we test the as operator
  */
 TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
 
@@ -231,7 +231,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
 
     auto query = Query::from("default_logical")
                      .map(Attribute("f3") = Attribute("f3") * 42)
-                     .project(Attribute("f3").rename("f4"))
+                     .project(Attribute("f3").as("f4"))
                      .sink(FileSinkDescriptor::create(""));
 
     auto plan = query.getQueryPlan();
@@ -248,7 +248,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
 }
 
 /**
-     * @brief In this test we test the rename operator
+     * @brief In this test we test the as operator
      */
 TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
 
@@ -388,7 +388,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
                      .map(Attribute("f1") = Attribute("f1") + 2)
-                     .project(Attribute("f1").rename("f3"), Attribute("f2").rename("f4"))
+                     .project(Attribute("f1").as("f3"), Attribute("f2").as("f4"))
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
@@ -493,7 +493,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProject) {
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
-                     .project(Attribute("f1").rename("f3"), Attribute("f2").rename("f4"))
+                     .project(Attribute("f1").as("f3"), Attribute("f2").as("f4"))
                      .map(Attribute("f3") = Attribute("f4") + 2)
                      .as("x")
                      .sink(FileSinkDescriptor::create(""));
@@ -599,7 +599,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
-                     .project(Attribute("f1").rename("f3"), Attribute("f2").rename("f4"))
+                     .project(Attribute("f1").as("f3"), Attribute("f2").as("f4"))
                      .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
                      .as("x")
                      .sink(FileSinkDescriptor::create(""));
@@ -662,7 +662,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto query = Query::from("default_logical")
                      .unionWith(&subQuery)
                      .filter(Attribute("f2") < 42)
-                     .project(Attribute("f1").rename("f3"), Attribute("f2").rename("f4"))
+                     .project(Attribute("f1").as("f3"), Attribute("f2").as("f4"))
                      .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
                      .as("x")
                      .sink(FileSinkDescriptor::create(""));
@@ -733,7 +733,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
                      .equalsTo(Attribute("f1"))
                      .window(windowType1)
                      .filter(Attribute("x$default_logical$f2") < 42)
-                     .project(Attribute("x$default_logical$f1").rename("f3"), Attribute("y$default_logical$f2").rename("f4"))
+                     .project(Attribute("x$default_logical$f1").as("f3"), Attribute("y$default_logical$f2").as("f4"))
                      .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
                      .as("x")
                      .sink(FileSinkDescriptor::create(""));
@@ -820,7 +820,7 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
                      .equalsTo(Attribute("f3"))
                      .window(windowType2)
                      .filter(Attribute("default_logical$f1") < 42)
-                     .project(Attribute("default_logical$f1").rename("f23"), Attribute("default_logical2$f3").rename("f44"))
+                     .project(Attribute("default_logical$f1").as("f23"), Attribute("default_logical2$f3").as("f44"))
                      .map(Attribute("f23") = Attribute("f44") + 2)
                      .as("x")
                      .sink(FileSinkDescriptor::create(""));

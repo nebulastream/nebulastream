@@ -66,15 +66,15 @@ ExpressionItem::ExpressionItem(ValueTypePtr value) : ExpressionItem(ConstantValu
 
 ExpressionItem::ExpressionItem(ExpressionNodePtr exp) : expression(std::move(exp)) {}
 
-//ExpressionItem ExpressionItem::rename(std::string newName) {
-//    //rename expression node
-//    if (!expression->instanceOf<FieldAccessExpressionNode>()) {
-//        NES_ERROR("Renaming is only allowed on Field Access Attributes");
-//        NES_NOT_IMPLEMENTED();
-//    }
-//    auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
-//    return FieldRenameExpressionNode::create(fieldAccessExpression, std::move(newName));
-//}
+ExpressionItem ExpressionItem::as(std::string newName) {
+    //rename expression node
+    if (!expression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Renaming is only allowed on Field Access Attributes");
+        NES_NOT_IMPLEMENTED();
+    }
+    auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
+    return FieldRenameExpressionNode::create(fieldAccessExpression, std::move(newName));
+}
 
 FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionItem assignItem) {
     return operator=(assignItem.getExpressionNode());
