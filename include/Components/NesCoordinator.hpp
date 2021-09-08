@@ -180,7 +180,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     uint16_t numberOfSlots;
     uint16_t numberOfWorkerThreads;
     uint32_t numberOfBuffersInGlobalBufferManager;
-    uint32_t numberOfBuffersPerPipeline;
+    uint32_t numberOfBuffersPerWorker;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
     std::unique_ptr<grpc::Server> rpcServer;

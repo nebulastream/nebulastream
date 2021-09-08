@@ -44,6 +44,7 @@ class ThreadPool {
                         QueryManagerPtr queryManager,
                         uint32_t numThreads,
                         std::vector<BufferManagerPtr> bufferManagers,
+                        uint64_t numberOfBuffersPerWorker,
                         std::vector<uint64_t> workerPinningPositionList);
 
     /**
@@ -102,6 +103,7 @@ class ThreadPool {
     std::shared_ptr<QueryManager> queryManager;
     std::vector<BufferManagerPtr> bufferManagers;
 
+    uint64_t numberOfBuffersPerWorker;
     //this is a list of slots where we pin the worker, one after the other
     std::vector<uint64_t> workerPinningPositionList;
 

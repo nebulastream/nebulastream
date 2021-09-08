@@ -20,9 +20,9 @@
 
 namespace NES::Runtime {
 
-WorkerContext::WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager)
+WorkerContext::WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker)
     : workerId(workerId) {
-    localBufferPool = bufferManager->createLocalBufferPool(128);
+    localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
     NES_ASSERT(localBufferPool != NULL, "Local buffer is not allowed to be null");
 }
 

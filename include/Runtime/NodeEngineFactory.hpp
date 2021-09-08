@@ -49,7 +49,7 @@ class NodeEngineFactory {
                                           uint64_t bufferSize,
                                           uint64_t numberOfBuffersInGlobalBufferManager,
                                           uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                          uint64_t numberOfBuffersPerPipeline,
+                                          uint64_t numberOfBuffersPerWorker,
                                           NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
                                           const std::string& workerToCodeMapping = "",
                                           const std::string& queryCompilerExecutionMode = "DEBUG",

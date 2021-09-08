@@ -146,9 +146,9 @@ class WorkerConfig {
     IntConfigOption getNumberOfBuffersInGlobalBufferManager();
 
     /**
-    * @brief gets a ConfigOption object with number of numberOfBuffersPerPipeline
+    * @brief gets a ConfigOption object with number of numberOfBuffersPerWorker
     */
-    IntConfigOption getNumberOfBuffersPerPipeline();
+    IntConfigOption getNumberOfBuffersPerWorker();
 
     /**
     * @brief gets a ConfigOption object with number of numberOfBuffersInSourceLocalBufferPool
@@ -161,9 +161,9 @@ class WorkerConfig {
     void setNumberOfBuffersInGlobalBufferManager(uint64_t count);
 
     /**
-     * @brief set the value for number of numberOfBuffersPerPipeline
+     * @brief set the value for number of numberOfBuffersPerWorker
      */
-    void setNumberOfBuffersPerPipeline(uint64_t count);
+    void setNumberOfBuffersPerWorker(uint64_t count);
 
     /**
      * @brief set the value for number of numberOfBuffersInSourceLocalBufferPool
@@ -239,7 +239,7 @@ class WorkerConfig {
     IntConfigOption numberOfSlots;
     IntConfigOption numWorkerThreads;
     IntConfigOption numberOfBuffersInGlobalBufferManager;
-    IntConfigOption numberOfBuffersPerPipeline;
+    IntConfigOption numberOfBuffersPerWorker;
     IntConfigOption numberOfBuffersInSourceLocalBufferPool;
     IntConfigOption bufferSizeInBytes;
     StringConfigOption parentId;

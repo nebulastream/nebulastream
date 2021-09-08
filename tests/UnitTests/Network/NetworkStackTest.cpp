@@ -301,7 +301,7 @@ TEST_F(NetworkStackTest, testSendData) {
 TEST_F(NetworkStackTest, testMassiveSending) {
     std::promise<bool> completedProm;
 
-    uint64_t totalNumBuffer = 1'000'000;
+    uint64_t totalNumBuffer = 100000;
     std::atomic<std::uint64_t> bufferReceived = 0;
     auto nesPartition = NesPartition(1, 22, 333, 444);
     try {
@@ -582,7 +582,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
     auto sendingThreads = std::vector<std::thread>();
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
 
-    NodeLocation nodeLocation{0, "127.0.0.1", 31337};
+    NodeLocation nodeLocation{0, "127.0.0.1", 31339};
     NesPartition nesPartition{1, 22, 33, 44};
 
     try {
@@ -623,7 +623,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
         auto netManager = NetworkManager::create(
             "127.0.0.1",
-            31337,
+            31339,
             ExchangeProtocol(pManager, std::make_shared<ExchangeListener>(completed, nesPartition, bufferCnt)),
             bMgr);
 
@@ -862,7 +862,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto nodeEngine =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31338, streamConf, 1, bufferSize, buffersManaged, 64, 64);
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,

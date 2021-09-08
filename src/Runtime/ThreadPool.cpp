@@ -41,8 +41,10 @@ ThreadPool::ThreadPool(uint64_t nodeId,
                        QueryManagerPtr queryManager,
                        uint32_t numThreads,
                        std::vector<BufferManagerPtr> bufferManagers,
+                       uint64_t numberOfBuffersPerWorker,
                        std::vector<uint64_t> workerPinningPositionList)
     : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)), bufferManagers(bufferManagers),
+      numberOfBuffersPerWorker(numberOfBuffersPerWorker),
       workerPinningPositionList(workerPinningPositionList) {}
 
 ThreadPool::~ThreadPool() {
@@ -135,7 +137,7 @@ bool ThreadPool::start() {
 #endif
 #endif
             barrier->wait();
-            runningRoutine(WorkerContext(NesThread::getId(), localBufferManager));
+            runningRoutine(WorkerContext(NesThread::getId(), localBufferManager, numberOfBuffersPerWorker));
         });
     }
     barrier->wait();

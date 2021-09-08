@@ -51,7 +51,7 @@ NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
       localWorkerZmqPort(workerConfig->getDataPort()->getValue()), numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
       numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()),
       numberOfBuffersInGlobalBufferManager(workerConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
-      numberOfBuffersPerPipeline(workerConfig->getNumberOfBuffersPerPipeline()->getValue()),
+      numberOfBuffersPerWorker(workerConfig->getNumberOfBuffersPerWorker()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
       queryCompilerExecutionMode(workerConfig->getQueryCompilerExecutionMode()->getValue()),
@@ -140,7 +140,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   bufferSizeInBytes,
                                                                   numberOfBuffersInGlobalBufferManager,
                                                                   numberOfBuffersInSourceLocalBufferPool,
-                                                                  numberOfBuffersPerPipeline,
+                                                                  numberOfBuffersPerWorker,
                                                                   enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED
                                                                                       : Runtime::NumaAwarenessFlag::DISABLED,
                                                                   workerToCoreMapping,

@@ -54,14 +54,14 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
-                       uint64_t numberOfBuffersPerPipeline)
+                       uint64_t numberOfBuffersPerWorker)
     : nodeStatsProvider(std::make_shared<NodeStatsProvider>()), queryManager(std::move(queryManager)),
       hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
       queryCompiler(std::move(queryCompiler)), partitionManager(std::move(partitionManager)),
       stateManager(std::move(stateManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
-      numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
+      numberOfBuffersPerWorker(numberOfBuffersPerWorker) {
 
     configs.push_back(config);
     NES_TRACE("Runtime() id=" << nodeEngineId);
@@ -72,7 +72,7 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
     networkManager = networkManagerCreator(std::shared_ptr<NodeEngine>(this, [](NodeEngine*) {
         // nop
     }));
-    if (!this->queryManager->startThreadPool()) {
+    if (!this->queryManager->startThreadPool(numberOfBuffersPerWorker)) {
         NES_ERROR("Runtime: error while start thread pool");
         throw Exception("Error while start thread pool");
     }

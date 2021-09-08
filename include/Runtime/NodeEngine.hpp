@@ -78,7 +78,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
-                        uint64_t numberOfBuffersPerPipeline);
+                        uint64_t numberOfBuffersPerWorker);
 
     ~NodeEngine() override;
 
@@ -277,7 +277,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint64_t nodeEngineId;
     [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
-    [[maybe_unused]] uint32_t numberOfBuffersPerPipeline;
+    [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

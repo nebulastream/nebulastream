@@ -71,8 +71,8 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
     EXPECT_EQ(coordinatorConfigPtr->getLogLevel()->getValue(), coordinatorConfigPtr->getLogLevel()->getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
               coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersPerPipeline()->getValue(),
-              coordinatorConfigPtr->getNumberOfBuffersPerPipeline()->getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersPerWorker()->getValue(),
+              coordinatorConfigPtr->getNumberOfBuffersPerWorker()->getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getValue(),
               coordinatorConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->getBufferSizeInBytes()->getValue(),
@@ -96,7 +96,7 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
                           "--numberOfSlots=10",
                           "--enableQueryMerging=",
                           "--numberOfBuffersInGlobalBufferManager=",
-                          "--numberOfBuffersPerPipeline=",
+                          "--numberOfBuffersPerWorker=",
                           "--numberOfBuffersInSourceLocalBufferPool=128",
                           "--bufferSizeInBytes=1024"};
     int argc = 9;
@@ -120,8 +120,8 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
     EXPECT_EQ(coordinatorConfigPtr->getLogLevel()->getValue(), coordinatorConfigPtr->getLogLevel()->getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
               coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersPerPipeline()->getValue(),
-              coordinatorConfigPtr->getNumberOfBuffersPerPipeline()->getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersPerWorker()->getValue(),
+              coordinatorConfigPtr->getNumberOfBuffersPerWorker()->getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getValue(),
               coordinatorConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->getBufferSizeInBytes()->getValue(),
@@ -150,8 +150,8 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
     EXPECT_EQ(workerConfigPtr->getLogLevel()->getValue(), workerConfigPtr->getLogLevel()->getDefaultValue());
     EXPECT_NE(workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
               workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getNumberOfBuffersPerPipeline()->getValue(),
-              workerConfigPtr->getNumberOfBuffersPerPipeline()->getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->getNumberOfBuffersPerWorker()->getValue(),
+              workerConfigPtr->getNumberOfBuffersPerWorker()->getDefaultValue());
     EXPECT_NE(workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getValue(),
               workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
     EXPECT_EQ(workerConfigPtr->getBufferSizeInBytes()->getValue(), workerConfigPtr->getBufferSizeInBytes()->getDefaultValue());
@@ -167,7 +167,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
                           "--numberOfSlots=",
                           "--numWorkerThreads=5",
                           "--numberOfBuffersInGlobalBufferManager=2048",
-                          "--numberOfBuffersPerPipeline=",
+                          "--numberOfBuffersPerWorker=",
                           "--numberOfBuffersInSourceLocalBufferPool=128"};
     int argc = 8;
 
@@ -190,8 +190,8 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
     EXPECT_EQ(workerConfigPtr->getLogLevel()->getValue(), workerConfigPtr->getLogLevel()->getDefaultValue());
     EXPECT_NE(workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
               workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getNumberOfBuffersPerPipeline()->getValue(),
-              workerConfigPtr->getNumberOfBuffersPerPipeline()->getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->getNumberOfBuffersPerWorker()->getValue(),
+              workerConfigPtr->getNumberOfBuffersPerWorker()->getDefaultValue());
     EXPECT_NE(workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getValue(),
               workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
     EXPECT_EQ(workerConfigPtr->getBufferSizeInBytes()->getValue(), workerConfigPtr->getBufferSizeInBytes()->getDefaultValue());
