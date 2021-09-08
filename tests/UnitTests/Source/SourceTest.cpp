@@ -709,6 +709,7 @@ TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
     mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
 TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
@@ -753,6 +754,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
 TEST_F(SourceTest, testDataSourceOpen) {
