@@ -458,8 +458,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
     auto resultTupleBufferDeclaration = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
     BinaryOperatorStatement initResultTupleBufferPtr(
-        VarDeclStatement(resultTupleBufferDeclaration)
-            .assign(VarRef(varDeclWorkerContext).accessRef(allocateTupleBuffer)));
+        VarDeclStatement(resultTupleBufferDeclaration).assign(VarRef(varDeclWorkerContext).accessRef(allocateTupleBuffer)));
 
     BinaryOperatorStatement initResultTuplePtr(
         VarRef(varDeclResultTuple)

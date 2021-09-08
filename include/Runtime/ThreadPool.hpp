@@ -106,7 +106,6 @@ class ThreadPool {
     uint64_t numberOfBuffersPerWorker;
     //this is a list of slots where we pin the worker, one after the other
     std::vector<uint64_t> workerPinningPositionList;
-
 };
 
 using ThreadPoolPtr = std::shared_ptr<ThreadPool>;

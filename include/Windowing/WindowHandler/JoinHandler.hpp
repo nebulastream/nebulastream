@@ -180,7 +180,11 @@ class JoinHandler : public AbstractJoinHandler {
      * @param ts
      * @param originId
      */
-    void updateMaxTs(WatermarkTs ts, OriginId originId, SequenceNumber sequenceNumber,Runtime::WorkerContextPtr workerContext, bool isLeftSide) override {
+    void updateMaxTs(WatermarkTs ts,
+                     OriginId originId,
+                     SequenceNumber sequenceNumber,
+                     Runtime::WorkerContextPtr workerContext,
+                     bool isLeftSide) override {
         std::unique_lock lock(mutex);
         std::string side = isLeftSide ? "leftSide" : "rightSide";
         NES_TRACE("JoinHandler " << id << ": updateAllMaxTs with ts=" << ts << " originId=" << originId << " side=" << side);
@@ -279,10 +283,10 @@ class JoinHandler : public AbstractJoinHandler {
             } else {
                 NES_ASSERT(false, "Invalid window");
             }
-//            NES_DEBUG("Going to flush window " << toString());
-//            trigger(true);
-//            executableJoinAction->doAction(leftJoinState, rightJoinState, lastWatermark + windowLenghtMs + 1, lastWatermark);
-//            NES_DEBUG("Flushed window content after end of stream message " << toString());
+            //            NES_DEBUG("Going to flush window " << toString());
+            //            trigger(true);
+            //            executableJoinAction->doAction(leftJoinState, rightJoinState, lastWatermark + windowLenghtMs + 1, lastWatermark);
+            //            NES_DEBUG("Flushed window content after end of stream message " << toString());
         };
 
         auto cleanup = [this]() {

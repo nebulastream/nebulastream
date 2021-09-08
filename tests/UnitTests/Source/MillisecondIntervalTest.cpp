@@ -26,11 +26,11 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
-#include <Runtime/WorkerContext.hpp>
 
 using namespace NES::Runtime;
 using namespace NES::Runtime::Execution;
@@ -130,8 +130,7 @@ class MillisecondIntervalTest : public testing::Test {
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
-                                   DataSinkPtr sink)
+    MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, DataSinkPtr sink)
         : PipelineExecutionContext(
             0,
             std::move(queryManager),
@@ -183,8 +182,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
     auto sink = createCSVFileSink(schema, 0, this->nodeEngine, "qep1.txt", false);
-    auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(),
-                                                                    sink);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(), sink);
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, queryId, context, executableStage, 1, {sink});
     auto source = createCSVFileSource(schema,

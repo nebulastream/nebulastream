@@ -77,9 +77,8 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                                         << " is lower than the fixed size pool: "
                                                                         << numberOfBuffersInSourceLocalBufferPool);
             NES_ASSERT2_FMT(numberOfBuffersPerWorker < numberOfBufferPerNumaNode,
-                            "The number of buffer for each numa node: " << numberOfBufferPerNumaNode
-                                                                        << " is lower than the pipeline pool: "
-                                                                        << numberOfBuffersPerWorker);
+                            "The number of buffer for each numa node: "
+                                << numberOfBufferPerNumaNode << " is lower than the pipeline pool: " << numberOfBuffersPerWorker);
             for (auto i = 0u; i < hardwareManager->getNumberOfNumaRegions(); ++i) {
                 bufferManagers.push_back(
                     std::make_shared<BufferManager>(bufferSize, numberOfBufferPerNumaNode, hardwareManager->getNumaAllactor(i)));

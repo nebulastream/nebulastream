@@ -15,8 +15,8 @@
 */
 
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Runtime/LocalBufferPool.hpp>
+#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime {
 

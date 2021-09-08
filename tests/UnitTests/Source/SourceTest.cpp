@@ -48,9 +48,9 @@
 #include <Sources/MonitoringSource.hpp>
 #include <Util/TestUtils.hpp>
 
+#include <Runtime/WorkerContext.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <Runtime/WorkerContext.hpp>
 
 namespace NES {
 
@@ -397,8 +397,7 @@ class MonitoringSourceProxy : public MonitoringSource {
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
-                                   DataSinkPtr sink)
+    MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, DataSinkPtr sink)
         : PipelineExecutionContext(
             0,
             std::move(queryManager),
@@ -502,8 +501,7 @@ class SourceTest : public testing::Test {
 
     std::shared_ptr<Runtime::Execution::ExecutablePipeline>
     createExecutablePipeline(std::shared_ptr<MockedExecutablePipeline> executableStage, std::shared_ptr<SinkMedium> sink) {
-        auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(),
-                                                                        sink);
+        auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(), sink);
         return Runtime::Execution::ExecutablePipeline::create(0, this->queryId, context, executableStage, 1, {sink});
     }
 

@@ -137,7 +137,6 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
         return nullptr;
     }
-
 }
 void PhysicalStreamConfig::setSourceFrequency(uint32_t sf) {
     PhysicalStreamConfig::sourceFrequency = std::chrono::milliseconds(sf);

@@ -22,6 +22,7 @@
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 #include <Util/Logger.hpp>
@@ -37,7 +38,6 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Join {
 template<class KeyType, class InputTypeLeft, class InputTypeRight>
