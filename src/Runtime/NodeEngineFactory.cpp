@@ -58,7 +58,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t bufferSize,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
                                                   const uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                                  const uint64_t numberOfBuffersPerPipeline,
+                                                  const uint64_t numberOfBuffersPerWorker,
                                                   NumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& workerToCodeMapping,
                                                   const std::string& queryCompilerExecutionMode,
@@ -76,10 +76,10 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                             "The number of buffer for each numa node: " << numberOfBufferPerNumaNode
                                                                         << " is lower than the fixed size pool: "
                                                                         << numberOfBuffersInSourceLocalBufferPool);
-            NES_ASSERT2_FMT(numberOfBuffersPerPipeline < numberOfBufferPerNumaNode,
+            NES_ASSERT2_FMT(numberOfBuffersPerWorker < numberOfBufferPerNumaNode,
                             "The number of buffer for each numa node: " << numberOfBufferPerNumaNode
                                                                         << " is lower than the pipeline pool: "
-                                                                        << numberOfBuffersPerPipeline);
+                                                                        << numberOfBuffersPerWorker);
             for (auto i = 0u; i < hardwareManager->getNumberOfNumaRegions(); ++i) {
                 bufferManagers.push_back(
                     std::make_shared<BufferManager>(bufferSize, numberOfBufferPerNumaNode, hardwareManager->getNumaAllactor(i)));
@@ -149,7 +149,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             nodeEngineId,
             numberOfBuffersInGlobalBufferManager,
             numberOfBuffersInSourceLocalBufferPool,
-            numberOfBuffersPerPipeline);
+            numberOfBuffersPerWorker);
         installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {

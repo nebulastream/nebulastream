@@ -237,9 +237,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     /**
     * @brief method to start the thread pool
     * @param nodeEngineId the id of the owning node engine
+     * @param numberOfBuffersPerWorker
     * @return bool indicating success
     */
-    bool startThreadPool();
+    bool startThreadPool(uint64_t numberOfBuffersPerWorker);
 
     /**
      * @brief finalize task execution by:

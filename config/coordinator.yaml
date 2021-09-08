@@ -28,7 +28,7 @@ logLevel: LOG_DEBUG
 numberOfBuffersInGlobalBufferManager: 1024
 
 # Number buffers in task local buffer pool
-numberOfBuffersPerPipeline: 128
+numberOfBuffersPerWorker: 128
 
 # Number buffers in source local buffer pool
 numberOfBuffersInSourceLocalBufferPool: 64

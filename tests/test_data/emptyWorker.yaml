@@ -22,7 +22,7 @@ numWorkerThreads: 5
 numberOfBuffersInGlobalBufferManager: 2048
 
 # Number buffers in task local buffer pool
-numberOfBuffersPerPipeline:
+numberOfBuffersPerWorker:
 
 # Number buffers in source local buffer pool
 numberOfBuffersInSourceLocalBufferPool: 128

@@ -45,8 +45,8 @@ WorkerConfig::WorkerConfig() {
 
     numberOfBuffersInGlobalBufferManager =
         ConfigOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1024, "Number buffers in global buffer pool.");
-    numberOfBuffersPerPipeline =
-        ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 128, "Number buffers in task local buffer pool.");
+    numberOfBuffersPerWorker =
+        ConfigOption<uint32_t>::create("numberOfBuffersPerWorker", 128, "Number buffers in task local buffer pool.");
     numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool",
                                                                             64,
                                                                             "Number buffers in source local buffer pool.");
@@ -119,9 +119,9 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
                 && config["numberOfBuffersInGlobalBufferManager"].As<std::string>() != "\n") {
                 setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             }
-            if (!config["numberOfBuffersPerPipeline"].As<std::string>().empty()
-                && config["numberOfBuffersPerPipeline"].As<std::string>() != "\n") {
-                setNumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
+            if (!config["numberOfBuffersPerWorker"].As<std::string>().empty()
+                && config["numberOfBuffersPerWorker"].As<std::string>() != "\n") {
+                setNumberOfBuffersPerWorker(config["numberOfBuffersPerWorker"].As<uint32_t>());
             }
             if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()
                 && config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>() != "\n") {
@@ -179,8 +179,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setNumWorkerThreads(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInGlobalBufferManager" && !it->second.empty()) {
                 setNumberOfBuffersInGlobalBufferManager(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersPerPipeline" && !it->second.empty()) {
-                setNumberOfBuffersPerPipeline(stoi(it->second));
+            } else if (it->first == "--numberOfBuffersPerWorker" && !it->second.empty()) {
+                setNumberOfBuffersPerWorker(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool" && !it->second.empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
             } else if (it->first == "--bufferSizeInBytes" && !it->second.empty()) {
@@ -220,7 +220,7 @@ void WorkerConfig::resetWorkerOptions() {
     setParentId(parentId->getDefaultValue());
     setLogLevel(logLevel->getDefaultValue());
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
-    setNumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
+    setNumberOfBuffersPerWorker(numberOfBuffersPerWorker->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
     setQueryCompilerExecutionMode(queryCompilerExecutionMode->getDefaultValue());
     setQueryCompilerOutputBufferAllocationStrategy(queryCompilerOutputBufferOptimizationLevel->getDefaultValue());
@@ -265,13 +265,13 @@ StringConfigOption WorkerConfig::getLogLevel() { return logLevel; }
 void WorkerConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(std::move(logLevelValue)); }
 
 IntConfigOption WorkerConfig::getNumberOfBuffersInGlobalBufferManager() { return numberOfBuffersInGlobalBufferManager; }
-IntConfigOption WorkerConfig::getNumberOfBuffersPerPipeline() { return numberOfBuffersPerPipeline; }
+IntConfigOption WorkerConfig::getNumberOfBuffersPerWorker() { return numberOfBuffersPerWorker; }
 IntConfigOption WorkerConfig::getNumberOfBuffersInSourceLocalBufferPool() { return numberOfBuffersInSourceLocalBufferPool; }
 
 void WorkerConfig::setNumberOfBuffersInGlobalBufferManager(uint64_t count) {
     numberOfBuffersInGlobalBufferManager->setValue(count);
 }
-void WorkerConfig::setNumberOfBuffersPerPipeline(uint64_t count) { numberOfBuffersPerPipeline->setValue(count); }
+void WorkerConfig::setNumberOfBuffersPerWorker(uint64_t count) { numberOfBuffersPerWorker->setValue(count); }
 void WorkerConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) {
     numberOfBuffersInSourceLocalBufferPool->setValue(count);
 }

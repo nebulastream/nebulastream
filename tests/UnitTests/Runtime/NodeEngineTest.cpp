@@ -628,7 +628,7 @@ void assertKiller() {
                                   uint64_t nodeEngineId,
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                  uint64_t numberOfBuffersPerPipeline)
+                                  uint64_t numberOfBuffersPerWorker)
             : NodeEngine(std::move(config),
                          std::move(hardwareManager),
                          std::move(bufferManagers),
@@ -640,7 +640,7 @@ void assertKiller() {
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
-                         numberOfBuffersPerPipeline) {}
+                         numberOfBuffersPerWorker) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override {
             stop(false);
@@ -671,7 +671,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                   uint64_t nodeEngineId,
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                  uint64_t numberOfBuffersPerPipeline)
+                                  uint64_t numberOfBuffersPerWorker)
             : NodeEngine(std::move(config),
                          std::move(hardwareManager),
                          std::move(bufferManagers),
@@ -683,7 +683,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
-                         numberOfBuffersPerPipeline) {}
+                         numberOfBuffersPerWorker) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             const auto* str = exception->what();
@@ -743,7 +743,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                   uint64_t nodeEngineId,
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                  uint64_t numberOfBuffersPerPipeline)
+                                  uint64_t numberOfBuffersPerWorker)
             : NodeEngine(std::move(config),
                          std::move(hardwareManager),
                          std::move(bufferManagers),
@@ -755,7 +755,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
-                         numberOfBuffersPerPipeline) {}
+                         numberOfBuffersPerWorker) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             const auto* str = exception->what();

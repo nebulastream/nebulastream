@@ -199,7 +199,7 @@ class NesWorker {
     uint16_t numberOfSlots;
     uint16_t numWorkerThreads;
     uint32_t numberOfBuffersInGlobalBufferManager;
-    uint32_t numberOfBuffersPerPipeline;
+    uint32_t numberOfBuffersPerWorker;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
     // indicates the execution mode of the query compiler [DEBUG|OPTIMIZE].

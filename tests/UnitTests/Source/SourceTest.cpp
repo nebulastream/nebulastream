@@ -1627,9 +1627,9 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     crdConf->setRpcPort(4000);
     crdConf->setRestPort(8081);
     crdConf->setNumWorkerThreads(8);
-    crdConf->setNumberOfBuffersInGlobalBufferManager(1000);
+    crdConf->setNumberOfBuffersInGlobalBufferManager(3000);
     crdConf->setNumberOfBuffersInSourceLocalBufferPool(124);
-    crdConf->setNumberOfBuffersPerPipeline(124);
+    crdConf->setNumberOfBuffersPerWorker(124);
     crdConf->setBufferSizeInBytes(524288);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;

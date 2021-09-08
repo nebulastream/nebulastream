@@ -23,7 +23,7 @@ enableQueryMerging:
 numberOfBuffersInGlobalBufferManager:
 
 # Number buffers in task local buffer pool
-numberOfBuffersPerPipeline:
+numberOfBuffersPerWorker:
 
 # Number buffers in source local buffer pool
 numberOfBuffersInSourceLocalBufferPool: 128
