@@ -47,6 +47,8 @@
 #include <Monitoring/MonitoringManager.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Services/StreamCatalogService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
@@ -86,6 +88,8 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     queryCatalog = std::make_shared<QueryCatalog>();
 
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
+    streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
+    topologyManagerService = std::make_shared<TopologyManagerService>(topology, streamCatalog);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<NESRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
@@ -136,6 +140,8 @@ NesCoordinator::~NesCoordinator() {
     queryRequestProcessorThread.reset();
     worker.reset();
     coordinatorEngine.reset();
+    streamCatalogService.reset();
+    topologyManagerService.reset();
     restThread.reset();
     restServer.reset();
     rpcThread.reset();
@@ -157,6 +163,8 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(restThread.use_count() == 0, "NesCoordinator restThread leaked");
     NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
     NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
+    NES_ASSERT(streamCatalogService.use_count()==0, "NesCoordinator streamCatalogService leaked");
+    NES_ASSERT(topologyManagerService.use_count()==0, "NesCoordinator topologyManagerService leaked");
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
@@ -312,6 +320,9 @@ bool NesCoordinator::stopCoordinator(bool force) {
 void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom) {
     grpc::ServerBuilder builder;
     NES_ASSERT(coordinatorEngine, "null coordinator engine");
+    NES_ASSERT(streamCatalogService, "null streamCatalogService");
+    NES_ASSERT(topologyManagerService, "null topologyManagerService");
+
     CoordinatorRPCServer service(topology, streamCatalog);
 
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
@@ -341,5 +352,7 @@ void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
 CoordinatorEnginePtr NesCoordinator::getCoordinatorEngine() const { return coordinatorEngine; }
+StreamCatalogServicePtr NesCoordinator::getStreamCatalogService() const { return streamCatalogService; }
+TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { return topologyManagerService; }
 
 }// namespace NES
