@@ -234,7 +234,7 @@ TEST_F(AdaptiveKFTest, kfStepChangeTest) {
     }
 }
 
-TEST_F(AdaptiveKFTest, DISABLED_kfInnovationErrorChangeTest) {
+TEST_F(AdaptiveKFTest, kfInnovationErrorChangeTest) {
 
     // time and step size
     double initialTimestamp = 0;
@@ -280,10 +280,10 @@ TEST_F(AdaptiveKFTest, DISABLED_kfInnovationErrorChangeTest) {
 
         // get current error, update, assert NE with new one
         // innovation error is a column matrix, m*1 dimensions
-        // TODO: update changes dimensions, verify it works properly
         auto oldInnovError = kalmanFilter.getInnovationError();
         kalmanFilter.update(y);
-        ASSERT_FALSE(oldInnovError.isApprox(kalmanFilter.getInnovationError()));
+        auto newInnovError = kalmanFilter.getInnovationError();
+        ASSERT_TRUE(oldInnovError(0) != newInnovError(0));
     }
 }
 }// namespace NES
