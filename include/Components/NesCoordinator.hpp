@@ -22,6 +22,8 @@
 #include <Runtime/ErrorListener.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+#include <Services/StreamCatalogService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <future>
 #include <string>
 #include <thread>
@@ -72,6 +74,12 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
+
+class StreamCatalogService;
+using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
+
+class TopologyManagerService;
+using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
 namespace Catalogs {
 
@@ -165,6 +173,18 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      */
     CoordinatorEnginePtr getCoordinatorEngine() const;
 
+    /**
+     * getter for the streamCatalogService
+     * @return
+     */
+    StreamCatalogServicePtr getStreamCatalogService() const;
+
+    /**
+     * getter for the topologyManagerService
+     * @return
+     */
+    TopologyManagerServicePtr getTopologyManagerService() const;
+
     NesWorkerPtr getNesWorker();
 
   private:
@@ -188,7 +208,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     std::shared_ptr<std::thread> queryRequestProcessorThread;
     NesWorkerPtr worker;
     CoordinatorEnginePtr coordinatorEngine;
-
+    TopologyManagerServicePtr topologyManagerService;
+    StreamCatalogServicePtr streamCatalogService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;
