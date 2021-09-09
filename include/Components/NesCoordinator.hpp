@@ -51,9 +51,6 @@ using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 class RestServer;
 using RestServerPtr = std::shared_ptr<RestServer>;
 
-class CoordinatorEngine;
-using CoordinatorEnginePtr = std::shared_ptr<CoordinatorEngine>;
-
 class QueryDeployer;
 using QueryDeployerPtr = std::shared_ptr<QueryDeployer>;
 
@@ -168,12 +165,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     bool isCoordinatorRunning();
 
     /**
-     * getter for the coordinator engine
-     * @return
-     */
-    CoordinatorEnginePtr getCoordinatorEngine() const;
-
-    /**
      * getter for the streamCatalogService
      * @return
      */
@@ -207,7 +198,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     std::shared_ptr<std::thread> rpcThread;
     std::shared_ptr<std::thread> queryRequestProcessorThread;
     NesWorkerPtr worker;
-    CoordinatorEnginePtr coordinatorEngine;
     TopologyManagerServicePtr topologyManagerService;
     StreamCatalogServicePtr streamCatalogService;
     GlobalExecutionPlanPtr globalExecutionPlan;
