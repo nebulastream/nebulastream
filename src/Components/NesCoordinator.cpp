@@ -42,7 +42,6 @@
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Services/MonitoringService.hpp>
@@ -87,7 +86,6 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();
 
-    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
     topologyManagerService = std::make_shared<TopologyManagerService>(topology, streamCatalog);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
@@ -139,7 +137,6 @@ NesCoordinator::~NesCoordinator() {
     monitoringService.reset();
     queryRequestProcessorThread.reset();
     worker.reset();
-    coordinatorEngine.reset();
     streamCatalogService.reset();
     topologyManagerService.reset();
     restThread.reset();
@@ -158,11 +155,8 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(rpcThread.use_count() == 0, "NesCoordinator rpcThread leaked");
     NES_ASSERT(queryRequestProcessorThread.use_count() == 0, "NesCoordinator queryRequestProcessorThread leaked");
     NES_ASSERT(worker.use_count() == 0, "NesCoordinator worker leaked");
-    NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
     NES_ASSERT(restServer.use_count() == 0, "NesCoordinator restServer leaked");
     NES_ASSERT(restThread.use_count() == 0, "NesCoordinator restThread leaked");
-    NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
-    NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
     NES_ASSERT(streamCatalogService.use_count()==0, "NesCoordinator streamCatalogService leaked");
     NES_ASSERT(topologyManagerService.use_count()==0, "NesCoordinator topologyManagerService leaked");
 }
@@ -319,7 +313,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
 
 void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom) {
     grpc::ServerBuilder builder;
-    NES_ASSERT(coordinatorEngine, "null coordinator engine");
     NES_ASSERT(streamCatalogService, "null streamCatalogService");
     NES_ASSERT(topologyManagerService, "null topologyManagerService");
 
@@ -351,7 +344,6 @@ GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
-CoordinatorEnginePtr NesCoordinator::getCoordinatorEngine() const { return coordinatorEngine; }
 StreamCatalogServicePtr NesCoordinator::getStreamCatalogService() const { return streamCatalogService; }
 TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { return topologyManagerService; }
 
