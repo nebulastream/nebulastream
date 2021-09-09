@@ -44,14 +44,14 @@ void PartitionManager::pinSubpartition(NesPartition partition) {
 }
 
 void PartitionManager::unpinSubpartition(NesPartition partition) {
-//    std::unique_lock lock(mutex);
-//    auto it = partitions.find(partition);
-//    if (it != partitions.end()) {
-//        it->second.unpin();
-//        NES_DEBUG("PartitionManager: Unpinning SubpartitionCounter for " << it->first.toString() << " now at " << it->second.count());
-//        return;
-//    }
-    NES_ASSERT2_FMT(false, "Cannot decrement partition counter as partition does not exists " << partition);
+   std::unique_lock lock(mutex);
+   auto it = partitions.find(partition);
+   if (it != partitions.end()) {
+       it->second.unpin();
+        NES_DEBUG("PartitionManager: Unpinning SubpartitionCounter for " << partition.toString());
+       return;
+   }
+ NES_ASSERT2_FMT(false, "Cannot decrement partition counter as partition does not exists " << partition);
 }
 
 bool PartitionManager::registerSubpartition(NesPartition partition, DataEmitterPtr emitterPtr) {

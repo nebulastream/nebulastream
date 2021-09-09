@@ -21,3 +21,4 @@ docker/executableImage/resources/NebulaStream*.deb
 
 # Python virtual environment
 venv
+/build1/

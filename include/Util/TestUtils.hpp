@@ -211,10 +211,84 @@ class TestUtils {
     }
 
     /**
-     * @brief This method is used for stop a query
+     * @brief This method is used for adding parent to topology node
      * @param queryId: Id of the query
      * @return if stopped
      */
+    static bool addParentViaRest(const string& body, const std::string& restPort = "8081") {
+        web::json::value json_return;
+
+        web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/topology/addParent");
+        client.request(web::http::methods::POST, _XPLATSTR("/"), body)
+            .then([](const web::http::http_response& response) {
+                NES_INFO("get first then");
+                return response.extract_json();
+            })
+            .then([&json_return](const pplx::task<web::json::value>& task) {
+                try {
+                    NES_INFO("set return");
+                    json_return = task.get();
+                } catch (const web::http::http_exception& e) {
+                    NES_INFO("error while setting return");
+                    NES_INFO("error " << e.what());
+                }
+            })
+            .wait();
+
+        NES_DEBUG("addParentViaRest: status =" << json_return);
+
+        return json_return.at("Success").as_bool();
+    }
+
+    static bool removeParentViaRest(const string& body, const std::string& restPort = "8081") {
+        web::json::value json_return;
+        web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/topology/removeParent");
+        client.request(web::http::methods::POST, _XPLATSTR("/"), body)
+                .then([](const web::http::http_response& response) {
+                    NES_INFO("get first then");
+                    return response.extract_json();
+                })
+                .then([&json_return](const pplx::task<web::json::value>& task) {
+                    try {
+                        NES_INFO("set return");
+                        json_return = task.get();
+                    } catch (const web::http::http_exception& e) {
+                        NES_INFO("error while setting return");
+                        NES_INFO("error " << e.what());
+                    }
+                })
+                .wait();
+
+        NES_DEBUG("removeParentViaRest: status =" << json_return);
+
+        return json_return.at("Success").as_bool();
+    }
+
+    static bool submitMaintenanceRequestViaRest(const string& body, const std::string& restPort = "8081") {
+        web::json::value json_return;
+
+        web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/maintenance/mark");
+        client.request(web::http::methods::POST, _XPLATSTR("/"), body)
+                .then([](const web::http::http_response& response) {
+                    NES_INFO("get first then");
+                    return response.extract_json();
+                })
+                .then([&json_return](const pplx::task<web::json::value>& task) {
+                    try {
+                        NES_INFO("set return");
+                        json_return = task.get();
+                    } catch (const web::http::http_exception& e) {
+                        NES_INFO("error while setting return");
+                        NES_INFO("error " << e.what());
+                    }
+                })
+                .wait();
+
+        NES_DEBUG("stopQueryViaRest: status =" << json_return);
+
+        return json_return.at("Success").as_bool();
+    }
+
     static bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081") {
         web::json::value json_return;
 

@@ -121,7 +121,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
 
 bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize) {
     if(buffering){
-        NES_DEBUG("OutputChannel: Buffering data intended for: " << socketAddr);
+        NES_ERROR("OutputChannel: Buffering data intended for: " << socketAddr);
         buffer.push(std::pair<Runtime::TupleBuffer, uint64_t> {inputBuffer, tupleSize});
         return true;
     }
@@ -196,24 +196,24 @@ std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& OutputChannel::moveBuffe
     return std::move(buffer);
 }
 bool OutputChannel::emptyBuffer() {
-    NES_DEBUG("OutputChannel: Emptying buffer intended for: " << socketAddr);
+    NES_ERROR("OutputChannel: Emptying buffer intended for: " << socketAddr);
     if(buffer.empty()){
-        NES_DEBUG("OutputChannel: Buffer is empty");
+        NES_ERROR("OutputChannel: Buffer is empty");
         buffering = false;
         return true;
     }
-    NES_DEBUG("OutputChannel: emptying buffer. Nr of elements: " << buffer.size());
+    NES_ERROR("OutputChannel: emptying buffer. Nr of elements: " << buffer.size());
     while(!buffer.empty()){
         auto data = buffer.front();
         if(sendBuffer( data.first, data.second)){
             buffer.pop();
-            NES_DEBUG("OutputChannel: Successfully sent a buffered TupleBuffer");
+            NES_ERROR("OutputChannel: Successfully sent a buffered TupleBuffer");
             continue;
         }
-        NES_DEBUG("OutputChannel: Error while senidng buffered TupleBuffer");
+        NES_ERROR("OutputChannel: Error while senidng buffered TupleBuffer");
 
     }
-    NES_DEBUG("OutputChannel: Buffer is empty");
+    NES_ERROR("OutputChannel: Buffer is empty");
     buffering = false;
     return true;
 }

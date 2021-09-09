@@ -176,6 +176,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setLocalWorkerIp(it->second);
             } else if (it->first == "--coordinatorIp" && !it->second.empty()) {
                 setCoordinatorIp(it->second);
+            } else if (it->first == "--logLevel" && !it->second.empty()) {
+                setLogLevel(it->second);
             } else if (it->first == "--rpcPort" && !it->second.empty()) {
                 setRpcPort(stoi(it->second));
             } else if (it->first == "--coordinatorPort" && !it->second.empty()) {

@@ -434,4 +434,146 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
     }
 }
 
+TEST_F(E2ECoordinatorMultiWorkerTest, testMQTTourceWithMigration) {
+        //TODO result content does not end up in file?
+        NES_INFO(" start coordinator");
+        std::string outputFilePath = "testMQTTSourceWithMigration.csv";
+        remove(outputFilePath.c_str());
+
+
+        std::string coordinatorRPCPort = std::to_string(rpcPort);
+        std::string cmdCoord = "../nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
+        bp::child coordinatorProc(cmdCoord.c_str());
+
+        EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+        NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+
+        std::stringstream schema;
+        schema << "{\"streamName\" : \"mqtt\",\"schema\" "
+                  ":\"Schema::create()->addField(createField(\\\"id\\\", UINT64))->addField(createField(\\\"creation_timestamp\\\", UINT64))->addField(createField(\\\"data\\\", UINT64))->addField(createField(\\\"ingestion_timestamp\\\", UINT64))->addField(createField(\\\"expulsion_timestamp\\\", UINT64));\"}";
+        schema << endl;
+
+        NES_INFO("schema submit=" << schema.str());
+        EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+
+        string worker1RPCPort = std::to_string(rpcPort + 3);
+        string worker1DataPort = std::to_string(dataPort);
+        string cmdWrk1 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
+                         + " --dataPort=" + worker1DataPort;
+        bp::child workerProc1(cmdWrk1.c_str());
+        NES_INFO("started worker 1 with pid = " << workerProc1.id());
+
+        string worker2RPCPort = std::to_string(rpcPort + 6);
+        string worker2DataPort = std::to_string(dataPort + 2);
+        string cmdWrk2 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort
+                         + " --dataPort=" + worker2DataPort;
+        bp::child workerProc2(cmdWrk2.c_str());
+        NES_INFO("started worker 2 with pid = " << workerProc2.id());
+
+        string worker3RPCPort = std::to_string(rpcPort + 9);
+        string worker3DataPort = std::to_string(dataPort + 4);
+        string cmdWrk3 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker3RPCPort
+                         + "--dataPort=" + worker3DataPort
+                         + "--logicalStreamName=mqtt "
+                           "--physicalStreamName=mqttP --sourceType=MQTTSource --sourceConfig=\"tcp://127.0.0.1:1883;nes;nes;test;JSON;1;true\" "
+                           "--skipHeader=True";
+        //bp::child workerProc3(cmdWrk3.c_str());
+        //NES_INFO("started worker 2 with pid = " << workerProc3.id());
+
+        uint64_t coordinatorPid = coordinatorProc.id();
+        uint64_t workerPid1 = workerProc1.id();
+        uint64_t workerPid2 = workerProc2.id();
+        //uint64_t workerPid3 = workerProc3.id();
+
+        EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 3));
+
+        std::stringstream aP1;
+        aP1 << "{\"childId\" : \"4\", \"parentId\":\"2\"}";
+        aP1 << endl;
+        web::json::value aP1_return = TestUtils::addParentViaRest(aP1.str(), std::to_string(restPort));
+        NES_DEBUG(aP1_return);
+
+        std::stringstream aP2;
+        aP2 << "{\"childId\" : \"4\", \"parentId\":\"3\"}";
+        aP2 << endl;
+        web::json::value aP2_return = TestUtils::addParentViaRest(aP2.str(), std::to_string(restPort));
+        NES_DEBUG(aP2_return);
+
+        std::stringstream rP;
+        rP << "{\"childId\" : \"4\", \"parentId\":\"1\"}";
+        rP << endl;
+        web::json::value rP_return = TestUtils::removeParentViaRest(rP.str(), std::to_string(restPort));
+        NES_DEBUG(rP_return);
+
+
+
+        std::stringstream ss;
+        ss << "{\"userQuery\" : ";
+        ss << "\"Query::from(\\\"mqtt\\\")"
+              ".sink(FileSinkDescriptor::create(\\\"";
+        ss << outputFilePath;
+        ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+        ss << R"());","strategyName" : "BottomUp"})";
+        ss << endl;
+        NES_INFO("query string submit=" << ss.str());
+
+//        std::stringstream ss;
+//        ss << "{\"userQuery\" : ";
+//        ss << "\"Query::from(\\\"window\\\")"
+//              ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
+//              ".byKey(Attribute(\\\"id\\\"))"
+//              ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+//        ss << outputFilePath;
+//        ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+//        ss << R"());","strategyName" : "BottomUp"})";
+//        ss << endl;
+
+        web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+        QueryId queryId = json_return.at("queryId").as_integer();
+
+        NES_INFO("try to acc return");
+        NES_INFO("Query ID: " << queryId);
+        EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+        sleep(40);
+        std::stringstream mR;
+        mR << "{\"ids\":1, \"strategy\":2}";
+        mR << endl;
+        NES_INFO("query string submit=" << mR.str());
+        web::json::value mR_return = TestUtils::submitMaintenanceRequestViaRest(mR.str(), std::to_string(restPort));
+        NES_DEBUG(mR_return);
+
+        sleep(30);
+        EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3, std::to_string(restPort)));
+        EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+
+//        std::ifstream ifs(outputFilePath.c_str());
+//        EXPECT_TRUE(ifs.good());
+//        std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+//
+//        string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+//                                 "0,10000,1,102\n"
+//                                 "10000,20000,1,290\n"
+//                                 "0,10000,4,2\n"
+//                                 "0,10000,11,10\n"
+//                                 "0,10000,12,2\n"
+//                                 "0,10000,16,4\n";
+//
+//        NES_INFO("content=" << content);
+//        NES_INFO("expContent=" << expectedContent);
+//        EXPECT_EQ(content, expectedContent);
+//
+//        int response = remove(outputFilePath.c_str());
+//        EXPECT_TRUE(response == 0);
+
+        NES_INFO("Killing worker 1 process->PID: " << workerPid1);
+        workerProc1.terminate();
+        NES_INFO("Killing worker 2 process->PID: " << workerPid2);
+        workerProc2.terminate();
+//        NES_INFO("Killing worker 3 process->PID: " << workerPid3);
+//        workerProc3.terminate();
+        NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
+        coordinatorProc.terminate();
+    }
+
 }// namespace NES
