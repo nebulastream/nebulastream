@@ -124,6 +124,12 @@ class HardwareManager {
      */
     uint32_t getNumberOfNumaRegions() const;
 
+    /**
+     * @brief Returns the numa region of the current caller
+     * @return numa region
+     */
+    uint32_t getMyNumaRegion() const;
+
   private:
     NesDefaultMemoryAllocatorPtr globalAllocator;
 #ifdef NES_ENABLE_NUMA_SUPPORT

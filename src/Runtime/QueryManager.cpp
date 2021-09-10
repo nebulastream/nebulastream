@@ -30,6 +30,7 @@
 #include <memory>
 #include <stack>
 #include <utility>
+#include <Runtime/HardwareManager.hpp>
 
 namespace NES::Runtime {
 
@@ -85,9 +86,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 
 }// namespace detail
 
-#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
-#endif
 
 QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            uint64_t nodeEngineId,
@@ -95,15 +94,21 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            std::vector<uint64_t> workerToCoreMapping)
     : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads),
       workerToCoreMapping(workerToCoreMapping)
-#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-
-#else
+#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
       ,
       taskQueue(
           DEFAULT_QUEUE_INITIAL_CAPACITY)// TODO consider if we could use something num of buffers in buffer manager but maybe it could be too much
 #endif
 {
     NES_DEBUG("Init QueryManager::QueryManager");
+#if NES_USE_ONE_QUEUE_PER_NUMA_NODE
+    auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
+    auto numaRegions = hardwareManager->getNumberOfNumaRegions();
+    for(uint64_t i = 0; i < numaRegions; i++)
+    {
+        taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
+    }
+#endif
     reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
 }
 
