@@ -22,12 +22,14 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <Services/StreamCatalogService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
-
 #include <string>
+
 using namespace std;
 using namespace NES;
 

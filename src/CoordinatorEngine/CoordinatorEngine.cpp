@@ -33,9 +33,9 @@ namespace NES {
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalogPtr, TopologyPtr topologyPtr)
     : streamCatalogService(streamCatalogPtr), topologyManagerService(topologyPtr, streamCatalogPtr),
       streamCatalog(std::move(streamCatalogPtr)), topology(std::move(topologyPtr)) {
-    NES_DEBUG("CoordinatorEngine()");
+    NES_DEBUG("ServiceTests()");
 }
-CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
+CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~ServiceTests()"); };
 
 uint64_t CoordinatorEngine::registerNode(const std::string& address,
                                          int64_t grpcPort,
