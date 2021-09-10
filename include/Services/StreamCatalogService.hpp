@@ -82,6 +82,6 @@ class StreamCatalogService {
     std::mutex addRemoveLogicalStream;
     std::mutex addRemovePhysicalStream;
 };
-
+using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
 }// namespace NES
 #endif//NES_SRC_SERVICES_STREAMCATALOGSERVICE_H_
