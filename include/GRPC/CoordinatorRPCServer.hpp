@@ -15,11 +15,11 @@
 */
 
 #include <CoordinatorRPCService.grpc.pb.h>
+#include <Services/StreamCatalogService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <Services/TopologyManagerService.hpp>
-#include <Services/StreamCatalogService.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;

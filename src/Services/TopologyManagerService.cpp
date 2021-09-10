@@ -229,10 +229,8 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
     }
     NES_DEBUG("TopologyManagerService::removeParent: successful");
     return true;
-    }
+}
 
-    TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId){
-        return topology->findNodeWithId(nodeId);
-    }
+TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return topology->findNodeWithId(nodeId); }
 
 }// namespace NES

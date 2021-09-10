@@ -19,7 +19,6 @@
 #include "SerializableQueryPlan.pb.h"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryId.hpp>

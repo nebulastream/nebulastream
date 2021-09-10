@@ -21,9 +21,9 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/ErrorListener.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
-#include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
 #include <string>
 #include <thread>
