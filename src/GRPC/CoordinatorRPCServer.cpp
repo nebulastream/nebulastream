@@ -14,23 +14,24 @@
     limitations under the License.
 */
 
-#include <Services/TopologyManagerService.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 using namespace NES;
 
 CoordinatorRPCServer::CoordinatorRPCServer(TopologyPtr topology, StreamCatalogPtr streamCatalog)
-: topologyManagerService(std::make_shared<TopologyManagerService>(topology, streamCatalog)), streamCatalogService(std::make_shared<StreamCatalogService>(streamCatalog)){};
+    : topologyManagerService(std::make_shared<TopologyManagerService>(topology, streamCatalog)),
+      streamCatalogService(std::make_shared<StreamCatalogService>(streamCatalog)){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
     uint64_t id = topologyManagerService->registerNode(request->address(),
-                                                  request->grpcport(),
-                                                  request->dataport(),
-                                                  request->numberofslots(),
-                                                  std::make_shared<NodeStats>(request->nodeproperties()),
-                                                  (NodeType) request->type());
+                                                       request->grpcport(),
+                                                       request->dataport(),
+                                                       request->numberofslots(),
+                                                       std::make_shared<NodeStats>(request->nodeproperties()),
+                                                       (NodeType) request->type());
     if (id != 0) {
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);
         reply->set_id(id);
@@ -61,9 +62,9 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*,
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream: request =" << request);
     TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
     bool success = streamCatalogService->registerPhysicalStream(physicalNode,
-                                                             request->sourcetype(),
-                                                             request->physicalstreamname(),
-                                                             request->logicalstreamname());
+                                                                request->sourcetype(),
+                                                                request->physicalstreamname(),
+                                                                request->logicalstreamname());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream success");

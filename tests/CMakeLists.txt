@@ -310,11 +310,6 @@ add_executable(serialize-operator-test "UnitTests/Serialization/SerializationUti
 target_link_libraries(serialize-operator-test nes ${GTEST_LIBRARIES})
 add_test(NAME serialize-operator-test COMMAND serialize-operator-test)
 
-### ServiceTests Tests ###
-add_executable(coordinator-engine-tests "UnitTests/ServiceTests/CoordinatorEngineTest.cpp")
-target_link_libraries(coordinator-engine-tests nes ${GTEST_LIBRARIES})
-add_test(NAME coordinator-engine-tests COMMAND coordinator-engine-tests)
-
 ### StreamCatalogService Tests ###
 add_executable(stream-catalog-service-tests "UnitTests/ServiceTests/StreamCatalogServiceTest.cpp")
 target_link_libraries(stream-catalog-service-tests nes ${GTEST_LIBRARIES})

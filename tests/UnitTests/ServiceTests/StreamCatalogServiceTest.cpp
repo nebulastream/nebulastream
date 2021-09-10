@@ -14,18 +14,18 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Services/StreamCatalogService.hpp>
-#include <Services/TopologyManagerService.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
+#include <Services/StreamCatalogService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
+#include <gtest/gtest.h>
 #include <string>
 
 using namespace std;
@@ -91,7 +91,7 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
-    StreamCatalogServicePtr streamCatalogService =  std::make_shared<StreamCatalogService>(streamCatalog);
+    StreamCatalogServicePtr streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
     TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, streamCatalog);
 
     std::string physicalStreamName = "testStream";
@@ -118,16 +118,16 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
     // common case
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
     bool successRegisterPhysicalStream = streamCatalogService->registerPhysicalStream(physicalNode,
-                                                                                   conf->getSourceType(),
-                                                                                   conf->getPhysicalStreamName(),
-                                                                                   conf->getLogicalStreamName());
+                                                                                      conf->getSourceType(),
+                                                                                      conf->getPhysicalStreamName(),
+                                                                                      conf->getLogicalStreamName());
     EXPECT_TRUE(successRegisterPhysicalStream);
 
     //test register existing stream
     bool successRegisterExistingPhysicalStream = streamCatalogService->registerPhysicalStream(physicalNode,
-                                                                                           conf->getSourceType(),
-                                                                                           conf->getPhysicalStreamName(),
-                                                                                           conf->getLogicalStreamName());
+                                                                                              conf->getSourceType(),
+                                                                                              conf->getPhysicalStreamName(),
+                                                                                              conf->getLogicalStreamName());
     EXPECT_TRUE(!successRegisterExistingPhysicalStream);
 
     //test unregister not existing physical stream

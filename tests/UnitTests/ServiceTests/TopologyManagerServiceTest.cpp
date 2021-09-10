@@ -21,10 +21,10 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Services/StreamCatalogService.hpp>
-#include <Services/TopologyManagerService.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
+#include <Services/StreamCatalogService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
 #include <string>
