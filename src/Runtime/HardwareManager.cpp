@@ -22,6 +22,13 @@
 #include <sys/types.h>
 #endif
 
+#ifdef NES_ENABLE_NUMA_SUPPORT
+#if defined(__linux__)
+#include <numa.h>
+#include <numaif.h>
+#endif
+#endif
+
 namespace NES::Runtime {
 namespace detail {
 
@@ -104,6 +111,13 @@ NumaRegionMemoryAllocatorPtr HardwareManager::getNumaAllactor(uint32_t numaNodeI
 }
 #endif
 NesDefaultMemoryAllocatorPtr HardwareManager::getGlobalAllocator() const { return globalAllocator; }
+
+
+uint32_t HardwareManager::getMyNumaRegion() const {
+    return numa_node_of_cpu(sched_getcpu());
+
+}
+
 
 bool HardwareManager::bindThreadToCore(pthread_t, uint32_t, uint32_t) {
     NES_ASSERT2_FMT(false, "This will implemented at some point");
