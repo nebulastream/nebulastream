@@ -93,4 +93,14 @@ TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
     TestForException(queryString);
 }
 
+// Test a query that calls "Attribute().as()" outside a Projection operator
+TEST_F(SyntacticQueryValidationTest, attributeRenameOutsideProjection) {
+    NES_INFO("Invalid bool operator test");
+
+//    std::string queryString = R"(Query::from("default_logical").filter(Attribute("id").as("identity") > 10); )";
+    std::string queryString = R"(Query::from("default_logical").map(Attribute("id") =  Attribute("id").as("identity") + 2 ); )";
+
+    TestForException(queryString);
+}
+
 }// namespace NES
