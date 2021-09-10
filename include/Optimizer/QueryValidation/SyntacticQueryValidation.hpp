@@ -18,6 +18,8 @@
 #define NES_OPTIMIZE_SYNTACTIC_QUERY_VALIDATION_HPP
 
 #include <memory>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 
 namespace NES {
 
@@ -62,6 +64,13 @@ class SyntacticQueryValidation {
      * @brief Throws InvalidQueryException with formatted exception message
      */
     static void handleException(const std::exception& ex);
+
+    /**
+     * @brief Traverse through the expression and check if FieldRenameExpression exists
+     * @param start starting expression node
+     * @return true if a FieldRenameExpression exists
+     */
+    bool checkIfFieldRenameExpressionExist(NodePtr start);
 };
 
 }// namespace NES::Optimizer
