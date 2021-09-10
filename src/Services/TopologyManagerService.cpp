@@ -17,7 +17,6 @@
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <NodeStats.pb.h>
 #include <Services/TopologyManagerService.hpp>

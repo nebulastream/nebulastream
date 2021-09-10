@@ -27,7 +27,7 @@ namespace NES::Runtime {
 
 /// this mutex protected the globalErrorListeners vector
 static std::recursive_mutex globalErrorListenerMutex;
-/// this vector contains system-wide error listeners, e.g., Runtime and CoordinatorEngine
+/// this vector contains system-wide error listeners, e.g., Runtime and ServiceTests
 static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
 
 /**
