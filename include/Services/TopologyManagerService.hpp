@@ -86,6 +86,9 @@ class TopologyManagerService {
     StreamCatalogPtr streamCatalog;
     std::mutex registerDeregisterNode;
 };
+
+using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
+
 }//namespace NES
 
 #endif//NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_
