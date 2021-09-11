@@ -71,15 +71,17 @@ MQTTSource::MQTTSource(SchemaPtr schema,
       inputFormat(inputFormat), tupleSize(schema->getSchemaSizeInBytes()), qualityOfService(qualityOfService),
       cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs),
       readTimeoutInMs((bufferFlushIntervalMs > 0) ? bufferFlushIntervalMs : 100) {
+      NES_DEBUG("In MQTT constr");
 
     if (cleanSession) {
         uint32_t randomizeClientId = random();
         this->clientId = (clientId + std::to_string(randomizeClientId));
     }
-
-    client = std::make_shared<mqtt::async_client>(serverAddress, this->clientId);
-
-    //init physical types
+        NES_DEBUG("establ conn mqtt client");
+        NES_DEBUG("ServerAddress: " << serverAddress <<" ClientId: " << clientId);
+        client = std::make_shared<mqtt::async_client>(serverAddress, this->clientId);
+        NES_DEBUG("conn est mqtt client");
+        //init physical types
     std::vector<std::string> schemaKeys;
     std::string fieldName;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -155,7 +157,7 @@ std::string MQTTSource::toString() const {
 bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
     // determine how many tuples fit into the buffer
-    tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
+    tuplesThisPass = 1;//tupleBuffer.getBufferSize() / tupleSize;
     NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
 
     uint64_t tupleCount = 0;
@@ -172,7 +174,7 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
             // If connected is false, constantly check if we are reconnected again and if so, resubscribe.
             if (connected) {
                 // Using try_consume_message_for(), because it is non-blocking.
-                auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
+                auto message = client->consume_message();//client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
                 if (message) {// Check if message was received correctly (not nullptr)
                     NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
                     receivedMessageString = message->get_payload_str();
