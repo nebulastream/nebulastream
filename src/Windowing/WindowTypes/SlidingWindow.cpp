@@ -64,7 +64,8 @@ std::string SlidingWindow::toString() {
 }
 
 bool SlidingWindow::equal(WindowTypePtr otherWindowType) {
-    return this->timeCharacteristic->getField()->getName() == otherWindowType->getTimeCharacteristic()->getField()->getName()
+    return this->isSlidingWindow() && otherWindowType->isSlidingWindow()
+        && this->timeCharacteristic->getField()->getName() == otherWindowType->getTimeCharacteristic()->getField()->getName()
         && this->size.getTime() == otherWindowType->getSize().getTime()
         && this->slide.getTime() == otherWindowType->getSlide().getTime();
 }

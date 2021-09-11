@@ -644,3 +644,57 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_EQ(updatedRootOperators1.size(), 2u);
 }
+
+/**
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different windows
+ */
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindowsWithoutKeyBy) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Minutes(66), Minutes(66));
+    auto aggregation1 = Sum(Attribute("value"));
+    Query query1 = Query::from("car").window(windowType1).apply(aggregation1).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    auto windowType2 = SlidingWindow::of(EventTime(Attribute("ts")), Seconds(3960), Seconds(3960));
+    auto aggregation2 = Sum(Attribute("value"));
+    Query query2 = Query::from("car").window(windowType2).apply(aggregation2).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    auto rewriteRule = Optimizer::QueryRewritePhase::create(true);
+    queryPlan1 = rewriteRule->execute(queryPlan1);
+    queryPlan2 = rewriteRule->execute(queryPlan2);
+
+    auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
+    queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    //execute
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    auto updatedSharedQMToDeploy = globalQueryPlan->getAllSharedQueryPlans();
+    EXPECT_EQ(updatedSharedQMToDeploy.size(), 1u);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_EQ(updatedRootOperators1.size(), 2u);
+}

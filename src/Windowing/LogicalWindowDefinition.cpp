@@ -163,8 +163,16 @@ void LogicalWindowDefinition::setOriginId(uint64_t originId) { this->originId = 
 uint64_t LogicalWindowDefinition::getAllowedLateness() const { return allowedLateness; }
 
 bool LogicalWindowDefinition::equal(LogicalWindowDefinitionPtr otherWindowDefinition) {
-    return this->isKeyed() == otherWindowDefinition->isKeyed() && this->getOnKey()->equal(otherWindowDefinition->getOnKey())
-        && this->windowType->equal(otherWindowDefinition->getWindowType())
+
+    if (this->isKeyed() != otherWindowDefinition->isKeyed()) {
+        return false;
+    }
+
+    if (this->isKeyed() && !this->getOnKey()->equal(otherWindowDefinition->getOnKey())) {
+        return false;
+    }
+
+    return this->windowType->equal(otherWindowDefinition->getWindowType())
         && this->windowAggregation->equal(otherWindowDefinition->getWindowAggregation());
 }
 
