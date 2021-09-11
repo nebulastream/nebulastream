@@ -264,9 +264,9 @@ class TestUtils {
         return json_return.at("Success").as_bool();
     }
 
-    static bool submitMaintenanceRequestViaRest(const string& body, const std::string& restPort = "8081") {
+    static uint64_t submitMaintenanceRequestViaRest(const string& body, const std::string& restPort = "8081") {
         web::json::value json_return;
-
+        NES_DEBUG("Submitting Maintenance Request via REST");
         web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/maintenance/mark");
         client.request(web::http::methods::POST, _XPLATSTR("/"), body)
                 .then([](const web::http::http_response& response) {
@@ -284,9 +284,34 @@ class TestUtils {
                 })
                 .wait();
 
-        NES_DEBUG("stopQueryViaRest: status =" << json_return);
+        NES_DEBUG("submitMaintenanceRequestViaRest: status =" << json_return);
 
-        return json_return.at("Success").as_bool();
+        return json_return.at("Node Id").as_integer();
+    }
+
+    static bool getExecutionNodesOfAQueryViaRest(QueryId queryId, const std::string& restPort = "8081") {
+        web::json::value json_return;
+
+        web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/query/execution-plan");
+        web::uri_builder builder(("/"));
+        builder.append_query(("queryId"), queryId);
+        client.request(web::http::methods::GET, builder.to_string())
+                .then([](const web::http::http_response& response) {
+                    NES_INFO("get first then");
+                    return response.extract_json();
+                })
+                .then([&json_return](const pplx::task<web::json::value>& task) {
+                    try {
+                        NES_INFO("set return");
+                        json_return = task.get();
+                    } catch (const web::http::http_exception& e) {
+                        NES_INFO("error while setting return");
+                        NES_INFO("error " << e.what());
+                    }
+                })
+                .wait();
+
+        return true;
     }
 
     static bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081") {
