@@ -58,6 +58,7 @@ void AvgAggregationDescriptor::inferStamp(SchemaPtr schema) {
         auto identifier = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         asField->as<FieldAccessExpressionNode>()->updateFieldName(identifier + asFieldName);
     }
+    asField->setStamp(onField->getStamp());
 }
 WindowAggregationDescriptorPtr AvgAggregationDescriptor::copy() {
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(this->onField->copy(), this->asField->copy()));

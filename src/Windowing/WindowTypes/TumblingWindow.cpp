@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -52,11 +53,19 @@ bool TumblingWindow::isTumblingWindow() { return true; }
 
 TimeMeasure TumblingWindow::getSize() { return size; }
 
+TimeMeasure TumblingWindow::getSlide() { return getSize(); }
+
 std::string TumblingWindow::toString() {
     std::stringstream ss;
     ss << "TumblingWindow: size=" << size.getTime();
     ss << " timeCharacteristic=" << timeCharacteristic->toString();
     ss << std::endl;
     return ss.str();
+}
+
+bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
+    return this->timeCharacteristic->getField()->getName() == otherWindowType->getTimeCharacteristic()->getField()->getName()
+        && this->isTumblingWindow() == otherWindowType->isTumblingWindow()
+        && this->size.getTime() == otherWindowType->getSize().getTime();
 }
 }// namespace NES::Windowing

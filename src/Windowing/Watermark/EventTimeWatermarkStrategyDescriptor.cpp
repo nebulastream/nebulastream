@@ -36,8 +36,11 @@ EventTimeWatermarkStrategyDescriptor::create(const ExpressionItem& onField, Time
                                                         std::move(allowedLateness),
                                                         std::move(unit)));
 }
-ExpressionNodePtr EventTimeWatermarkStrategyDescriptor::getOnField() { return onField; }
+
+ExpressionItem EventTimeWatermarkStrategyDescriptor::getOnField() { return onField; }
+
 TimeMeasure EventTimeWatermarkStrategyDescriptor::getAllowedLateness() { return allowedLateness; }
+
 bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other) {
     auto eventTimeWatermarkStrategyDescriptor = other->as<EventTimeWatermarkStrategyDescriptor>();
     return eventTimeWatermarkStrategyDescriptor->onField == onField

@@ -64,7 +64,7 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     z3::config cfg;
-    cfg.set("timeout", 500);
+    cfg.set("timeout", 50000);
     cfg.set("model", false);
     cfg.set("type_check", false);
     z3Context = std::make_shared<z3::context>(cfg);

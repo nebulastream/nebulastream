@@ -167,6 +167,8 @@ class LogicalWindowDefinition {
 
     std::string toString();
 
+    bool equal(LogicalWindowDefinitionPtr otherWindowDefinition);
+
   private:
     WindowAggregationPtr windowAggregation;
     WindowTriggerPolicyPtr triggerPolicy;

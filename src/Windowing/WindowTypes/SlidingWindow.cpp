@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -61,4 +62,11 @@ std::string SlidingWindow::toString() {
     ss << std::endl;
     return ss.str();
 }
+
+bool SlidingWindow::equal(WindowTypePtr otherWindowType) {
+    return this->timeCharacteristic->getField()->getName() == otherWindowType->getTimeCharacteristic()->getField()->getName()
+        && this->size.getTime() == otherWindowType->getSize().getTime()
+        && this->slide.getTime() == otherWindowType->getSlide().getTime();
+}
+
 }// namespace NES::Windowing

@@ -61,6 +61,7 @@ void MaxAggregationDescriptor::inferStamp(SchemaPtr schema) {
         auto identifier = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         asField->as<FieldAccessExpressionNode>()->updateFieldName(identifier + asFieldName);
     }
+    asField->setStamp(onField->getStamp());
 }
 
 WindowAggregationPtr MaxAggregationDescriptor::copy() {

@@ -71,4 +71,11 @@ std::string WindowAggregationDescriptor::getTypeAsString() {
 }
 
 ExpressionNodePtr WindowAggregationDescriptor::on() { return onField; }
+
+bool WindowAggregationDescriptor::equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor) {
+    return this->getType() == otherWindowAggregationDescriptor->getType()
+        && this->onField->equal(otherWindowAggregationDescriptor->onField)
+        && this->asField->equal(otherWindowAggregationDescriptor->asField);
+}
+
 }// namespace NES::Windowing

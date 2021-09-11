@@ -697,6 +697,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
                 || originalAttributeName.find("cnt") != std::string::npos) {
                 updatedSchemaMap[originalAttributeName] =
                     DataTypeToZ3ExprUtil::createForField(originalAttributeName, outputField->getDataType(), context)->getExpr();
+            } else if (originalAttributeName == "count") {
+                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate()));
+                updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
             } else if (originalAttributeName == asFieldName) {
                 auto fieldExpr = schemaFieldToExprMap[onFieldName];
                 auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*fieldExpr)));
