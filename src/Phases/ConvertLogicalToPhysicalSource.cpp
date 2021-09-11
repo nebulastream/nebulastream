@@ -131,7 +131,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
 #endif
 #ifdef ENABLE_MQTT_BUILD
     } else if (sourceDescriptor->instanceOf<MQTTSourceDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating OPC source");
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating MQTT source");
         const MQTTSourceDescriptorPtr mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
         return createMQTTSource(mqttSourceDescriptor->getSchema(),
                                 bufferManager,

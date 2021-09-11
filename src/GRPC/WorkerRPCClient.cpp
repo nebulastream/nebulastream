@@ -400,13 +400,13 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->UpdateNetworkSink(&context, request, &reply);
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
+        NES_DEBUG("WorkerRPCClient::UpdateNetworkSinks: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_ERROR(" WorkerRPCClient::BeginBuffer "
+        NES_ERROR(" WorkerRPCClient::UpdateNetworkSinks "
                   "error="
                       << status.error_code() << ": " << status.error_message());
-        throw Exception("Error while WorkerRPCClient::stopQuery");
+        throw Exception("Error while WorkerRPCClient::updateNetworkSinks");
     }
 }
 }// namespace NES
