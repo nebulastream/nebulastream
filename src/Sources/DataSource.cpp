@@ -67,6 +67,12 @@ DataSource::DataSource(const SchemaPtr& pSchema,
 }
 
 void DataSource::emitWorkFromSource(NodeEngine::TupleBuffer& buffer) {
+
+    if (!queryManager->getLocationClient()->areSourcesEnabled() && type == ZMQ_SOURCE) {
+        NES_DEBUG("DataSource: Buffer skipped -> source disabled based on location!");
+        return;
+    }
+
     // set the origin id for this source
     buffer.setOriginId(operatorId);
     // set the creation timestamp
@@ -207,7 +213,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t processedOverallBufferCnt = 0;
     while (running) {
 
-        if (!queryManager->getLocationClient()->areSourcesEnabled()) {
+        if (!queryManager->getLocationClient()->areSourcesEnabled() && type != ZMQ_SOURCE) {
             NES_DEBUG("DataSource: Source disabled based on location!");
             continue;
         }
@@ -295,7 +301,7 @@ void DataSource::runningRoutineWithFrequency() {
     uint64_t cnt = 0;
     while (running) {
 
-        if (!queryManager->getLocationClient()->areSourcesEnabled()) {
+        if (!queryManager->getLocationClient()->areSourcesEnabled() && type != ZMQ_SOURCE) {
             NES_DEBUG("DataSource: Source disabled based on location!");
             continue;
         }
