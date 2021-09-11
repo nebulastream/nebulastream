@@ -47,23 +47,30 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
         //zmqSocket.setsockopt(ZMQ_IDENTITY, &channelId, sizeof(ChannelId));
         zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
         zmqSocket.connect(socketAddr);
+        NES_ASSERT(zmqSocket.connected(), "Cannot connect to socket!");
         int i = 0;
 
         while (i < retryTimes) {
+            NES_DEBUG("Sending Client Announcement to id= " << channelId);
             sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId);
+            NES_DEBUG("OutputChannel: client announcement sent");
 
             zmq::message_t recvHeaderMsg;
+            NES_DEBUG("Beginn receiving reply from ZMQ Socket");
             auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
+            NES_DEBUG("Reply received from ZMQ Socket");
             NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
 
             auto* recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
 
             if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
+                NES_DEBUG("Message from server is corrupt");
                 NES_THROW_RUNTIME_ERROR("OutputChannel: Message from server is corrupt!");
             }
 
             switch (recvHeader->getMsgType()) {
                 case Messages::kServerReady: {
+                    NES_DEBUG("OutputChannel: connecting with " << socketAddr << " succesful");
                     zmq::message_t recvMsg;
                     auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
@@ -85,6 +92,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                     break;
                 }
                 case Messages::kErrorMessage: {
+                    NES_DEBUG("OutputChannel: Error on Client Announcement");
                     // if server receives a message that an error occured
                     zmq::message_t errorEnvelope;
                     auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
@@ -96,7 +104,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                 }
                 default: {
                     // got a wrong message type!
-                    NES_ERROR("OutputChannel: received unknown message " << recvHeader->getMsgType());
+                    NES_DEBUG("OutputChannel: received unknown message " << recvHeader->getMsgType());
                     return nullptr;
                 }
             }
@@ -121,10 +129,11 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
 
 bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize) {
     if(buffering){
-        NES_ERROR("OutputChannel: Buffering data intended for: " << socketAddr);
+        NES_ERROR("OutputChannel: Storing data intended for: " << socketAddr);
         buffer.push(std::pair<Runtime::TupleBuffer, uint64_t> {inputBuffer, tupleSize});
         return true;
     }
+    NES_DEBUG("OutputChannel: buffer sent");
     auto numOfTuples = inputBuffer.getNumberOfTuples();
     auto originId = inputBuffer.getOriginId();
     auto watermark = inputBuffer.getWatermark();
@@ -133,9 +142,10 @@ bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tuple
     auto payloadSize = tupleSize * numOfTuples;
     auto* ptr = inputBuffer.getBuffer<uint8_t>();
     if (payloadSize == 0) {
+        NES_DEBUG("payload size 0");
         return true;
     }
-    NES_DEBUG("OutputChannel: Senidng buffer to: " << socketAddr);
+    NES_DEBUG("OutputChannel: Sending buffer to: " << socketAddr);
     sendMessage<Messages::DataBufferMessage, kZmqSendMore>(zmqSocket,
                                                            payloadSize,
                                                            numOfTuples,
@@ -196,24 +206,24 @@ std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& OutputChannel::moveBuffe
     return std::move(buffer);
 }
 bool OutputChannel::emptyBuffer() {
-    NES_ERROR("OutputChannel: Emptying buffer intended for: " << socketAddr);
+    NES_ERROR("OutputChannel: Emptying store intended for: " << socketAddr);
     if(buffer.empty()){
-        NES_ERROR("OutputChannel: Buffer is empty");
+        NES_ERROR("OutputChannel: Store is empty!");
         buffering = false;
         return true;
     }
-    NES_ERROR("OutputChannel: emptying buffer. Nr of elements: " << buffer.size());
+    NES_ERROR("OutputChannel: emptying store. Nr of elements: " << buffer.size());
     while(!buffer.empty()){
         auto data = buffer.front();
         if(sendBuffer( data.first, data.second)){
             buffer.pop();
-            NES_ERROR("OutputChannel: Successfully sent a buffered TupleBuffer");
+            NES_ERROR("OutputChannel: Successfully sent a stored TupleBuffer");
             continue;
         }
-        NES_ERROR("OutputChannel: Error while senidng buffered TupleBuffer");
+        NES_ERROR("OutputChannel: Error while senidng stored TupleBuffer");
 
     }
-    NES_ERROR("OutputChannel: Buffer is empty");
+    NES_ERROR("OutputChannel: Store is empty");
     buffering = false;
     return true;
 }

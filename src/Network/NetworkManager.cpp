@@ -69,7 +69,7 @@ OutputChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocation
                                                               std::chrono::seconds waitTime,
                                                               uint8_t retryTimes,
                                                               std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer) {
-    NES_INFO("NetworkManager: Registering SubpartitionProducer: " << nesPartition.toString());
+    NES_INFO("NetworkManager: Registering SubpartitionProducer: " << nesPartition.toString() << " to " << nodeLocation.createZmqURI());
     // method needs to return a pointer so that it can be passed to boost::thread_specific_ptr
     return OutputChannel::create(server->getContext(),
                                  nodeLocation.createZmqURI(),

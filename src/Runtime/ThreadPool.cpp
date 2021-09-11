@@ -62,6 +62,7 @@ ThreadPool::~ThreadPool() {
 }
 
 void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
+    NES_DEBUG("Worker thread is in running routine");
     while (running) {
         try {
             switch (queryManager->processNextTask(running, workerContext)) {

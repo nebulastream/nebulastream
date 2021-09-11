@@ -65,6 +65,8 @@ void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runti
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
 
-void NetworkSource::emitWork(Runtime::TupleBuffer& buffer) { DataSource::emitWork(buffer); }
+void NetworkSource::emitWork(Runtime::TupleBuffer& buffer) {
+    NES_DEBUG("NetworkSource: emitting work for partition: " << nesPartition.toString());
+    DataSource::emitWork(buffer); }
 
 }// namespace NES::Network

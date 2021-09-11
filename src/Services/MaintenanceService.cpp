@@ -51,8 +51,6 @@ std::vector<MaintenanceService::QueryMigrationMessage> MaintenanceService::submi
         results.push_back(message);
         return results;
     }
-    NES_DEBUG("Applying first strategy for maintenance on node" << std::to_string(nodeId));
-
     TopologyNodePtr topologyNode = topology->findNodeWithId(nodeId);
     if(!topologyNode){
         NES_INFO("MaintenanceService: Node with ID " + std::to_string(nodeId) + " does not exit.");

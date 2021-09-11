@@ -251,7 +251,10 @@ void DataSource::runningRoutineWithIngestionRate() {
 
         //produce buffers until limit for this second or for all perionds is reached or source is topped
         while (buffersProcessedCnt < gatheringIngestionRate && running && processedOverallBufferCnt < numBuffersToProcess) {
+            NES_DEBUG("receiveing Data");
             auto optBuf = receiveData();
+            NES_DEBUG("data received");
+
 
             if (optBuf.has_value()) {
                 // here we got a valid buffer

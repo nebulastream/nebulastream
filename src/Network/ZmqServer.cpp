@@ -181,7 +181,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
             auto const identityEnvelopeReceived = dispatcherSocket.recv(identityEnvelope);
             auto const headerEnvelopeReceived = dispatcherSocket.recv(headerEnvelope);
             auto* msgHeader = headerEnvelope.data<Messages::MessageHeader>();
-
+            NES_DEBUG("received data at ZMQ Port");
             if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER || !identityEnvelopeReceived.has_value()
                 || !headerEnvelopeReceived.has_value()) {
                 // TODO handle error -- need to discuss how we handle errors on the node engine
@@ -220,7 +220,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto* bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
                     auto nesPartition = *identityEnvelope.data<NesPartition>();
 
-                    NES_TRACE("ZmqServer: DataBuffer received from origin=" << bufferHeader->originId << " and NesPartition="
+                    NES_DEBUG("ZmqServer: DataBuffer received from origin=" << bufferHeader->originId << " and NesPartition="
                                                                             << nesPartition.toString() << " with payload size "
                                                                             << bufferHeader->payloadSize);
 
@@ -236,7 +236,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     buffer.setWatermark(bufferHeader->watermark);
                     buffer.setCreationTimestamp(bufferHeader->creationTimestamp);
                     buffer.setSequenceNumber(bufferHeader->sequenceNumber);
-
+                    NES_DEBUG("good for :" << nesPartition.toString());
                     exchangeProtocol.onBuffer(nesPartition, buffer);
                     break;
                 }
@@ -277,7 +277,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     break;
                 }
                 default: {
-                    NES_ERROR("ZmqServer: received unknown message type");
+                    NES_DEBUG("ZmqServer: received unknown message type");
                 }
             }
         }

@@ -45,6 +45,7 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 NetworkSink::~NetworkSink() { NES_INFO("NetworkSink: Destructor called " << nesPartition); }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
+    NES_DEBUG("NetworkSink: writing data to: " << nodeLocation.createZmqURI());
     auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
     //bufferStorage->insertBuffer(inputBuffer.getSequenceNumber() + inputBuffer.getOriginId(), inputBuffer);
     if (channel) {
@@ -73,6 +74,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     NES::SinkMedium::reconfigure(task, workerContext);
     switch (task.getType()) {
         case Runtime::Initialize: {
+            NES_DEBUG("NetworkSink: Initialize Network Sink");
             auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes);
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
