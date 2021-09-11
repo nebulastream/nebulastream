@@ -59,6 +59,12 @@ class WindowType {
     virtual TimeMeasure getSize() = 0;
 
     /**
+     * @brief method to get the window slide
+     * @return slide of the window
+     */
+    virtual TimeMeasure getSlide() = 0;
+
+    /**
     * @return true if this is a sliding window
     */
     virtual bool isSlidingWindow();
@@ -71,6 +77,8 @@ class WindowType {
      * @return true if success else false
      */
     bool inferStamp(const SchemaPtr& schema);
+
+    virtual bool equal(WindowTypePtr otherWindowType) = 0;
 
   protected:
     TimeCharacteristicPtr timeCharacteristic;

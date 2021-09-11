@@ -77,7 +77,6 @@ Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForDataValue(const ValueTypePtr
         expr = std::make_shared<z3::expr>(context->string_val(basicValueType->value));
     } else {
         NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + valueTypeType->toString());
-        return nullptr;
     }
     return Z3ExprAndFieldMap::create(expr, {});
 }

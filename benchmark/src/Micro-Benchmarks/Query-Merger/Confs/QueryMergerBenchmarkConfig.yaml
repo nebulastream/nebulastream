@@ -2,11 +2,11 @@
 
 #Location of query set
 # For each query set we will run the experiments
-#querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
-querySetLocation: '/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
+querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
+#querySetLocation: '/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
 
 # Parameter that are changed per run with comma separated list
-queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule
+queryMergerRule: SyntaxBasedCompleteQueryMergerRule
   #,HybridCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
 #queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
 #queryMergerRule: Z3SignatureBasedPartialQueryMergerRule,SyntaxBasedPartialQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedPartialQueryMergerRule,ImprovedStringSignatureBasedPartialQueryMergerRule
@@ -19,4 +19,4 @@ batchSize: 1
 logLevel: LOG_ERROR
 numberOfDistinctSources: 10
 startupSleepIntervalInSeconds: 3
-numberOfMeasurementsToCollect: 3
+numberOfMeasurementsToCollect: 1

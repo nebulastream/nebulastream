@@ -131,7 +131,6 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         //Create a negation of CNF of all conditions collected till now
         solver->push();
         solver->add(!z3::mk_and(allConditions).simplify());
-        //NES_ERROR(counter << " : Solver " << *solver);
         //        NES_ERROR("COND CHK Z3: " << counter);
         bool equal = solver->check() == z3::unsat;
         solver->pop();

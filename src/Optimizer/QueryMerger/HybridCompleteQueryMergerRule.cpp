@@ -70,6 +70,8 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                 return hostSink->getStringSignature() == targetSink->getStringSignature();
             });
 
+
+
             if (match != hostSinks.end()) {
                 targetToHostSinkOperatorMap[targetSink] = *match;
                 foundMatch = true;

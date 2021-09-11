@@ -80,7 +80,10 @@ class WindowAggregationDescriptor {
     virtual DataTypePtr getFinalAggregateStamp() = 0;
 
     std::string toString();
+
     std::string getTypeAsString();
+
+    bool equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor);
 
   protected:
     explicit WindowAggregationDescriptor(const FieldAccessExpressionNodePtr& onField);
