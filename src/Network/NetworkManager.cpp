@@ -24,11 +24,13 @@ namespace NES::Network {
 
 NetworkManager::NetworkManager(const std::string& hostname,
                                uint16_t port,
+                               uint64_t nodeEngineId,
                                ExchangeProtocol&& exchangeProtocol,
                                const Runtime::BufferManagerPtr& bufferManager,
                                uint16_t numServerThread)
     : server(std::make_shared<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)),
       exchangeProtocol(exchangeProtocol) {
+    this->nodeEngineId = nodeEngineId;
 
     if (bool const success = server->start(); success) {
         NES_INFO("NetworkManager: Server started successfully");
@@ -41,10 +43,11 @@ NetworkManager::~NetworkManager() { destroy(); }
 
 NetworkManagerPtr NetworkManager::create(const std::string& hostname,
                                          uint16_t port,
+                                         uint64_t nodeEngineId,
                                          Network::ExchangeProtocol&& exchangeProtocol,
                                          const Runtime::BufferManagerPtr& bufferManager,
                                          uint16_t numServerThread) {
-    return std::make_shared<NetworkManager>(hostname, port, std::move(exchangeProtocol), bufferManager, numServerThread);
+    return std::make_shared<NetworkManager>(hostname, port, nodeEngineId, std::move(exchangeProtocol), bufferManager, numServerThread);
 }
 
 void NetworkManager::destroy() { server->stop(); }
@@ -74,10 +77,15 @@ OutputChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocation
     return OutputChannel::create(server->getContext(),
                                  nodeLocation.createZmqURI(),
                                  nesPartition,
+                                 nodeEngineId,
                                  exchangeProtocol,
                                  waitTime,
                                  retryTimes,
                                  std::move(buffer));
 }
+
+    uint64_t NetworkManager::getNodeEngineId() {
+        return nodeEngineId;
+    }
 
 }// namespace NES::Network

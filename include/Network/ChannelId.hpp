@@ -25,21 +25,21 @@ namespace Network {
 
 class ChannelId {
   public:
-    explicit ChannelId(NesPartition nesPartition, uint32_t threadId) : nesPartition(nesPartition), threadId(threadId) {
+    explicit ChannelId(NesPartition nesPartition, uint64_t nodeEngineId) : nesPartition(nesPartition), nodeEngineId(nodeEngineId) {
         // nop
     }
 
     [[nodiscard]] NesPartition getNesPartition() const { return nesPartition; }
 
-    [[nodiscard]] uint64_t getThreadId() const { return threadId; }
+    [[nodiscard]] uint64_t getNodeEngineId() const { return nodeEngineId; }
 
-    [[nodiscard]] std::string toString() const { return nesPartition.toString() + "(threadId=" + std::to_string(threadId) + ")"; }
+    [[nodiscard]] std::string toString() const { return nesPartition.toString() + "(nodeEngineId=" + std::to_string(nodeEngineId) + ")"; }
 
     friend std::ostream& operator<<(std::ostream& os, const ChannelId& channelId) { return os << channelId.toString(); }
 
   private:
     const NesPartition nesPartition;
-    const uint32_t threadId;
+    uint64_t nodeEngineId;
 };
 }// namespace Network
 }// namespace NES

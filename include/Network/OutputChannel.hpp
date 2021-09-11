@@ -62,6 +62,7 @@ class OutputChannel {
     static OutputChannelPtr create(const std::shared_ptr<zmq::context_t>& zmqContext,
                                    std::string&& socketAddr,
                                    NesPartition nesPartition,
+                                   uint64_t nodeEngineId,
                                    ExchangeProtocol& protocol,
                                    std::chrono::seconds waitTime,
                                    uint8_t retryTimes,

@@ -133,9 +133,10 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             std::move(bufferManagers),
             std::move(queryManager),
             std::move(bufferStorage),
-            [hostname, port, numThreads](const std::shared_ptr<NodeEngine>& engine) {
+            [hostname, port,nodeEngineId, numThreads](const std::shared_ptr<NodeEngine>& engine) {
                 return Network::NetworkManager::create(hostname,
                                                        port,
+                                                       nodeEngineId,
                                                        Network::ExchangeProtocol(engine->getPartitionManager(), engine),
                                                        engine->getBufferManager(),
                                                        numThreads);

@@ -51,6 +51,7 @@ class NetworkManager {
      */
     static std::shared_ptr<NetworkManager> create(const std::string& hostname,
                                                   uint16_t port,
+                                                  uint64_t nodeEngineId,
                                                   Network::ExchangeProtocol&& exchangeProtocol,
                                                   const Runtime::BufferManagerPtr& bufferManager,
                                                   uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
@@ -103,9 +104,12 @@ class NetworkManager {
      */
     explicit NetworkManager(const std::string& hostname,
                             uint16_t port,
+                            uint64_t nodeEngineId,
                             ExchangeProtocol&& exchangeProtocol,
                             const Runtime::BufferManagerPtr& bufferManager,
                             uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+
+    uint64_t getNodeEngineId();
 
     /**
      * @brief Destroy the network manager calling destroy()
@@ -119,6 +123,7 @@ class NetworkManager {
 
     std::shared_ptr<ZmqServer> server;
     ExchangeProtocol exchangeProtocol;
+    uint64_t nodeEngineId;
 };
 using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
 

@@ -33,13 +33,15 @@ OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelI
 std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
                                                      std::string&& socketAddr,
                                                      NesPartition nesPartition,
+                                                     uint64_t nodeEngineId,
                                                      ExchangeProtocol& protocol,
                                                      std::chrono::seconds waitTime,
                                                      uint8_t retryTimes,
                                                      std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer) {
     std::chrono::seconds backOffTime = waitTime;
     try {
-        ChannelId channelId(nesPartition, Runtime::NesThread::getId());
+        ChannelId channelId(nesPartition,nodeEngineId);
+        NES_DEBUG("ThreadId at OutputChannel: " << channelId.toString());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
         constexpr int linger = -1;
         NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);

@@ -547,10 +547,10 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testMQTTourceWithMigrationDiamond) {
         EXPECT_NE(queryId, INVALID_QUERY_ID);
 
 
-        sleep(5);
+
         NES_DEBUG(TestUtils::getExecutionNodesOfAQueryViaRest(1, std::to_string(restPort)));
         std::stringstream mR;
-        mR << "{\"ids\":3, \"strategy\":3}";
+        mR << "{\"ids\":3, \"strategy\":2}";
         mR << endl;
         NES_INFO("query string submit=" << mR.str());
         NES_DEBUG("Submitting maint request over REST");
@@ -558,7 +558,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testMQTTourceWithMigrationDiamond) {
         web::json::value mR_return = TestUtils::submitMaintenanceRequestViaRest(mR.str(), std::to_string(restPort));
         NES_DEBUG(mR_return);
 
-        sleep(15);
+          sleep(20);
         //EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3, std::to_string(restPort)));
        // EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
