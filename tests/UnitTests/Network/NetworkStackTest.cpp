@@ -159,7 +159,7 @@ TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
         auto exchangeProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
-        auto netManager = NetworkManager::create("127.0.0.1", 31337, std::move(exchangeProtocol), buffMgr);
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, 0,std::move(exchangeProtocol), buffMgr);
     } catch (...) {
         ASSERT_EQ(true, false);
     }
@@ -188,7 +188,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
         auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed));
-        auto netManager = NetworkManager::create("127.0.0.1", 31337, std::move(ep), buffMgr);
+        auto netManager = NetworkManager::create("127.0.0.1", 31337,0, std::move(ep), buffMgr);
 
         auto nesPartition = NesPartition(0, 0, 0, 0);
 
@@ -258,6 +258,7 @@ TEST_F(NetworkStackTest, testSendData) {
         auto netManager =
             NetworkManager::create("127.0.0.1",
                                    31337,
+                                   0,
                                    ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
                                    buffMgr);
 
@@ -340,6 +341,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
         auto netManager =
             NetworkManager::create("127.0.0.1",
                                    31337,
+                                   0,
                                    ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
                                    buffMgr);
 
@@ -444,6 +446,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
         auto netManager =
             NetworkManager::create("127.0.0.1",
                                    31337,
+                                   0,
                                    ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(serverError, channelError)),
                                    buffMgr);
 
@@ -511,6 +514,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
         auto netManager = NetworkManager::create(
             "127.0.0.1",
             31337,
+            0,
             ExchangeProtocol(partMgr, std::make_shared<ExchangeListenerImpl>(bufferCounter, completedPromises)),
             buffMgr);
 
@@ -627,6 +631,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         auto netManager = NetworkManager::create(
             "127.0.0.1",
             31339,
+            0,
             ExchangeProtocol(pManager, std::make_shared<ExchangeListener>(completed, nesPartition, bufferCnt)),
             bMgr);
 
@@ -754,6 +759,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(hostname,
                                                    port,
+                                                   0,
                                                    Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManagers[0]);
         };

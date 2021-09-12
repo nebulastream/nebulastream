@@ -131,6 +131,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(hostname,
                                                    port,
+                                                   0,
                                                    Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManager[0]);
         };
