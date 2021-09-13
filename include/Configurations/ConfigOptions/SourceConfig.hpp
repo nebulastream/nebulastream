@@ -58,6 +58,11 @@ class SourceConfig {
     void resetSourceOptions();
 
     /**
+     * @brief prints the current source configuration (name: current value)
+     */
+    std::string toString();
+
+    /**
      * @brief gets a ConfigOption object with sourceType
      */
     [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getSourceType() const;

@@ -67,12 +67,7 @@ int main(int argc, const char* argv[]) {
     }
     NES::setLogLevel(NES::getDebugLevelFromString(coordinatorConfig->getLogLevel()->getValue()));
 
-    NES_INFO("start coordinator with RestIp=" << coordinatorConfig->getRestIp()->getValue()
-                                              << " restPort=" << coordinatorConfig->getRestPort()->getValue()
-                                              << " coordinatorIp=" << coordinatorConfig->getCoordinatorIp()->getValue()
-                                              << " with rpc port " << coordinatorConfig->getRpcPort()->getValue()
-                                              << " numberOfThreads=" << coordinatorConfig->getNumWorkerThreads()->getValue()
-                                              << " numberOfSlots=" << coordinatorConfig->getNumberOfSlots()->getValue());
+    NES_INFO("start coordinator with " << coordinatorConfig->toString());
 
     NES_INFO("creating coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);

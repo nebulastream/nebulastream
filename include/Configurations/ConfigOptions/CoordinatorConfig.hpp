@@ -58,6 +58,11 @@ class CoordinatorConfig {
     void resetCoordinatorOptions();
 
     /**
+     * @brief prints the current coordinator configuration (name: current value)
+     */
+     std::string toString();
+
+    /**
      * @brief gets a ConfigOption object with restIp
      * @return Configuration option for rest IP
      */
