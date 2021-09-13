@@ -115,10 +115,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @return an execution result
      *
      */
-#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-    ExecutionResult processNextTask(std::atomic<bool>& running, WorkerContext& workerContext);
-#else
+#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     ExecutionResult processNextTask(bool running, WorkerContext& workerContext);
+#else
+    ExecutionResult processNextTask(std::atomic<bool>& running, WorkerContext& workerContext);
 #endif
 
     /**
@@ -287,6 +287,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     folly::MPMCQueue<Task> taskQueue;
 #elif NES_USE_ONE_QUEUE_PER_NUMA_NODE
     std::vector<folly::MPMCQueue<Task>> taskQueues;
+    std::shared_ptr<Runtime::HardwareManager> hardwareManager;
 #else
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;
