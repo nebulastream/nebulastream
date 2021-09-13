@@ -183,8 +183,8 @@ bool DataSource::stop(bool graceful) {
                     auto* ptr = dynamic_cast<ZmqSource*>(this);
                     ptr->disconnect();
                 }
-
                 thread->join();
+
                 NES_DEBUG("DataSource: Thread joined");
                 ret = true;
                 thread.reset();
