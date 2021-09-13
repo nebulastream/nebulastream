@@ -30,8 +30,10 @@
 
 #ifdef NES_ENABLE_NUMA_SUPPORT
 #if defined(__linux__)
+#include <Runtime/HardwareManager.hpp>
 #include <numa.h>
 #include <numaif.h>
+
 #endif
 #endif
 
@@ -130,6 +132,17 @@ bool ThreadPool::start() {
                 NES_DEBUG("Worker thread " << i << " will use numa node =" << numaNodeIndex);
 
             } else {
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+                //We have to make sure that we divide the number of threads evenly among the numa nodes
+                NES_WARNING("Flag: NES_USE_ONE_QUEUE_PER_NUMA_NODE is used but no worker list is specified");
+                std::shared_ptr<Runtime::HardwareManager> hardwareManager = std::make_shared<Runtime::HardwareManager>();
+                auto numberOfNumaRegions = hardwareManager->getNumberOfNumaRegions();
+                if (numberOfNumaRegions != 1) {
+                    NES_ASSERT(false, "We have to specify a worker list that evenly distributes threads among cores");
+                } else {
+                    NES_WARNING("With only one NUMA node we do not distribute the threads among the cores");
+                }
+#endif
                 NES_WARNING("Worker use default affinity");
                 localBufferManager = bufferManagers[0];
             }
