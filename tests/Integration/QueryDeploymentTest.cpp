@@ -463,12 +463,13 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
-    testHarness.addNonSourceWorker();
+    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
-    for (int i = 0; i < 20; ++i) {
+    for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 0);
+        testHarness.pushElement<Test>({1, 1}, 1);
     }
 
     struct Output {
@@ -503,10 +504,11 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
-    testHarness.addNonSourceWorker();
+    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
 
-    for (int i = 0; i < 20; ++i) {
+    for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 0);
+        testHarness.pushElement<Test>({1, 1}, 1);
     }
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
