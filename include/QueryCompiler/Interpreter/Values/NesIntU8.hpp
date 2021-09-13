@@ -15,24 +15,31 @@
      limitations under the License.
  */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESBOOL_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESBOOL_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESINTU8_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESINTU8_HPP_
+
 
 #include <QueryCompiler/Interpreter/Values/NesValue.hpp>
+#include <QueryCompiler/Interpreter/Values/NesBool32.hpp>
 namespace NES::QueryCompilation {
 
-class NesBool : public NesValue {
+class NesUInt8 : public NesValue  {
   public:
-    NesBool(bool value);
-
-    operator bool() { return value; };
-    bool getValue();
+    NesUInt8(uint8_t value);
     NesValuePtr equals(NesValuePtr) const override;
-    void write(NesMemoryAddressPtr memoryAddress) const override;
+    uint8_t getValue() const;
+    NesValuePtr lt(NesValuePtr ptr) const override;
+    NesValuePtr mul(NesValuePtr ptr) const override;
+    NesValuePtr add(NesValuePtr ptr) const override;
+    NesValuePtr le(NesValuePtr ptr) const override;
+    NesValuePtr sub(NesValuePtr ptr) const override;
+    operator bool() override { return NesValue::operator bool(); }
+    void write(NesMemoryAddressPtr) const override;
 
   private:
-    bool value;
+    uint8_t value;
 };
-};// namespace NES::QueryCompilation
 
-#endif//NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESBOOL_HPP_
+}// namespace NES::QueryCompiler
+
+#endif//NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESINTU8_HPP_

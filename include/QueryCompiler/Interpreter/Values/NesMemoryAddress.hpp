@@ -15,24 +15,24 @@
      limitations under the License.
  */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESBOOL_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESBOOL_HPP_
+//
+// Created by pgrulich on 23.08.21.
+//
 
-#include <QueryCompiler/Interpreter/Values/NesValue.hpp>
+#ifndef NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESMEMORYADDRESS_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESMEMORYADDRESS_HPP_
+#include "NesValue.hpp"
 namespace NES::QueryCompilation {
-
-class NesBool : public NesValue {
+class NesMemoryAddress : public NesValue {
   public:
-    NesBool(bool value);
-
-    operator bool() { return value; };
-    bool getValue();
-    NesValuePtr equals(NesValuePtr) const override;
-    void write(NesMemoryAddressPtr memoryAddress) const override;
-
+    NesMemoryAddress(uint8_t* ptr);
+    uint8_t* getValue() const;
+    NesValuePtr mul(NesValuePtr ptr) const override;
+    NesValuePtr add(NesValuePtr ptr) const override;
+    NesValuePtr sub(NesValuePtr ptr) const override;
   private:
-    bool value;
+    uint8_t* ptr;
 };
-};// namespace NES::QueryCompilation
+}// namespace NES::QueryCompiler
 
-#endif//NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESBOOL_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESMEMORYADDRESS_HPP_

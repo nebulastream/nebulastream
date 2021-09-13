@@ -15,19 +15,47 @@
      limitations under the License.
  */
 
-#include <QueryCompiler/Interpreter/Operators/OperatorContext.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <QueryCompiler/Interpreter/Operators/ExecutableOperator.hpp>
+#include <QueryCompiler/Interpreter/Operators/OperatorContext.hpp>
 
 #include <QueryCompiler/Interpreter/Operators/ScanOperator.hpp>
 #include <QueryCompiler/Interpreter/Record.hpp>
 #include <QueryCompiler/Interpreter/RecordBuffer.hpp>
+#include <QueryCompiler/Interpreter/Values/NesInt32.hpp>
+#include <QueryCompiler/Interpreter/Values/NesInt64.hpp>
+#include <QueryCompiler/Interpreter/Values/NesMemoryAddress.hpp>
+#include <QueryCompiler/Interpreter/Values/NesValue.hpp>
 namespace NES::QueryCompilation {
 
-ScanOperator::ScanOperator(ExecutableOperatorPtr next) : Operator(next) {}
+ScanOperator::ScanOperator(SchemaPtr inputSchema, ExecutableOperatorPtr next) : Operator(next), inputSchema(inputSchema) {}
+
+RecordPtr ScanOperator::readRecord(RecordBuffer& buffer, NesValuePtr recordIndex) {
+    auto values = std::vector<NesValuePtr>();
+    auto recordSize = inputSchema->getSchemaSizeInBytes();
+    auto physicalFieldFactory = DefaultPhysicalTypeFactory();
+
+    int64_t fieldOffset = 0L;
+    for (uint64_t i = 0; i < inputSchema->fields.size(); i++) {
+        auto field = inputSchema->fields[i];
+        auto physicalType = physicalFieldFactory.getPhysicalType(field->getDataType());
+        auto offset = (recordIndex * recordSize) + fieldOffset;
+        // TODO extract read
+        auto buf = buffer.getBufferAddress();
+        auto address = std::dynamic_pointer_cast<NesMemoryAddress>(buf + offset);
+        int32_t value = *reinterpret_cast<int32_t*>(address->getValue());
+        values.emplace_back(std::make_shared<NesInt32>(value));
+        fieldOffset = fieldOffset + physicalType->size();
+    }
+
+    return std::make_shared<Record>(values);
+}
 
 void ScanOperator::execute(RecordBuffer& buffer, ExecutionContextPtr ctx) {
-    for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
-        auto record = buffer[i];
+    for (NesValuePtr i = std::make_shared<NesInt32>(0); i < buffer.getNumberOfTuples(); i = i + 1) {
+        auto record = readRecord(buffer, i);
         next->execute(record, ctx);
     }
 }

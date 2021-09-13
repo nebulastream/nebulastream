@@ -14,23 +14,27 @@
      See the License for the specific language governing permissions and
      limitations under the License.
  */
-#include <QueryCompiler/Interpreter/RecordBuffer.hpp>
 #include <QueryCompiler/Interpreter/Record.hpp>
+#include <QueryCompiler/Interpreter/RecordBuffer.hpp>
 #include <QueryCompiler/Interpreter/Values/NesInt32.hpp>
+#include <QueryCompiler/Interpreter/Values/NesInt64.hpp>
+#include <QueryCompiler/Interpreter/Values/NesIntU8.hpp>
+#include <QueryCompiler/Interpreter/Values/NesMemoryAddress.hpp>
 #include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 namespace NES::QueryCompilation {
 
-RecordBuffer::RecordBuffer(Runtime::TupleBuffer& buffer, SchemaPtr schema) : buffer(buffer), schema(schema) {}
+RecordBuffer::RecordBuffer(Runtime::TupleBuffer buffer, SchemaPtr schema) : buffer(buffer), schema(schema) {}
 
-uint64_t RecordBuffer::getNumberOfTuples() { return buffer.getNumberOfTuples(); }
+NesInt32Ptr RecordBuffer::getNumberOfTuples() { return std::make_shared<NesInt32>(buffer.getNumberOfTuples()); }
+NesMemoryAddressPtr RecordBuffer::getBufferAddress() { return std::make_shared<NesMemoryAddress>(buffer.getBuffer()); }
 
 RecordPtr RecordBuffer::operator[](std::size_t index) const {
     auto values = std::vector<NesValuePtr>();
     //auto recordSize = schema->getSchemaSizeInBytes();
     for (auto field : schema->fields) {
-      //  uint32_t value = recordSize * index + buffer.getBufferSize();
+        //  uint32_t value = recordSize * index + buffer.getBufferSize();
         values.emplace_back(std::make_shared<NesInt32>(index));
     }
     return std::make_shared<Record>(values);

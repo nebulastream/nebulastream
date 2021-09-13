@@ -33,7 +33,7 @@ void Record::write(std::string fieldName, std::shared_ptr<NesValue>) { NES_DEBUG
 
 std::ostream& operator<<(std::ostream& os, const RecordPtr& r){
     os << "[";
-    for (auto value : r.records) {
+    for (auto value : r->records) {
         os << value << ", ";
     }
     os << "]";

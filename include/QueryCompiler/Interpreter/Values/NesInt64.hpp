@@ -19,7 +19,26 @@
 // Created by pgrulich on 23.08.21.
 //
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESINT16_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESINT16_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESINT64_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESINT64_HPP_
 
-#endif//NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESINT16_HPP_
+#include <QueryCompiler/Interpreter/Values/NesValue.hpp>
+#include <QueryCompiler/Interpreter/Values/NesBool32.hpp>
+namespace NES::QueryCompilation {
+
+class NesInt64 : public NesValue  {
+  public:
+    NesInt64(int64_t value);
+    NesValuePtr equals(NesValuePtr) const override;
+    int64_t getValue() const;
+    operator bool() override { return NesValue::operator bool(); }
+    void write(NesMemoryAddressPtr memoryAddress) const override;
+    NesValuePtr mul(NesValuePtr ptr) const override;
+    NesValuePtr add(NesValuePtr ptr) const override;
+
+  private:
+    int64_t value;
+};
+
+}// namespace NES::QueryCompiler
+#endif//NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESINT64_HPP_

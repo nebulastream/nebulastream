@@ -16,12 +16,30 @@
  */
 
 #include <QueryCompiler/Interpreter/Values/NesValue.hpp>
+#include <QueryCompiler/Interpreter/Values/NesInt32.hpp>
+#include <QueryCompiler/Interpreter/Values/NesInt64.hpp>
+#include <Util/Logger.hpp>
+#include <utility>
 
+namespace NES::QueryCompilation {
 
-namespace NES::QueryCompilation{
+NesValuePtr NesValue::add(NesValuePtr) const { NES_NOT_IMPLEMENTED(); }
+NesValuePtr NesValue::div(NesValuePtr) const { NES_NOT_IMPLEMENTED(); }
+NesValuePtr NesValue::mul(NesValuePtr) const { NES_NOT_IMPLEMENTED(); }
+NesValuePtr NesValue::sub(NesValuePtr) const { NES_NOT_IMPLEMENTED(); }
+NesValuePtr NesValue::le(NesValuePtr) const { NES_NOT_IMPLEMENTED(); }
+NesValuePtr NesValue::lt(NesValuePtr) const { NES_NOT_IMPLEMENTED(); }
+NesValuePtr NesValue::ge(NesValuePtr) const { NES_NOT_IMPLEMENTED(); }
+NesValuePtr NesValue::gt(NesValuePtr) const { NES_NOT_IMPLEMENTED(); }
+NesValuePtr NesValue::equals(NesValuePtr) const { NES_NOT_IMPLEMENTED(); }
+void NesValue::write(NesMemoryAddressPtr) const { NES_NOT_IMPLEMENTED(); }
 
-NesValuePtr operator==(NesValuePtr leftExp, NesValuePtr rightExp) {
-    return leftExp->equals(rightExp);
+NesValuePtr createNesInt(int32_t v){
+    return std::make_shared<NesInt32>(v);
 }
 
+NesValuePtr createNesLong(int64_t){
+    return std::make_shared<NesInt32>(10);
 }
+
+}// namespace NES::QueryCompilation

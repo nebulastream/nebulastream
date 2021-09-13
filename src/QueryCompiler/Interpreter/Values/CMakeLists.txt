@@ -14,6 +14,8 @@
 
 add_source_nes(
         NesInt32.cpp
+        NesInt64.cpp
         NesValue.cpp
         NesBool.cpp
+        NesMemoryAddress.cpp
 )

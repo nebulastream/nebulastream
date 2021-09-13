@@ -26,8 +26,11 @@ namespace NES::QueryCompilation {
 
 class ScanOperator : public Operator{
   public:
-    ScanOperator(ExecutableOperatorPtr next);
+    ScanOperator(SchemaPtr inputSchema, ExecutableOperatorPtr next);
     void execute(RecordBuffer& buffer, ExecutionContextPtr ctx);
+  private:
+    RecordPtr readRecord(RecordBuffer& buffer, NesValuePtr index);
+    SchemaPtr inputSchema;
 };
 
 }// namespace NES::QueryCompilation

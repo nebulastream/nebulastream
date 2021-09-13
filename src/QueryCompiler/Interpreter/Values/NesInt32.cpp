@@ -16,6 +16,8 @@
  */
 
 #include <QueryCompiler/Interpreter/Values/NesInt32.hpp>
+#include <QueryCompiler/Interpreter/Values/NesMemoryAddress.hpp>
+#include <QueryCompiler/Interpreter/Values/NesInt64.hpp>
 
 namespace NES::QueryCompilation {
 
@@ -24,11 +26,42 @@ NesInt32::NesInt32(int32_t value) : value(value) {}
 NesValuePtr NesInt32::equals(NesValuePtr oValue) const {
     if (auto v = std::dynamic_pointer_cast<NesInt32>(oValue)) {
         return std::make_shared<NesBool>(value == v->getValue());
-    } else {
-        throw std::exception();
     }
+    throw std::exception();
 }
 
 int32_t NesInt32::getValue() const { return value; }
+
+void NesInt32::write(NesMemoryAddressPtr memoryAddress) const { *reinterpret_cast<int32_t*>(memoryAddress->getValue()) = value; }
+NesValuePtr NesInt32::lt(NesValuePtr ptr) const {
+    if (auto v = std::dynamic_pointer_cast<NesInt32>(ptr)) {
+        return std::make_shared<NesBool>(value < v->value);
+    }
+    return NesValue::lt(ptr);
+}
+NesValuePtr NesInt32::mul(NesValuePtr ptr) const {
+    if (auto v = std::dynamic_pointer_cast<NesInt32>(ptr)) {
+        return std::make_shared<NesInt32>(value * v->value);
+    }
+    return NesValue::mul(ptr);
+}
+NesValuePtr NesInt32::add(NesValuePtr ptr) const {
+    if (auto v = std::dynamic_pointer_cast<NesInt32>(ptr)) {
+        return std::make_shared<NesInt32>(value + v->value);
+    }
+    return NesValue::mul(ptr);
+}
+NesValuePtr NesInt32::le(NesValuePtr ptr) const {
+    if (auto v = std::dynamic_pointer_cast<NesInt32>(ptr)) {
+        return std::make_shared<NesInt32>(value <= v->value);
+    }
+    return NesValue::mul(ptr);
+}
+NesValuePtr NesInt32::sub(NesValuePtr ptr) const {
+    if (auto v = std::dynamic_pointer_cast<NesInt32>(ptr)) {
+        return std::make_shared<NesBool>(value - v->value);
+    }
+    return NesValue::mul(ptr);
+}
 
 }// namespace NES::QueryCompilation

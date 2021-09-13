@@ -18,4 +18,5 @@ add_source_nes(
         EmitOperator.cpp
         ScanOperator.cpp
         ExecutableOperator.cpp
+        ExecutionContext.cpp
 )
