@@ -46,7 +46,7 @@ class SyntacticQueryValidationTest : public testing::Test {
     }
 };
 
-// Positive test for a syntactically valid query
+// Positive tests for a syntactically valid query
 TEST_F(SyntacticQueryValidationTest, validQueryTest) {
     NES_INFO("Valid Query test");
 
@@ -56,6 +56,17 @@ TEST_F(SyntacticQueryValidationTest, validQueryTest) {
 
     syntacticQueryValidation->checkValidity(queryString);
 }
+
+TEST_F(SyntacticQueryValidationTest, validAttributeRenameFromProjectOperator) {
+    NES_INFO("Valid Query test");
+
+    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
+
+    std::string queryString = R"(Query::from("default_logical").project(Attribute("id").as("identity")); )";
+
+    syntacticQueryValidation->checkValidity(queryString);
+}
+
 
 // Test a query with missing ; at line end
 TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
@@ -97,10 +108,11 @@ TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
 TEST_F(SyntacticQueryValidationTest, attributeRenameOutsideProjection) {
     NES_INFO("Invalid bool operator test");
 
-//    std::string queryString = R"(Query::from("default_logical").filter(Attribute("id").as("identity") > 10); )";
-    std::string queryString = R"(Query::from("default_logical").map(Attribute("id") =  Attribute("id").as("identity") + 2 ); )";
+    std::string queryStringWithMap = R"(Query::from("default_logical").map(Attribute("id") =  Attribute("id").as("identity") + 2 ); )";
+    TestForException(queryStringWithMap);
 
-    TestForException(queryString);
+    std::string queryStringWithFilter = R"(Query::from("default_logical").filter(Attribute("id").as("identity") > 10); )";
+    TestForException(queryStringWithFilter);
 }
 
 }// namespace NES
