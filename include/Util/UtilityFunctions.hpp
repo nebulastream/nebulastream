@@ -110,41 +110,49 @@ class UtilityFunctions {
    */
     static std::string getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& s1, const std::string& s2);
 
-
     /**
     * @brief set of helper functions for splitting for different types
     * @return splitting function for a given type
     */
-    template <typename T>
-    struct SplitFunctionHelper {
+    template<typename T>
+    struct SplitFunctionHelper {};
+
+    template<>
+    struct SplitFunctionHelper<std::string> {
+        static constexpr auto FUNCTION = [](std::string x) {
+            return x;
+        };
     };
 
-    template <>
-    struct SplitFunctionHelper <std::string> {
-        static constexpr auto FUNCTION = [](std::string x) { return x; };
+    template<>
+    struct SplitFunctionHelper<uint64_t> {
+        static constexpr auto FUNCTION = [](std::string&& x) {
+            return uint64_t(std::atoll(x.c_str()));
+        };
     };
 
-    template <>
-    struct SplitFunctionHelper <uint64_t> {
-        static constexpr auto FUNCTION = [](std::string&& x) { return uint64_t(std::atoll(x.c_str())); };
+    template<>
+    struct SplitFunctionHelper<uint32_t> {
+        static constexpr auto FUNCTION = [](std::string&& x) {
+            return uint32_t(std::atoi(x.c_str()));
+        };
     };
 
-    template <>
-    struct SplitFunctionHelper <uint32_t> {
-        static constexpr auto FUNCTION = [](std::string&& x) { return uint32_t(std::atoi(x.c_str())); };
+    template<>
+    struct SplitFunctionHelper<int> {
+        static constexpr auto FUNCTION = [](std::string&& x) {
+            return std::atoi(x.c_str());
+        };
     };
 
-    template <>
-    struct SplitFunctionHelper <int> {
-        static constexpr auto FUNCTION = [](std::string&& x) { return std::atoi(x.c_str()); };
+    template<>
+    struct SplitFunctionHelper<double> {
+        static constexpr auto FUNCTION = [](std::string&& x) {
+            return std::atof(x.c_str());
+        };
     };
 
-    template <>
-    struct SplitFunctionHelper <double> {
-        static constexpr auto FUNCTION = [](std::string&& x) { return std::atof(x.c_str()); };
-    };
-
-        /**
+    /**
     * @brief splits a string given a delimiter into multiple substrings stored in a T vector
     * the delimiter is allowed to be a string rather than a char only.
     * @param data - the string that is to be split
@@ -153,7 +161,10 @@ class UtilityFunctions {
     * @return
     */
     template<typename T>
-    static std::vector<T> splitWithStringDelimiter(const std::string& inputString, const std::string& delim, std::function<T(std::string)> fromStringToT = SplitFunctionHelper<T>::FUNCTION) {
+    static std::vector<T>
+    splitWithStringDelimiter(const std::string& inputString,
+                             const std::string& delim,
+                             std::function<T(std::string)> fromStringToT = SplitFunctionHelper<T>::FUNCTION) {
         std::string copy = inputString;
         size_t pos = 0;
         std::vector<T> elems;
@@ -167,7 +178,6 @@ class UtilityFunctions {
 
         return elems;
     }
-
 
     /**
    * @brief Outputs a tuple buffer accordingly to a specific schema
