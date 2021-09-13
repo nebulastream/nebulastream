@@ -106,7 +106,7 @@ class MillisecondIntervalTest : public testing::Test {
 
         srcConf = SourceConfig::create();
         srcConf->setSourceType("DefaultSource");
-        srcConf->setSourceConfig("../tests/test_data/exdra.csv");
+        srcConf->setFilePath("../tests/test_data/exdra.csv");
         srcConf->setSourceFrequency(550);
         srcConf->setNumberOfTuplesToProducePerBuffer(1);
         srcConf->setNumberOfBuffersToProduce(3);
