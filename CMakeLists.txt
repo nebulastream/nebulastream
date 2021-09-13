@@ -17,9 +17,16 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v4)
 if(APPLE)
     # for macOS or iOS, watchOS, tvOS (since 3.10.3)
-    set(VCPKG_TARGET_TRIPLET x64-osx-nes)
-endif()
-if(UNIX AND NOT APPLE)
+    # The system architecture is normally set in CMAKE_HOST_PROCESSOR,
+    # which is set by the PROJECT command. However, we cannot call PROJECT
+    # at this point because we want to use a custom toolchain file.
+    execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
+    if (NES_HOST_PROCESSOR MATCHES "x86_64")
+        set(VCPKG_TARGET_TRIPLET x64-osx-nes)
+    elseif(NES_HOST_PROCESSOR MATCHES "arm64")
+        set(VCPKG_TARGET_TRIPLET arm64-osx-nes)
+    endif()
+elseif(UNIX AND NOT APPLE)
     # for Linux, BSD, Solaris, Minix
     set(VCPKG_TARGET_TRIPLET x64-linux-nes)
 endif()
