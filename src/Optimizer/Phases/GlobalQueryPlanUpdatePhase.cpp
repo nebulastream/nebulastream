@@ -92,7 +92,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 auto endTI1 =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                NES_BM(queryId << ",Type-Inference (micro)," << endTI1 - startTI1);
+                NES_BM(queryId << ",Type-Inference-1 (micro)," << endTI1 - startTI1);
 
                 NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
                 auto startQR =
@@ -107,6 +107,15 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     throw Exception("QueryProcessingService: Failed during query rewrite phase for query: "
                                     + std::to_string(queryId));
                 }
+
+                auto startTI2 =
+                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                        .count();
+                queryPlan = typeInferencePhase->execute(queryPlan);
+                auto endTI2 =
+                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                        .count();
+                NES_BM(queryId << ",Type-Inference-2 (micro)," << endTI2 - startTI2);
 
                 NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
 
@@ -132,14 +141,14 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     throw Exception("QueryProcessingService: Failed during query topology specific rewrite phase for query: "
                                     + std::to_string(queryId));
                 }
-                auto startTI2 =
+                auto startTI3 =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
                 queryPlan = typeInferencePhase->execute(queryPlan);
-                auto endTI2 =
+                auto endTI3 =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                NES_BM(queryId << ",Type-Inference-2 (micro)," << endTI2 - startTI2);
+                NES_BM(queryId << ",Type-Inference-3 (micro)," << endTI3 - startTI3);
                 if (!queryPlan) {
                     throw Exception("QueryProcessingService: Failed during Type inference phase for query: "
                                     + std::to_string(queryId));

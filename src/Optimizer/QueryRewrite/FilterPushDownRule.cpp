@@ -89,7 +89,7 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
                         NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                         throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                     }
-                    isFilterAboveUnionOperator = false;
+                    isFilterAboveUnionOperator = !nodesToProcess.empty();
                 } else if (!(filterOperator->removeAndJoinParentAndChildren()
                              && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
 
@@ -114,7 +114,7 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
                         NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                         throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                     }
-                    isFilterAboveUnionOperator = false;
+                    isFilterAboveUnionOperator = !nodesToProcess.empty();
                 } else if (!(filterOperator->removeAndJoinParentAndChildren()
                              && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");

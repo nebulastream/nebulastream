@@ -68,6 +68,7 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
     auto existingField = schema->hasFieldName(fieldName);
     if (existingField) {
         field->updateFieldName(existingField->getName());
+        field->setStamp(existingField->getDataType());
     } else {
         //Since this is a new field add the stream name from schema
         //Check if field name is already fully qualified
