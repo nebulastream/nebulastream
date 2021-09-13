@@ -111,7 +111,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         SourceDescriptor::InputFormat inputFormat = MQTTSourceDescriptor::JSON;
         if (strcasecmp(config->getInputFormat().c_str(), "JSON") == 0){
             inputFormat = SourceDescriptor::InputFormat::JSON;
-        } else if (strcasecmp(mqttConfig[4].c_str(), "CSV") == 0) {
+        } else if (strcasecmp(config->getInputFormat().c_str(), "CSV") == 0) {
             inputFormat = SourceDescriptor::InputFormat::CSV;
         }
 
