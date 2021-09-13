@@ -282,7 +282,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     uint16_t numThreads;
     std::vector<uint64_t> workerToCoreMapping;
-    mutable std::shared_mutex queryMutex;
+//    mutable std::shared_mutex queryMutex;
+    mutable std::recursive_mutex queryMutex;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     folly::MPMCQueue<Task> taskQueue;
 #elif NES_USE_ONE_QUEUE_PER_NUMA_NODE

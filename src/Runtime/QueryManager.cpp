@@ -155,7 +155,7 @@ void QueryManager::destroy() {
             std::scoped_lock locks(queryMutex, statisticsMutex);
             NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size()
                                                                     << " task queue size=" << taskQueue.size());
-#elif NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
             std::scoped_lock locks(queryMutex, statisticsMutex);
             for (uint32_t i = 0; i < hardwareManager->getNumberOfNumaRegions(); i++) {
                 NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size() << " id=" << i
@@ -403,7 +403,7 @@ void QueryManager::poisonWorkers() {
     for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
         taskQueue.write(Task(pipeline, buffer));
     }
-#elif NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     //TODO:assumption same number of threads per numa region
     auto numberOfNumaRegions = hardwareManager->getNumberOfNumaRegions();
     for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
@@ -494,7 +494,7 @@ uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     auto qSize = taskQueue.size();
     return qSize > 0 ? qSize : 0;
-#elif NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     auto sum = 0;
     for (uint32_t i = 0; i < hardwareManager->getNumberOfNumaRegions(); i++) {
         auto qSize = taskQueues[i].size();
@@ -510,7 +510,8 @@ uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
 }
 
 void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
-    std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
+//    std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
+    std::unique_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
 
     // check if source is registered
     if (sourceIdToSuccessorMap.find(sourceId) != sourceIdToSuccessorMap.end()) {
@@ -523,7 +524,7 @@ void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
             // dispatch task to task queue.
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
             taskQueue.write(std::move(task));
-#elif NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
             taskQueues[hardwareManager->getMyNumaRegion()].write(std::move(task));
 #else
             //TODO: this is a problem now as it can become the bottleneck
@@ -568,7 +569,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
     } else {
         taskQueue.write(Task(pipeline, buffer));
     }
-#elif NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     //TODO: add one mutex per queue
     auto numberOfNumaRegions = hardwareManager->getNumberOfNumaRegions();
     for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
@@ -638,7 +639,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
         for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
             taskQueue.write(Task(pipeline, buffer));
         }
-#elif NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
         auto numberOfNumaRegions = hardwareManager->getNumberOfNumaRegions();
         for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
             for (auto i{0ul}; i < threadPool->getNumberOfThreads() / numberOfNumaRegions; ++i) {
@@ -714,7 +715,8 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
 }
 
 bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
-    std::shared_lock queryLock(queryMutex);
+//    std::shared_lock queryLock(queryMutex);
+    std::unique_lock queryLock(queryMutex);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 #ifndef NES_USE_ONE_QUEUE_PER_NUMA_NODE
     std::unique_lock lock(workMutex);
@@ -951,7 +953,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         auto qSize = 0;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
         qSize = taskQueue.size();
-#elif NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
         for (uint32_t i = 0; i < hardwareManager->getNumberOfNumaRegions(); i++) {
             auto tempSize = taskQueues[i].size();
             if (tempSize > 0) {
