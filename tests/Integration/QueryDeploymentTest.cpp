@@ -465,6 +465,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
     testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
     testHarness.addNonSourceWorker();
 
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
+
     for (int i = 0; i < 20; ++i) {
         testHarness.pushElement<Test>({1, 1}, 0);
     }
@@ -506,6 +508,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     for (int i = 0; i < 20; ++i) {
         testHarness.pushElement<Test>({1, 1}, 0);
     }
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     struct Output {
         uint32_t id;
