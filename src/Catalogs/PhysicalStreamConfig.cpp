@@ -106,7 +106,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
 #ifdef ENABLE_MQTT_BUILD
         NES_DEBUG("PhysicalStreamConfig: create MQTT source with configurations: " << conf << ".");
     } else if (type == "MQTTSource") {
-        std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter(conf, ";");
+        std::vector<std::string> mqttConfig = UtilityFunctions::splitWithStringDelimiter<std::string>(conf, ";");
 
         //init inputFormat to default value (JSON). Only flat JSON and CSV format implemented currently
         SourceDescriptor::InputFormat inputFormat = MQTTSourceDescriptor::JSON;
