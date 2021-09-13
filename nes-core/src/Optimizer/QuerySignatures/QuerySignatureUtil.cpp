@@ -105,6 +105,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
             NES_TRACE("QuerySignatureUtil: Computing Signature for join operator");
             auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
             return createQuerySignatureForJoin(context, joinOperator);
+        } else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+            NES_TRACE("QuerySignatureUtil: Computing Signature for infer model operator");
+            auto imOperator = operatorNode->as<InferModelLogicalOperatorNode>();
+            return createQuerySignatureForJoin(context, imOperator);
         }
         throw SignatureComputationException("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
     } catch (const std::exception& ex) {
@@ -199,6 +203,63 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
                                   std::move(updatedColumns),
                                   std::move(updatedSchemaFieldToExprMaps),
                                   std::move(windowExpressions));
+}
+
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(const z3::ContextPtr& context,
+                                                                 const InferModelLogicalOperatorNodePtr& inferModelOperator) {
+    //Fetch query signature of the child operator
+    std::vector<NodePtr> children = inferModelOperator->getChildren();
+    NES_ASSERT(children.size() == 1, "InferModel operator should only have one non null children.");
+    auto child = children[0];
+    auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
+
+    //Fetch the signature of only children and get the column values
+    auto columns = childQuerySignature->getColumns();
+    auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
+
+    //Substitute rhs operands with actual values computed previously
+    std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaFieldToExprMaps;
+    for (auto& schemaFieldToExprMap : schemaFieldToExprMaps) {
+        updatedSchemaFieldToExprMaps.emplace_back(schemaFieldToExprMap);
+        SchemaPtr outputSchema = inferModelOperator->getOutputSchema();
+
+        auto inputfields = inferModelOperator->getInputFieldsAsPtr();
+        auto outoutfields = inferModelOperator->getInputFieldsAsPtr();
+
+        for (auto in_field : inputfields){
+            auto fieldname = in_field->getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();
+        }
+
+        for (auto& field : outputSchema->fields) {
+            auto fieldName = field->getName();
+            auto found = std::find(columns.begin(), columns.end(), fieldName);
+            if (found == columns.end()) {
+                columns.emplace_back(fieldName);
+                auto fieldExpr = DataTypeToZ3ExprUtil::createForField(fieldName, field->getDataType(), context)->getExpr();
+                schemaFieldToExprMap[fieldName] = fieldExpr;
+            }
+        }
+        updatedSchemaFieldToExprMaps = {schemaFieldToExprMap};
+    }
+
+    //Create an equality expression for example: <logical stream name>.streamName == "<logical stream name>"
+    std::string modelName = inferModelOperator->getModel();
+    auto modelNameVarName = modelName + ".model";
+    auto streamNameVar = context->constant(context->str_symbol(modelNameVarName.c_str()), context->string_sort());
+    auto streamNameVal = context->string_val(modelName);
+
+    //Construct Z3 expression using ML model name
+    auto modelCondtition = to_expr(*context, Z3_mk_eq(*context, streamNameVar, streamNameVal));
+    auto childConditions = childQuerySignature->getConditions();
+    Z3_ast array[] = {modelCondtition, *childConditions};
+    auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
+
+    auto windowsExpressions = childQuerySignature->getWindowsExpressions();
+    //Compute signature
+    return QuerySignature::create(std::move(conditions),
+                                  std::move(columns),
+                                  std::move(updatedSchemaFieldToExprMaps),
+                                  std::move(windowsExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::ContextPtr& context,
