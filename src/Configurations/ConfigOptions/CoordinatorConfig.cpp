@@ -198,7 +198,7 @@ std::string CoordinatorConfig::toString(){
     ss << numberOfSlots->toStringNameCurrentValue();
     ss << logLevel->toStringNameCurrentValue();
     ss << numberOfBuffersInGlobalBufferManager->toStringNameCurrentValue();
-    ss << numberOfBuffersPerPipeline->toStringNameCurrentValue();
+    ss << numberOfBuffersPerWorker->toStringNameCurrentValue();
     ss << numberOfBuffersInSourceLocalBufferPool->toStringNameCurrentValue();
     ss << bufferSizeInBytes->toStringNameCurrentValue();
     ss << numWorkerThreads->toStringNameCurrentValue();

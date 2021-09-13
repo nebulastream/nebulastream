@@ -252,7 +252,7 @@ std::string WorkerConfig::toString(){
     ss << parentId->toStringNameCurrentValue();
     ss << logLevel->toStringNameCurrentValue();
     ss << numberOfBuffersInGlobalBufferManager->toStringNameCurrentValue();
-    ss << numberOfBuffersPerPipeline->toStringNameCurrentValue();
+    ss << numberOfBuffersPerWorker->toStringNameCurrentValue();
     ss << numberOfBuffersInSourceLocalBufferPool->toStringNameCurrentValue();
     ss << queryCompilerExecutionMode->toStringNameCurrentValue();
     ss << queryCompilerOutputBufferOptimizationLevel->toStringNameCurrentValue();
