@@ -23,6 +23,7 @@ namespace NES::QueryCompilation {
 class ExecutableOperator : public Operator {
   public:
     ExecutableOperator(ExecutableOperatorPtr next);
+
     virtual void execute(RecordPtr record, ExecutionContextPtr ctx) const = 0;
 };
 

@@ -21,12 +21,12 @@
 namespace NES::QueryCompilation {
 
 Operator::Operator(ExecutableOperatorPtr next) : next(next) {}
-void Operator::open() const {
+void Operator::open(ExecutionContextPtr ctx) const {
     if (next != nullptr)
-        next->open();
+        next->open(ctx);
 }
-void Operator::close() const {
+void Operator::close(ExecutionContextPtr ctx) const {
     if (next != nullptr)
-        next->close();
+        next->close(ctx);
 }
 }// namespace NES::QueryCompilation

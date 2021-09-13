@@ -28,7 +28,13 @@ class NesInt32 : public NesValue  {
     NesInt32(int32_t value);
     NesValuePtr equals(NesValuePtr) const override;
     int32_t getValue() const;
+    NesValuePtr lt(NesValuePtr ptr) const override;
+    NesValuePtr mul(NesValuePtr ptr) const override;
+    NesValuePtr add(NesValuePtr ptr) const override;
+    NesValuePtr le(NesValuePtr ptr) const override;
+    NesValuePtr sub(NesValuePtr ptr) const override;
     operator bool() override { return NesValue::operator bool(); }
+    void write(NesMemoryAddressPtr memoryAddress) const override;
 
   private:
     int32_t value;

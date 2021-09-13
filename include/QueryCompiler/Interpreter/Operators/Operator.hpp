@@ -25,15 +25,15 @@ using RecordPtr = std::shared_ptr<Record>;
 class ExecutionContext;
 using ExecutionContextPtr = std::shared_ptr<ExecutionContext>;
 class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
+using OperatorPtr = std::shared_ptr<const Operator>;
 class ExecutableOperator;
 using ExecutableOperatorPtr = std::shared_ptr<ExecutableOperator>;
-class Operator {
+class Operator: public std::enable_shared_from_this<Operator> {
   public:
     explicit Operator(ExecutableOperatorPtr next);
     virtual ~Operator() = default;
-    virtual void open() const;
-    virtual void close() const;
+    virtual void open(ExecutionContextPtr ctx) const;
+    virtual void close(ExecutionContextPtr ctx) const;
 
   protected:
     ExecutableOperatorPtr next;

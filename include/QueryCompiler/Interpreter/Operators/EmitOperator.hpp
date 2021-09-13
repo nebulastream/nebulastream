@@ -18,14 +18,32 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_INTERPRETER_OPERATORS_EMITOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_INTERPRETER_OPERATORS_EMITOPERATOR_HPP_
 #include <QueryCompiler/Interpreter/Operators/ExecutableOperator.hpp>
+#include <QueryCompiler/Interpreter/Operators/OperatorContext.hpp>
+#include <QueryCompiler/Interpreter/ForwardDeclaration.hpp>
+#include <QueryCompiler/Interpreter/RecordBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
 namespace NES::QueryCompilation {
 class Expression;
 using ExpressionPtr = std::shared_ptr<Expression>;
+using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
 
+class EmitOperatorState : public OperatorState {
+  public:
+    EmitOperatorState() : OperatorState(){}
+    ~EmitOperatorState() override = default;
+    uint64_t recordSize;
+    RecordBufferPtr buffer;
+    NesInt32Ptr currentIndex;
+};
 class EmitOperator : public ExecutableOperator {
   public:
-    EmitOperator();
+    EmitOperator(SchemaPtr outputSchema);
+    void open(ExecutionContextPtr ctx) const override;
+    void close(ExecutionContextPtr ctx) const override;
     void execute(RecordPtr record, ExecutionContextPtr ctx) const override;
+
+  private:
+    SchemaPtr outputSchema;
 };
 
 }// namespace NES::QueryCompilation

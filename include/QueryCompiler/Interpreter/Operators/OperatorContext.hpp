@@ -16,15 +16,40 @@
  */
 #ifndef NES_INCLUDE_QUERYCOMPILER_INTERPRETER_OPERATORS_OPERATORCONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_INTERPRETER_OPERATORS_OPERATORCONTEXT_HPP_
+#include <Runtime/BufferManager.hpp>
+#include <QueryCompiler/Interpreter/ForwardDeclaration.hpp>
+#include <map>
 #include <memory>
+namespace NES::Runtime {
+class TupleBuffer;
+}
 namespace NES::QueryCompilation {
 
 class Record;
 using RecordPtr = std::shared_ptr<Record>;
 class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
-class ExecutionContext {
+using OperatorPtr = std::shared_ptr<const Operator>;
 
+class OperatorState {
+  public:
+    OperatorState() = default;
+    virtual ~OperatorState() = default;
+};
+using OperatorStatePtr = std::shared_ptr<OperatorState>;
+
+class ExecutionContext {
+  public:
+    ExecutionContext(Runtime::BufferManagerPtr bufferManager);
+    Runtime::TupleBuffer allocateTupleBuffer();
+    auto setThreadLocalOperator(OperatorPtr op, OperatorStatePtr operatorState) { threadLocalState[op] = operatorState; }
+    template<class OperatorStateType>
+    auto getThreadLocalOperator(OperatorPtr op) {
+        return std::dynamic_pointer_cast<OperatorStateType>(threadLocalState[op]);
+    }
+
+  private:
+    Runtime::BufferManagerPtr bufferManager;
+    std::map<OperatorPtr, OperatorStatePtr> threadLocalState;
 };
 
 }// namespace NES::QueryCompilation

@@ -14,25 +14,12 @@
      See the License for the specific language governing permissions and
      limitations under the License.
  */
-
-#ifndef NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESBOOL_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESBOOL_HPP_
-
-#include <QueryCompiler/Interpreter/Values/NesValue.hpp>
+#include <QueryCompiler/Interpreter/Operators/OperatorContext.hpp>
+#include <utility>
+#include <Runtime/TupleBuffer.hpp>
 namespace NES::QueryCompilation {
-
-class NesBool : public NesValue {
-  public:
-    NesBool(bool value);
-
-    operator bool() { return value; };
-    bool getValue();
-    NesValuePtr equals(NesValuePtr) const override;
-    void write(NesMemoryAddressPtr memoryAddress) const override;
-
-  private:
-    bool value;
-};
-};// namespace NES::QueryCompilation
-
-#endif//NES_INCLUDE_QUERYCOMPILER_INTERPRETER_DATATYPES_NESBOOL_HPP_
+ExecutionContext::ExecutionContext(Runtime::BufferManagerPtr bufferManager) : bufferManager(std::move(bufferManager)) {}
+Runtime::TupleBuffer ExecutionContext::allocateTupleBuffer() {
+    return bufferManager->getBufferBlocking();
+}
+}// namespace NES::QueryCompilation

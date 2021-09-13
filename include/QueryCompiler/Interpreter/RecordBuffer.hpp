@@ -19,6 +19,8 @@
 #define NES_INCLUDE_QUERYCOMPILER_INTERPRETER_RECORDBUFFER_HPP_
 #include <QueryCompiler/Interpreter/Values/NesValue.hpp>
 #include <QueryCompiler/Interpreter/Record.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <QueryCompiler/Interpreter/ForwardDeclaration.hpp>
 #include <API/Schema.hpp>
 #include <memory>
 
@@ -33,12 +35,14 @@ using TupleBufferPtr = std::shared_ptr<TupleBuffer>;
 namespace NES::QueryCompilation {
 class RecordBuffer {
   public:
-    RecordBuffer(Runtime::TupleBuffer& buffer, SchemaPtr schema);
-    virtual uint64_t getNumberOfTuples();
+    RecordBuffer(Runtime::TupleBuffer buffer, SchemaPtr schema);
+    virtual ~RecordBuffer() = default;
+    virtual NesInt32Ptr getNumberOfTuples();
+    virtual NesMemoryAddressPtr getBufferAddress();
     virtual RecordPtr operator[](std::size_t index) const;
 
   private:
-    Runtime::TupleBuffer& buffer;
+    Runtime::TupleBuffer buffer;
     SchemaPtr schema;
 };
 

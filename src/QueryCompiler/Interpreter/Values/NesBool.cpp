@@ -16,6 +16,8 @@
  */
 
 #include <QueryCompiler/Interpreter/Values/NesBool32.hpp>
+#include <QueryCompiler/Interpreter/Values/NesInt32.hpp>
+#include <QueryCompiler/Interpreter/Values/NesMemoryAddress.hpp>
 
 namespace NES::QueryCompilation {
 
@@ -28,7 +30,9 @@ NesValuePtr NesBool::equals(NesValuePtr oValue) const {
         throw std::exception();
     }
 }
+
 bool NesBool::getValue() { return value; }
 
+void NesBool::write(NesMemoryAddressPtr memoryAddress) const { *reinterpret_cast<bool*>(memoryAddress->getValue()) = value; }
 
 }// namespace NES::QueryCompilation
