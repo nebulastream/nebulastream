@@ -52,7 +52,6 @@ class QueryParsingService {
     SchemaPtr createSchemaFromCode(const std::string& schemaCodeSnippet);
 
   private:
-    uint64_t findSubQueryTermination(uint64_t startOfUnionWith, const std::string& queryCodeSnippet);
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
 };
 
