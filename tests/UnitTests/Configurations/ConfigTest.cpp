@@ -197,7 +197,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
     sourceConfigPtr->overwriteConfigWithYAMLFileInput("../tests/test_data/emptySource.yaml");
 
     EXPECT_NE(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getSourceConfig()->getValue(), sourceConfigPtr->getSourceConfig()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(),
               sourceConfigPtr->getNumberOfBuffersToProduce()->getDefaultValue());
@@ -229,7 +228,7 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
     sourceConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
 
     EXPECT_NE(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getSourceConfig()->getValue(), sourceConfigPtr->getSourceConfig()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr->getFilePath()->getValue(), sourceConfigPtr->getFilePath()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(),
               sourceConfigPtr->getNumberOfBuffersToProduce()->getDefaultValue());
