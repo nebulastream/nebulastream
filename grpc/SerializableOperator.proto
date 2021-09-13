@@ -395,6 +395,7 @@ message SerializableOperator{
    */
   message FilterDetails {
     SerializableExpression predicate = 1;
+    float selectivity = 2;
   }
 
   /**

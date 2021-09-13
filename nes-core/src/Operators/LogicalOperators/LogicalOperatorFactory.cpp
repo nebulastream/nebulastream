@@ -49,6 +49,9 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createSinkOperator(const Sin
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr& predicate, OperatorId id) {
     return std::make_shared<FilterLogicalOperatorNode>(predicate, id);
 }
+LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr& predicate, float selectivity, OperatorId id) {
+    return std::make_shared<FilterLogicalOperatorNode>(predicate, selectivity, id);
+}
 
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createRenameSourceOperator(const std::string& newSourceName, OperatorId id) {
     return std::make_shared<RenameSourceOperatorNode>(newSourceName, id);
