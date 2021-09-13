@@ -235,6 +235,13 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
 endif ()
 
+# folly
+if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
+    find_package(folly CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+endif ()
+
+
 # Numa awareness
 find_package(NUMA)
 if(NUMA_FOUND)
@@ -443,7 +450,7 @@ add_definitions(-D '__STDC_LIMIT_MACROS')
 
 # $ORIGIN is to read the shared object from the installation directory
 if(ORIGIN)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN' -v")
 endif()
 #https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")

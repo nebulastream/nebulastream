@@ -334,6 +334,7 @@ void BufferManager::UnpooledBufferHolder::markFree() { free = true; }
 LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedBuffers) {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
+    NES_DEBUG("availableBuffers.size()=" << availableBuffers.size() << " requested buffers=" << numberOfReservedBuffers);
     NES_ASSERT2_FMT((size_t) availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i) {
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
