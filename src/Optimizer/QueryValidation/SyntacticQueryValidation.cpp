@@ -16,7 +16,11 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -60,11 +64,22 @@ void SyntacticQueryValidation::checkValidity(const std::string& inputQuery) {
             // set data modification factor for map operator
             if ((*qPlanItr)->instanceOf<MapLogicalOperatorNode>()) {
                 const auto mapExp = (*qPlanItr)->as<MapLogicalOperatorNode>()->getMapExpression();
-
                 auto isFieldRenameExists = checkIfFieldRenameExpressionExist(mapExp);
                 if (isFieldRenameExists) {
                     throw InvalidQueryException("Attribute rename used outside projection operator.");
                 }
+            } else if ((*qPlanItr)->instanceOf<FilterLogicalOperatorNode>()) {
+                const auto predicateExp = (*qPlanItr)->as<FilterLogicalOperatorNode>()->getPredicate();
+                auto isFieldRenameExists = checkIfFieldRenameExpressionExist(predicateExp);
+                if (isFieldRenameExists) {
+                    throw InvalidQueryException("Attribute rename used outside projection operator.");
+                }
+            } else if((*qPlanItr)->instanceOf<WindowOperatorNode>()) {
+                // TODO #1489: Add checks here
+            } else if((*qPlanItr)->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+                // TODO #1489: Add checks here
+            } else if((*qPlanItr)->instanceOf<JoinLogicalOperatorNode>()) {
+                // TODO #1489: Add checks here
             }
         }
 
