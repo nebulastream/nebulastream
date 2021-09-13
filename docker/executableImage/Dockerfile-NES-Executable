@@ -6,14 +6,14 @@ RUN mkdir -p /nebulastream/build && \
     cd /nebulastream/build && \
     cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
     make version && make -j4 && cpack && mv *.deb /nes.deb && \
-    rm -rf /nebulastream/build/nes-dependencies-v3-x64-linux-nes.7z
+    rm -rf /nebulastream/build/nes-dependencies-v4-x64-linux-nes.7z
 
 FROM nebulastream/nes-build-image:latest AS execimg
 
 COPY --from=buildimg /nes.deb .
-COPY --from=buildimg /nebulastream/build/nes-dependencies-v3-x64-linux-nes/installed/x64-linux-nes/ /nebulastream/build/nes-dependencies-v3-x64-linux-nes/installed/x64-linux-nes/
+COPY --from=buildimg /nebulastream/build/nes-dependencies-v4-x64-linux-nes/installed/x64-linux-nes/ /nebulastream/build/nes-dependencies-v4-x64-linux-nes/installed/x64-linux-nes/
 
-RUN mv /nebulastream/build/nes-dependencies-v3-x64-linux-nes/installed/x64-linux-nes/lib/libpaho*so* /usr/local/lib/ && \
+RUN mv /nebulastream/build/nes-dependencies-v4-x64-linux-nes/installed/x64-linux-nes/lib/libpaho*so* /usr/local/lib/ && \
 dpkg -i /nes.deb && apt install iproute2 ifupdown net-tools --no-install-recommends -y -qq && \
 apt autoclean -y -qq && rm -rf /*.deb
 
