@@ -53,18 +53,48 @@ NES::NesCoordinatorPtr coordinator;
 void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource) {
     NES::StreamCatalogPtr streamCatalog = nesCoordinator->getStreamCatalog();
     //register logical stream qnv
-    NES::SchemaPtr schema = NES::Schema::create()
-                                ->addField("a", NES::UINT64)
-                                ->addField("b", NES::UINT64)
-                                ->addField("c", NES::UINT64)
-                                ->addField("d", NES::UINT64)
-                                ->addField("e", NES::UINT64)
-                                ->addField("f", NES::UINT64)
-                                ->addField("a_time", NES::UINT64)
-                                ->addField("b_time", NES::UINT64);
+    NES::SchemaPtr schema1 = NES::Schema::create()
+                                 ->addField("a", NES::UINT64)
+                                 ->addField("b", NES::UINT64)
+                                 ->addField("c", NES::UINT64)
+                                 ->addField("d", NES::UINT64)
+                                 ->addField("e", NES::UINT64)
+                                 ->addField("f", NES::UINT64)
+                                 ->addField("a_time", NES::UINT64)
+                                 ->addField("b_time", NES::UINT64);
 
+    NES::SchemaPtr schema2 = NES::Schema::create()
+                                 ->addField("g", NES::UINT64)
+                                 ->addField("h", NES::UINT64)
+                                 ->addField("i", NES::UINT64)
+                                 ->addField("j", NES::UINT64)
+                                 ->addField("k", NES::UINT64)
+                                 ->addField("l", NES::UINT64)
+                                 ->addField("a_time", NES::UINT64)
+                                 ->addField("b_time", NES::UINT64);
+
+    NES::SchemaPtr schema3 = NES::Schema::create()
+                                 ->addField("m", NES::UINT64)
+                                 ->addField("n", NES::UINT64)
+                                 ->addField("o", NES::UINT64)
+                                 ->addField("p", NES::UINT64)
+                                 ->addField("q", NES::UINT64)
+                                 ->addField("r", NES::UINT64)
+                                 ->addField("a_time", NES::UINT64)
+                                 ->addField("b_time", NES::UINT64);
+
+    uint16_t counter = 1;
     for (uint64_t j = 0; j < numberOfDistinctSources; j++) {
-        streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema);
+        if (counter == 1) {
+            streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema1);
+        } else if (counter == 2) {
+            streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema2);
+        } else if (counter == 3) {
+            streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema3);
+            counter = 0;
+        }
+        counter++;
+
         for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
             auto topoNode = TopologyNode::create(i, "", i, i, 2);
             auto streamCat = StreamCatalogEntry::create("CSV",
@@ -172,8 +202,8 @@ int main(int argc, const char* argv[]) {
     if (configPath != commandLineParams.end()) {
         loadConfigFromYAMLFile(configPath->second.c_str());
     } else {
-//                loadConfigFromYAMLFile(
-//                    "/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
+        //                loadConfigFromYAMLFile(
+        //                    "/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
         loadConfigFromYAMLFile(
             "/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
     }
