@@ -112,7 +112,6 @@ UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::string& input, c
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
 
-
 std::string UtilityFunctions::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
