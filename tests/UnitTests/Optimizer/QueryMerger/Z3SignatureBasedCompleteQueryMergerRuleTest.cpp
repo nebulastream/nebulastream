@@ -282,7 +282,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
     Query query1 = Query::from("car")
-                       .unionWith(&subQuery1)
+                       .unionWith(Query::from("truck"))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -293,7 +293,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2)
+                       .unionWith(Query::from("truck"))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -346,7 +346,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
     Query query1 = Query::from("truck")
-                       .unionWith(&subQuery1)
+                       .unionWith(Query::from("car"))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -357,7 +357,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2)
+                       .unionWith(Query::from("truck"))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -410,7 +410,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
     Query query1 = Query::from("truck")
-                       .unionWith(&subQuery1)
+                       .unionWith(Query::from("bike"))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -421,7 +421,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2)
+                       .unionWith(Query::from("truck"))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1023,7 +1023,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("type") < 40)
-                       .project(Attribute("value"), Attribute("type"))
+                       .project(Attribute("type"), Attribute("value"))
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1092,7 +1092,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("type") < 40)
-                       .project(Attribute("value"), Attribute("type"))
+                       .project(Attribute("type"), Attribute("value"))
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1160,7 +1160,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
 
     Query query2 = Query::from("car")
                        .filter(Attribute("type") < 40)
-                       .project(Attribute("value"), Attribute("type"))
+                       .project(Attribute("type"), Attribute("value"))
                        .filter(Attribute("value") < 30)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
@@ -1228,7 +1228,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
 
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
-                       .project(Attribute("value"), Attribute("type"))
+                       .project(Attribute("type"), Attribute("value"))
                        .filter(Attribute("type") < 40)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
@@ -1366,7 +1366,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWa
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                        .map(Attribute("value") = 40)
                        .filter(Attribute("type") < 40)
-                       .project(Attribute("value"), Attribute("type"))
+                       .project(Attribute("type"), Attribute("value"))
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1439,7 +1439,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
                                                                                                 NES::API::Milliseconds()))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("type") < 40)
-                       .project(Attribute("value"), Attribute("type"))
+                       .project(Attribute("type"), Attribute("value"))
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1493,24 +1493,26 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    Query query1 = Query::from("car")
-                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(&subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query1 =
+        Query::from("car")
+            .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+            .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
+            .map(Attribute("value") = 40)
+            .filter(Attribute("id") < 45)
+            .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(&subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query2 =
+        Query::from("car")
+            .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+            .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
+            .map(Attribute("value") = 40)
+            .filter(Attribute("id") < 45)
+            .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -1567,7 +1569,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
                                                                                                      NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(&subQuery1)
+                       .unionWith(Query::from("truck").assignWatermark(
+                           Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
+                                                                                   NES::API::Milliseconds(10),
+                                                                                   NES::API::Milliseconds())))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1582,7 +1587,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
                                                                                                      NES::API::Milliseconds()));
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(&subQuery2)
+                       .unionWith(Query::from("truck").assignWatermark(
+                           Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
+                                                                                   NES::API::Milliseconds(10),
+                                                                                   NES::API::Milliseconds())))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1642,7 +1650,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
                                                                                                      NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(&subQuery1)
+                       .unionWith(Query::from("truck").assignWatermark(
+                           Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
+                                                                                   NES::API::Milliseconds(10),
+                                                                                   NES::API::Milliseconds())))
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1654,7 +1665,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
                        .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
                                                                                                 NES::API::Milliseconds(10),
                                                                                                 NES::API::Milliseconds()))
-                       .unionWith(&subQuery2)
+                       .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1726,79 +1737,6 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .joinWith(subQuery2)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
-                       .window(windowType2)
-                       .sink(printSinkDescriptor);
-
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
-
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
-
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedCompleteQueryMergerRule::create(context);
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
-
-    //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
-
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
-
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
-
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
-            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
-}
-
-/**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
- */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentStreamOrder) {
-
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-
-    Query subQuery1 = Query::from("truck");
-    Query query1 = Query::from("car")
-                       .joinWith(subQuery1)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
-                       .window(windowType1)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
-
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
-
-    Query subQuery2 = Query::from("car");
-    Query query2 = Query::from("truck")
                        .joinWith(subQuery2)
                        .where(Attribute("value"))
                        .equalsTo(Attribute("value"))
@@ -1990,6 +1928,79 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
         for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
+        }
+    }
+}
+
+/**
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ */
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentStreamOrder) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+
+    Query subQuery1 = Query::from("truck");
+    Query query1 = Query::from("car")
+                       .joinWith(subQuery1)
+                       .where(Attribute("value"))
+                       .equalsTo(Attribute("value"))
+                       .window(windowType1)
+                       .sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+    auto aggregation2 = Sum(Attribute("value"));
+
+    Query subQuery2 = Query::from("car");
+    Query query2 = Query::from("truck")
+                       .joinWith(subQuery2)
+                       .where(Attribute("value"))
+                       .equalsTo(Attribute("value"))
+                       .window(windowType2)
+                       .sink(printSinkDescriptor);
+
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase =
+        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    z3InferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    //execute
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedCompleteQueryMergerRule::create(context);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
