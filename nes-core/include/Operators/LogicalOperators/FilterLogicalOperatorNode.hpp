@@ -25,6 +25,7 @@ namespace NES {
 class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit FilterLogicalOperatorNode(ExpressionNodePtr const&, OperatorId id);
+    explicit FilterLogicalOperatorNode(ExpressionNodePtr const&, float selectivity, OperatorId id);
     ~FilterLogicalOperatorNode() override = default;
 
     /**
@@ -32,6 +33,8 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
    * @return PredicatePtr
    */
     ExpressionNodePtr getPredicate();
+    float getSelectivity();
+    void setSelectivity(float s);
 
     /**
      * @brief check if two operators have the same filter predicate.
@@ -54,6 +57,7 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
 
   private:
     ExpressionNodePtr predicate;
+    float selectivity;
 };
 
 }// namespace NES

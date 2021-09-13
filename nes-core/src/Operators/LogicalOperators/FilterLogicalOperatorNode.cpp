@@ -19,7 +19,12 @@
 namespace NES {
 
 FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& predicate, uint64_t id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), predicate(predicate) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), predicate(predicate) {
+    selectivity = 1.0;
+}
+
+    FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& predicate, float selectivity, uint64_t id)
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), predicate(predicate), selectivity(selectivity) {}
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() { return predicate; }
 
@@ -53,7 +58,7 @@ bool FilterLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
 }
 
 OperatorNodePtr FilterLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createFilterOperator(predicate, id);
+    auto copy = LogicalOperatorFactory::createFilterOperator(predicate, selectivity, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -84,4 +89,6 @@ void FilterLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+float FilterLogicalOperatorNode::getSelectivity() { return selectivity; }
+void FilterLogicalOperatorNode::setSelectivity(float s) {selectivity = s;}
 }// namespace NES

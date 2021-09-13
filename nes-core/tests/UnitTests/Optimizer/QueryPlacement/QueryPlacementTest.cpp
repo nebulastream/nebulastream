@@ -53,6 +53,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <utility>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
+#include <z3++.h>
+
 
 using namespace NES;
 using namespace z3;
@@ -126,6 +130,135 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 
         globalExecutionPlan = GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    }
+    void setupComplexTopologyAndStreamCatalog() {
+        topology = Topology::create();
+
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 10);
+        rootNode->addNodeProperty("tf_installed", false);
+        topology->setAsRoot(rootNode);
+
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+        sourceNode1->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode1);
+
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
+        sourceNode2->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode2);
+
+        TopologyNodePtr sourceNode11 = TopologyNode::create(4, "localhost", 123, 124, 4);
+        sourceNode11->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(sourceNode1, sourceNode11);
+
+        TopologyNodePtr sourceNode12 = TopologyNode::create(5, "localhost", 123, 124, 4);
+        sourceNode12->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(sourceNode1, sourceNode12);
+
+        TopologyNodePtr sourceNode21 = TopologyNode::create(6, "localhost", 123, 124, 4);
+        sourceNode21->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(sourceNode2, sourceNode21);
+
+        TopologyNodePtr sourceNode22 = TopologyNode::create(7, "localhost", 123, 124, 4);
+        sourceNode22->addNodeProperty("tf_installed", false);
+        topology->addNewPhysicalNodeAsChild(sourceNode2, sourceNode22);
+
+        TopologyNodePtr sourceNode121 = TopologyNode::create(8, "localhost", 123, 124, 1);
+        sourceNode121->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(sourceNode12, sourceNode121);
+
+        std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
+                           ->addField(createField("SepalLengthCm", FLOAT32))
+                           ->addField(createField("SepalWidthCm", FLOAT32))
+                           ->addField(createField("PetalLengthCm", FLOAT32))
+                           ->addField(createField("PetalWidthCm", FLOAT32))
+                           ->addField(createField("SpeciesCode", UINT64));)";
+        const std::string streamName = "iris";
+
+        streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+        streamCatalog->addLogicalStream(streamName, schema);
+
+        SourceConfigPtr sourceConfig = SourceConfig::create();
+        sourceConfig->setSourceFrequency(0);
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+        sourceConfig->setPhysicalStreamName("test2");
+        sourceConfig->setLogicalStreamName("iris");
+
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+
+        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode11);
+        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode22);
+        StreamCatalogEntryPtr streamCatalogEntry3 = std::make_shared<StreamCatalogEntry>(conf, sourceNode121);
+        StreamCatalogEntryPtr streamCatalogEntry4 = std::make_shared<StreamCatalogEntry>(conf, sourceNode21);
+
+        streamCatalog->addPhysicalStream("iris", streamCatalogEntry1);
+        streamCatalog->addPhysicalStream("iris", streamCatalogEntry2);
+        streamCatalog->addPhysicalStream("iris", streamCatalogEntry3);
+        streamCatalog->addPhysicalStream("iris", streamCatalogEntry4);
+    }
+
+    void setupComplexTopologyAndStreamCatalog2() {
+        topology = Topology::create();
+
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 10);
+        rootNode->addNodeProperty("tf_installed", false);
+        topology->setAsRoot(rootNode);
+
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 10);
+        sourceNode1->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode1);
+
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 10);
+        sourceNode2->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode2);
+
+        TopologyNodePtr sourceNode11 = TopologyNode::create(4, "localhost", 123, 124, 4);
+        sourceNode11->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(sourceNode1, sourceNode11);
+
+        TopologyNodePtr sourceNode12 = TopologyNode::create(5, "localhost", 123, 124, 4);
+        sourceNode12->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(sourceNode1, sourceNode12);
+
+        TopologyNodePtr sourceNode21 = TopologyNode::create(6, "localhost", 123, 124, 10);
+        sourceNode21->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(sourceNode2, sourceNode21);
+
+        TopologyNodePtr sourceNode22 = TopologyNode::create(7, "localhost", 123, 124, 4);
+        sourceNode22->addNodeProperty("tf_installed", false);
+        topology->addNewPhysicalNodeAsChild(sourceNode2, sourceNode22);
+
+        TopologyNodePtr sourceNode121 = TopologyNode::create(8, "localhost", 123, 124, 1);
+        sourceNode121->addNodeProperty("tf_installed", true);
+        topology->addNewPhysicalNodeAsChild(sourceNode12, sourceNode121);
+
+        std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
+                           ->addField(createField("SepalLengthCm", FLOAT32))
+                           ->addField(createField("SepalWidthCm", FLOAT32))
+                           ->addField(createField("PetalLengthCm", FLOAT32))
+                           ->addField(createField("PetalWidthCm", FLOAT32))
+                           ->addField(createField("SpeciesCode", UINT64));)";
+        const std::string streamName = "iris";
+
+        streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+        streamCatalog->addLogicalStream(streamName, schema);
+
+        SourceConfigPtr sourceConfig = SourceConfig::create();
+        sourceConfig->setSourceFrequency(0);
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+        sourceConfig->setPhysicalStreamName("test2");
+        sourceConfig->setLogicalStreamName("iris");
+
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+
+        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode11);
+        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode22);
+        StreamCatalogEntryPtr streamCatalogEntry3 = std::make_shared<StreamCatalogEntry>(conf, sourceNode121);
+        StreamCatalogEntryPtr streamCatalogEntry4 = std::make_shared<StreamCatalogEntry>(conf, sourceNode21);
+
+        streamCatalog->addPhysicalStream("iris", streamCatalogEntry1);
+        streamCatalog->addPhysicalStream("iris", streamCatalogEntry2);
+        streamCatalog->addPhysicalStream("iris", streamCatalogEntry3);
+        streamCatalog->addPhysicalStream("iris", streamCatalogEntry4);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {
@@ -203,7 +336,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 /* Test query placement with Ml heuristic strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
-    setupTopologyAndStreamCatalog();
+    setupComplexTopologyAndStreamCatalog2();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -213,12 +346,14 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
                                                                               typeInferencePhase,
                                                                               streamCatalog);
 
-    Query query = Query::from("car")
+    Query query = Query::from("iris")
                   .inferModel("models/iris.tflite",
-                                    {Attribute("value"), Attribute("id")},
-                                    {Attribute("prediction")})
-                  .filter(Attribute("prediction") > 0)
+                              {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
+                              {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                  .filter(Attribute("iris0") < 3.0, 1)
+                  .project(Attribute("iris1"), Attribute("iris2"))
                   .sink(PrintSinkDescriptor::create());
+
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -231,6 +366,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+
+    auto context = std::make_shared<z3::context>();
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    signatureInferencePhase->execute(queryPlan);
 
     placementStrategy->updateGlobalExecutionPlan(queryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);

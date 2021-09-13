@@ -306,7 +306,8 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedFilterOperator);
         // de-serialize filter expression
         auto filterExpression = ExpressionSerializationUtil::deserializeExpression(serializedFilterOperator.mutable_predicate());
-        operatorNode = LogicalOperatorFactory::createFilterOperator(filterExpression);
+        auto selectivity = serializedFilterOperator.selectivity();
+        operatorNode = LogicalOperatorFactory::createFilterOperator(filterExpression, selectivity);
     } else if (details.Is<SerializableOperator_ProjectionDetails>()) {
         // de-serialize projection operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to ProjectionLogicalOperator");

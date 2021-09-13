@@ -16,11 +16,17 @@
 
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
+#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -28,6 +34,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
+#include <z3++.h>
 
 namespace NES::Optimizer {
 
@@ -84,6 +91,59 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
                   << queryId);
 
         NES_DEBUG("MlHeuristicStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+
+        runTypeInferencePhase(queryId);
+
+        bool enable_redundancy_elimination = true;
+
+        if(enable_redundancy_elimination) {
+            auto executionNodes = globalExecutionPlan->getAllExecutionNodes();// for this q id
+            auto context = std::make_shared<z3::context>();
+            auto signatureInferencePhase =
+                Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+
+            for (auto ex_node : executionNodes) {
+                auto querysubplans = ex_node->getQuerySubPlans(queryId);
+
+                SignatureEqualityUtilPtr signatureEqualityUtil = SignatureEqualityUtil::create(context);
+
+                if (querysubplans.size() >= 2) {
+                    auto a = querysubplans[0];
+                    auto b = querysubplans[1];
+
+                    runTypeInferencePhase(queryId);
+
+                    signatureInferencePhase->execute(a);
+                    signatureInferencePhase->execute(b);
+
+                    auto targetSinkOperator = a->getSinkOperators().at(0);
+                    auto hostSinkOperator = b->getSinkOperators().at(0);;
+
+                    auto targetRootOperator = a->getSourceOperators().at(0)->getParents().at(0);
+                    auto hostRootOperator = b->getSourceOperators().at(0)->getParents().at(0);
+
+                    auto a_sign = targetSinkOperator->as<LogicalUnaryOperatorNode>()->getZ3Signature();
+                    auto b_sign = hostSinkOperator->as<LogicalUnaryOperatorNode>()->getZ3Signature();
+
+                    if (signatureEqualityUtil->checkEquality(a_sign, b_sign)) {
+                        auto targetRootChildren = targetRootOperator->getChildren();
+                        auto hostRootChildren = hostRootOperator->getChildren();
+
+                        for (auto& hostChild : hostRootChildren) {
+                            bool addedNewParent = hostChild->addParent(targetRootOperator);
+                            if (!addedNewParent) {
+                                NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                            }
+                        }
+                    }
+
+                    querysubplans.pop_back();
+                }
+                ex_node->updateQuerySubPlans(queryId, querysubplans);
+            }
+            NES_DEBUG("MlHeuristicStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+        }
+
         return runTypeInferencePhase(queryId);
     } catch (Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
@@ -110,7 +170,7 @@ void MlHeuristicStrategy::placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan
     NES_DEBUG("MlHeuristicStrategy: Finished placing query operators into the global execution plan");
 }
 
-void MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
+bool MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
                                                    const OperatorNodePtr& operatorNode,
                                                    TopologyNodePtr candidateTopologyNode) {
 
@@ -124,7 +184,7 @@ void MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
         std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(operatorNode);
         if (childTopologyNodes.empty()) {
             NES_WARNING("MlHeuristicStrategy: No topology node found where child operators are placed.");
-            return;
+            return true;
         }
 
         NES_TRACE("MlHeuristicStrategy: Find a node reachable from all topology nodes where child operators are placed.");
@@ -163,40 +223,59 @@ void MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
         }
     }
 
-//    operatorNode->getChildren()
+    candidateTopologyNode->getNodeStats();
+    candidateTopologyNode->getAvailableResources();
 
-    if(operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
-        NES_TRACE("MlHeuristicStrategy: Received an InferModel operator for placement.");
-        if(!canInferModelOperatorBePlacedOnTopologyode(candidateTopologyNode)){
-            NES_DEBUG("MlHeuristicStrategy: Find the next NES node in the path where operator can be placed");
-            while (!candidateTopologyNode->getParents().empty()) {
-                candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
-                if (canInferModelOperatorBePlacedOnTopologyode(candidateTopologyNode)) {
-                    NES_DEBUG("MlHeuristicStrategy: Found NES node for placing the operators with id : "
-                    << candidateTopologyNode->getId());
-                    break;
-                }
-            }
-        }
-    } else {
-        if (candidateTopologyNode->getAvailableResources() == 0) {
+    bool cpu_saver_mode = true;
+    bool should_push_up = false;
+    bool can_be_placed_here = true;
 
-            NES_DEBUG("MlHeuristicStrategy: Find the next NES node in the path where operator can be placed");
-            while (!candidateTopologyNode->getParents().empty()) {
-                //FIXME: we are considering only one root node currently
-                candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
-                if (candidateTopologyNode->getAvailableResources() > 0) {
-                    NES_DEBUG("MlHeuristicStrategy: Found NES node for placing the operators with id : "
-                              << candidateTopologyNode->getId());
-                    break;
-                }
-            }
+    bool tf_not_installed = operatorNode->instanceOf<InferModelLogicalOperatorNode>() && (!candidateTopologyNode->hasNodeProperty("tf_installed") || !std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed")));
+    if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0 || tf_not_installed) {
+        can_be_placed_here = false;
+    }
+
+    if(!can_be_placed_here){
+        should_push_up = true;
+        if(candidateTopologyNode->getParents().empty()) {
+            return false;
         }
     }
 
-    if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
-        NES_ERROR("MlHeuristicStrategy: No node available for further placement of operators");
-        throw Exception("MlHeuristicStrategy: No node available for further placement of operators");
+    if(operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+        if(candidateTopologyNode->getAvailableResources() < 5 && cpu_saver_mode){
+            should_push_up = true;
+        }
+
+        auto infModl = operatorNode->as<InferModelLogicalOperatorNode>();
+        float f0 = infModl->getInputSchema()->getSize();
+
+        auto ancestors = operatorNode->getAndFlattenAllAncestors();
+        auto sink = ancestors.at(ancestors.size()-1);
+        float f_new = sink->as<UnaryOperatorNode>()->getOutputSchema()->getSize();
+
+        float s = 1.0;
+
+        for (auto ancestor : ancestors) {
+            if(ancestor->instanceOf<FilterLogicalOperatorNode>()){
+                auto fltr = ancestor->as<FilterLogicalOperatorNode>();
+                s*=fltr->getSelectivity();
+            }
+        }
+        float fields_measure = f_new / f0;
+        float selectivity_measure = 1/s;
+        if (fields_measure > selectivity_measure) {
+            should_push_up = true;
+        }
+    }
+
+    if(should_push_up) {
+        if(placeOperatorOnTopologyNode(queryId, operatorNode, candidateTopologyNode->getParents()[0]->as<TopologyNode>())){
+            return true;
+        }
+    }
+    if(!can_be_placed_here){
+        return false;
     }
 
     NES_TRACE("MlHeuristicStrategy: Get the candidate execution node for the candidate topology node.");
@@ -227,23 +306,6 @@ void MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
     for (const auto& parent : operatorNode->getParents()) {
         placeOperatorOnTopologyNode(queryId, parent->as<OperatorNode>(), candidateTopologyNode);
     }
-}
-
-bool MlHeuristicStrategy::canInferModelOperatorBePlacedOnTopologyNode(TopologyNodePtr candidateTopologyNode) {
-
-    // candidateTopologyNode->getFreeDiskSpace()
-    // candidateTopologyNode->getNetworkInterfaceStats()
-
-    if(!candidateTopologyNode->hasNodeProperty("tf_installed")){
-        return false;
-    }
-    if(!std::any_cast<bool>(candidateTopologyNode->getNodeProperty("tf_installed"))) {
-        return false;
-    }
-    if(candidateTopologyNode->getAvailableResources() == 0){
-        return false;
-    }
-    NES_TRACE("MlHeuristicStrategy: Operator can be placed here");
     return true;
 }
 
