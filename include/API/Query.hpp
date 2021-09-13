@@ -183,7 +183,7 @@ class Query {
     * @param subQuery is the query to be unioned
     * @return the query
     */
-    Query& unionWith(Query* subQuery);
+    Query& unionWith(Query& subQuery);
 
     /**
      * @brief this call projects out the attributes in the parameter list

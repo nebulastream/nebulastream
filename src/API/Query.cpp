@@ -103,10 +103,10 @@ Query& Query::as(const std::string& newStreamName) {
     return *this;
 }
 
-Query& Query::unionWith(Query* subQuery) {
+Query& Query::unionWith(Query& subQuery) {
     NES_DEBUG("Query: unionWith the subQuery to current query");
     OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
-    const QueryPlanPtr& subQueryPlan = subQuery->getQueryPlan();
+    const QueryPlanPtr& subQueryPlan = subQuery.getQueryPlan();
     queryPlan->addRootOperator(subQueryPlan->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
     //Update the Source names by sorting and then concatenating the source names from the sub query plan
