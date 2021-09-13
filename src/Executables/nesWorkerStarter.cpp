@@ -50,7 +50,6 @@ const string logo = "/********************************************************\n
                     " *\n"
                     " ********************************************************/";
 
-// TODO handle proper configuration properly
 int main(int argc, char** argv) {
     std::cout << logo << std::endl;
 
@@ -84,9 +83,7 @@ int main(int argc, char** argv) {
     }
     NES::setLogLevel(NES::getDebugLevelFromString(workerConfig->getLogLevel()->getValue()));
 
-    NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort()->getValue() << " localport="
-                                                  << workerConfig->getDataPort()->getValue() << " pid=" << getpid()
-                                                  << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
+    NES_INFO("NESWORKERSTARTER: Start with " << workerConfig->toString());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
     //register phy stream if necessary
@@ -94,10 +91,7 @@ int main(int argc, char** argv) {
         NES_INFO("start with dedicated source=" << sourceConfig->getSourceType()->getValue() << "\n");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-        NES_INFO("NESWORKERSTARTER: Source Config type = "
-                 << sourceConfig->getSourceType()->getValue() << " Config = " << sourceConfig->getSourceConfig()->getValue()
-                 << " physicalStreamName = " << sourceConfig->getPhysicalStreamName()->getValue()
-                 << " logicalStreamName = " << sourceConfig->getLogicalStreamName()->getValue());
+        NES_INFO("NESWORKERSTARTER: Source Config: " << sourceConfig->toString());
 
         wrk->setWithRegister(conf);
     } else if (workerConfig->getParentId()->getValue() != "-1") {

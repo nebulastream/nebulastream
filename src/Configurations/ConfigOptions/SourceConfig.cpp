@@ -253,6 +253,33 @@ void SourceConfig::resetSourceOptions() {
     setSkipHeader(skipHeader->getDefaultValue());
 }
 
+std::string SourceConfig::toString() {
+    std::stringstream ss;
+    ss << sourceType->toStringNameCurrentValue();
+    ss << udsf->toStringNameCurrentValue();
+    ss << filePath->toStringNameCurrentValue();
+    ss << namespaceIndex->toStringNameCurrentValue();
+    ss << nodeIdentifier->toStringNameCurrentValue();
+    ss << clientId->toStringNameCurrentValue();
+    ss << userName->toStringNameCurrentValue();
+    ss << password->toStringNameCurrentValue();
+    ss << topic->toStringNameCurrentValue();
+    ss << inputFormat->toStringNameCurrentValue();
+    ss << qos->toStringNameCurrentValue();
+    ss << cleanSession->toStringNameCurrentValue();
+    ss << flushIntervalMS->toStringNameCurrentValue();
+    ss << rowLayout->toStringNameCurrentValue();
+    ss << connectionTimeout->toStringNameCurrentValue();
+    ss << autoCommit->toStringNameCurrentValue();
+    ss << sourceFrequency->toStringNameCurrentValue();
+    ss << numberOfBuffersToProduce->toStringNameCurrentValue();
+    ss << numberOfTuplesToProducePerBuffer->toStringNameCurrentValue();
+    ss << physicalStreamName->toStringNameCurrentValue();
+    ss << logicalStreamName->toStringNameCurrentValue();
+    ss << skipHeader->toStringNameCurrentValue();
+    return ss.str();
+}
+
 StringConfigOption SourceConfig::getSourceType() const { return sourceType; }
 
 StringConfigOption SourceConfig::getUdsf() const { return udsf; }

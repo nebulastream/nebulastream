@@ -61,6 +61,11 @@ class WorkerConfig {
     void resetWorkerOptions();
 
     /**
+     * @brief prints the current worker configuration (name: current value)
+     */
+    std::string toString();
+
+    /**
      * @brief gets a ConfigOption object with localWorkerIp
      */
     StringConfigOption getLocalWorkerIp();

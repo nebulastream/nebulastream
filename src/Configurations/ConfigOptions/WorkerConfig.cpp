@@ -240,6 +240,27 @@ void WorkerConfig::resetWorkerOptions() {
     setSourcePinList(sourcePinList->getDefaultValue());
 }
 
+std::string WorkerConfig::toString(){
+    std::stringstream ss;
+    ss << localWorkerIp->toStringNameCurrentValue();
+    ss << coordinatorIp->toStringNameCurrentValue();
+    ss << coordinatorPort->toStringNameCurrentValue();
+    ss << rpcPort->toStringNameCurrentValue();
+    ss << dataPort->toStringNameCurrentValue();
+    ss << numberOfSlots->toStringNameCurrentValue();
+    ss << numWorkerThreads->toStringNameCurrentValue();
+    ss << parentId->toStringNameCurrentValue();
+    ss << logLevel->toStringNameCurrentValue();
+    ss << numberOfBuffersInGlobalBufferManager->toStringNameCurrentValue();
+    ss << numberOfBuffersPerPipeline->toStringNameCurrentValue();
+    ss << numberOfBuffersInSourceLocalBufferPool->toStringNameCurrentValue();
+    ss << queryCompilerExecutionMode->toStringNameCurrentValue();
+    ss << queryCompilerOutputBufferOptimizationLevel->toStringNameCurrentValue();
+    ss << workerPinList->toStringNameCurrentValue();
+    ss << sourcePinList->toStringNameCurrentValue();
+    return ss.str();
+}
+
 StringConfigOption WorkerConfig::getLocalWorkerIp() { return localWorkerIp; }
 
 void WorkerConfig::setLocalWorkerIp(std::string localWorkerIpValue) { localWorkerIp->setValue(std::move(localWorkerIpValue)); }

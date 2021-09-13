@@ -188,6 +188,26 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
 }
 
+std::string CoordinatorConfig::toString(){
+    std::stringstream ss;
+    ss << restPort->toStringNameCurrentValue();
+    ss << rpcPort->toStringNameCurrentValue();
+    ss << dataPort->toStringNameCurrentValue();
+    ss << restIp->toStringNameCurrentValue();
+    ss << coordinatorIp->toStringNameCurrentValue();
+    ss << numberOfSlots->toStringNameCurrentValue();
+    ss << logLevel->toStringNameCurrentValue();
+    ss << numberOfBuffersInGlobalBufferManager->toStringNameCurrentValue();
+    ss << numberOfBuffersPerPipeline->toStringNameCurrentValue();
+    ss << numberOfBuffersInSourceLocalBufferPool->toStringNameCurrentValue();
+    ss << bufferSizeInBytes->toStringNameCurrentValue();
+    ss << numWorkerThreads->toStringNameCurrentValue();
+    ss << queryBatchSize->toStringNameCurrentValue();
+    ss << queryMergerRule->toStringNameCurrentValue();
+    ss << enableSemanticQueryValidation->toStringNameCurrentValue();
+    return ss.str();
+}
+
 StringConfigOption CoordinatorConfig::getRestIp() { return restIp; }
 
 void CoordinatorConfig::setRestIp(std::string restIpValue) { restIp->setValue(std::move(restIpValue)); }
