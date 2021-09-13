@@ -51,18 +51,21 @@ using namespace z3;
 
 class ILPPlacementTest : public testing::Test {
   public:
+    std::shared_ptr<QueryParsingService> queryParsingService;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup ILPPlacementTest test class." << std::endl; }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("ILPPlacementTest.log", NES::LOG_DEBUG);
-        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
         std::cout << "Setup ILPPlacementTest test case." << std::endl;
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Setup ILPPlacementTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Setup ILPPlacementTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down ILPPlacementTest test class." << std::endl; }
@@ -94,7 +97,7 @@ class ILPPlacementTest : public testing::Test {
                              "->addField(\"value\", BasicType::UINT64);";
         const std::string streamName = "car";
 
-        streamCatalogForILP = std::make_shared<StreamCatalog>();
+        streamCatalogForILP = std::make_shared<StreamCatalog>(queryParsingService);
         streamCatalogForILP->addLogicalStream(streamName, schema);
 
         SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -213,10 +216,6 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-
-    //auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    //queryPlan = queryReWritePhase->execute(queryPlan);
-    //typeInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
     topologySpecificQueryRewrite->execute(queryPlan);
@@ -338,10 +337,6 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    //auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    //queryPlan = queryReWritePhase->execute(queryPlan);
-    //typeInferencePhase->execute(queryPlan);
-
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
@@ -380,21 +375,24 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     }
 }
 
-
+// TODO 1979: Move this to benchmark
 class ILPPlacementBenchmark : public testing::Test {
   public:
+    std::shared_ptr<QueryParsingService> queryParsingService;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup ILPPlacementTest test class." << std::endl; }
+    static void SetUpTestCase() { std::cout << "Setup ILPPlacementBenchmark test class." << std::endl; }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("ILPPlacementBenchmark.log", NES::LOG_DEBUG);
-        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
         std::cout << "Setup ILPPlacementBenchmark test case." << std::endl;
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Setup ILPPlacementBenchmark test case." << std::endl; }
+    void TearDown() override { std::cout << "Setup ILPPlacementBenchmark test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down ILPPlacementBenchmark test class." << std::endl; }
@@ -410,7 +408,7 @@ class ILPPlacementBenchmark : public testing::Test {
         TopologyNodePtr rootNode = TopologyNode::create(nodeID++, "localhost", 123, 124, resources1);
         rootNode->addNodeProperty("slots", resources1);
         topologyForILP->setAsRoot(rootNode);
-        streamCatalogForILP = std::make_shared<StreamCatalog>();
+        streamCatalogForILP = std::make_shared<StreamCatalog>(queryParsingService);
 
         LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
@@ -482,7 +480,7 @@ TEST_F(ILPPlacementBenchmark, increaseSources) {
             }
 
             Query query = subqueries[0];
-            for (int i = 1; i < subqueries.size(); i++) {
+            for (uint64_t i = 1; i < subqueries.size(); i++) {
                 query.unionWith(&subqueries[i]);
             }
             query = query.sink(PrintSinkDescriptor::create());
@@ -552,7 +550,7 @@ TEST_F(ILPPlacementBenchmark, increaseResources) {
             }
 
             Query query = subqueries[0];
-            for (int i = 1; i < subqueries.size(); i++) {
+            for (uint64_t i = 1; i < subqueries.size(); i++) {
                 query.unionWith(&subqueries[i]);
             }
             query = query.sink(PrintSinkDescriptor::create());
@@ -597,15 +595,15 @@ TEST_F(ILPPlacementBenchmark, increaseResources) {
 TEST_F(ILPPlacementBenchmark, increaseOperators) {
     std::list<int> listOfInts( {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15});
 
-    int repetitions = 11;
-    int iot_devices = 1;
+    uint64_t repetitions = 11;
+    uint64_t iot_devices = 1;
     setupTopologyAndStreamCatalogForILP(iot_devices, iot_devices, 10, true);
 
     std::map<int, std::vector<long>> counts;
     for(int n : listOfInts) {
         std::vector<long> counts_n;
 
-        for(int j = 0; j < repetitions; j++) {
+        for(uint64_t j = 0; j < repetitions; j++) {
             GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
             auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("ILP",
@@ -617,7 +615,7 @@ TEST_F(ILPPlacementBenchmark, increaseOperators) {
             NES_INFO("N: " << n << ", Run: " << j);
 
             std::vector<Query> subqueries;
-            for (int i = 0; i < iot_devices; i++) {
+            for (uint64_t i = 0; i < iot_devices; i++) {
                 Query subquery = Query::from("car" + std::to_string(i));
                 for (int j = 0; j < n; j++) {
                     subquery = subquery.filter(Attribute("id") < 45).map(Attribute("c") = Attribute("id") + Attribute("value"));
@@ -626,7 +624,7 @@ TEST_F(ILPPlacementBenchmark, increaseOperators) {
             }
 
             Query query = subqueries[0];
-            for (int i = 1; i < subqueries.size(); i++) {
+            for (uint64_t i = 1; i < subqueries.size(); i++) {
                 query.unionWith(&subqueries[i]);
             }
             query = query.sink(PrintSinkDescriptor::create());

@@ -29,14 +29,14 @@ typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 namespace NES::Optimizer {
 
-/**\brief:
- *          This class implements ILP strategy.
+/**
+ * @brief This class implements Integer Linear Programming strategy to optimize the operator placement
  */
 class ILPStrategy : public BasePlacementStrategy {
   public:
-    ~ILPStrategy(){};
+    ~ILPStrategy() override= default;;
 
-    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
+    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
     static std::unique_ptr<ILPStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                     TopologyPtr topology,
@@ -57,7 +57,7 @@ class ILPStrategy : public BasePlacementStrategy {
                               TypeInferencePhasePtr typeInferencePhase,
                               StreamCatalogPtr streamCatalog);
     /**
-     * assigns operators to topology nodes based on ILP solution
+     * @brief assigns operators to topology nodes based on ILP solution
      * @param queryPlan
      * @param m
      * @param placementVariables
@@ -71,7 +71,7 @@ class ILPStrategy : public BasePlacementStrategy {
     std::vector<NodePtr> findPathToRoot(NodePtr sourceNode);
 
     /**
-    * creates the placement variables and adds constraints to the optimizer
+    * @brief creates the placement variables and adds constraints to the optimizer
     * @param c Z3 context
     * @param opt
     * @param operatorPath
@@ -95,7 +95,7 @@ class ILPStrategy : public BasePlacementStrategy {
                  std::map<std::string, double>& mileages);
 
     /**
-    * calculates the mileage property for a node
+    * @brief calculates the mileage property for a node
     * mileage: distance to the root node, takes into account the bandwidth of the links
     * @param node topology node for which mileage is calculated
     * @mileageMap map of mileages
@@ -103,20 +103,20 @@ class ILPStrategy : public BasePlacementStrategy {
     void computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileageMap);
 
     /**
-    * computes heuristics for distance
+    * @brief computes heuristics for distance
     * @param queryPlan
     * @return the map of mileage parameters
     */
     std::map<std::string, double> computeDistanceHeuristic(QueryPlanPtr queryPlan);
 
     /**
-     * assigns the output and cost properties to each operator
+     * @brief assigns the output and cost properties to each operator
      * @param queryPlan
      */
     void applyOperatorHeuristics(QueryPlanPtr queryPlan);
 
     /**
-    * called by applyOperatorHeuristics, (if not provided) estimates output and computing-cost of an
+    * @brief called by applyOperatorHeuristics, (if not provided) estimates output and computing-cost of an
     * @param operatorNode
     */
     void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode);

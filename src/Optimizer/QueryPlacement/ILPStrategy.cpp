@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include "../../../include/Optimizer/QueryPlacement/ILPStrategy.hpp"
 #include "z3++.h"
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
@@ -31,6 +30,7 @@
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
+#include <Optimizer/QueryPlacement/ILPStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -154,10 +154,6 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     return runTypeInferencePhase(queryPlan->getQueryId());
 }
 
-/**
- * @param sourceNode source operator or source topology node
- * @returns array containing all nodes on path from source to sink or parent topology node
- */
 std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode) {
     std::vector<NodePtr> path;
     path.push_back(sourceNode);
@@ -167,12 +163,6 @@ std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode) {
     return path;
 }
 
-/**
- * calculates the mileage property for a node
- * mileage: distance to the root node, takes into account the bandwidth of the links
- * @param node topology node for which mileage is calculated
- * @mileageMap map of mileages
- */
 void ILPStrategy::computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileageMap) {
     std::string topologyID = std::to_string(node->getId());
     auto& parents = node->getParents();
@@ -188,11 +178,6 @@ void ILPStrategy::computeDistanceRecursive(TopologyNodePtr node, std::map<std::s
     mileageMap[topologyID] = 1.0 / node->getLinkProperty(parent)->bandwidth + mileageMap[parentID];
 }
 
-/**
- * computes heuristics for distance
- * @param queryPlan
- * @return the map of mileage parameters
- */
 std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr queryPlan) {
     std::map<std::string, double> mileageMap;// (operatorid, M)
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
@@ -207,10 +192,6 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
     return mileageMap;
 }
 
-/**
-* called by applyOperatorHeuristics, (if not provided) estimates output and computing-cost of an
-* @param operatorNode
-*/
 void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode) {
     int cost = 1;
     double dmf = 1;
@@ -249,29 +230,12 @@ void ILPStrategy::assignOperatorPropertiesRecursive(LogicalOperatorNodePtr opera
     operatorNode->addProperty("cost", cost);
 }
 
-/**
- * assigns the output and cost properties to each operator in the
- * @param queryPlan
- */
 void ILPStrategy::applyOperatorHeuristics(QueryPlanPtr queryPlan) {
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 }
 
-/**
- * creates the placement variables and adds constraints to the optimizer
- * @param c Z3 context
- * @param opt
- * @param operatorPath
- * @param topologyPath
- * @param operatorNodes
- * @param topologyNodes
- * @param placementVariables
- * @param positions
- * @param utilizations
- * @param mileages
- */
 void ILPStrategy::addPath(context& c,
                           optimize& opt,
                           std::vector<NodePtr>& operatorPath,
@@ -283,13 +247,13 @@ void ILPStrategy::addPath(context& c,
                           std::map<std::string, expr>& utilizations,
                           std::map<std::string, double>& mileages) {
 
-    for (int i = 0; i < operatorPath.size(); i++) {
+    for (uint64_t i = 0; i < operatorPath.size(); i++) {
         OperatorNodePtr operatorNode = operatorPath[i]->as<OperatorNode>();
         std::string operatorID = std::to_string(operatorNode->getId());
 
         if (operatorNodes.find(operatorID) != operatorNodes.end()) {
             expr path_constraint = c.int_val(0);
-            for (int j = 0; j < topologyPath.size(); j++) {
+            for (uint64_t j = 0; j < topologyPath.size(); j++) {
                 TopologyNodePtr topologyNode = topologyPath[j]->as<TopologyNode>();
                 std::string topologyID = std::to_string(topologyNode->getId());
                 topologyNodes[topologyID] = topologyNode;
@@ -307,7 +271,7 @@ void ILPStrategy::addPath(context& c,
         operatorNodes[operatorID] = operatorNode;
         expr sum_i = c.int_val(0);
         expr D_i = c.int_val(0);
-        for (int j = 0; j < topologyPath.size(); j++) {
+        for (uint64_t j = 0; j < topologyPath.size(); j++) {
             TopologyNodePtr topologyNode = topologyPath[j]->as<TopologyNode>();
             std::string topologyID = std::to_string(topologyNode->getId());
             topologyNodes[topologyID] = topologyNode;
@@ -315,7 +279,7 @@ void ILPStrategy::addPath(context& c,
             // create placement variable and constraint to {0,1}
             std::string variableID = operatorID + "," + topologyID;
             expr P_IJ = c.int_const(variableID.c_str());
-            if (i == 0 && j == 0 || i == operatorPath.size() - 1 && j == topologyPath.size() - 1) {
+            if ((i == 0 && j == 0) || (i == operatorPath.size() - 1 && j == topologyPath.size() - 1)) {
                 opt.add(P_IJ == 1);// fix sources and sinks
             } else {
                 opt.add(P_IJ == 0 || P_IJ == 1);
@@ -344,9 +308,6 @@ void ILPStrategy::addPath(context& c,
     }
 }
 
-/**
- * assigns operators to topology nodes based on ILP solution
- */
 void ILPStrategy::placeOperators(QueryPlanPtr queryPlan, model& m, std::map<std::string, expr>& placementVariables) {
     auto topologyIterator = NES::DepthFirstNodeIterator(topology->getRoot()).begin();
     std::vector<std::vector<bool>> binaryMapping;
