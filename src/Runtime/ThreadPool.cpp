@@ -129,7 +129,7 @@ bool ThreadPool::start() {
                 NES_ASSERT(numaNodeIndex <= (int) bufferManagers.size(), "requested buffer manager idx is too large");
 
                 localBufferManager = bufferManagers[numaNodeIndex];
-                NES_DEBUG("Worker thread " << i << " will use numa node =" << numaNodeIndex);
+                NES_WARNING("Worker thread " << i << " will use numa node =" << numaNodeIndex);
 
             } else {
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
@@ -137,8 +137,8 @@ bool ThreadPool::start() {
                 NES_WARNING("Flag: NES_USE_ONE_QUEUE_PER_NUMA_NODE is used but no worker list is specified");
                 std::shared_ptr<Runtime::HardwareManager> hardwareManager = std::make_shared<Runtime::HardwareManager>();
                 auto numberOfNumaRegions = hardwareManager->getNumberOfNumaRegions();
-                if (numberOfNumaRegions != 1) {
-                    NES_ASSERT(false, "We have to specify a worker list that evenly distributes threads among cores");
+                if (numberOfNumaRegions != 1 && numThreads != 1) {
+                    NES_ASSERT(false, "We have to specify a worker list that evenly distributes threads among cores for more than one thread");
                 } else {
                     NES_WARNING("With only one NUMA node we do not distribute the threads among the cores");
                 }
