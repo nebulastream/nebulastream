@@ -209,12 +209,12 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
         int64_t start;
         int64_t end;
         int64_t key;
-        int64_t value1;
-        int64_t id1;
-        int64_t timestamp1;
-        int64_t value2;
-        int64_t id2;
-        int64_t timestamp2;
+        uint64_t value1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        uint64_t value2;
+        uint64_t id2;
+        uint64_t timestamp2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
@@ -290,12 +290,12 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
         int64_t start;
         int64_t end;
         int64_t key;
-        int64_t value1;
-        int64_t id1;
-        int64_t timestamp1;
-        int64_t value2;
-        int64_t id2;
-        int64_t timestamp2;
+        uint64_t value1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        uint64_t value2;
+        uint64_t id2;
+        uint64_t timestamp2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
@@ -372,12 +372,12 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
         int64_t start;
         int64_t end;
         int64_t key;
-        int64_t value1;
-        int64_t id1;
-        int64_t timestamp1;
-        int64_t value2;
-        int64_t id2;
-        int64_t timestamp2;
+        uint64_t value1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        uint64_t value2;
+        uint64_t id2;
+        uint64_t timestamp2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
@@ -453,10 +453,10 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
         int64_t end;
         int64_t key;
         int64_t win;
-        int64_t id1;
-        int64_t timestamp1;
-        int64_t id2;
-        int64_t timestamp2;
+        uint64_t id1;
+        uint64_t timestamp1;
+        uint64_t id2;
+        uint64_t timestamp2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
@@ -538,11 +538,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
         int64_t end;
         int64_t key;
         int64_t win1;
-        int64_t id1;
-        int64_t timestamp1;
+        uint64_t id1;
+        uint64_t timestamp1;
         int64_t win2;
-        int64_t id2;
-        int64_t timestamp2;
+        uint64_t id2;
+        uint64_t timestamp2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
@@ -621,11 +621,11 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
         int64_t end;
         int64_t key;
         int64_t win1;
-        int64_t id1;
-        int64_t timestamp1;
+        uint64_t id1;
+        uint64_t timestamp1;
         int64_t win2;
-        int64_t id2;
-        int64_t timestamp2;
+        uint64_t id2;
+        uint64_t timestamp2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
@@ -710,11 +710,11 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
         int64_t end;
         int64_t key;
         int64_t win1;
-        int64_t id1;
-        int64_t timestamp1;
+        uint64_t id1;
+        uint64_t timestamp1;
         int64_t win2;
-        int64_t id2;
-        int64_t timestamp2;
+        uint64_t id2;
+        uint64_t timestamp2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
@@ -797,11 +797,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
         int64_t end;
         int64_t key;
         int64_t win1;
-        int64_t id1;
-        int64_t timestamp1;
+        uint64_t id1;
+        uint64_t timestamp1;
         int64_t win2;
-        int64_t id2;
-        int64_t timestamp2;
+        uint64_t id2;
+        uint64_t timestamp2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
@@ -882,10 +882,10 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
         int64_t end;
         int64_t key;
         int64_t win;
-        int64_t id1;
-        int64_t timestamp1;
-        int64_t id2;
-        int64_t timestamp2;
+        uint64_t id1;
+        uint64_t timestamp1;
+        uint64_t id2;
+        uint64_t timestamp2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
