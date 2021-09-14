@@ -123,6 +123,7 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
     {
         ss << "region=" << val.first << " threadCnt=" << val.second << std::endl;
     }
+    std::cout << "numa placement=" << ss.str() << std::endl;
 
     NES_WARNING("with numa placement =" << ss.str());
 
