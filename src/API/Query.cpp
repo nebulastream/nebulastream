@@ -18,6 +18,7 @@
 #include <API/Query.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
@@ -181,6 +182,9 @@ Query& Query::joinWith(const Query& subQueryRhs,
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
+    if (checkIfFieldRenameExpressionExist(filterExpression)) {
+        NES_THROW_RUNTIME_ERROR("Query: Filter predicate cannot have a FieldRenameExpression");
+    }
     OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
@@ -188,6 +192,9 @@ Query& Query::filter(const ExpressionNodePtr& filterExpression) {
 
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     NES_DEBUG("Query: add map operator to query");
+    if (checkIfFieldRenameExpressionExist(mapExpression)) {
+        NES_THROW_RUNTIME_ERROR("Query: Map expression cannot have a FieldRenameExpression");
+    }
     OperatorNodePtr op = LogicalOperatorFactory::createMapOperator(mapExpression);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
@@ -209,4 +216,21 @@ Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& w
 
 QueryPlanPtr Query::getQueryPlan() { return queryPlan; }
 
+bool Query::checkIfFieldRenameExpressionExist(const NodePtr& start) {
+    bool isFieldRenameExpressionExist = false;
+    if (!start->getChildren().empty()) {
+        for (auto child : start->getChildren()) {
+            if (child->instanceOf<FieldRenameExpressionNode>()) {
+                isFieldRenameExpressionExist = true;
+            }
+
+            if (!isFieldRenameExpressionExist) {
+                isFieldRenameExpressionExist = checkIfFieldRenameExpressionExist(child);
+            } else {
+                break;
+            }
+        }
+    }
+    return isFieldRenameExpressionExist;
+}
 }// namespace NES

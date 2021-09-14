@@ -67,7 +67,6 @@ TEST_F(SyntacticQueryValidationTest, validAttributeRenameFromProjectOperator) {
     syntacticQueryValidation->checkValidity(queryString);
 }
 
-
 // Test a query with missing ; at line end
 TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
     NES_INFO("Missing semicolon test");
@@ -108,11 +107,57 @@ TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
 TEST_F(SyntacticQueryValidationTest, attributeRenameOutsideProjection) {
     NES_INFO("Invalid bool operator test");
 
+    // Field-rename in Map expression is not allowed
     std::string queryStringWithMap = R"(Query::from("default_logical").map(Attribute("id") =  Attribute("id").as("identity") + 2 ); )";
     TestForException(queryStringWithMap);
 
+    // Field-rename in Filter predicate is not allowed
     std::string queryStringWithFilter = R"(Query::from("default_logical").filter(Attribute("id").as("identity") > 10); )";
     TestForException(queryStringWithFilter);
+
+    // Field-rename in Window Type creation is not allowed
+    std::string queryStringWithTumblingWindow = R"(Query::from("default_logical").window(TumblingWindow::of(EventTime(Attribute("ts").as("timestamp")), Seconds(10))).byKey(Attribute("id")).apply(Sum(Attribute("value")));)";
+    TestForException(queryStringWithTumblingWindow);
+
+    // Field-rename in Window's byKey expression is not allowed
+    std::string queryStringWithWindowByKey = R"(Query::from("default_logical").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).byKey(Attribute("id").as("identity")).apply(Sum(Attribute("value")));)";
+    TestForException(queryStringWithWindowByKey);
+
+    // Field-rename in Sum expression is not allowed
+    std::string queryStringWithSum = R"(Query::from("default_logical").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).byKey(Attribute("id")).apply(Sum(Attribute("value").as("val")));)";
+    TestForException(queryStringWithSum);
+
+    // Field-rename in Avg expression is not allowed
+    std::string queryStringWithAvg = R"(Query::from("default_logical").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).byKey(Attribute("id")).apply(Avg(Attribute("value").as("val")));)";
+    TestForException(queryStringWithAvg);
+
+    // Field-rename in Count expression is not allowed
+    std::string queryStringWithCount = R"(Query::from("default_logical").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).byKey(Attribute("id")).apply(Count(Attribute("value").as("val")));)";
+    TestForException(queryStringWithCount);
+
+    // Field-rename in Min expression is not allowed
+    std::string queryStringWithMin = R"(Query::from("default_logical").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).byKey(Attribute("id")).apply(Min(Attribute("value").as("val")));)";
+    TestForException(queryStringWithMin);
+
+    // Field-rename in Max expression is not allowed
+    std::string queryStringWithMax = R"(Query::from("default_logical").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).byKey(Attribute("id")).apply(Max(Attribute("value").as("val")));)";
+    TestForException(queryStringWithMax);
+
+    // Field-rename in Median expression is not allowed
+    std::string queryStringWithMedian = R"(Query::from("default_logical").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).byKey(Attribute("id")).apply(Median(Attribute("value").as("val")));)";
+    TestForException(queryStringWithMedian);
+
+    // Field-rename in EventTimeWatermarkStrategyDescriptor is not allowed
+    std::string queryStringWithWatermarkAssigner = R"(Query::from("default_logical").assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute("timestamp").as("ts"),Milliseconds(50), ""Milliseconds()));)";
+    TestForException(queryStringWithWatermarkAssigner);
+
+    // Field-rename in Join's Where expression is not allowed
+    std::string queryStringWithJoinWhere = R"(Query::from("default_logical").joinWith(subQuery).where(Attribute("id").as("identity")).equalsTo(Attribute("id")).window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10))).sink(printSinkDescriptor);)";
+    TestForException(queryStringWithJoinWhere);
+
+    // Field-rename in Join's EqualsTo expression is not allowed
+    std::string queryStringWithJoinEqualsTo = R"(Query::from("default_logical").joinWith(subQuery).where(Attribute("id")).equalsTo(Attribute("id").as("identity")).window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10))).sink(printSinkDescriptor);)";
+    TestForException(queryStringWithJoinEqualsTo);
 }
 
 }// namespace NES

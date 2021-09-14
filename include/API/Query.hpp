@@ -279,6 +279,13 @@ class Query {
     Query& windowByKey(ExpressionItem onKey,
                        Windowing::WindowTypePtr const& windowType,
                        Windowing::WindowAggregationPtr const& aggregation);
+
+    /**
+     * @brief Traverse through the expression and check if FieldRenameExpression exists
+     * @param start starting expression node
+     * @return true if a FieldRenameExpression exists
+     */
+    bool checkIfFieldRenameExpressionExist(const NodePtr &start);
 };
 
 using QueryPtr = std::shared_ptr<Query>;
