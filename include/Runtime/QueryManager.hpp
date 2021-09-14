@@ -290,7 +290,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::vector<folly::MPMCQueue<Task>> taskQueues;
     std::shared_ptr<Runtime::HardwareManager> hardwareManager;
     std::map<size_t, size_t> numaRegionToThreadMap;
-    size_t numberOfQueues = 0;
+    size_t numberOfQueues = 1;
 #else
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;
