@@ -101,10 +101,47 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
 #endif
 {
     NES_DEBUG("Init QueryManager::QueryManager");
-#if NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+    //we have to create the make the mapping of cores to numa regions
     hardwareManager = std::make_shared<Runtime::HardwareManager>();
-    auto numaRegions = hardwareManager->getNumberOfNumaRegions();
-    for (uint64_t i = 0; i < numaRegions; i++) {
+    for(auto& val : workerToCoreMapping)
+    {
+        auto tmpNumaNode = hardwareManager->getNumaNodeForCore(val);
+        numaRegionToThreadMap[tmpNumaNode] +=1;
+    }
+
+    //make sure that all numa nodes have the same number of threads (for simplicity)
+    size_t prevValue = 999;
+    for(auto region : numaRegionToThreadMap)
+    {
+        if(prevValue == 999)
+        {
+            prevValue = region.second;
+        }
+        else
+        {
+            NES_ASSERT(region.second == prevValue, "the worker map contains different number of threads per node");
+        }
+    }
+
+    //make sure that we only have consecutive numa regions in use
+    size_t prevKey = 999;
+    for(auto region : numaRegionToThreadMap)
+    {
+        if(prevKey == 999)
+        {
+            prevKey = region.first;
+        }
+        else
+        {
+            NES_ASSERT(region.first == prevKey + 1, "the worker map contains non consecutive numa regions");
+            prevKey = region.first;
+        }
+    }
+    numberOfQueues = numaRegionToThreadMap.size();
+    NES_WARNING("Number of queues used for running is =" << numberOfQueues);
+
+    for (uint64_t i = 0; i < numberOfQueues; i++) {
         taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
     }
 #endif
@@ -157,7 +194,7 @@ void QueryManager::destroy() {
                                                                     << " task queue size=" << taskQueue.size());
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
             std::scoped_lock locks(queryMutex, statisticsMutex);
-            for (uint32_t i = 0; i < hardwareManager->getNumberOfNumaRegions(); i++) {
+            for (uint32_t i = 0; i < numberOfQueues; i++) {
                 NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size() << " id=" << i
                                                                         << " task queue size=" << taskQueues[i].size());
             }
@@ -405,9 +442,10 @@ void QueryManager::poisonWorkers() {
     }
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     //TODO:assumption same number of threads per numa region
-    auto numberOfNumaRegions = hardwareManager->getNumberOfNumaRegions();
+    auto numberOfNumaRegions = numberOfQueues;
     for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
         for (auto i{0ul}; i < threadPool->getNumberOfThreads() / numberOfNumaRegions; ++i) {
+            NES_DEBUG("Add poision for queue no=" << u);
             taskQueues[u].write(Task(pipeline, buffer));
         }
     }
@@ -455,7 +493,7 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool 
     }
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
     std::scoped_lock locks(queryMutex, statisticsMutex);
-    for (uint32_t i = 0; i < hardwareManager->getNumberOfNumaRegions(); i++) {
+    for (uint32_t i = 0; i < numberOfQueues; i++) {
         NES_DEBUG("QueryManager: stopQuery queue sizeses are "
                   << " id=" << i << " task queue size=" << taskQueues[i].size());
     }
@@ -496,7 +534,7 @@ uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
     return qSize > 0 ? qSize : 0;
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     auto sum = 0;
-    for (uint32_t i = 0; i < hardwareManager->getNumberOfNumaRegions(); i++) {
+    for (uint32_t i = 0; i < numberOfQueues; i++) {
         auto qSize = taskQueues[i].size();
         if (qSize > 0) {
             sum += qSize;
@@ -571,7 +609,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
     }
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     //TODO: add one mutex per queue
-    auto numberOfNumaRegions = hardwareManager->getNumberOfNumaRegions();
+    auto numberOfNumaRegions = numberOfQueues;
     for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
         for (auto i{0ul}; i < threadPool->getNumberOfThreads() / numberOfNumaRegions; ++i) {
             taskQueues[u].write(Task(pipeline, buffer));
@@ -640,7 +678,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
             taskQueue.write(Task(pipeline, buffer));
         }
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
-        auto numberOfNumaRegions = hardwareManager->getNumberOfNumaRegions();
+        auto numberOfNumaRegions = numberOfQueues;
         for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
             for (auto i{0ul}; i < threadPool->getNumberOfThreads() / numberOfNumaRegions; ++i) {
                 taskQueues[u].write(Task(pipeline, buffer));
@@ -954,7 +992,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
         qSize = taskQueue.size();
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
-        for (uint32_t i = 0; i < hardwareManager->getNumberOfNumaRegions(); i++) {
+        for (uint32_t i = 0; i < numberOfQueues; i++) {
             auto tempSize = taskQueues[i].size();
             if (tempSize > 0) {
                 qSize += tempSize;
@@ -1062,3 +1100,5 @@ uint64_t QueryManager::getNodeId() const { return nodeEngineId; }
 bool QueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
 
 }// namespace NES::Runtime
+
+#pragma clang diagnostic pop

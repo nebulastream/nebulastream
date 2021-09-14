@@ -289,6 +289,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 #elif NES_USE_ONE_QUEUE_PER_NUMA_NODE
     std::vector<folly::MPMCQueue<Task>> taskQueues;
     std::shared_ptr<Runtime::HardwareManager> hardwareManager;
+    std::map<size_t, size_t> numaRegionToThreadMap;
+    size_t numberOfQueues = 0;
 #else
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;
