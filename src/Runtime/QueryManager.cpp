@@ -109,6 +109,14 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
         numaRegionToThreadMap[tmpNumaNode] += 1;
     }
 
+    std::stringstream ss;
+    for(auto& val : numaRegionToThreadMap)
+    {
+        ss << "region=" << val.first << " threadCnt=" << val.second << std::endl;
+    }
+
+    NES_WARNING("with numa placement =" << ss.str());
+
     //make sure that all numa nodes have the same number of threads (for simplicity)
     size_t prevValue = 999;
     for (auto region : numaRegionToThreadMap) {
@@ -134,13 +142,7 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
     }
 
     NES_WARNING("Number of queues used for running is =" << numberOfQueues);
-    std::stringstream ss;
-    for(auto& val : numaRegionToThreadMap)
-    {
-        ss << "region=" << val.first << " threadCnt=" << val.second << std::endl;
-    }
 
-    NES_WARNING("with numa placement =" << ss.str());
 
     for (uint64_t i = 0; i < numberOfQueues; i++) {
         taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
