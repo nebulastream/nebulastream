@@ -18,8 +18,6 @@
 #define NES_OPTIMIZE_SYNTACTIC_QUERY_VALIDATION_HPP
 
 #include <memory>
-#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 
 namespace NES {
 

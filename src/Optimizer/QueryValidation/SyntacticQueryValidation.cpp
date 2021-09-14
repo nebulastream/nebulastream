@@ -14,17 +14,9 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
 
 namespace NES::Optimizer {
 

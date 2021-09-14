@@ -103,7 +103,7 @@ TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
     TestForException(queryString);
 }
 
-// Test a query that calls "Attribute().as()" outside a Projection operator
+// Test queries that calls "Attribute().as()" outside a Projection operator
 TEST_F(SyntacticQueryValidationTest, attributeRenameOutsideProjection) {
     NES_INFO("Invalid bool operator test");
 
