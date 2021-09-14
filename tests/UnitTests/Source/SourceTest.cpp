@@ -39,6 +39,7 @@
 #include <Components/NesWorker.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -747,13 +748,14 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([=]() {
         mDataSource->running = false;
         return;
     }));
     mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    ASSERT_TRUE(this->nodeEngine->undeployQuery(this->queryId));
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
