@@ -231,9 +231,6 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) { delete buffer; }
 
   private:
-    // DISABLED since they pass only with AllowLeak
-    // TODO: create issue for fix without using AllowLeak
-    // Issue on https://github.com/nebulastream/nebulastream/issues/2035
     FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
@@ -748,7 +745,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([=]() {
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
         mDataSource->running = false;
         return;
     }));
