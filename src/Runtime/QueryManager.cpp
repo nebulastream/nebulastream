@@ -104,9 +104,18 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
     //we have to create the make the mapping of cores to numa regions
     hardwareManager = std::make_shared<Runtime::HardwareManager>();
+    auto usedThreadsForMapping = 0;
     for (auto& val : workerToCoreMapping) {
-        auto tmpNumaNode = hardwareManager->getNumaNodeForCore(val);
-        numaRegionToThreadMap[tmpNumaNode] += 1;
+        if(usedThreadsForMapping < numThreads)
+        {
+            auto tmpNumaNode = hardwareManager->getNumaNodeForCore(val);
+            numaRegionToThreadMap[tmpNumaNode] += 1;
+            usedThreadsForMapping++;
+        }
+        else
+        {
+            break;
+        }
     }
 
     std::stringstream ss;
