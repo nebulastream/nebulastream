@@ -225,29 +225,29 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
-    ASSERT_EQ(executionNodes.size(), 3u);
-    for (auto executionNode : executionNodes) {
+    ASSERT_EQ(executionNodes.size(), 3U);
+    for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1) {
             // place filter on source node
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0u];
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
+            ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
             EXPECT_TRUE(actualRootOperator->getChildWithOperatorId(1)->instanceOf<SourceLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildWithOperatorId(2)->instanceOf<FilterLogicalOperatorNode>());
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1u);
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
         } else if (executionNode->getId() == 3){
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0u];
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
+            ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), 3);
+            ASSERT_EQ(actualRootOperator->getId(), 3U);
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
         }
     }
@@ -288,24 +288,24 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
-    ASSERT_EQ(executionNodes.size(), 3u);
-    for (auto executionNode : executionNodes) {
+    ASSERT_EQ(executionNodes.size(), 3U);
+    for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1) {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0u];
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
+            ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1);
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
         } else if (executionNode->getId() == 3){
             // both map operators should be placed on cloud node
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
+            ASSERT_EQ(querySubPlans.size(), 1U);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
+            ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
@@ -345,37 +345,37 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
-    ASSERT_EQ(executionNodes.size(), 3);
-    for (auto executionNode : executionNodes) {
+    ASSERT_EQ(executionNodes.size(), 3U);
+    for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1) {
             // filter should be placed on source node
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0u];
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
+            ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1u);
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
         } else if (executionNode->getId() == 3){
             // map should be placed on cloud node
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0u];
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
+            ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
             //ASSERT_EQ(actualRootOperator->getId(), 4);
             ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1);
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
         }
     }
 }
 
-// TODO 1979: Move this to benchmark
+// TODO 1979: Move this to benchmark?
 class ILPPlacementBenchmark : public testing::Test {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
