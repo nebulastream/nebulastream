@@ -22,7 +22,6 @@
 #include <Network/PartitionManager.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <atomic>
-#include <boost/core/noncopyable.hpp>
 #include <future>
 #include <memory>
 #include <thread>
@@ -32,7 +31,12 @@ namespace NES {
 class ThreadBarrier;
 namespace Network {
 
-class ZmqServer : public boost::noncopyable {
+/**
+ * @brief ZMQ server on hostname:port with numNetworkThreads i/o threads and a set of callbacks in
+ * exchangeProtocol.
+ * This class is not copyable.
+ */
+class ZmqServer {
   private:
     static constexpr const char* dispatcherPipe = "inproc://dispatcher";
 
@@ -76,6 +80,17 @@ class ZmqServer : public boost::noncopyable {
     [[nodiscard]] bool isServerRunning() const { return isRunning; }
 
   private:
+
+    /**
+    * @brief Remove copy constructor to make this class not copyable
+    */
+    ZmqServer(const ZmqServer&) = delete;
+
+    /**
+    * @brief Remove assignment to make this class not copyable
+    */
+    ZmqServer& operator=(const ZmqServer&) = delete;
+
     /**
      * @brief the receiving thread where clients send their messages to the server, here messages are forwarded to the
      * handlerEventLoop by the proxy
