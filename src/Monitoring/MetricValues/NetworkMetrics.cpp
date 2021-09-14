@@ -62,7 +62,7 @@ NetworkMetrics NetworkMetrics::fromBuffer(const SchemaPtr& schema, Runtime::Tupl
     auto output = NetworkMetrics();
     auto i = schema->getIndex(prefix + "INTERFACE_NO");
     auto fieldName = schema->fields[i]->getName();
-    bool hasField = UtilityFunctions::endsWith(fieldName, prefix + "INTERFACE_NO");
+    bool hasField = Util::endsWith(fieldName, prefix + "INTERFACE_NO");
 
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && hasField) {
         NES_DEBUG("NetworkMetrics: Prefix found in schema " + prefix + "INTERFACE_NO with index " + std::to_string(i));
@@ -116,7 +116,7 @@ SchemaPtr getSchema(const NetworkMetrics& metrics, const std::string& prefix) {
 
     for (uint64_t i = 0; i < metrics.getInterfaceNum(); i++) {
         auto interfacePrefix = prefix + "Intfs[" + std::to_string(i + 1) + "]_"
-            + UtilityFunctions::trim(std::to_string(metrics.getNetworkValue(i).interfaceName)) + "_";
+            + Util::trim(std::to_string(metrics.getNetworkValue(i).interfaceName)) + "_";
 
         schema->copyFields(NetworkValues::getSchema(interfacePrefix));
     }

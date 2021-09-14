@@ -57,19 +57,60 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-class UtilityFunctions {
-  public:
+namespace Util {
+    namespace detail {
+    /**
+    * @brief set of helper functions for splitting for different types
+    * @return splitting function for a given type
+    */
+    template <typename T>
+    struct SplitFunctionHelper {
+    };
+
+    template <>
+    struct SplitFunctionHelper <std::string> {
+        static constexpr auto FUNCTION = [](std::string x) { return x; };
+    };
+
+    template <>
+    struct SplitFunctionHelper <uint64_t> {
+        static constexpr auto FUNCTION = [](std::string&& x) { return uint64_t(std::atoll(x.c_str())); };
+    };
+
+    template <>
+    struct SplitFunctionHelper <uint32_t> {
+        static constexpr auto FUNCTION = [](std::string&& x) { return uint32_t(std::atoi(x.c_str())); };
+    };
+
+    template <>
+    struct SplitFunctionHelper <int> {
+        static constexpr auto FUNCTION = [](std::string&& x) { return std::atoi(x.c_str()); };
+    };
+
+    template <>
+    struct SplitFunctionHelper <double> {
+        static constexpr auto FUNCTION = [](std::string&& x) { return std::atof(x.c_str()); };
+    };
+
+    /**
+     * @brief This method is responsible for returning the location where the sub query terminates
+     * @param startOfUnionWith : the location where unionWith starts
+     * @param queryCodeSnippet: the whole string code snippet
+     * @return location where sub query terminates
+     */
+    uint64_t findSubQueryTermination(uint64_t startOfUnionWith, const std::string& queryCodeSnippet);
+    }
     /**
      * @brief escapes all non text characters in a input string, such that the string could be processed as json.
      * @param s input string.
      * @return result sing.
      */
-    static std::string escapeJson(const std::string& s);
+    std::string escapeJson(const std::string& s);
 
     /**
      * @brief removes leading and trailing whitespaces
      */
-    static std::string trim(std::string s);
+    std::string trim(std::string s);
 
     /**
      * @brief Checks if a string ends with a given string.
@@ -77,7 +118,7 @@ class UtilityFunctions {
      * @param ending
      * @return true if it ends with the given string, else false
      */
-    static bool endsWith(const std::string& fullString, const std::string& ending);
+    bool endsWith(const std::string& fullString, const std::string& ending);
 
     /**
      * @brief Checks if a string starts with a given string.
@@ -85,7 +126,7 @@ class UtilityFunctions {
      * @param start
      * @return true if it ends with the given string, else false
      */
-    static bool startsWith(const std::string& fullString, const std::string& ending);
+    bool startsWith(const std::string& fullString, const std::string& ending);
 
     /**
    * @brief this function creates an ID string
@@ -93,13 +134,13 @@ class UtilityFunctions {
    * https://stackoverflow.com/questions/24365331/how-can-i-generate-uuid-in-c-without-using-boost-library
    * example id: 665b3caf-f097-568e-2b2f-220b6c0a9bcd
    */
-    static std::string generateIdString();
+    std::string generateIdString();
 
     /**
    * @brief this function creates a hased ID as int
    * @return the ID as site_t
    */
-    static std::uint64_t generateIdInt();
+    std::uint64_t generateIdInt();
 
     /**
    * @brief get the first substring between a unique first delimiter and a non-unique second delimiter
@@ -108,51 +149,9 @@ class UtilityFunctions {
    * @param delimiter2
    * @return the substring
    */
-    static std::string getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& s1, const std::string& s2);
+    std::string getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& s1, const std::string& s2);
 
-    /**
-    * @brief set of helper functions for splitting for different types
-    * @return splitting function for a given type
-    */
-    template<typename T>
-    struct SplitFunctionHelper {};
-
-    template<>
-    struct SplitFunctionHelper<std::string> {
-        static constexpr auto FUNCTION = [](std::string x) {
-            return x;
-        };
-    };
-
-    template<>
-    struct SplitFunctionHelper<uint64_t> {
-        static constexpr auto FUNCTION = [](std::string&& x) {
-            return uint64_t(std::atoll(x.c_str()));
-        };
-    };
-
-    template<>
-    struct SplitFunctionHelper<uint32_t> {
-        static constexpr auto FUNCTION = [](std::string&& x) {
-            return uint32_t(std::atoi(x.c_str()));
-        };
-    };
-
-    template<>
-    struct SplitFunctionHelper<int> {
-        static constexpr auto FUNCTION = [](std::string&& x) {
-            return std::atoi(x.c_str());
-        };
-    };
-
-    template<>
-    struct SplitFunctionHelper<double> {
-        static constexpr auto FUNCTION = [](std::string&& x) {
-            return std::atof(x.c_str());
-        };
-    };
-
-    /**
+        /**
     * @brief splits a string given a delimiter into multiple substrings stored in a T vector
     * the delimiter is allowed to be a string rather than a char only.
     * @param data - the string that is to be split
@@ -161,10 +160,7 @@ class UtilityFunctions {
     * @return
     */
     template<typename T>
-    static std::vector<T>
-    splitWithStringDelimiter(const std::string& inputString,
-                             const std::string& delim,
-                             std::function<T(std::string)> fromStringToT = SplitFunctionHelper<T>::FUNCTION) {
+    std::vector<T> splitWithStringDelimiter(const std::string& inputString, const std::string& delim, std::function<T(std::string)> fromStringToT = detail::SplitFunctionHelper<T>::FUNCTION) {
         std::string copy = inputString;
         size_t pos = 0;
         std::vector<T> elems;
@@ -179,6 +175,7 @@ class UtilityFunctions {
         return elems;
     }
 
+
     /**
    * @brief Outputs a tuple buffer accordingly to a specific schema
    * @param buffer the tuple buffer
@@ -186,33 +183,33 @@ class UtilityFunctions {
    * @return
    */
 
-    static std::string prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema);
+    std::string prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema);
 
     /**
    * @brief Outputs a tuple buffer in text format
    * @param buffer the tuple buffer
    * @return string of tuple buffer
    */
-    static std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
+    std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
 
     /**
     * @brief this method creates a string from the content of a tuple buffer
     * @return string of the buffer content
     */
-    static std::string printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffer, const SchemaPtr& schema);
+    std::string printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffer, const SchemaPtr& schema);
 
     /**
     * @brief this method creates a string from the content of a tuple buffer
     * @return string of the buffer content
     */
-    static std::string castStringToBasicTypeAndWriteToBuffer(BasicPhysicalType::NativeType type, Runtime::TupleBuffer& tbuffer);
+    std::string castStringToBasicTypeAndWriteToBuffer(BasicPhysicalType::NativeType type, Runtime::TupleBuffer& tbuffer);
 
     /**
       * @brief function to obtain JSON representation of a NES Topology
       * @param root of the Topology
       * @return JSON representation of the Topology
       */
-    static web::json::value getTopologyAsJson(TopologyNodePtr root);
+    web::json::value getTopologyAsJson(TopologyNodePtr root);
 
     /**
      * @brief function to replace all string occurrences
@@ -220,44 +217,44 @@ class UtilityFunctions {
      * @param toSearch search string
      * @param replaceStr replace string
      */
-    static void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
+    void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
 
     /**
      * @brief method to get the schema as a csv string
      * @param schema
      * @return schema as csv string
      */
-    static std::string toCSVString(const SchemaPtr& schema);
+    std::string toCSVString(const SchemaPtr& schema);
 
     /**
      * @brief Returns the next free operator id
      * @return operator id
      */
-    static OperatorId getNextOperatorId();
+    OperatorId getNextOperatorId();
 
     /**
    * @brief Returns the next free pipeline id
    * @return node id
    */
-    static uint64_t getNextPipelineId();
+    uint64_t getNextPipelineId();
 
     /**
      * @brief Returns the next free node id
      * @return node id
      */
-    static uint64_t getNextTopologyNodeId();
+    uint64_t getNextTopologyNodeId();
 
     /**
      * @brief Returns the next free node id
      * @return node id
      */
-    static uint64_t getNextNodeEngineId();
+    uint64_t getNextNodeEngineId();
 
     /**
      * @brief Returns the next free task id
      * @return node id
      */
-    static uint64_t getNextTaskId();
+    uint64_t getNextTaskId();
 
     /**
      *
@@ -267,7 +264,7 @@ class UtilityFunctions {
      * @param replace - The string that is replacing the search term.
      * @return
      */
-    static std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace);
+    std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace);
 
     /**
      *
@@ -275,18 +272,11 @@ class UtilityFunctions {
      * @param properties properties to assign
      * @return true if the assignment success, and false otherwise
      */
-    static bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
+    bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                                  std::vector<std::map<std::string, std::any>> properties);
 
-  private:
-    /**
-     * @brief This method is responsible for returning the location where the sub query terminates
-     * @param startOfUnionWith : the location where unionWith starts
-     * @param queryCodeSnippet: the whole string code snippet
-     * @return location where sub query terminates
-     */
-    static uint64_t findSubQueryTermination(uint64_t startOfUnionWith, const std::string& queryCodeSnippet);
-};
+
+    };
 }// namespace NES
 
 #endif /* UTILITY_FUNCTIONS_HPP */

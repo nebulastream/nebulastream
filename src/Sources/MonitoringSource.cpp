@@ -67,7 +67,7 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
     generatedTuples++;
     generatedBuffers++;
 
-    NES_DEBUG("MonitoringSource::Buffer content: " << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
+    NES_DEBUG("MonitoringSource::Buffer content: " << Util::prettyPrintTupleBuffer(buf, schema));
 
     return buf;
 }

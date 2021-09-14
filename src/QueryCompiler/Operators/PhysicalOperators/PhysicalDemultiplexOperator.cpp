@@ -21,7 +21,7 @@ PhysicalOperatorPtr PhysicalDemultiplexOperator::create(OperatorId id, const Sch
     return std::make_shared<PhysicalDemultiplexOperator>(id, inputSchema);
 }
 PhysicalOperatorPtr PhysicalDemultiplexOperator::create(SchemaPtr inputSchema) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema));
+    return create(Util::getNextOperatorId(), std::move(inputSchema));
 }
 
 PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, const SchemaPtr& inputSchema)

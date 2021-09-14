@@ -25,7 +25,7 @@ GeneratableBufferScan::GeneratableBufferScan(OperatorId id, const SchemaPtr& inp
     : OperatorNode(id), GeneratableOperator(id, inputSchema, inputSchema) {}
 
 GeneratableOperatorPtr GeneratableBufferScan::create(SchemaPtr inputSchema) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema));
+    return create(Util::getNextOperatorId(), std::move(inputSchema));
 }
 
 GeneratableOperatorPtr GeneratableBufferScan::create(OperatorId id, SchemaPtr inputSchema) {

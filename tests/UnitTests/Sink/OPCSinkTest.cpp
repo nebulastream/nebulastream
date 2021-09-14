@@ -184,7 +184,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
 
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: "
-              << UtilityFunctions::prettyPrintTupleBuffer(write_buffer, test_schema));
+              << Util::prettyPrintTupleBuffer(write_buffer, test_schema));
     opcSink->writeData(write_buffer, wctx);
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
     write_buffer.release();

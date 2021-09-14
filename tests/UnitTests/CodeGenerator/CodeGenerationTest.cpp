@@ -562,7 +562,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     stage->start(*context);
     ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), ExecutionResult::Ok);
     auto outputBuffer = context->buffers[0];
-    NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
+    NES_INFO(Util::prettyPrintTupleBuffer(outputBuffer, recordSchema));
 
     /* check result for correctness */
     auto bindedOutputRowLayout = layout->bind(outputBuffer);

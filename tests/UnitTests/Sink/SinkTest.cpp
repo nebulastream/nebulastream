@@ -95,11 +95,11 @@ TEST_F(SinkTest, testCSVFileSink) {
         }
     }
     buffer.setNumberOfTuples(4);
-    cout << "bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+    cout << "bufferContent before write=" << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
     write_result = csvSink->writeData(buffer, wctx);
 
     EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
     cout << "Buffer Content= " << bufferContent << endl;
 
     ifstream testFile(path_to_csv_file.c_str());
@@ -110,7 +110,7 @@ TEST_F(SinkTest, testCSVFileSink) {
     cout << "File Content=" << fileContent << endl;
     //search for each value
     string contentWOHeader = fileContent.erase(0, fileContent.find('\n') + 1);
-    UtilityFunctions::findAndReplaceAll(contentWOHeader, "\n", ",");
+    Util::findAndReplaceAll(contentWOHeader, "\n", ",");
     cout << "File Content shrinked=" << contentWOHeader << endl;
 
     stringstream ss(contentWOHeader);
@@ -142,7 +142,7 @@ TEST_F(SinkTest, testTextFileSink) {
     buffer.setNumberOfTuples(25);
     write_result = binSink->writeData(buffer, wctx);
     EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
     cout << "Buffer Content= " << bufferContent << endl;
 
     ifstream testFile(path_to_csv_file.c_str());
@@ -170,7 +170,7 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     write_result = binSink->writeData(buffer, wctx);
 
     EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
     cout << "Buffer Content= " << bufferContent << endl;
 
     //deserialize schema
@@ -197,13 +197,13 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
         FAIL();
     }
 
-    cout << "expected=" << endl << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-    cout << "result=" << endl << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema) << endl;
+    cout << "expected=" << endl << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+    cout << "result=" << endl << Util::prettyPrintTupleBuffer(deszBuffer, test_schema) << endl;
 
     cout << "File path = " << path_to_bin_file
-         << " Content=" << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema);
-    EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema),
-              UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+         << " Content=" << Util::prettyPrintTupleBuffer(deszBuffer, test_schema);
+    EXPECT_EQ(Util::prettyPrintTupleBuffer(deszBuffer, test_schema),
+              Util::prettyPrintTupleBuffer(buffer, test_schema));
     buffer.release();
 }
 
@@ -223,11 +223,11 @@ TEST_F(SinkTest, testCSVPrintSink) {
         }
     }
     buffer.setNumberOfTuples(4);
-    cout << "bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+    cout << "bufferContent before write=" << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
     write_result = csvSink->writeData(buffer, wctx);
 
     EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
     cout << "Buffer Content= " << bufferContent << endl;
 
     ifstream testFile(path_to_osfile_file.c_str());
@@ -238,7 +238,7 @@ TEST_F(SinkTest, testCSVPrintSink) {
     cout << "File Content=" << fileContent << endl;
     //search for each value
     string contentWOHeader = fileContent.erase(0, fileContent.find('\n') + 1);
-    UtilityFunctions::findAndReplaceAll(contentWOHeader, "\n", ",");
+    Util::findAndReplaceAll(contentWOHeader, "\n", ",");
     cout << "File Content shrinked=" << contentWOHeader << endl;
 
     stringstream ss(contentWOHeader);
@@ -272,11 +272,11 @@ TEST_F(SinkTest, testNullOutSink) {
         }
     }
     buffer.setNumberOfTuples(4);
-    cout << "bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+    cout << "bufferContent before write=" << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
     write_result = nullSink->writeData(buffer, wctx);
 
     EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
     cout << "Buffer Content= " << bufferContent << endl;
 }
 
@@ -300,7 +300,7 @@ TEST_F(SinkTest, testTextPrintSink) {
     buffer.setNumberOfTuples(25);
     write_result = binSink->writeData(buffer, wctx);
     EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
     cout << "Buffer Content= " << bufferContent << endl;
 
     ifstream testFile(path_to_osfile_file.c_str());
@@ -328,7 +328,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
         }
     }
     buffer.setNumberOfTuples(4);
-    cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    cout << "buffer before send=" << Util::prettyPrintTupleBuffer(buffer, test_schema);
 
     // Create ZeroMQ Data Source.
     auto zmq_source = createZmqSource(test_schema,
@@ -351,13 +351,13 @@ TEST_F(SinkTest, testCSVZMQSink) {
         std::string schemaStr;
         schemaStr.assign(bufSchema.getBuffer<char>(), bufSchema.getNumberOfTuples());
         cout << "Schema=" << schemaStr << endl;
-        EXPECT_EQ(UtilityFunctions::toCSVString(test_schema), schemaStr);
+        EXPECT_EQ(Util::toCSVString(test_schema), schemaStr);
 
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
         cout << "Buffer=" << bufData.getBuffer<char>() << endl;
 
-        std::string bufferContent = UtilityFunctions::printTupleBufferAsCSV(buffer, test_schema);
+        std::string bufferContent = Util::printTupleBufferAsCSV(buffer, test_schema);
         std::string dataStr;
         dataStr.assign(bufData.getBuffer<char>(), bufData.getNumberOfTuples());
         cout << "Buffer Content received= " << bufferContent << endl;
@@ -384,7 +384,7 @@ TEST_F(SinkTest, testTextZMQSink) {
         }
     }
     buffer.setNumberOfTuples(4);
-    cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    cout << "buffer before send=" << Util::prettyPrintTupleBuffer(buffer, test_schema);
 
     // Create ZeroMQ Data Source.
     auto zmq_source = createZmqSource(test_schema,
@@ -404,9 +404,9 @@ TEST_F(SinkTest, testTextZMQSink) {
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
 
-        std::string bufferContent = UtilityFunctions::printTupleBufferAsText(bufData);
+        std::string bufferContent = Util::printTupleBufferAsText(bufData);
         cout << "Buffer Content received= " << bufferContent << endl;
-        EXPECT_EQ(bufferContent, UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+        EXPECT_EQ(bufferContent, Util::prettyPrintTupleBuffer(buffer, test_schema));
         receiving_finished = true;
     });
 
@@ -428,7 +428,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
         }
     }
     buffer.setNumberOfTuples(4);
-    cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    cout << "buffer before send=" << Util::prettyPrintTupleBuffer(buffer, test_schema);
 
     // Create ZeroMQ Data Source.
     auto zmq_source = createZmqSource(test_schema,
@@ -454,11 +454,11 @@ TEST_F(SinkTest, testBinaryZMQSink) {
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
         cout << "rec buffer tups=" << bufData.getNumberOfTuples()
-             << " content=" << UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema) << endl;
+             << " content=" << Util::prettyPrintTupleBuffer(bufData, test_schema) << endl;
         cout << "ref buffer tups=" << buffer.getNumberOfTuples()
-             << " content=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-        EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema),
-                  UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+             << " content=" << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+        EXPECT_EQ(Util::prettyPrintTupleBuffer(bufData, test_schema),
+                  Util::prettyPrintTupleBuffer(buffer, test_schema));
     });
 
     // Wait until receiving is complete.

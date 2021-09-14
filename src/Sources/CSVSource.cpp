@@ -166,7 +166,7 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buffer) {
     generatedTuples += tupleCount;
     generatedBuffers++;
     NES_TRACE("CSVSource::fillBuffer: reading finished read " << tupleCount << " tuples at posInFile=" << currentPositionInFile);
-    NES_TRACE("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buffer, schema));
+    NES_TRACE("CSVSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer, schema));
 }
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }

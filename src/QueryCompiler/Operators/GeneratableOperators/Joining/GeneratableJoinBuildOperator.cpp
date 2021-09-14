@@ -35,7 +35,7 @@ GeneratableOperatorPtr GeneratableJoinBuildOperator::create(SchemaPtr inputSchem
                                                             SchemaPtr outputSchema,
                                                             Join::JoinOperatorHandlerPtr operatorHandler,
                                                             JoinBuildSide buildSide) {
-    return create(UtilityFunctions::getNextOperatorId(),
+    return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(operatorHandler),

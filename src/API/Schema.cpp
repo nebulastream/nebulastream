@@ -199,7 +199,7 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
     int i = 0;
     bool found = false;
     for (const auto& field : this->fields) {
-        if (UtilityFunctions::startsWith(field->getName(), fieldName)) {
+        if (Util::startsWith(field->getName(), fieldName)) {
             found = true;
             break;
         }

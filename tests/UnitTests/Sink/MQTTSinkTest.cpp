@@ -131,7 +131,7 @@ class MQTTTSinkTest : public testing::Test {
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, 1);
         auto inputBuffer = createTupleBuffer(bufferSize, buffMgr);
         if (printBuffer) {
-            NES_DEBUG("bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, testSchema) << '\n');
+            NES_DEBUG("bufferContent before write=" << Util::prettyPrintTupleBuffer(inputBuffer, testSchema) << '\n');
         }
         bool connectSuccessful = mqttSink->connect();
         if (connectSuccessful) {

@@ -39,7 +39,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createFilterOperator(ExpressionNodePtr const& predicate,
-                                                            OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                            OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a new stream rename operator.
@@ -47,7 +47,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createRenameStreamOperator(std::string const& newStreamName,
-                                                                  OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                                  OperatorId id = Util::getNextOperatorId());
 
     /**
     * @brief Create a new logical projection operator.
@@ -56,7 +56,7 @@ class LogicalOperatorFactory {
     * @return LogicalOperatorNodePtr
     */
     static LogicalUnaryOperatorNodePtr createProjectionOperator(const std::vector<ExpressionNodePtr>& expressions,
-                                                                OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                                OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a new sink operator with a specific sink descriptor.
@@ -65,7 +65,7 @@ class LogicalOperatorFactory {
      * @return LogicalOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createSinkOperator(SinkDescriptorPtr const& sinkDescriptor,
-                                                          OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                          OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a new map operator with a field assignment expression as a map expression.
@@ -74,7 +74,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression,
-                                                         OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                         OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a new source operator with source descriptor.
@@ -83,7 +83,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createSourceOperator(SourceDescriptorPtr const& sourceDescriptor,
-                                                            OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                            OperatorId id = Util::getNextOperatorId());
 
     /**
     * @brief Create a specialized watermark assigner operator.
@@ -93,7 +93,7 @@ class LogicalOperatorFactory {
     */
     static LogicalUnaryOperatorNodePtr
     createWatermarkAssignerOperator(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor,
-                                    OperatorId id = UtilityFunctions::getNextOperatorId());
+                                    OperatorId id = Util::getNextOperatorId());
     /**
      * @brief Create a new window operator with window definition.
      * @param windowDefinition the LogicalWindowDefinitionPtr.
@@ -101,7 +101,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createWindowOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition,
-                                                            OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                            OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a specialized central window operator with window definition.
@@ -111,7 +111,7 @@ class LogicalOperatorFactory {
      */
     static LogicalUnaryOperatorNodePtr
     createCentralWindowSpecializedOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition,
-                                           OperatorId id = UtilityFunctions::getNextOperatorId());
+                                           OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a specialized slice creation window operator with window definition.
@@ -121,7 +121,7 @@ class LogicalOperatorFactory {
      */
     static LogicalUnaryOperatorNodePtr
     createSliceCreationSpecializedOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition,
-                                           OperatorId id = UtilityFunctions::getNextOperatorId());
+                                           OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a specialized slice merging window operator with window definition.
@@ -131,7 +131,7 @@ class LogicalOperatorFactory {
      */
     static LogicalUnaryOperatorNodePtr
     createSliceMergingSpecializedOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition,
-                                          OperatorId id = UtilityFunctions::getNextOperatorId());
+                                          OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a specialized window computation window operator with window definition.
@@ -141,14 +141,14 @@ class LogicalOperatorFactory {
      */
     static LogicalUnaryOperatorNodePtr
     createWindowComputationSpecializedOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition,
-                                               OperatorId id = UtilityFunctions::getNextOperatorId());
+                                               OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a specialized union operator.
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return BinaryOperatorNode
      */
-    static LogicalBinaryOperatorNodePtr createUnionOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
+    static LogicalBinaryOperatorNodePtr createUnionOperator(OperatorId id = Util::getNextOperatorId());
 
     /**
     * @brief Create a specialized join operator.
@@ -156,14 +156,14 @@ class LogicalOperatorFactory {
     * @return BinaryOperatorNode
     */
     static LogicalBinaryOperatorNodePtr createJoinOperator(const Join::LogicalJoinDefinitionPtr& joinDefinition,
-                                                           OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                           OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a broadcast operator.
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return BroadcastLogicalOperatorNodePtr
      */
-    static BroadcastLogicalOperatorNodePtr createBroadcastOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
+    static BroadcastLogicalOperatorNodePtr createBroadcastOperator(OperatorId id = Util::getNextOperatorId());
 
     /**
      * CEP Operators
@@ -178,7 +178,7 @@ class LogicalOperatorFactory {
     */
     static LogicalUnaryOperatorNodePtr createCEPIterationOperator(uint64_t minIterations,
                                                                   uint64_t maxIterations,
-                                                                  OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                                  OperatorId id = Util::getNextOperatorId());
 };
 
 }// namespace NES

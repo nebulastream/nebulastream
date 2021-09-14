@@ -55,7 +55,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
     }
 
     //get unique id for the new node
-    uint64_t id = UtilityFunctions::getNextTopologyNodeId();
+    uint64_t id = Util::getNextTopologyNodeId();
 
     TopologyNodePtr physicalNode;
     if (type == NodeType::Sensor) {

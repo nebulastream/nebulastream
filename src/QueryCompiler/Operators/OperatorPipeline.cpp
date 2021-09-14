@@ -24,15 +24,15 @@ OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
     : id(pipelineId), queryPlan(QueryPlan::create()), pipelineType(pipelineType) {}
 
 OperatorPipelinePtr OperatorPipeline::create() {
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(UtilityFunctions::getNextPipelineId(), OperatorPipelineType));
+    return std::make_shared<OperatorPipeline>(OperatorPipeline(Util::getNextPipelineId(), OperatorPipelineType));
 }
 
 OperatorPipelinePtr OperatorPipeline::createSinkPipeline() {
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(UtilityFunctions::getNextPipelineId(), SinkPipelineType));
+    return std::make_shared<OperatorPipeline>(OperatorPipeline(Util::getNextPipelineId(), SinkPipelineType));
 }
 
 OperatorPipelinePtr OperatorPipeline::createSourcePipeline() {
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(UtilityFunctions::getNextPipelineId(), SourcePipelineType));
+    return std::make_shared<OperatorPipeline>(OperatorPipeline(Util::getNextPipelineId(), SourcePipelineType));
 }
 
 void OperatorPipeline::setType(Type pipelineType) { this->pipelineType = pipelineType; }

@@ -116,7 +116,7 @@ class ExecutableCompleteAggregationTriggerAction
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
                       << this->windowDefinition->getDistributionType()->toString()
                       << "): Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
-                      << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
+                      << " records, content=" << Util::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                       << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
             //forward buffer to next  pipeline stage
@@ -244,7 +244,7 @@ class ExecutableCompleteAggregationTriggerAction
                     NES_TRACE("ExecutableCompleteAggregationTriggerAction "
                               << id << ": (" << this->windowDefinition->getDistributionType()->toString()
                               << "): Dispatch intermediate output buffer with " << currentNumberOfTuples
-                              << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
+                              << " records, content=" << Util::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString());
                     //forward buffer to next  pipeline stage
                     executionContext->dispatchBuffer(tupleBuffer);

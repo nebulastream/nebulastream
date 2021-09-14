@@ -22,7 +22,7 @@ PhysicalOperatorPtr PhysicalJoinSinkOperator::create(SchemaPtr leftInputSchema,
                                                      SchemaPtr rightInputSchema,
                                                      SchemaPtr outputSchema,
                                                      Join::JoinOperatorHandlerPtr joinOperatorHandler) {
-    return create(UtilityFunctions::getNextOperatorId(),
+    return create(Util::getNextOperatorId(),
                   std::move(leftInputSchema),
                   std::move(rightInputSchema),
                   std::move(outputSchema),

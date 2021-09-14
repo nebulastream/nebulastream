@@ -63,7 +63,7 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
     sinkProp.insert(std::make_pair("dmf", 1));
     properties.push_back(sinkProp);
 
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
+    bool res = Util::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
 
     // Assert if the assignment success
     ASSERT_TRUE(res);
@@ -104,7 +104,7 @@ TEST_F(OperatorPropertiesTest, testAssignDifferentPropertyTypes) {
     sinkProp.insert(std::make_pair("misc_str", std::string("xyz")));
     properties.push_back(sinkProp);
 
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
+    bool res = Util::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
 
     // Assert if the assignment success
     ASSERT_TRUE(res);
@@ -148,7 +148,7 @@ TEST_F(OperatorPropertiesTest, testAssignWithMorePropertiesThanOperators) {
     properties.push_back(sinkProp);
 
     // this should return false as properties of all operators has to be supplied if one of them is supplied
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
+    bool res = Util::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
     ASSERT_FALSE(res);
 }
 
@@ -171,7 +171,7 @@ TEST_F(OperatorPropertiesTest, testAssignWithLessPropertiesThanOperators) {
     properties.push_back(sinkProp);
 
     // this should return false as properties of all operators has to be supplied if one of them is supplied
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
+    bool res = Util::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
     ASSERT_FALSE(res);
 }
 
@@ -225,7 +225,7 @@ TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
     sinkProp.insert(std::make_pair("load", 7));
     properties.push_back(sinkProp);
 
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
+    bool res = Util::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
     ASSERT_TRUE(res);
 
     auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();

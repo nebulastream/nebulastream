@@ -74,7 +74,7 @@ std::string detail::VizNode::serialize() {
     }
     ss << "\"properties\":[";
     for (auto& tuple : properties) {
-        auto quotedValue = UtilityFunctions::escapeJson(std::get<1>(tuple));
+        auto quotedValue = Util::escapeJson(std::get<1>(tuple));
         ss << "{\"" << std::get<0>(tuple) << "\":\"" << quotedValue << "\"}";
         if (&properties.back() != &tuple) {
             ss << ",";

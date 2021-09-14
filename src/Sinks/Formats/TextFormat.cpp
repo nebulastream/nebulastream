@@ -44,7 +44,7 @@ std::vector<Runtime::TupleBuffer> TextFormat::getData(Runtime::TupleBuffer& inpu
         return buffers;
     }
 
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, schema);
+    std::string bufferContent = Util::prettyPrintTupleBuffer(inputBuffer, schema);
     uint64_t contentSize = bufferContent.length();
     NES_DEBUG("TextFormat::getData content size=" << contentSize << " content=" << bufferContent);
 

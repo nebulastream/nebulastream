@@ -82,7 +82,7 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         return false;
     }
     // Print received Tuple Buffer for debugging purposes.
-    NES_TRACE("MQTTSink::writeData" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr()));
+    NES_TRACE("MQTTSink::writeData" << Util::prettyPrintTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr()));
 
     try {
         // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string

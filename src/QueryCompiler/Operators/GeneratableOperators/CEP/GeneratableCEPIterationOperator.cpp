@@ -37,7 +37,7 @@ GeneratableOperatorPtr GeneratableCEPIterationOperator::create(SchemaPtr inputSc
                                                                SchemaPtr outputSchema,
                                                                uint64_t minIteration,
                                                                uint64_t maxIteration) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, minIteration, maxIteration);
+    return create(Util::getNextOperatorId(), inputSchema, outputSchema, minIteration, maxIteration);
 }
 
 GeneratableOperatorPtr GeneratableCEPIterationOperator::create(OperatorId id,

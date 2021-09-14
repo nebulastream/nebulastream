@@ -49,7 +49,7 @@ CpuMetrics CpuMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer&
     auto idx = schema->getIndex(prefix + "CORE_NO");
 
     if (idx < schema->getSize() && buf.getNumberOfTuples() == 1
-        && UtilityFunctions::endsWith(schema->fields[idx]->getName(), "CORE_NO")) {
+        && Util::endsWith(schema->fields[idx]->getName(), "CORE_NO")) {
         //if schema contains cpuMetrics parse the wrapper object
         auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         auto bindedRowLayout = layout->bind(buf);
