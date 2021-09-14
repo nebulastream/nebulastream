@@ -168,6 +168,13 @@ class ExecutableQueryPlan : public Reconfigurable {
      */
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
+    /**
+     * @brief destroy resources allocated to the EQP. Used
+     * to explicitly destroy them outside the allocated
+     * destructor.
+     */
+    void destroy();
+
   private:
     const QueryId queryId;
     const QuerySubPlanId querySubPlanId;

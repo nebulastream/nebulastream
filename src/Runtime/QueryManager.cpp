@@ -308,6 +308,7 @@ bool QueryManager::deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep)
         }
          */
     }
+    qep->destroy();
     return succeed;
 }
 

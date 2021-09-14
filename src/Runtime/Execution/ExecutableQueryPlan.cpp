@@ -65,10 +65,7 @@ ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_DEBUG("destroy qep " << queryId << " " << querySubPlanId);
     NES_ASSERT(qepStatus.load() == Created || qepStatus.load() == Stopped || qepStatus.load() == ErrorState,
                "QueryPlan is created but not executing " << queryId);
-    sources.clear();
-    pipelines.clear();
-    sinks.clear();
-    bufferManager.reset();
+    destroy();
 }
 
 std::shared_future<ExecutableQueryPlanResult> ExecutableQueryPlan::getTerminationFuture() {
@@ -226,6 +223,13 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             break;
         }
     }
+}
+
+void ExecutableQueryPlan::destroy() {
+    sources.clear();
+    pipelines.clear();
+    sinks.clear();
+    bufferManager.reset();
 }
 
 }// namespace NES::Runtime::Execution
