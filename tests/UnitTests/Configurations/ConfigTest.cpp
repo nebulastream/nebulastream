@@ -18,27 +18,8 @@
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <boost/process.hpp>
-#include <cpprest/filestream.h>
-#include <cpprest/http_client.h>
-#include <cstdio>
-#include <filesystem>
 #include <gtest/gtest.h>
-#include <sstream>
 #include <string>
-#include <unistd.h>
-
-using namespace utility;
-// Common utilities like string conversions
-using namespace web;
-// Common features like URIs.
-using namespace web::http;
-// Common HTTP functionality
-using namespace web::http::client;
-// HTTP client features
-using namespace concurrency::streams;
-// Asynchronous streams
-namespace bp = boost::process;
 
 namespace NES {
 

@@ -21,7 +21,6 @@
 #include <unistd.h>
 #define GetCurrentDir getcwd
 #include <Util/TestUtils.hpp>
-#include <boost/process.hpp>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
 #include <cstdio>
@@ -36,8 +35,6 @@ using namespace web::http;
 using namespace web::http::client;
 // HTTP client features
 using namespace concurrency::streams;
-// Asynchronous streams
-namespace bp = boost::process;
 
 namespace NES {
 
@@ -75,22 +72,14 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
 
-    string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --numberOfSlots=8"
-        + " --restPort=" + std::to_string(restPort);
-    bp::child coordinatorProc(cmdCoord.c_str());
-    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
-    uint64_t coordinatorPid = coordinatorProc.id();
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort), TestUtils::numberOfSlots(8)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
-    string worker1RPCPort = std::to_string(rpcPort + 3);
-    string worker1DataPort = std::to_string(dataPort);
-    string cmdWrk = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
-        + " --dataPort=" + worker1DataPort + " --numberOfSlots=8";
-    bp::child workerProc(cmdWrk.c_str());
-    NES_INFO("started worker with pid = " << workerProc.id());
-
-    uint64_t workerPid = workerProc.id();
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
+                                          TestUtils::dataPort(dataPort),
+                                          TestUtils::coordinatorPort(rpcPort),
+                                          TestUtils::numberOfSlots(8)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ssQuery1;
@@ -151,11 +140,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     NES_INFO("content Q2=" << contentQ2);
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ2, expectedContent);
-
-    NES_INFO("Killing worker process->PID: " << workerPid);
-    workerProc.terminate();
-    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
-    coordinatorProc.terminate();
 }
 
 /**
@@ -171,22 +155,15 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     remove(pathQuery2.c_str());
     remove(pathQuery3.c_str());
 
-    string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
-    bp::child coordinatorProc(cmdCoord.c_str());
-    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
-    string worker1RPCPort = std::to_string(rpcPort + 3);
-    string worker1DataPort = std::to_string(dataPort);
-    string cmdWrk =
-        "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort;
-    bp::child workerProc(cmdWrk.c_str());
-    NES_INFO("started worker with pid = " << workerProc.id());
-
-    uint64_t coordinatorPid = coordinatorProc.id();
-    uint64_t workerPid = workerProc.id();
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
+                                          TestUtils::dataPort(dataPort),
+                                          TestUtils::coordinatorPort(rpcPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+
 
     std::stringstream ssQuery1;
     ssQuery1 << R"({"userQuery" : "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\")";
@@ -261,11 +238,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     NES_INFO("content Q3=" << contentQ3);
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ3, expectedContent);
-
-    NES_INFO("Killing worker process->PID: " << workerPid);
-    workerProc.terminate();
-    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
-    coordinatorProc.terminate();
 }
 
 /**
@@ -278,12 +250,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     remove(pathPattern1.c_str());
     remove(pathPattern2.c_str());
 
-    string coordinatorRPCPort = std::to_string(rpcPort);
-    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
-    bp::child coordinatorProc(path.c_str());
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
-    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
-    uint64_t coordinatorPid = coordinatorProc.id();
+
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -293,15 +263,15 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     NES_INFO("schema submit=" << schema.str());
     EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
-    string worker1RPCPort = std::to_string(rpcPort + 3);
-    string worker1DataPort = std::to_string(dataPort);
-    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
-        + " --dataPort=" + worker1DataPort
-        + " --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource "
-          "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1000";
-    bp::child workerProc(path2.c_str());
-    NES_INFO("started worker with pid = " << workerProc.id());
-    uint64_t workerPid = workerProc.id();
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
+                                          TestUtils::dataPort(dataPort),
+                                          TestUtils::coordinatorPort(rpcPort),
+                                          TestUtils::logicalStreamName("QnV"),
+                                          TestUtils::sourceType("CSVSource"),
+                                          TestUtils::sourceConfig("../tests/test_data/QnV_short.csv"),
+                                          TestUtils::numberOfBuffersToProduce(1),
+                                          TestUtils::sourceFrequency(1000),
+                                          TestUtils::physicalStreamName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ssPattern1;
@@ -375,11 +345,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     NES_INFO("content Q2=" << contentQ2);
     NES_INFO("expContent=" << expectedContent2);
     EXPECT_EQ(contentQ2, expectedContent2);
-
-    NES_INFO("Killing worker process->PID: " << workerPid);
-    workerProc.terminate();
-    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
-    coordinatorProc.terminate();
 }
 
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
@@ -390,10 +355,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     remove(outputFilePath2.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
-    bp::child coordinatorProc(path.c_str());
-    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"window\",\"schema\" "
@@ -403,16 +369,16 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     NES_INFO("schema submit=" << schema.str());
     EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
-    string worker1RPCPort = std::to_string(rpcPort + 3);
-    string worker1DataPort = std::to_string(dataPort);
-    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
-        + " --dataPort=" + worker1DataPort
-        + " --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
-          "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1000 "
-          "--numberOfTuplesToProducePerBuffer=28";
-    bp::child workerProc(path2.c_str());
-    NES_INFO("started worker with pid = " << workerProc.id());
-    uint64_t workerPid = workerProc.id();
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
+                                          TestUtils::dataPort(dataPort),
+                                          TestUtils::coordinatorPort(rpcPort),
+                                          TestUtils::logicalStreamName("window"),
+                                          TestUtils::sourceType("CSVSource"),
+                                          TestUtils::sourceConfig("../tests/test_data/window.csv"),
+                                          TestUtils::numberOfBuffersToProduce(1),
+                                          TestUtils::numberOfTuplesToProducePerBuffer(28),
+                                          TestUtils::sourceFrequency(1000),
+                                          TestUtils::physicalStreamName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ss;
@@ -485,11 +451,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     NES_INFO("content Q2=" << contentQ2);
     NES_INFO("expContent=" << expectedContent2);
     EXPECT_EQ(contentQ2, expectedContent2);
-
-    NES_INFO("Killing worker process->PID: " << workerPid);
-    workerProc.terminate();
-    NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
-    coordinatorProc.terminate();
 }
 
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
@@ -499,10 +460,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     remove(outputFilePath.c_str());
     remove(outputFilePath2.c_str());
 
-    string coordinatorRPCPort = std::to_string(rpcPort);
-    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
-    bp::child coordinatorProc(path.c_str());
-    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
@@ -513,16 +472,16 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     NES_INFO("schema submit=" << schema.str());
     EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
-    string worker1RPCPort = std::to_string(rpcPort + 3);
-    string worker1DataPort = std::to_string(dataPort);
-    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
-        + " --dataPort=" + worker1DataPort
-        + " --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
-          "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1000 "
-          "--numberOfTuplesToProducePerBuffer=28";
-    bp::child workerProc(path2.c_str());
-    NES_INFO("started worker with pid = " << workerProc.id());
-    uint64_t workerPid = workerProc.id();
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
+                                          TestUtils::dataPort(dataPort),
+                                          TestUtils::coordinatorPort(rpcPort),
+                                          TestUtils::logicalStreamName("window"),
+                                          TestUtils::sourceType("CSVSource"),
+                                          TestUtils::sourceConfig("../tests/test_data/window.csv"),
+                                          TestUtils::numberOfBuffersToProduce(1),
+                                          TestUtils::sourceFrequency(1000),
+                                          TestUtils::numberOfTuplesToProducePerBuffer(28),
+                                          TestUtils::physicalStreamName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ss;
@@ -588,11 +547,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath));
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2));
-
-    NES_INFO("Killing worker process->PID: " << workerPid);
-    workerProc.terminate();
-    NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
-    coordinatorProc.terminate();
 }
 
 }// namespace NES

@@ -13,17 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        UtilityFunctions.cpp
-        SharedLibrary.cpp
-        TimeMeasurement.cpp
-        StacktraceLoader.cpp
-        ThreadNaming.cpp
+        Subprocess.cpp
 )
-if (NES_USE_MQTT)
-    add_source_nes(
-        MQTTClientWrapper.cpp
-    )
-endif ()
-add_subdirectory(yaml)
-add_subdirectory(Subprocess)
+
 
