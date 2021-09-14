@@ -40,11 +40,16 @@ class Subprocess {
     ~Subprocess();
   private:
     /**
-     * @brief
-     * @param file
+     * @brief read a _IO_FILE and pipe the content to an output stream
+     * @param file _IO_FILE
      * @param ostream
      */
     static void readFromFile(FILE* file, std::ostream& ostream);
+
+    /**
+     * @brief execute the cmd and all its arguments in the child process.
+     * @param argv arguments
+     */
     void executeCommandInChildProcess(const std::vector<std::string>& argv);
     pid_t pid;
     int outPipe[2];
