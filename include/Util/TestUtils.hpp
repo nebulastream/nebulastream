@@ -25,6 +25,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Subprocess/Subprocess.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <cpprest/filestream.h>
@@ -50,6 +51,74 @@ class TestUtils {
     static constexpr uint64_t timeout = 60;
     // in milliseconds
     static constexpr uint64_t sleepDuration = 250;
+
+    [[nodiscard]] static std::string coordinatorPort(uint64_t coordinatorPort){
+        return "--coordinatorPort=" + std::to_string(coordinatorPort);
+    }
+
+    [[nodiscard]] static std::string numberOfSlots(uint64_t coordinatorPort){
+        return "--numberOfSlots=" + std::to_string(coordinatorPort);
+    }
+
+    [[nodiscard]] static std::string rpcPort(uint64_t rpcPort){
+        return "--rpcPort=" + std::to_string(rpcPort);
+    }
+
+    [[nodiscard]] static std::string sourceType(std::string sourceType){
+        return "--sourceType=" + sourceType;
+    }
+
+    [[nodiscard]] static std::string sourceConfig(std::string sourceConfig){
+        return "--sourceConfig=" + sourceConfig;
+    }
+
+    [[nodiscard]] static std::string dataPort(uint64_t dataPort){
+        return "--dataPort=" + std::to_string(dataPort);
+    }
+
+    [[nodiscard]] static std::string numberOfTuplesToProducePerBuffer(uint64_t numberOfTuplesToProducePerBuffer){
+        return "--numberOfTuplesToProducePerBuffer=" + std::to_string(numberOfTuplesToProducePerBuffer);
+    }
+
+    [[nodiscard]] static std::string physicalStreamName(std::string physicalStreamName){
+        return "--physicalStreamName=" + physicalStreamName;
+    }
+
+    [[nodiscard]] static std::string logicalStreamName(std::string logicalStreamName){
+        return "--logicalStreamName=" + logicalStreamName;
+    }
+
+    [[nodiscard]] static std::string numberOfBuffersToProduce(uint64_t numberOfBuffersToProduce){
+        return "--numberOfBuffersToProduce=" + std::to_string(numberOfBuffersToProduce);
+    }
+
+    [[nodiscard]] static std::string sourceFrequency(uint64_t sourceFrequency){
+        return "--sourceFrequency=" + std::to_string(sourceFrequency);
+    }
+
+    [[nodiscard]] static std::string restPort(uint64_t restPort){
+        return "--restPort=" + std::to_string(restPort);
+    }
+
+    /**
+   * @brief start a new instance of a nes coordinator with a set of configuration flags
+   * @param flags
+   * @return coordinator process, which terminates if it leaves the scope
+   */
+    [[nodiscard]] static Util::Subprocess startCoordinator(std::initializer_list<std::string> list ) {
+        NES_INFO("Start coordinator");
+        return {"./nesCoordinator", list};
+    }
+
+    /**
+     * @brief start a new instance of a nes worker with a set of configuration flags
+     * @param flags
+     * @return worker process, which terminates if it leaves the scope
+     */
+    [[nodiscard]] static Util::Subprocess startWorker(std::initializer_list<std::string> flags ) {
+        NES_INFO("Start worker");
+        return {"./nesWorker", flags};
+    }
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
