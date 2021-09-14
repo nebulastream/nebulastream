@@ -17,13 +17,14 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 
 namespace NES::Optimizer {
 
@@ -34,55 +35,11 @@ SyntacticQueryValidationPtr SyntacticQueryValidation::create(QueryParsingService
     return std::make_shared<SyntacticQueryValidation>(queryParsingService);
 }
 
-bool SyntacticQueryValidation::checkIfFieldRenameExpressionExist(NodePtr start) {
-    bool isFieldRenameExpressionExist = false;
-    if (!start->getChildren().empty()) {
-        for (auto child : start->getChildren()) {
-            if (child->instanceOf<FieldRenameExpressionNode>()) {
-                isFieldRenameExpressionExist = true;
-            }
-
-            if (!isFieldRenameExpressionExist) {
-                isFieldRenameExpressionExist = checkIfFieldRenameExpressionExist(child);
-            } else {
-                break;
-            }
-        }
-    }
-    return isFieldRenameExpressionExist;
-}
-
 void SyntacticQueryValidation::checkValidity(const std::string& inputQuery) {
     try {
         // Compiling the query string to an object
         // If it's unsuccessful, the validity check fails
         QueryPtr query = queryParsingService->createQueryFromCodeString(inputQuery);
-
-        // check for attribute rename operation outside projection
-        auto queryPlanIterator = QueryPlanIterator(query->getQueryPlan());
-        for (auto qPlanItr = queryPlanIterator.begin(); qPlanItr != QueryPlanIterator::end(); ++qPlanItr) {
-            // set data modification factor for map operator
-            if ((*qPlanItr)->instanceOf<MapLogicalOperatorNode>()) {
-                const auto mapExp = (*qPlanItr)->as<MapLogicalOperatorNode>()->getMapExpression();
-                auto isFieldRenameExists = checkIfFieldRenameExpressionExist(mapExp);
-                if (isFieldRenameExists) {
-                    throw InvalidQueryException("Attribute rename used outside projection operator.");
-                }
-            } else if ((*qPlanItr)->instanceOf<FilterLogicalOperatorNode>()) {
-                const auto predicateExp = (*qPlanItr)->as<FilterLogicalOperatorNode>()->getPredicate();
-                auto isFieldRenameExists = checkIfFieldRenameExpressionExist(predicateExp);
-                if (isFieldRenameExists) {
-                    throw InvalidQueryException("Attribute rename used outside projection operator.");
-                }
-            } else if((*qPlanItr)->instanceOf<WindowOperatorNode>()) {
-                // TODO #1489: Add checks here
-            } else if((*qPlanItr)->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-                // TODO #1489: Add checks here
-            } else if((*qPlanItr)->instanceOf<JoinLogicalOperatorNode>()) {
-                // TODO #1489: Add checks here
-            }
-        }
-
     } catch (const std::exception& ex) {
         handleException(ex);
     }
