@@ -115,9 +115,11 @@ NesDefaultMemoryAllocatorPtr HardwareManager::getGlobalAllocator() const { retur
 
 uint32_t HardwareManager::getMyNumaRegion() const {
     return numa_node_of_cpu(sched_getcpu());
-
 }
 
+uint32_t HardwareManager::getNumaNodeForCore(int coreId) const {
+    return numa_node_of_cpu(coreId);
+}
 
 bool HardwareManager::bindThreadToCore(pthread_t, uint32_t, uint32_t) {
     NES_ASSERT2_FMT(false, "This will implemented at some point");

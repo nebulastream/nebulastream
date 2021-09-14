@@ -130,6 +130,12 @@ class HardwareManager {
      */
     uint32_t getMyNumaRegion() const;
 
+    /**
+     * @brief Returns the numa region for a particular core
+     * @return numa region
+     */
+    uint32_t getNumaNodeForCore(int coreId) const;
+
   private:
     NesDefaultMemoryAllocatorPtr globalAllocator;
 #ifdef NES_ENABLE_NUMA_SUPPORT
