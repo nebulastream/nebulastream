@@ -34,7 +34,7 @@ PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id,
 
 PhysicalOperatorPtr
 PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(),
+    return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(sourceDescriptor));

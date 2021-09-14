@@ -58,8 +58,8 @@ bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr buffe
         return false;
     }
 
-    auto hasName = UtilityFunctions::endsWith(bufferSchema->fields[i]->getName(), metricSchema->get(0)->getName());
-    auto hasLastField = UtilityFunctions::endsWith(bufferSchema->fields[i + metricSchema->getSize() - 1]->getName(),
+    auto hasName = Util::endsWith(bufferSchema->fields[i]->getName(), metricSchema->get(0)->getName());
+    auto hasLastField = Util::endsWith(bufferSchema->fields[i + metricSchema->getSize() - 1]->getName(),
                                                    metricSchema->get(metricSchema->getSize() - 1)->getName());
 
     if (!hasName || !hasLastField) {

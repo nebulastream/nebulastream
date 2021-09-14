@@ -103,7 +103,7 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
 
         std::string streamName = queryCodeSnippet.substr(queryCodeSnippet.find("::from("));
         streamName = streamName.substr(7, streamName.find(')') - 7);
-        NES_DEBUG(" UtilityFunctions: stream name = " << streamName);
+        NES_DEBUG(" Util: stream name = " << streamName);
 
         std::string newQuery = queryCodeSnippet;
 
@@ -111,25 +111,25 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
             auto pos1 = queryCodeSnippet.find("unionWith(");
             uint64_t closingLoc = findSubQueryTermination(pos1, queryCodeSnippet);
             std::string subquery = queryCodeSnippet.substr(pos1 + 10, closingLoc - pos1 - 10);
-            NES_DEBUG("UtilityFunctions: subquery = " << subquery);
+            NES_DEBUG("Util: subquery = " << subquery);
             code << "auto subQuery = " << subquery << ";" << std::endl;
             newQuery.replace(pos1, closingLoc - pos1, "unionWith(&subQuery");
-            NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
+            NES_DEBUG("Util: newQuery = " << newQuery);
         }
 
         // add return statement in front of input query/pattern
         //if pattern
         if (pattern) {
-            UtilityFunctions::findAndReplaceAll(newQuery, "Pattern::from", "return Pattern::from");
+            Util::findAndReplaceAll(newQuery, "Pattern::from", "return Pattern::from");
         } else {// if Query
-            newQuery = UtilityFunctions::replaceFirst(newQuery, "Query::from", "return Query::from");
+            newQuery = Util::replaceFirst(newQuery, "Query::from", "return Query::from");
         }
 
-        NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
+        NES_DEBUG("Util: parsed query = " << newQuery);
         code << newQuery << std::endl;
         code << "}" << std::endl;
         code << "}" << std::endl;
-        NES_DEBUG("UtilityFunctions: query code \n" << code.str());
+        NES_DEBUG("Util: query code \n" << code.str());
         auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code.str());
         auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, true);
         auto result = jitCompiler->compile(std::move(request));
@@ -141,17 +141,17 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
         using CreateQueryFunctionPtr = Query (*)();
         auto func = compiled_code->getInvocableMember<CreateQueryFunctionPtr>("_ZN3NES11createQueryEv");
         if (!func) {
-            NES_ERROR("UtilityFunctions: Error retrieving function! Symbol not found!");
+            NES_ERROR("Util: Error retrieving function! Symbol not found!");
         }
         /* call loaded function to create query object */
         Query query((*func)());
 
         return std::make_shared<Query>(query);
     } catch (std::exception& exc) {
-        NES_ERROR("UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet << exc.what());
+        NES_ERROR("Util: Failed to create the query from input code string: " << queryCodeSnippet << exc.what());
         throw;
     } catch (...) {
-        NES_ERROR("UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet);
+        NES_ERROR("Util: Failed to create the query from input code string: " << queryCodeSnippet);
         throw "Failed to create the query from input code string";
     }
 }

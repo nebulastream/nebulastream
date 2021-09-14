@@ -38,7 +38,7 @@ TEST(SharedLibraryTest, loadSharedLib) {
 #else
 #error "Unknown error"
 #endif
-    auto function = sharedLib->getInvocableMember<FunctionType>("_ZN3NES16UtilityFunctions17getNextOperatorIdEv");
+    auto function = sharedLib->getInvocableMember<FunctionType>("_ZN3NES16Util17getNextOperatorIdEv");
     EXPECT_EQ(function(), 1ULL);
     EXPECT_EQ(function(), 2ULL);
     sharedLib.reset();

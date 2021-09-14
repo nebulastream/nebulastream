@@ -36,7 +36,7 @@ void CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine,
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount: " << tupleCount);
     uint64_t offset = 0;
 
-    std::vector<std::string> values = NES::UtilityFunctions::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
+    std::vector<std::string> values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
 
     // iterate over fields of schema and cast string values to correct type
     for (uint64_t j = 0; j < numberOfSchemaFields; j++) {

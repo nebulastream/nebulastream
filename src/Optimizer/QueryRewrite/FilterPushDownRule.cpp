@@ -83,7 +83,7 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
                     NES_TRACE("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
                     //Create duplicate of the filter
                     OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
-                    duplicatedFilterOperator->setId(UtilityFunctions::getNextOperatorId());
+                    duplicatedFilterOperator->setId(Util::getNextOperatorId());
                     //Inset it between currently traversed node and its parent
                     if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
                         NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
@@ -108,7 +108,7 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
                     NES_TRACE("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
                     //Create duplicate of the filter
                     OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
-                    duplicatedFilterOperator->setId(UtilityFunctions::getNextOperatorId());
+                    duplicatedFilterOperator->setId(Util::getNextOperatorId());
                     //Inset it between currently traversed node and its parent
                     if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
                         NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");

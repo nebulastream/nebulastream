@@ -141,7 +141,7 @@ class YSBBenchmarkSource : public SimpleBenchmarkSource {
         generatedTuples += numberOfTuplesPerBuffer;
         generatedBuffers++;
 
-        NES_DEBUG("YSBSource::Buffer content: " << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
+        NES_DEBUG("YSBSource::Buffer content: " << Util::prettyPrintTupleBuffer(buf, schema));
 
         return buf;
     }

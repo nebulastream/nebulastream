@@ -107,7 +107,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             tupleBuffer.setWatermark(currentWatermark);
             NES_TRACE("ExecutableNestedLoopJoinTriggerAction "
                       << id << ":: Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
-                      << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
+                      << " records, content=" << Util::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << " watermark=" << tupleBuffer.getWatermark()
                       << "windowAction=" << toString());
 

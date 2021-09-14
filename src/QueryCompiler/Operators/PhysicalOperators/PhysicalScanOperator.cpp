@@ -21,7 +21,7 @@ PhysicalScanOperator::PhysicalScanOperator(OperatorId id, const SchemaPtr& outpu
     : OperatorNode(id), PhysicalUnaryOperator(id, outputSchema, outputSchema) {}
 
 PhysicalOperatorPtr PhysicalScanOperator::create(SchemaPtr outputSchema) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(outputSchema));
+    return create(Util::getNextOperatorId(), std::move(outputSchema));
 }
 PhysicalOperatorPtr PhysicalScanOperator::create(OperatorId id, const SchemaPtr& outputSchema) {
     return std::make_shared<PhysicalScanOperator>(id, outputSchema);

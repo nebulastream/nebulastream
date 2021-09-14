@@ -88,7 +88,7 @@ TEST_F(MonitoringSerializationTest, testSerializationRuntimeNesMetrics) {
     auto schema = getSchema(measuredVal, "");
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, schema));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
     RuntimeNesMetrics deserVal = RuntimeNesMetrics::fromBuffer(schema, tupleBuffer, "");
@@ -105,7 +105,7 @@ TEST_F(MonitoringSerializationTest, testSerializationStaticNesMetrics) {
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
     NES_DEBUG(measuredVal.toJson());
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, schema));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
     StaticNesMetrics deserVal = StaticNesMetrics::fromBuffer(schema, tupleBuffer, "");
@@ -121,7 +121,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsCpu) {
     auto schema = getSchema(measuredVal, "");
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, schema));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
     CpuMetrics deserVal = CpuMetrics::fromBuffer(schema, tupleBuffer, "");
@@ -135,7 +135,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkValue) {
     NetworkValues measuredVal = networkStats.measure().getNetworkValue(0);
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, measuredVal.getSchema("")));
+    NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, measuredVal.getSchema("")));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
     NetworkValues deserNw = NetworkValues::fromBuffer(NES::NetworkValues::getSchema(""), tupleBuffer, "");
@@ -150,7 +150,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkMetrics) {
     auto schema = getSchema(measuredVal, "");
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, schema));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
     NetworkMetrics deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, "");
@@ -183,7 +183,7 @@ TEST_F(MonitoringSerializationTest, testSerializationGroups) {
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     metricGroup->getSample(tupleBuffer);
 
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, metricGroup->createSchema()));
+    NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, metricGroup->createSchema()));
 }
 
 TEST_F(MonitoringSerializationTest, testDeserializationMetricValues) {
@@ -226,7 +226,7 @@ TEST_F(MonitoringSerializationTest, testDeserializationMetricValues) {
 
     auto deserDisk = DiskMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::DISK_METRICS_DESC);
     EXPECT_TRUE(deserDisk.fBlocks == diskStats.measure().fBlocks);
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
 TEST_F(MonitoringSerializationTest, testSerDeserMetricGroup) {

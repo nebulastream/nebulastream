@@ -758,7 +758,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
         valueFields[4] = 12; //value 12
         buffer.setNumberOfTuples(5);
     }
-    std::cout << "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema) << std::endl;
+    std::cout << "buffer=" << Util::prettyPrintTupleBuffer(buffer, schema) << std::endl;
     /* execute Stage */
     stage1->setup(*executionContext);
     stage1->start(*executionContext);
@@ -877,7 +877,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>());
-    cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
+    cout << "inputBuffer=" << Util::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
     stage->setup(*queryContext);
     stage->start(*queryContext);
@@ -888,7 +888,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3UL);
 
-    NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, inputSchema));
+    NES_INFO(Util::prettyPrintTupleBuffer(resultBuffer, inputSchema));
 }
 
 /**
@@ -1346,7 +1346,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     source->open();
     auto inputBuffer = source->receiveData().value();
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
-    cout << "buffer content=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, input_schema);
+    cout << "buffer content=" << Util::prettyPrintTupleBuffer(inputBuffer, input_schema);
 
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
     stage1->setup(*executionContext);
@@ -1665,7 +1665,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
 
     cepOperatorHandler->start(queryContext, nodeEngine->getStateManager(), 0);
 
-    cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
+    cout << "inputBuffer=" << Util::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
     stage->setup(*queryContext);
     stage->start(*queryContext);
@@ -1676,6 +1676,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     /* check for correctness, as minIteration = 50, we expect 2 outputs from the 131 tuples in the inputBuffer*/
     EXPECT_EQ(int(resultBuffer.getNumberOfTuples()), 2);
 
-    NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, inputSchema));
+    NES_INFO(Util::prettyPrintTupleBuffer(resultBuffer, inputSchema));
 }
 }// namespace NES

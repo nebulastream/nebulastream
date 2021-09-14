@@ -42,7 +42,7 @@ PhysicalOperatorPtr
 PhysicalWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
                                             SchemaPtr outputSchema,
                                             Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(),
+    return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(watermarkStrategyDescriptor));

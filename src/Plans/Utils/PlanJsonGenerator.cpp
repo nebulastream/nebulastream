@@ -37,7 +37,7 @@
 namespace NES {
 
 std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNode) {
-    NES_INFO("UtilityFunctions: getting the type of the operator");
+    NES_INFO("Util: getting the type of the operator");
 
     std::string operatorType;
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {

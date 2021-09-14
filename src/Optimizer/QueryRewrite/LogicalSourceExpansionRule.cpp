@@ -81,7 +81,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                             "LogicalSourceExpansionRule: Add the duplicate operator to the parent of the original head operator");
                         for (const auto& parent : originalRootOperator->getParents()) {
                             NES_TRACE("LogicalSourceExpansionRule: Assign the duplicate operator a new operator id.");
-                            (*found)->as<OperatorNode>()->setId(UtilityFunctions::getNextOperatorId());
+                            (*found)->as<OperatorNode>()->setId(Util::getNextOperatorId());
                             parent->addChild(*found);
                         }
                         family.erase(found);
@@ -90,7 +90,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
 
                 NES_TRACE("LogicalSourceExpansionRule: Assign all operators in the duplicated operator graph a new operator id.");
                 for (auto& member : family) {
-                    member->as<OperatorNode>()->setId(UtilityFunctions::getNextOperatorId());
+                    member->as<OperatorNode>()->setId(Util::getNextOperatorId());
                 }
             }
         }

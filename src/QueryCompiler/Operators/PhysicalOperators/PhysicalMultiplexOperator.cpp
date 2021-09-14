@@ -22,7 +22,7 @@ PhysicalOperatorPtr PhysicalMultiplexOperator::create(OperatorId id, const Schem
 }
 
 PhysicalOperatorPtr PhysicalMultiplexOperator::create(SchemaPtr schema) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(schema));
+    return create(Util::getNextOperatorId(), std::move(schema));
 }
 
 PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id, const SchemaPtr& schema)

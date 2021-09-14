@@ -33,7 +33,7 @@ void TopologyController::handleGet(const std::vector<utility::string_t>& paths, 
 
     topology->print();
     if (paths.size() == 1) {
-        web::json::value topologyJson = UtilityFunctions::getTopologyAsJson(topology->getRoot());
+        web::json::value topologyJson = Util::getTopologyAsJson(topology->getRoot());
         successMessageImpl(message, topologyJson);
         return;
     }

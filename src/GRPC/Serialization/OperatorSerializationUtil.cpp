@@ -292,13 +292,13 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
         auto serializedWindowOperator = SerializableOperator_WindowDetails();
         details.UnpackTo(&serializedWindowOperator);
-        operatorNode = deserializeWindowOperator(&serializedWindowOperator, UtilityFunctions::getNextOperatorId());
+        operatorNode = deserializeWindowOperator(&serializedWindowOperator, Util::getNextOperatorId());
     } else if (details.Is<SerializableOperator_JoinDetails>()) {
         // de-serialize window operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to JoinLogicalOperator");
         auto serializedJoinOperator = SerializableOperator_JoinDetails();
         details.UnpackTo(&serializedJoinOperator);
-        operatorNode = deserializeJoinOperator(&serializedJoinOperator, UtilityFunctions::getNextOperatorId());
+        operatorNode = deserializeJoinOperator(&serializedJoinOperator, Util::getNextOperatorId());
     } else if (details.Is<SerializableOperator_WatermarkStrategyDetails>()) {
         // de-serialize watermark assigner operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to watermarkassigner operator");

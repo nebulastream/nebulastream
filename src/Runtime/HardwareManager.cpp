@@ -48,7 +48,7 @@ void readCpuConfig(uint32_t& numa_nodes_count,
         std::istringstream lineStream(line);
         while (std::getline(lineStream, s, ' ')) {
             if (!s.empty()) {
-                UtilityFunctions::trim(s);
+                Util::trim(s);
                 splits.push_back(s);
             }
         }

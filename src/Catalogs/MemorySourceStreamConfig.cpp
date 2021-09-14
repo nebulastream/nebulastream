@@ -52,7 +52,7 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
 }
 
 MemorySource::SourceMode MemorySourceStreamConfig::getSourceModeFromString(const std::string& mode) {
-    UtilityFunctions::trim(mode);
+    Util::trim(mode);
     if (mode == "emptyBuffer") {
         return MemorySource::EMPTY_BUFFER;
     } else if (mode == "wrapBuffer") {

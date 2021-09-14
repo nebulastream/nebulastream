@@ -33,7 +33,7 @@ TEST(UtilFunctionTest, replaceNothing) {
     std::string origin = "I do not have the search string in me.";
     std::string search = "nebula";
     std::string replace = "replacing";
-    std::string replacedString = UtilityFunctions::replaceFirst(origin, search, replace);
+    std::string replacedString = Util::replaceFirst(origin, search, replace);
     EXPECT_TRUE(replacedString == origin);
 }
 
@@ -41,7 +41,7 @@ TEST(UtilFunctionTest, replaceOnceWithOneFinding) {
     std::string origin = "I do  have the search string nebula in me, but only once.";
     std::string search = "nebula";
     std::string replace = "replacing";
-    std::string replacedString = UtilityFunctions::replaceFirst(origin, search, replace);
+    std::string replacedString = Util::replaceFirst(origin, search, replace);
     std::string expectedReplacedString = "I do  have the search string replacing in me, but only once.";
     EXPECT_TRUE(replacedString == expectedReplacedString);
 }
@@ -50,7 +50,7 @@ TEST(UtilFunctionTest, replaceOnceWithMultipleFindings) {
     std::string origin = "I do  have the search string nebula in me, but multiple times nebula";
     std::string search = "nebula";
     std::string replace = "replacing";
-    std::string replacedString = UtilityFunctions::replaceFirst(origin, search, replace);
+    std::string replacedString = Util::replaceFirst(origin, search, replace);
     std::string expectedReplacedString = "I do  have the search string replacing in me, but multiple times nebula";
     EXPECT_TRUE(replacedString == expectedReplacedString);
 }
@@ -61,7 +61,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterNothing) {
     test.emplace_back("This is a random test line with no delimiter.");
     std::string line = "This is a random test line with no delimiter.";
     std::string delimiter = "x";
-    tokens = UtilityFunctions::splitWithStringDelimiter<std::string>(line, delimiter);
+    tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -72,7 +72,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterOnce) {
     test.emplace_back(" delimiter.");
     std::string line = "This is a random test line with x delimiter.";
     std::string delimiter = "x";
-    tokens = UtilityFunctions::splitWithStringDelimiter<std::string>(line, delimiter);
+    tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -84,7 +84,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterTwice) {
     test.emplace_back(" delimiter.");
     std::string line = "This is a random x line with x delimiter.";
     std::string delimiter = "x";
-    tokens = UtilityFunctions::splitWithStringDelimiter<std::string>(line, delimiter);
+    tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -96,7 +96,7 @@ TEST(UtilFunctionTest, splitWithOmittingEmptyLast) {
     test.emplace_back(" delimiter. ");
     std::string line = "This is a random x line with x delimiter. x";
     std::string delimiter = "x";
-    tokens = UtilityFunctions::splitWithStringDelimiter<std::string>(line, delimiter);
+    tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 

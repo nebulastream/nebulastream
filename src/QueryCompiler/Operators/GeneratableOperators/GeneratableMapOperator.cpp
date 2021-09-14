@@ -33,7 +33,7 @@ GeneratableMapOperator::GeneratableMapOperator(OperatorId id,
 
 GeneratableOperatorPtr
 GeneratableMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
-    return create(UtilityFunctions::getNextOperatorId(),
+    return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(mapExpression));

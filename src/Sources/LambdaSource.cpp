@@ -75,7 +75,7 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
 
     NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
                                                                      << " outOrgID=" << buffer.getOriginId());
-    //    NES_ERROR("bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer
+    //    NES_ERROR("bufferContent before write=" << Util::prettyPrintTupleBuffer(buffer
     //                                                                                        , schema) << '\n');
 
     if (buffer.getNumberOfTuples() == 0) {

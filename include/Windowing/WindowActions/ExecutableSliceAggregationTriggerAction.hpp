@@ -97,7 +97,7 @@ class ExecutableSliceAggregationTriggerAction
             NES_DEBUG("ExecutableSliceAggregationTriggerAction "
                       << id << ": Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
                       << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark
-                      << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
+                      << " records, content=" << Util::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                       << " this->nextPipeline=" << executionContext->toString() << std::endl);
             //forward buffer to next  pipeline stage
@@ -162,7 +162,7 @@ class ExecutableSliceAggregationTriggerAction
                     //write full buffer
                     NES_DEBUG("ExecutableSliceAggregationTriggerAction "
                               << id << ": Dispatch intermediate output buffer with " << currentNumberOfTuples
-                              << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
+                              << " records, content=" << Util::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
 
                     //forward buffer to next  pipeline stage

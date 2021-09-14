@@ -44,7 +44,7 @@ std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExec
 }
 
 DataSource::GatheringMode DataSource::getGatheringModeFromString(const std::string& mode) {
-    UtilityFunctions::trim(mode);
+    Util::trim(mode);
     if (mode == "frequency") {
         return GatheringMode::FREQUENCY_MODE;
     }

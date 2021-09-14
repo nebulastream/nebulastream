@@ -235,7 +235,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
             NES_TRACE("BasePlacementStrategy: For all the nodes between the topology node for child and parent operators add "
                       "respective source or sink operator.");
             const SchemaPtr& inputSchema = operatorNode->getOutputSchema();
-            uint64_t sourceOperatorId = UtilityFunctions::getNextOperatorId();
+            uint64_t sourceOperatorId = Util::getNextOperatorId();
             for (std::size_t i = static_cast<std::size_t>(0ul); i < nodesBetween.size(); ++i) {
 
                 NES_TRACE("BasePlacementStrategy: Find the execution node for the topology node.");
@@ -298,7 +298,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                     querySubPlan->appendOperatorAsNewRoot(networkSource);
 
                     NES_TRACE("BasePlacementStrategy: add network sink operator");
-                    sourceOperatorId = UtilityFunctions::getNextOperatorId();
+                    sourceOperatorId = Util::getNextOperatorId();
                     OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
                     querySubPlan->appendOperatorAsNewRoot(networkSink);
 

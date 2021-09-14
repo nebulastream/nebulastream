@@ -158,7 +158,7 @@ int main(int argc, const char* argv[]) {
 
 #pragma omp parallel for
         for (uint64_t i = 0; i < queries.size(); i++) {
-            auto queryObj = UtilityFunctions::createQueryFromCodeString(queries[i]);
+            auto queryObj = Util::createQueryFromCodeString(queries[i]);
             queryObjects[i] = queryObj;
         }
 

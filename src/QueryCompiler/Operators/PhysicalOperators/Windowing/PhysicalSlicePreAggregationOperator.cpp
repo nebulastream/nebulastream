@@ -21,7 +21,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(SchemaPtr inputSchema,
                                                                 SchemaPtr outputSchema,
                                                                 Windowing::WindowOperatorHandlerPtr handler) {
-    return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(handler));
+    return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(handler));
 }
 
 PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(OperatorId id,
