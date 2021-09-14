@@ -104,41 +104,35 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
     //we have to create the make the mapping of cores to numa regions
     hardwareManager = std::make_shared<Runtime::HardwareManager>();
-    for(auto& val : workerToCoreMapping)
-    {
+    for (auto& val : workerToCoreMapping) {
         auto tmpNumaNode = hardwareManager->getNumaNodeForCore(val);
-        numaRegionToThreadMap[tmpNumaNode] +=1;
+        numaRegionToThreadMap[tmpNumaNode] += 1;
     }
 
     //make sure that all numa nodes have the same number of threads (for simplicity)
     size_t prevValue = 999;
-    for(auto region : numaRegionToThreadMap)
-    {
-        if(prevValue == 999)
-        {
+    for (auto region : numaRegionToThreadMap) {
+        if (prevValue == 999) {
             prevValue = region.second;
-        }
-        else
-        {
+        } else {
             NES_ASSERT(region.second == prevValue, "the worker map contains different number of threads per node");
         }
     }
 
     //make sure that we only have consecutive numa regions in use
     size_t prevKey = 999;
-    for(auto region : numaRegionToThreadMap)
-    {
-        if(prevKey == 999)
-        {
+    for (auto region : numaRegionToThreadMap) {
+        if (prevKey == 999) {
             prevKey = region.first;
-        }
-        else
-        {
+        } else {
             NES_ASSERT(region.first == prevKey + 1, "the worker map contains non consecutive numa regions");
             prevKey = region.first;
         }
     }
-    numberOfQueues = numaRegionToThreadMap.size();
+    if (numaRegionToThreadMap.size() != 0) {
+        numberOfQueues = numaRegionToThreadMap.size();
+    }
+
     NES_WARNING("Number of queues used for running is =" << numberOfQueues);
 
     for (uint64_t i = 0; i < numberOfQueues; i++) {
@@ -548,7 +542,7 @@ uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
 }
 
 void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
-//    std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
+    //    std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
     std::unique_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
 
     // check if source is registered
@@ -660,7 +654,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
                                              << " queryExecutionPlanId=" << executableQueryPlan->getQuerySubPlanId()
                                              << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
                                              << executableQueryPlan->getQueryId());
-//                  << " tasks in queue=" << taskQueue.size());
+        //                  << " tasks in queue=" << taskQueue.size());
         auto pipelineContext =
             std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
                                                                               inherited0::shared_from_this());
@@ -753,7 +747,7 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
 }
 
 bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
-//    std::shared_lock queryLock(queryMutex);
+    //    std::shared_lock queryLock(queryMutex);
     std::unique_lock queryLock(queryMutex);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 #ifndef NES_USE_ONE_QUEUE_PER_NUMA_NODE
