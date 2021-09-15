@@ -886,7 +886,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
                         .sink(FileSinkDescriptor::create(")"
                    + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+//    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "MlHeuristic");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
@@ -911,6 +912,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
+//    bool retStopWrk2 = wrk2->stop(true);
+//    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -947,6 +950,15 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModelFromCsvDa
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
+//    NES_INFO("QueryDeploymentTest: Start worker 2");
+//    wrkConf->setCoordinatorPort(port);
+//    wrkConf->setRpcPort(port + 20);
+//    wrkConf->setDataPort(port + 21);
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+
     std::string outputFilePath = "test.out";
 
     //register logical stream qnv
@@ -975,6 +987,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModelFromCsvDa
     PhysicalStreamConfigPtr irisStream = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(irisStream);
+//    wrk2->registerPhysicalStream(irisStream);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -985,11 +998,11 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModelFromCsvDa
                         {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
     .filter((Attribute("iris0") > Attribute("iris1") && Attribute("iris0") > Attribute("iris2") && Attribute("SpeciesCode") > 0) ||
             (Attribute("iris1") > Attribute("iris0") && Attribute("iris1") > Attribute("iris2") && (Attribute("SpeciesCode") < 1 || Attribute("SpeciesCode") > 1)) ||
-            (Attribute("iris2") > Attribute("iris0") && Attribute("iris2") > Attribute("iris1") && Attribute("SpeciesCode") < 2))
+            (Attribute("iris2") > Attribute("iris0") && Attribute("iris2") > Attribute("iris1") && Attribute("SpeciesCode") < 2), 0.1)
     .sink(FileSinkDescriptor::create(")"
     + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "MlHeuristic");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
