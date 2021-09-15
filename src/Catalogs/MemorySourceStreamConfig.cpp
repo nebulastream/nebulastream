@@ -60,7 +60,7 @@ MemorySource::SourceMode MemorySourceStreamConfig::getSourceModeFromString(const
     } else if (mode == "copyBuffer") {
         return MemorySource::COPY_BUFFER;
     } else if (mode == "copyBufferSimdRte") {
-        return MemorySource::COPY_BUFFER;
+        return MemorySource::COPY_BUFFER_SIMD_RTE;
     } else if (mode == "cacheCopy") {
         return MemorySource::CACHE_COPY;
     } else if (mode == "copyBufferSimdApex") {
