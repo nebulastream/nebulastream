@@ -80,7 +80,6 @@ class ZmqServer {
     [[nodiscard]] bool isServerRunning() const { return isRunning; }
 
   private:
-
     /**
     * @brief Remove copy constructor to make this class not copyable
     */
