@@ -97,7 +97,7 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         bool enable_redundancy_elimination = true;
 
         if(enable_redundancy_elimination) {
-            auto executionNodes = globalExecutionPlan->getAllExecutionNodes();// for this q id
+            auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
             auto context = std::make_shared<z3::context>();
             auto signatureInferencePhase =
                 Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
@@ -269,6 +269,9 @@ bool MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
         }
     }
 
+    if(candidateTopologyNode->getParents().empty()){
+        should_push_up = false;
+    }
     if(should_push_up) {
         if(placeOperatorOnTopologyNode(queryId, operatorNode, candidateTopologyNode->getParents()[0]->as<TopologyNode>())){
             return true;

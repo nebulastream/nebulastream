@@ -1,6 +1,13 @@
 FROM ubuntu:20.04 AS execimg
 ARG TARGETARCH
 COPY ./nes-$TARGETARCH.deb nes.deb
+
+RUN apt-get install -y wget && \
+    cd /tmp && \
+    wget https://github.com/sumegim/libternsorflowlite_c/raw/master/libtensorflowlite-c.tar.gz && \
+    tar -C /usr/local -xzf libtensorflowlite-c.tar.gz && \
+    ldconfig \
+
 RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  \
     libstdc++-9-dev \
     libobjc-9-dev \

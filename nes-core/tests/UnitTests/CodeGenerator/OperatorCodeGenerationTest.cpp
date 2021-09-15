@@ -928,7 +928,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -970,7 +970,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     codeGenerator->generateCodeForInferModel(context, imop->getInputFieldsAsPtr(), imop->getOutputFieldsAsPtr());
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, context);
+    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -980,11 +980,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    Runtime::WorkerContext wctx{0};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                       nodeEngine->getBufferManager(),
-                                                                       inferModelOperatorHandler);
+                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
 
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());
