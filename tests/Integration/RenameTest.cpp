@@ -329,11 +329,10 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
 
     NES_INFO("RenameTest: Submit query");
 
-    string query =
-        "Query::from(\"window\")"
-        ".project(Attribute(\"id\").as(\"newId\"), Attribute(\"timestamp\"), Attribute(\"value\").as(\"newValue\"))"
-        ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Seconds(1)))"
-        ".byKey(Attribute(\"newId\")).apply(Sum(Attribute(\"newValue\"))).sink(FileSinkDescriptor::create(\""
+    string query = "Query::from(\"window\")"
+                   ".project(Attribute(\"id\").as(\"newId\"), Attribute(\"timestamp\"), Attribute(\"value\").as(\"newValue\"))"
+                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Seconds(1)))"
+                   ".byKey(Attribute(\"newId\")).apply(Sum(Attribute(\"newValue\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");

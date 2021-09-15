@@ -279,7 +279,6 @@ class Query {
     Query& windowByKey(ExpressionItem onKey,
                        Windowing::WindowTypePtr const& windowType,
                        Windowing::WindowAggregationPtr const& aggregation);
-
 };
 
 using QueryPtr = std::shared_ptr<Query>;
