@@ -124,13 +124,15 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
             buffer = bufferManager->getBufferBlocking();
             break;
         }
-#ifdef __x86_64__
         case COPY_BUFFER_SIMD_RTE: {
+#ifdef __x86_64__
             buffer = bufferManager->getBufferBlocking();
             rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+#else
+            NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
+#endif
             break;
         }
-#endif
         case COPY_BUFFER_SIMD_APEX: {
             buffer = bufferManager->getBufferBlocking();
             apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
