@@ -182,7 +182,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
-    if (checkIfFieldRenameExpressionExist(filterExpression)) {
+    if (!filterExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
         NES_THROW_RUNTIME_ERROR("Query: Filter predicate cannot have a FieldRenameExpression");
     }
     OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression);
@@ -192,7 +192,7 @@ Query& Query::filter(const ExpressionNodePtr& filterExpression) {
 
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     NES_DEBUG("Query: add map operator to query");
-    if (checkIfFieldRenameExpressionExist(mapExpression)) {
+    if (!mapExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
         NES_THROW_RUNTIME_ERROR("Query: Map expression cannot have a FieldRenameExpression");
     }
     OperatorNodePtr op = LogicalOperatorFactory::createMapOperator(mapExpression);
@@ -216,21 +216,4 @@ Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& w
 
 QueryPlanPtr Query::getQueryPlan() { return queryPlan; }
 
-bool Query::checkIfFieldRenameExpressionExist(const NodePtr& start) {
-    bool isFieldRenameExpressionExist = false;
-    if (!start->getChildren().empty()) {
-        for (auto child : start->getChildren()) {
-            if (child->instanceOf<FieldRenameExpressionNode>()) {
-                isFieldRenameExpressionExist = true;
-            }
-
-            if (!isFieldRenameExpressionExist) {
-                isFieldRenameExpressionExist = checkIfFieldRenameExpressionExist(child);
-            } else {
-                break;
-            }
-        }
-    }
-    return isFieldRenameExpressionExist;
-}
 }// namespace NES
