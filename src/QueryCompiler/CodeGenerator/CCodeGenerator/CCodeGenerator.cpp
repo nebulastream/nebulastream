@@ -50,6 +50,7 @@
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
+#include <QueryCompiler/Compiler/LazyCompiledExecutablePipelineStage.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/PointerDataType.hpp>
@@ -2332,18 +2333,22 @@ Runtime::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(Compiler:
     std::string src = generateCode(code);
     auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", src);
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, true);
-    auto result = jitCompiler->compile(std::move(request));
-    auto compiledCode = result.get().getDynamicObject();
+    auto result = jitCompiler->compile(std::move(request)).share();
 
-    PipelineStageArity const arity = [&ari = code->arity]() {
-        switch (ari) {
-            case PipelineContext::Unary: return Unary;
-            case PipelineContext::BinaryLeft: return BinaryLeft;
-            case PipelineContext::BinaryRight: return BinaryRight;
-            default: NES_FATAL_ERROR(catString("Unknown PipelineContext", ari, ". Terminate."));
-        }
-    }();
-    return CompiledExecutablePipelineStage::create(compiledCode, arity, src);
+    auto futureCompiledExecutablePipelineStage = std::async(std::launch::async, [result, code, src]() {
+        auto compiledCode = result.get().getDynamicObject();
+        PipelineStageArity const arity = [&ari = code->arity]() {
+            switch (ari) {
+                case PipelineContext::Unary: return Unary;
+                case PipelineContext::BinaryLeft: return BinaryLeft;
+                case PipelineContext::BinaryRight: return BinaryRight;
+                default: NES_FATAL_ERROR(catString("Unknown PipelineContext", ari, ". Terminate."));
+            }
+        }();
+        return CompiledExecutablePipelineStage::create(compiledCode, arity, src);
+    });
+    // defer compilation till the first invocation of the pipeline
+    return LazyCompiledExecutablePipelineStage::create(futureCompiledExecutablePipelineStage.share());
 }
 
 BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(const VariableDeclaration& workerContextVariable) {
