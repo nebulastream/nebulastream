@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/Compiler/LazyCompiledExecutablePipelineStage.hpp>
 namespace NES {
 NES::LazyCompiledExecutablePipelineStage::LazyCompiledExecutablePipelineStage(
