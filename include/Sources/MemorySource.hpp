@@ -34,14 +34,7 @@ class MemorySegment;
  */
 class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
-    enum SourceMode { EMPTY_BUFFER,
-                      WRAP_BUFFER,
-                      CACHE_COPY,
-                      COPY_BUFFER,
-#ifdef __x86_64__
-                      COPY_BUFFER_SIMD_RTE,
-#endif
-                      COPY_BUFFER_SIMD_APEX };
+    enum SourceMode { EMPTY_BUFFER, WRAP_BUFFER, CACHE_COPY, COPY_BUFFER, COPY_BUFFER_SIMD_RTE, COPY_BUFFER_SIMD_APEX };
 
     /**
      * @brief The constructor of a MemorySource
