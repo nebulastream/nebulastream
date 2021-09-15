@@ -17,7 +17,9 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/internal/apex_memmove.hpp>
+#ifdef __x86_64__
 #include <Runtime/internal/rte_memory.h>
+#endif
 #include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -122,11 +124,13 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
             buffer = bufferManager->getBufferBlocking();
             break;
         }
+#ifdef __x86_64__
         case COPY_BUFFER_SIMD_RTE: {
             buffer = bufferManager->getBufferBlocking();
             rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
             break;
         }
+#endif
         case COPY_BUFFER_SIMD_APEX: {
             buffer = bufferManager->getBufferBlocking();
             apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
