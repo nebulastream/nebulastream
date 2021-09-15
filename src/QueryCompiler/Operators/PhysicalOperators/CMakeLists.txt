@@ -26,6 +26,7 @@ add_source_nes(
         PhysicalWatermarkAssignmentOperator.cpp
         PhysicalScanOperator.cpp
         PhysicalEmitOperator.cpp
+        PhysicalExternalOperator.cpp
 )
 
 add_subdirectory(Windowing)
