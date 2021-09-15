@@ -20,6 +20,7 @@
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
@@ -50,6 +51,16 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
     auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
     auto rootOperator = pipelineRoots[0];
+
+    // if this pipeline contains an external operator we skip compilation
+    if (rootOperator->instanceOf<PhysicalOperators::PhysicalExternalOperator>()) {
+        auto physicalExternalOperator = rootOperator->as<PhysicalOperators::PhysicalExternalOperator>();
+        auto pipelineStage = physicalExternalOperator->getExecutablePipelineStage();
+        // todo register operator handler
+        auto executableOperator = ExecutableOperator::create(pipelineStage, {});
+        pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
+        return pipeline;
+    }
 
     generate(rootOperator, [this, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
         operatorNode->generateOpen(codeGenerator, context);

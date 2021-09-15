@@ -22,6 +22,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
@@ -29,6 +30,7 @@
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -36,6 +38,7 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -323,6 +326,60 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
+    ASSERT_FALSE(result->hasError());
+}
+
+class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStage {
+  public:
+    ExecutionResult execute(Runtime::TupleBuffer&,
+                            Runtime::Execution::PipelineExecutionContext&,
+                            Runtime::WorkerContext&) override {
+        return ExecutionResult::Ok;
+    }
+};
+
+/**
+ * @brief Input Query Plan:
+ *
+ * |Source| -- |Filter| -- |ExternalOperator| -- |Sink|
+ *
+ */
+TEST_F(QueryCompilerTest, externalOperatorTest) {
+    SchemaPtr schema = Schema::create();
+    schema->addField("F1", INT32);
+    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    streamCatalog->addLogicalStream("streamName", schema);
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                                   31337,
+                                                                   streamConf,
+                                                                   1,
+                                                                   4096,
+                                                                   1024,
+                                                                   12,
+                                                                   12,
+                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
+    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
+    auto phaseFactory = Phases::DefaultPhaseFactory::create();
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+
+    auto query = Query::from("streamName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
+    auto queryPlan = query.getQueryPlan();
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    queryPlan = typeInferencePhase->execute(queryPlan);
+
+    // add physical operator behind the filter
+    auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
+
+    auto customPipelineStage = std::make_shared<CustomPipelineStageOne>();
+    auto externalOperator = PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
+
+    filterOperator->insertBetweenThisAndParentNodes(externalOperator);
+    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
+    request->enableDump();
+    auto result = queryCompiler->compileQuery(request);
+
     ASSERT_FALSE(result->hasError());
 }
 

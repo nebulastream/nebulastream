@@ -18,6 +18,7 @@
 
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
@@ -37,11 +38,14 @@
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
 #include <Catalogs/StreamCatalog.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Topology/TopologyNode.hpp>
 
@@ -1091,4 +1095,100 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     }
 
     testSink->cleanupBuffers();
+}
+
+class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStage {
+  public:
+    struct InputRecord {
+        int64_t test$id;
+        int64_t test$one;
+        int64_t test$value;
+    };
+    ExecutionResult execute(Runtime::TupleBuffer& buffer,
+                            Runtime::Execution::PipelineExecutionContext& ctx,
+                            Runtime::WorkerContext& wc) override {
+        auto record = buffer.getBuffer<InputRecord>();
+        for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
+            record[i].test$value = record[i].test$value + 42;
+        }
+        ctx.emitBuffer(buffer, wc);
+        return ExecutionResult::Ok;
+    }
+};
+
+TEST_F(QueryExecutionTest, ExternalOperatorQueryQuery) {
+    // creating query plan
+
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t numSourceLocalBuffers,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 numSourceLocalBuffers,
+                                                                 std::move(successors));
+        });
+
+    auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+
+    auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    // add physical operator behind the filter
+    auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
+
+    auto customPipelineStage = std::make_shared<CustomPipelineStageOne>();
+    auto externalOperator =
+        NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
+
+    filterOperator->insertBetweenThisAndParentNodes(externalOperator);
+
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+    // The plan should have one pipeline
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
+    EXPECT_EQ(plan->getPipelines().size(), 2u);
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+    fillBuffer(buffer, memoryLayout);
+    plan->setup();
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+    plan->start(nodeEngine->getStateManager());
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
+    plan->getPipelines()[1]->execute(buffer, workerContext);
+
+    // This plan should produce one output buffer
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+
+    auto resultBuffer = testSink->get(0);
+    // The output buffer should contain 5 tuple;
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
+
+    auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
+    auto resultRecordIndexFields =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultRecordValueFields =
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayoutResult);
+    for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
+        // id
+        std::cout << resultRecordIndexFields[recordIndex] << std::endl;
+        EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
+        EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
+    }
+
+    testSink->cleanupBuffers();
+    buffer.release();
+    plan->stop();
 }
