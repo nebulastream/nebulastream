@@ -28,15 +28,9 @@ static const size_t READ_BUFFER_SIZE = 128;
 
 enum ends_of_pipe { READ = 0, WRITE = 1 };
 
-struct raii_char_str {
-    raii_char_str(std::string s) : buf(s.c_str(), s.c_str() + s.size() + 1){};
-    operator char*() const { return &buf[0]; };
-    mutable std::vector<char> buf;
-};
-
 Subprocess::Subprocess(std::string cmd, std::vector<std::string> argv) {
     // initialize pipes
-    if (pipe2(outPipe, O_CLOEXEC) == -1) {
+    if (pipe(outPipe) == -1) {
         throw std::system_error(errno, std::system_category());
     }
 
@@ -81,8 +75,9 @@ void Subprocess::executeCommandInChildProcess(const std::vector<std::string>& ar
     }
     ::close(outPipe[WRITE]);
 
-    std::vector<raii_char_str> real_args(argv.begin(), argv.end());
-    std::vector<char*> cargs(real_args.begin(), real_args.end());
+    std::vector<char*> cargs;
+    cargs.reserve(argv.size() + 1);
+    std::transform(std::begin(argv), std::end(argv), std::back_inserter(cargs), [&](const std::string& str) { return str.c_str() });
     cargs.push_back(nullptr);
 
     if (execvp(cargs[0], &cargs[0]) == -1) {
