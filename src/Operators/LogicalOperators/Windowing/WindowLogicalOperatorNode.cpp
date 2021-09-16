@@ -106,7 +106,7 @@ void WindowLogicalOperatorNode::inferStringSignature() {
     }
     signatureStream << "WINDOW-TYPE: " << windowType->toString() << ",";
     signatureStream << "AGGREGATION: " << windowAggregation->toString() << ")";
-    signatureStream << "." << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    signatureStream << "." << std::get<1>(children[0]->as<LogicalOperatorNode>()->getHashBasedSignature())[0];
     setHashBasedSignature(signatureStream.str());
 }
 }// namespace NES

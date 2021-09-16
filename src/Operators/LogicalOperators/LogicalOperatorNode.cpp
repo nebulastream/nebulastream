@@ -39,10 +39,21 @@ void LogicalOperatorNode::inferZ3Signature(const z3::ContextPtr& context) {
 
 void LogicalOperatorNode::setZ3Signature(Optimizer::QuerySignaturePtr signature) { this->z3Signature = std::move(signature); }
 
-std::tuple<size_t, std::string> LogicalOperatorNode::getHashBasedSignature() { return hashBasedSignature; }
+std::map<size_t, std::set<std::string>> LogicalOperatorNode::getHashBasedSignature() { return hashBasedSignature; }
 
-void LogicalOperatorNode::setHashBasedSignature(std::tuple<size_t, std::string> signature) {
+void LogicalOperatorNode::setHashBasedSignature(std::map<size_t, std::set<std::string>> signature) {
     this->hashBasedSignature = std::move(signature);
+}
+
+void LogicalOperatorNode::updateHashBasedSignature(size_t hashCode, std::string stringSignature) {
+
+    if (hashBasedSignature.find(hashCode) != hashBasedSignature.end()) {
+        auto stringSignatures = hashBasedSignature[hashCode];
+        stringSignatures.emplace(stringSignature);
+        hashBasedSignature[hashCode] = stringSignatures;
+    } else {
+        hashBasedSignature[hashCode] = {stringSignature};
+    }
 }
 
 }// namespace NES

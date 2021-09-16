@@ -61,10 +61,16 @@ class LogicalOperatorNode : public virtual OperatorNode {
     virtual void inferStringSignature() = 0;
 
     /**
-     * @brief Set the string signature for the logical operator
+     * @brief Set the update the hash based  for the logical operator
      * @param signature : the signature
      */
-    void setHashBasedSignature(std::tuple<size_t, std::string> signature);
+    void setHashBasedSignature(std::map<size_t, std::set<std::string>> signature);
+
+    /**
+     * @brief update the hash based signature for the logical operator
+     * @param signature : the signature
+     */
+    void updateHashBasedSignature(size_t hashCode, std::string stringSignature);
 
     /**
      * @brief Get the Z3 expression for the logical operator
@@ -76,13 +82,13 @@ class LogicalOperatorNode : public virtual OperatorNode {
      * @brief Get the string signature computed based on upstream operator chain
      * @return string representing the query signature
      */
-    std::tuple<size_t, std::string> getHashBasedSignature();
+    std::map<size_t, std::set<std::string>> getHashBasedSignature();
 
     virtual bool inferSchema() = 0;
 
   protected:
     Optimizer::QuerySignaturePtr z3Signature;
-    std::tuple<size_t, std::string> hashBasedSignature;
+    std::map<size_t, std::set<std::string>> hashBasedSignature;
 };
 
 }// namespace NES
