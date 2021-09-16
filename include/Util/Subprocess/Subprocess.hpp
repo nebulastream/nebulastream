@@ -16,12 +16,12 @@
 
 #ifndef NES_UTIL_NESSUBPROCESS_HPP
 #define NES_UTIL_NESSUBPROCESS_HPP
-#include <iostream>
+#include <atomic>
 #include <cstdio>
+#include <iostream>
+#include <thread>
 #include <unistd.h>
 #include <vector>
-#include <atomic>
-#include <thread>
 
 namespace NES::Util {
 
@@ -38,6 +38,7 @@ class Subprocess {
      */
     Subprocess(std::string cmd, std::vector<std::string> argv);
     ~Subprocess();
+
   private:
     /**
      * @brief read a _IO_FILE and pipe the content to an output stream
