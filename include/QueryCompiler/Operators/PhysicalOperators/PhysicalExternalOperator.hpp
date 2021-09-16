@@ -29,6 +29,13 @@ namespace PhysicalOperators {
  */
 class PhysicalExternalOperator : public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator {
   public:
+    /**
+     * @brief Creates a new physical external operator, which contains an executable pipeline stage
+     * @param id operator id
+     * @param inputSchema input schema
+     * @param outputSchema output schema
+     * @param executablePipelineStage executable pipeline stage
+     */
     PhysicalExternalOperator(OperatorId id,
                              SchemaPtr inputSchema,
                              SchemaPtr outputSchema,
