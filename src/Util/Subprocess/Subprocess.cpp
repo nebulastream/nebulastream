@@ -78,7 +78,7 @@ void Subprocess::executeCommandInChildProcess(const std::vector<std::string>& ar
     std::vector<char*> cargs;
     cargs.reserve(argv.size() + 1);
     std::transform(std::begin(argv), std::end(argv), std::back_inserter(cargs), [&](const std::string& str) {
-        return str.c_str();
+        return (char*)str.c_str();
     });
     cargs.push_back(nullptr);
 
