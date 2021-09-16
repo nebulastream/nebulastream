@@ -106,7 +106,11 @@ void ProjectionLogicalOperatorNode::inferStringSignature() {
     for (const auto& field : fields) {
         signatureStream << " " << field << " ";
     }
-    signatureStream << ")." << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
-    setHashBasedSignature(signatureStream.str());
+    auto childSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    signatureStream << ")." << *childSignature.begin()->second.begin();
+
+    //Update the signature
+    auto hashCode = hashGenerator(signatureStream.str());
+    hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 }// namespace NES
