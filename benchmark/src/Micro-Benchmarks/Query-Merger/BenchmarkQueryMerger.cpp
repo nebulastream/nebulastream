@@ -60,8 +60,8 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
                                  ->addField("d", NES::UINT64)
                                  ->addField("e", NES::UINT64)
                                  ->addField("f", NES::UINT64)
-                                 ->addField("a_time", NES::UINT64)
-                                 ->addField("b_time", NES::UINT64);
+                                 ->addField("time1", NES::UINT64)
+                                 ->addField("time2", NES::UINT64);
 
     NES::SchemaPtr schema2 = NES::Schema::create()
                                  ->addField("g", NES::UINT64)
@@ -70,8 +70,8 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
                                  ->addField("j", NES::UINT64)
                                  ->addField("k", NES::UINT64)
                                  ->addField("l", NES::UINT64)
-                                 ->addField("a_time", NES::UINT64)
-                                 ->addField("b_time", NES::UINT64);
+                                 ->addField("time1", NES::UINT64)
+                                 ->addField("time2", NES::UINT64);
 
     NES::SchemaPtr schema3 = NES::Schema::create()
                                  ->addField("m", NES::UINT64)
@@ -80,8 +80,8 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
                                  ->addField("p", NES::UINT64)
                                  ->addField("q", NES::UINT64)
                                  ->addField("r", NES::UINT64)
-                                 ->addField("a_time", NES::UINT64)
-                                 ->addField("b_time", NES::UINT64);
+                                 ->addField("time1", NES::UINT64)
+                                 ->addField("time2", NES::UINT64);
 
     uint16_t counter = 1;
     for (uint64_t j = 0; j < numberOfDistinctSources; j++) {
