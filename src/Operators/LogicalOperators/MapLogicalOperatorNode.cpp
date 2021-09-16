@@ -75,7 +75,7 @@ OperatorNodePtr MapLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createMapOperator(mapExpression, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setStringSignature(stringSignature);
+    copy->setHashBasedSignature(stringSignature);
     copy->setZ3Signature(z3Signature);
     return copy;
 }
@@ -90,7 +90,7 @@ void MapLogicalOperatorNode::inferStringSignature() {
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    signatureStream << "MAP(" + mapExpression->toString() + ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
-    setStringSignature(signatureStream.str());
+    signatureStream << "MAP(" + mapExpression->toString() + ")." << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    setHashBasedSignature(signatureStream.str());
 }
 }// namespace NES

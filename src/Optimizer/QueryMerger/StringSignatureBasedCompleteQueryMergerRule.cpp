@@ -58,7 +58,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
             for (auto& targetSink : targetQueryPlan->getSinkOperators()) {
                 for (auto& hostSink : hostQueryPlan->getSinkOperators()) {
                     //Check if the address and target sink operator signatures match each other
-                    if (hostSink->getStringSignature() == targetSink->getStringSignature()) {
+                    if (hostSink->getHashBasedSignature() == targetSink->getHashBasedSignature()) {
                         targetToHostSinkOperatorMap[targetSink] = hostSink;
                         foundMatch = true;
                         break;

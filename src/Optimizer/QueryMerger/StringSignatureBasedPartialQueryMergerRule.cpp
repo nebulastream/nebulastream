@@ -161,7 +161,7 @@ StringSignatureBasedPartialQueryMergerRule::areOperatorEqual(const LogicalOperat
     }
 
     NES_TRACE("StringSignatureBasedPartialQueryMergerRule: Compare target and host operators.");
-    if (targetOperator->getStringSignature() == hostOperator->getStringSignature()) {
+    if (targetOperator->getHashBasedSignature() == hostOperator->getHashBasedSignature()) {
         NES_TRACE("StringSignatureBasedPartialQueryMergerRule: Check if parents of target and address operators are equal.");
         uint16_t matchCount = 0;
         for (const auto& targetParent : targetOperator->getParents()) {
