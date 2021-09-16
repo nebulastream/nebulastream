@@ -52,7 +52,7 @@ OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(stringSignature);
+    copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
     return copy;
 }
@@ -74,10 +74,15 @@ void WatermarkAssignerLogicalOperatorNode::inferStringSignature() {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
         childOperator->inferStringSignature();
     }
+
     std::stringstream signatureStream;
-    signatureStream << "WATERMARKASSIGNER(" << watermarkStrategyDescriptor->toString() << ")."
-                    << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
-    setHashBasedSignature(signatureStream.str());
+    signatureStream << "WATERMARKASSIGNER(" << watermarkStrategyDescriptor->toString() << ").";
+    auto childSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    signatureStream << *childSignature.begin()->second.begin();
+
+    //Update the signature
+    auto hashCode = hashGenerator(signatureStream.str());
+    hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
 }// namespace NES
