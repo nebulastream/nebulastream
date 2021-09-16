@@ -16,31 +16,31 @@
 
 #include "gtest/gtest.h"
 
+#include "../../util/DummySink.hpp"
+#include "../../util/SchemaSourceDescriptor.hpp"
+#include "../../util/TestQuery.hpp"
+#include "../../util/TestSink.hpp"
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <future>
 #include <iostream>
 #include <utility>
-
-#include "../../util/DummySink.hpp"
-#include "../../util/SchemaSourceDescriptor.hpp"
-#include "../../util/TestQuery.hpp"
-#include <Catalogs/StreamCatalog.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Sinks/Formats/NesFormat.hpp>
-#include <Topology/TopologyNode.hpp>
 
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -247,76 +247,6 @@ class WindowSource : public NES::DefaultSource {
     }
 };
 
-using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
-
-class TestSink : public SinkMedium {
-  public:
-    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0), expectedBuffer(expectedBuffer){};
-
-    static std::shared_ptr<TestSink>
-    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
-        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
-    }
-
-    bool writeData(TupleBuffer& input_buffer, Runtime::WorkerContext&) override {
-        std::unique_lock lock(m);
-        NES_DEBUG("ProjectionTest: TestSink: got buffer " << input_buffer);
-        NES_DEBUG("ProjectionTest: PrettyPrintTupleBuffer"
-                  << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
-
-        resultBuffers.emplace_back(std::move(input_buffer));
-        if (resultBuffers.size() == expectedBuffer) {
-            completed.set_value(true);
-        } else if (resultBuffers.size() > expectedBuffer) {
-            EXPECT_TRUE(false);
-        }
-        return true;
-    }
-
-    /**
-     * @brief Factory to create a new TestSink.
-     * @param expectedBuffer number of buffers expected this sink should receive.
-     * @return
-     */
-
-    TupleBuffer get(uint64_t index) {
-        std::unique_lock lock(m);
-        return resultBuffers[index];
-    }
-
-    std::string toString() const override { return "Test_Sink"; }
-
-    void setup() override{};
-
-    void shutdown() override {
-        std::unique_lock lock(m);
-        cleanupBuffers();
-    };
-
-    ~TestSink() override {
-        std::unique_lock lock(m);
-        cleanupBuffers();
-    };
-
-    uint32_t getNumberOfResultBuffers() {
-        std::unique_lock lock(m);
-        return resultBuffers.size();
-    }
-
-    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
-
-    void cleanupBuffers() { resultBuffers.clear(); }
-
-  private:
-    std::mutex m;
-    uint64_t expectedBuffer;
-
-  public:
-    std::promise<bool> completed;
-    std::vector<TupleBuffer> resultBuffers;
-};
-
 void fillBuffer(TupleBuffer& buf, const Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout) {
     auto bindedRowLayout = memoryLayout->bind(buf);
 
@@ -396,7 +326,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
     }
 
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     buffer.release();
     plan->stop();
 }
@@ -464,7 +394,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
         EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
     }
 
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     plan->stop();
 }
 
@@ -534,7 +464,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
         EXPECT_EQ(resultFields01[recordIndex], 8);
     }
 
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     plan->stop();
 }
 
@@ -671,7 +601,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
 
     nodeEngine->stopQuery(0);
     testSink->cleanupBuffers();
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
@@ -837,6 +767,6 @@ TEST_F(ProjectionTest, mergeQuery) {
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex * 2);
     }
 
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     plan->stop();
 }

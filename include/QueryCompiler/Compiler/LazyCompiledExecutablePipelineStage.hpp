@@ -40,6 +40,7 @@ class LazyCompiledExecutablePipelineStage : public Runtime::Execution::Executabl
     uint32_t close(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
                    Runtime::WorkerContext& workerContext) override;
     uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    ~LazyCompiledExecutablePipelineStage() override;
     std::string getCodeAsString() override;
 
   private:

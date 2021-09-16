@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/Compiler/LazyCompiledExecutablePipelineStage.hpp>
+#include <Util/Logger.hpp>
 namespace NES {
 NES::LazyCompiledExecutablePipelineStage::LazyCompiledExecutablePipelineStage(
     std::shared_future<Runtime::Execution::ExecutablePipelineStagePtr> futurePipelineStage)
@@ -52,6 +53,9 @@ std::string NES::LazyCompiledExecutablePipelineStage::getCodeAsString() { return
 Runtime::Execution::ExecutablePipelineStagePtr
 LazyCompiledExecutablePipelineStage::create(std::shared_future<Runtime::Execution::ExecutablePipelineStagePtr> futurePipeline) {
     return std::make_shared<LazyCompiledExecutablePipelineStage>(futurePipeline);
+}
+LazyCompiledExecutablePipelineStage::~LazyCompiledExecutablePipelineStage() {
+    NES_DEBUG("~LazyCompiledExecutablePipelineStage()");
 }
 
 }// namespace NES
