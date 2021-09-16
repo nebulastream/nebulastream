@@ -28,21 +28,18 @@ BinaryOperatorSortRulePtr BinaryOperatorSortRule::create() {
 BinaryOperatorSortRule::BinaryOperatorSortRule() { NES_DEBUG("BinaryOperatorSortRule()"); };
 
 QueryPlanPtr BinaryOperatorSortRule::apply(QueryPlanPtr queryPlanPtr) {
-    NES_INFO("Apply BinaryOperatorSortRule");
-
+    NES_INFO("Apply BinaryOperatorSortRule ");
     //Find all join operators in the query plan and sort children individually.
     auto joinOperators = queryPlanPtr->getOperatorByType<JoinLogicalOperatorNode>();
     for (const auto& joinOperator : joinOperators) {
         sortChildren(joinOperator);
     }
-
     //Find all Union operators in the query plan and sort children individually.
     auto unionOperators = queryPlanPtr->getOperatorByType<UnionLogicalOperatorNode>();
     for (const auto& unionOperator : unionOperators) {
         sortChildren(unionOperator);
     }
-
-    //Retrun the updated query plan
+    //Return the updated query plan
     return queryPlanPtr;
 }
 
