@@ -89,6 +89,7 @@ class LogicalOperatorNode : public virtual OperatorNode {
   protected:
     Optimizer::QuerySignaturePtr z3Signature;
     std::map<size_t, std::set<std::string>> hashBasedSignature;
+    std::hash<std::string> hashGenerator;
 };
 
 }// namespace NES
