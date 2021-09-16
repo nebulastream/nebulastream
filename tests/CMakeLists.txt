@@ -606,16 +606,19 @@ add_executable(e2e-coordinator-single-worker-test "E2e/E2ECoordinatorSingleWorke
 target_link_libraries(e2e-coordinator-single-worker-test nes ${GTEST_LIBRARIES})
 add_test(NAME e2e-coordinator-single-worker-test COMMAND e2e-coordinator-single-worker-test)
 set_tests_properties(e2e-coordinator-single-worker-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_dependencies(e2e-coordinator-single-worker-test nesCoordinator nesWorker)
 
 add_executable(e2e-coordinator-multi-worker-test "E2e/E2ECoordinatorMultiWorkerTest.cpp")
 target_link_libraries(e2e-coordinator-multi-worker-test nes ${GTEST_LIBRARIES})
 add_test(NAME e2e-coordinator-multi-worker-test COMMAND e2e-coordinator-multi-worker-test)
 set_tests_properties(e2e-coordinator-multi-worker-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_dependencies(e2e-coordinator-multi-worker-test nesCoordinator nesWorker)
 
 add_executable(e2e-coordinator-multi-query-test "E2e/E2ECoordinatorMultiQueryTest.cpp")
 target_link_libraries(e2e-coordinator-multi-query-test nes ${GTEST_LIBRARIES})
 add_test(NAME e2e-coordinator-multi-query-test COMMAND e2e-coordinator-multi-query-test)
 set_tests_properties(e2e-coordinator-multi-query-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_dependencies(e2e-coordinator-multi-query-test nesCoordinator nesWorker)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
