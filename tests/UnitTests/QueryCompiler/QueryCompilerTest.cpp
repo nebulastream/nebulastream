@@ -331,9 +331,8 @@ TEST_F(QueryCompilerTest, joinQuery) {
 
 class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStage {
   public:
-    ExecutionResult execute(Runtime::TupleBuffer&,
-                            Runtime::Execution::PipelineExecutionContext&,
-                            Runtime::WorkerContext&) override {
+    ExecutionResult
+    execute(Runtime::TupleBuffer&, Runtime::Execution::PipelineExecutionContext&, Runtime::WorkerContext&) override {
         return ExecutionResult::Ok;
     }
 };
