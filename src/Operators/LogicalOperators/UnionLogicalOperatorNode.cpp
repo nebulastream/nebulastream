@@ -68,7 +68,7 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setZ3Signature(z3Signature);
-    copy->setHashBasedSignature(stringSignature);
+    copy->setHashBasedSignature(hashBasedSignature);
     return copy;
 }
 
@@ -83,9 +83,14 @@ void UnionLogicalOperatorNode::inferStringSignature() {
     }
     std::stringstream signatureStream;
     signatureStream << "UNION(";
-    signatureStream << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature() + ").";
-    signatureStream << children[1]->as<LogicalOperatorNode>()->getHashBasedSignature();
-    setHashBasedSignature(signatureStream.str());
+    auto rightChildSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    auto leftChildSignature = children[1]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    signatureStream << *rightChildSignature.begin()->second.begin() + ").";
+    signatureStream << *leftChildSignature.begin()->second.begin();
+
+    //Update the signature
+    auto hashCode = hashGenerator(signatureStream.str());
+    hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
 }// namespace NES
