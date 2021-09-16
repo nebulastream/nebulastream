@@ -1118,7 +1118,6 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
 
 TEST_F(QueryExecutionTest, ExternalOperatorQueryQuery) {
     // creating query plan
-
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
