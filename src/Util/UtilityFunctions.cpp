@@ -50,7 +50,7 @@
 
 namespace NES {
 
-std::string UtilityFunctions::escapeJson(const std::string& s) {
+std::string Util::escapeJson(const std::string& s) {
     std::ostringstream o;
     for (char c : s) {
         if (c == '"' || c == '\\' || ('\x00' <= c && c <= '\x1f')) {
@@ -62,7 +62,7 @@ std::string UtilityFunctions::escapeJson(const std::string& s) {
     return o.str();
 }
 
-std::string UtilityFunctions::trim(std::string s) {
+std::string Util::trim(std::string s) {
     auto not_space = [](char c) {
         return isspace(c) == 0;
     };
@@ -73,7 +73,7 @@ std::string UtilityFunctions::trim(std::string s) {
     return s;
 }
 
-std::string UtilityFunctions::generateIdString() {
+std::string Util::generateIdString() {
     static std::random_device dev;
     static std::mt19937 rng(dev());
 
@@ -95,15 +95,15 @@ std::string UtilityFunctions::generateIdString() {
     return res;
 }
 
-std::uint64_t UtilityFunctions::generateIdInt() {
-    std::string linkID_string = UtilityFunctions::generateIdString();
+std::uint64_t Util::generateIdInt() {
+    std::string linkID_string = Util::generateIdString();
     NES_DEBUG("UtilityFunctions: generateIdInt: create a new string_id=" << linkID_string);
     std::hash<std::string> hash_fn;
     return hash_fn(linkID_string);
 }
 
 std::string
-UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& s1, const std::string& s2) {
+Util::getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& s1, const std::string& s2) {
     unsigned firstDelimPos = input.find(s1);
     unsigned endPosOfFirstDelim = firstDelimPos + s1.length();
 
@@ -112,7 +112,7 @@ UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::string& input, c
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
 
-std::string UtilityFunctions::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
+std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
         ss << buffer.getBuffer<char>()[i];
@@ -120,7 +120,7 @@ std::string UtilityFunctions::printTupleBufferAsText(Runtime::TupleBuffer& buffe
     return ss.str();
 }
 
-std::string UtilityFunctions::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema) {
+std::string Util::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema) {
     if (!buffer.isValid()) {
         return "INVALID_BUFFER_PTR";
     }
@@ -174,7 +174,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffe
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string UtilityFunctions::printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffer, const SchemaPtr& schema) {
+std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto* buffer = tbuffer.getBuffer<char>();
@@ -198,7 +198,7 @@ std::string UtilityFunctions::printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffe
     return ss.str();
 }
 
-void UtilityFunctions::findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
+void Util::findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
     // Get the first occurrence
     uint64_t pos = data.find(toSearch);
     // Repeat till end is reached
@@ -210,14 +210,14 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, const std::string& t
     }
 }
 
-std::string UtilityFunctions::replaceFirst(std::string origin, const std::string& search, const std::string& replace) {
+std::string Util::replaceFirst(std::string origin, const std::string& search, const std::string& replace) {
     if (origin.find(search) != std::string::npos) {
         return origin.replace(origin.find(search), search.size(), replace);
     }
     return origin;
 }
 
-std::string UtilityFunctions::toCSVString(const SchemaPtr& schema) {
+std::string Util::toCSVString(const SchemaPtr& schema) {
     std::stringstream ss;
     for (auto& f : schema->fields) {
         ss << f->toString() << ",";
@@ -227,7 +227,7 @@ std::string UtilityFunctions::toCSVString(const SchemaPtr& schema) {
     return ss.str();
 }
 
-bool UtilityFunctions::endsWith(const std::string& fullString, const std::string& ending) {
+bool Util::endsWith(const std::string& fullString, const std::string& ending) {
     if (fullString.length() >= ending.length()) {
         // get the start of the ending index of the full string and compare with the ending string
         return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
@@ -235,36 +235,36 @@ bool UtilityFunctions::endsWith(const std::string& fullString, const std::string
     return false;
 }
 
-bool UtilityFunctions::startsWith(const std::string& fullString, const std::string& ending) {
+bool Util::startsWith(const std::string& fullString, const std::string& ending) {
     return (fullString.rfind(ending, 0) == 0);
 }
 
-OperatorId UtilityFunctions::getNextOperatorId() {
+OperatorId Util::getNextOperatorId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
 
-uint64_t UtilityFunctions::getNextPipelineId() {
+uint64_t Util::getNextPipelineId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
 
-uint64_t UtilityFunctions::getNextTopologyNodeId() {
+uint64_t Util::getNextTopologyNodeId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
 
-uint64_t UtilityFunctions::getNextNodeEngineId() {
+uint64_t Util::getNextNodeEngineId() {
     static std::atomic_uint64_t id = time(nullptr) ^ getpid();
     return ++id;
 }
 
-uint64_t UtilityFunctions::getNextTaskId() {
+uint64_t Util::getNextTaskId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
 
-web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
+web::json::value Util::getTopologyAsJson(TopologyNodePtr root) {
     NES_INFO("UtilityFunctions: getting topology as JSON");
 
     web::json::value topologyJson{};
@@ -311,7 +311,7 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     return topologyJson;
 }
 
-bool UtilityFunctions::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
+bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                                         std::vector<std::map<std::string, std::any>> properties) {
     // count the number of operators in the query
     auto queryPlanIterator = QueryPlanIterator(queryPlan);

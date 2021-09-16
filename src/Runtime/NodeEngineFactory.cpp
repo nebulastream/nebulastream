@@ -65,7 +65,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const std::string& queryCompilerOutputBufferOptimizationLevel) {
 
     try {
-        auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
+        auto nodeEngineId = Util::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
         std::vector<BufferManagerPtr> bufferManagers;
@@ -102,7 +102,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         QueryManagerPtr queryManager;
         if (workerToCodeMapping != "") {
             std::vector<uint64_t> workerToCoreMapping =
-                UtilityFunctions::splitWithStringDelimiter<uint64_t>(workerToCodeMapping, ",");
+                Util::splitWithStringDelimiter<uint64_t>(workerToCodeMapping, ",");
             queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, workerToCoreMapping);
         } else {
             queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads);

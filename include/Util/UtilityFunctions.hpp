@@ -92,13 +92,6 @@ namespace Util {
         static constexpr auto FUNCTION = [](std::string&& x) { return std::atof(x.c_str()); };
     };
 
-    /**
-     * @brief This method is responsible for returning the location where the sub query terminates
-     * @param startOfUnionWith : the location where unionWith starts
-     * @param queryCodeSnippet: the whole string code snippet
-     * @return location where sub query terminates
-     */
-    uint64_t findSubQueryTermination(uint64_t startOfUnionWith, const std::string& queryCodeSnippet);
     }
     /**
      * @brief escapes all non text characters in a input string, such that the string could be processed as json.
