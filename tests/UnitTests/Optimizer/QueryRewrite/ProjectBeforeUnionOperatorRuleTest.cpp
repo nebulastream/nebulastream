@@ -73,7 +73,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
     setupSensorNodeAndStreamCatalog(streamCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");
-    Query query = Query::from("y").unionWith(&subQuery).sink(printSinkDescriptor);
+    Query query = Query::from("y").unionWith(subQuery).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
@@ -102,7 +102,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
     setupSensorNodeAndStreamCatalog(streamCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");
-    Query query = Query::from("x").unionWith(&subQuery).sink(printSinkDescriptor);
+    Query query = Query::from("x").unionWith(subQuery).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();

@@ -176,7 +176,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
 
     Query subQuery = Query::from("default_logical");
     auto query = Query::from("default_logical")
-                     .unionWith(&subQuery)
+                     .unionWith(subQuery)
                      .map(Attribute("f3") = Attribute("id")++)
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
@@ -662,7 +662,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto subQuery = Query::from("default_logical");
 
     auto query = Query::from("default_logical")
-                     .unionWith(&subQuery)
+                     .unionWith(subQuery)
                      .filter(Attribute("f2") < 42)
                      .project(Attribute("f1").as("f3"), Attribute("f2").as("f4"))
                      .map(Attribute("default_logical$f3") = Attribute("f4") + 2)

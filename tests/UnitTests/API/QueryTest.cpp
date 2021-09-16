@@ -212,7 +212,7 @@ TEST_F(QueryTest, testQueryMerge) {
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto subQuery = Query::from("default_logical").filter(lessExpression);
-    auto query = Query::from("default_logical").unionWith(&subQuery).sink(printSinkDescriptor);
+    auto query = Query::from("default_logical").unionWith(subQuery).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 2U);

@@ -1001,7 +1001,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // creating P3
     // merge does not change schema
     SchemaPtr ptr = std::make_shared<Schema>(testSchema);
-    auto mergedQuery = query2.unionWith(&query1).sink(DummySink::create());
+    auto mergedQuery = query2.unionWith(query1).sink(DummySink::create());
 
     auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine->getBufferManager());
 
