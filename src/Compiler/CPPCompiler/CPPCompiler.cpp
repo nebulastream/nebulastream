@@ -187,7 +187,7 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
         compilerCall << arg << " ";
     }
     NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
-    std::cout << "Compiler: compile with: '" << compilerCall.str() << "'" << std::endl;
+//    std::cout << "Compiler: compile with: '" << compilerCall.str() << "'" << std::endl;
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
     FILE* fp = nullptr;
     char buffer[8192];
