@@ -61,7 +61,7 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(stringSignature);
+    copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
     if (copy->instanceOf<SourceLogicalOperatorNode>()) {
         copy->as<SourceLogicalOperatorNode>()->setProjectSchema(projectSchema);

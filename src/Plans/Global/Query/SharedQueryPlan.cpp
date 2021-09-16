@@ -27,7 +27,7 @@
 namespace NES {
 
 SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
-    : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), deployed(false), newMetaData(true) {
+    : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), deployed(false), newMetaData(true), signatureCollection() {
     NES_DEBUG("SharedQueryPlan()");
     auto queryId = queryPlan->getQueryId();
     //Create a new query plan
@@ -42,7 +42,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     changeLog = SharedQueryPlanChangeLog::create();
     sinkOperators = rootOperators;
     queryIds.push_back(queryId);
-    signatureCollection[rootOperators[0]->getId()] = {rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature()};
+//    signatureCollection[rootOperators[0]->getId()] = rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
 }
 
 SharedQueryPlanPtr SharedQueryPlan::create(QueryPlanPtr queryPlan) {
