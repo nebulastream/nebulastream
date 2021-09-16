@@ -457,14 +457,6 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
-
-    std::map<size_t, std::set<std::string>> la;
-
-    la[1]={"x"};
-
-    NES_INFO(la);
-
-
 }
 
 /**

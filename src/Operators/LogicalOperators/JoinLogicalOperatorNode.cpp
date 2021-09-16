@@ -140,7 +140,7 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
-    copy->setHashBasedSignature(stringSignature);
+    copy->setHashBasedSignature(hashBasedSignature);
     return copy;
 }
 

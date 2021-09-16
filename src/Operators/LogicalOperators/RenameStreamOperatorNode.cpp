@@ -66,7 +66,7 @@ OperatorNodePtr RenameStreamOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
-    copy->setHashBasedSignature(stringSignature);
+    copy->setHashBasedSignature(hashBasedSignature);
     return copy;
 }
 
@@ -80,8 +80,11 @@ void RenameStreamOperatorNode::inferStringSignature() {
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    signatureStream << "RENAME_STREAM(newStreamName=" << newStreamName << ")."
-                    << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
-    setHashBasedSignature(signatureStream.str());
+    auto childSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    signatureStream << "RENAME_STREAM(newStreamName=" << newStreamName << ")." << *childSignature.begin()->second.begin();
+
+    //Update the signature
+    auto hashCode = hashGenerator(signatureStream.str());
+    hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 }// namespace NES
