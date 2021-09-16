@@ -107,7 +107,7 @@ class TestUtils {
    */
     [[nodiscard]] static Util::Subprocess startCoordinator(std::initializer_list<std::string> list ) {
         NES_INFO("Start coordinator");
-        return {"./nesCoordinator", list};
+        return {std::string(PATH_TO_BINARY_DIR) + "/nesCoordinator", list};
     }
 
     /**
@@ -117,7 +117,7 @@ class TestUtils {
      */
     [[nodiscard]] static Util::Subprocess startWorker(std::initializer_list<std::string> flags ) {
         NES_INFO("Start worker");
-        return {"./nesWorker", flags};
+        return {std::string(PATH_TO_BINARY_DIR) + "/nesWorker", flags};
     }
 
     /**
