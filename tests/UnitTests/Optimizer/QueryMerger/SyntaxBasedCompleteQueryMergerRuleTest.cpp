@@ -243,7 +243,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperat
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
     Query query1 = Query::from("car")
-                       .unionWith(&subQuery1)
+                       .unionWith(subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -254,7 +254,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperat
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2)
+                       .unionWith(subQuery2)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -297,7 +297,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
     Query query1 = Query::from("truck")
-                       .unionWith(&subQuery1)
+                       .unionWith(subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -308,7 +308,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2)
+                       .unionWith(subQuery2)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -351,7 +351,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
     Query query1 = Query::from("truck")
-                       .unionWith(&subQuery1)
+                       .unionWith(subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -362,7 +362,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2)
+                       .unionWith(subQuery2)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);

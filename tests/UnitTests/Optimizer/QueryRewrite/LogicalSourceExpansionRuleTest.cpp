@@ -202,7 +202,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 
     Query query = Query::from(logicalStreamName)
                       .map(Attribute("value") = 40)
-                      .unionWith(&subQuery)
+                      .unionWith(subQuery)
                       .filter(Attribute("id") < 45)
                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();

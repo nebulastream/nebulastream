@@ -271,7 +271,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
     auto query1 = Query::from("streamName");
     auto query2 =
-        Query::from("streamName").filter(Attribute("key") == 32).unionWith(&query1).sink(NullOutputSinkDescriptor::create());
+        Query::from("streamName").filter(Attribute("key") == 32).unionWith(query1).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query2.getQueryPlan();
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);

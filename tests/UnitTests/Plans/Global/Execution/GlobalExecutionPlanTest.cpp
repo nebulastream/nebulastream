@@ -94,7 +94,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto subQuery = Query::from("car");
-    auto query = Query::from("truck").unionWith(&subQuery).sink(printSinkDescriptor);
+    auto query = Query::from("truck").unionWith(subQuery).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     QuerySubPlanId querySubPlanId = PlanIdGenerator::getNextQuerySubPlanId();

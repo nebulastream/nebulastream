@@ -77,7 +77,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSorte
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("src1");
-    Query query = Query::from("src2").unionWith(&subQuery).sink(printSinkDescriptor);
+    Query query = Query::from("src2").unionWith(subQuery).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
@@ -108,7 +108,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedC
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("src2");
-    Query query = Query::from("src1").unionWith(&subQuery).sink(printSinkDescriptor);
+    Query query = Query::from("src1").unionWith(subQuery).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
@@ -216,7 +216,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
     Query subQuery1 = Query::from("src1");
     Query subQuery2 = Query::from("src1");
     Query query = Query::from("src2")
-                      .unionWith(&subQuery1)
+                      .unionWith(subQuery1)
                       .joinWith(subQuery2)
                       .where(Attribute("id"))
                       .equalsTo(Attribute("id"))
@@ -266,7 +266,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWith
     Query subQuery1 = Query::from("src2");
     Query subQuery2 = Query::from("src2");
     Query query = Query::from("src1")
-                      .unionWith(&subQuery1)
+                      .unionWith(subQuery1)
                       .joinWith(subQuery2)
                       .where(Attribute("id"))
                       .equalsTo(Attribute("id"))

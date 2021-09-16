@@ -282,7 +282,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
     Query query1 = Query::from("car")
-                       .unionWith(&subQuery1)
+                       .unionWith(subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -293,7 +293,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2)
+                       .unionWith(subQuery2)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -347,7 +347,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
     Query query1 = Query::from("truck")
-                       .unionWith(&subQuery1)
+                       .unionWith(subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -358,7 +358,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2)
+                       .unionWith(subQuery2)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -399,7 +399,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
     Query query1 = Query::from("truck")
-                       .unionWith(&subQuery1)
+                       .unionWith(subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -410,7 +410,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2)
+                       .unionWith(subQuery2)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1326,7 +1326,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(&subQuery1)
+                       .unionWith(subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1338,7 +1338,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUn
     Query subQuery2 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(&subQuery2)
+                       .unionWith(subQuery2)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1399,7 +1399,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
                                                                                                      NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(&subQuery1)
+                       .unionWith(subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1414,7 +1414,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
                                                                                                      NES::API::Milliseconds()));
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(&subQuery2)
+                       .unionWith(subQuery2)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1475,7 +1475,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
                                                                                                      NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(&subQuery1)
+                       .unionWith(subQuery1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1487,7 +1487,7 @@ TEST_F(StringSignatureBasedCompleteQueryMergerRuleTest,
                        .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
                                                                                                 NES::API::Milliseconds(10),
                                                                                                 NES::API::Milliseconds()))
-                       .unionWith(&subQuery2)
+                       .unionWith(subQuery2)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
