@@ -20,20 +20,18 @@
 #include <API/Schema.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <future>
 #include <iostream>
 #include <utility>
 
 #include "../../util/DummySink.hpp"
+#include "../../util/TestSink.hpp"
 #include "../../util/SchemaSourceDescriptor.hpp"
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
@@ -50,8 +48,6 @@
 #include <Topology/TopologyNode.hpp>
 
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
-
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -221,71 +217,6 @@ class WindowSource : public NES::DefaultSource {
     }
 };
 
-using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
-
-class TestSink : public SinkMedium {
-  public:
-    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0), expectedBuffer(expectedBuffer){};
-
-    static std::shared_ptr<TestSink>
-    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
-        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
-    }
-
-    bool writeData(TupleBuffer& input_buffer, Runtime::WorkerContext&) override {
-        std::unique_lock lock(m);
-        NES_DEBUG("QueryExecutionTest: TestSink: got buffer " << input_buffer);
-        NES_DEBUG("QueryExecutionTest: PrettyPrintTupleBuffer"
-                  << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
-
-        resultBuffers.emplace_back(std::move(input_buffer));
-        if (resultBuffers.size() == expectedBuffer) {
-            completed.set_value(true);
-        } else if (resultBuffers.size() > expectedBuffer) {
-            EXPECT_TRUE(false);
-        }
-        return true;
-    }
-
-    /**
-     * @brief Factory to create a new TestSink.
-     * @param expectedBuffer number of buffers expected this sink should receive.
-     * @return
-     */
-
-    TupleBuffer get(uint64_t index) {
-        std::unique_lock lock(m);
-        return resultBuffers[index];
-    }
-
-    void setup() override{};
-
-    std::string toString() const override { return "Test_Sink"; }
-
-    void shutdown() override {}
-
-    ~TestSink() override {
-        NES_DEBUG("~TestSink()");
-        std::unique_lock lock(m);
-        cleanupBuffers();
-    };
-
-    uint32_t getNumberOfResultBuffers() {
-        std::unique_lock lock(m);
-        return resultBuffers.size();
-    }
-
-    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
-
-    void cleanupBuffers() { resultBuffers.clear(); }
-
-    mutable std::recursive_mutex m;
-    uint64_t expectedBuffer;
-
-    std::promise<bool> completed;
-    std::vector<TupleBuffer> resultBuffers;
-};
 
 void fillBuffer(TupleBuffer& buf, const Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout) {
 

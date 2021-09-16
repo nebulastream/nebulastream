@@ -1,0 +1,101 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+
+#ifndef NES_TESTS_UTIL_TESTSINK_HPP_
+#define NES_TESTS_UTIL_TESTSINK_HPP_
+#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/DefaultSource.hpp>
+#include <Sources/SourceCreator.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
+namespace NES {
+
+using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
+
+class TestSink : public SinkMedium {
+  public:
+    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager)
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0), expectedBuffer(expectedBuffer){};
+
+    static std::shared_ptr<TestSink>
+    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
+        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
+    }
+
+    bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContext&) override {
+        std::unique_lock lock(m);
+        NES_DEBUG("TestSink: TestSink: got buffer " << input_buffer);
+        NES_DEBUG("TestSink: PrettyPrintTupleBuffer"
+                  << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
+
+        resultBuffers.emplace_back(std::move(input_buffer));
+        if (resultBuffers.size() == expectedBuffer) {
+            completed.set_value(true);
+        } else if (resultBuffers.size() > expectedBuffer) {
+            EXPECT_TRUE(false);
+        }
+        return true;
+    }
+
+    /**
+     * @brief Factory to create a new TestSink.
+     * @param expectedBuffer number of buffers expected this sink should receive.
+     * @return
+     */
+
+    Runtime::TupleBuffer get(uint64_t index) {
+        std::unique_lock lock(m);
+        return resultBuffers[index];
+    }
+
+    void setup() override{};
+
+    std::string toString() const override { return "Test_Sink"; }
+
+    ~TestSink() override {
+        NES_DEBUG("~TestSink()");
+        std::unique_lock lock(m);
+        cleanupBuffers();
+    };
+
+    uint32_t getNumberOfResultBuffers() {
+        std::unique_lock lock(m);
+        return resultBuffers.size();
+    }
+
+    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
+
+    void cleanupBuffers() { resultBuffers.clear(); }
+
+    void shutdown() override {}
+
+    mutable std::recursive_mutex m;
+    uint64_t expectedBuffer;
+
+    std::promise<bool> completed;
+    std::vector<Runtime::TupleBuffer> resultBuffers;
+};
+
+}// namespace NES
+
+#endif//NES_TESTS_UTIL_TESTSINK_HPP_
