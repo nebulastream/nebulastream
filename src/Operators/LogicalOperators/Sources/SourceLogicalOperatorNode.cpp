@@ -71,6 +71,8 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
 }
 
 void SourceLogicalOperatorNode::inferStringSignature() {
-    setHashBasedSignature("SOURCE(" + sourceDescriptor->getStreamName() + ")");
+    //Update the signature
+    auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getStreamName() + ")");
+    hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getStreamName() + ")"};
 }
 }// namespace NES
