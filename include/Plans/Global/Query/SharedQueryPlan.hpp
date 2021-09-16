@@ -209,6 +209,7 @@ class SharedQueryPlan {
     SharedQueryPlanChangeLogPtr changeLog;
     bool deployed;
     bool newMetaData;
+    std::map<size_t, std::set<std::string>> signatureCollection;
 };
 }// namespace NES
 

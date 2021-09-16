@@ -59,7 +59,7 @@ OperatorNodePtr FilterLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
-    copy->setStringSignature(stringSignature);
+    copy->setHashBasedSignature(stringSignature);
     return copy;
 }
 
@@ -74,7 +74,7 @@ void FilterLogicalOperatorNode::inferStringSignature() {
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    signatureStream << "FILTER(" + predicate->toString() + ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
-    setStringSignature(signatureStream.str());
+    signatureStream << "FILTER(" + predicate->toString() + ")." << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    setHashBasedSignature(signatureStream.str());
 }
 }// namespace NES

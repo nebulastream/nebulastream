@@ -66,7 +66,7 @@ void IterationLogicalOperatorNode::inferStringSignature() {
 
     std::stringstream signatureStream;
     signatureStream << "Iteration(" << minIterations << ", " << maxIterations << ")."
-                    << children[0]->as<LogicalOperatorNode>()->getStringSignature();
-    setStringSignature(signatureStream.str());
+                    << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    setHashBasedSignature(signatureStream.str());
 }
 }// namespace NES

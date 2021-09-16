@@ -140,7 +140,7 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
-    copy->setStringSignature(stringSignature);
+    copy->setHashBasedSignature(stringSignature);
     return copy;
 }
 
@@ -159,8 +159,8 @@ void JoinLogicalOperatorNode::inferStringSignature() {
     signatureStream << "JOIN(LEFT-KEY=" << joinDefinition->getLeftJoinKey()->toString() << ",";
     signatureStream << "RIGHT-KEY=" << joinDefinition->getRightJoinKey()->toString() << ",";
     signatureStream << "WINDOW-DEFINITION=" << joinDefinition->getWindowType()->toString() << ",";
-    signatureStream << children[0]->as<LogicalOperatorNode>()->getStringSignature() + ").";
-    signatureStream << children[1]->as<LogicalOperatorNode>()->getStringSignature();
-    setStringSignature(signatureStream.str());
+    signatureStream << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature() + ").";
+    signatureStream << children[1]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    setHashBasedSignature(signatureStream.str());
 }
 }// namespace NES

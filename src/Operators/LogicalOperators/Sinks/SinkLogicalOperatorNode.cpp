@@ -52,7 +52,7 @@ OperatorNodePtr SinkLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
-    copy->setStringSignature(stringSignature);
+    copy->setHashBasedSignature(stringSignature);
     return copy;
 }
 
@@ -66,7 +66,7 @@ void SinkLogicalOperatorNode::inferStringSignature() {
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    signatureStream << "SINK()." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
-    setStringSignature(signatureStream.str());
+    signatureStream << "SINK()." << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    setHashBasedSignature(signatureStream.str());
 }
 }// namespace NES

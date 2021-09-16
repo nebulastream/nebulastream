@@ -63,11 +63,11 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             auto hostSinks = hostQueryPlan->getSinkOperators();
             bool foundMatch = false;
 
-            //            NES_ERROR("HostSink " << hostSink->getStringSignature());
-            //            NES_ERROR("TargetSink " << targetSink->getStringSignature());
+            //            NES_ERROR("HostSink " << hostSink->getHashBasedSignature());
+            //            NES_ERROR("TargetSink " << targetSink->getHashBasedSignature());
             //Check if the host and target sink operator signatures match each other
             auto match = std::find_if(hostSinks.begin(), hostSinks.end(), [&](const SinkLogicalOperatorNodePtr& hostSink) {
-                return hostSink->getStringSignature() == targetSink->getStringSignature();
+                return hostSink->getHashBasedSignature() == targetSink->getHashBasedSignature();
             });
 
 

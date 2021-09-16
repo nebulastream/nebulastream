@@ -61,7 +61,7 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setStringSignature(stringSignature);
+    copy->setHashBasedSignature(stringSignature);
     copy->setZ3Signature(z3Signature);
     if (copy->instanceOf<SourceLogicalOperatorNode>()) {
         copy->as<SourceLogicalOperatorNode>()->setProjectSchema(projectSchema);
@@ -71,6 +71,6 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
 }
 
 void SourceLogicalOperatorNode::inferStringSignature() {
-    setStringSignature("SOURCE(" + sourceDescriptor->getStreamName() + ")");
+    setHashBasedSignature("SOURCE(" + sourceDescriptor->getStreamName() + ")");
 }
 }// namespace NES
