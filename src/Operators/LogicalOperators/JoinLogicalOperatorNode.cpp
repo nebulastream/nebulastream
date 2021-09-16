@@ -159,8 +159,14 @@ void JoinLogicalOperatorNode::inferStringSignature() {
     signatureStream << "JOIN(LEFT-KEY=" << joinDefinition->getLeftJoinKey()->toString() << ",";
     signatureStream << "RIGHT-KEY=" << joinDefinition->getRightJoinKey()->toString() << ",";
     signatureStream << "WINDOW-DEFINITION=" << joinDefinition->getWindowType()->toString() << ",";
-    signatureStream << children[0]->as<LogicalOperatorNode>()->getHashBasedSignature() + ").";
-    signatureStream << children[1]->as<LogicalOperatorNode>()->getHashBasedSignature();
-    setHashBasedSignature(signatureStream.str());
+
+    auto rightChildSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    auto leftChildSignature = children[1]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    signatureStream << *rightChildSignature.begin()->second.begin() + ").";
+    signatureStream << *leftChildSignature.begin()->second.begin();
+
+    //Update the signature
+    auto hashCode = hashGenerator(signatureStream.str());
+    hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 }// namespace NES
