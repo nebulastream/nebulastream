@@ -137,6 +137,13 @@ bool SharedQueryPlan::addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan) 
         sinkOperators.emplace_back(sinkOperator);
         changeLog->registerNewlyAddedSink(sinkOperator->getId());
         queryIdToSinkOperatorMap[queryId] = queryPlan->getRootOperators();
+        //Add new signatures to the shared query plan
+        auto hashBasedSignature = sinkOperator->as<LogicalOperatorNode>()->getHashBasedSignature();
+        for (const auto& entry : hashBasedSignature) {
+            for (const auto& stringValue : entry.second) {
+                updateHashBasedSignature(entry.first, stringValue);
+            }
+        }
     }
     //Mark the meta data as updated but not deployed
     markAsNotDeployed();

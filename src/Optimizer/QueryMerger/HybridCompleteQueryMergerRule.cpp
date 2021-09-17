@@ -55,33 +55,40 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
 
-            auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
             std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
-            auto targetSink = targetQueryPlan->getSinkOperators()[0];
+
+            auto hostHashSignature = hostSharedQueryPlan->getHashBasedSignature();
+            auto targetSinkOperators = targetQueryPlan->getSinkOperators();
+            auto targetHashSignature = targetSinkOperators[0]->getHashBasedSignature();
+
+            auto targetSignatureHashValue = targetHashSignature.begin()->first;
+            auto targetSignatureStringValue = *targetHashSignature.begin()->second.begin();
+
+            auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             auto hostSinks = hostQueryPlan->getSinkOperators();
             bool foundMatch = false;
 
-            //            NES_ERROR("HostSink " << hostSink->getHashBasedSignature());
-            //            NES_ERROR("TargetSink " << targetSink->getHashBasedSignature());
             //Check if the host and target sink operator signatures match each other
-            auto match = std::find_if(hostSinks.begin(), hostSinks.end(), [&](const SinkLogicalOperatorNodePtr& hostSink) {
-                return hostSink->getHashBasedSignature() == targetSink->getHashBasedSignature();
-            });
+            if (hostHashSignature.find(targetSignatureHashValue) != hostHashSignature.end()) {
+                auto hostSignatureStringValues = hostHashSignature[targetSignatureHashValue];
+                auto match = std::find_if(hostSignatureStringValues.begin(),
+                                          hostSignatureStringValues.end(),
+                                          [&](const std::string& hostSignatureStringValue) {
+                                              return hostSignatureStringValue == targetSignatureStringValue;
+                                          });
+                if (match != hostSignatureStringValues.end()) {
+                    targetToHostSinkOperatorMap[targetSinkOperators[0]] = hostSharedQueryPlan->getSinkOperators()[0];
+                    foundMatch = true;
+                }
+            }
 
-
-
-            if (match != hostSinks.end()) {
-                targetToHostSinkOperatorMap[targetSink] = *match;
+            if (!foundMatch
+                && signatureEqualityUtil->checkEquality(hostSinks[0]->getZ3Signature(),
+                                                        targetSinkOperators[0]->getZ3Signature())) {
+                targetToHostSinkOperatorMap[targetSinkOperators[0]] = hostSinks[0];
                 foundMatch = true;
-                stringComp++;
-                NES_ERROR("String Comp " << stringComp);
-            } else if (signatureEqualityUtil->checkEquality(hostSinks[0]->getZ3Signature(), targetSink->getZ3Signature())) {
-                targetToHostSinkOperatorMap[targetSink] = hostSinks[0];
-                foundMatch = true;
-                z3Comp++;
-//                NES_ERROR("Z3 Comp " << z3Comp);
             }
 
             //Not all sinks found an equivalent entry in the target shared query metadata

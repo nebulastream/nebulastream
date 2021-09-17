@@ -41,7 +41,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
         case QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule:
             queryMergerRule = Z3SignatureBasedCompleteQueryMergerRule::create(context);
             break;
-        case QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule:
+        case QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule:
         case QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule:
             queryMergerRule = HashSignatureBasedCompleteQueryMergerRule::create();
             break;
