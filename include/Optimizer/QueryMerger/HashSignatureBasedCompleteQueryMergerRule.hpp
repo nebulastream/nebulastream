@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_STRINGSIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
-#define NES_STRINGSIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
+#ifndef NES_HASHSIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
+#define NES_HASHSIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
@@ -24,8 +24,8 @@ namespace NES::Optimizer {
 class SignatureEqualityUtil;
 using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
 
-class StringSignatureBasedCompleteQueryMergerRule;
-using StringSignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<StringSignatureBasedCompleteQueryMergerRule>;
+class HashSignatureBasedCompleteQueryMergerRule;
+using HashSignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<HashSignatureBasedCompleteQueryMergerRule>;
 
 /**
  * @brief StringSignatureBasedEqualQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
@@ -66,18 +66,18 @@ using StringSignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<StringSig
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class StringSignatureBasedCompleteQueryMergerRule final : public BaseQueryMergerRule {
+class HashSignatureBasedCompleteQueryMergerRule final : public BaseQueryMergerRule {
 
   public:
-    static StringSignatureBasedCompleteQueryMergerRulePtr create();
+    static HashSignatureBasedCompleteQueryMergerRulePtr create();
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-    ~StringSignatureBasedCompleteQueryMergerRule() final = default;
+    ~HashSignatureBasedCompleteQueryMergerRule() final = default;
 
   private:
     SignatureEqualityUtilPtr signatureEqualityUtil{nullptr};
 };
 }// namespace NES::Optimizer
 
-#endif//NES_STRINGSIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
+#endif//NES_HASHSIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP

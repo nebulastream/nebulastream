@@ -17,8 +17,8 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/QueryMerger/HashSignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/QueryMerger/StringSignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -27,24 +27,25 @@
 
 namespace NES::Optimizer {
 
-StringSignatureBasedCompleteQueryMergerRulePtr StringSignatureBasedCompleteQueryMergerRule::create() {
-    return std::make_shared<StringSignatureBasedCompleteQueryMergerRule>();
+HashSignatureBasedCompleteQueryMergerRulePtr HashSignatureBasedCompleteQueryMergerRule::create() {
+    return std::make_shared<HashSignatureBasedCompleteQueryMergerRule>();
 }
 
-bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     long qmTime = 0;
     auto startSI =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_INFO("SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO(
+        "HashSignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
+        NES_WARNING("HashSignatureBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG("SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("HashSignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all query plans to identify the potential sharing opportunities
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
@@ -76,7 +77,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
             }
 
             if (foundMatch) {
-                NES_TRACE("SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE("HashSignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
                 auto startQM =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
@@ -93,7 +94,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
                         for (auto& hostChild : hostSinkChildren) {
                             bool addedNewParent = hostChild->addParent(targetSinkOperator);
                             if (!addedNewParent) {
-                                NES_WARNING("SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                                NES_WARNING("HashSignatureBasedCompleteQueryMergerRule: Failed to add new parent");
                             }
                             hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSinkOperator);
                         }
@@ -118,7 +119,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
         }
 
         if (!merged) {
-            NES_DEBUG("SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG("HashSignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
             auto startQM =
                 std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                     .count();

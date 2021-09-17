@@ -435,7 +435,7 @@ target_link_libraries(z3-signature-based-partial-query-merger-rule-test nes ${GT
 add_test(NAME z3-signature-based-partial-query-merger-rule-test COMMAND z3-signature-based-partial-query-merger-rule-test)
 
 ### String Signature Based Complete Query Merger Rule Test ###
-add_executable(string-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/StringSignatureBasedCompleteQueryMergerRuleTest.cpp")
+add_executable(string-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/HashSignatureBasedCompleteQueryMergerRuleTest.cpp")
 target_link_libraries(string-signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME string-signature-based-equal-query-merger-rule-test COMMAND string-signature-based-equal-query-merger-rule-test)
 
