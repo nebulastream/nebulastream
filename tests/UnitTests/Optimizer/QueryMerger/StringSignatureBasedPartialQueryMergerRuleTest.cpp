@@ -67,10 +67,10 @@ class StringSignatureBasedPartialQueryMergerRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup StringSignatureBasedCompleteQueryMergerRuleTest test case."); }
+    void TearDown() override { NES_INFO("Setup HashSignatureBasedCompleteQueryMergerRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down StringSignatureBasedCompleteQueryMergerRuleTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down HashSignatureBasedCompleteQueryMergerRuleTest test class."); }
 };
 
 /**

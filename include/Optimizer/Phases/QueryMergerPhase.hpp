@@ -46,7 +46,7 @@ static const std::map<std::string, QueryMergerRule> stringToMergerRuleEnum{
     {"SyntaxBasedPartialQueryMergerRule", QueryMergerRule::SyntaxBasedPartialQueryMergerRule},
     {"Z3SignatureBasedCompleteQueryMergerRule", QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule},
     {"Z3SignatureBasedPartialQueryMergerRule", QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule},
-    {"StringSignatureBasedCompleteQueryMergerRule", QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule},
+    {"HashSignatureBasedCompleteQueryMergerRule", QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule},
     {"ImprovedStringSignatureBasedCompleteQueryMergerRule", QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule},
     {"ImprovedStringSignatureBasedPartialQueryMergerRule", QueryMergerRule::ImprovedStringSignatureBasedPartialQueryMergerRule},
     {"StringSignatureBasedPartialQueryMergerRule", QueryMergerRule::StringSignatureBasedPartialQueryMergerRule},
