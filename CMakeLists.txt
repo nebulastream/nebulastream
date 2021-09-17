@@ -343,9 +343,9 @@ set(LIBRARIES ${LIBRARIES} ${BACKWARD_LIBRARIES})
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
 # C++ REST SDK
+# cpprestsdk relies on boost so we set the right configuration flag
+set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 find_package(cpprestsdk CONFIG REQUIRED)
-
-# Library containing rest dependencies
 set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
 
 # Library containing Kafka client
