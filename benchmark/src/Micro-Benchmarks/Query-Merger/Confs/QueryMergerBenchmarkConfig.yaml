@@ -6,14 +6,15 @@ querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query
 #querySetLocation: '/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
 
 # Parameter that are changed per run with comma separated list
-queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule
-  #,HybridCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
+queryMergerRule: ImprovedStringSignatureBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,Z3SignatureBasedCompleteQueryMergerRule
+  # Z3SignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule
+#,HybridCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
 #queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
 #queryMergerRule: Z3SignatureBasedPartialQueryMergerRule,SyntaxBasedPartialQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedPartialQueryMergerRule,ImprovedStringSignatureBasedPartialQueryMergerRule
 noOfPhysicalSources: 1,1,1
-  #,1,1
+#,1,1
 batchSize: 1,1,1
-  #,1,1
+#,1,1
 
 #benchmark internal parameter
 logLevel: LOG_ERROR

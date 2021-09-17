@@ -33,7 +33,7 @@ SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr contex
 }
 
 void SignatureInferencePhase::execute(const QueryPlanPtr& queryPlan) {
-    if (queryMergerRule == QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule
+    if (queryMergerRule == QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule
         || queryMergerRule == QueryMergerRule::StringSignatureBasedPartialQueryMergerRule
         || queryMergerRule == QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
         || queryMergerRule == QueryMergerRule::ImprovedStringSignatureBasedPartialQueryMergerRule) {
