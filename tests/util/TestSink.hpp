@@ -14,20 +14,19 @@
     limitations under the License.
 */
 
-
 #ifndef NES_TESTS_UTIL_TESTSINK_HPP_
 #define NES_TESTS_UTIL_TESTSINK_HPP_
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Sinks/Formats/NesFormat.hpp>
 namespace NES {
 
 using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
@@ -45,8 +44,7 @@ class TestSink : public SinkMedium {
     bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
         NES_DEBUG("TestSink: TestSink: got buffer " << input_buffer);
-        NES_DEBUG("TestSink: PrettyPrintTupleBuffer"
-                  << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
+        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
 
         resultBuffers.emplace_back(std::move(input_buffer));
         if (resultBuffers.size() == expectedBuffer) {
