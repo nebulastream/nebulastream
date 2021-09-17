@@ -51,25 +51,27 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globa
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
+            auto hostSignature = hostSharedQueryPlan->getHashBasedSignature();
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
             std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
             bool foundMatch = false;
-            for (auto& targetSink : targetQueryPlan->getSinkOperators()) {
-                hostSharedQueryPlan->get
-                for (auto& hostSink : hostQueryPlan->getSinkOperators()) {
-                    //Check if the address and target sink operator signatures match each other
-                    auto targetSignature = targetSink->getHashBasedSignature();
-                    if (hostSink->getHashBasedSignature() == targetSignature) {
-                        targetToHostSinkOperatorMap[targetSink] = hostSink;
-                        foundMatch = true;
-                        break;
-                    }
-                }
-                if (!foundMatch) {
-                    NES_WARNING("SignatureBasedCompleteQueryMergerRule: There are no matching host sink for target sink "
-                                << targetSink->toString());
-                    break;
+
+            auto targetSinkOperators = targetQueryPlan->getSinkOperators();
+            auto targetSignature = targetSinkOperators[0]->getHashBasedSignature();
+            auto targetSignatureHashValue = targetSignature.begin()->first;
+            auto targetSignatureStringValue = *targetSignature.begin()->second.begin();
+
+            if (hostSignature.find(targetSignatureHashValue) != hostSignature.end()) {
+                auto hostSignatureStringValues = hostSignature[targetSignatureHashValue];
+                auto match = std::find_if(hostSignatureStringValues.begin(),
+                                          hostSignatureStringValues.end(),
+                                          [&](const std::string& hostSignatureStringValue) {
+                                              return hostSignatureStringValue == targetSignatureStringValue;
+                                          });
+                if (match != hostSignatureStringValues.end()) {
+                    targetToHostSinkOperatorMap[targetSinkOperators[0]] = hostSharedQueryPlan->getSinkOperators()[0];
+                    foundMatch = true;
                 }
             }
 
