@@ -27,7 +27,7 @@
 namespace NES {
 
 SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
-    : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), deployed(false), newMetaData(true), signatureCollection() {
+    : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), deployed(false), newMetaData(true), hashBasedSignatures() {
     NES_DEBUG("SharedQueryPlan()");
     auto queryId = queryPlan->getQueryId();
     //Create a new query plan
@@ -42,7 +42,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     changeLog = SharedQueryPlanChangeLog::create();
     sinkOperators = rootOperators;
     queryIds.push_back(queryId);
-//    signatureCollection[rootOperators[0]->getId()] = rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    //    hashBasedSignatures[rootOperators[0]->getId()] = rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
 }
 
 SharedQueryPlanPtr SharedQueryPlan::create(QueryPlanPtr queryPlan) {
@@ -171,5 +171,17 @@ bool SharedQueryPlan::removeOperator(const OperatorNodePtr& operatorToRemove) {
 }
 
 SharedQueryPlanChangeLogPtr SharedQueryPlan::getChangeLog() { return changeLog; }
+
+std::map<size_t, std::set<std::string>> SharedQueryPlan::getHashBasedSignature() { return hashBasedSignatures; }
+
+void SharedQueryPlan::updateHashBasedSignature(size_t hashValue, const std::string& stringSignature) {
+    if (hashBasedSignatures.find(hashValue) != hashBasedSignatures.end()) {
+        auto stringSignatures = hashBasedSignatures[hashValue];
+        stringSignatures.emplace(stringSignature);
+        hashBasedSignatures[hashValue] = stringSignatures;
+    } else {
+        hashBasedSignatures[hashValue] = {stringSignature};
+    }
+}
 
 }// namespace NES
