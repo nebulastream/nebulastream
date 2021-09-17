@@ -191,6 +191,19 @@ class SharedQueryPlan {
 
     SharedQueryPlanChangeLogPtr getChangeLog();
 
+    /**
+     * Get the hash based signature for the shared query plan
+     * @return collection of hash based signatures
+     */
+    std::map<size_t, std::set<std::string>> getHashBasedSignature();
+
+    /**
+     * Update the hash based signatures with new values
+     * @param hashValue: The hash value
+     * @param stringSignature: The string signature
+     */
+    void updateHashBasedSignature(size_t hashValue, const std::string& stringSignature);
+
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
@@ -209,7 +222,7 @@ class SharedQueryPlan {
     SharedQueryPlanChangeLogPtr changeLog;
     bool deployed;
     bool newMetaData;
-    std::map<size_t, std::set<std::string>> signatureCollection;
+    std::map<size_t, std::set<std::string>> hashBasedSignatures;
 };
 }// namespace NES
 
