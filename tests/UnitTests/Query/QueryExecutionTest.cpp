@@ -191,7 +191,7 @@ class WindowSource : public NES::DefaultSource {
         timestamp = timestamp + 10;
         runCnt++;
 
-        NES_DEBUG("QueryExecutionTest: source buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema));
+        NES_DEBUG("QueryExecutionTest: source buffer=" << Util::prettyPrintTupleBuffer(buffer, schema));
         return buffer;
     };
 
@@ -455,7 +455,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
 
     auto resultBuffer = testSink->get(0);
 
-    EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, outputSchema));
+    EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, outputSchema));
 
     buffer.release();
     testSink->cleanupBuffers();
@@ -602,7 +602,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
     auto resultBuffer = testSink->get(0);
 
-    NES_DEBUG("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    NES_DEBUG("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
 
@@ -692,7 +692,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     // get result buffer, which should contain two results.
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
     auto resultBuffer = testSink->get(0);
-    NES_DEBUG("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    NES_DEBUG("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
 
@@ -779,14 +779,14 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
 
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2UL);
-    NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    NES_INFO("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     std::string expectedContent = "+----------------------------------------------------+\n"
                                   "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                   "+----------------------------------------------------+\n"
                                   "|0|10|1|10|\n"
                                   "|5|15|1|10|\n"
                                   "+----------------------------------------------------+";
-    EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(0);
     testSink->cleanupBuffers();
 }
@@ -849,24 +849,24 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
 
     auto resultBuffer = testSink->get(0);
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
-    NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    NES_INFO("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     std::string expectedContent = "+----------------------------------------------------+\n"
                                   "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                   "+----------------------------------------------------+\n"
                                   "|0|15|1|10|\n"
                                   "+----------------------------------------------------+";
-    EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
 
     auto resultBuffer2 = testSink->get(1);
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer2.getNumberOfTuples() << " tuples.");
-    NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
+    NES_INFO("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
     std::string expectedContent2 = "+----------------------------------------------------+\n"
                                    "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                    "+----------------------------------------------------+\n"
                                    "|5|20|1|20|\n"
                                    "|10|25|1|10|\n"
                                    "+----------------------------------------------------+";
-    EXPECT_EQ(expectedContent2, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
+    EXPECT_EQ(expectedContent2, Util::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
 
     nodeEngine->stopQuery(0);
     testSink->cleanupBuffers();
@@ -936,14 +936,14 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
 
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2UL);
-    NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    NES_INFO("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     std::string expectedContent = "+----------------------------------------------------+\n"
                                   "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                   "+----------------------------------------------------+\n"
                                   "|2|6|1|10|\n"
                                   "|4|8|1|10|\n"
                                   "+----------------------------------------------------+";
-    EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(0);
     testSink->cleanupBuffers();
 }
