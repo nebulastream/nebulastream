@@ -140,7 +140,8 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
         case CACHE_COPY: {
             buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
+//            memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
+            rte_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
             break;
         }
         case COPY_BUFFER: {
