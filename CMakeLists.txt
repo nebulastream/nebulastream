@@ -38,31 +38,6 @@ function(download_file url filename hash_type hash)
                 TIMEOUT 0)
     endif ()
 endfunction(download_file)
-#[[
-message("test: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
-message("test: ${CMAKE_GENERATOR_PLATFORM}")
-message("test: ${UNIX}")
-message("test: ${CMAKE_HOST_SYSTEM}")
-if (${APPLE})
-
-    if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "64Bit")
-        set(VCPKG_TARGET_TRIPLET x64-linux-nes)
-    else ()
-        message(ERROR "NES currently dose not support non ${CMAKE_HOST_SYSTEM_PROCESSOR} architectures on Apple")
-    endif ()
-elseif (${UNIX})
-
-    if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "64Bit")
-        set(VCPKG_TARGET_TRIPLET x64-linux-nes)
-    elseif (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "arm64")
-        set(VCPKG_TARGET_TRIPLET arm64-linux-nes)
-    else ()
-        message(ERROR "NES currently dose not support ${CMAKE_HOST_SYSTEM_PROCESSOR} architectures on UNIX")
-    endif ()
-else ()
-    message(ERROR "NES currently dose not support ${CMAKE_HOST_SYSTEM_NAME} with ${CMAKE_HOST_SYSTEM_PROCESSOR} architectures on UNIX")
-endif ()
-]]
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 
