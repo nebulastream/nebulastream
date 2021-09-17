@@ -222,6 +222,7 @@ class SharedQueryPlan {
     SharedQueryPlanChangeLogPtr changeLog;
     bool deployed;
     bool newMetaData;
+    //FIXME: We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
 };
 }// namespace NES

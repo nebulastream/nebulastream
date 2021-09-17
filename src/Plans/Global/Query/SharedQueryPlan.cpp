@@ -42,7 +42,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     changeLog = SharedQueryPlanChangeLog::create();
     sinkOperators = rootOperators;
     queryIds.push_back(queryId);
-    //    hashBasedSignatures[rootOperators[0]->getId()] = rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    hashBasedSignatures = rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
 }
 
 SharedQueryPlanPtr SharedQueryPlan::create(QueryPlanPtr queryPlan) {
