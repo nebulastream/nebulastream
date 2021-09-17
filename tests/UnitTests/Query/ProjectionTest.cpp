@@ -198,7 +198,7 @@ class WindowSource : public NES::DefaultSource {
         timestamp = timestamp + 10;
         runCnt++;
 
-        NES_DEBUG("ProjectionTest: source buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema));
+        NES_DEBUG("ProjectionTest: source buffer=" << Util::prettyPrintTupleBuffer(buffer, schema));
         return buffer;
     };
 
@@ -577,7 +577,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
 
     auto resultBuffer = testSink->get(0);
 
-    NES_DEBUG("ProjectionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    NES_DEBUG("ProjectionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1ULL);
 
