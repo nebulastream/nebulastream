@@ -323,7 +323,6 @@ add_custom_command(
         DEPENDS "${PROTO_FILE_PATH}")
 
 # LibZMQ
-# ------
 message(STATUS "Libzmq")
 find_package(ZeroMQ CONFIG REQUIRED)
 if (NOT ${ZeroMQ_FOUND})
@@ -357,16 +356,7 @@ include_directories(${Log4cxx_INCLUDE_DIR})
 set(LIBRARIES ${LIBRARIES} log4cxx)
 message(STATUS "Using Log4cxx: " ${Log4cxx_LIBRARY})
 
-# Boost Libraries
-set(Boost_USE_MULTITHREADED TRUE)
-set(Boost_NO_WARN_NEW_VERSIONS TRUE)
-find_package(Boost REQUIRED system thread program_options filesystem chrono) # Only check if lib is available on system for generated code.
-message("Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIRS}")
-include_directories(${Boost_INCLUDE_DIRS})
-set(LIBRARIES ${LIBRARIES} Boost::boost Boost::system Boost::thread Boost::program_options Boost::filesystem Boost::chrono)
-
 # Backward
-
 include(cmake/BackwardConfig.cmake)
 include_directories(${BACKWARD_INCLUDE_DIRS})
 add_compile_definitions(${BACKWARD_DEFINITIONS})
@@ -379,12 +369,9 @@ set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
 # C++ REST SDK
 find_package(cpprestsdk CONFIG REQUIRED)
+
 # Library containing rest dependencies
 set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
-
-# Library containing actor framework
-#find_package(CAF COMPONENTS core io)
-#set(LIBRARIES ${LIBRARIES} ${CAF_EXTRA_LDFLAGS} ${CAF_LIBRARIES} ${PTHREAD_LIBRARIES})
 
 # Library containing Kafka client
 if (NES_USE_KAFKA)
@@ -401,7 +388,6 @@ if (NES_USE_OPC)
 endif (NES_USE_OPC)
 
 # Library containing MQTT client
-
 if (NES_USE_MQTT)
     message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
     find_package(PahoMqttCpp CONFIG REQUIRED)
