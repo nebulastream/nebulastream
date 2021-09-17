@@ -31,10 +31,10 @@
 #include <utility>
 
 #include "../../util/DummySink.hpp"
-#include "../../util/TestSink.hpp"
 #include "../../util/SchemaSourceDescriptor.hpp"
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
+#include "../../util/TestSink.hpp"
 #include <Catalogs/StreamCatalog.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -216,7 +216,6 @@ class WindowSource : public NES::DefaultSource {
                                               successors);
     }
 };
-
 
 void fillBuffer(TupleBuffer& buf, const Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout) {
 
