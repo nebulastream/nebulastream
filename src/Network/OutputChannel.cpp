@@ -130,9 +130,20 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
 }
 
 bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize) {
+//    auto ts = std::chrono::system_clock::now();
+//    auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
+//    if(timeSinceLastBufferSent == 0){
+//        NES_ERROR("OutputChannel: first buffer sent ");
+//        timeSinceLastBufferSent = time;
+//    }
+//    else {
+//        std::cout << "BST: " << (time - timeSinceLastBufferSent) <<std::endl;
+//        timeSinceLastBufferSent = time;
+//    }
     if(buffering){
         NES_ERROR("OutputChannel: Storing data intended for: " << socketAddr);
         buffer.push(std::pair<Runtime::TupleBuffer, uint64_t> {inputBuffer, tupleSize});
+        NES_ERROR("Store size now: " <<  buffer.size());
         return true;
     }
     NES_DEBUG("OutputChannel: buffer sent");

@@ -100,7 +100,7 @@ bool NodeEngine::deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr
         NES_ERROR("Runtime::deployQueryInNodeEngine: failed to start query");
         return false;
     }
-    NES_DEBUG("Runtime::deployQueryInNodeEngine: successfully start query");
+    NES_ERROR("Runtime::deployQueryInNodeEngine: successfully start query");
 
     return true;
 }

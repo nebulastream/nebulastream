@@ -77,10 +77,12 @@ bool StreamCatalog::addLogicalStream(const std::string& logicalStreamName, Schem
     std::unique_lock lock(catalogMutex);
     //check if stream already exist
     NES_DEBUG("StreamCatalog: search for logical stream in addLogicalStream() " << logicalStreamName);
+    NES_DEBUG(schemaPtr->toString());
 
     if (!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
         NES_DEBUG("StreamCatalog: add logical stream " << logicalStreamName);
         logicalStreamToSchemaMapping[logicalStreamName] = std::move(schemaPtr);
+
         return true;
     }
     NES_ERROR("StreamCatalog: logical stream " << logicalStreamName << " already exists");

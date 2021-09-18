@@ -332,6 +332,7 @@ void DataSource::runningRoutineWithFrequency() {
         bool recNow = false;
         auto tsNow = std::chrono::steady_clock::now();
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
+        //auto t = nowInMillis.count();
 
         //this check checks if the gathering interval is zero or a ZMQ_Source, where we do not create a watermark-only buffer
         NES_DEBUG("DataSource::runningRoutine will now check src type with gatheringInterval=" << gatheringInterval.count());
@@ -373,6 +374,7 @@ void DataSource::runningRoutineWithFrequency() {
 
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
+//                std::cout <<"NrT:" << optBuf->getNumberOfTuples() <<std::endl;
                 auto& buf = optBuf.value();
                 NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
                                                        << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
@@ -382,6 +384,7 @@ void DataSource::runningRoutineWithFrequency() {
                 emitWorkFromSource(buf);
                 ++cnt;
             } else {
+                //std::cout << 0 <<std::endl;
                 if (!wasGracefullyStopped) {
                     NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
                     running = false;
@@ -395,6 +398,10 @@ void DataSource::runningRoutineWithFrequency() {
             wasGracefullyStopped = true;
         }
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
+//        auto a = std::chrono::steady_clock::now();
+//        auto am = std::chrono::duration_cast<std::chrono::milliseconds>(a.time_since_epoch()).count();
+//        auto d = am-t;
+//        std::cout << d <<std::endl;
     }
     close();
     // inject reconfiguration task containing end of stream

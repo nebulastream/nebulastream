@@ -92,7 +92,7 @@ void NESRequestProcessorService::start() {
                 try {
                     auto ts = std::chrono::system_clock::now();
                     auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
-                    std::cout << "MR Recieved: " << time;
+                    NES_ERROR("MR Recieved: " << time);
                     bool successful = queryMigrationPhase->execute(nesRequests[0]->as<MigrateQueryRequest>());
                     if (!successful) {
                         throw QueryMigrationException(nesRequests[0]->getQueryId(),
@@ -124,7 +124,11 @@ void NESRequestProcessorService::start() {
 
                     if (!sharedQueryPlan->isNew()) {
                         NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
+                        auto ts = std::chrono::system_clock::now();
+                        auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
+                        NES_ERROR("Query Restart: begin undeployment: " << time);
                         bool successful = queryUndeploymentPhase->execute(sharedQueryId);
+
                         if (!successful) {
                             throw QueryUndeploymentException("Unable to stop Global QueryId " + std::to_string(sharedQueryId));
                         }
@@ -136,6 +140,7 @@ void NESRequestProcessorService::start() {
                                   << sharedQueryId);
 
                         bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+
                         if (!placementSuccessful) {
                             throw QueryPlacementException(sharedQueryId,
                                                           "QueryProcessingService: Failed to perform query placement for "
@@ -144,6 +149,9 @@ void NESRequestProcessorService::start() {
                         }
 
                         bool successful = queryDeploymentPhase->execute(sharedQueryId);
+                        auto ts = std::chrono::system_clock::now();
+                        auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
+                        NES_ERROR("Query Restart: redeployment complete: " << time);
                         if (!successful) {
                             throw QueryDeploymentException(
                                 sharedQueryId,

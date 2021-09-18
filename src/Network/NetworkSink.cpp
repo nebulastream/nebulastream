@@ -102,7 +102,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 workerContext.getChannel(nesPartition.getOperatorId())->emptyBuffer();
                 auto ts = std::chrono::system_clock::now();
                 auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
-                std::cout << "BE: " << time;
+                NES_ERROR("NetworkSink: Node reconfiguration complete; time : " << time);
 
                 break;
         }
@@ -117,6 +117,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             NES_DEBUG("Buffering Data for every Threads OutputChannel");
             auto ts = std::chrono::system_clock::now();
             auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
+            NES_ERROR("NetworkSink: Beginning buffer: time : " << time);
             std::cout << "BB: " << time;
             workerContext.getChannel(nesPartition.getOperatorId())->setBuffer(true);
             break;

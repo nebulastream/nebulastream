@@ -80,7 +80,7 @@ TEST_F(MQTTSourceDeploymentTest, testDeployOneWorker) {
 
 
         std::string mqtt =
-                R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("creation_timestamp", UINT64))->addField(createField("data", UINT64))->addField(createField("ingestion_timestamp", UINT64))->addField(createField("expulsion_timestamp", UINT64));)";
+                R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("creation_timestamp", UINT64))->addField(createField("data", UINT64))->addField("stringData",addField(createField("ingestion_timestamp", UINT64))->addField(createField("expulsion_timestamp", UINT64));)";
         std::string testSchemaFileName = "mqtt.hpp";
         std::ofstream out(testSchemaFileName);
         out << mqtt;
@@ -100,11 +100,8 @@ TEST_F(MQTTSourceDeploymentTest, testDeployOneWorker) {
         srcConf->setSourceConfig("tcp://127.0.0.1:1883;nes;nes;test;JSON;1;true");
         srcConf->setPhysicalStreamName("mqttP");
         srcConf->setLogicalStreamName("mqtt");
-        srcConf->setSkipHeader(true);
         //srcConf->setSourceFrequency(500);
-        srcConf->setNumberOfTuplesToProducePerBuffer(1);
-        srcConf->setNumberOfBuffersToProduce(1);
-
+        wrk1->registerLogicalStream("mqtt", testSchemaFileName);
         PhysicalStreamConfigPtr mqttConfig = PhysicalStreamConfig::create(srcConf);
         wrk1->registerPhysicalStream(mqttConfig);
 

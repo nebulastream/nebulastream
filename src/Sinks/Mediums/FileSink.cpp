@@ -82,9 +82,9 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                 std::string schemaFile = shrinkedPath + "schema";
                 NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString()
                                                              << " to file=" << schemaFile);
-                outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
+                outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::app);
             } else {
-                outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
+                outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
             }
 
             outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());

@@ -235,6 +235,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t gatheringIngestionRate{};
     uint64_t sourceAffinity{std::numeric_limits<uint64_t>::max()};
     std::chrono::milliseconds gatheringInterval{0};
+    uint64_t timeSinceLastSend{0};
     GatheringMode gatheringMode;
     SourceType type;
     std::atomic<bool> wasGracefullyStopped{true};

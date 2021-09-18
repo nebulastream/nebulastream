@@ -121,9 +121,10 @@ MQTTSource::~MQTTSource() {
 }
 
 std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
-    NES_DEBUG("MQTTSource  " << this << ": receiveData ");
-
-    auto buffer = bufferManager->getBufferBlocking();
+    //NES_DEBUG("MQTTSource  " << this << ": receiveData ");
+//    auto ts1 = std::chrono::system_clock::now();
+//    auto time1 = std::chrono::duration_cast<std::chrono::nanoseconds>(ts1.time_since_epoch()).count();
+      auto buffer = bufferManager->getBufferBlocking();
     if (connect()) {
         if (!fillBuffer(buffer)) {
             NES_ERROR("MQTTSource::receiveData: Failed to fill the TupleBuffer.");
@@ -136,6 +137,9 @@ std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }
+//    auto ts2 = std::chrono::system_clock::now();
+//    auto time2 = std::chrono::duration_cast<std::chrono::nanoseconds>(ts2.time_since_epoch()).count();
+//    std::cout << "BWT: " <<(time2-time1) <<std::endl;
     return buffer;
 }
 
@@ -157,8 +161,8 @@ std::string MQTTSource::toString() const {
 bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
     // determine how many tuples fit into the buffer
-    tuplesThisPass = 1;//tupleBuffer.getBufferSize() / tupleSize;
-    NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
+    tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
+    //NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
 
     uint64_t tupleCount = 0;
     auto flushIntervalTimerStart = std::chrono::system_clock::now();
@@ -207,7 +211,7 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
                      .count()
                  >= bufferFlushIntervalMs)) {
-            NES_DEBUG("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            //NES_DEBUG("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }//end of while

@@ -437,13 +437,14 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
 TEST_F(E2ECoordinatorMultiWorkerTest, testMQTTourceWithMigrationDiamond) {
         //TODO result content does not end up in file?
         NES_INFO(" start coordinator");
-        std::string outputFilePath = "testMQTTSourceWithMigration.csv";
+        std::string outputFilePath = "testMQTTSourceWithMigrationBALINT.csv";
         remove(outputFilePath.c_str());
 
 
         std::string coordinatorRPCPort = std::to_string(rpcPort);
         NES_DEBUG(std::to_string(restPort));
-        std::string cmdCoord = "../nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
+        string configs = " --numberOfBuffersInGlobalBufferManager=12000 --bufferSizeInBytes=2048 --numberOfBuffersPerWorker=5000 --numberOfBuffersInSourceLocalBufferPool=4000";
+        std::string cmdCoord = "../nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort) + configs + " --logLevel=LOG_NONE";
         bp::child coordinatorProc(cmdCoord.c_str());
 
 
@@ -461,7 +462,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testMQTTourceWithMigrationDiamond) {
         string worker1RPCPort = std::to_string(rpcPort + 3);
         string worker1DataPort = std::to_string(dataPort);
         string cmdWrk1 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
-                         + " --dataPort=" + worker1DataPort;
+                         + " --dataPort=" + worker1DataPort + configs + " --logLevel=LOG_NONE";
         bp::child workerProc1(cmdWrk1.c_str());
         NES_INFO("started worker 1 with pid = " << workerProc1.id());
         sleep(1);
@@ -481,11 +482,9 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testMQTTourceWithMigrationDiamond) {
         string cmdWrk3 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker3RPCPort
                          + " --dataPort=" + worker3DataPort
                          + " --logicalStreamName=mqtt "
-                         + "--physicalStreamName=mqttP --sourceType=MQTTSource --sourceConfig=tcp://127.0.0.1:1883;nes;nes;test;JSON;1;true;10000"
-                         + " --skipHeader=True";
+                         + "--physicalStreamName=mqttP --sourceType=MQTTSource --sourceConfig=tcp://127.0.0.1:1883;nes;nes;test;JSON;1;true;2"
+                         + " --skipHeader=True"  + configs + " --logLevel=LOG_ERROR";
         NES_DEBUG(cmdWrk3);
-        auto test = cmdWrk3.c_str();
-        NES_DEBUG(test);
         bp::child workerProc3(cmdWrk3.c_str());
         NES_INFO("started worker 3 with pid = " << workerProc3.id());
         sleep(1);
@@ -550,17 +549,18 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testMQTTourceWithMigrationDiamond) {
 
         NES_DEBUG(TestUtils::getExecutionNodesOfAQueryViaRest(1, std::to_string(restPort)));
         std::stringstream mR;
-        mR << "{\"ids\":3, \"strategy\":2}";
+        mR << "{\"ids\":3, \"strategy\":1}";
         mR << endl;
         NES_INFO("query string submit=" << mR.str());
         NES_DEBUG("Submitting maint request over REST");
-        sleep(4);
-        web::json::value mR_return = TestUtils::submitMaintenanceRequestViaRest(mR.str(), std::to_string(restPort));
-        NES_DEBUG(mR_return);
+        sleep(6);
+//        web::json::value mR_return = TestUtils::submitMaintenanceRequestViaRest(mR.str(), std::to_string(restPort));
+//        NES_DEBUG(mR_return);
 
-          sleep(20);
+        sleep(60);
         //EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3, std::to_string(restPort)));
-       // EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+        EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+
 
 //        std::ifstream ifs(outputFilePath.c_str());
 //        EXPECT_TRUE(ifs.good());
@@ -626,7 +626,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testMQTTourceWithMigrationDiamond) {
         string worker2RPCPort = std::to_string(rpcPort + 6);
         string worker2DataPort = std::to_string(dataPort + 2);
         string cmdWrk2 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort
-                         + " --dataPort=" + worker2DataPort;
+                         + " --dataPort=" + worker2DataPort  + configs + " --logLevel=LOG_NONE";
         bp::child workerProc2(cmdWrk2.c_str());
         NES_INFO("started worker 2 with pid = " << workerProc2.id());
         sleep(1);

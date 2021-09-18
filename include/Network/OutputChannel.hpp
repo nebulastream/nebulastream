@@ -113,6 +113,7 @@ class OutputChannel {
     bool isClosed{false};
     std::queue<std::pair<Runtime::TupleBuffer, uint64_t>> buffer;
     bool buffering;
+    //uint64_t timeSinceLastBufferSent{0};
 };
 
 }// namespace Network
