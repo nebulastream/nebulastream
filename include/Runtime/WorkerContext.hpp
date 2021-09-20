@@ -42,7 +42,7 @@ class WorkerContext {
     LocalBufferPoolPtr localBufferPool;
 
   public:
-    explicit WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker = 64);
+    explicit WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager);
 
     /**
      * @brief Allocates a new tuple buffer.
