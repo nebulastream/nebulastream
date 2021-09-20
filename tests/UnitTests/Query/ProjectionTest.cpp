@@ -307,7 +307,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -375,7 +375,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -442,7 +442,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
     plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -735,7 +735,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
-    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
 
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
