@@ -555,7 +555,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     inputBuffer.setNumberOfTuples(100);
 
     /* execute code */
-    auto wctx = Runtime::WorkerContext{0, nodeEngine->getBufferManager()};
+    auto wctx = Runtime::WorkerContext{0, nodeEngine->getBufferManager(), 64};
     auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                   std::vector<Runtime::Execution::OperatorHandlerPtr>());
     stage->setup(*context);
