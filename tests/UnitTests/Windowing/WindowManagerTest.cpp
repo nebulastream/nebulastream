@@ -269,7 +269,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager());
+    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager(), 64);
     windowHandler->updateMaxTs(ts, 0, 1, ctx);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
@@ -358,7 +358,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     auto store = key_value_handle.value();
 
     uint64_t ts = 7;
-    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager());
+    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager(), 64);
     windowHandler->updateMaxTs(ts, 0, 1, ctx);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
@@ -449,7 +449,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager());
+    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager(), 64);
     windowHandler->updateMaxTs(ts, 0, 1, ctx);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
@@ -530,7 +530,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager());
+    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager(), 64);
     windowHandler->updateMaxTs(ts, 0, 1, ctx);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
@@ -612,7 +612,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager());
+    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager(), 64);
     windowHandler->updateMaxTs(ts, 0, 1, ctx);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
@@ -697,7 +697,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager());
+    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager(), 64);
     windowHandler->updateMaxTs(ts, 0, 1, ctx);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
@@ -780,7 +780,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager());
+    Runtime::WorkerContext ctx = Runtime::WorkerContext(1, nodeEngine->getBufferManager(), 64);
     windowHandler->updateMaxTs(ts, 0, 1, ctx);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
