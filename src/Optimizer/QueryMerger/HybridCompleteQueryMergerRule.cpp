@@ -85,8 +85,8 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             }
 
             if (!foundMatch
-                && signatureEqualityUtil->checkEquality(hostSinks[0]->getZ3Signature(),
-                                                        targetSinkOperators[0]->getZ3Signature())) {
+                       && signatureEqualityUtil->checkEquality(hostSinks[0]->getZ3Signature(),
+                                                               targetSinkOperators[0]->getZ3Signature())) {
                 targetToHostSinkOperatorMap[targetSinkOperators[0]] = hostSinks[0];
                 foundMatch = true;
             }
