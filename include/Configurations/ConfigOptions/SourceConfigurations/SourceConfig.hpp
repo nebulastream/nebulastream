@@ -44,23 +44,23 @@ class SourceConfig {
      * @brief overwrite the default configurations with those loaded from a yaml file
      * @param filePath file path to the yaml file
      */
-    void overwriteConfigWithYAMLFileInput(const std::string& filePath);
+    virtual void overwriteConfigWithYAMLFileInput(const std::string& filePath);
 
     /**
      * @brief overwrite the default and the yaml file configurations with command line input
      * @param inputParams map with key=command line parameter and value = value
      */
-    void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams);
+    virtual void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams);
 
     /**
      * @brief resets all options to default values
      */
-    void resetSourceOptions();
+    virtual void resetSourceOptions();
 
     /**
      * @brief prints the current source configuration (name: current value)
      */
-    std::string toString();
+    virtual std::string toString();
 
     /**
      * @brief gets a ConfigOption object with sourceType
