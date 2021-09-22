@@ -40,11 +40,11 @@ class TopologyManagerServiceTest : public testing::Test {
     std::shared_ptr<QueryParsingService> queryParsingService;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup NES TopologyManagerService test class." << std::endl; }
+    static void SetUpTestCase() { NES_DEBUG("Setup NES TopologyManagerService test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup NES TopologyManagerService test case." << std::endl;
+        NES_DEBUG("Setup NES TopologyManagerService test case.");
         NES::setupLogging("TopologyManager.log", NES::LOG_DEBUG);
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();
@@ -53,10 +53,10 @@ class TopologyManagerServiceTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Setup NES TopologyManagerService test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Setup NES TopologyManagerService test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down NES TopologyManagerService test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down NES TopologyManagerService test class."); }
 
     std::string ip = "127.0.0.1";
     uint16_t receive_port = 0;
