@@ -62,12 +62,12 @@ DataSource::DataSource(const SchemaPtr& pSchema,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
-    : queryManager(std::move(queryManager)), globalBufferManager(std::move(bufferManager)),
+    : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
       executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(pSchema),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
 
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
-    NES_ASSERT(this->globalBufferManager, "Invalid buffer manager");
+    NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
 }
 
@@ -212,7 +212,7 @@ bool DataSource::stop(bool graceful) {
 
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
-void DataSource::open() { bufferManager = globalBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
+void DataSource::open() { bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
 
 void DataSource::close() {}
 
