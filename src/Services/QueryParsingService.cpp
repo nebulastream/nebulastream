@@ -118,7 +118,6 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
         // add return statement in front of input query
         newQuery = Util::replaceFirst(newQuery, "Query::from", "return Query::from");
 
-
         NES_DEBUG("Util: parsed query = " << newQuery);
         code << newQuery << std::endl;
         code << "}" << std::endl;
