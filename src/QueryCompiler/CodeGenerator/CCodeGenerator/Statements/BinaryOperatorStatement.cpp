@@ -17,7 +17,6 @@
 #include <memory>
 #include <string>
 
-#include <API/Pattern.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>

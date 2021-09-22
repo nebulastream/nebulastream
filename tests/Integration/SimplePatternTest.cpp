@@ -22,6 +22,8 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
 
