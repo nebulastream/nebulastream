@@ -39,11 +39,11 @@ class StreamCatalogServiceTest : public testing::Test {
     std::shared_ptr<QueryParsingService> queryParsingService;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup NES StreamCatalogService test class." << std::endl; }
+    static void SetUpTestCase() { NES_DEBUG("Setup NES StreamCatalogService test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup NES StreamCatalogService test case." << std::endl;
+        NES_DEBUG("Setup NES StreamCatalogService test case.");
         NES::setupLogging("StreamCatalogServiceTest.log", NES::LOG_DEBUG);
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();
@@ -52,10 +52,10 @@ class StreamCatalogServiceTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Setup NES Coordinator test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Setup NES Coordinator test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down NES Coordinator test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down NES Coordinator test class."); }
 
     std::string ip = "127.0.0.1";
     uint16_t receive_port = 0;
