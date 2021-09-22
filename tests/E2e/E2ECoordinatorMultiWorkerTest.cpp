@@ -129,9 +129,9 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidUserQueryWithFi
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerSameSource) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWorkerSameSource) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
+    std::string outputFilePath = "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
@@ -168,8 +168,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
-    ss << "{\"pattern\" : ";
-    ss << R"("Pattern::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
+    ss << "{\"query\" : ";
+    ss << R"("Query::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
     ss << outputFilePath;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
     ss << R"());","strategyName" : "BottomUp"})";
@@ -184,11 +184,11 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     string expectedContent =
-        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
-        "R2000073,1543624020000,102.629631,8,1\n"
-        "R2000070,1543625280000,108.166664,5,1\n"
-        "R2000073,1543624020000,102.629631,8,1\n"
-        "R2000070,1543625280000,108.166664,5,1\n";
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
+        "R2000073,1543624020000,102.629631,8\n"
+        "R2000070,1543625280000,108.166664,5\n"
+        "R2000073,1543624020000,102.629631,8\n"
+        "R2000070,1543625280000,108.166664,5\n";
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
@@ -205,9 +205,9 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWorkerDifferentSource) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
+    std::string outputFilePath = "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
@@ -244,8 +244,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
-    ss << "{\"pattern\" : ";
-    ss << R"("Pattern::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
+    ss << "{\"query\" : ";
+    ss << R"("Query::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
     ss << outputFilePath;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
     ss << R"());","strategyName" : "BottomUp"})";

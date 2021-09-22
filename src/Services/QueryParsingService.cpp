@@ -80,13 +80,11 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
         throw InvalidQueryException("Queries are not allowed to define schemas anymore");
     }
 
-    bool pattern = queryCodeSnippet.find("Pattern::") != std::string::npos;
     bool merge = queryCodeSnippet.find(".unionWith") != std::string::npos;
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
         code << "#include <API/Query.hpp>" << std::endl;
-        code << "#include <API/Pattern.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
         code << "#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
         code << "#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
@@ -117,13 +115,9 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
             NES_DEBUG("Util: newQuery = " << newQuery);
         }
 
-        // add return statement in front of input query/pattern
-        //if pattern
-        if (pattern) {
-            Util::findAndReplaceAll(newQuery, "Pattern::from", "return Pattern::from");
-        } else {// if Query
-            newQuery = Util::replaceFirst(newQuery, "Query::from", "return Query::from");
-        }
+        // add return statement in front of input query
+        newQuery = Util::replaceFirst(newQuery, "Query::from", "return Query::from");
+
 
         NES_DEBUG("Util: parsed query = " << newQuery);
         code << newQuery << std::endl;

@@ -15,7 +15,6 @@
 add_source_nes(
         Schema.cpp
         Query.cpp
-        Pattern.cpp
         AttributeField.cpp
         Windowing.cpp
         WindowedQuery.cpp
