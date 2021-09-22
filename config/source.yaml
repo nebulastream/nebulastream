@@ -1,64 +1,6 @@
 # ~~~ Configurations for the Data Source ~~~
 
 # ~~ Source Handling ~~
-# Set the source type (available options: No_Source, DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
-#                                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
-#                                         BinarySource (ToDo: Make source available))
-sourceType: NoSource
-
-# Set udsf, needed for: SenseSource
-udsf:
-
-# Set file path, needed for: CSVSource, BinarySource
-filePath: ../tests/test_data/QnV_short.csv
-
-# Set url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource
-url: ws://127.0.0.1:9001
-
-# Set namespaceIndex for node, needed for: OPCSource
-namespaceIndex: 1
-
-# Set node identifier, needed for: OPCSource
-nodeIdentifier: the.answer
-
-# Set clientId, needed for: MQTTSource (needs to be unique for each connected MQTTSource), KafkaSource (use this for groupId)
-clientId: testClient
-
-# Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
-userName: testUser
-
-# Set password, needed for: OPCSource
-password:
-
-# Set topic to listen to, needed for: MQTTSource, KafkaSource
-topic: demoTownSensorData
-
-# Set input data format
-inputFormat: JSON
-
-# set quality of service, needed for: MQTTSource
-qos: 2
-
-# set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session), needed for: MQTTSource
-cleanSession: true
-
-# set tupleBuffer flush interval in milliseconds
-flushIntervalMS: -1
-
-# Set storage layout, true = row layout, false = column layout
-rowLayout: true
-
-# Set connection time out for source, needed for: KafkaSource
-connectionTimeout: 10
-
-# Set auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
-autoCommit: 1
-
-# Set sampling frequency of source
-sourceFrequency: 1
-
-# Skip first line of the file
-skipHeader: false
 
 # Set number of buffers to produce
 numberOfBuffersToProduce: 1
@@ -71,3 +13,69 @@ physicalStreamName: default_stream_phy
 
 # Set logical stream name where this stream is added to
 logicalStreamName: default_stream_log
+
+# Set sampling frequency of source
+sourceFrequency: 1
+
+# Set storage layout, true = row layout, false = column layout
+rowLayout: true
+
+# set tupleBuffer flush interval in milliseconds
+flushIntervalMS: -1
+
+# Set input data format
+inputFormat: JSON
+
+# Set the source type (available options: No_Source, DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
+#                                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
+#                                         BinarySource (ToDo: Make source available))
+sourceType: NoSource
+
+# SenseSource and its needed configuration params
+SenseSource:
+  # Set udsf
+  udsf:
+
+CSVSource:
+  # Set file path
+  filePath: ../tests/test_data/QnV_short.csv
+  # Skip first line of the file
+  skipHeader: false
+
+BinarySource:
+  # Set file path
+  filePath: ../tests/test_data/QnV_short.csv
+
+MQTTSource:
+  # Set url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource
+  url: ws://127.0.0.1:9001
+  # Set clientId
+  clientId: testClient
+  # Set userName
+  userName: testUser
+  # Set topic to listen to
+  topic: demoTownSensorData
+  # set quality of service
+  qos: 2
+  # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+  cleanSession: true
+
+KafkaSource:
+  # Set auto commit, boolean value where 1 equals true, and 0 equals false
+  autoCommit: 1
+  # Set groupId
+  groupId: testGroup
+  # Set topic to listen to
+  topic: testTopic
+  # Set connection time out for source
+  connectionTimeout: 10
+
+OPCSource:
+  # Set namespaceIndex for node, needed for: OPCSource
+  namespaceIndex: 1
+  # Set node identifier, needed for: OPCSource
+  nodeIdentifier: the.answer
+  # Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
+  userName: testUser
+  # Set password, needed for: OPCSource
+  password:

@@ -15,7 +15,7 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
