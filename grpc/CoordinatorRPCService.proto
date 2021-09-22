@@ -138,6 +138,8 @@ message RegisterNodeRequest {
   SerializableRegistrationMetrics registrationMetrics = 5;
   Coordinates coordinates = 6;
   NodeType spatialType = 7;
+  bool isMobile = 8;
+  bool tfInstalled = 9;
 }
 
 message RegisterNodeReply {

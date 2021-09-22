@@ -120,23 +120,23 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
     uint64_t id;
     if (request->has_coordinates()) {
         NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
-        id = topologyManagerService->registerNode(
-            request->address(),
-            request->grpcport(),
-            request->dataport(),
-            request->numberofslots(),
-            NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(request->spatialtype()),
-            NES::Spatial::Index::Experimental::Location(request->coordinates()));
+        id = topologyManagerService->registerNode(request->address(),
+                                                  request->grpcport(),
+                                                  request->dataport(),
+                                                  request->numberofslots(),
+                                                  request->ismobile(),
+                                                  NES::Spatial::Index::Experimental::Location(request->coordinates()),
+                                                  request->tfinstalled());
     } else {
         /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
         of geographical location */
-        id = topologyManagerService->registerNode(
-            request->address(),
-            request->grpcport(),
-            request->dataport(),
-            request->numberofslots(),
-            NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(request->spatialtype()),
-            NES::Spatial::Index::Experimental::Location());
+        id = topologyManagerService->registerNode(request->address(),
+                                                  request->grpcport(),
+                                                  request->dataport(),
+                                                  request->numberofslots(),
+                                                  request->ismobile(),
+                                                  NES::Spatial::Index::Experimental::Location(),
+                                                  request->tfinstalled());
     }
 
     auto registrationMetrics =
