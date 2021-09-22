@@ -60,7 +60,9 @@ class TopologyManagerService {
                           int64_t dataPort,
                           uint16_t numberOfSlots,
                           NES::Spatial::Index::Experimental::NodeType spatialType,
-                          NES::Spatial::Index::Experimental::Location fixedCoordinates);
+                          bool isMobile,
+                          NES::Spatial::Index::Experimental::Location fixedCoordinates,
+                          bool tfInstalled);
 
     /**
     * @brief unregister an existing node

@@ -279,7 +279,8 @@ class WorkerConfiguration : public BaseConfiguration {
                 &queryManagerMode,
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
-                &configPath};
+                &configPath,
+                &tfInstalled};
     }
 };
 }// namespace Configurations
