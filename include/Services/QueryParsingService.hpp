@@ -15,7 +15,6 @@
 */
 #ifndef NES_INCLUDE_QUERY_PARSING_SERVICE_HPP_
 #define NES_INCLUDE_QUERY_PARSING_SERVICE_HPP_
-#include <API/Pattern.hpp>
 #include <memory>
 
 namespace NES {

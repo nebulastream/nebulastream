@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <API/Pattern.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
