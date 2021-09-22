@@ -223,7 +223,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
   protected:
     Runtime::QueryManagerPtr queryManager;
-    Runtime::BufferManagerPtr globalBufferManager;
+    Runtime::BufferManagerPtr localBufferManager;
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;

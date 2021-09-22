@@ -55,7 +55,7 @@ LambdaSource::LambdaSource(
     } else {
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
     }
-    numberOfTuplesToProduce = this->globalBufferManager->getBufferSize() / this->schema->getSchemaSizeInBytes();
+    numberOfTuplesToProduce = this->localBufferManager->getBufferSize() / this->schema->getSchemaSizeInBytes();
     wasGracefullyStopped = true;
 }
 

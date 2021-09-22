@@ -68,13 +68,13 @@ MemorySource::MemorySource(SchemaPtr schema,
     this->sourceAffinity = sourceAffinity;
 
     //if the memory area is smaller than a buffer
-    if (memoryAreaSize <= globalBufferManager->getBufferSize()) {
+    if (memoryAreaSize <= localBufferManager->getBufferSize()) {
         numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(this->schema->getSchemaSizeInBytes()));
     } else {
         //if the memory area spans multiple buffers
         auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->schema->getSchemaSizeInBytes();
         auto numberOfTuplesPerBuffer =
-            std::floor(double(globalBufferManager->getBufferSize()) / double(this->schema->getSchemaSizeInBytes()));
+            std::floor(double(localBufferManager->getBufferSize()) / double(this->schema->getSchemaSizeInBytes()));
         if (restTuples > numberOfTuplesPerBuffer) {
             numberOfTuplesToProduce = numberOfTuplesPerBuffer;
         } else {
@@ -89,9 +89,10 @@ MemorySource::MemorySource(SchemaPtr schema,
 void MemorySource::open() {
     DataSource::open();
 
-    auto buffer = globalBufferManager->getUnpooledBuffer(memoryAreaSize);
+    auto buffer = localBufferManager->getUnpooledBuffer(memoryAreaSize);
     numaLocalMemoryArea = *buffer;
     std::memcpy(numaLocalMemoryArea.getBuffer(), memoryArea.get(), memoryAreaSize);
+    memoryArea.reset();
 }
 
 void MemorySource::close() {
@@ -102,7 +103,7 @@ void MemorySource::close() {
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
 
-    auto bufferSize = globalBufferManager->getBufferSize();
+    auto bufferSize = localBufferManager->getBufferSize();
     if (memoryAreaSize > bufferSize) {
         if (currentPositionInBytes + numberOfTuplesToProduce * schema->getSchemaSizeInBytes() > memoryAreaSize) {
             if (numBuffersToProcess != 0) {
@@ -127,7 +128,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         case COPY_BUFFER_SIMD_RTE: {
 #ifdef __x86_64__
             buffer = bufferManager->getBufferBlocking();
-            rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+            rte_memcpy(buffer.getBuffer(), numaLocalMemoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
 #else
             NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
 #endif
@@ -135,22 +136,21 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
         case COPY_BUFFER_SIMD_APEX: {
             buffer = bufferManager->getBufferBlocking();
-            apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+            apex_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
             break;
         }
         case CACHE_COPY: {
             buffer = bufferManager->getBufferBlocking();
-//            memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
-            apex_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
+            memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
             break;
         }
         case COPY_BUFFER: {
             buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+            memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
             break;
         }
         case WRAP_BUFFER: {
-            buffer = Runtime::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, bufferSize, this);
+            buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
             break;
         }
     }
