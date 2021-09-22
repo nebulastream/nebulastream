@@ -270,7 +270,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ssQuery1;
-    ssQuery1 << "{\"query1\" : ";
+    ssQuery1 << "{\"userQuery\" : ";
     ssQuery1 << R"("Query::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
     ssQuery1 << Qpath1;
     ssQuery1 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
@@ -281,7 +281,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     string bodyQuery1 = ssQuery1.str();
 
     std::stringstream ssQuery2;
-    ssQuery2 << "{\"query2\" : ";
+    ssQuery2 << "{\"userQuery\" : ";
     ssQuery2 << R"("Query::from(\"QnV\").filter(Attribute(\"quantity\") > 10).sink(FileSinkDescriptor::create(\")";
     ssQuery2 << Qpath2;
     ssQuery2 << R"(\", \"CSV_FORMAT\", \"APPEND\")";

@@ -127,10 +127,10 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|_$PatternId:INT32|\n"
+        "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|\n"
         "+----------------------------------------------------+\n"
-        "|R2000073|1543624020000|102.629631|8|1|\n"
-        "|R2000070|1543625280000|108.166664|5|1|\n"
+        "|R2000073|1543624020000|102.629631|8|\n"
+        "|R2000070|1543625280000|108.166664|5|\n"
         "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
@@ -195,7 +195,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     remove(outputFilePath.c_str());
 
     //register query
-    std::string query = R"(Pattern::from("QnV").filter(Attribute("velocity") > 80).iter(3,10).sink(FileSinkDescriptor::create(")"
+    std::string query = R"(Query::from("QnV").filter(Attribute("velocity") > 80).iter(3,10).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");

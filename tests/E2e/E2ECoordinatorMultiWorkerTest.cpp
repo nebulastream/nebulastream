@@ -168,7 +168,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
-    ss << "{\"query\" : ";
+    ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
     ss << outputFilePath;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
@@ -244,7 +244,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
-    ss << "{\"query\" : ";
+    ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
     ss << outputFilePath;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
