@@ -346,63 +346,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
-    NES_INFO(" start coordinator");
-    std::string outputFilePath = "testExecutingSimplePattern.out";
-    remove(outputFilePath.c_str());
-
-    auto coordinator = TestUtils::startCoordinator({TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
-
-    std::stringstream schema;
-    schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
-              "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
-              "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
-    schema << endl;
-    NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
-
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
-                                          TestUtils::sourceType("CSVSource"),
-                                          TestUtils::sourceConfig("../tests/test_data/QnV_short.csv"),
-                                          TestUtils::physicalStreamName("test_stream"),
-                                          TestUtils::logicalStreamName("QnV"),
-                                          TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(146),
-                                          TestUtils::sourceFrequency(1)});
-
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
-
-    std::stringstream ss;
-    ss << "{\"pattern\" : ";
-    ss << R"("Pattern::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
-    ss << outputFilePath;
-    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","strategyName" : "BottomUp"})";
-    ss << endl;
-
-    NES_INFO("query string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
-
-    NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
-    NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
-
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
-
-    // XXX
-    string expectedContent =
-        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
-        "R2000073,1543624020000,102.629631,8,1\n"
-        "R2000070,1543625280000,108.166664,5,1\n";
-
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-}
-
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";

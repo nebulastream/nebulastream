@@ -238,14 +238,14 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 }
 
 /**
- * @brief This test starts two workers and a coordinator and submits two pattern-queries
+ * @brief This test starts two workers and a coordinator and submits two different queries
  */
-TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     NES_INFO(" start coordinator");
-    std::string pathPattern1 = "patternQnV1.out";
-    std::string pathPattern2 = "patternQnV2.out";
-    remove(pathPattern1.c_str());
-    remove(pathPattern2.c_str());
+    std::string Qpath1 = "QueryQnV1.out";
+    std::string Qpath2 = "QueryQnV2.out";
+    remove(Qpath1.c_str());
+    remove(Qpath2.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
@@ -269,34 +269,34 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
                                           TestUtils::physicalStreamName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
-    std::stringstream ssPattern1;
-    ssPattern1 << "{\"pattern\" : ";
-    ssPattern1 << R"("Pattern::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
-    ssPattern1 << pathPattern1;
-    ssPattern1 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ssPattern1 << R"());","strategyName" : "BottomUp"})";
-    ssPattern1 << endl;
+    std::stringstream ssQuery1;
+    ssQuery1 << "{\"query1\" : ";
+    ssQuery1 << R"("Query::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
+    ssQuery1 << Qpath1;
+    ssQuery1 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ssQuery1 << R"());","strategyName" : "BottomUp"})";
+    ssQuery1 << endl;
 
-    NES_INFO("pattern1 string submit=" << ssPattern1.str());
-    string bodyPattern1 = ssPattern1.str();
+    NES_INFO("query1 string submit=" << ssQuery1.str());
+    string bodyQuery1 = ssQuery1.str();
 
-    std::stringstream ssPattern2;
-    ssPattern2 << "{\"pattern\" : ";
-    ssPattern2 << R"("Pattern::from(\"QnV\").filter(Attribute(\"quantity\") > 10).sink(FileSinkDescriptor::create(\")";
-    ssPattern2 << pathPattern2;
-    ssPattern2 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ssPattern2 << R"());","strategyName" : "BottomUp"})";
-    ssPattern2 << endl;
+    std::stringstream ssQuery2;
+    ssQuery2 << "{\"query2\" : ";
+    ssQuery2 << R"("Query::from(\"QnV\").filter(Attribute(\"quantity\") > 10).sink(FileSinkDescriptor::create(\")";
+    ssQuery2 << Qpath2;
+    ssQuery2 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ssQuery2 << R"());","strategyName" : "BottomUp"})";
+    ssQuery2 << endl;
 
-    NES_INFO("pattern2 string submit=" << ssPattern2.str());
-    string bodyPattern2 = ssPattern2.str();
+    NES_INFO("query2 string submit=" << ssQuery2.str());
+    string bodyQuery2 = ssQuery2.str();
 
     NES_INFO("send query 1:");
-    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssPattern1.str(), std::to_string(restPort));
+    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(restPort));
     NES_INFO("return from q1");
 
     NES_INFO("send query 2:");
-    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssPattern2.str(), std::to_string(restPort));
+    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str(), std::to_string(restPort));
     NES_INFO("return from q2");
 
     QueryId queryId1 = jsonReturnQ1.at("queryId").as_integer();
@@ -312,29 +312,29 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
     string expectedContent1 =
-        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
-        "R2000073,1543624020000,102.629631,8,1\n"
-        "R2000070,1543625280000,108.166664,5,1\n";
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
+        "R2000073,1543624020000,102.629631,8\n"
+        "R2000070,1543625280000,108.166664,5\n";
 
     string expectedContent2 =
-        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
-        "R2000073,1543622760000,63.277779,11,1\n"
-        "R2000073,1543622940000,66.222221,12,1\n"
-        "R2000073,1543623000000,74.666664,11,1\n"
-        "R2000073,1543623480000,62.444443,13,1\n"
-        "R2000073,1543624200000,64.611115,12,1\n"
-        "R2000073,1543624260000,68.407410,11,1\n"
-        "R2000073,1543625040000,56.666668,11,1\n"
-        "R2000073,1543625400000,62.333332,11,1\n";
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
+        "R2000073,1543622760000,63.277779,11\n"
+        "R2000073,1543622940000,66.222221,12\n"
+        "R2000073,1543623000000,74.666664,11\n"
+        "R2000073,1543623480000,62.444443,13\n"
+        "R2000073,1543624200000,64.611115,12\n"
+        "R2000073,1543624260000,68.407410,11\n"
+        "R2000073,1543625040000,56.666668,11\n"
+        "R2000073,1543625400000,62.333332,11\n";
 
-    std::ifstream ifsQ1(pathPattern1.c_str());
+    std::ifstream ifsQ1(Qpath1.c_str());
     EXPECT_TRUE(ifsQ1.good());
     std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)), (std::istreambuf_iterator<char>()));
     NES_INFO("content Q1=" << contentQ1);
     NES_INFO("expContent=" << expectedContent1);
     EXPECT_EQ(contentQ1, expectedContent1);
 
-    std::ifstream ifsQ2(pathPattern2.c_str());
+    std::ifstream ifsQ2(Qpath2.c_str());
     EXPECT_TRUE(ifsQ2.good());
     std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)), (std::istreambuf_iterator<char>()));
     NES_INFO("content Q2=" << contentQ2);

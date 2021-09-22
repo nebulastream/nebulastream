@@ -200,6 +200,13 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     return *this;
 }
 
+Query& Query::iter(const uint64_t minIteration, const uint64_t maxIteration) {
+    NES_DEBUG("Pattern: enter iteration function with (min, max)" << minIteration << "," << maxIteration);
+    OperatorNodePtr op = LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+}
+
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Query: add sink operator to query");
     OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
