@@ -195,7 +195,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     remove(outputFilePath.c_str());
 
     //register query
-    std::string query = R"(Query::from("QnV").filter(Attribute("velocity") > 80).iter(3,10).sink(FileSinkDescriptor::create(")"
+    std::string query = R"(Query::from("QnV").filter(Attribute("velocity") > 80).times(3,10).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
