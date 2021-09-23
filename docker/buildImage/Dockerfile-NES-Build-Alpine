@@ -1,0 +1,29 @@
+FROM alpine:3.14.2
+
+RUN apk add -u \
+  libdwarf-dev \
+  libdwarf1 \
+  binutils-dev \
+  libdw-dev \
+  libssl-dev \
+  build-essential \
+  clang-format \
+  libmbedtls-dev \
+  libjemalloc-dev \
+  git \
+  wget \
+  python3.8 \
+  libsodium-dev \
+  tar \
+  p7zip \
+  doxygen \
+  graphviz \
+  software-properties-common \
+  && apt-get clean -qq
+
+RUN [ "$TARGETARCH" = "amd64" ] && echo "x86_64-linux-gnu" > /debian-triple || echo "aarch64-linux-gnu" > /debian-triple
+ENV ACTUAL_TRIPLE='cat /debian-triple'
+
+ADD ./entrypoint-nes-build.sh /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
