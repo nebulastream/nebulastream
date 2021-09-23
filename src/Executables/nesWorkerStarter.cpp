@@ -69,17 +69,13 @@ int main(int argc, char** argv) {
     }
 
     auto workerConfigPath = commandLineParams.find("--workerConfigPath");
-    auto sourceConfigPath = commandLineParams.find("--sourceConfigPath");
 
     if (workerConfigPath != commandLineParams.end()) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
-    if (sourceConfigPath != commandLineParams.end()) {
-        sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
-    }
+
     if (argc >= 1) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
-        sourceConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
     NES::setLogLevel(NES::getDebugLevelFromString(workerConfig->getLogLevel()->getValue()));
 
