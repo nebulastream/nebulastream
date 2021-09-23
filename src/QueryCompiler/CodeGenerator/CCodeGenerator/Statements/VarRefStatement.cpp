@@ -23,9 +23,9 @@ CodeExpressionPtr VarRefStatement::getCode() const { return varDeclaration->getI
 
 ExpressionStatementPtr VarRefStatement::copy() const { return std::make_shared<VarRefStatement>(*this); }
 
-VarRefStatement::VarRefStatement(const VariableDeclaration& var_decl)
-    : varDeclaration(std::dynamic_pointer_cast<VariableDeclaration>(var_decl.copy())) {}
+VarRefStatement::VarRefStatement(const VariableDeclaration& varDecl)
+    : varDeclaration(std::dynamic_pointer_cast<VariableDeclaration>(varDecl.copy())) {}
 
-VarRefStatement::VarRefStatement(VariableDeclarationPtr var_decl) : varDeclaration(std::move(var_decl)) {}
+VarRefStatement::VarRefStatement(VariableDeclarationPtr varDecl) : varDeclaration(std::move(varDecl)) {}
 
 }// namespace NES::QueryCompilation

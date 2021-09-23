@@ -77,7 +77,7 @@ class CodeGenerator {
     virtual bool generateCodeForFilter(PredicatePtr predicate, PipelineContextPtr context) = 0;
 
     /**
-     * @brief Code generation for a predicated filter operator, which depends on a particular filter predicate. // TODO
+     * @brief Code generation for a (branchless) predicated filter operator.
      * @param predicate The filter predicate, which selects input records.
      * @param context The context of the current pipeline.
      * @return flag if the generation was successful.
@@ -101,7 +101,7 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool
-    generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, bool increasesResultBufferWriteIndex, PipelineContextPtr context) = 0;
+    generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, PipelineContextPtr context) = 0;
 
     /**
      * @brief Code generation for a watermark assigner operator.

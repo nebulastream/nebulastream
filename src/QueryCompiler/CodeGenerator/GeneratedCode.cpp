@@ -27,6 +27,7 @@ GeneratedCode::GeneratedCode()
       varDeclarationExecutionContext(VariableDeclaration::create(DataTypeFactory::createInt32(), "output_buffer")),
       tupleBufferGetNumberOfTupleCall(FunctionCallStatement("getNumberOfTuples")),
       varDeclarationInputTuples(VariableDeclaration::create(DataTypeFactory::createInt32(), "inputTuples")),
+      varDeclarationTuplePassesFilters(VariableDeclaration::create(DataTypeFactory::createBoolean(), "tuplePassesFilters")),
       varDeclarationNumberOfResultTuples(
           VariableDeclaration::create(DataTypeFactory::createInt64(),
                                       "numberOfResultTuples",

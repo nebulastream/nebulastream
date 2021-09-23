@@ -36,6 +36,8 @@ class VarDeclStatement : public ExpressionStatement {
   private:
     std::shared_ptr<VariableDeclaration> variableDeclaration;
 };
+
+using VarDecl = VarDeclStatement;
 }// namespace QueryCompilation
 }// namespace NES
 

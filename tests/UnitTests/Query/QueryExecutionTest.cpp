@@ -233,73 +233,6 @@ void fillBuffer(TupleBuffer& buf, const Runtime::DynamicMemoryLayout::DynamicRow
 }
 
 TEST_F(QueryExecutionTest, filterQuery) {
-    // creating query plan
-
-    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
-        testSchema,
-        [&](OperatorId id,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
-            size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
-        });
-
-    auto outputSchema = Schema::create()
-            ->addField("test$id", BasicType::INT64)
-            ->addField("test$one", BasicType::INT64)
-            ->addField("test$value", BasicType::INT64);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-    auto queryCompiler = TestUtils::createTestQueryCompiler();
-    auto result = queryCompiler->compileQuery(request);
-    auto plan = result->getExecutableQueryPlan();
-    // The plan should have one pipeline
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1u);
-    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
-    fillBuffer(buffer, memoryLayout);
-    plan->setup();
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-    plan->start(nodeEngine->getStateManager());
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
-    plan->getPipelines()[0]->execute(buffer, workerContext);
-
-    // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-
-    auto resultBuffer = testSink->get(0);
-    // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
-
-    auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
-    auto resultRecordIndexFields =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
-    for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
-        // id
-        EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
-    }
-
-    testSink->cleanupBuffers();
-    buffer.release();
-    plan->stop();
-}
-
-TEST_F(QueryExecutionTest, filterQueryAllQueryCompilerOptions) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
             testSchema,
@@ -339,14 +272,23 @@ TEST_F(QueryExecutionTest, filterQueryAllQueryCompilerOptions) {
             options->setOutputBufferOptimizationLevel(lvl);
 
             // set Predication bool
-            if (j == 0) options->disablePredication();
-            else        options->enablePredication();
+            if (j == 0) {
+                options->disablePredication();
+            } else {
+                options->enablePredication();
+            }
 
             // now, test the query for all possible combinations
             auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
             auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-            auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
+            // two filter operators to validate correct behaviour of (multiple) branchless predicated filters
+            auto query = TestQuery::from(testSourceDescriptor)
+                    .filter(Attribute("id") < 6)
+                    .map(Attribute("idx2") = Attribute("id") * 2)
+                    .filter(Attribute("idx2") < 10)
+                    .project(Attribute("id"), Attribute("one"), Attribute("value"))
+                    .sink(testSinkDescriptor);
 
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
             auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -365,7 +307,7 @@ TEST_F(QueryExecutionTest, filterQueryAllQueryCompilerOptions) {
             ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
             plan->start(nodeEngine->getStateManager());
             ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-            Runtime::WorkerContext workerContext{1};
+            Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
             plan->getPipelines()[0]->execute(buffer, workerContext);
 
             // This plan should produce one output buffer

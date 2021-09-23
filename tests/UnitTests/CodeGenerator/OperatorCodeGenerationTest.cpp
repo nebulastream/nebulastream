@@ -435,7 +435,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", DataTypeFactory::createUInt64()),
                                        QueryCompilation::NO_OPTIMIZATION,
-                                       true,
                                        context);
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -488,7 +487,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     codeGenerator->generateCodeForFilter(pred, context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(source->getSchema(), QueryCompilation::NO_OPTIMIZATION, true, context);
+    codeGenerator->generateCodeForEmit(source->getSchema(), QueryCompilation::NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -863,7 +862,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
         context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(inputSchema, QueryCompilation::NO_OPTIMIZATION, true, context);
+    codeGenerator->generateCodeForEmit(inputSchema, QueryCompilation::NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -926,7 +925,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, true, context);
+    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -1003,7 +1002,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, true, context);
+    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -1081,7 +1080,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, true, context);
+    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -1158,7 +1157,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, true, context);
+    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -1236,7 +1235,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
         context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, true, context);
+    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
@@ -1645,7 +1644,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     codeGenerator->generateCodeForCEPIterationOperator(50, 150, context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(inputSchema, QueryCompilation::NO_OPTIMIZATION, true, context);
+    codeGenerator->generateCodeForEmit(inputSchema, QueryCompilation::NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context);
