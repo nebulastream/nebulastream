@@ -22,6 +22,17 @@
 #include <utility>
 namespace NES::QueryCompilation {
 
+class ValueHolder {
+
+  public:
+    int printValue(int a, int b);
+};
+
+template<typename R, typename T, typename A1,  typename A2>
+R call2(R (T::* v)(A1, A2)){
+    static_cast<R(T::*)(A1 attribute, A2 attribute2)>(v);
+}
+
 template<typename T, typename R>
 R call(T&& t){
     return t();
