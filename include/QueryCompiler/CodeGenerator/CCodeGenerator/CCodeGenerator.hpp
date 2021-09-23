@@ -66,7 +66,7 @@ class CCodeGenerator : public CodeGenerator {
     bool generateCodeForFilter(PredicatePtr pred, PipelineContextPtr context) override;
 
     /**
-    * @brief Code generation for a predicated filter operator, which depends on a particular filter predicate. // TODO
+    * @brief Code generation for a (branchless) predicated filter operator.
     * @param predicate The filter predicate, which selects input records.
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
@@ -90,7 +90,7 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool
-    generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, bool increasesResultBufferWriteIndex, PipelineContextPtr context) override;
+    generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, PipelineContextPtr context) override;
 
     /**
      * @brief Code generation for a watermark assigner operator.

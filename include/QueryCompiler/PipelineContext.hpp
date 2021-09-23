@@ -66,12 +66,22 @@ class PipelineContext {
     std::vector<BlockScopeStatementPtr> getSetupScopes();
     std::vector<BlockScopeStatementPtr> getStartScopes();
 
+    /**
+     * @brief Gets value of the variable tuplePassesPredicatesIsDeclared.
+     */
+    bool getTuplePassesFiltersIsDeclared();
+    /**
+     * @brief Sets the variable tuplePassesPredicatesIsDeclared to true, so that it does not declared again.
+     */
+    void setTrueTuplePassesFiltersIsDeclared();
+
   private:
     RecordHandlerPtr recordHandler;
     std::vector<PipelineContextPtr> nextPipelines;
     std::vector<BlockScopeStatementPtr> setupScopes;
     std::vector<BlockScopeStatementPtr> startScopes;
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
+    bool tuplePassesFiltersIsDeclared = false;
 };
 }// namespace QueryCompilation
 }// namespace NES

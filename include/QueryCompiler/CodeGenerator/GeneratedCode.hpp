@@ -56,6 +56,7 @@ class GeneratedCode {
     VariableDeclaration varDeclarationExecutionContext;
     FunctionCallStatement tupleBufferGetNumberOfTupleCall;
     VariableDeclaration varDeclarationInputTuples;
+    VariableDeclaration varDeclarationTuplePassesFilters;
     VariableDeclaration varDeclarationNumberOfResultTuples;
     std::vector<StructDeclaration> typeDeclarations;
     std::vector<DeclarationPtr> override_fields;

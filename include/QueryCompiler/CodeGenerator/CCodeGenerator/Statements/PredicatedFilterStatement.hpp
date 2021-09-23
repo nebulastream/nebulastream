@@ -25,10 +25,12 @@ namespace NES {
 namespace QueryCompilation {
 class PredicatedFilterStatement : public Statement {
   public:
-    explicit PredicatedFilterStatement(const Statement& condExpr, const VariableDeclaration& indexVariable);
+    static ExpressionStatementPtr generatePredicateEvaluationCode(const ExpressionStatement& condExpr, const VariableDeclaration& tuplePassesFilter, bool tuplePassesPredicateIsDeclared);
 
-    PredicatedFilterStatement(const Statement& condExpr, const VariableDeclaration& indexVariable, const Statement& predicatedCode);
-    PredicatedFilterStatement(const StatementPtr condExpr, const VariableDeclarationPtr indexVariable, const StatementPtr predicatedCode);
+    explicit PredicatedFilterStatement(const ExpressionStatement& condExpr, const VariableDeclaration& tuplePassesFilter, bool tuplePassesPredicateIsDeclared);
+
+    PredicatedFilterStatement(const ExpressionStatement& condExpr, const VariableDeclaration& tuplePassesFilter, bool tuplePassesPredicateIsDeclared, const Statement& predicatedCode);
+    PredicatedFilterStatement(const ExpressionStatementPtr condExpr, const VariableDeclarationPtr tuplePassesFilter, bool tuplePassesPredicateIsDeclared, const StatementPtr predicatedCode);
 
     [[nodiscard]] StatementType getStamentType() const override;
     [[nodiscard]] CodeExpressionPtr getCode() const override;
@@ -39,8 +41,7 @@ class PredicatedFilterStatement : public Statement {
     ~PredicatedFilterStatement() noexcept override = default;
 
   private:
-    const StatementPtr conditionalExpression;
-    VarRefStatement indexVariable;
+    ExpressionStatementPtr predicateEvaluation;
     CompoundStatementPtr predicatedCode;
 };
 

@@ -14,8 +14,10 @@
     limitations under the License.
 */
 
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/PredicatedFilterStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
 #include <utility>
@@ -23,39 +25,47 @@
 
 namespace NES::QueryCompilation {
 
-PredicatedFilterStatement::PredicatedFilterStatement(const Statement& condExpr, const VariableDeclaration& indexVariable)
-: conditionalExpression(condExpr.createCopy()), indexVariable(indexVariable), predicatedCode(std::make_shared<CompoundStatement>()) {}
+ExpressionStatementPtr PredicatedFilterStatement::generatePredicateEvaluationCode(const ExpressionStatement& predicateExpression, const VariableDeclaration& tuplePassesFilter, bool tuplePassesPredicateIsDeclared) {
+    auto predicateEvaluation = std::make_shared<CompoundStatement>();
+    if (!tuplePassesPredicateIsDeclared) {
+        // we need to declare the boolean tuplePassesFilter, then assign the evaluation of the predicate
+        return VarDecl(tuplePassesFilter).assign(predicateExpression.copy()).copy();
+    } else {
+        // tuplePassesFilter has been previously declared and assigned. we rewrite it with the "AND" of this next predicate's evaluation
+        return VarRef(tuplePassesFilter).assign((VarRef(tuplePassesFilter) & predicateExpression).copy()).copy();
+    }
+}
 
-PredicatedFilterStatement::PredicatedFilterStatement(const Statement& condExpr, const VariableDeclaration& indexVariable, const Statement& predicatedCode)
-: conditionalExpression(condExpr.createCopy()), indexVariable(indexVariable), predicatedCode(std::make_shared<CompoundStatement>()) {
+PredicatedFilterStatement::PredicatedFilterStatement(const ExpressionStatement& predicateExpression, const VariableDeclaration& tuplePassesFilter, bool tuplePassesPredicateIsDeclared)
+: predicateEvaluation(generatePredicateEvaluationCode(predicateExpression, tuplePassesFilter, tuplePassesPredicateIsDeclared)), predicatedCode(std::make_shared<CompoundStatement>()) {}
+
+PredicatedFilterStatement::PredicatedFilterStatement(const ExpressionStatement& predicateExpression, const VariableDeclaration& tuplePassesFilter, bool tuplePassesPredicateIsDeclared, const Statement& predicatedCode)
+: predicateEvaluation(generatePredicateEvaluationCode(predicateExpression, tuplePassesFilter, tuplePassesPredicateIsDeclared)), predicatedCode(std::make_shared<CompoundStatement>()) {
     this->predicatedCode->addStatement(predicatedCode.createCopy());
 }
 
-PredicatedFilterStatement::PredicatedFilterStatement(StatementPtr condExpr, const VariableDeclarationPtr indexVariable, const StatementPtr predicatedCode)
-: conditionalExpression(std::move(condExpr)), indexVariable(indexVariable), predicatedCode(std::make_shared<CompoundStatement>()) {
+PredicatedFilterStatement::PredicatedFilterStatement(ExpressionStatementPtr predicateExpression, const VariableDeclarationPtr tuplePassesFilter, bool tuplePassesPredicateIsDeclared, const StatementPtr predicatedCode)
+: predicateEvaluation(generatePredicateEvaluationCode(*predicateExpression, *tuplePassesFilter, tuplePassesPredicateIsDeclared)), predicatedCode(std::make_shared<CompoundStatement>()) {
     this->predicatedCode->addStatement(predicatedCode->createCopy());
 }
 
 StatementType PredicatedFilterStatement::getStamentType() const { return PREDICATED_FILTER_STMT; }
 CodeExpressionPtr PredicatedFilterStatement::getCode() const {
-    auto conditionalExpressionGenerated = conditionalExpression->getCode()->code_;
+
+    auto predicateEvaluationGenerated = predicateEvaluation->getCode()->code_;
     auto predicatedCodeGenerated = predicatedCode->getCode()->code_;
-    auto indexVariableGenerated = indexVariable.getCode()->code_;
-    NES_ASSERT(!conditionalExpressionGenerated.empty(),
-               "PredicatedFilterstatement: conditionalExpression did not generate valid code.");
+    NES_ASSERT(!predicateEvaluationGenerated.empty(),
+               "PredicatedFilterstatement: predicateEvaluation did not generate valid code.");
     NES_ASSERT(!predicatedCodeGenerated.empty(),
-               "PredicatedFilterstatement: predicatedCodeGenerated did not generate valid code.");
-    NES_ASSERT(!indexVariableGenerated.empty(),
-               "PredicatedFilterstatement: indexVariableGenerated did not generate valid code.");
+               "PredicatedFilterstatement: predicatedCode did not generate valid code.");
 
     std::stringstream code;
-    // evaluate the predicate (based on input buffer field) first - so that the field isn't overwritten with a result value in the buffer reuse optimization
-    code << "bool passesFilter = " << conditionalExpressionGenerated << ";" << std::endl;
-    // execute lower code statements as if they were not predicated
+    // evaluate the predicate (based on input buffer field) first - so that the field isn't overwritten with a result value in the buffer reuse optimization:
+    code << predicateEvaluationGenerated << ";" << std::endl;
+    // in a following emit operator the tuple is written to the result buffer as if not predicated.
+    // but the index of the result buffer write location is only increased if the filter is passed.
+    // thus only tuples that pass the filter will persist in the result buffer:
     code << predicatedCodeGenerated << std::endl;
-    // but then, only increase the index of the result buffer write location if condition is fulfilled
-    code << indexVariableGenerated << " += passesFilter;" << std::endl;
-    // thus only tuples that pass the condition will persist in the result buffer
     return std::make_shared<CodeExpression>(code.str());
 }
 StatementPtr PredicatedFilterStatement::createCopy() const { return std::make_shared<PredicatedFilterStatement>(*this); }

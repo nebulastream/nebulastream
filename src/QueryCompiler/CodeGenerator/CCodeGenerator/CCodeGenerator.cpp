@@ -348,8 +348,7 @@ bool CCodeGenerator::generateCodeForFilter(PredicatePtr pred, PipelineContextPtr
     // first, add the head and brackets of the if-statement
     context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
     // second, move insertion point. the rest of the pipeline will be generated within the brackets of the if-statement
-    context->code->currentCodeInsertionPoint = ifStatement.getCompoundStatement(); // why does this work when we created a copy two lines above?
-
+    context->code->currentCodeInsertionPoint = ifStatement.getCompoundStatement();
     return true;
 }
 
@@ -364,11 +363,11 @@ bool CCodeGenerator::generateCodeForFilterPredicated(PredicatePtr pred, Pipeline
 
     // create predicate expression from filter predicate
     auto predicateExpression = pred->generateCode(context->code, context->getRecordHandler());
-    auto predicatedFilter = PredicatedFilter(*predicateExpression, context->code->varDeclarationNumberOfResultTuples);
+    auto predicatedFilter = PredicatedFilter(*predicateExpression, context->code->varDeclarationTuplePassesFilters, context->getTuplePassesFiltersIsDeclared());
 
     context->code->currentCodeInsertionPoint->addStatement(predicatedFilter.createCopy());
+    context->setTrueTuplePassesFiltersIsDeclared();
     context->code->currentCodeInsertionPoint = predicatedFilter.getCompoundStatement();
-
     return true;
 }
 
@@ -403,9 +402,7 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, LegacyExpressio
     return true;
 }
 
-bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
-                                         OutputBufferAllocationStrategy bufferStrategy,
-                                         bool increasesResultBufferWriteIndex,
+bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy,
                                          PipelineContextPtr context) {
 
     auto tf = getTypeFactory();
@@ -432,7 +429,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                 VarRef(code->varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
 
         } else {
-            // Here we handle weaker optimizations.
+            // An optimization other than ONLY_INPLACE_OPERATIONS will be applied:
 
             auto recordHandler = context->getRecordHandler();
             auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
@@ -508,9 +505,15 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                 code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
             }
 
-            // If the pipeline uses (branchless) predicated filtering, the increase of "numberOfResultTuples" is handled by the filter operator
-            // If not we do it ourselves here:
-            if (increasesResultBufferWriteIndex) {
+            if (context->getTuplePassesFiltersIsDeclared()) {
+                // the pipeline uses (branchless) predicated filtering
+                // we increase "numberOfResultTuples" if all filters are passed, as shown by the boolean tuplePassesFilters
+                code->currentCodeInsertionPoint->addStatement(
+                        VarRef(code->varDeclarationNumberOfResultTuples).assign(
+                                VarRef(code->varDeclarationNumberOfResultTuples) + VarRef(code->varDeclarationTuplePassesFilters)
+                                ).copy());
+            } else {
+                // no (branchless) predicated filtering in pipeline
                 // increment number of tuples in buffer -> ++numberOfResultTuples;
                 code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
             }
@@ -576,7 +579,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
         // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
         // We can optimize this away if the result schema is smaller than the input schema.
-        if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || bufferStrategy == OMIT_OVERFLOW_CHECK)) { // todo does this work yet for col? because in the commit it was removed at row
+        if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || bufferStrategy == OMIT_OVERFLOW_CHECK)) { // TODO does this work yet for col layout?
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
     } else {
