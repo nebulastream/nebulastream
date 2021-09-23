@@ -6,7 +6,7 @@
 numberOfBuffersToProduce: 1
 
 # Set number of tuples to produce per buffer
-numberOfTuplesToProducePerBuffer: 0
+numberOfTuplesToProducePerBuffer: 1
 
 # Set physical stream name
 physicalStreamName: default_stream_phy

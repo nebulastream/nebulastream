@@ -38,19 +38,10 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 class SourceConfig {
 
   public:
-    static SourceConfigPtr create();
-
     /**
-     * @brief overwrite the default configurations with those loaded from a yaml file
-     * @param filePath file path to the yaml file
+     * @brief constructor to create a new source option object initialized with default values as set below
      */
-    virtual void overwriteConfigWithYAMLFileInput(const std::string& filePath);
-
-    /**
-     * @brief overwrite the default and the yaml file configurations with command line input
-     * @param inputParams map with key=command line parameter and value = value
-     */
-    virtual void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams);
+    explicit SourceConfig(const std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief resets all options to default values
@@ -123,16 +114,6 @@ class SourceConfig {
     void setLogicalStreamName(std::string logicalStreamName);
 
     /**
-     * @brief gets a ConfigOption object with skipHeader
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<bool>> getSkipHeader() const;
-
-    /**
-     * @brief set the value for skipHeader with the appropriate data format
-     */
-    void setSkipHeader(bool skipHeader);
-
-    /**
      * @brief Get udsf, needed for: SenseSource
      */
     [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUdsf() const;
@@ -141,16 +122,6 @@ class SourceConfig {
      * @brief Set udsf, needed for: SenseSource
      */
     void setUdsf(std::string udsf);
-
-    /**
-     * @brief Get file path, needed for: CSVSource, BinarySource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getFilePath() const;
-
-    /**
-     * @brief Set file path, needed for: CSVSource, BinarySource
-     */
-    void setFilePath(std::string filePath);
 
     /**
      * @brief Get url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource
@@ -293,13 +264,8 @@ class SourceConfig {
     void setAutoCommit(uint32_t autoCommit);
 
   private:
-    /**
-     * @brief constructor to create a new source option object initialized with default values as set below
-     */
-    SourceConfig();
     StringConfigOption sourceType;
     StringConfigOption udsf;
-    StringConfigOption filePath;
     StringConfigOption url;
     IntConfigOption namespaceIndex;
     StringConfigOption nodeIdentifier;
@@ -319,7 +285,7 @@ class SourceConfig {
     IntConfigOption numberOfTuplesToProducePerBuffer;
     StringConfigOption physicalStreamName;
     StringConfigOption logicalStreamName;
-    BoolConfigOption skipHeader;
+
 };
 }// namespace NES
 #endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_

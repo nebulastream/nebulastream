@@ -15,5 +15,6 @@
 add_source_nes(
         SourceConfig.cpp
         CSVSourceConfig.cpp
+        SourceConfigFactory.cpp
 )
 
