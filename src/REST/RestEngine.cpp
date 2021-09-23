@@ -123,7 +123,7 @@ void RestEngine::handlePost(http_request request) {
     auto paths = splitPath(path);
 
     if (!paths.empty()) {
-        if (paths[0] == "query" || paths[0] == "pattern") {
+        if (paths[0] == "query") {
             queryController->handlePost(paths, request);
             return;
         }

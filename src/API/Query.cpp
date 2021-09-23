@@ -200,9 +200,9 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     return *this;
 }
 
-Query& Query::iter(const uint64_t minIteration, const uint64_t maxIteration) {
-    NES_DEBUG("Pattern: enter iteration function with (min, max)" << minIteration << "," << maxIteration);
-    OperatorNodePtr op = LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration);
+Query& Query::times(const uint64_t minOccurrences, const uint64_t maxOccurrences) {
+    NES_DEBUG("Pattern: enter iteration function with (min, max)" << minOccurrences << "," << maxOccurrences);
+    OperatorNodePtr op = LogicalOperatorFactory::createCEPIterationOperator(minOccurrences, maxOccurrences);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }

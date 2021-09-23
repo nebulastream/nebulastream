@@ -226,12 +226,14 @@ class Query {
     Query& map(FieldAssignmentExpressionNodePtr const& mapExpression);
 
     /**
-     * @brief: Monitors a condition from a particular source stream. The source stream is identified by its name.
-     * During processing the underlying source descriptor is retrieved from the stream catalog.
-     * @param sourceStreamName name of the stream to monitor. This name has to be registered in the query catalog.
+     * @brief: This operator is a CEP operator, in CEP engines also called iteration operator. It
+     * allows for multiple occurrences of a specified event, i.e., tuples.
+     * Thus, 'times' enables patterns of arbitrary length (when only minOccurrences are defined)
+     * @param minOccurrences: minimal number of occurrences of a specified event, i.e., tuples
+     * @param maxOccurrences: maximal number of occurrences of a specified event, i.e., tuples
      * @return the pattern
      */
-    Query& iter(uint64_t minIterations, uint64_t maxIteration);
+    Query& times(uint64_t minOccurrences, uint64_t maxOccurrences);
 
     /**
      * @brief Add sink operator for the query.

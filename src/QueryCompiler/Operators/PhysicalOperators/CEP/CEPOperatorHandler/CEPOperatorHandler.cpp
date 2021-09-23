@@ -37,7 +37,7 @@ void CEPOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMes
     Reconfigurable::postReconfigurationCallback(task);
 }
 
-[[maybe_unused]] void CEPOperatorHandler::addTuple() { counter++; }
+[[maybe_unused]] void CEPOperatorHandler::incrementCounter() { counter++; }
 
 [[maybe_unused]] uint64_t CEPOperatorHandler::getCounter() { return counter; }
 
