@@ -87,6 +87,7 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
 
 void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
     for (const auto& successor : executableSuccessors) {
+        //NES_ERROR(executableSuccessors.size());
         queryManager->addWorkForNextPipeline(buffer, successor, numaNode);
     }
 }
@@ -211,7 +212,10 @@ bool DataSource::stop(bool graceful) {
 
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
-void DataSource::open() { bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
+void DataSource::open() {
+    //NES_ERROR("Creating Data source with :" << numSourceLocalBuffers<< "buffers");
+    bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
+}
 
 void DataSource::close() {}
 

@@ -35,7 +35,7 @@ ExchangeProtocol::ExchangeProtocol(std::shared_ptr<PartitionManager> partitionMa
 Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
     // check if the partition is registered via the partition manager or wait until this is not done
     // if all good, send message back
-    NES_INFO("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString());
+
     auto nesPartition = msg.getChannelId().getNesPartition();
 
     // check if identity is registered
@@ -43,6 +43,7 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
         // increment the counter
         partitionManager->pinSubpartition(nesPartition);
         NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " REGISTERED");
+        //NES_ERROR("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " and partition " << msg.getChannelId().getNesPartition() << "SUCCSESFUL");
         // send response back to the client based on the identity
         return Messages::ServerReadyMessage(msg.getChannelId());
     }
@@ -86,7 +87,7 @@ void ExchangeProtocol::onRemoveQEP(Messages::RemoveQEPMessage removeQEPMessage) 
         if (partitionManager->unregisterSubpartition(removeQEPMessage.getChannelId().getNesPartition())) {
             protocolListener->onRemoveQEP(removeQEPMessage);
         } else {
-            NES_DEBUG("ExchangeProtocol: removeQEP message received from "
+            NES_ERROR("ExchangeProtocol: removeQEP message received from "
                           << removeQEPMessage.getChannelId().toString() << " but there is still some active subpartition: "
                           << partitionManager->getSubpartitionCounter(removeQEPMessage.getChannelId().getNesPartition()));
         }

@@ -44,7 +44,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
         NES_DEBUG("ThreadId at OutputChannel: " << channelId.toString());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
         constexpr int linger = -1;
-        NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);
+        //NES_ERROR("OutputChannel: Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId <<",address="<<socketAddr);
         zmqSocket.set(zmq::sockopt::linger, linger);
         //zmqSocket.setsockopt(ZMQ_IDENTITY, &channelId, sizeof(ChannelId));
         zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
@@ -72,7 +72,6 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
 
             switch (recvHeader->getMsgType()) {
                 case Messages::kServerReady: {
-                    NES_DEBUG("OutputChannel: connecting with " << socketAddr << " succesful");
                     zmq::message_t recvMsg;
                     auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
@@ -87,14 +86,14 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                     }
 
                     if (serverReadyMsg->isOk() && !serverReadyMsg->isPartitionNotFound()) {
-                        NES_INFO("OutputChannel: Connection established with server " << socketAddr << " for " << channelId);
+                        //NES_ERROR("OutputChannel: Connection established with server " << socketAddr << " for " << channelId);
                         return std::make_unique<OutputChannel>(std::move(zmqSocket), channelId, std::move(socketAddr), std::move(buffer));
                     }
                     protocol.onChannelError(Messages::ErrorMessage(channelId, serverReadyMsg->getErrorType()));
                     break;
                 }
                 case Messages::kErrorMessage: {
-                    NES_DEBUG("OutputChannel: Error on Client Announcement");
+                    NES_ERROR("OutputChannel: Error on Client Announcement");
                     // if server receives a message that an error occured
                     zmq::message_t errorEnvelope;
                     auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
@@ -106,7 +105,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                 }
                 default: {
                     // got a wrong message type!
-                    NES_DEBUG("OutputChannel: received unknown message " << recvHeader->getMsgType());
+                    NES_ERROR("OutputChannel: received unknown message " << recvHeader->getMsgType());
                     return nullptr;
                 }
             }

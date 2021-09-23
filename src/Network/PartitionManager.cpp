@@ -69,6 +69,7 @@ bool PartitionManager::registerSubpartition(NesPartition partition, DataEmitterP
 }
 
 bool PartitionManager::unregisterSubpartition(NesPartition partition) {
+    //NES_ERROR("Unregistering a partition");
     std::unique_lock lock(mutex);
 
     auto it = partitions.find(partition);
@@ -79,7 +80,7 @@ bool PartitionManager::unregisterSubpartition(NesPartition partition) {
     NES_DEBUG("Unregistering SubPartition");
     if (it->second.count() == 0) {
         NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
-        partitions.erase(it);
+        //partitions.erase(it);
         return true;
     }
 
@@ -88,7 +89,7 @@ bool PartitionManager::unregisterSubpartition(NesPartition partition) {
     if (it->second.count() == 0) {
         //if counter reaches 0, log error
         NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
-        partitions.erase(it);
+        //partitions.erase(it);
         return true;
     }
     return false;
@@ -101,12 +102,14 @@ uint64_t PartitionManager::getSubpartitionCounter(NesPartition partition) {
 
 DataEmitterPtr PartitionManager::getDataEmitter(NesPartition partition) {
     std::unique_lock lock(mutex);
+    if(!partitions.contains(partition))
+        NES_ERROR("PartitionManager: partition emiiter for " << partition.toString() <<" does not exist");
     return partitions[partition].getEmitter();
 }
 
 void PartitionManager::clear() {
     std::unique_lock lock(mutex);
-    NES_INFO("PartitionManager: Clearing registered partitions");
+    NES_ERROR("PartitionManager: Clearing registered partitions");
     partitions.clear();
 }
 

@@ -95,12 +95,10 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
 
     // StartCall initiates the RPC call
     call->responseReader->StartCall();
-
     // Request that, upon completion of the RPC, "reply" be updated with the
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
-
     return true;
 }
 
@@ -248,12 +246,14 @@ bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId
     call->responseReader = workerStub->PrepareAsyncStartQuery(&call->context, request, cq.get());
 
     // StartCall initiates the RPC call
+
     call->responseReader->StartCall();
 
     // Request that, upon completion of the RPC, "reply" be updated with the
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+
 
     return true;
 }

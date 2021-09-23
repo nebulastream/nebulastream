@@ -172,7 +172,7 @@ void BottomUpStrategy::placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan, b
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
     for (auto& sourceOperator : sourceOperators) {
         NES_DEBUG("BottomUpStrategy: Get the topology node for source operator " << sourceOperator->toString() << " placement.");
-        TopologyNodePtr candidateTopologyNode = getTopologyNodeForPinnedOperator(sourceOperator->getId());
+        TopologyNodePtr candidateTopologyNode = getTopologyNodeForPinnedOperator(sourceOperator->getId(),partialPlacement);
         if (candidateTopologyNode->getAvailableResources() == 0 && !partialPlacement) {
             NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
             throw Exception(
@@ -316,7 +316,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId,
 
     NES_TRACE("BottomUpStrategy: Place the parent operators.");
     for (const auto& parent : operatorNode->getParents()) {
-        placeOperatorOnTopologyNode(queryId, parent->as<OperatorNode>(), candidateTopologyNode);
+        placeOperatorOnTopologyNode(queryId, parent->as<OperatorNode>(), candidateTopologyNode,partialPlacement);
     }
 }
 

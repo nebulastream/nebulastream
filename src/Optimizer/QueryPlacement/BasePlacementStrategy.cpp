@@ -211,7 +211,7 @@ ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& 
     return candidateExecutionNode;
 }
 
-TopologyNodePtr BasePlacementStrategy::getTopologyNodeForPinnedOperator(uint64_t operatorId) {
+TopologyNodePtr BasePlacementStrategy::getTopologyNodeForPinnedOperator(uint64_t operatorId, bool partialPlacement) {
 
     NES_DEBUG("BasePlacementStrategy: Get the topology node for logical operator with id " << operatorId);
     auto found = pinnedOperatorLocationMap.find(operatorId);
@@ -222,7 +222,7 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNodeForPinnedOperator(uint64_t
     }
 
     TopologyNodePtr candidateTopologyNode = pinnedOperatorLocationMap[operatorId];
-    if (candidateTopologyNode->getAvailableResources() == 0) {
+    if (candidateTopologyNode->getAvailableResources() == 0 && !partialPlacement) {
         NES_ERROR("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
         throw Exception("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
     }

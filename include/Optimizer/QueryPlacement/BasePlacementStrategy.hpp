@@ -128,7 +128,7 @@ class BasePlacementStrategy {
      * @param operatorId: the id of the operator
      * @return Topology node ptr or nullptr
      */
-    TopologyNodePtr getTopologyNodeForPinnedOperator(uint64_t operatorId);
+    TopologyNodePtr getTopologyNodeForPinnedOperator(uint64_t operatorId, bool partialPlacement=false);
 
     /**
      * @brief Add network source and sinks between query sub plans allocated on different execution nodes

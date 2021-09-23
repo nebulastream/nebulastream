@@ -115,6 +115,7 @@ bool NodeEngine::registerQueryInNodeEngine(const QueryPlanPtr& queryPlan) {
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, inherited1::shared_from_this());
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
+    NES_ERROR("Compilation TIme: "<<result->getCompilationTime());
     try {
         auto executablePlan = result->getExecutableQueryPlan();
         return registerQueryInNodeEngine(executablePlan);
@@ -363,7 +364,7 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
     NES_DEBUG("Propagating EoS Message to QEPS that get data from source with id: " << msg.getChannelId().getNesPartition().getOperatorId());
-    queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
+    //queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {

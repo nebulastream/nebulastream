@@ -55,6 +55,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const std::string& queryCompilerOutputBufferOptimizationLevel) {
 
     try {
+        NES_DEBUG("numberOfBuffersInSourceLocalBufferPool:" << numberOfBuffersInSourceLocalBufferPool );
         auto nodeEngineId = getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto hardwareManager = std::make_shared<Runtime::HardwareManager>();

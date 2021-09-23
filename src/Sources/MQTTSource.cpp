@@ -72,6 +72,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
       cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs),
       readTimeoutInMs((bufferFlushIntervalMs > 0) ? bufferFlushIntervalMs : 100) {
       NES_DEBUG("In MQTT constr");
+      NES_ERROR("MQTTSource: number of buffers: " << numSourceLocalBuffers);
 
     if (cleanSession) {
         uint32_t randomizeClientId = random();

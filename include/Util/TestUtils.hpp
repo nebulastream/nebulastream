@@ -57,6 +57,10 @@ class TestUtils {
         return "--numberOfSlots=" + std::to_string(coordinatorPort);
     }
 
+    [[nodiscard]] static std::string logLevel(std::string logLevel) {
+        return "--logLevel=" + logLevel;
+    }
+
     [[nodiscard]] static std::string rpcPort(uint64_t rpcPort) { return "--rpcPort=" + std::to_string(rpcPort); }
 
     [[nodiscard]] static std::string sourceType(std::string sourceType) { return "--sourceType=" + sourceType; }
@@ -67,6 +71,22 @@ class TestUtils {
 
     [[nodiscard]] static std::string numberOfTuplesToProducePerBuffer(uint64_t numberOfTuplesToProducePerBuffer) {
         return "--numberOfTuplesToProducePerBuffer=" + std::to_string(numberOfTuplesToProducePerBuffer);
+    }
+
+    [[nodiscard]] static std::string numberOfBuffersInGlobalBufferManager(uint32_t numberOfBuffersInGlobalBufferManager	) {
+        return "--numberOfBuffersInGlobalBufferManager=" + std::to_string(numberOfBuffersInGlobalBufferManager)	;
+    }
+
+    [[nodiscard]] static std::string numberOfBuffersPerWorker(uint32_t numberOfBuffersPerWorker	) {
+        return "--numberOfBuffersPerWorker=" + std::to_string(numberOfBuffersPerWorker)	;
+    }
+
+    [[nodiscard]] static std::string numberOfBuffersInSourceLocalBufferPool(uint32_t numberOfBuffersInSourceLocalBufferPool	) {
+        return "--numberOfBuffersInSourceLocalBufferPool=" + std::to_string(numberOfBuffersInSourceLocalBufferPool)	;
+    }
+
+    [[nodiscard]] static std::string bufferSizeInBytes(uint32_t bufferSizeInBytes) {
+        return "--bufferSizeInBytes=" + std::to_string(bufferSizeInBytes)	;
     }
 
     [[nodiscard]] static std::string physicalStreamName(std::string physicalStreamName) {
@@ -94,6 +114,7 @@ class TestUtils {
    */
     [[nodiscard]] static Util::Subprocess startCoordinator(std::initializer_list<std::string> list) {
         NES_INFO("Start coordinator");
+        NES_DEBUG(list.size());
         return {std::string(PATH_TO_BINARY_DIR) + "/nesCoordinator", list};
     }
 

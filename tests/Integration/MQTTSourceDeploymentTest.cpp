@@ -80,7 +80,7 @@ TEST_F(MQTTSourceDeploymentTest, testDeployOneWorker) {
 
 
         std::string mqtt =
-                R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("creation_timestamp", UINT64))->addField(createField("data", UINT64))->addField("stringData",addField(createField("ingestion_timestamp", UINT64))->addField(createField("expulsion_timestamp", UINT64));)";
+                R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("creation_timestamp", UINT64))->addField(createField("data", UINT64))->addField(createField("ingestion_timestamp", UINT64))->addField(createField("expulsion_timestamp", UINT64));)";
         std::string testSchemaFileName = "mqtt.hpp";
         std::ofstream out(testSchemaFileName);
         out << mqtt;
@@ -96,12 +96,16 @@ TEST_F(MQTTSourceDeploymentTest, testDeployOneWorker) {
         EXPECT_TRUE(retStart1);
         NES_INFO("MQTTSourceDeploymentTest: Worker1 started successfully");
         wrk1->registerLogicalStream("mqtt", testSchemaFileName);
+        sleep(3);
         srcConf->setSourceType("MQTTSource");
-        srcConf->setSourceConfig("tcp://127.0.0.1:1883;nes;nes;test;JSON;1;true");
+        srcConf->setSourceConfig("tcp://127.0.0.1:1883;nes;nes;test;JSON;1;false");
         srcConf->setPhysicalStreamName("mqttP");
         srcConf->setLogicalStreamName("mqtt");
-        //srcConf->setSourceFrequency(500);
-        wrk1->registerLogicalStream("mqtt", testSchemaFileName);
+        srcConf->setSkipHeader(true);
+        srcConf->setSourceFrequency(500);
+        //srcConf->setNumberOfTuplesToProducePerBuffer(1);
+        //srcConf->setNumberOfBuffersToProduce(10);
+
         PhysicalStreamConfigPtr mqttConfig = PhysicalStreamConfig::create(srcConf);
         wrk1->registerPhysicalStream(mqttConfig);
 
@@ -115,7 +119,7 @@ TEST_F(MQTTSourceDeploymentTest, testDeployOneWorker) {
         NES_INFO("MQTTSourceDeploymentTest: Submit query");
 
         // arguments are given so that ThingsBoard accepts the messages sent by the MQTT client
-        string query = R"(Query::from("mqtt").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+        string query = R"(Query::from("mqtt").map(Attribute("id") = Attribute("id")*100).map(Attribute("id") = Attribute("id")*100).sink(FileSinkDescriptor::create(")" + outputFilePath + R"(" , "CSV_FORMAT", "APPEND"));)";
 
         QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 

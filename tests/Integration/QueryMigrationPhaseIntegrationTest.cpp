@@ -1355,7 +1355,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferM
         coConf->setRpcPort(rpcPort);
         coConf->setRestPort(restPort);
         wrkConf->setCoordinatorPort(rpcPort);
-        wrkConf->setNumWorkerThreads(3);
+        wrkConf->setNumWorkerThreads(1);
         NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
         uint64_t port = crd->startCoordinator(/**blocking**/ false);
         EXPECT_NE(port, 0UL);
@@ -1380,6 +1380,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferM
 
         wrkConf->setRpcPort(port + 30);
         wrkConf->setDataPort(port + 31);
+        wrkConf->setNumberOfSlots(1);
         NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf,NesNodeType::Sensor);
         bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
         EXPECT_TRUE(retStart4);
@@ -1401,9 +1402,6 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferM
         srcConf->setSourceConfig("tcp://127.0.0.1:1883;nes;nes;test;JSON;1;true");
         srcConf->setPhysicalStreamName("mqttP");
         srcConf->setLogicalStreamName("mqtt");
-        srcConf->setSkipHeader(true);
-        //srcConf->setSourceFrequency(500);
-        srcConf->setNumberOfTuplesToProducePerBuffer(1);
         //srcConf->setNumberOfBuffersToProduce(400);
 
         PhysicalStreamConfigPtr mqttConfig = PhysicalStreamConfig::create(srcConf);
@@ -1415,7 +1413,10 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferM
         NES_INFO("MQTTSourceDeploymentTest: Submit query");
 
         // arguments are given so that ThingsBoard accepts the messages sent by the MQTT client
-        auto query = R"(Query::from("mqtt").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+        auto query = R"(Query::from("mqtt").map(Attribute("data") = Attribute("data")*Attribute("id")).sink(FileSinkDescriptor::create(")" + outputFilePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+
+
+        //
 
         QueryServicePtr queryService = crd->getQueryService();
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1427,7 +1428,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQueryWithBufferM
         ASSERT_TRUE(crd->getGlobalExecutionPlan()->checkIfExecutionNodeExists(wrk2TopologyNodeId));
         sleep(5);
         maintenanceService->submitMaintenanceRequest(wrk2TopologyNodeId,2); //doesnt work at all
-        sleep(10);
+        sleep(30);
         queryService->validateAndQueueStopRequest(queryId);
         EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
         NES_INFO("QueryDeploymentTest: Stop worker 2");

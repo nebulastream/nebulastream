@@ -123,6 +123,7 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
     // try to get an exclusive buffer
     std::unique_lock lock(mutex);
     while (exclusiveBuffers.empty()) {
+        NES_ERROR("No more buffers");
         cvar.wait(lock);
     }
     auto* memSegment = exclusiveBuffers.front();
