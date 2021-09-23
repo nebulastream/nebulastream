@@ -130,7 +130,9 @@ bool ThreadPool::start() {
 
                 localBufferManager = bufferManagers[numaNodeIndex];
                 NES_WARNING("Worker thread " << i << " will use numa node =" << numaNodeIndex);
-                std::cout << "Worker thread " << i << " pins to core=" << workerPinningPositionList[i] <<" will use numa node =" << numaNodeIndex << std::endl;
+                std::stringstream ss;
+                ss << "Worker thread " << i << " pins to core=" << workerPinningPositionList[i] <<" will use numa node =" << numaNodeIndex << std::endl;
+                std::cout << ss.str();
 
             } else {
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
