@@ -60,7 +60,7 @@ class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     ~CEPOperatorHandler() override { NES_DEBUG("~CEPOperatorHandler()"); }
 
-    [[maybe_unused]] void addTuple();
+    [[maybe_unused]] void incrementCounter();
 
     [[maybe_unused]] uint64_t getCounter();
 

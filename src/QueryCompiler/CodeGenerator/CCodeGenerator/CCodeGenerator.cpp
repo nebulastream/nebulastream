@@ -1063,7 +1063,7 @@ bool CCodeGenerator::generateCodeForCEPIterationOperator(uint64_t minIteration,
     NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: got CEPOperatorHadnler");
 
     // for each tuple: call addTuple on CEPOperatorCounter to count occurrences of events
-    auto updateCounter = VarRef(CEPOperatorHandlerDeclaration).accessPtr(call("addTuple"));
+    auto updateCounter = VarRef(CEPOperatorHandlerDeclaration).accessPtr(call("incrementCounter"));
     context->code->currentCodeInsertionPoint->addStatement(updateCounter.copy());
     // creates the following line of code: CEPOperatorHandler.addTuple();
 
