@@ -191,7 +191,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf);
 
-    std::string outputFilePath = "testPatternWithWindowandAggregation.out";
+    std::string outputFilePath = "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
 
     //register query
