@@ -209,8 +209,6 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    //TODO Patternname waiting for String support in map operator
-
     string expectedContent =
         "+----------------------------------------------------+\n"
         "|QnV$sensor_id:UINT64|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|\n"
