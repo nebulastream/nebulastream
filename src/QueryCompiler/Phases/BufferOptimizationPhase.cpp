@@ -19,6 +19,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/CEP/GeneratableCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
@@ -87,6 +88,8 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
             outputSchema = emitNode->getOutputSchema();
         } else if (node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()) {
             filterOperatorFound = true;
+        } else if (node->instanceOf<GeneratableOperators::GeneratableCEPIterationOperator>()) {
+            return operatorPipeline;
         }
     }
 
