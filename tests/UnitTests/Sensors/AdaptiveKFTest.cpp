@@ -82,96 +82,73 @@ class AdaptiveKFTest : public testing::Test {
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
 
-    // time and step size
-    double initialTimestamp = 0;
-    double timeStep = 1.0/30;
+    // empty filter
+    KalmanFilter kalmanFilter;
+    kalmanFilter.setDefaultValues();
 
-    // measurements
-    int m = 1;
-    // states
-    int n = 3;
-
-    // initial values of matrices
-    Eigen::MatrixXd F(n, n); // system dynamics
-    Eigen::MatrixXd H(m, n); // observation model
-    Eigen::MatrixXd Q(n, n); // process noise covariance
-    Eigen::MatrixXd R(m, m); // measurement noise covariance
-    Eigen::MatrixXd P0(n, n); // estimate error covariance
-
-    // initial state estimations, values can be anything
-    Eigen::VectorXd initialState(n);
-
-    // Discrete LTI projectile motion, measuring position only
-    F << 1, timeStep, 0, 0, 1, timeStep, 0, 0, 1;
-    H << 1, 0, 0;
-
-    // Reasonable covariance matrices
-    Q << .05, .05, .0, .05, .05, .0, .0, .0, .0;
-    R << 5;
-    P0 << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
-
-    // Construct the filter
-    KalmanFilter kalmanFilter(timeStep, F, H, Q, R, P0);
-
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
     initialState << 0, measurements[0], -9.81;
-    kalmanFilter.init(initialTimestamp, initialState);
+    kalmanFilter.init(initialState);
 
     // start measurements vector
-    Eigen::VectorXd y(m);
+    Eigen::VectorXd y(1);
+
+    auto initialError = kalmanFilter.getError();
 
     // predict and update
     for(auto measurement : measurements) {
-        initialTimestamp += timeStep;
         y << measurement;
         kalmanFilter.update(y);
     }
 
     // error has changed and P != P0
-    EXPECT_NE(P0, kalmanFilter.getError());
+    EXPECT_NE(initialError, kalmanFilter.getError());
 }
 
 TEST_F(AdaptiveKFTest, kfStateChangeTest) {
 
-    // time and step size
-    double initialTimestamp = 0;
-    double timeStep = 1.0/30;
+    // empty filter
+    KalmanFilter kalmanFilter;
+    kalmanFilter.setDefaultValues();
 
-    // measurements
-    int m = 1;
-    // states
-    int n = 3;
-
-    // initial values of matrices
-    Eigen::MatrixXd F(n, n); // system dynamics
-    Eigen::MatrixXd H(m, n); // observation model
-    Eigen::MatrixXd Q(n, n); // process noise covariance
-    Eigen::MatrixXd R(m, m); // measurement noise covariance
-    Eigen::MatrixXd P0(n, n); // estimate error covariance
-
-    // initial state estimations, values can be anything
-    Eigen::VectorXd initialState(n);
-
-    // Discrete LTI projectile motion, measuring position only
-    F << 1, timeStep, 0, 0, 1, timeStep, 0, 0, 1;
-    H << 1, 0, 0;
-
-    // Reasonable covariance matrices
-    Q << .05, .05, .0, .05, .05, .0, .0, .0, .0;
-    R << 5;
-    P0 << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
-
-    // Construct the filter
-    KalmanFilter kalmanFilter(timeStep, F, H, Q, R, P0);
-
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
     initialState << 0, measurements[0], -9.81;
-    kalmanFilter.init(initialTimestamp, initialState);
+    kalmanFilter.init(initialState);
 
     // start measurements vector
-    Eigen::VectorXd y(m);
+    Eigen::VectorXd y(1);
+
+    auto initialError = kalmanFilter.getError();
 
     // predict and update
     for(auto measurement : measurements) {
-        initialTimestamp += timeStep;
+        y << measurement;
+
+        // get current xHat, update, assert NE with new one
+        auto oldXHat = kalmanFilter.getState();
+        kalmanFilter.update(y);
+        EXPECT_NE(oldXHat, kalmanFilter.getState());
+    }
+}
+
+TEST_F(AdaptiveKFTest, kfStateChangeEmptyInitialStateTest) {
+
+    // empty filter
+    KalmanFilter kalmanFilter;
+    kalmanFilter.setDefaultValues();
+
+    // empty initial state, should be all zeroes
+    kalmanFilter.init();
+
+    // start measurements vector
+    Eigen::VectorXd y(1);
+
+    auto initialError = kalmanFilter.getError();
+
+    // predict and update
+    for(auto measurement : measurements) {
         y << measurement;
 
         // get current xHat, update, assert NE with new one
@@ -183,99 +160,49 @@ TEST_F(AdaptiveKFTest, kfStateChangeTest) {
 
 TEST_F(AdaptiveKFTest, kfStepChangeTest) {
 
-    // time and step size
-    double initialTimestamp = 0;
-    double timeStep = 1.0/30;
+    // empty filter
+    KalmanFilter kalmanFilter;
+    kalmanFilter.setDefaultValues();
 
-    // measurements
-    int m = 1;
-    // states
-    int n = 3;
-
-    // initial values of matrices
-    Eigen::MatrixXd F(n, n); // system dynamics
-    Eigen::MatrixXd H(m, n); // observation model
-    Eigen::MatrixXd Q(n, n); // process noise covariance
-    Eigen::MatrixXd R(m, m); // measurement noise covariance
-    Eigen::MatrixXd P0(n, n); // estimate error covariance
-
-    // initial state estimations, values can be anything
-    Eigen::VectorXd initialState(n);
-
-    // Discrete LTI projectile motion, measuring position only
-    F << 1, timeStep, 0, 0, 1, timeStep, 0, 0, 1;
-    H << 1, 0, 0;
-
-    // Reasonable covariance matrices
-    Q << .05, .05, .0, .05, .05, .0, .0, .0, .0;
-    R << 5;
-    P0 << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
-
-    // Construct the filter
-    KalmanFilter kalmanFilter(timeStep, F, H, Q, R, P0);
-
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
     initialState << 0, measurements[0], -9.81;
-    kalmanFilter.init(initialTimestamp, initialState);
+    kalmanFilter.init(initialState);
 
     // start measurements vector
-    Eigen::VectorXd y(m);
+    Eigen::VectorXd y(1);
+
+    auto initialError = kalmanFilter.getError();
 
     // predict and update
     for(auto measurement : measurements) {
-        initialTimestamp += timeStep;
         y << measurement;
 
         // get current step, update, assert NE with new one
         auto oldStep = kalmanFilter.getCurrentStep();
         kalmanFilter.update(y);
         EXPECT_NE(oldStep, kalmanFilter.getCurrentStep());
-        // step increased by the pre-defined interval only
-        EXPECT_EQ(oldStep + timeStep, kalmanFilter.getCurrentStep());
     }
 }
 
 TEST_F(AdaptiveKFTest, kfInnovationErrorChangeTest) {
 
-    // time and step size
-    double initialTimestamp = 0;
-    double timeStep = 1.0/30;
+    // empty filter
+    KalmanFilter kalmanFilter;
+    kalmanFilter.setDefaultValues();
 
-    // measurements
-    int m = 1;
-    // states
-    int n = 3;
-
-    // initial values of matrices
-    Eigen::MatrixXd F(n, n); // system dynamics
-    Eigen::MatrixXd H(m, n); // observation model
-    Eigen::MatrixXd Q(n, n); // process noise covariance
-    Eigen::MatrixXd R(m, m); // measurement noise covariance
-    Eigen::MatrixXd P0(n, n); // estimate error covariance
-
-    // initial state estimations, values can be anything
-    Eigen::VectorXd initialState(n);
-
-    // Discrete LTI projectile motion, measuring position only
-    F << 1, timeStep, 0, 0, 1, timeStep, 0, 0, 1;
-    H << 1, 0, 0;
-
-    // Reasonable covariance matrices
-    Q << .05, .05, .0, .05, .05, .0, .0, .0, .0;
-    R << 5;
-    P0 << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
-
-    // Construct the filter
-    KalmanFilter kalmanFilter(timeStep, F, H, Q, R, P0);
-
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
     initialState << 0, measurements[0], -9.81;
-    kalmanFilter.init(initialTimestamp, initialState);
+    kalmanFilter.init(initialState);
 
     // start measurements vector
-    Eigen::VectorXd y(m);
+    Eigen::VectorXd y(1);
+
+    auto initialError = kalmanFilter.getError();
 
     // predict and update
     for(auto measurement : measurements) {
-        initialTimestamp += timeStep;
         y << measurement;
 
         // get current error, update, assert NE with new one

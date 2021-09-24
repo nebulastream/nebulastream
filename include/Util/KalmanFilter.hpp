@@ -26,9 +26,12 @@ class KalmanFilter {
   public:
     explicit KalmanFilter(double timeStep, Eigen::MatrixXd F, Eigen::MatrixXd H, Eigen::MatrixXd Q,
                  Eigen::MatrixXd R, Eigen::MatrixXd P);
+    KalmanFilter();
 
     void init(); // all zeroes
-    void init(double firstTimestamp, const Eigen::VectorXd& initialState);
+    void init(const Eigen::VectorXd& initialState);
+    void init(double initialTimestamp, const Eigen::VectorXd& initialState);
+    void setDefaultValues(); // create artificial initial values
 
     void update(const Eigen::VectorXd& measuredValues); // same timestep
     void update(const Eigen::VectorXd& measuredValues, double newTimeStep); // update with timestep
@@ -42,7 +45,6 @@ class KalmanFilter {
 
   private:
     int m, n; // system model dimensions
-    KalmanFilter();
 
     /**
     * Process-specific matrices for a general KF.
@@ -64,7 +66,6 @@ class KalmanFilter {
     double timeStep;
     double initialTimestamp;
     double currentTime;
-    bool initialized;
 
 };// class KalmanFilter
 

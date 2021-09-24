@@ -15,35 +15,84 @@
 */
 
 #include <Util/KalmanFilter.hpp>
+#include <ctime>
 
 namespace NES {
 KalmanFilter::KalmanFilter(){};
 
 KalmanFilter::KalmanFilter(double timeStep, const Eigen::MatrixXd F, const Eigen::MatrixXd H, const Eigen::MatrixXd Q,
                                                    const Eigen::MatrixXd R, const Eigen::MatrixXd P)
-    : m(H.rows()), n(F.rows()), F(F), H(H), Q(Q), R(R), P0(P), I(n, n), xHat(n), xHatNew(n), innovationError(n), timeStep(timeStep), initialized(false) { I.setIdentity(); }
-
-void KalmanFilter::init() {
-    xHat.setZero();
-    P = P0;
-    initialTimestamp = 0;
-    currentTime = 0;
-    initialized = true;
+    : m(H.rows()), n(F.rows()), F(F), H(H), Q(Q), R(R), P0(P),
+      I(n, n), xHat(n), xHatNew(n), innovationError(n), timeStep(timeStep) {
+    I.setIdentity();
 }
 
-void KalmanFilter::init(double firstTimestamp, const Eigen::VectorXd& initialState) {
-    xHat = initialState;
-    P = P0;
-    initialTimestamp = firstTimestamp;
-    currentTime = firstTimestamp;
-    initialized = true;
+void KalmanFilter::init() {
+    this->setDefaultValues();
+    this->xHat.setZero();
+}
+
+void KalmanFilter::init(const Eigen::VectorXd& initialState) {
+    this->setDefaultValues();
+    this->xHat = initialState;
+}
+
+void KalmanFilter::init(double initialTimestamp, const Eigen::VectorXd& initialState) {
+    this->setDefaultValues();
+    this->xHat = initialState;
+    this->initialTimestamp = initialTimestamp;
+    this->currentTime = initialTimestamp;
+}
+
+void KalmanFilter::setDefaultValues() {
+
+    // measurements
+    this->m = 1;
+    // states
+    this->n = 3;
+    // timestep value
+    this->timeStep = 1.0/30;
+
+    // initial values of matrices
+    Eigen::MatrixXd F(this->n, this->n); // system dynamics
+    Eigen::MatrixXd H(this->m, this->n); // observation model
+    Eigen::MatrixXd Q(this->n, this->n); // process noise covariance
+    Eigen::MatrixXd R(this->m, this->m); // measurement noise covariance
+    Eigen::MatrixXd P0(this->n, this->n); // estimate error covariance
+    Eigen::MatrixXd I(this->n, this->n); // identity matrix
+
+    // initialization of innovation error
+    Eigen::VectorXd initialInnovationError(n);
+
+    // initial state estimations, values can be anything
+    Eigen::VectorXd initialState(this->n);
+
+    // Discrete LTI projectile motion, measuring position only
+    F << 1, this->timeStep, 0, 0, 1, this->timeStep, 0, 0, 1;
+    H << 1, 0, 0;
+
+    // Reasonable covariance matrices
+    Q << .05, .05, .0, .05, .05, .0, .0, .0, .0;
+    R << 5;
+    P0 << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
+
+    // initialize matrices
+    this->F = std::move(F);
+    this->H = std::move(H);
+    this->Q = std::move(Q);
+    this->R = std::move(R);
+    this->P0 = std::move(P0);
+    this->P = this->P0;
+    this->I = std::move(I);
+    this->I.setIdentity();
+    this->xHat = std::move(initialState);
+    this->xHatNew = std::move(initialState);
+    this->innovationError = std::move(initialInnovationError);
+    this->initialTimestamp = std::time(nullptr);
+    this->currentTime = std::time(nullptr);
 }
 
 void KalmanFilter::update(const Eigen::VectorXd& measuredValues) {
-    if (!initialized) {
-        this->init();
-    }
-
     // simplified prediction phase
     xHatNew = F * xHat; // no control unit (B*u), predicted a-priori state estimate
     P = F * P * F.transpose() + Q; // predicted a-priori estimate covariance
