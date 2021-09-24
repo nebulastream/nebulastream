@@ -1095,7 +1095,7 @@ TEST_F(QueryExecutionTest, ExternalOperatorQueryQuery) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
     plan->getPipelines()[1]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
