@@ -1317,161 +1317,21 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
  * @brief test distributed tumbling window and event time
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-    NES_INFO("WindowDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
-    EXPECT_TRUE(retStart1);
-    NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
-
-    NES_INFO("WindowDeploymentTest: Start worker 2");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 20);
-    workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);//id=3
-    wrk2->replaceParent(1, 2);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
-
-    NES_INFO("WindowDeploymentTest: Start worker 3");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 30);
-    workerConfig->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-    wrk3->replaceParent(1, 2);
-
-    EXPECT_TRUE(retStart3);
-    NES_INFO("WindowDeploymentTest: Worker 3 started successfully");
-
-    NES_INFO("WindowDeploymentTest: Start worker 4");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 40);
-    workerConfig->setDataPort(port + 41);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
-    wrk4->replaceParent(1, 2);
-    EXPECT_TRUE(retStart4);
-    NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
-
-    NES_INFO("WindowDeploymentTest: Start worker 5");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 60);
-    workerConfig->setDataPort(port + 61);
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
-    wrk5->replaceParent(1, 2);
-    EXPECT_TRUE(retStart5);
-    NES_INFO("WindowDeploymentTest: Worker 6 started successfully");
-
-    std::string outputFilePath = "testDeployOneWorkerDistributedWindowQueryEventTime.out";
-    remove(outputFilePath.c_str());
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    NES_INFO("WindowDeploymentTest: Submit query");
-
-    //register logical stream
-    std::string testSchema =
-        R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("window", testSchemaFileName);
-
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
-
-    //register physical stream
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    //    wrk1->registerPhysicalStream(conf);
-    wrk2->registerPhysicalStream(conf);
-    wrk3->registerPhysicalStream(conf);
-    wrk4->registerPhysicalStream(conf);
-    wrk5->registerPhysicalStream(conf);
-
-    NES_INFO("WindowDeploymentTest: Submit query");
-    string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
-                   "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "1000,2000,1,68\n"
-                             "2000,3000,2,112\n";
-
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    NES_INFO("WindowDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("WindowDeploymentTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
-
-    NES_INFO("WindowDeploymentTest: Stop worker 3");
-    bool retStopWrk3 = wrk3->stop(true);
-    EXPECT_TRUE(retStopWrk3);
-
-    NES_INFO("WindowDeploymentTest: Stop worker 4");
-    bool retStopWrk4 = wrk4->stop(true);
-    EXPECT_TRUE(retStopWrk4);
-
-    NES_INFO("WindowDeploymentTest: Stop worker 5");
-    bool retStopWrk5 = wrk5->stop(true);
-    EXPECT_TRUE(retStopWrk5);
-
-    NES_INFO("WindowDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("WindowDeploymentTest: Test finished");
-
-    /*struct Test {
-        uint64_t value;
+    struct Test {
         uint64_t id;
+        uint64_t value;
         uint64_t timestamp;
     };
 
     auto testSchema = Schema::create()
-        ->addField("value", DataTypeFactory::createUInt64())
-        ->addField("id", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("ts", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     std::string query =
-        R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
+        R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -1482,13 +1342,13 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test_stream");
     sourceConfig->setLogicalStreamName("window");
-
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
-    testHarness.addCSVSource(conf, testSchema, 2);
-    testHarness.addCSVSource(conf, testSchema, 2);
-    testHarness.addCSVSource(conf, testSchema, 2);
-    testHarness.addCSVSource(conf, testSchema, 2);
+
+    testHarness.addNonSourceWorker();
+    testHarness.addCSVSource(conf, testSchema, testHarness.getWorkerId(0));
+    testHarness.addCSVSource(conf, testSchema, testHarness.getWorkerId(0));
+    testHarness.addCSVSource(conf, testSchema, testHarness.getWorkerId(0));
+    testHarness.addCSVSource(conf, testSchema, testHarness.getWorkerId(0));
 
     ASSERT_EQ(testHarness.getWorkerCount(), 5UL);
 
@@ -1502,13 +1362,12 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
             return (start == rhs.start && end == rhs.end && id == rhs.id && value == rhs.value);
         }
     };
-    std::vector<Output> expectedOutput = {{1000,2000,1,68},
-                                          {2000,3000,2,112}};
+    std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));*/
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 /**
