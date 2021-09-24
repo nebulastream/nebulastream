@@ -116,6 +116,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 #endif
 
     auto& sourceCode = request->getSourceCode()->getCode();
+    NES_DEBUG("Generated query code is =" << request->getSourceCode()->getCode());
     NES_ASSERT2_FMT(sourceCode.size(), "empty source code for " << sourceFileName);
     auto file = File::createFile(sourceFileName, sourceCode);
     auto compilationFlags = CPPCompilerFlags::createDefaultCompilerFlags();
