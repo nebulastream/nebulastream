@@ -239,7 +239,7 @@ class TestHarness {
         wrkConf->setCoordinatorPort(crdPort);
         wrkConf->setRpcPort(crdPort + (testHarnessWorkers.size() + 1) * 20);
         wrkConf->setDataPort(crdPort + (testHarnessWorkers.size() + 1) * 20 + 1);
-        auto wrk = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+        auto wrk = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
         wrk->replaceParent(crd->getTopology()->getRoot()->getId(), parentId);
 
