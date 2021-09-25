@@ -78,7 +78,6 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
 
             if (foundMatch) {
                 NES_TRACE("HashSignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
-
                 auto startQM =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();

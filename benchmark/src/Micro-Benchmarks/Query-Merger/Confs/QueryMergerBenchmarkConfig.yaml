@@ -6,16 +6,19 @@ querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query
 #querySetLocation: '/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
 
 # Parameter that are changed per run with comma separated list
-#queryMergerRule: ImprovedStringSignatureBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule
-  # Z3SignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule
+queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
+  #,SyntaxBasedCompleteQueryMergerRule
+# Z3SignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule
 #,HybridCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
-queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,DefaultQueryMergerRule,HashSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
+#queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,DefaultQueryMergerRule,HashSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
 #queryMergerRule: Z3SignatureBasedPartialQueryMergerRule,SyntaxBasedPartialQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedPartialQueryMergerRule,ImprovedStringSignatureBasedPartialQueryMergerRule
-noOfPhysicalSources: 1,1,1,1,1,1
-batchSize: 1,1,1,1,1,1
+noOfPhysicalSources: 1,1,1,1
+#  ,1,1,1,1
+batchSize: 1,1,1,1
+#  ,1,1,1,1
 
 #benchmark internal parameter
-logLevel: LOG_ERROR
+logLevel: LOG_NONE
 numberOfDistinctSources: 10
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 3

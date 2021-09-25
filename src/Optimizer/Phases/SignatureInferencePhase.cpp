@@ -53,7 +53,7 @@ void SignatureInferencePhase::execute(const QueryPlanPtr& queryPlan) {
         NES_INFO("SignatureInferencePhase: computing Z3 based signature for the query " << queryPlan->getQueryId());
         auto sinkOperators = queryPlan->getRootOperators();
         for (auto& sinkOperator : sinkOperators) {
-            sinkOperator->as<LogicalOperatorNode>()->inferZ3Signature(context);
+//            sinkOperator->as<LogicalOperatorNode>()->inferZ3Signature(context);
             sinkOperator->as<LogicalOperatorNode>()->inferStringSignature();
         }
     } else {

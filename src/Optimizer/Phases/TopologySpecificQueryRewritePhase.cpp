@@ -34,9 +34,9 @@ TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(StreamCatal
 }
 
 QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
-    queryPlan = logicalSourceExpansionRule->apply(queryPlan);
-    queryPlan = distributeJoinRule->apply(queryPlan);
-    return distributeWindowRule->apply(queryPlan);
+    return logicalSourceExpansionRule->apply(queryPlan);
+//    queryPlan = distributeJoinRule->apply(queryPlan);
+//    return distributeWindowRule->apply(queryPlan);
 }
 
 }// namespace NES::Optimizer
