@@ -27,6 +27,9 @@ LogicalOperatorNode::LogicalOperatorNode(uint64_t id)
 Optimizer::QuerySignaturePtr LogicalOperatorNode::getZ3Signature() { return z3Signature; }
 
 void LogicalOperatorNode::inferZ3Signature(const z3::ContextPtr& context) {
+    if (z3Signature) {
+        return;
+    }
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
     NES_TRACE("Inferring Z3 expressions for " << operatorNode->toString());
 

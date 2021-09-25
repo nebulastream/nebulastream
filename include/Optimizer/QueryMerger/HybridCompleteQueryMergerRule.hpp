@@ -83,6 +83,7 @@ class HybridCompleteQueryMergerRule final : public BaseQueryMergerRule {
   private:
     explicit HybridCompleteQueryMergerRule(z3::ContextPtr context);
     SignatureEqualityUtilPtr signatureEqualityUtil;
+    z3::ContextPtr context;
 };
 }// namespace NES::Optimizer
 

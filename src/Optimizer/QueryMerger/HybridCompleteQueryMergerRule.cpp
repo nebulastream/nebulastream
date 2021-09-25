@@ -28,7 +28,8 @@
 namespace NES::Optimizer {
 
 HybridCompleteQueryMergerRule::HybridCompleteQueryMergerRule(z3::ContextPtr context) : BaseQueryMergerRule() {
-    signatureEqualityUtil = SignatureEqualityUtil::create(std::move(context));
+    this->context = move(context);
+    signatureEqualityUtil = SignatureEqualityUtil::create(this->context);
 }
 
 HybridCompleteQueryMergerRulePtr HybridCompleteQueryMergerRule::create(z3::ContextPtr context) {
@@ -54,21 +55,17 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
         bool matched = false;
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
-
+            auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
+            auto hostHashSignature = hostSharedQueryPlan->getHashBasedSignature();
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
             std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
+            bool foundMatch = false;
 
-            auto hostHashSignature = hostSharedQueryPlan->getHashBasedSignature();
             auto targetSinkOperators = targetQueryPlan->getSinkOperators();
             auto targetHashSignature = targetSinkOperators[0]->getHashBasedSignature();
-
             auto targetSignatureHashValue = targetHashSignature.begin()->first;
             auto targetSignatureStringValue = *targetHashSignature.begin()->second.begin();
-
-            auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
-            auto hostSinks = hostQueryPlan->getSinkOperators();
-            bool foundMatch = false;
 
             //Check if the host and target sink operator signatures match each other
             if (hostHashSignature.find(targetSignatureHashValue) != hostHashSignature.end()) {
@@ -84,11 +81,17 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                 }
             }
 
-            if (!foundMatch
-                       && signatureEqualityUtil->checkEquality(hostSinks[0]->getZ3Signature(),
-                                                               targetSinkOperators[0]->getZ3Signature())) {
-                targetToHostSinkOperatorMap[targetSinkOperators[0]] = hostSinks[0];
-                foundMatch = true;
+            if (!foundMatch) {
+                auto hostSinkOperators = hostQueryPlan->getSinkOperators();
+                for (auto& hostSinkOperator : hostSinkOperators) {
+                    hostSinkOperator->inferZ3Signature(context);
+                }
+                targetSinkOperators[0]->inferZ3Signature(context);
+                if (signatureEqualityUtil->checkEquality(targetSinkOperators[0]->getZ3Signature(),
+                                                         hostSinkOperators[0]->getZ3Signature())) {
+                    targetToHostSinkOperatorMap[targetSinkOperators[0]] = hostSinkOperators[0];
+                    foundMatch = true;
+                }
             }
 
             //Not all sinks found an equivalent entry in the target shared query metadata
@@ -98,7 +101,6 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                         .count();
                 NES_TRACE("HybridCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
-                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
                 //Iterate over all matched pairs of sink operators and merge the query plan
                 for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
                     //Get children of target and host sink operators
@@ -119,6 +121,8 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                     //Add target sink operator as root to the host query plan.
                     hostQueryPlan->addRootOperator(targetSinkOperator);
                 }
+
+                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
                 //Update the shared query meta data
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data
