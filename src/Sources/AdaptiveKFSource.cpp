@@ -31,6 +31,7 @@ AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr b
       frequency(initialFrequency), freqLastReceived(initialFrequency), kfErrorWindow(20) {
     this->numBuffersToProcess = numBuffersToProcess;
     calculateTotalEstimationErrorDivider(20); // calculate once at init
+    this->kFilter.setDefaultValues();
 }
 
 std::string AdaptiveKFSource::toString() const { return std::string(); }

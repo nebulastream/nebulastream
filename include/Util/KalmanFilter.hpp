@@ -24,27 +24,33 @@ namespace NES {
 class KalmanFilter {
 
   public:
-    explicit KalmanFilter(double timeStep, Eigen::MatrixXd F, Eigen::MatrixXd H, Eigen::MatrixXd Q,
-                 Eigen::MatrixXd R, Eigen::MatrixXd P);
+    explicit KalmanFilter(double timeStep,
+                          Eigen::MatrixXd F,
+                          Eigen::MatrixXd H,
+                          Eigen::MatrixXd Q,
+                          Eigen::MatrixXd R,
+                          Eigen::MatrixXd P);
     KalmanFilter();
 
-    void init(); // all zeroes
+    void init();// all zeroes
     void init(const Eigen::VectorXd& initialState);
     void init(double initialTimestamp, const Eigen::VectorXd& initialState);
-    void setDefaultValues(); // create artificial initial values
+    void setDefaultValues();// create artificial initial values
 
-    void update(const Eigen::VectorXd& measuredValues); // same timestep
-    void update(const Eigen::VectorXd& measuredValues, double newTimeStep); // update with timestep
-    void update(const Eigen::VectorXd& measuredValues, double newTimeStep,
-                const Eigen::MatrixXd& A); // update using new timestep and dynamics
+    void update(const Eigen::VectorXd& measuredValues);                    // same timestep
+    void update(const Eigen::VectorXd& measuredValues, double newTimeStep);// update with timestep
+    void update(const Eigen::VectorXd& measuredValues,
+                double newTimeStep,
+                const Eigen::MatrixXd& A);// update using new timestep and dynamics
 
     double getCurrentStep() { return currentTime; }
     Eigen::VectorXd getState() { return xHat; }
     Eigen::MatrixXd getError() { return P; }
     Eigen::MatrixXd getInnovationError() { return innovationError; }
+    double getEstimationError() { return estimationError; }
 
   private:
-    int m, n; // system model dimensions
+    int m, n;// system model dimensions
 
     /**
     * Process-specific matrices for a general KF.
@@ -57,15 +63,16 @@ class KalmanFilter {
     *   K - Kalman gain
 	*/
     Eigen::MatrixXd F, H, Q, R, P, K, P0;
-    Eigen::MatrixXd I; // identity matrix, on size n
+    Eigen::MatrixXd I;// identity matrix, on size n
 
     // estimated state, estimated state +1
     Eigen::VectorXd xHat, xHatNew;
-    Eigen::VectorXd innovationError; // eq. 3
+    Eigen::VectorXd innovationError;// eq. 3
 
     double timeStep;
     double initialTimestamp;
     double currentTime;
+    double estimationError;// eq. 8
 
 };// class KalmanFilter
 

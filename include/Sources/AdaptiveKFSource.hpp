@@ -19,6 +19,7 @@
 
 #include <Sources/AdaptiveSource.hpp>
 #include <Util/CircularBuffer.hpp>
+#include <Util/KalmanFilter.hpp>
 
 namespace NES {
 
@@ -53,7 +54,7 @@ class AdaptiveKFSource : public AdaptiveSource {
 
     // paper equations as methods
     bool desiredFreqInRange();                          // eq. 7
-    long calculateCurrentEstimationError();// eq. 8 (after insertion to kf)
+    long calculateCurrentEstimationError();             // eq. 8 (after insertion to kf)
     long calculateTotalEstimationError();               // eq. 9
     void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calculated at init)
 
@@ -81,6 +82,13 @@ class AdaptiveKFSource : public AdaptiveSource {
      * calculated once.
      */
     float totalEstimationErrorDivider;
+
+    /**
+     * @brief the KF associated with a source.
+     * We use default values for initialization.
+     * TODO: allow tuning to the measurement domain
+     */
+    KalmanFilter kFilter;
 };
 
 using AdaptiveKFSourcePtr = std::shared_ptr<AdaptiveKFSource>;

@@ -20,10 +20,14 @@
 namespace NES {
 KalmanFilter::KalmanFilter(){};
 
-KalmanFilter::KalmanFilter(double timeStep, const Eigen::MatrixXd F, const Eigen::MatrixXd H, const Eigen::MatrixXd Q,
-                                                   const Eigen::MatrixXd R, const Eigen::MatrixXd P)
-    : m(H.rows()), n(F.rows()), F(F), H(H), Q(Q), R(R), P0(P),
-      I(n, n), xHat(n), xHatNew(n), innovationError(n), timeStep(timeStep) {
+KalmanFilter::KalmanFilter(double timeStep,
+                           const Eigen::MatrixXd F,
+                           const Eigen::MatrixXd H,
+                           const Eigen::MatrixXd Q,
+                           const Eigen::MatrixXd R,
+                           const Eigen::MatrixXd P)
+    : m(H.rows()), n(F.rows()), F(F), H(H), Q(Q), R(R), P0(P), I(n, n), xHat(n), xHatNew(n), innovationError(n),
+      timeStep(timeStep) {
     I.setIdentity();
 }
 
@@ -51,7 +55,7 @@ void KalmanFilter::setDefaultValues() {
     // states
     this->n = 3;
     // timestep value
-    this->timeStep = 1.0/30;
+    this->timeStep = 1.0 / 30;
 
     // initialize system dymanics and observation matrices
     this->F = Eigen::MatrixXd(this->n, this->n);
@@ -82,15 +86,19 @@ void KalmanFilter::setDefaultValues() {
 
 void KalmanFilter::update(const Eigen::VectorXd& measuredValues) {
     // simplified prediction phase
-    xHatNew = F * xHat; // no control unit (B*u), predicted a-priori state estimate
-    P = F * P * F.transpose() + Q; // predicted a-priori estimate covariance
+    xHatNew = F * xHat;           // no control unit (B*u), predicted a-priori state estimate
+    P = F * P * F.transpose() + Q;// predicted a-priori estimate covariance
 
     // simplified update phase
-    innovationError = (H * xHat) - (H * xHatNew); // update innovation error ψ_k, eq. 2 + 3
-    K = P * H.transpose() * (H * P * H.transpose() + R).inverse(); // kalman gain
-    xHatNew += K * (measuredValues - H * xHatNew);// updated a-posteriori state estimate
-    P = (I - K * H) * P; // updated a-posteriori estimate covariance
-    xHat = xHatNew; // updated xHat
+    innovationError = measuredValues - (H * xHatNew);             // update innovation error ψ_k, eq. 2 + 3
+    K = P * H.transpose() * (H * P * H.transpose() + R).inverse();// kalman gain
+    xHatNew += K * (measuredValues - (H * xHatNew));              // updated a-posteriori state estimate
+    P = (I - K * H) * P;                                          // updated a-posteriori estimate covariance
+    xHat = xHatNew;                                               // updated xHat
+
+    // update estimation error, eq.8
+    this->estimationError =
+        std::sqrt(((innovationError * measuredValues.inverse()) * (innovationError * measuredValues.inverse())).trace());
 
     // update timestep
     currentTime += timeStep;
