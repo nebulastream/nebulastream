@@ -74,11 +74,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     std::string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query);
 
-    testHarness.addMemorySource("test", testSchema, "test1");
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
+    testHarness.addMemorySource("test", testSchema, "test1");                            //idx=0
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=1
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=2
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=3
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=4
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
@@ -137,12 +137,12 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     std::string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query);
 
-    testHarness.addMemorySource("test", testSchema, "test1");
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("test", testSchema, "test1");
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(3));
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(3));
+    testHarness.addMemorySource("test", testSchema, "test1");                            // idx=0
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=1
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=2
+    testHarness.addMemorySource("test", testSchema, "test1");                            //idx=3
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(3));//idx=4
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(3));//idx=5
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
@@ -202,11 +202,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     std::string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query);
 
-    testHarness.addMemorySource("test", testSchema, "test1");
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
+    testHarness.addMemorySource("test", testSchema, "test1");                            //idx=0
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));                          // idx=1
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=2
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=3
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=4
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
@@ -215,7 +215,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
 
     for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 0);
-        //testHarness.pushElement<Test>({1, 1}, 1);
+        // worker with idx 1 does not produce data
         testHarness.pushElement<Test>({1, 1}, 2);
         testHarness.pushElement<Test>({1, 1}, 3);
         testHarness.pushElement<Test>({1, 1}, 4);
@@ -265,12 +265,12 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     std::string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query);
 
-    testHarness.addMemorySource("test", testSchema, "test1");
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));
-    testHarness.addNonSourceWorker();
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(3));
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(3));
+    testHarness.addNonSourceWorker();                                                    // idx = 0
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));// idx = 1
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));// idx = 2
+    testHarness.addNonSourceWorker();                                                    // idx = 3
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(3));// idx = 4
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(3));// idx = 5
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
@@ -279,10 +279,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
 
     for (int i = 0; i < 10; ++i) {
-        testHarness.pushElement<Test>({1, 1}, 0);
+        // worker with idx 0 does not produce data
         testHarness.pushElement<Test>({1, 1}, 1);
         testHarness.pushElement<Test>({1, 1}, 2);
-        //testHarness.pushElement<Test>({1, 1}, 3);
+        // worker with idx 3 does not produce data
         testHarness.pushElement<Test>({1, 1}, 4);
         testHarness.pushElement<Test>({1, 1}, 5);
     }
@@ -296,7 +296,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     };
 
     std::vector<Output> expectedOutput;
-    for (int i = 0; i < 50; ++i) {
+    for (int i = 0; i < 40; ++i) {
         expectedOutput.push_back({1, 1});
     }
 
@@ -322,285 +322,67 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    struct Test {
+        uint32_t key;
+        uint32_t value;
+    };
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    auto testSchema =
+        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    crdConf->setNumberOfSlots(12);
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0UL);
-    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
-    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    /**
-     * Worker
-     */
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    wrkConf->setNumberOfSlots(1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
-    EXPECT_TRUE(retStart1);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
+    std::string query = R"(Query::from("test"))";
+    TestHarness testHarness = TestHarness(query);
 
-    TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
-    ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    // Workers
+    testHarness.addNonSourceWorker();                          // idx = 0
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));// idx = 1
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));// idx = 2
+    testHarness.addNonSourceWorker();                          // idx = 3
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(3));// idx = 4
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(3));// idx = 5
+    // Sensors
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(1));// idx = 6
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(2));// idx = 7
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(4));// idx = 8
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(5));// idx = 9
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    wrkConf->resetWorkerOptions();
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    wrkConf->setNumberOfSlots(12);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
+    TopologyPtr topology = testHarness.getTopology();
+    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
+    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
+    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
+    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
+    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
+    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
-    TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
-    ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    for (int i = 0; i < 10; ++i) {
+        // worker with idx 0-5 do not produce data
+        testHarness.pushElement<Test>({1, 1}, 6);
+        testHarness.pushElement<Test>({1, 1}, 7);
+        testHarness.pushElement<Test>({1, 1}, 8);
+        testHarness.pushElement<Test>({1, 1}, 9);
+    }
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 30);
-    wrkConf->setDataPort(port + 31);
-    wrkConf->setNumberOfSlots(12);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
-    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
+    struct Output {
+        uint32_t key;
+        uint32_t value;
 
-    TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
-    ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value); }
+    };
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 40);
-    wrkConf->setDataPort(port + 41);
-    wrkConf->setNumberOfSlots(12);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
-    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart4);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
+    std::vector<Output> expectedOutput;
+    for (int i = 0; i < 40; ++i) {
+        expectedOutput.push_back({1, 1});
+    }
 
-    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
-    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 60);
-    wrkConf->setDataPort(port + 61);
-    wrkConf->setNumberOfSlots(12);
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
-    bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
-
-    TopologyNodeId wrk5TopologyNodeId = wrk5->getTopologyNodeId();
-    ASSERT_NE(wrk5TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 70);
-    wrkConf->setDataPort(port + 71);
-    wrkConf->setNumberOfSlots(12);
-    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
-    bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart6);
-    wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
-
-    TopologyNodeId wrk6TopologyNodeId = wrk6->getTopologyNodeId();
-    ASSERT_NE(wrk6TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
-
-    /**
-     * Sensors
-     */
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 7");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 80);
-    wrkConf->setDataPort(port + 81);
-    wrkConf->setNumberOfSlots(12);
-    NesWorkerPtr wrk7 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart7);
-    wrk7->replaceParent(crdTopologyNodeId, wrk5TopologyNodeId);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 7 started successfully");
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 8");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 90);
-    wrkConf->setDataPort(port + 91);
-    wrkConf->setNumberOfSlots(12);
-    NesWorkerPtr wrk8 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart8);
-    wrk8->replaceParent(crdTopologyNodeId, wrk6TopologyNodeId);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 8 started successfully");
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 9");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 100);
-    wrkConf->setDataPort(port + 101);
-    wrkConf->setNumberOfSlots(12);
-    NesWorkerPtr wrk9 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart9 = wrk9->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart9);
-    wrk9->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 110);
-    wrkConf->setDataPort(port + 111);
-    wrkConf->setNumberOfSlots(12);
-    NesWorkerPtr wrk10 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart10);
-    wrk10->replaceParent(crdTopologyNodeId, wrk3TopologyNodeId);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
-
-    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
-
-    // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2U);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2U);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2U);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
-
-    std::string outputFilePath = "testOutput.out";
-    remove(outputFilePath.c_str());
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
-
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
-
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 3");
-    bool retStopWrk3 = wrk3->stop(true);
-    EXPECT_TRUE(retStopWrk3);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 4");
-    bool retStopWrk4 = wrk4->stop(true);
-    EXPECT_TRUE(retStopWrk4);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 5");
-    bool retStopWrk5 = wrk5->stop(true);
-    EXPECT_TRUE(retStopWrk5);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 6");
-    bool retStopWrk6 = wrk6->stop(true);
-    EXPECT_TRUE(retStopWrk6);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 7");
-    bool retStopWrk7 = wrk7->stop(true);
-    EXPECT_TRUE(retStopWrk7);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 8");
-    bool retStopWrk8 = wrk8->stop(true);
-    EXPECT_TRUE(retStopWrk8);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 9");
-    bool retStopWrk9 = wrk9->stop(true);
-    EXPECT_TRUE(retStopWrk9);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 10");
-    bool retStopWrk10 = wrk10->stop(true);
-    EXPECT_TRUE(retStopWrk10);
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 /**
@@ -798,17 +580,17 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
     TestHarness testHarness = TestHarness(query);
 
     // Workers
-    testHarness.addNonSourceWorker();                          // id=0
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));// id=1
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));// id=2
-    testHarness.addNonSourceWorker();                          // id=3
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(3));// id=4
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(3));// id=5
+    testHarness.addNonSourceWorker();                          // idx=0
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));// idx=1
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));// idx=2
+    testHarness.addNonSourceWorker();                          // idx=3
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(3));// idx=4
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(3));// idx=5
     // Sensors
-    testHarness.addMemorySource("truck", testSchema, "physical_truck", testHarness.getWorkerId(1));// id=6
-    testHarness.addMemorySource("car", testSchema, "physical_car", testHarness.getWorkerId(2));    // id=7
-    testHarness.addMemorySource("truck", testSchema, "physical_truck", testHarness.getWorkerId(4));// id=8
-    testHarness.addMemorySource("car", testSchema, "physical_car", testHarness.getWorkerId(5));    // id=9
+    testHarness.addMemorySource("truck", testSchema, "physical_truck", testHarness.getWorkerId(1));// idx=6
+    testHarness.addMemorySource("car", testSchema, "physical_car", testHarness.getWorkerId(2));    // idx=7
+    testHarness.addMemorySource("truck", testSchema, "physical_truck", testHarness.getWorkerId(4));// idx=8
+    testHarness.addMemorySource("car", testSchema, "physical_car", testHarness.getWorkerId(5));    // idx=9
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
@@ -821,6 +603,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
     for (int i = 0; i < 10; ++i) {
+        // worker with idx 0-5 do not produce data
         testHarness.pushElement<Test>({1, 1}, 6);
         testHarness.pushElement<Test>({1, 1}, 7);
         testHarness.pushElement<Test>({1, 1}, 8);
