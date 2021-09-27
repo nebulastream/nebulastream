@@ -23,6 +23,7 @@
 #include <Optimizer/QueryMerger/SyntaxBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerBottomUpRule.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 
@@ -47,6 +48,9 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
             break;
         case QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule:
             queryMergerRule = Z3SignatureBasedPartialQueryMergerRule::create(std::move(context));
+            break;
+        case QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule:
+            queryMergerRule = Z3SignatureBasedPartialQueryMergerBottomUpRule::create(std::move(context));
             break;
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
             queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();

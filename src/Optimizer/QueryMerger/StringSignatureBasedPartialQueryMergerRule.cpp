@@ -66,6 +66,30 @@ bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr global
                         .count();
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
+                // As we merge partially equivalent queries, we can potentially find matches across multiple operators.
+                // As upstream matched operators are covered by downstream matched operators. We need to retain only the
+                // downstream matched operator containing any upstream matched operator. This will prevent in computation
+                // of inconsistent shared query plans.
+
+                //Fetch all the matched target operators.
+                std::vector<LogicalOperatorNodePtr> matchedTargetOperators;
+                matchedTargetOperators.reserve(matchedTargetToHostOperatorMap.size());
+                for (auto& mapEntry : matchedTargetToHostOperatorMap) {
+                    matchedTargetOperators.emplace_back(mapEntry.first);
+                }
+
+                //Iterate over the target operators and remove the upstream operators covered by downstream matched operators
+                for (uint64_t i = 0; i < matchedTargetOperators.size(); i++) {
+                    for (uint64_t j = i; j < matchedTargetOperators.size(); j++) {
+                        if (matchedTargetOperators[i]->containAsGrandChild(matchedTargetOperators[j])) {
+                            matchedTargetToHostOperatorMap.erase(matchedTargetOperators[j]);
+                        } else if (matchedTargetOperators[i]->containAsGrandParent(matchedTargetOperators[j])) {
+                            matchedTargetToHostOperatorMap.erase(matchedTargetOperators[i]);
+                            break;
+                        }
+                    }
+                }
+
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
                     for (const auto& targetParent : targetOperator->getParents()) {
@@ -161,7 +185,8 @@ StringSignatureBasedPartialQueryMergerRule::areOperatorEqual(const LogicalOperat
     }
 
     NES_TRACE("StringSignatureBasedPartialQueryMergerRule: Compare target and host operators.");
-    if (targetOperator->getHashBasedSignature() == hostOperator->getHashBasedSignature()) {
+    const std::map<size_t, std::set<std::string>>& targetHashBased = targetOperator->getHashBasedSignature();
+    if (targetHashBased == hostOperator->getHashBasedSignature()) {
         NES_TRACE("StringSignatureBasedPartialQueryMergerRule: Check if parents of target and address operators are equal.");
         uint16_t matchCount = 0;
         for (const auto& targetParent : targetOperator->getParents()) {

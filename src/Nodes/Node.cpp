@@ -367,14 +367,37 @@ void Node::clear() {
 
 const std::vector<NodePtr>& Node::getChildren() const { return children; }
 
+bool Node::containAsParent(NodePtr node) {
+    NES_DEBUG("Node: Checking if the input node is contained in the parent list");
+    return vectorContainsTheNode(parents, std::move(node));
+}
+
+bool Node::containAsGrandParent(NodePtr node) {
+    std::vector<NodePtr> ancestors{};
+    for (auto& parent : parents) {
+        NES_TRACE("Node: Get this node, all its parents, and Ancestors");
+        std::vector<NodePtr> parentAndAncestors = parent->getAndFlattenAllAncestors();
+        NES_TRACE("Node: Add them to the result");
+        ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
+    }
+    return vectorContainsTheNode(ancestors, std::move(node));
+}
+
 bool Node::containAsChild(NodePtr node) {
     NES_DEBUG("Node: Checking if the input node is contained in the children list");
     return vectorContainsTheNode(children, std::move(node));
 }
 
-bool Node::containAsParent(NodePtr node) {
-    NES_DEBUG("Node: Checking if the input node is contained in the parent list");
-    return vectorContainsTheNode(parents, std::move(node));
+bool Node::containAsGrandChild(NodePtr node) {
+    std::vector<NodePtr> grandChildren{};
+    for (auto& child : children) {
+        NES_TRACE("Node: Get this node, all its parents, and Ancestors");
+        std::vector<NodePtr> childAndGrandChildren = child->getAndFlattenAllChildren(true);
+        childAndGrandChildren.emplace_back(child);
+        NES_TRACE("Node: Add them to the result");
+        grandChildren.insert(grandChildren.end(), childAndGrandChildren.begin(), childAndGrandChildren.end());
+    }
+    return vectorContainsTheNode(grandChildren, std::move(node));
 }
 
 const std::vector<NodePtr>& Node::getParents() const { return parents; }
