@@ -16,7 +16,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <NodeStats.pb.h>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Util/Logger.hpp>
 #include <filesystem>
 #include <fstream>
@@ -230,7 +230,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         NodeType type,
-                                        const NodeStats& nodeStats) {
+                                        const StaticNesMetricsPtr staticNesMetrics) {
     if (type == NodeType::Sensor) {
         NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
     } else if (type == NodeType::Worker) {
@@ -245,7 +245,10 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     request.set_grpcport(grpcPort);
     request.set_dataport(dataPort);
     request.set_numberofslots(numberOfSlots);
-    request.mutable_nodeproperties()->CopyFrom(nodeStats);
+
+    request.mutable_monitoringdata()->resize(sizeof(StaticNesMetrics));
+    memcpy(request.mutable_monitoringdata()->data(), staticNesMetrics.get(), sizeof(StaticNesMetrics));
+
     request.set_type(type);
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
 

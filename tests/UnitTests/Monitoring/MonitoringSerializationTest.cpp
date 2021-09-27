@@ -32,7 +32,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <memory>
@@ -240,7 +240,7 @@ TEST_F(MonitoringSerializationTest, testSerDeserMetricGroup) {
 
     // coordinator side
     auto schema = metricGroup->createSchema();
-    GroupedValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
+    GroupedMetricValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
 
     EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
     EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);

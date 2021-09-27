@@ -16,10 +16,13 @@
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
+#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
@@ -49,12 +52,24 @@ SchemaPtr MonitoringAgent::registerMonitoringPlan(const MonitoringPlanPtr& monit
     return schema;
 }
 
-bool MonitoringAgent::getMetrics(Runtime::TupleBuffer& tupleBuffer) {
+bool MonitoringAgent::getMetricsFromPlan(Runtime::TupleBuffer& tupleBuffer) {
     MetricGroupPtr metricGroup = monitoringPlan->createMetricGroup(catalog);
     metricGroup->getSample(tupleBuffer);
     return true;
 }
 
 SchemaPtr MonitoringAgent::getSchema() { return schema; }
+
+StaticNesMetricsPtr MonitoringAgent::getStaticNesMetrics() {
+    auto staticStats = MetricUtils::staticNesStats();
+    auto measuredVal = std::make_shared<StaticNesMetrics>(staticStats.measure());
+    return measuredVal;
+}
+
+RuntimeNesMetricsPtr MonitoringAgent::getRuntimeNesMetrics() {
+    auto rutimeStats = MetricUtils::runtimeNesStats();
+    auto measuredVal = std::make_shared<RuntimeNesMetrics>(rutimeStats.measure());
+    return measuredVal;
+}
 
 }// namespace NES

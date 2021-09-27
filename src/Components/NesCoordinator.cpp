@@ -222,9 +222,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //create the monitoring service, it can only be used if a NesWorker has started
     NES_DEBUG("NesCoordinator: Initializing monitoring service");
-    auto monitoringManager = std::make_shared<MonitoringManager>(workerRpcClient, topology);
-    monitoringService =
-        std::make_shared<MonitoringService>(topology, worker->getNodeEngine()->getBufferManager(), monitoringManager);
+    auto monitoringManager = std::make_shared<MonitoringManager>(workerRpcClient, topology, worker->getNodeEngine()->getBufferManager());
+    monitoringService = std::make_shared<MonitoringService>(monitoringManager);
 
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");

@@ -40,7 +40,7 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
  */
 class MonitoringService {
   public:
-    explicit MonitoringService(TopologyPtr topology, Runtime::BufferManagerPtr bufferManager, MonitoringManagerPtr manager);
+    explicit MonitoringService(MonitoringManagerPtr manager);
     ~MonitoringService();
 
     web::json::value registerMonitoringPlanToAllNodes(MonitoringPlanPtr monitoringPlan);
@@ -81,8 +81,6 @@ class MonitoringService {
     web::json::value requestMonitoringDataFromAllNodesViaPrometheusAsJson();
 
   private:
-    TopologyPtr topology;
-    Runtime::BufferManagerPtr bufferManager;
     MonitoringManagerPtr monitoringManager;
 };
 

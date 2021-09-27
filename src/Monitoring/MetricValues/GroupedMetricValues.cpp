@@ -13,10 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <cpprest/json.h>
 
-web::json::value NES::GroupedValues::asJson() {
+web::json::value NES::GroupedMetricValues::asJson() {
     web::json::value metricsJson{};
 
     if (diskMetrics.has_value()) {

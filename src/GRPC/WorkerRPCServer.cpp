@@ -113,7 +113,7 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     try {
         NES_DEBUG("WorkerRPCServer::GetMonitoringData: Got request");
         auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-        monitoringAgent->getMetrics(buf);
+        monitoringAgent->getMetricsFromPlan(buf);
 
         // add buffer to the reply object
         reply->set_buffer(buf.getBuffer(), monitoringAgent->getSchema()->getSchemaSizeInBytes());

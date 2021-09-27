@@ -29,7 +29,7 @@ namespace NES {
 
 class MetricCatalog;
 class MetricGroup;
-struct GroupedValues;
+struct GroupedMetricValues;
 class SerializableMonitoringPlan;
 class MonitoringPlan;
 class MetricCatalog;
@@ -78,7 +78,7 @@ class MonitoringPlan {
      * @param buf
      * @return
      */
-    GroupedValues fromBuffer(const std::shared_ptr<Schema>& schema, Runtime::TupleBuffer& buf) const;
+    GroupedMetricValues fromBuffer(const std::shared_ptr<Schema>& schema, Runtime::TupleBuffer& buf) const;
 
     /**
      * @brief Returns the schema of the class.

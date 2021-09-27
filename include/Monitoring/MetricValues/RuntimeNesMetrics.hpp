@@ -64,6 +64,8 @@ class RuntimeNesMetrics {
     uint64_t longCoord;
 } __attribute__((packed));
 
+using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeNesMetrics>;
+
 /**
  * @brief The serialize method to write runtime metrics of NES into the given Schema and TupleBuffer. The prefix specifies a string
  * that should be added before each field description in the Schema.

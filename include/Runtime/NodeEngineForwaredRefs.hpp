@@ -72,9 +72,6 @@ class WorkerContext;
 using WorkerContextRef = WorkerContext&;
 using WorkerContextPtr = WorkerContext&;
 
-class NodeStatsProvider;
-using NodeStatsProviderPtr = std::shared_ptr<NodeStatsProvider>;
-
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 

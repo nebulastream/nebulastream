@@ -246,26 +246,19 @@ bool NesWorker::connect() {
     std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
 
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddress=" << localAddress);
-    // todo add nodeEngine->getNodePropertiesAsString()
-    auto nodeStatsProvider = nodeEngine->getNodeStatsProvider();
-    nodeStatsProvider->update();
-    auto nodeStats = nodeStatsProvider->getNodeStats();
-
     bool successPRCRegister = false;
     if (type == NesNodeType::Sensor) {
         successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
                                                                 localWorkerRpcPort,
                                                                 localWorkerZmqPort,
                                                                 numberOfSlots,
-                                                                NodeType::Sensor,
-                                                                nodeStats);
+                                                                NodeType::Sensor);
     } else if (type == NesNodeType::Worker) {
         successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
                                                                 localWorkerRpcPort,
                                                                 localWorkerZmqPort,
                                                                 numberOfSlots,
-                                                                NodeType::Worker,
-                                                                nodeStats);
+                                                                NodeType::Worker);
     } else {
         NES_NOT_IMPLEMENTED();
     }

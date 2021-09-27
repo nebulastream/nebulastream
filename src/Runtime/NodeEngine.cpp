@@ -32,7 +32,6 @@
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeStatsProvider.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -41,7 +40,6 @@
 
 namespace NES::Runtime {
 
-NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
 NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        HardwareManagerPtr&& hardwareManager,
@@ -55,7 +53,7 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker)
-    : nodeStatsProvider(std::make_shared<NodeStatsProvider>()), queryManager(std::move(queryManager)),
+    : queryManager(std::move(queryManager)),
       hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
       queryCompiler(std::move(queryCompiler)), partitionManager(std::move(partitionManager)),
       stateManager(std::move(stateManager)), nodeEngineId(nodeEngineId),

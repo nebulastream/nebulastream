@@ -28,11 +28,15 @@ class TupleBuffer;
 class MetricCatalog;
 class Schema;
 class MonitoringAgent;
+class StaticNesMetrics;
+class RuntimeNesMetrics;
 
 using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 using MetricCatalogPtr = std::shared_ptr<MetricCatalog>;
 using SchemaPtr = std::shared_ptr<Schema>;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
+using StaticNesMetricsPtr = std::shared_ptr<StaticNesMetrics>;
+using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeNesMetrics>;
 
 /**
  * @brief The MonitoringAgent which is responsible for collecting metrics on a local level.
@@ -57,7 +61,7 @@ class MonitoringAgent {
      * @param tupleBuffer
      * @return the schema of the monitoring plan
      */
-    bool getMetrics(Runtime::TupleBuffer& tupleBuffer);
+    bool getMetricsFromPlan(Runtime::TupleBuffer& tupleBuffer);
 
     /**
      * @brief Return the schema based on the monitoring plan. If no schema is provided then the default schema is return, which
@@ -65,6 +69,18 @@ class MonitoringAgent {
      * @return the schema
      */
     SchemaPtr getSchema();
+
+    /**
+     * @brief Returns the static metrics used for NES.
+     * @return The metric object.
+     */
+    static StaticNesMetricsPtr getStaticNesMetrics();
+
+    /**
+     * @brief Returns the static metrics used for NES.
+     * @return The metric object.
+     */
+    static RuntimeNesMetricsPtr getRuntimeNesMetrics();
 
   private:
     MonitoringPlanPtr monitoringPlan;

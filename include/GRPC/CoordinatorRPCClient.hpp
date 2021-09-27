@@ -29,7 +29,8 @@ using grpc::Status;
 
 namespace NES {
 
-class NodeStats;
+class StaticNesMetrics;
+using StaticNesMetricsPtr = std::shared_ptr<StaticNesMetrics>;
 
 class PhysicalStreamConfig;
 using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
@@ -106,7 +107,7 @@ class CoordinatorRPCClient {
                       int64_t dataPort,
                       int16_t numberOfSlots,
                       NodeType type,
-                      const NodeStats& nodeStats);
+                      StaticNesMetricsPtr staticNesMetrics);
 
     /**
    * @brief method to unregister a node after the connection is established
