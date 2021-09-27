@@ -164,21 +164,27 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                 // downstream matched operator containing any upstream matched operator. This will prevent in computation
                 // of inconsistent shared query plans.
 
-                //Fetch all the matched target operators.
-                std::vector<OperatorNodePtr> matchedTargetOperators;
-                matchedTargetOperators.reserve(matchedTargetToHostOperatorMap.size());
-                for (auto& mapEntry : matchedTargetToHostOperatorMap) {
-                    matchedTargetOperators.emplace_back(mapEntry.first);
-                }
+                if (matchedTargetToHostOperatorMap.size() > 1) {
+                    //Fetch all the matched target operators.
+                    std::vector<OperatorNodePtr> matchedTargetOperators;
+                    matchedTargetOperators.reserve(matchedTargetToHostOperatorMap.size());
+                    for (auto& mapEntry : matchedTargetToHostOperatorMap) {
+                        matchedTargetOperators.emplace_back(mapEntry.first);
+                    }
 
-                //Iterate over the target operators and remove the upstream operators covered by downstream matched operators
-                for (uint64_t i = 0; i < matchedTargetOperators.size(); i++) {
-                    for (uint64_t j = i; j < matchedTargetOperators.size(); j++) {
-                        if (matchedTargetOperators[i]->containAsGrandChild(matchedTargetOperators[j])) {
-                            matchedTargetToHostOperatorMap.erase(matchedTargetOperators[j]);
-                        } else if (matchedTargetOperators[i]->containAsGrandParent(matchedTargetOperators[j])) {
-                            matchedTargetToHostOperatorMap.erase(matchedTargetOperators[i]);
-                            break;
+                    //Iterate over the target operators and remove the upstream operators covered by downstream matched operators
+                    for (uint64_t i = 0; i < matchedTargetOperators.size(); i++) {
+                        for (uint64_t j = 0; j < matchedTargetOperators.size(); j++) {
+                            if (i == j) {
+                                continue;//Skip chk with itself
+                            }
+
+                            if (matchedTargetOperators[i]->containAsGrandChild(matchedTargetOperators[j])) {
+                                matchedTargetToHostOperatorMap.erase(matchedTargetOperators[j]);
+                            } else if (matchedTargetOperators[i]->containAsGrandParent(matchedTargetOperators[j])) {
+                                matchedTargetToHostOperatorMap.erase(matchedTargetOperators[i]);
+                                break;
+                            }
                         }
                     }
                 }
