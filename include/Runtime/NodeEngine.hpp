@@ -24,7 +24,6 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/ErrorListener.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
-#include <Runtime/NodeStatsProvider.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -160,12 +159,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool stop(bool markQueriesAsFailed = false);
 
     /**
-     * @brief gets the node properties.
-     * @return NodePropertiesPtr
-     */
-    NodeStatsProviderPtr getNodeStatsProvider();
-
-    /**
      * @brief getter of query manager
      * @return query manager
      */
@@ -261,7 +254,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
   private:
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
-    NodeStatsProviderPtr nodeStatsProvider;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;

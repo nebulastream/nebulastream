@@ -71,6 +71,8 @@ class StaticNesMetrics {
     bool hasBattery;
 } __attribute__((packed));
 
+using StaticNesMetricsPtr = std::shared_ptr<StaticNesMetrics>;
+
 /**
  * @brief The serialize method to write StaticNesMetrics into the given Schema and TupleBuffer. The prefix specifies a string
  * that should be added before each field description in the Schema.

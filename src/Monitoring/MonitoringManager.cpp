@@ -19,7 +19,7 @@
 
 #include <API/Schema.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -33,8 +33,10 @@
 
 namespace NES {
 
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
-    : workerClient(std::move(workerClient)), topology(std::move(topology)) {
+MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
+                                     TopologyPtr topology,
+                                     Runtime::BufferManagerPtr bufferManager)
+    : bufferManager(bufferManager), workerClient(workerClient), topology(topology) {
     NES_DEBUG("MonitoringManager: Init");
 }
 
@@ -81,19 +83,27 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
     return true;
 }
 
-bool MonitoringManager::requestMonitoringData(uint64_t nodeId, Runtime::TupleBuffer& tupleBuffer) {
+GroupedMetricValues MonitoringManager::requestMonitoringData(uint64_t nodeId) {
     NES_DEBUG("MonitoringManager: Requesting metrics for node id=" + std::to_string(nodeId));
     auto plan = getMonitoringPlan(nodeId);
+    auto schema = plan->createSchema();
 
     //getMonitoringPlan(..) checks if node exists, so no further check necessary
     TopologyNodePtr node = topology->findNodeWithId(nodeId);
-    auto schemaSize = plan->createSchema()->getSchemaSizeInBytes();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(schema->getSchemaSizeInBytes()).value();
+
     auto nodeIp = node->getIpAddress();
     auto nodeGrpcPort = node->getGrpcPort();
     std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
-    auto success = workerClient->requestMonitoringData(destAddress, tupleBuffer, schemaSize);
-    NES_DEBUG("MonitoringManager: Received monitoring data with status " + std::to_string(success));
-    return success;
+    auto success = workerClient->requestMonitoringData(destAddress, tupleBuffer, schema->getSchemaSizeInBytes());
+
+    if (success) {
+        NES_DEBUG("MonitoringManager: Received monitoring data with status " + std::to_string(success));
+        GroupedMetricValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
+        return parsedValues;
+    }
+    NES_THROW_RUNTIME_ERROR("MonitoringManager: Error receiving monitoring metrics for node with id "
+                            + std::to_string(node->getId()));
 }
 
 MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
@@ -110,5 +120,7 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
         return monitoringPlanMap[nodeId];
     }
 }
+
+const TopologyPtr MonitoringManager::getTopology() const { return topology; }
 
 }// namespace NES

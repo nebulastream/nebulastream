@@ -16,7 +16,7 @@ add_source_nes(
         CpuMetrics.cpp
         CpuValues.cpp
         DiskMetrics.cpp
-        GroupedValues.cpp
+        GroupedMetricValues.cpp
         MemoryMetrics.cpp
         MetricValueType.cpp
         NetworkMetrics.cpp

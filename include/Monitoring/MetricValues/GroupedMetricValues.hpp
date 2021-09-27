@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDVALUES_HPP_
-#define NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDVALUES_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDMETRICVALUES_HPP_
+#define NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDMETRICVALUES_HPP_
 
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
@@ -26,7 +26,7 @@
 namespace NES {
 class MonitoringPlan;
 
-struct GroupedValues {
+struct GroupedMetricValues {
     std::optional<std::unique_ptr<DiskMetrics>> diskMetrics;
     std::optional<std::unique_ptr<CpuMetrics>> cpuMetrics;
     std::optional<std::unique_ptr<NetworkMetrics>> networkMetrics;
@@ -37,4 +37,4 @@ struct GroupedValues {
 
 }// namespace NES
 
-#endif//NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDVALUES_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDMETRICVALUES_HPP_

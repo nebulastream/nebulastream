@@ -27,7 +27,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 
-#include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
@@ -1479,7 +1479,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     ASSERT_EQ(buf->getNumberOfTuples(), 1u);
     ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
     ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
-    GroupedValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), buf.value());
+    GroupedMetricValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), buf.value());
     EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
     EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
     EXPECT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
@@ -1504,7 +1504,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     monitoringDataSource.open();
     while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = monitoringDataSource.receiveData();
-        GroupedValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), optBuf.value());
+        GroupedMetricValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), optBuf.value());
         EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
         EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
         EXPECT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);

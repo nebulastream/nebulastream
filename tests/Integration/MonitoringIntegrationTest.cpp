@@ -37,7 +37,7 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Services/MonitoringService.hpp>
 #include <cstdint>
 #include <memory>

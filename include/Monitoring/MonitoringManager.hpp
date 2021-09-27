@@ -34,12 +34,14 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+struct GroupedMetricValues;
+
 /**
  * @brief The MonitoringManager is responsible for managing all global metrics of all nodes in the topology.
  */
 class MonitoringManager {
   public:
-    MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology);
+    MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, Runtime::BufferManagerPtr bufferManager);
     ~MonitoringManager();
 
     /**
@@ -58,7 +60,7 @@ class MonitoringManager {
      * @param tupleBuffer
      * @return
      */
-    bool requestMonitoringData(uint64_t nodeId, Runtime::TupleBuffer& tupleBuffer);
+    GroupedMetricValues requestMonitoringData(uint64_t nodeId);
 
     /**
      * @brief Get the monitoring plan for a given node ID. If the node exists in the topology but has not a registered
@@ -68,8 +70,15 @@ class MonitoringManager {
      */
     MonitoringPlanPtr getMonitoringPlan(uint64_t nodeId);
 
+    /**
+     * @brief Getter for the underlying NES topology.
+     * @return Ptr to the NES topology.
+     */
+    const TopologyPtr getTopology() const;
+
   private:
     std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
+    Runtime::BufferManagerPtr bufferManager;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
 };

@@ -15,7 +15,6 @@
 */
 
 syntax = "proto3";
-import "NodeStats.proto";
 // The greeting service definition.
 service CoordinatorRPCService {
   // Sends a greeting
@@ -49,8 +48,8 @@ message RegisterNodeRequest {
   uint32 grpcPort = 2;
   uint32 dataPort = 3;
   uint32 numberOfSlots = 4;
-  NES.NodeStats nodeProperties = 5;
-  NodeType type = 6;
+  NodeType type = 5;
+  bytes monitoringData = 6;
 }
 
 message RegisterNodeReply {

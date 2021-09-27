@@ -18,7 +18,7 @@
 
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
-#include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/Metrics/Gauge.hpp>
@@ -136,8 +136,8 @@ MetricGroupPtr MonitoringPlan::createMetricGroup(const MetricCatalogPtr&) const 
     return metricGroup;
 }
 
-GroupedValues MonitoringPlan::fromBuffer(const std::shared_ptr<Schema>& schema, Runtime::TupleBuffer& buf) const {
-    auto output = GroupedValues();
+GroupedMetricValues MonitoringPlan::fromBuffer(const std::shared_ptr<Schema>& schema, Runtime::TupleBuffer& buf) const {
+    auto output = GroupedMetricValues();
 
     if (cpuMetrics) {
         auto metrics = std::make_unique<CpuMetrics>(CpuMetrics::fromBuffer(schema, buf, MonitoringPlan::CPU_METRICS_DESC));
