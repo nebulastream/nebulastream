@@ -52,8 +52,7 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
     int numOfOperators;
     struct Placement {
         std::vector<bool> chromosome;
-        TopologyPtr topology;
-        float cost;
+        double cost;
     };
     std::vector<Placement> population;
 
@@ -75,17 +74,16 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
 
     double getCost(Placement placement);
 
-    Placement getOptimizedPlacement(std::vector<Placement> population,int time, QueryPlanPtr queryPlan);
+    Placement getOptimizedPlacement(std::vector<Placement> population,uint32_t time, QueryPlanPtr queryPlan);
     Placement mutate(Placement placement, QueryPlanPtr queryPlan);
 
     void DFS(int s, int v, std::list<int>* adj, std::vector<bool>& tc, int numOfTopologyNodes);
 
     bool checkPlacementValidation(Placement placement, QueryPlanPtr queryPlan);
     std::vector<TopologyNodePtr> topologySnapshot(TopologyPtr topology);
-
-    void eliminateReachableNodes(std::vector<int>* topologyIndices);
-    Placement crossOver(GeneticAlgorithmStrategy::Placement placement, GeneticAlgorithmStrategy::Placement other);
-    bool offspingExists(std::vector<GeneticAlgorithmStrategy::Placement> population, GeneticAlgorithmStrategy::Placement offpring);
+    //void eliminateReachableNodes(std::vector<int>* topologyIndices);
+    Placement crossOver(GeneticAlgorithmStrategy::Placement placement, GeneticAlgorithmStrategy::Placement other,uint32_t crossOverIndex);
+    bool placementAlreadyExists(std::vector<GeneticAlgorithmStrategy::Placement> population, GeneticAlgorithmStrategy::Placement offpring);
 };
 }// namespace NES::Optimizer
 
