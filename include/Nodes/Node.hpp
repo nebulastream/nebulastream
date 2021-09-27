@@ -235,10 +235,24 @@ class Node : public std::enable_shared_from_this<Node> {
     const std::vector<NodePtr>& getChildren() const;
 
     /**
+     * Check if the node is present as the parent or grand-parent
+     * @param node: node to look for
+     * @return true if present as false
+     */
+    bool containAsGrandParent(NodePtr node);
+
+    /**
      * Check if input node is present as parent to this
      * @return true if input node is in parent list
      */
     virtual bool containAsParent(NodePtr node);
+
+    /**
+     * Check if the node is present as the child or grand-child
+     * @param node: node to look for
+     * @return true if present as false
+     */
+    bool containAsGrandChild(NodePtr node);
 
     /**
      * Check if input node is present as children to this

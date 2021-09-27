@@ -50,8 +50,7 @@ bool SyntaxBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
 
             //create a map of matching target to address operator id map
-            std::map<OperatorNodePtr, OperatorNodePtr> matchedTargetToHostOperatorMap =
-                areQueryPlansEqual(targetQueryPlan, hostQueryPlan);
+            auto matchedTargetToHostOperatorMap = areQueryPlansEqual(targetQueryPlan, hostQueryPlan);
 
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (!matchedTargetToHostOperatorMap.empty()) {
@@ -60,6 +59,30 @@ bool SyntaxBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
+
+                // As we merge partially equivalent queries, we can potentially find matches across multiple operators.
+                // As upstream matched operators are covered by downstream matched operators. We need to retain only the
+                // downstream matched operator containing any upstream matched operator. This will prevent in computation
+                // of inconsistent shared query plans.
+
+                //Fetch all the matched target operators.
+                std::vector<OperatorNodePtr> matchedTargetOperators;
+                matchedTargetOperators.reserve(matchedTargetToHostOperatorMap.size());
+                for (auto& mapEntry : matchedTargetToHostOperatorMap) {
+                    matchedTargetOperators.emplace_back(mapEntry.first);
+                }
+
+                //Iterate over the target operators and remove the upstream operators covered by downstream matched operators
+                for (uint64_t i = 0; i < matchedTargetOperators.size(); i++) {
+                    for (uint64_t j = i; j < matchedTargetOperators.size(); j++) {
+                        if (matchedTargetOperators[i]->containAsGrandChild(matchedTargetOperators[j])) {
+                            matchedTargetToHostOperatorMap.erase(matchedTargetOperators[j]);
+                        } else if (matchedTargetOperators[i]->containAsGrandParent(matchedTargetOperators[j])) {
+                            matchedTargetToHostOperatorMap.erase(matchedTargetOperators[i]);
+                            break;
+                        }
+                    }
+                }
 
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
@@ -164,7 +187,7 @@ SyntaxBasedPartialQueryMergerRule::areOperatorEqual(const OperatorNodePtr& targe
             }
         }
 
-        if(matchCount < targetOperator->getParents().size()){
+        if (matchCount < targetOperator->getParents().size()) {
             targetHostOperatorMap[targetOperator] = hostOperator;
         }
         return targetHostOperatorMap;

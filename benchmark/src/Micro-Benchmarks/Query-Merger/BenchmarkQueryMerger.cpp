@@ -202,10 +202,10 @@ int main(int argc, const char* argv[]) {
     if (configPath != commandLineParams.end()) {
         loadConfigFromYAMLFile(configPath->second.c_str());
     } else {
-//                loadConfigFromYAMLFile(
-//                    "/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
-        loadConfigFromYAMLFile(
-            "/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
+//        loadConfigFromYAMLFile(
+//            "/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
+                loadConfigFromYAMLFile(
+                    "/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
     }
 
     NES::setupLogging("BM.log", loglevel);
@@ -269,10 +269,15 @@ int main(int argc, const char* argv[]) {
 
                 auto gqp = coordinator->getGlobalQueryPlan();
                 auto allSQP = gqp->getAllSharedQueryPlans();
-                std::cout << "Number of Sources : " << gqp->sourceNamesToSharedQueryPlanMap.size();
+                std::cout << "Number of Sources : " << gqp->sourceNamesToSharedQueryPlanMap.size() << std::endl;
+                for (auto [key, value] : gqp->sourceNamesToSharedQueryPlanMap) {
+                    std::cout << key << std::endl;
+                }
                 uint64_t actualOperators = 0;
                 for (auto sqp : allSQP) {
-                    actualOperators = actualOperators + QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();
+                    unsigned long planSize = QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();
+                    std::cout << planSize << std::endl;
+                    actualOperators = actualOperators + planSize;
                 }
 
                 auto efficiency = ((totalOperators - actualOperators) / totalOperators) * 100;
