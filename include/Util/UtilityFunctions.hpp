@@ -74,22 +74,22 @@ namespace Util {
 
     template <>
     struct SplitFunctionHelper <uint64_t> {
-        static constexpr auto FUNCTION = [](std::string&& x) { return uint64_t(std::atoll(x.c_str())); };
+        static constexpr auto FUNCTION = [](std::string&& str) { return uint64_t(std::atoll(str.c_str())); };
     };
 
     template <>
     struct SplitFunctionHelper <uint32_t> {
-        static constexpr auto FUNCTION = [](std::string&& x) { return uint32_t(std::atoi(x.c_str())); };
+        static constexpr auto FUNCTION = [](std::string&& str) { return uint32_t(std::atoi(str.c_str())); };
     };
 
     template <>
     struct SplitFunctionHelper <int> {
-        static constexpr auto FUNCTION = [](std::string&& x) { return std::atoi(x.c_str()); };
+        static constexpr auto FUNCTION = [](std::string&& str) { return std::atoi(str.c_str()); };
     };
 
     template <>
     struct SplitFunctionHelper <double> {
-        static constexpr auto FUNCTION = [](std::string&& x) { return std::atof(x.c_str()); };
+        static constexpr auto FUNCTION = [](std::string&& str) { return std::atof(str.c_str()); };
     };
 
     }
@@ -98,7 +98,7 @@ namespace Util {
      * @param s input string.
      * @return result sing.
      */
-    std::string escapeJson(const std::string& s);
+    std::string escapeJson(const std::string& str);
 
     /**
      * @brief removes leading and trailing whitespaces
@@ -142,7 +142,7 @@ namespace Util {
    * @param delimiter2
    * @return the substring
    */
-    std::string getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& s1, const std::string& s2);
+    std::string getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& str1, const std::string& str2);
 
         /**
     * @brief splits a string given a delimiter into multiple substrings stored in a T vector

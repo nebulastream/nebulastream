@@ -50,9 +50,9 @@
 
 namespace NES {
 
-std::string Util::escapeJson(const std::string& s) {
+std::string Util::escapeJson(const std::string& str) {
     std::ostringstream o;
-    for (char c : s) {
+    for (char c : str) {
         if (c == '"' || c == '\\' || ('\x00' <= c && c <= '\x1f')) {
             o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int) c;
         } else {
@@ -62,15 +62,15 @@ std::string Util::escapeJson(const std::string& s) {
     return o.str();
 }
 
-std::string Util::trim(std::string s) {
+std::string Util::trim(std::string str) {
     auto not_space = [](char c) {
         return isspace(c) == 0;
     };
     // trim left
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), not_space));
+    str.erase(str.begin(), std::find_if(str.begin(), str.end(), not_space));
     // trim right
-    s.erase(find_if(s.rbegin(), s.rend(), not_space).base(), s.end());
-    return s;
+    str.erase(find_if(str.rbegin(), str.rend(), not_space).base(), str.end());
+    return str;
 }
 
 std::string Util::generateIdString() {
@@ -103,11 +103,11 @@ std::uint64_t Util::generateIdInt() {
 }
 
 std::string
-Util::getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& s1, const std::string& s2) {
-    unsigned firstDelimPos = input.find(s1);
-    unsigned endPosOfFirstDelim = firstDelimPos + s1.length();
+Util::getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& str1, const std::string& str2) {
+    unsigned firstDelimPos = input.find(str1);
+    unsigned endPosOfFirstDelim = firstDelimPos + str1.length();
 
-    unsigned lastDelimPos = input.find_first_of(s2, endPosOfFirstDelim);
+    unsigned lastDelimPos = input.find_first_of(str2, endPosOfFirstDelim);
 
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
