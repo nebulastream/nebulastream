@@ -27,10 +27,7 @@ PhysicalSinkOperator::PhysicalSinkOperator(OperatorId id,
 
 PhysicalOperatorPtr
 PhysicalSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor) {
-    return create(Util::getNextOperatorId(),
-                  std::move(inputSchema),
-                  std::move(outputSchema),
-                  std::move(sinkDescriptor));
+    return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(sinkDescriptor));
 }
 
 PhysicalOperatorPtr PhysicalSinkOperator::create(OperatorId id,

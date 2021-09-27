@@ -176,9 +176,8 @@ class LogicalOperatorFactory {
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return LogicalOperatorNodePtr
     */
-    static LogicalUnaryOperatorNodePtr createCEPIterationOperator(uint64_t minIterations,
-                                                                  uint64_t maxIterations,
-                                                                  OperatorId id = Util::getNextOperatorId());
+    static LogicalUnaryOperatorNodePtr
+    createCEPIterationOperator(uint64_t minIterations, uint64_t maxIterations, OperatorId id = Util::getNextOperatorId());
 };
 
 }// namespace NES

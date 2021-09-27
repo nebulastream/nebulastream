@@ -488,8 +488,7 @@ class TestUtils {
             NES_DEBUG("checkOutputOrTimeout: check content for file " << outputFilePath);
             std::ifstream ifs(outputFilePath);
             if (ifs.good() && ifs.is_open()) {
-                std::vector<std::string> expectedlines =
-                    Util::splitWithStringDelimiter<std::string>(expectedContent, "\n");
+                std::vector<std::string> expectedlines = Util::splitWithStringDelimiter<std::string>(expectedContent, "\n");
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
                 count = std::count(content.begin(), content.end(), '\n');
                 if (expectedlines.size() != count) {
