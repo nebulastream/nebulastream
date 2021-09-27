@@ -200,10 +200,8 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     cout << "expected=" << endl << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
     cout << "result=" << endl << Util::prettyPrintTupleBuffer(deszBuffer, test_schema) << endl;
 
-    cout << "File path = " << path_to_bin_file
-         << " Content=" << Util::prettyPrintTupleBuffer(deszBuffer, test_schema);
-    EXPECT_EQ(Util::prettyPrintTupleBuffer(deszBuffer, test_schema),
-              Util::prettyPrintTupleBuffer(buffer, test_schema));
+    cout << "File path = " << path_to_bin_file << " Content=" << Util::prettyPrintTupleBuffer(deszBuffer, test_schema);
+    EXPECT_EQ(Util::prettyPrintTupleBuffer(deszBuffer, test_schema), Util::prettyPrintTupleBuffer(buffer, test_schema));
     buffer.release();
 }
 
@@ -457,8 +455,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
              << " content=" << Util::prettyPrintTupleBuffer(bufData, test_schema) << endl;
         cout << "ref buffer tups=" << buffer.getNumberOfTuples()
              << " content=" << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-        EXPECT_EQ(Util::prettyPrintTupleBuffer(bufData, test_schema),
-                  Util::prettyPrintTupleBuffer(buffer, test_schema));
+        EXPECT_EQ(Util::prettyPrintTupleBuffer(bufData, test_schema), Util::prettyPrintTupleBuffer(buffer, test_schema));
     });
 
     // Wait until receiving is complete.

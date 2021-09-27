@@ -39,10 +39,7 @@ GeneratableOperatorPtr GeneratableJoinSinkOperator::create(OperatorId id,
 
 GeneratableOperatorPtr
 GeneratableJoinSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler) {
-    return create(Util::getNextOperatorId(),
-                  std::move(inputSchema),
-                  std::move(outputSchema),
-                  std::move(operatorHandler));
+    return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler));
 }
 
 void GeneratableJoinSinkOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {

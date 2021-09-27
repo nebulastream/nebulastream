@@ -102,8 +102,7 @@ std::uint64_t Util::generateIdInt() {
     return hash_fn(linkID_string);
 }
 
-std::string
-Util::getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& str1, const std::string& str2) {
+std::string Util::getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& str1, const std::string& str2) {
     unsigned firstDelimPos = input.find(str1);
     unsigned endPosOfFirstDelim = firstDelimPos + str1.length();
 
@@ -235,9 +234,7 @@ bool Util::endsWith(const std::string& fullString, const std::string& ending) {
     return false;
 }
 
-bool Util::startsWith(const std::string& fullString, const std::string& ending) {
-    return (fullString.rfind(ending, 0) == 0);
-}
+bool Util::startsWith(const std::string& fullString, const std::string& ending) { return (fullString.rfind(ending, 0) == 0); }
 
 OperatorId Util::getNextOperatorId() {
     static std::atomic_uint64_t id = 0;
@@ -312,7 +309,7 @@ web::json::value Util::getTopologyAsJson(TopologyNodePtr root) {
 }
 
 bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
-                                                        std::vector<std::map<std::string, std::any>> properties) {
+                                            std::vector<std::map<std::string, std::any>> properties) {
     // count the number of operators in the query
     auto queryPlanIterator = QueryPlanIterator(queryPlan);
     size_t numOperators = queryPlanIterator.snapshot().size();
