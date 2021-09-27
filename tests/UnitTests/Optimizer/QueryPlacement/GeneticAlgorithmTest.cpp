@@ -315,12 +315,12 @@ TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrateg
     // Setup the topology
     auto sinkNode = TopologyNode::create(1, "localhost", 4000, 5000, 4);
     auto midNode1 = TopologyNode::create(2, "localhost", 4001, 5001, 4);
-    auto srcNode1 = TopologyNode::create(3, "localhost", 4002, 5002, 4);
+    auto srcNode1 = TopologyNode::create(3, "localhost", 4002, 5002, 3);
     auto midNode2 = TopologyNode::create(4, "localhost", 4001, 5001, 4);
-    auto srcNode2 = TopologyNode::create(5, "localhost", 4002, 5002, 4);
-    auto srcNode3 = TopologyNode::create(6, "localhost", 4002, 5002, 4);
-    auto srcNode4 = TopologyNode::create(7, "localhost", 4002, 5002, 4);
-    auto srcNode5 = TopologyNode::create(8, "localhost", 4002, 5002, 4);
+    auto srcNode2 = TopologyNode::create(5, "localhost", 4002, 5002, 3);
+    auto srcNode3 = TopologyNode::create(6, "localhost", 4002, 5002, 3);
+    auto srcNode4 = TopologyNode::create(7, "localhost", 4002, 5002, 3);
+    auto srcNode5 = TopologyNode::create(8, "localhost", 4002, 5002, 3);
 
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
@@ -445,66 +445,11 @@ TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrateg
     std::map<std::string, std::any> filterProp;
     filterProp.insert(std::make_pair("load", 2));
     filterProp.insert(std::make_pair("dmf", 0.4));
-    /*
-    // adding property of the source2
-    std::map<std::string, std::any> src2Prop;
-    src2Prop.insert(std::make_pair("load", 1));
-    src2Prop.insert(std::make_pair("dmf", 5.0));
-
-    // adding property of the filter2
-    std::map<std::string, std::any> filter2Prop;
-    filter2Prop.insert(std::make_pair("load", 3));
-    filter2Prop.insert(std::make_pair("dmf", 0.2));
-
-    // adding property of the source3
-    std::map<std::string, std::any> src3Prop;
-    src3Prop.insert(std::make_pair("load", 1));
-    src3Prop.insert(std::make_pair("dmf", 5.0));
-
-    // adding property of the filter3
-    std::map<std::string, std::any> filter3Prop;
-    filter3Prop.insert(std::make_pair("load", 3));
-    filter3Prop.insert(std::make_pair("dmf", 0.2));
-
-    // adding property of the source4
-    std::map<std::string, std::any> src4Prop;
-    src4Prop.insert(std::make_pair("load", 1));
-    src4Prop.insert(std::make_pair("dmf", 5.0));
-
-    // adding property of the filter4
-    std::map<std::string, std::any> filter4Prop;
-    filter4Prop.insert(std::make_pair("load", 3));
-    filter4Prop.insert(std::make_pair("dmf", 0.2));
-
-    // adding property of the source5
-    std::map<std::string, std::any> src5Prop;
-    src5Prop.insert(std::make_pair("load", 1));
-    src5Prop.insert(std::make_pair("dmf", 5.0));
-
-    // adding property of the filter5
-    std::map<std::string, std::any> filter5Prop;
-    filter5Prop.insert(std::make_pair("load", 3));
-    filter5Prop.insert(std::make_pair("dmf", 0.2)); */
 
     // adding property of the union
     std::map<std::string, std::any> unionProp;
     unionProp.insert(std::make_pair("load", 3));
     unionProp.insert(std::make_pair("dmf", 3.0));
-    /*
-    // adding property of the union2
-    std::map<std::string, std::any> union2Prop;
-    union2Prop.insert(std::make_pair("load", 4));
-    union2Prop.insert(std::make_pair("dmf", 4.0));
-
-    // adding property of the union3
-    std::map<std::string, std::any> union3Prop;
-    union3Prop.insert(std::make_pair("load", 4));
-    union3Prop.insert(std::make_pair("dmf", 4.0));
-
-    // adding property of the union4
-    std::map<std::string, std::any> union4Prop;
-    union4Prop.insert(std::make_pair("load", 4));
-    union4Prop.insert(std::make_pair("dmf", 4.0));  */
 
     // adding property of the sink
     std::map<std::string, std::any> sinkProp;
@@ -791,7 +736,7 @@ TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrateg
 
     // adding property of the filter
     std::map<std::string, std::any> filterProp;
-    filterProp.insert(std::make_pair("load", 2));
+    filterProp.insert(std::make_pair("load", 1));
     filterProp.insert(std::make_pair("dmf", 0.3));
 
     // adding property of the sink
@@ -945,14 +890,6 @@ class GeneticAlgorithmStrategyEvaluationTest : public testing::Test{
     streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName1, schema);
     streamCatalog->addLogicalStream(streamName2, schema);
-    /*
-    streamCatalog->addLogicalStream(streamName2, schema);
-    streamCatalog->addLogicalStream(streamName3, schema);
-    streamCatalog->addLogicalStream(streamName4, schema);
-    streamCatalog->addLogicalStream(streamName5, schema);
-    streamCatalog->addLogicalStream(streamName6, schema);
-    streamCatalog->addLogicalStream(streamName7, schema);
-    streamCatalog->addLogicalStream(streamName8, schema);   */
 
     SourceConfigPtr sourceConfig1 = SourceConfig::create();
     sourceConfig1->setSourceFrequency(0);
@@ -965,52 +902,9 @@ class GeneticAlgorithmStrategyEvaluationTest : public testing::Test{
     sourceConfig2->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig2->setPhysicalStreamName("evaluationTest2");
     sourceConfig2->setLogicalStreamName(streamName2);
-    /*
-    SourceConfigPtr sourceConfig3 = SourceConfig::create();
-    sourceConfig3->setSourceFrequency(0);
-    sourceConfig3->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig3->setPhysicalStreamName("car3");
-    sourceConfig3->setLogicalStreamName(streamName3);
-
-    SourceConfigPtr sourceConfig4 = SourceConfig::create();
-    sourceConfig4->setSourceFrequency(0);
-    sourceConfig4->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig4->setPhysicalStreamName("car4");
-    sourceConfig4->setLogicalStreamName(streamName4);
-
-    SourceConfigPtr sourceConfig5 = SourceConfig::create();
-    sourceConfig5->setSourceFrequency(0);
-    sourceConfig5->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig5->setPhysicalStreamName("car5");
-    sourceConfig5->setLogicalStreamName(streamName5);
-
-    SourceConfigPtr sourceConfig6 = SourceConfig::create();
-    sourceConfig6->setSourceFrequency(0);
-    sourceConfig6->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig6->setPhysicalStreamName("car6");
-    sourceConfig6->setLogicalStreamName(streamName6);
-
-    SourceConfigPtr sourceConfig7 = SourceConfig::create();
-    sourceConfig7->setSourceFrequency(0);
-    sourceConfig7->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig7->setPhysicalStreamName("car7");
-    sourceConfig7->setLogicalStreamName(streamName7);
-
-    SourceConfigPtr sourceConfig8 = SourceConfig::create();
-    sourceConfig8->setSourceFrequency(0);
-    sourceConfig8->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig8->setPhysicalStreamName("car8");
-    sourceConfig8->setLogicalStreamName(streamName8);   */
 
     PhysicalStreamConfigPtr conf1 = PhysicalStreamConfig::create(sourceConfig1);
     PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(sourceConfig2);
-    /*
-    PhysicalStreamConfigPtr conf3 = PhysicalStreamConfig::create(sourceConfig3);
-    PhysicalStreamConfigPtr conf4 = PhysicalStreamConfig::create(sourceConfig4);
-    PhysicalStreamConfigPtr conf5 = PhysicalStreamConfig::create(sourceConfig5);
-    PhysicalStreamConfigPtr conf6 = PhysicalStreamConfig::create(sourceConfig6);
-    PhysicalStreamConfigPtr conf7 = PhysicalStreamConfig::create(sourceConfig7);
-    PhysicalStreamConfigPtr conf8 = PhysicalStreamConfig::create(sourceConfig8);    */
 
     StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode1);
     StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode2);
@@ -1180,7 +1074,122 @@ TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest1) {
 
 TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest2) {
 
-    setupTopologyAndStreamCatalogForGA();
+    // create the topology for the test
+    TopologyPtr topology = Topology::create();
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+    TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 14);
+    topology->setAsRoot(rootNode);
+
+    TopologyNodePtr fogTopNode1 = TopologyNode::create(2, "localhost", grpcPort, dataPort, 10);
+    topology->addNewPhysicalNodeAsChild(rootNode, fogTopNode1);
+
+    TopologyNodePtr fogTopNode2 = TopologyNode::create(3, "localhost", grpcPort, dataPort, 8);
+    topology->addNewPhysicalNodeAsChild(rootNode, fogTopNode2);
+
+    TopologyNodePtr fogBottomNode1 = TopologyNode::create(4, "localhost", grpcPort, dataPort, 5);
+    topology->addNewPhysicalNodeAsChild(fogTopNode1, fogBottomNode1);
+
+    TopologyNodePtr fogBottomNode2 = TopologyNode::create(5, "localhost", grpcPort, dataPort, 5);
+    topology->addNewPhysicalNodeAsChild(fogTopNode1, fogBottomNode2);
+
+    TopologyNodePtr fogBottomNode3 = TopologyNode::create(6, "localhost", grpcPort, dataPort, 5);
+    topology->addNewPhysicalNodeAsChild(fogTopNode2, fogBottomNode3);
+
+    TopologyNodePtr fogBottomNode4 = TopologyNode::create(7, "localhost", grpcPort, dataPort, 5);
+    topology->addNewPhysicalNodeAsChild(fogTopNode2, fogBottomNode4);
+
+    TopologyNodePtr sourceNode1 = TopologyNode::create(8, "localhost", grpcPort, dataPort, 3);
+    topology->addNewPhysicalNodeAsChild(fogBottomNode1, sourceNode1);
+
+    TopologyNodePtr sourceNode2 = TopologyNode::create(9, "localhost", grpcPort, dataPort, 3);
+    topology->addNewPhysicalNodeAsChild(fogBottomNode1, sourceNode2);
+
+    TopologyNodePtr sourceNode3 = TopologyNode::create(10, "localhost", grpcPort, dataPort, 3);
+    topology->addNewPhysicalNodeAsChild(fogBottomNode2, sourceNode3);
+
+    TopologyNodePtr sourceNode4 = TopologyNode::create(11, "localhost", grpcPort, dataPort, 3);
+    topology->addNewPhysicalNodeAsChild(fogBottomNode2, sourceNode4);
+
+    TopologyNodePtr sourceNode5 = TopologyNode::create(12, "localhost", grpcPort, dataPort, 3);
+    topology->addNewPhysicalNodeAsChild(fogBottomNode3, sourceNode5);
+
+    TopologyNodePtr sourceNode6 = TopologyNode::create(13, "localhost", grpcPort, dataPort, 3);
+    topology->addNewPhysicalNodeAsChild(fogBottomNode3, sourceNode6);
+
+    TopologyNodePtr sourceNode7 = TopologyNode::create(14, "localhost", grpcPort, dataPort, 3);
+    topology->addNewPhysicalNodeAsChild(fogBottomNode4, sourceNode7);
+
+    TopologyNodePtr sourceNode8 = TopologyNode::create(15, "localhost", grpcPort, dataPort, 3);
+    topology->addNewPhysicalNodeAsChild(fogBottomNode4, sourceNode8);
+
+    LinkPropertyPtr linkProperty1 = std::make_shared<LinkProperty>(LinkProperty(100, 64));
+    rootNode->addLinkProperty(fogTopNode1, linkProperty1);
+    fogTopNode1->addLinkProperty(rootNode, linkProperty1);
+    rootNode->addLinkProperty(fogTopNode2, linkProperty1);
+    fogTopNode2->addLinkProperty(rootNode, linkProperty1);
+
+    LinkPropertyPtr linkProperty2 = std::make_shared<LinkProperty>(LinkProperty(50, 256));
+    fogTopNode1->addLinkProperty(fogBottomNode1, linkProperty2);
+    fogBottomNode1->addLinkProperty(fogTopNode1, linkProperty2);
+    fogTopNode1->addLinkProperty(fogBottomNode2, linkProperty2);
+    fogBottomNode2->addLinkProperty(fogTopNode1, linkProperty2);
+    fogTopNode2->addLinkProperty(fogBottomNode3, linkProperty2);
+    fogBottomNode3->addLinkProperty(fogTopNode2, linkProperty2);
+    fogTopNode2->addLinkProperty(fogBottomNode4, linkProperty2);
+    fogBottomNode4->addLinkProperty(fogTopNode2, linkProperty2);
+
+    LinkPropertyPtr linkProperty3 = std::make_shared<LinkProperty>(LinkProperty(10, 512));
+    fogBottomNode1->addLinkProperty(sourceNode1, linkProperty3);
+    sourceNode1->addLinkProperty(fogBottomNode1, linkProperty3);
+    fogBottomNode1->addLinkProperty(sourceNode2, linkProperty3);
+    sourceNode2->addLinkProperty(fogBottomNode1, linkProperty3);
+    fogBottomNode2->addLinkProperty(sourceNode3, linkProperty3);
+    sourceNode3->addLinkProperty(fogBottomNode2, linkProperty3);
+    fogBottomNode2->addLinkProperty(sourceNode4, linkProperty3);
+    sourceNode4->addLinkProperty(fogBottomNode2, linkProperty3);
+    fogBottomNode3->addLinkProperty(sourceNode5, linkProperty3);
+    sourceNode5->addLinkProperty(fogBottomNode3, linkProperty3);
+    fogBottomNode3->addLinkProperty(sourceNode6, linkProperty3);
+    sourceNode6->addLinkProperty(fogBottomNode3, linkProperty3);
+    fogBottomNode4->addLinkProperty(sourceNode7, linkProperty3);
+    sourceNode7->addLinkProperty(fogBottomNode4, linkProperty3);
+    fogBottomNode4->addLinkProperty(sourceNode8, linkProperty3);
+    sourceNode8->addLinkProperty(fogBottomNode4, linkProperty3);
+
+    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                         "->addField(\"timestamp\", BasicType::UINT64)"
+                         "->addField(\"value\", BasicType::UINT64);";
+    const std::string streamName1 = "car";
+
+    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    streamCatalog->addLogicalStream(streamName1, schema);
+
+    SourceConfigPtr sourceConfig1 = SourceConfig::create();
+    sourceConfig1->setSourceFrequency(0);
+    sourceConfig1->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig1->setPhysicalStreamName("evaluationTest2");
+    sourceConfig1->setLogicalStreamName(streamName1);
+
+    PhysicalStreamConfigPtr conf1 = PhysicalStreamConfig::create(sourceConfig1);
+    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode1);
+    StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode2);
+    StreamCatalogEntryPtr streamCatalogEntry3 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode3);
+    StreamCatalogEntryPtr streamCatalogEntry4 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode4);
+    StreamCatalogEntryPtr streamCatalogEntry5 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode5);
+    StreamCatalogEntryPtr streamCatalogEntry6 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode6);
+    StreamCatalogEntryPtr streamCatalogEntry7 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode7);
+    StreamCatalogEntryPtr streamCatalogEntry8 = std::make_shared<StreamCatalogEntry>(conf1, sourceNode8);
+
+    streamCatalog->addPhysicalStream(streamName1, streamCatalogEntry1);
+    streamCatalog->addPhysicalStream(streamName1, streamCatalogEntry2);
+    streamCatalog->addPhysicalStream(streamName1, streamCatalogEntry3);
+    streamCatalog->addPhysicalStream(streamName1, streamCatalogEntry4);
+    streamCatalog->addPhysicalStream(streamName1, streamCatalogEntry5);
+    streamCatalog->addPhysicalStream(streamName1, streamCatalogEntry6);
+    streamCatalog->addPhysicalStream(streamName1, streamCatalogEntry7);
+    streamCatalog->addPhysicalStream(streamName1, streamCatalogEntry8);
+
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("GeneticAlgorithm",
@@ -1188,19 +1197,6 @@ TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest2) {
                                                                               topology,
                                                                               typeInferencePhase,
                                                                               streamCatalog);
-
-    Query query = Query::from("car");
-    int m = 2;
-    for(int i = 0; i < m; i++){
-        query.filter(Attribute("id") < 45);
-    }
-    for(int i = 0; i < m; i++){
-        query.map(Attribute("c") = Attribute("id") + Attribute("value"));
-    }
-    query.sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan = query.getQueryPlan();
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
 
     std::vector<std::map<std::string, std::any>> properties;
 
@@ -1224,16 +1220,39 @@ TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest2) {
     sinkProp.insert(std::make_pair("load", 5));
     sinkProp.insert(std::make_pair("dmf", 4.0));
 
+    Query query = Query::from("car");
     properties.push_back(sinkProp);
-    for(int i = 0; i < m; i++){
-        properties.push_back(mapProp);
+
+    int n = 2;
+    for(int i = 0; i < n; i+=2){
+        query.filter(Attribute("id") < n-i);
     }
-    for(int i = 0; i < m; i++){
-        properties.push_back(filterProp);
+    for(int i = 1; i < n; i+=2){
+        query.map(Attribute("value2") = Attribute("value") * 2);
     }
-    properties.push_back(srcProp);
-    UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties);
+    for(int i = 0; i < 8; i++){
+        for(int j = 1; j < n; j+=2){
+            properties.push_back(mapProp);
+        }
+        for(int j = 0; j < n; j+=2){
+            properties.push_back(filterProp);
+        }
+        properties.push_back(srcProp);
+    }
+    query.sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+    // Execute optimization phases prior to placement
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties);
     auto start = std::chrono::high_resolution_clock::now();
     ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(queryPlan));
     auto stop = std::chrono::high_resolution_clock::now();
@@ -1384,7 +1403,7 @@ class GeneticAlgorithmBenchmark : public testing::Test {
 
 
 TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFixedTopologyWithDynamicQuery) {
-    std::list<int> listOfInts({1,2,3,4,5,6,7,8,9,10});
+    std::list<int> listOfInts({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40});
     std::map<int, std::vector<long>> counts;
     int SourcePerMiddle = 3;
     int repetitions = 5;
@@ -1544,7 +1563,7 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGAStrategyFixedQueryWithDy
         setupTopologyAndStreamCatalogForGA(n, SourcePerMiddle);
         GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-        auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("IFCOP",
+        auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("GeneticAlgorithm",
                                                                                   globalExecutionPlan,
                                                                                   topology,
                                                                                   typeInferencePhase,
@@ -1708,7 +1727,7 @@ TEST_F(GeneticAlgorithmBenchmark2, testPlacingQueryWithGeneticAlgorithmStrategyF
         setupTopologyAndStreamCatalogForGA(n);
         GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-        auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("IFCOP",
+        auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("GeneticAlgorithm",
                                                                                   globalExecutionPlan,
                                                                                   topology,
                                                                                   typeInferencePhase,
@@ -1752,14 +1771,14 @@ TEST_F(GeneticAlgorithmBenchmark2, testPlacingQueryWithGeneticAlgorithmStrategyF
 
 
 TEST_F(GeneticAlgorithmBenchmark2, testPlacingQueryWithGeneticAlgorithmStrategyFixedTopologyWithDynamicQuery) {
-    std::list<int> listOfInts( {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40});
+    std::list<int> listOfInts( {10});
     std::map<int, std::vector<long>> counts;
     int repetitions = 5;
 
     setupTopologyAndStreamCatalogForGA(10);
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("IFCOP",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("GeneticAlgorithm",
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
@@ -1816,7 +1835,6 @@ TEST_F(GeneticAlgorithmBenchmark2, testPlacingQueryWithGeneticAlgorithmStrategyF
         auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
         topologySpecificQueryRewrite->execute(testQueryPlan);
         typeInferencePhase->execute(testQueryPlan);
-
         UtilityFunctions::assignPropertiesToQueryOperators(testQueryPlan, properties);
         std::vector<long> counts_n;
         for(int j = 0; j < repetitions; j++) {
@@ -1846,7 +1864,7 @@ TEST_F(GeneticAlgorithmBenchmark2, testPlacingQueryWithGeneticAlgorithmStrategyF
     }
 }
 TEST_F(GeneticAlgorithmBenchmark2, testPlacingQueryWithGeneticAlgorithmStrategyEvaluation) {
-    std::list<int> listOfInts( {20});
+    std::list<int> listOfInts( {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40});
     std::map<int, std::vector<long>> counts;
     int repetitions = 1;
 
