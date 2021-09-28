@@ -25,7 +25,6 @@
 namespace NES {
 
 class MonitoringPlan;
-class TupleBuffer;
 using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 
 class WorkerRPCClient;
@@ -41,7 +40,7 @@ struct GroupedMetricValues;
  */
 class MonitoringManager {
   public:
-    MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, Runtime::BufferManagerPtr bufferManager);
+    MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology);
     ~MonitoringManager();
 
     /**
@@ -60,7 +59,13 @@ class MonitoringManager {
      * @param tupleBuffer
      * @return
      */
-    GroupedMetricValues requestMonitoringData(uint64_t nodeId);
+    GroupedMetricValues requestMonitoringData(uint64_t nodeId, Runtime::BufferManagerPtr bufferManager);
+
+    /**
+     * @brief Receive arbitrary monitoring data from a given node.
+     * @param nodeId
+     */
+    void receiveMonitoringData(uint64_t nodeId, GroupedMetricValues);
 
     /**
      * @brief Get the monitoring plan for a given node ID. If the node exists in the topology but has not a registered
@@ -70,15 +75,8 @@ class MonitoringManager {
      */
     MonitoringPlanPtr getMonitoringPlan(uint64_t nodeId);
 
-    /**
-     * @brief Getter for the underlying NES topology.
-     * @return Ptr to the NES topology.
-     */
-    const TopologyPtr getTopology() const;
-
   private:
     std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
-    Runtime::BufferManagerPtr bufferManager;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
 };

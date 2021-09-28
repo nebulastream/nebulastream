@@ -23,11 +23,14 @@
 
 namespace NES {
 
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
+class WorkerRPCClient;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class MonitoringPlan;
 using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
@@ -40,7 +43,7 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
  */
 class MonitoringService {
   public:
-    explicit MonitoringService(MonitoringManagerPtr manager);
+    explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology);
     ~MonitoringService();
 
     web::json::value registerMonitoringPlanToAllNodes(MonitoringPlanPtr monitoringPlan);
@@ -52,7 +55,7 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    web::json::value requestMonitoringDataAsJson(uint64_t nodeId);
+    web::json::value requestMonitoringDataAsJson(uint64_t nodeId, Runtime::BufferManagerPtr bufferManager);
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
@@ -61,7 +64,7 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    web::json::value requestMonitoringDataFromAllNodesAsJson();
+    web::json::value requestMonitoringDataFromAllNodesAsJson(Runtime::BufferManagerPtr bufferManager);
 
     /**
      * @brief Requests from a remote worker node its monitoring data via prometheus node exporter.
@@ -80,8 +83,16 @@ class MonitoringService {
      */
     web::json::value requestMonitoringDataFromAllNodesViaPrometheusAsJson();
 
+    /**
+     * Getter for MonitoringManager
+     * @return The MonitoringManager
+     */
+    [[nodiscard]] const MonitoringManagerPtr getMonitoringManager() const;
+
+
   private:
     MonitoringManagerPtr monitoringManager;
+    TopologyPtr topology;
 };
 
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;

@@ -37,10 +37,8 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
                                               int64_t grpcPort,
                                               int64_t dataPort,
                                               uint16_t numberOfSlots,
-                                              const NodeStatsPtr& nodeStats,
                                               NodeType type) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
-                                                               << " nodeProperties=" << nodeStats->DebugString()
                                                                << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -104,11 +102,6 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
     } else {
         NES_THROW_RUNTIME_ERROR("TopologyManagerService::registerNode type not supported ");
     }
-
-    //TODO: this has to be refactored #1971
-    //    if (nodeStats->IsInitialized()) {
-    //        physicalNode->setNodeStats(std::make_shared<NodeStats>());
-    //    }
 
     const TopologyNodePtr rootNode = topology->getRoot();
 

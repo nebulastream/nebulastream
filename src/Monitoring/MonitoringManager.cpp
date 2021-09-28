@@ -23,7 +23,6 @@
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -33,10 +32,8 @@
 
 namespace NES {
 
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
-                                     TopologyPtr topology,
-                                     Runtime::BufferManagerPtr bufferManager)
-    : bufferManager(bufferManager), workerClient(workerClient), topology(topology) {
+MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
+    : workerClient(workerClient), topology(topology) {
     NES_DEBUG("MonitoringManager: Init");
 }
 
@@ -83,7 +80,7 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
     return true;
 }
 
-GroupedMetricValues MonitoringManager::requestMonitoringData(uint64_t nodeId) {
+GroupedMetricValues MonitoringManager::requestMonitoringData(uint64_t nodeId, Runtime::BufferManagerPtr bufferManager) {
     NES_DEBUG("MonitoringManager: Requesting metrics for node id=" + std::to_string(nodeId));
     auto plan = getMonitoringPlan(nodeId);
     auto schema = plan->createSchema();
@@ -106,6 +103,12 @@ GroupedMetricValues MonitoringManager::requestMonitoringData(uint64_t nodeId) {
                             + std::to_string(node->getId()));
 }
 
+void MonitoringManager::receiveMonitoringData(uint64_t, GroupedMetricValues) {
+
+
+}
+
+
 MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
     if (monitoringPlanMap.find(nodeId) == monitoringPlanMap.end()) {
         TopologyNodePtr node = topology->findNodeWithId(nodeId);
@@ -120,7 +123,5 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
         return monitoringPlanMap[nodeId];
     }
 }
-
-const TopologyPtr MonitoringManager::getTopology() const { return topology; }
 
 }// namespace NES
