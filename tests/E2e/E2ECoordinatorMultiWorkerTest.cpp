@@ -183,12 +183,11 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    string expectedContent =
-        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
-        "R2000073,1543624020000,102.629631,8\n"
-        "R2000070,1543625280000,108.166664,5\n"
-        "R2000073,1543624020000,102.629631,8\n"
-        "R2000070,1543625280000,108.166664,5\n";
+    string expectedContent = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
+                             "R2000073,1543624020000,102.629631,8\n"
+                             "R2000070,1543625280000,108.166664,5\n"
+                             "R2000073,1543624020000,102.629631,8\n"
+                             "R2000070,1543625280000,108.166664,5\n";
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));

@@ -16,10 +16,10 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/CEP/GeneratableCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/CEP/GeneratableCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
