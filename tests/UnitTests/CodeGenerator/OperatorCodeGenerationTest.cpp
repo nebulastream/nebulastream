@@ -453,7 +453,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>());
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     stage->setup(*queryContext);
     stage->start(*queryContext);
     stage->execute(buffer, *queryContext, wctx);
@@ -505,7 +505,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>());
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     stage->setup(*queryContext);
     stage->start(*queryContext);
     stage->execute(inputBuffer, *queryContext, wctx);
@@ -545,7 +545,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context1 = QueryCompilation::PipelineContext::create();
@@ -642,7 +642,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     stage1->setup(*executionContext);
     stage1->start(*executionContext);
     stage1->execute(inputBuffer, *executionContext, wctx);
@@ -661,7 +661,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
                       ->addField(createField("window$end", UINT64))
@@ -808,7 +808,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
                       ->addField(createField("window$end", UINT64))
@@ -883,7 +883,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>());
     cout << "inputBuffer=" << Util::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     stage->setup(*queryContext);
     stage->start(*queryContext);
     stage->execute(inputBuffer, *queryContext, wctx);
@@ -940,7 +940,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>());
@@ -1017,7 +1017,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>());
@@ -1095,7 +1095,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>());
@@ -1172,7 +1172,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>());
@@ -1250,7 +1250,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>());
@@ -1353,7 +1353,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
     cout << "buffer content=" << Util::prettyPrintTupleBuffer(inputBuffer, input_schema);
 
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     stage1->setup(*executionContext);
     stage1->start(*executionContext);
     executionContext->getOperatorHandlers()[0]->start(executionContext, nodeEngine->getStateManager(), 0);
@@ -1403,7 +1403,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         /* prepare objects for test */
         auto streamConf = PhysicalStreamConfig::createEmpty();
         auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-        Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
+        Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
         auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
         auto codeGenerator = QueryCompilation::CCodeGenerator::create();
         auto context1 = QueryCompilation::PipelineContext::create();
@@ -1489,7 +1489,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context1 = QueryCompilation::PipelineContext::create();
@@ -1567,7 +1567,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context1 = QueryCompilation::PipelineContext::create();
@@ -1671,7 +1671,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     cepOperatorHandler->start(queryContext, nodeEngine->getStateManager(), 0);
 
     cout << "inputBuffer=" << Util::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     stage->setup(*queryContext);
     stage->start(*queryContext);
     stage->execute(inputBuffer, *queryContext, wctx);
