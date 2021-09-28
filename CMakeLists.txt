@@ -222,9 +222,10 @@ if(UNIX AND NOT APPLE)
     set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 endif()
 
-# folly
-if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    find_package(folly CONFIG REQUIRED)
+
+find_package(folly CONFIG REQUIRED)
+if(folly_FOUND)
+    message(STATUS "Using Folly")
     set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
 endif ()
 
@@ -248,7 +249,6 @@ find_package(Protobuf REQUIRED)
 message(STATUS "Using protobuf ${protobuf_VERSION}")
 
 set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
-set(_REFLECTION gRPC::grpc++_reflection)
 if (CMAKE_CROSSCOMPILING)
     find_program(_PROTOBUF_PROTOC protoc)
 else ()
