@@ -311,21 +311,19 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
-    string expectedContent1 =
-        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
-        "R2000073,1543624020000,102.629631,8\n"
-        "R2000070,1543625280000,108.166664,5\n";
+    string expectedContent1 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
+                              "R2000073,1543624020000,102.629631,8\n"
+                              "R2000070,1543625280000,108.166664,5\n";
 
-    string expectedContent2 =
-        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
-        "R2000073,1543622760000,63.277779,11\n"
-        "R2000073,1543622940000,66.222221,12\n"
-        "R2000073,1543623000000,74.666664,11\n"
-        "R2000073,1543623480000,62.444443,13\n"
-        "R2000073,1543624200000,64.611115,12\n"
-        "R2000073,1543624260000,68.407410,11\n"
-        "R2000073,1543625040000,56.666668,11\n"
-        "R2000073,1543625400000,62.333332,11\n";
+    string expectedContent2 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
+                              "R2000073,1543622760000,63.277779,11\n"
+                              "R2000073,1543622940000,66.222221,12\n"
+                              "R2000073,1543623000000,74.666664,11\n"
+                              "R2000073,1543623480000,62.444443,13\n"
+                              "R2000073,1543624200000,64.611115,12\n"
+                              "R2000073,1543624260000,68.407410,11\n"
+                              "R2000073,1543625040000,56.666668,11\n"
+                              "R2000073,1543625400000,62.333332,11\n";
 
     std::ifstream ifsQ1(Qpath1.c_str());
     EXPECT_TRUE(ifsQ1.good());

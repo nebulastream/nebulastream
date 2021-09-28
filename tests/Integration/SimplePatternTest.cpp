@@ -125,13 +125,12 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
 
     //TODO Patternname waiting for String support in map operator
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|R2000073|1543624020000|102.629631|8|\n"
-        "|R2000070|1543625280000|108.166664|5|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|\n"
+                             "+----------------------------------------------------+\n"
+                             "|R2000073|1543624020000|102.629631|8|\n"
+                             "|R2000070|1543625280000|108.166664|5|\n"
+                             "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -209,12 +208,11 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|QnV$sensor_id:UINT64|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|2000070|1543625280000|108.166664|5|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|QnV$sensor_id:UINT64|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|\n"
+                             "+----------------------------------------------------+\n"
+                             "|2000070|1543625280000|108.166664|5|\n"
+                             "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
