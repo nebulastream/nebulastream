@@ -66,15 +66,17 @@ MemorySource::MemorySource(SchemaPtr schema,
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
     }
     this->sourceAffinity = sourceAffinity;
+    schemaSize = this->schema->getSchemaSizeInBytes();
+    bufferSize = localBufferManager->getBufferSize();
 
     //if the memory area is smaller than a buffer
-    if (memoryAreaSize <= localBufferManager->getBufferSize()) {
-        numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(this->schema->getSchemaSizeInBytes()));
+    if (memoryAreaSize <= bufferSize) {
+        numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(this->schemaSize));
     } else {
         //if the memory area spans multiple buffers
-        auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->schema->getSchemaSizeInBytes();
+        auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->schemaSize;
         auto numberOfTuplesPerBuffer =
-            std::floor(double(localBufferManager->getBufferSize()) / double(this->schema->getSchemaSizeInBytes()));
+            std::floor(double(bufferSize) / double(this->schemaSize));
         if (restTuples > numberOfTuplesPerBuffer) {
             numberOfTuplesToProduce = numberOfTuplesPerBuffer;
         } else {
@@ -103,9 +105,8 @@ void MemorySource::close() {
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
 
-    auto bufferSize = localBufferManager->getBufferSize();
     if (memoryAreaSize > bufferSize) {
-        if (currentPositionInBytes + numberOfTuplesToProduce * schema->getSchemaSizeInBytes() > memoryAreaSize) {
+        if (currentPositionInBytes + numberOfTuplesToProduce * schemaSize > memoryAreaSize) {
             if (numBuffersToProcess != 0) {
                 NES_DEBUG("MemorySource::receiveData: reset buffer to 0");
                 currentPositionInBytes = 0;
@@ -116,7 +117,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
     }
 
-    NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= bufferSize,
+    NES_ASSERT2_FMT(numberOfTuplesToProduce * schemaSize <= bufferSize,
                     "value to write is larger than the buffer");
 
     Runtime::TupleBuffer buffer;
