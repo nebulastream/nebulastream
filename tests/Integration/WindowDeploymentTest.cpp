@@ -658,57 +658,6 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("WindowDeploymentTest: Test finished");
-
-    /*struct Test {
-        uint64_t value;
-        uint64_t id;
-        uint64_t timestamp;
-    };
-
-    auto testSchema = Schema::create()
-        ->addField("value", DataTypeFactory::createUInt64())
-        ->addField("id", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
-
-    ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
-
-    std::string query =
-     R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp"), Seconds()), Minutes(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(1);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
-
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
-    testHarness.addCSVSource(conf, testSchema);
-
-    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
-
-    struct Output {
-        uint64_t start;
-        uint64_t end;
-        uint64_t id;
-        uint64_t value;
-
-        bool operator==(Output const& rhs) const {
-            return (start == rhs.start && end == rhs.end && id == rhs.id && value == rhs.value);
-        }
-    };
-    std::vector<Output> expectedOutput =
-        {{960000,1020000,1,34},
-         {1980000,2040000,2,56}};
-
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
-
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));*/
 }
 
 /**
@@ -975,7 +924,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) { /*TODO*/
+TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
