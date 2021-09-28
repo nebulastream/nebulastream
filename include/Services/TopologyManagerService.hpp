@@ -49,7 +49,6 @@ class TopologyManagerService {
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
-                          const NodeStatsPtr& nodeStats,
                           NodeType type);
 
     /**

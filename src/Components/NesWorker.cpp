@@ -252,13 +252,15 @@ bool NesWorker::connect() {
                                                                 localWorkerRpcPort,
                                                                 localWorkerZmqPort,
                                                                 numberOfSlots,
-                                                                NodeType::Sensor);
+                                                                NodeType::Sensor,
+                                                                MonitoringAgent::getStaticNesMetrics());
     } else if (type == NesNodeType::Worker) {
         successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
                                                                 localWorkerRpcPort,
                                                                 localWorkerZmqPort,
                                                                 numberOfSlots,
-                                                                NodeType::Worker);
+                                                                NodeType::Worker,
+                                                                MonitoringAgent::getStaticNesMetrics());
     } else {
         NES_NOT_IMPLEMENTED();
     }

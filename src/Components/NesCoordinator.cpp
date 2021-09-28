@@ -43,7 +43,6 @@
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
-#include <Monitoring/MonitoringManager.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/StreamCatalogService.hpp>
@@ -222,8 +221,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //create the monitoring service, it can only be used if a NesWorker has started
     NES_DEBUG("NesCoordinator: Initializing monitoring service");
-    auto monitoringManager = std::make_shared<MonitoringManager>(workerRpcClient, topology, worker->getNodeEngine()->getBufferManager());
-    monitoringService = std::make_shared<MonitoringService>(monitoringManager);
+    monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology, worker->getNodeEngine()->getBufferManager());
 
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
