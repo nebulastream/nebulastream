@@ -82,6 +82,9 @@ class JavaUdfDescriptor {
      */
     JavaUdfByteCodeList::const_iterator end() const { return byteCodeList.end(); }
 
+    // TODO comment
+    const JavaUdfByteCodeList& getByteCodeList() const { return byteCodeList; }
+
   private:
     const std::string className;
     const std::string methodName;
