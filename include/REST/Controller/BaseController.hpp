@@ -35,60 +35,56 @@ class BaseController {
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    // TODO #2197 request should be passed by reference
-    void handleGet(const std::vector<utility::string_t>& path, http_request request);
+    void handleGet(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle the put request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    // TODO #2197 path should be passed by const reference
-    // TODO #2197 request should be passed by reference
-    // TODO #2197 This method is not implemented
-    void handlePut(std::vector<utility::string_t> path, http_request request);
+    void handlePut(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle the post request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handlePost(std::vector<utility::string_t> path, http_request request);
+    void handlePost(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle the delete request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleDelete(const std::vector<utility::string_t>& path, http_request request);
+    void handleDelete(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle the patch request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handlePatch(std::vector<utility::string_t> path, http_request request);
+    void handlePatch(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle the head request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleHead(const std::vector<utility::string_t>& path, http_request request);
+    void handleHead(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle trace request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleTrace(const std::vector<utility::string_t>& path, http_request request);
+    void handleTrace(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle unionWith request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleMerge(const std::vector<utility::string_t>& path, http_request request);
+    void handleMerge(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief set http response options
@@ -98,7 +94,6 @@ class BaseController {
 
     static json::value responseNotImpl(const http::method& method, utility::string_t path);
     static void internalServerErrorImpl(const web::http::http_request& message);
-    // TODO #2197 consolidate implementations as template function, see badRequestImpl as an example
     static void successMessageImpl(const web::http::http_request& message, const web::json::value& result);
     static void successMessageImpl(const web::http::http_request& message, const utf8string& result);
 
