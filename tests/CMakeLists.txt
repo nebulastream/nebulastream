@@ -81,6 +81,10 @@ message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}")
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
 
+add_executable(udf-catalog-controller-test "UnitTests/Rest/UdfCatalogControllerTest.cpp")
+target_link_libraries(udf-catalog-controller-test nes ${GTEST_LIBRARIES})
+add_test(NAME udf-catalog-controller-test COMMAND udf-catalog-controller-test)
+
 add_executable(udf-test "UnitTests/Catalogs/UdfCatalogTest.cpp" "UnitTests/Catalogs/JavaUdfDescriptorTest.cpp")
 target_link_libraries(udf-test nes ${GTEST_LIBRARIES})
 add_test(NAME udf-test COMMAND udf-test)

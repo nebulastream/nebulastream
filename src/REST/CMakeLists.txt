@@ -15,6 +15,7 @@
 add_source_nes(
         RestEngine.cpp
         Controller/BaseController.cpp
+        Controller/UdfCatalogController.cpp
         Controller/ConnectivityController.cpp
         Controller/MonitoringController.cpp
         Controller/QueryCatalogController.cpp
