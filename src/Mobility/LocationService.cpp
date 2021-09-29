@@ -65,7 +65,6 @@ void LocationService::start() {
     NES_DEBUG("LocationService: starting with time interval -> " + std::to_string(updateInterval));
 
     while (running) {
-        NES_DEBUG("LocationService: updating sources ...");
         updateSources();
         std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
     }

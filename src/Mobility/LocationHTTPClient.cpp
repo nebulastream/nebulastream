@@ -77,10 +77,13 @@ bool LocationHTTPClient::fetchSourceStatus() {
         .wait();
 
     if (statusCode == REQUEST_SUCCESS_CODE) {
-        sourcesEnabled = getSourceJsonReturn.at("enabled").as_bool();
+        bool enabled =  getSourceJsonReturn.at("enabled").as_bool();
+        if (sourcesEnabled != enabled) {
+            std::string enabledValue = (enabled) ? "true" : "false";
+            NES_DEBUG("LocationHTTPClient: source enabled: " << enabledValue);
+        }
+        sourcesEnabled = enabled;
     }
-
-    NES_DEBUG("LocationHTTPClient: sourceEnabled -> " << sourcesEnabled);
 
     return (statusCode == REQUEST_SUCCESS_CODE);
 }

@@ -89,11 +89,23 @@ void LocationCatalog::updateSources() {
         for (auto const& [sourceId, source] : sources) {
             if (source->hasRange()) {
                 bool enabled = sink->getRange()->contains(source->getRange());
-                NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' contains source with range '" << source->getId() << "': " << enabled);
+                string status = (enabled) ? "true" : "false";
+
+                NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' contains source with range '" << source->getId() << "': " << status);
+                if (source->isEnabled() != enabled) {
+                    string oldStatus = (source->isEnabled()) ? "true" : "false";
+                    NES_DEBUG("LocationCatalog: Source '" << source->getId() << "' changed from '" << oldStatus << "' to '" << status << "'!");
+                }
                 source->setEnabled(enabled);
             } else {
                 bool enabled = sink->getRange()->contains(source->getCurrentLocation());
-                NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' contains source '" << source->getId() << "': " << enabled);
+                string status = (enabled) ? "true" : "false";
+
+                NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' contains source '" << source->getId() << "': " << status);
+                if (source->isEnabled() != enabled) {
+                    string oldStatus = (source->isEnabled()) ? "true" : "false";
+                    NES_DEBUG("LocationCatalog: Source '" << source->getId() << "' changed from '" << oldStatus << "' to '" << status << "'!");
+                }
                 source->setEnabled(enabled);
             }
         }
