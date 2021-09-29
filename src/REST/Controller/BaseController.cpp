@@ -93,16 +93,18 @@ void BaseController::noContentImpl(const http_request& message) {
     message.reply(response);
 }
 
-void BaseController::badRequestImpl(const web::http::http_request& message, const web::json::value& detail) {
+template <typename T> void BaseController::badRequestImpl(const web::http::http_request& request, const T& detail) {
     // Returns error with http code 400 to indicate bad user request
     http_response response(status_codes::BadRequest);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
     response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
 
-    // Inform REST users with reason of the error as JSON response body
+    // Inform REST users with reason of the error
     response.set_body(detail);
-    message.reply(response);
+    request.reply(response);
 }
+template void BaseController::badRequestImpl<std::string>(const web::http::http_request& request, const std::string& detail);
+template void BaseController::badRequestImpl<web::json::value>(const web::http::http_request& request, const web::json::value& detail);
 
 utility::string_t BaseController::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
 

@@ -97,12 +97,20 @@ class BaseController {
 
     static json::value responseNotImpl(const http::method& method, utility::string_t path);
     static void internalServerErrorImpl(const web::http::http_request& message);
+    // TODO #2197 consolidate implementations as template function, see badRequestImpl as an example
     static void successMessageImpl(const web::http::http_request& message, const web::json::value& result);
     static void successMessageImpl(const web::http::http_request& message, const utf8string& result);
 
     static void resourceNotFoundImpl(const web::http::http_request& message);
     static void noContentImpl(const web::http::http_request& message);
-    static void badRequestImpl(const web::http::http_request& message, const web::json::value& detail);
+
+    /**
+     * @brief Return a 400 Bad Request response with a detailed error message.
+     * @tparam T The type of the error message. Supported types are std::string and web::json::value.
+     * @param request The HTTP request.
+     * @param detail The detailed error message.
+     */
+    template <typename T> static void badRequestImpl(const web::http::http_request& request, const T& detail);
 
     void handleException(const web::http::http_request& message, const std::exception& exc);
 
