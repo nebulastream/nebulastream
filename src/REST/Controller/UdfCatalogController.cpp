@@ -14,10 +14,11 @@
     limitations under the License.
 */
 
-#include <REST/Controller/UdfCatalogController.hpp>
 #include <Catalogs/UdfCatalog.hpp>
-#include <UdfCatalogService.pb.h>
+#include <Exceptions/UdfException.hpp>
+#include <REST/Controller/UdfCatalogController.hpp>
 #include <Util/Logger.hpp>
+#include <UdfCatalogService.pb.h>
 #include <algorithm>
 #include <iterator>
 
@@ -62,11 +63,17 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
                                                      classDefinition.byte_code().end()}});
         }
         // Register JavaUdfDescriptor in UDF catalog and return success.
-        auto javaUdfDescriptor = std::make_shared<JavaUdfDescriptor>(
-            javaUdfRequest.udf_class_name(), javaUdfRequest.udf_method_name(),
-            serializedInstance, javaUdfByteCodeList);
-        NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
-        udfCatalog->registerJavaUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
+        try {
+            auto javaUdfDescriptor = std::make_shared<JavaUdfDescriptor>(
+                javaUdfRequest.udf_class_name(), javaUdfRequest.udf_method_name(),
+                serializedInstance, javaUdfByteCodeList);
+            NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
+            udfCatalog->registerJavaUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
+        } catch (const UdfException& e) {
+            NES_WARNING("Exception occurred during UDF registration: " << e.what());
+            badRequestImpl(request, std::string{e.what()});
+            return;
+        }
         successMessageImpl(request, "Registered Java UDF");
     }).wait();
 }
