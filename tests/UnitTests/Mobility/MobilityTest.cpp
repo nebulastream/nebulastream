@@ -126,11 +126,31 @@ TEST(GeoSquare, TestBounds) {
 TEST(GeoSquare, TestContainsPoint) {
     GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
     GeoSquarePtr geoSquare = GeoAreaFactory::createSquare(center, 10000);
-
-
+    CartesianPointPtr cartesianCenter = GeoCalculator::geographicToCartesian(center);
     EXPECT_TRUE(geoSquare->contains(center));
-    EXPECT_TRUE(geoSquare->contains(std::make_shared<GeoPoint>(52.5128427, 13.3213395)));
-    EXPECT_FALSE(geoSquare->contains(std::make_shared<GeoPoint>(52.4876074, 13.3206216)));
+
+    const double insideOffset = 50;
+    const double outsideOffset = 51;
+
+    CartesianPointPtr cartesianInsidePoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + insideOffset, cartesianCenter->getY() + insideOffset);
+    GeoPointPtr insidePoint = GeoCalculator::cartesianToGeographic(cartesianInsidePoint);
+    EXPECT_TRUE(geoSquare->contains(insidePoint));
+
+    cartesianInsidePoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() - insideOffset, cartesianCenter->getY() - insideOffset);
+    insidePoint = GeoCalculator::cartesianToGeographic(cartesianInsidePoint);
+    EXPECT_TRUE(geoSquare->contains(insidePoint));
+
+    CartesianPointPtr outsideEast = std::make_shared<CartesianPoint>(cartesianCenter->getX() + outsideOffset, cartesianCenter->getY());
+    EXPECT_FALSE(geoSquare->contains(GeoCalculator::cartesianToGeographic(outsideEast)));
+
+    CartesianPointPtr outsideWest = std::make_shared<CartesianPoint>(cartesianCenter->getX() - outsideOffset, cartesianCenter->getY());
+    EXPECT_FALSE(geoSquare->contains(GeoCalculator::cartesianToGeographic(outsideWest)));
+
+    CartesianPointPtr outsideNorth = std::make_shared<CartesianPoint>(cartesianCenter->getX(), cartesianCenter->getY() + outsideOffset);
+    EXPECT_FALSE(geoSquare->contains(GeoCalculator::cartesianToGeographic(outsideNorth)));
+
+    CartesianPointPtr outsideSouth = std::make_shared<CartesianPoint>(cartesianCenter->getX(), cartesianCenter->getY() - outsideOffset);
+    EXPECT_FALSE(geoSquare->contains(GeoCalculator::cartesianToGeographic(outsideSouth)));
 }
 
 TEST(GeoSquare, TestContainsArea) {
