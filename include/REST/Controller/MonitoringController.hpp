@@ -18,6 +18,7 @@
 #define NES_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
 
 #include <REST/Controller/BaseController.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
 
 namespace NES {
@@ -28,7 +29,7 @@ using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 class MonitoringController : public BaseController {
 
   public:
-    explicit MonitoringController(MonitoringServicePtr mService);
+    explicit MonitoringController(MonitoringServicePtr mService, Runtime::BufferManagerPtr bufferManager);
 
     /**
      * Handling the Get requests for the query
@@ -46,6 +47,7 @@ class MonitoringController : public BaseController {
 
   private:
     MonitoringServicePtr monitoringService;
+    Runtime::BufferManagerPtr bufferManager;
 };
 
 using MonitoringControllerPtr = std::shared_ptr<MonitoringController>;
