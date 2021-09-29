@@ -42,9 +42,12 @@ static std::map<std::string, ConfigSourceType> stringToConfigSourceType{
     {"OPCSource", OPCSource},
 };
 
+class SourceConfig;
+using SourceConfigPtr = std::shared_ptr<SourceConfig>;
+
 class SourceConfigFactory {
   public:
-    static std::unique_ptr<SourceConfig> createSourceConfig(std::map<std::string, std::string> commandLineParams, int argc);
+    static std::shared_ptr<SourceConfig> createSourceConfig(const std::map<std::string, std::string>& commandLineParams, int argc);
     static void readYAMLFile(const std::string& filePath);
     static void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams);
 
