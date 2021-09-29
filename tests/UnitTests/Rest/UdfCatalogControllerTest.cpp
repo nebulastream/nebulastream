@@ -110,13 +110,21 @@ TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
     verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), javaUdfRequest.classes());
 }
 
-TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPath) {
+TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
     // given a REST message
     auto request = web::http::http_request {web::http::methods::POST};
-    // when that message is passed to the controller with the wrong starting path
-    udfCatalogController.handlePost({"wrong-path", "some-method"}, request);
+    // when that message is passed to the controller with the wrong path prefix
+    udfCatalogController.handlePost({"wrong-path-prefix"}, request);
     // then the HTTP response is InternalServerError
     verifyResponseStatusCode(request, status_codes::InternalError);
 }
 
+TEST_F(UdfCatalogControllerTest, HandlePostChecksForKnownPath) {
+    // given a REST message
+    auto request = web::http::http_request {web::http::methods::POST};
+    // when that message is passed to the controller with an unknown path
+    udfCatalogController.handlePost({UdfCatalogController::path_prefix, "unknown-path"}, request);
+    // then the HTTP response is BadRequest
+    verifyResponseStatusCode(request, status_codes::BadRequest);
+}
 } // namespace NES

@@ -17,8 +17,9 @@
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <Catalogs/UdfCatalog.hpp>
 #include <UdfCatalogService.pb.h>
-#include <algorithm>
 #include <Util/Logger.hpp>
+#include <algorithm>
+#include <iterator>
 
 namespace NES {
 
@@ -27,10 +28,19 @@ using namespace Catalogs;
 
 const std::string UdfCatalogController::path_prefix = "udf-catalog"s;
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, http_request& request) {
     if (path[0] != UdfCatalogController::path_prefix) {
+        // This is just a sanity check that the RestEngine did not call us with a wrong path.
+        NES_ERROR("The RestEngine delegated an HTTP request with an unknown path prefix to the UdfCatalogController: path[0] = " << path[0]);
         internalServerErrorImpl(request);
+        return;
+    }
+    if (path.size() != 2 || path[1] != "registerJavaUdf") {
+        std::stringstream ss;
+        ss << "HTTP request with unknown path: /";
+        std::copy(path.begin(), path.end(), std::ostream_iterator<std::string>(ss, "/"));
+        NES_WARNING(ss.str());
+        badRequestImpl(request, ss.str());
         return;
     }
     auto udfCatalog = this->udfCatalog;
@@ -60,6 +70,5 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
         successMessageImpl(request, "Registered Java UDF");
     }).wait();
 }
-#pragma GCC diagnostic warning "-Wunused-parameter"
 
 }
