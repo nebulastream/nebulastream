@@ -61,6 +61,8 @@ MQTTSource:
   cleanSession: true
 
 KafkaSource:
+  # Set kafka broker string
+  brokers:
   # Set auto commit, boolean value where 1 equals true, and 0 equals false
   autoCommit: 1
   # Set groupId

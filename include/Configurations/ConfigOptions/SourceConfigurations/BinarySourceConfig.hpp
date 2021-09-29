@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_CSVSOURCECONFIG_HPP
-#define NES_CSVSOURCECONFIG_HPP
+#ifndef NES_BINARYSOURCECONFIG_HPP
+#define NES_BINARYSOURCECONFIG_HPP
 
 #include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
 #include <map>
@@ -33,17 +33,17 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 /**
 * @brief Configuration object for source config
 */
-class CSVSourceConfig : public SourceConfig {
+class BinarySourceConfig : public SourceConfig {
 
   public:
     /**
-     * @brief create a CSVSourceConfigPtr object
+     * @brief create a BinarySourceConfigPtr object
      * @param sourceConfigMap inputted config options
-     * @return CSVSourceConfigPtr
+     * @return BinarySourceConfigPtr
      */
-    static std::shared_ptr<CSVSourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
+    static std::shared_ptr<BinarySourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
 
-    ~CSVSourceConfig() override = default;
+    ~BinarySourceConfig() override = default;
 
     /**
      * @brief resets alls Source configuration to default values
@@ -56,32 +56,21 @@ class CSVSourceConfig : public SourceConfig {
     std::string toString() override;
 
     /**
-     * @brief Get file path, needed for: CSVSource, BinarySource
+     * @brief Get file path
      */
     [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getFilePath() const;
 
     /**
-     * @brief Set file path, needed for: CSVSource, BinarySource
+     * @brief Set file path
      */
     void setFilePath(std::string filePath);
 
-    /**
-     * @brief gets a ConfigOption object with skipHeader
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<bool>> getSkipHeader() const;
-
-    /**
-     * @brief set the value for skipHeader with the appropriate data format
-     */
-    void setSkipHeader(bool skipHeader);
-
   private:
     /**
-     * @brief constructor to create a new CSV source config object initialized with default values as set below
+     * @brief constructor to create a new Binary source config object initialized with default values as set below
      */
-    explicit CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit BinarySourceConfig(std::map<std::string, std::string> sourceConfigMap);
     StringConfigOption filePath;
-    BoolConfigOption skipHeader;
 
 };
 }// namespace NES

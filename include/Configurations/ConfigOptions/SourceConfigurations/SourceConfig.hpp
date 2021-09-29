@@ -22,9 +22,6 @@
 
 namespace NES {
 
-class SourceConfig;
-using SourceConfigPtr = std::shared_ptr<SourceConfig>;
-
 template<class T>
 class ConfigOption;
 using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
@@ -38,10 +35,13 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 class SourceConfig {
 
   public:
+
     /**
      * @brief constructor to create a new source option object initialized with default values as set below
      */
-    explicit SourceConfig(const std::map<std::string, std::string> sourceConfigMap);
+    explicit SourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    virtual ~SourceConfig() = default;
 
     /**
      * @brief resets all options to default values
@@ -114,84 +114,9 @@ class SourceConfig {
     void setLogicalStreamName(std::string logicalStreamName);
 
     /**
-     * @brief Get udsf, needed for: SenseSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUdsf() const;
-
-    /**
-     * @brief Set udsf, needed for: SenseSource
-     */
-    void setUdsf(std::string udsf);
-
-    /**
-     * @brief Get url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUrl() const;
-
-    /**
-     * @brief Set url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource
-     */
-    void setUrl(std::string url);
-
-    /**
      * @brief Get namespaceIndex for node, needed for: OPCSource
      */
     [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getNamespaceIndex() const;
-
-    /**
-     * @brief Set namespaceIndex for node, needed for: OPCSource
-     */
-    void setNamespaceIndex(uint32_t namespaceIndex);
-
-    /**
-     * @brief Get node identifier, needed for: OPCSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getNodeIdentifier() const;
-
-    /**
-     * @brief Set node identifier, needed for: OPCSource
-     */
-    void setNodeIdentifier(std::string nodeIdentifier);
-
-    /**
-     * @brief Get clientId, needed for: MQTTSource (needs to be unique for each connected MQTTSource), KafkaSource (use this for groupId)
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getClientId() const;
-
-    /**
-     * @brief Set clientId, needed for: MQTTSource (needs to be unique for each connected MQTTSource), KafkaSource (use this for groupId)
-     */
-    void setClientId(std::string clientId);
-
-    /**
-     * @brief Get userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUserName() const;
-
-    /**
-     * @brief Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
-     */
-    void setUserName(std::string userName);
-
-    /**
-     * @brief Get password, needed for: OPCSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getPassword() const;
-
-    /**
-     * @brief Set password, needed for: OPCSource
-     */
-    void setPassword(std::string password);
-
-    /**
-     * @brief Get topic to listen to, needed for: MQTTSource, KafkaSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getTopic() const;
-
-    /**
-     * @brief Set topic to listen to, needed for: MQTTSource, KafkaSource
-     */
-    void setTopic(std::string topic);
 
     /**
      * @brief Get input data format
@@ -202,26 +127,6 @@ class SourceConfig {
      * @brief Set input data format
      */
     void setInputFormat(std::string inputFormat);
-
-    /**
-     * @brief Get quality of service, needed for: MQTTSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getQos() const;
-
-    /**
-     * @brief Set quality of service, needed for: MQTTSource
-     */
-    void setQos(uint32_t qos);
-
-    /**
-     * @brief Get cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session), needed for: MQTTSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<bool>> getCleanSession() const;
-
-    /**
-     * @brief Set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session), needed for: MQTTSource
-     */
-    void setCleanSession(bool cleanSession);
 
     /**
      * @brief Get tupleBuffer flush interval in milliseconds
@@ -243,48 +148,17 @@ class SourceConfig {
      */
     void setRowLayout(bool rowLayout);
 
-    /**
-     * @brief Get connection time out for source, needed for: KafkaSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getConnectionTimeout() const;
-
-    /**
-     * @brief Set connection time out for source, needed for: KafkaSource
-     */
-    void setConnectionTimeout(uint32_t connectionTimeout);
-
-    /**
-     * @brief Get auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getAutoCommit() const;
-
-    /**
-     * @brief Set auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
-     */
-    void setAutoCommit(uint32_t autoCommit);
-
   private:
-    StringConfigOption sourceType;
-    StringConfigOption udsf;
-    StringConfigOption url;
-    IntConfigOption namespaceIndex;
-    StringConfigOption nodeIdentifier;
-    StringConfigOption clientId;
-    StringConfigOption userName;
-    StringConfigOption password;
-    StringConfigOption topic;
-    StringConfigOption inputFormat;
-    IntConfigOption qos;
-    BoolConfigOption cleanSession;
-    FloatConfigOption flushIntervalMS;
-    BoolConfigOption rowLayout;
-    IntConfigOption connectionTimeout;
-    IntConfigOption autoCommit;
-    IntConfigOption sourceFrequency;
+
     IntConfigOption numberOfBuffersToProduce;
     IntConfigOption numberOfTuplesToProducePerBuffer;
     StringConfigOption physicalStreamName;
     StringConfigOption logicalStreamName;
+    IntConfigOption sourceFrequency;
+    BoolConfigOption rowLayout;
+    FloatConfigOption flushIntervalMS;
+    StringConfigOption inputFormat;
+    StringConfigOption sourceType;
 
 };
 }// namespace NES

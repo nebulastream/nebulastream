@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_CSVSOURCECONFIG_HPP
-#define NES_CSVSOURCECONFIG_HPP
+#ifndef NES_OPCSOURCECONFIG_HPP
+#define NES_OPCSOURCECONFIG_HPP
 
 #include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
 #include <map>
@@ -33,17 +33,17 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 /**
 * @brief Configuration object for source config
 */
-class CSVSourceConfig : public SourceConfig {
+class OPCSourceConfig : public SourceConfig {
 
   public:
     /**
-     * @brief create a CSVSourceConfigPtr object
+     * @brief create a BinarySourceConfigPtr object
      * @param sourceConfigMap inputted config options
-     * @return CSVSourceConfigPtr
+     * @return BinarySourceConfigPtr
      */
-    static std::shared_ptr<CSVSourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
+    static std::shared_ptr<OPCSourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
 
-    ~CSVSourceConfig() override = default;
+    ~OPCSourceConfig() override = default;
 
     /**
      * @brief resets alls Source configuration to default values
@@ -55,33 +55,52 @@ class CSVSourceConfig : public SourceConfig {
      */
     std::string toString() override;
 
-    /**
-     * @brief Get file path, needed for: CSVSource, BinarySource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getFilePath() const;
+    [[nodiscard]] std::shared_ptr<ConfigOption<std::uint32_t>> getNamespaceIndex() const;
 
     /**
-     * @brief Set file path, needed for: CSVSource, BinarySource
+     * @brief Set namespaceIndex for node
      */
-    void setFilePath(std::string filePath);
+    void setNamespaceIndex(uint32_t namespaceIndex);
 
     /**
-     * @brief gets a ConfigOption object with skipHeader
+     * @brief Get node identifier
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<bool>> getSkipHeader() const;
+    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getNodeIdentifier() const;
 
     /**
-     * @brief set the value for skipHeader with the appropriate data format
+     * @brief Set node identifier
      */
-    void setSkipHeader(bool skipHeader);
+    void setNodeIdentifier(std::string nodeIdentifier);
+
+    /**
+     * @brief Get userName
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUserName() const;
+
+    /**
+     * @brief Set userName
+     */
+    void setUserName(std::string userName);
+
+    /**
+     * @brief Get password
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getPassword() const;
+
+    /**
+     * @brief Set password
+     */
+    void setPassword(std::string password);
 
   private:
     /**
-     * @brief constructor to create a new CSV source config object initialized with default values as set below
+     * @brief constructor to create a new Binary source config object initialized with default values as set below
      */
-    explicit CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap);
-    StringConfigOption filePath;
-    BoolConfigOption skipHeader;
+    explicit OPCSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    IntConfigOption namespaceIndex;
+    StringConfigOption nodeIdentifier;
+    StringConfigOption userName;
+    StringConfigOption password;
 
 };
 }// namespace NES
