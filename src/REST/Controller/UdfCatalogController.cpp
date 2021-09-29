@@ -25,8 +25,14 @@ namespace NES {
 using namespace std::string_literals;
 using namespace Catalogs;
 
+const std::string UdfCatalogController::path_prefix = "udf-catalog"s;
+
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, http_request& request) {
+    if (path[0] != UdfCatalogController::path_prefix) {
+        internalServerErrorImpl(request);
+        return;
+    }
     auto udfCatalog = this->udfCatalog;
     request.extract_string(true).then([udfCatalog, &request](const utility::string_t& body) {
         // Convert protobuf message contents to JavaUdfDescriptor.
