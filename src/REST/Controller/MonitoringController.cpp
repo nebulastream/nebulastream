@@ -30,7 +30,8 @@
 
 namespace NES {
 
-MonitoringController::MonitoringController(MonitoringServicePtr mService) : monitoringService(std::move(mService)) {
+MonitoringController::MonitoringController(MonitoringServicePtr mService, Runtime::BufferManagerPtr bufferManager)
+    : monitoringService(mService), bufferManager(bufferManager) {
     NES_DEBUG("MonitoringController: Initializing");
 }
 
@@ -40,7 +41,7 @@ void MonitoringController::handleGet(std::vector<utility::string_t> path, const 
         NES_DEBUG("MonitoringController: GET metrics with path size " + std::to_string(path.size()));
         if (path.size() == 2) {
             NES_DEBUG("MonitoringController: GET metrics for all nodes");
-            auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesAsJson();
+            auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesAsJson(bufferManager);
             successMessageImpl(message, metricsJson);
             return;
         }
@@ -57,7 +58,7 @@ void MonitoringController::handleGet(std::vector<utility::string_t> path, const 
                 //if the arg is a valid number and node id
                 uint64_t nodeId = std::stoi(path[2]);
                 try {
-                    auto metricJson = monitoringService->requestMonitoringDataAsJson(nodeId);
+                    auto metricJson = monitoringService->requestMonitoringDataAsJson(nodeId, bufferManager);
                     successMessageImpl(message, metricJson);
                 } catch (std::runtime_error& ex) {
                     std::string errorMsg = ex.what();

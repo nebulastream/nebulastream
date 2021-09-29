@@ -73,7 +73,7 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesAsJson(Runt
     for (const auto& node : root->getAndFlattenAllChildren(false)) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(tNode->getId()));
-        metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId());
+        metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId(), bufferManager);
     }
     NES_INFO("MonitoringService: Metrics from coordinator received \n" + metricsJson.serialize());
 
