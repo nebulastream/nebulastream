@@ -34,6 +34,7 @@ class BaseController {
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
+    // TODO #2197 request should be passed by reference
     void handleGet(const std::vector<utility::string_t>& path, http_request request);
 
     /**
@@ -41,6 +42,9 @@ class BaseController {
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
+    // TODO #2197 path should be passed by const reference
+    // TODO #2197 request should be passed by reference
+    // TODO #2197 This method is not implemented
     void handlePut(std::vector<utility::string_t> path, http_request request);
 
     /**

@@ -21,6 +21,7 @@
 namespace NES {
 
 void BaseController::handleDelete(const std::vector<utility::string_t>&, http_request request) {
+    // TODO #2197 This can be extracted into a method returnDefaultReply(methods::DEL, request)
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, getPath(request)));
 }
 
