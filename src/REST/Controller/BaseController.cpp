@@ -20,24 +20,23 @@
 
 namespace NES {
 
-void BaseController::handleDelete(const std::vector<utility::string_t>&, http_request request) {
-    // TODO #2197 This can be extracted into a method returnDefaultReply(methods::DEL, request)
+void BaseController::handleDelete(const std::vector<utility::string_t>&, http_request& request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, getPath(request)));
 }
 
-void BaseController::handleGet(const std::vector<utility::string_t>&, http_request request) {
+void BaseController::handleGet(const std::vector<utility::string_t>&, http_request& request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, getPath(request)));
 }
 
-void BaseController::handleHead(const std::vector<utility::string_t>&, http_request request) {
+void BaseController::handleHead(const std::vector<utility::string_t>&, http_request& request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(request)));
 }
 
-void BaseController::handleMerge(const std::vector<utility::string_t>&, http_request request) {
+void BaseController::handleMerge(const std::vector<utility::string_t>&, http_request& request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(request)));
 }
 
-void BaseController::handleTrace(const std::vector<utility::string_t>&, http_request request) {
+void BaseController::handleTrace(const std::vector<utility::string_t>&, http_request& request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(request)));
 }
 
