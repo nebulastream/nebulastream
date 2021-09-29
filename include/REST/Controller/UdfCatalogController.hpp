@@ -32,6 +32,8 @@ using namespace Catalogs;
 class UdfCatalogController : public BaseController {
 
   public:
+    static const std::string path_prefix;
+
     explicit UdfCatalogController(UdfCatalogPtr udfCatalog)
         : udfCatalog(std::move(udfCatalog))
     { }

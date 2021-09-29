@@ -98,7 +98,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
     auto request = web::http::http_request {web::http::methods::POST};
     request.set_body(javaUdfRequest.SerializeAsString());
     // when that message is passed to the controller
-    udfCatalogController.handlePost({"udfCatalog", "registerJavaUdf"}, request);
+    udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerJavaUdf"}, request);
     // then the HTTP response is OK
     verifyResponseStatusCode(request, status_codes::OK);
     // and the catalog contains a Java UDF descriptor representing the Java UDF
@@ -108,6 +108,15 @@ TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
     ASSERT_EQ(javaUdfDescriptor->getMethodName(), javaUdfRequest.udf_method_name());
     verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), javaUdfRequest.serialized_instance());
     verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), javaUdfRequest.classes());
+}
+
+TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPath) {
+    // given a REST message
+    auto request = web::http::http_request {web::http::methods::POST};
+    // when that message is passed to the controller with the wrong starting path
+    udfCatalogController.handlePost({"wrong-path", "some-method"}, request);
+    // then the HTTP response is InternalServerError
+    verifyResponseStatusCode(request, status_codes::InternalError);
 }
 
 } // namespace NES
