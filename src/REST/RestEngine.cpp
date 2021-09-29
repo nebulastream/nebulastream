@@ -115,6 +115,7 @@ void RestEngine::handleGet(http_request request) {
             return;
         }
     }
+    // TODO #2197 This should be replaced with BaseController::handleGet(path, request)
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
 }
 
