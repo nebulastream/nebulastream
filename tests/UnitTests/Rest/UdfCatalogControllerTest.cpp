@@ -127,4 +127,18 @@ TEST_F(UdfCatalogControllerTest, HandlePostChecksForKnownPath) {
     // then the HTTP response is BadRequest
     verifyResponseStatusCode(request, status_codes::BadRequest);
 }
+
+TEST_F(UdfCatalogControllerTest, HandlePostHandlesExceptionInCatalog) {
+    // given a REST message containing a wrongly formed Java UDF (bytecode list is empty)
+    auto javaUdfRequest = createRegisterJavaUdfRequest("my_udf",
+                                                       "some_package.my_udf",
+                                                       "udf_method",
+                                                       {1}, {});
+    auto request = web::http::http_request {web::http::methods::POST};
+    request.set_body(javaUdfRequest.SerializeAsString());
+    // when that message is passed to the controller (which should cause an exception)
+    udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerJavaUdf"}, request);
+    // then the response is BadRequest
+    verifyResponseStatusCode(request, status_codes::BadRequest);
+}
 } // namespace NES
