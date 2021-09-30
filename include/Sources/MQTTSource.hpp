@@ -40,35 +40,24 @@ class MQTTSource : public DataSource {
 
   public:
     /**
-   * @brief constructor for the MQTT data source
-   * @param schema of the data
-   * @param bufferManager
-   * @param queryManager
-   * @param serverAddress address and port of the mqtt broker
-   * @param clientId identifies the client connecting to the server, each server has aunique clientID
-   * @param user name to connect to the mqtt broker
-   * @param topic to listen to, to obtain the desired data
-   * @param operatorId
-   * @param inputFormat data format that broker sends
-   * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
-   * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-   * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
-   */
+     * @brief constructor for the MQTT data source
+     * @param schema of the data
+     * @param bufferManager
+     * @param queryManager
+     * @param sourceConfig all source Configurations
+     * @param operatorId
+     * @param inputFormat data format that broker sends
+     * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
+     */
     explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
                         Runtime::QueryManagerPtr queryManager,
-                        std::string const& serverAddress,
-                        std::string const& clientId,
-                        std::string user,
-                        std::string topic,
+                        SourceConfigPtr sourceConfig,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                        SourceDescriptor::InputFormat inputFormat,
-                        MQTTSourceDescriptor::ServiceQualities qualityOfService,
-                        bool cleanSession,
-                        long bufferFlushIntervalMs);
+                        SourceDescriptor::InputFormat inputFormat);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
@@ -148,6 +137,16 @@ class MQTTSource : public DataSource {
      * @return physicalTypes
      */
     std::vector<PhysicalTypePtr> getPhysicalTypes() const;
+    /**
+     * @brief getter for source config
+     * @return sourceConfig
+     */
+    const SourceConfigPtr& getSourceConfig() const;
+    /**
+     * set SourceConfig
+     * @param sourceConfig
+     */
+    void setSourceConfig(const SourceConfigPtr& sourceConfig);
 
   private:
     /**
@@ -174,6 +173,7 @@ class MQTTSource : public DataSource {
      * serialization/deserialization process
      */
     friend class DataSource;
+    SourceConfigPtr sourceConfig;
     bool connected;
     std::string serverAddress;
     std::string clientId;

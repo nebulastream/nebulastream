@@ -22,6 +22,9 @@
 
 namespace NES {
 
+class SourceConfig;
+using SourceConfigPtr = std::shared_ptr<SourceConfig>;
+
 template<class T>
 class ConfigOption;
 using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
@@ -114,11 +117,6 @@ class SourceConfig {
     void setLogicalStreamName(std::string logicalStreamName);
 
     /**
-     * @brief Get namespaceIndex for node, needed for: OPCSource
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getNamespaceIndex() const;
-
-    /**
      * @brief Get input data format
      */
     [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getInputFormat() const;
@@ -147,6 +145,167 @@ class SourceConfig {
      * @brief Set storage layout, true = row layout, false = column layout
      */
     void setRowLayout(bool rowLayout);
+
+    /**
+     * @brief Get file path, needed for: CSVSource, BinarySource
+     */
+    virtual std::shared_ptr<ConfigOption<std::string>> getFilePath() const;
+
+    /**
+     * @brief Set file path, needed for: CSVSource, BinarySource
+     */
+    virtual void setFilePath(std::string filePath);
+
+    /**
+     * @brief gets a ConfigOption object with skipHeader
+     */
+    virtual std::shared_ptr<ConfigOption<bool>> getSkipHeader() const;
+
+    /**
+     * @brief set the value for skipHeader with the appropriate data format
+     */
+    virtual void setSkipHeader(bool skipHeader);
+
+    /**
+     * @brief Get url to connect
+     */
+    virtual std::shared_ptr<ConfigOption<std::string>> getUrl() const;
+
+    /**
+     * @brief Set url to connect to
+     */
+    virtual void setUrl(std::string url);
+
+    /**
+     * @brief Get clientId
+     */
+    virtual std::shared_ptr<ConfigOption<std::string>> getClientId() const;
+
+    /**
+     * @brief Set clientId
+     */
+    virtual void setClientId(std::string clientId);
+
+    /**
+     * @brief Get userName
+     */
+    virtual std::shared_ptr<ConfigOption<std::string>> getUserName() const;
+
+    /**
+     * @brief Set userName
+     */
+    virtual void setUserName(std::string userName);
+
+    /**
+     * @brief Get topic to listen to
+     */
+    virtual std::shared_ptr<ConfigOption<std::string>> getTopic() const;
+
+    /**
+     * @brief Set topic to listen to
+     */
+    virtual void setTopic(std::string topic);
+
+    /**
+     * @brief Get quality of service
+     */
+    virtual std::shared_ptr<ConfigOption<uint32_t>> getQos() const;
+
+    /**
+     * @brief Set quality of service
+     */
+    virtual void setQos(uint32_t qos);
+
+    /**
+     * @brief Get cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+     */
+    virtual std::shared_ptr<ConfigOption<bool>> getCleanSession() const;
+
+    /**
+     * @brief Set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+     */
+    virtual void setCleanSession(bool cleanSession);
+
+    /**
+     * @brief Get udsf
+     */
+    virtual std::shared_ptr<ConfigOption<std::string>> getUdsf() const;
+
+    /**
+     * @brief Set udsf
+     */
+    virtual void setUdsf(std::string udsf);
+
+    /**
+     * @brief Get broker string
+     */
+    virtual std::shared_ptr<ConfigOption<std::string>> getBrokers() const;
+
+    /**
+     * @brief Set broker string
+     */
+    virtual void setBrokers(std::string brokers);
+
+    /**
+     * @brief Get auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
+     */
+    virtual std::shared_ptr<ConfigOption<uint32_t>> getAutoCommit() const;
+
+    /**
+     * @brief Set auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
+     */
+    virtual void setAutoCommit(uint32_t autoCommit);
+
+    /**
+     * @brief get groupId
+     */
+    virtual std::shared_ptr<ConfigOption<std::string>> getGroupId() const;
+
+    /**
+      * @brief set groupId
+      */
+    virtual void setGroupId(std::string groupId);
+
+    /**
+     * @brief Get connection time out for source, needed for: KafkaSource
+     */
+    virtual std::shared_ptr<ConfigOption<uint32_t>> getConnectionTimeout() const;
+
+    /**
+     * @brief Set connection time out for source, needed for: KafkaSource
+     */
+    virtual void setConnectionTimeout(uint32_t connectionTimeout);
+
+    /**
+     * get the name space for OPCSource
+     * @return namespace index
+     */
+    virtual std::shared_ptr<ConfigOption<std::uint32_t>> getNamespaceIndex() const;
+
+    /**
+     * @brief Set namespaceIndex for node
+     */
+    virtual void setNamespaceIndex(uint32_t namespaceIndex);
+
+    /**
+     * @brief Get node identifier
+     */
+    virtual std::shared_ptr<ConfigOption<std::string>> getNodeIdentifier() const;
+
+    /**
+     * @brief Set node identifier
+     */
+    virtual void setNodeIdentifier(std::string nodeIdentifier);
+
+    /**
+     * @brief Get password
+     */
+    virtual std::shared_ptr<ConfigOption<std::string>> getPassword() const;
+
+    /**
+     * @brief Set password
+     */
+    virtual void setPassword(std::string password);
 
   private:
 

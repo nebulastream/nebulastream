@@ -26,7 +26,7 @@
 
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Util/Logger.hpp>
@@ -56,9 +56,6 @@ int main(int argc, char** argv) {
     NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("NoSource");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
 
     std::map<string, string> commandLineParams;
 
@@ -77,6 +74,9 @@ int main(int argc, char** argv) {
     if (argc >= 1) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
+
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig(commandLineParams, argc);
+
     NES::setLogLevel(NES::getDebugLevelFromString(workerConfig->getLogLevel()->getValue()));
 
     NES_INFO("NESWORKERSTARTER: Start with " << workerConfig->toString());

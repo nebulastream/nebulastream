@@ -21,6 +21,7 @@ limitations under the License.
 #include <Configurations/ConfigOptions/SourceConfigurations/SenseSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/BinarySourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/OPCSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/NoSourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
@@ -47,9 +48,13 @@ std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig(const std:
         case OPCSource: return OPCSourceConfig::create(sourceConfigMap);
         case BinarySource: return BinarySourceConfig::create(sourceConfigMap);
         case SenseSource: return SenseSourceConfig::create(sourceConfigMap);
+        case NoSource: return NoSourceConfig::create(sourceConfigMap);
         default: return nullptr;
     }
 }
+
+std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig() { return NoSourceConfig::create(sourceConfigMap); }
+
 void SourceConfigFactory::readYAMLFile(const std::string& filePath) {
 
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
@@ -370,4 +375,5 @@ void SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std
                     "default values for Source.");
     }
 }
+
 }// namespace NES

@@ -48,29 +48,23 @@ namespace NES {
 MQTTSource::MQTTSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
-                       std::string const& serverAddress,
-                       std::string const& clientId,
-                       std::string user,
-                       std::string topic,
+                       SourceConfigPtr sourceConfig,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                       SourceDescriptor::InputFormat inputFormat,
-                       MQTTSourceDescriptor::ServiceQualities qualityOfService,
-                       bool cleanSession,
-                       long bufferFlushIntervalMs)
-    : DataSource(schema,
+                       SourceDescriptor::InputFormat inputFormat)
+    : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
                  operatorId,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(executableSuccessors)),
-      connected(false), serverAddress(serverAddress), clientId(clientId), user(std::move(user)), topic(std::move(topic)),
-      inputFormat(inputFormat), tupleSize(schema->getSchemaSizeInBytes()), qualityOfService(qualityOfService),
-      cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs),
-      readTimeoutInMs((bufferFlushIntervalMs > 0) ? bufferFlushIntervalMs : 100) {
+      connected(false), serverAddress(sourceConfig->getUrl()->getValue()), clientId(sourceConfig->getClientId()->getValue()),
+      user(sourceConfig->getUserName()->getValue()), topic(sourceConfig->getTopic()->getValue()), inputFormat(inputFormat),
+      tupleSize(schema->getSchemaSizeInBytes()), qualityOfService(sourceConfig->getQos()->getValue()), cleanSession(sourceConfig->getCleanSession()->getValue()),
+      bufferFlushIntervalMs(sourceConfig->getFlushIntervalMS()->getValue() > 0 ? sourceConfig->getFlushIntervalMS()->getValue() : 100) {
 
     if (cleanSession) {
         uint32_t randomizeClientId = random();
@@ -307,6 +301,10 @@ uint64_t MQTTSource::getTuplesThisPass() const { return tuplesThisPass; }
 bool MQTTSource::getCleanSession() const { return cleanSession; }
 
 std::vector<PhysicalTypePtr> MQTTSource::getPhysicalTypes() const { return physicalTypes; }
+
+const SourceConfigPtr& MQTTSource::getSourceConfig() const { return sourceConfig; }
+
+void MQTTSource::setSourceConfig(const SourceConfigPtr& sourceConfig) { MQTTSource::sourceConfig = sourceConfig; }
 
 }// namespace NES
 #endif

@@ -30,7 +30,8 @@ enum ConfigSourceType {
     BinarySource,
     MQTTSource,
     KafkaSource,
-    OPCSource
+    OPCSource,
+    NoSource
 };
 
 static std::map<std::string, ConfigSourceType> stringToConfigSourceType{
@@ -40,6 +41,7 @@ static std::map<std::string, ConfigSourceType> stringToConfigSourceType{
     {"MQTTSource", MQTTSource},
     {"KafkaSource", KafkaSource},
     {"OPCSource", OPCSource},
+    {"NoSource", NoSource},
 };
 
 class SourceConfig;
@@ -48,6 +50,7 @@ using SourceConfigPtr = std::shared_ptr<SourceConfig>;
 class SourceConfigFactory {
   public:
     static std::shared_ptr<SourceConfig> createSourceConfig(const std::map<std::string, std::string>& commandLineParams, int argc);
+    static std::shared_ptr<SourceConfig> createSourceConfig();
     static void readYAMLFile(const std::string& filePath);
     static void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams);
 
