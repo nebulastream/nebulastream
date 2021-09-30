@@ -81,6 +81,11 @@ class RESTEndpointTest : public testing::Test {
         NES_INFO("RESTEndpointTest: Worker " << id << " started successfully");
         return worker;
     }
+
+    void stopWorker(NesWorker& worker, uint8_t id = 1) {
+        NES_INFO("RESTEndpointTest: Stop worker " << id);
+        EXPECT_TRUE(worker.stop(true));
+    }
 };
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
@@ -138,10 +143,7 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_INFO("RESTEndpointTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
+    stopWorker(*wrk1);
     stopCoordinator(*crd);
 }
 
@@ -186,10 +188,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
 
-    NES_INFO("RESTEndpointTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
+    stopWorker(*wrk1);
     stopCoordinator(*crd);
 }
 
@@ -249,10 +248,8 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
     EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
-    NES_INFO("RESTEndpointTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
 
+    stopWorker(*wrk1);
     stopCoordinator(*crd);
 }
 
@@ -287,10 +284,8 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
         .wait();
     EXPECT_EQ(statusCode, 400);
     EXPECT_TRUE(postJsonReturn.has_field("detail"));
-    NES_INFO("RESTEndpointTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
 
+    stopWorker(*wrk1);
     stopCoordinator(*crd);
 }
 
@@ -340,10 +335,7 @@ TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_INFO("RESTEndpointTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
+    stopWorker(*wrk1);
     stopCoordinator(*crd);
 }
 
@@ -386,14 +378,8 @@ TEST_F(RESTEndpointTest, testAddParentTopology) {
 
     ASSERT_TRUE(child->containAsParent(parent));
 
-    NES_INFO("RESTEndpointTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("RESTEndpointTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
-
+    stopWorker(*wrk1);
+    stopWorker(*wrk2, 2);
     stopCoordinator(*crd);
 }
 
@@ -435,10 +421,7 @@ TEST_F(RESTEndpointTest, testRemoveParentTopology) {
 
     ASSERT_FALSE(child->containAsParent(parent));
 
-    NES_INFO("RESTEndpointTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
+    stopWorker(*wrk1);
     stopCoordinator(*crd);
 }
 
@@ -472,10 +455,7 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
     EXPECT_TRUE(connectivityResponse.find("success") != connectivityResponse.end());
     EXPECT_TRUE(connectivityResponse.at("success").as_bool());
 
-    NES_INFO("RESTEndpointTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
+    stopWorker(*wrk1);
     stopCoordinator(*crd);
 }
 
