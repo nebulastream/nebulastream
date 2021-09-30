@@ -279,7 +279,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::vector<uint64_t> workerToCoreMapping;
     mutable std::shared_mutex queryMutex;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-    folly::MPMCQueue<Task> taskQueue;
+    folly::UMPMCQueue<Task, true> taskQueue; // true -> mayBlock indicates that consumer can block if queue is empty
 #else
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;

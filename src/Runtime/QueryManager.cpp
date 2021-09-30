@@ -85,9 +85,9 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 
 }// namespace detail
 
-#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
-#endif
+//#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+//static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
+//#endif
 
 QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            uint64_t nodeEngineId,
@@ -99,8 +99,7 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
 
 #else
       ,
-      taskQueue(
-          DEFAULT_QUEUE_INITIAL_CAPACITY)// TODO consider if we could use something num of buffers in buffer manager but maybe it could be too much
+      taskQueue()
 #endif
 {
     NES_DEBUG("Init QueryManager::QueryManager");
@@ -398,7 +397,7 @@ void QueryManager::poisonWorkers() {
     cv.notify_all();
 #else
     for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
-        taskQueue.write(Task(pipeline, buffer));
+        taskQueue.enqueue(Task(pipeline, buffer));
     }
 #endif
 }
@@ -490,15 +489,14 @@ void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
         for (const auto& executablePipeline : executablePipelines) {
             NES_DEBUG("Add Work for executable from network source " << sourceId << " origin id: " << buf.getOriginId());
             // create task
-            auto task = Task(executablePipeline, buf);
             // dispatch task to task queue.
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
             //TODO: this is a problem now as it can become the bottleneck
             std::unique_lock workQueueLock(workMutex);
-            taskQueue.emplace_back(task);
+            taskQueue.emplace_back(executablePipeline, buf);
             cv.notify_all();
 #else
-            taskQueue.write(std::move(task));
+            taskQueue.enqueue(Task(executablePipeline, buf));
 #endif
         }
     } else {
@@ -539,10 +537,10 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
         std::vector<Task> batch;
         for (size_t i = 0; i < threadPool->getNumberOfThreads(); ++i) {
             //            batch.emplace_back(pipeline, buffer);
-            taskQueue.write(Task(pipeline, buffer));
+            taskQueue.enqueue(Task(pipeline, buffer));
         }
     } else {
-        taskQueue.write(Task(pipeline, buffer));
+        taskQueue.enqueue(Task(pipeline, buffer));
     }
 #endif
     if (blocking) {
@@ -593,7 +591,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
         // emit the end of stream for each processing task
         for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-            taskQueue.write(Task(pipeline, buffer));
+            taskQueue.enqueue(Task(pipeline, buffer));
 #else
             taskQueue.emplace_back(pipeline, buffer);
 #endif
@@ -726,7 +724,7 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
 #else
     Task task;
     if (running) {
-        taskQueue.blockingRead(task);
+        taskQueue.dequeue(task);
         NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         auto result = task(workerContext);
         switch (result) {
@@ -793,7 +791,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
     bool hitReconfiguration = false;
     Task task;
-    while (taskQueue.read(task)) {
+    while (taskQueue.try_dequeue(task)) {
         if (!hitReconfiguration) {// execute all pending tasks until first reconfiguration
             task(workerContext);
             if (task.isReconfiguration()) {
@@ -837,12 +835,12 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
         if ((*nextPipeline)->isRunning()) {
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer);
-            taskQueue.write(Task(executable, buffer));
+            taskQueue.enqueue(Task(executable, buffer));
         } else {
             NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
         }
     } else {
-        taskQueue.write(Task(executable, buffer));
+        taskQueue.enqueue(Task(executable, buffer));
     }
 #endif
 }

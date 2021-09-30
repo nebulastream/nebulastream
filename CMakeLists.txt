@@ -222,12 +222,6 @@ if(UNIX AND NOT APPLE)
     set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 endif()
 
-# folly
-if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    find_package(folly CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
-endif ()
-
 # Numa awareness
 find_package(NUMA)
 if(NUMA_FOUND)
@@ -245,7 +239,7 @@ set(gRPC_RELEASE "v1.28.1")
 # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
 set(protobuf_MODULE_COMPATIBLE TRUE)
 find_package(Protobuf REQUIRED)
-message(STATUS "Using protobuf ${protobuf_VERSION}")
+message(STATUS "Using protobuf ${Protobuf_VERSION} ${Protobuf_PROTOC_EXECUTABLE}")
 
 set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
 set(_REFLECTION gRPC::grpc++_reflection)
@@ -376,6 +370,13 @@ if (NES_USE_ADAPTIVE)
     set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
     message("Adaptive sampling dependencies OK")
 endif (NES_USE_ADAPTIVE)
+
+# folly
+if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
+    find_dependency(gflags CONFIG REQUIRED)
+    find_package(folly CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+endif ()
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
