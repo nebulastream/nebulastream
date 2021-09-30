@@ -30,21 +30,11 @@
 
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
-
 class RESTEndpointTest : public testing::Test {
   protected:
     static void SetUpTestCase() {
         NES::setupLogging("RESTEndpointTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup RESTEndpointTest test class.");
-    }
-
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
     }
 
     void TearDown() override {
@@ -53,16 +43,17 @@ class RESTEndpointTest : public testing::Test {
 
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
 
+    RESTEndpointTest() : coordinatorRpcPort(getNextFreePort()), coordinatorRestPort(getNextFreePort()) { }
+
     [[nodiscard]] std::pair<NesCoordinatorPtr, uint64_t> startCoordinator() {
         NES_INFO("RESTEndpointTest: Start coordinator");
         CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-        coordinatorConfig->setRpcPort(rpcPort);
-        coordinatorConfig->setRestPort(restPort);
+        coordinatorConfig->setRpcPort(coordinatorRpcPort);
+        coordinatorConfig->setRestPort(coordinatorRestPort);
         auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-        auto port = coordinator->startCoordinator(false);
-        EXPECT_NE(port, 0u);
+        EXPECT_EQ(coordinator->startCoordinator(false), coordinatorRpcPort);
         NES_INFO("RESTEndpointTest: Coordinator started successfully");
-        return {coordinator, port};
+        return {coordinator, coordinatorRpcPort};
     }
 
     void stopCoordinator(NesCoordinator& coordinator) {
@@ -71,11 +62,12 @@ class RESTEndpointTest : public testing::Test {
     }
 
     NesWorkerPtr startWorker(uint64_t port, NesNodeType nodeType, uint8_t id = 1) {
+        EXPECT_EQ(port, coordinatorRpcPort);
         NES_INFO("RESTEndpointTest: Start worker " << id);
         WorkerConfigPtr workerConfig = WorkerConfig::create();
-        workerConfig->setCoordinatorPort(port);
-        workerConfig->setRpcPort(port + (id * 10));
-        workerConfig->setDataPort(port + (id * 10) + 1);
+        workerConfig->setCoordinatorPort(coordinatorRpcPort);
+        workerConfig->setRpcPort(getNextFreePort());
+        workerConfig->setDataPort(getNextFreePort());
         NesWorkerPtr worker = std::make_shared<NesWorker>(workerConfig, nodeType);
         EXPECT_TRUE(worker->start(/**blocking**/ false, /**withConnect**/ true));
         NES_INFO("RESTEndpointTest: Worker " << id << " started successfully");
@@ -88,10 +80,24 @@ class RESTEndpointTest : public testing::Test {
     }
 
     [[nodiscard]] web::http::client::http_client createRestClient(const std::string& restEndpoint) {
-        auto url = "http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/" + restEndpoint;
+        auto url = "http://127.0.0.1:" + std::to_string(coordinatorRestPort) + "/v1/nes/" + restEndpoint;
         return web::http::client::http_client {url};
     }
+
+    uint64_t getNextFreePort() {
+        // Skip 3 ports because some ports are created by default and not handled by this test.
+        // TODO: Consolidate assignment of ports with #2007
+        nextFreePort += 3;
+        return nextFreePort;
+    }
+
+  private:
+    static uint64_t nextFreePort;
+    uint64_t coordinatorRpcPort;
+    uint64_t coordinatorRestPort;
 };
+
+uint64_t RESTEndpointTest::nextFreePort = 1024;
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     auto [crd, port] = startCoordinator();

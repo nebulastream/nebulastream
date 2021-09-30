@@ -253,6 +253,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         NES_DEBUG("NesCoordinator started, return without blocking on port " << rpcPort);
         return rpcPort;
     }
+    // FIXME: return type of this method is uint64_t
     return -1;
 }
 
