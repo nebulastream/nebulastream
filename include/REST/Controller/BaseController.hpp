@@ -35,56 +35,56 @@ class BaseController {
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleGet(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handleGet(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle the put request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handlePut(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handlePut(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle the post request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handlePost(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handlePost(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle the delete request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleDelete(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handleDelete(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle the patch request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handlePatch(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handlePatch(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle the head request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleHead(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handleHead(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle trace request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleTrace(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handleTrace(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief Handle unionWith request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    void handleMerge(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handleMerge(const std::vector<utility::string_t>& path, http_request& request);
 
     /**
      * @brief set http response options
@@ -109,7 +109,7 @@ class BaseController {
     template<typename T>
     static void badRequestImpl(const web::http::http_request& request, const T& detail);
 
-    void handleException(const web::http::http_request& message, const std::exception& exc);
+    virtual void handleException(const web::http::http_request& message, const std::exception& exc);
 
     /**
      * @brief Get the URI path from the request

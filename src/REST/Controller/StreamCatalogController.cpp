@@ -30,7 +30,7 @@ StreamCatalogController::StreamCatalogController(StreamCatalogPtr streamCatalog)
     NES_DEBUG("StreamCatalogController()");
 }
 
-void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request request) {
+void StreamCatalogController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     //Extract parameters if any
     auto parameters = getParameters(request);
@@ -127,7 +127,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
     }
 }
 
-void StreamCatalogController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
+void StreamCatalogController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) {
 
     if (path[1] == "addLogicalStream") {
 
@@ -263,7 +263,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
     }
 }
 
-void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, web::http::http_request request) {
+void StreamCatalogController::handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     //Extract parameters if any
     auto parameters = getParameters(request);

@@ -26,7 +26,7 @@ namespace NES {
 
 ConnectivityController::ConnectivityController() = default;
 
-void ConnectivityController::handleGet(std::vector<utility::string_t> path, const http_request& message) {
+void ConnectivityController::handleGet(const std::vector<utility::string_t>& path, http_request& message) {
     if (path[1] == "check") {
         json::value result{};
         result["success"] = json::value::boolean(true);
