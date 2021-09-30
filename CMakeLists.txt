@@ -405,7 +405,7 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 # LLVM
-find_package(LLVM 11.0.0 CONFIG REQUIRED)
+find_package(LLVM 12.0.0 CONFIG REQUIRED)
 #find_package(LLVM CONFIG REQUIRED)
 if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
