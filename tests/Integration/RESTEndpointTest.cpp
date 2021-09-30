@@ -69,24 +69,25 @@ class RESTEndpointTest : public testing::Test {
         NES_INFO("RESTEndpointTest: Stop Coordinator");
         EXPECT_TRUE(coordinator.stopCoordinator(true));
     }
+
+    NesWorkerPtr startWorker(uint64_t port, NesNodeType nodeType, uint8_t id = 1) {
+        NES_INFO("RESTEndpointTest: Start worker " << id);
+        WorkerConfigPtr workerConfig = WorkerConfig::create();
+        workerConfig->setCoordinatorPort(port);
+        workerConfig->setRpcPort(port + (id * 10));
+        workerConfig->setDataPort(port + (id * 10) + 1);
+        NesWorkerPtr worker = std::make_shared<NesWorker>(workerConfig, nodeType);
+        EXPECT_TRUE(worker->start(/**blocking**/ false, /**withConnect**/ true));
+        NES_INFO("RESTEndpointTest: Worker " << id << " started successfully");
+        return worker;
+    }
 };
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     auto [crd, port] = startCoordinator();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+
     SourceConfigPtr srcConf = SourceConfig::create();
-
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NES_INFO("RESTEndpointTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("RESTEndpointTest: Worker1 started successfully");
-
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -146,20 +147,9 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     auto [crd, port] = startCoordinator();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+
     SourceConfigPtr srcConf = SourceConfig::create();
-
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NES_INFO("RESTEndpointTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("RESTEndpointTest: Worker1 started successfully");
-
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -205,20 +195,9 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     auto [crd, port] = startCoordinator();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+
     SourceConfigPtr srcConf = SourceConfig::create();
-
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NES_INFO("RESTEndpointTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("RESTEndpointTest: Worker1 started successfully");
-
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -279,20 +258,9 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
     auto [crd, port] = startCoordinator();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+
     SourceConfigPtr srcConf = SourceConfig::create();
-
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NES_INFO("RESTEndpointTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("RESTEndpointTest: Worker1 started successfully");
-
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -328,20 +296,9 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
 
 TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
     auto [crd, port] = startCoordinator();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+
     SourceConfigPtr srcConf = SourceConfig::create();
-
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NES_INFO("RESTEndpointTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("RESTEndpointTest: Worker1 started successfully");
-
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -392,27 +349,10 @@ TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
 
 TEST_F(RESTEndpointTest, testAddParentTopology) {
     auto [crd, port] = startCoordinator();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto wrk2 = startWorker(port, NesNodeType::Worker, 2);
+
     SourceConfigPtr srcConf = SourceConfig::create();
-
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NES_INFO("RESTEndpointTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    ASSERT_TRUE(retStart1);
-    NES_INFO("RESTEndpointTest: Worker1 started successfully");
-
-    workerConfig->setRpcPort(port + 20);
-    workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    ASSERT_TRUE(retStart2);
-    NES_INFO("RESTEndpointTest: Worker2 started successfully");
-
     uint64_t parentId = wrk2->getWorkerId();
     uint64_t childId = wrk1->getWorkerId();
 
@@ -459,20 +399,9 @@ TEST_F(RESTEndpointTest, testAddParentTopology) {
 
 TEST_F(RESTEndpointTest, testRemoveParentTopology) {
     auto [crd, port] = startCoordinator();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+
     SourceConfigPtr srcConf = SourceConfig::create();
-
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NES_INFO("RESTEndpointTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    ASSERT_TRUE(retStart1);
-    NES_INFO("RESTEndpointTest: Worker1 started successfully");
-
     uint64_t parentId = crd->getNesWorker()->getWorkerId();
     uint64_t childId = wrk1->getWorkerId();
 
@@ -515,20 +444,9 @@ TEST_F(RESTEndpointTest, testRemoveParentTopology) {
 
 TEST_F(RESTEndpointTest, testConnectivityCheck) {
     auto [crd, port] = startCoordinator();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+
     SourceConfigPtr srcConf = SourceConfig::create();
-
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NES_INFO("RESTEndpointTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("RESTEndpointTest: Worker1 started successfully");
-
     web::json::value response;
     web::http::client::http_client getConnectivityCheck("http://127.0.0.1:" + std::to_string(restPort)
                                                         + "/v1/nes/connectivity/check");
