@@ -136,17 +136,11 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         return createMQTTSource(mqttSourceDescriptor->getSchema(),
                                 bufferManager,
                                 queryManager,
-                                mqttSourceDescriptor->getServerAddress(),
-                                mqttSourceDescriptor->getClientId(),
-                                mqttSourceDescriptor->getUser(),
-                                mqttSourceDescriptor->getTopic(),
+                                mqttSourceDescriptor->getSourceConfig(),
                                 operatorId,
                                 numSourceLocalBuffers,
                                 successors,
-                                mqttSourceDescriptor->getInputFormat(),
-                                mqttSourceDescriptor->getQualityOfService(),
-                                mqttSourceDescriptor->getCleanSession(),
-                                mqttSourceDescriptor->getBufferFlushIntervalMs());
+                                mqttSourceDescriptor->getInputFormat());
 #endif
 #ifdef ENABLE_OPC_BUILD
     } else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {

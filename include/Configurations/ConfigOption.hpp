@@ -38,10 +38,6 @@ class ConfigOption {
         return std::make_shared<ConfigOption>(ConfigOption(name, value, description));
     };
 
-    static std::shared_ptr<ConfigOption> create(std::string name, T value, T defaultValue, std::string description) {
-        return std::make_shared<ConfigOption>(ConfigOption(name, value, defaultValue, description));
-    };
-
     /**
      * @brief converts a ConfigOption Object into human readable format
      * @return string representation of the config

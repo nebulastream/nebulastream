@@ -316,32 +316,20 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
 DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                const Runtime::BufferManagerPtr& bufferManager,
                                const Runtime::QueryManagerPtr& queryManager,
-                               const std::string& serverAddress,
-                               const std::string& clientId,
-                               const std::string& user,
-                               const std::string& topic,
+                               SourceConfigPtr sourceConfig,
                                OperatorId operatorId,
                                size_t numSourceLocalBuffers,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                               SourceDescriptor::InputFormat inputFormat,
-                               MQTTSourceDescriptor::ServiceQualities qualityOfService,
-                               bool cleanSession,
-                               long bufferFlushIntervalMs) {
+                               SourceDescriptor::InputFormat inputFormat) {
     return std::make_shared<MQTTSource>(schema,
                                         bufferManager,
                                         queryManager,
-                                        serverAddress,
-                                        clientId,
-                                        user,
-                                        topic,
+                                        sourceConfig,
                                         operatorId,
                                         numSourceLocalBuffers,
                                         DataSource::FREQUENCY_MODE,
                                         successors,
-                                        inputFormat,
-                                        qualityOfService,
-                                        cleanSession,
-                                        bufferFlushIntervalMs);
+                                        inputFormat);
 }
 #endif
 }// namespace NES

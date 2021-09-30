@@ -23,7 +23,7 @@
 namespace NES {
 
 SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 1, "Number of buffers to produce.")),
+    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 0, "Number of buffers to produce.")),
       numberOfTuplesToProducePerBuffer(
           ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.")),
       physicalStreamName(
@@ -35,7 +35,7 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap)
       inputFormat(ConfigOption<std::string>::create("inputFormat", "JSON", "input data format")),
       sourceType(
           ConfigOption<std::string>::create("sourceType",
-                                            "DefaultSource",
+                                            "NoSource",
                                             "Type of the Source (available options: DefaultSource, CSVSource, BinarySource).")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 

@@ -44,19 +44,19 @@ class AbstractPhysicalStreamConfig {
      * @brief The source type as a string
      * @return The source type as a string
      */
-    virtual std::string getSourceType() = 0;
+    virtual std::string getSourceType();
 
     /**
      * @brief Provides the physical stream name of the source
      * @return the physical stream name of the source
      */
-    virtual std::string getPhysicalStreamName() = 0;
+    virtual std::string getPhysicalStreamName();
 
     /**
      * @brief Provides the logical stream name of the source
      * @return the logical stream name of the source
      */
-    virtual std::string getLogicalStreamName() = 0;
+    virtual std::string getLogicalStreamName();
 };
 
 using AbstractPhysicalStreamConfigPtr = std::shared_ptr<AbstractPhysicalStreamConfig>;

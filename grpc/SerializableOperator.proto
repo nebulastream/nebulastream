@@ -60,6 +60,82 @@ message NodeLocation {
   uint32 port = 3;
 }
 
+/**
+The serializable wrapper for the sense source config object
+*/
+message SerializableSenseSourceConfig{
+  string udsf = 1;
+}
+
+/**
+The serializable wrapper for the binary source config object
+*/
+message SerializableBinarySourceConfig{
+  string filePath = 1;
+}
+
+/**
+The serializable wrapper for the csv source config object
+*/
+message SerializableCSVSourceConfig{
+  string filePath = 1;
+  bool skipHeader = 2;
+}
+
+/**
+The serializable wrapper for the mqtt source config object
+*/
+message SerializableMQTTSourceConfig{
+  string url = 1;
+  string clientId = 2;
+  string userName = 3;
+  string topic = 4;
+  uint32 qos = 5;
+  bool cleanSession = 6;
+}
+
+/**
+The serializable wrapper for the kafka source config object
+*/
+message SerializableKafkaSourceConfig{
+  string brokers = 1;
+  uint32 autoCommit = 2;
+  string groupId = 3;
+  string topic = 4;
+  uint32 connectionTimeout = 5;
+}
+
+/**
+The serializable wrapper for the opc source config object
+*/
+message SerializableOPCSourceConfig{
+  uint32 namespaceIndex = 1;
+  string nodeIdentifier = 2;
+  string userName = 3;
+  string password = 4;
+}
+
+/**
+The serializable wrapper for the source config object
+ */
+message SerializableSourceConfig{
+  string sourceType = 1;
+  string inputFormat = 2;
+  float flushIntervalMS = 3;
+  bool rowLayout = 4;
+  uint32 sourceFrequency = 5;
+  uint32 numberOfBuffersToProduce = 6;
+  uint32 numberOfTuplesToProducePerBuffer = 7;
+  string physicalStreamName = 8;
+  string logicalStreamName = 9;
+  SerializableSenseSourceConfig serializableSenseSourceConfig = 10;
+  SerializableBinarySourceConfig serializableBinarySourceConfig = 11;
+  SerializableCSVSourceConfig serializableCSVSourceConfig = 12;
+  SerializableMQTTSourceConfig serializableMQTTSourceConfig = 13;
+  SerializableKafkaSourceConfig serializableKafkaSourceConfig = 14;
+  SerializableOPCSourceConfig serializableOPCSourceConfig = 15;
+}
+
 /*
 The serializable wrapper definition for operator nodes
  */
@@ -130,19 +206,9 @@ message SerializableOperator{
         JSON=0;
         CSV=1;
       };
-      enum ServiceQualities{
-        atMostOnce=0;
-        atLeastOnce=1;
-        exactlyOnce=2;
-      };
-      string serverAddress = 1;
-      string clientId = 2;
-      string user = 3;
-      string topic = 4;
-      InputFormat inputFormat = 5;
-      ServiceQualities qualityOfService = 6;
-      bool cleanSession = 7;
-      SerializableSchema sourceSchema = 8;
+      SerializableSourceConfig sourceConfig = 1;
+      InputFormat inputFormat = 2;
+      SerializableSchema sourceSchema = 3;
     }
 
     message SerializableNetworkSourceDescriptor {
