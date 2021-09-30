@@ -87,7 +87,6 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 }// namespace detail
 
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
-//static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 2;
 
 QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            uint64_t nodeEngineId,
