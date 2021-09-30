@@ -128,7 +128,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostChecksForKnownPath) {
     verifyResponseStatusCode(request, status_codes::BadRequest);
 }
 
-TEST_F(UdfCatalogControllerTest, HandlePostHandlesExceptionInCatalog) {
+TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
     // given a REST message containing a wrongly formed Java UDF (bytecode list is empty)
     auto javaUdfRequest = createRegisterJavaUdfRequest("my_udf",
                                                        "some_package.my_udf",
@@ -140,5 +140,15 @@ TEST_F(UdfCatalogControllerTest, HandlePostHandlesExceptionInCatalog) {
     udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerJavaUdf"}, request);
     // then the response is BadRequest
     verifyResponseStatusCode(request, status_codes::BadRequest);
-}
+    // make sure the response does not contain the stack trace
+    request.get_response()
+        .then([=](const pplx::task<http_response>& task) {
+            auto response = task.get();
+            response.extract_string(true)
+                .then([=](const pplx::task<std::string>& task) {
+                    auto message = task.get();
+                    ASSERT_TRUE(message.find("Stack trace") == std::string::npos);
+                }).wait();
+        }).wait();
+    }
 } // namespace NES

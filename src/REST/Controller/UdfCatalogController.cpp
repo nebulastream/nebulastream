@@ -71,7 +71,8 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
             udfCatalog->registerJavaUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
         } catch (const UdfException& e) {
             NES_WARNING("Exception occurred during UDF registration: " << e.what());
-            badRequestImpl(request, std::string{e.what()});
+            // Just return the exception message to the client, not the stack trace.
+            badRequestImpl(request, e.getMessage());
             return;
         }
         successMessageImpl(request, "Registered Java UDF");
