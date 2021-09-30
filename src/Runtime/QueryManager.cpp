@@ -939,7 +939,8 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-            taskQueue.blockingWrite(Task(executable, buffer));
+//            taskQueue.blockingWrite(Task(executable, buffer));
+            taskQueue.write(Task(executable, buffer));
 #else
             taskQueues[hardwareManager->getMyNumaRegion()].write(Task(executable, buffer));
 #endif
