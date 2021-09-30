@@ -171,47 +171,47 @@ class SimpleBenchmarkSource : public DataSource {
                 auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
                 if (physicalType->isBasicType()) {
                     auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-                    if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                    if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<char, false>::create(fieldIndex,
                                                                                                  bindedRowLayout)[recordIndex] =
                             value;
-                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
-                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
-                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
-                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
-                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, false>::create(fieldIndex,
                                                                                                    bindedRowLayout)[recordIndex] =
                             value;
-                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
-                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
-                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, false>::create(
                             fieldIndex,
                             bindedRowLayout)[recordIndex] = value;
-                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, false>::create(fieldIndex,
                                                                                                   bindedRowLayout)[recordIndex] =
                             value;
-                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                    } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
                         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, false>::create(fieldIndex,
                                                                                                    bindedRowLayout)[recordIndex] =
                             value;
@@ -232,7 +232,7 @@ class SimpleBenchmarkSource : public DataSource {
         return buf;
     }
 
-    const std::string toString() const override { return "SimpleBenchmarkSource"; }
+    std::string toString() const override { return  "SimpleBenchmarkSource"; }
 
     SourceType getType() const override { return TEST_SOURCE; }
 

@@ -33,7 +33,7 @@ int main() {
 
     // All ingestion rates that the nodeEngine is exposed
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 600 * 1000 * 1000, 610 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 600 * 1000 * 1000, 610 * 1000, 10 * 1000 * 1000);
 
     // Duration of one experiment
     std::vector<uint64_t> allExperimentsDuration;
@@ -56,10 +56,12 @@ int main() {
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
     //-----------------------------------------Start of BM_SimpleMapQuery----------------------------------------------------------------------------------------------
-    auto benchmarkSchema = Schema::create()->addField("test$key", BasicType::INT16)->addField("test$value", BasicType::INT16);
+    //auto benchmarkSchema = Schema::create()->addField("key", INT32)->addField("value", INT32);
+    auto benchmarkSchema = Schema::create()->addField("Test$key", BasicType::INT16)->addField("Test$value", BasicType::INT16);
     BM_AddBenchmark(
         "BM_SimpleMapQuery",
-        TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
+        //TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
+        TestQuery::from(thisSchema).map(Attribute("key") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
         SimpleBenchmarkSource::create(nodeEngine->getBufferManager(),
                                       nodeEngine->getQueryManager(),
                                       benchmarkSchema,

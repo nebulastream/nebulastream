@@ -20,13 +20,17 @@
 #include "SimpleBenchmarkSink.hpp"
 #include <API/Query.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Version/version.hpp>
 #include <cstdint>
 #include <list>
 #include <random>
 #include <vector>
+#include <Util/TestUtils.hpp>
 
 namespace NES::Benchmarking {
 /**
@@ -123,6 +127,21 @@ class BenchmarkUtils {
 };
 
 //12,12 in the node engine are the new for source and pipeline local buffers, please change them accordingly
+/**
+* @brief BM_AddBenchmark helps creating a new benchmark by providing a solid building block. For now it sets
+* It requires std::vectors of type uint64_t named {allIngestionRates, allExperimentsDuration, allPeriodLengths, allWorkerThreads}
+*/
+#define BM_AddBenchmark(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs)        \
+{                                                                                                                            \
+                                                                                                                                 \
+    BM_AddBenchmarkCustomBufferSize(benchmarkName,                                                                               \
+                                    benchmarkQuery,                                                                              \
+                                    benchmarkSource,                                                                             \
+                                    benchmarkSink,                                                                               \
+                                    csvHeaderString,                                                                             \
+                                    customCSVOutputs);                                                                           \
+}
+
 #define BM_AddBenchmarkCustomBufferSize(benchmarkName,                                                                           \
                                         benchmarkQuery,                                                                          \
                                         benchmarkSource,                                                                         \
@@ -149,17 +168,21 @@ class BenchmarkUtils {
                         for (auto workerThreads : allWorkerThreads) {                                                            \
                             for (auto sourceCnt : allDataSources) {                                                              \
                                                                                                                                  \
+                                /*TopologyNodePtr sensorNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);                                                                                                \
+                                StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(streamConf, sensorNode);        \
+                                streamCatalog->addPhysicalStream(thisSchema, sce); */                                                                                                    \
                                 PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();                        \
                                 uint64_t zmqPort = distr(gen);                                                                   \
                                 NES_WARNING("BenchmarkUtils: Starting zmq on port " << zmqPort);                                 \
-                                auto nodeEngine = Runtime::NodeEngine::create("127.0.0.1",                                       \
-                                                                              zmqPort,                                           \
+                                auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",                                       \
+                                                                              zmqPort,                                         \
                                                                               streamConf,                                        \
                                                                               workerThreads,                                     \
                                                                               bufferSize,                                        \
                                                                               numBuffers,                                        \
                                                                               12,                                                \
-                                                                              12);                                               \
+                                                                              12,                                                \
+                                                                              NES::Runtime::NumaAwarenessFlag::DISABLED);                                               \
                                                                                                                                  \
                                 BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;                                 \
                                 BenchmarkUtils::periodLengthInSeconds = periodLength;                                            \
@@ -214,21 +237,41 @@ class BenchmarkUtils {
         NES::NESLogger->removeAllAppenders();                                                                                    \
     }
 
-/**
- * @brief BM_AddBenchmark helps creating a new benchmark by providing a solid building block. For now it sets
- * It requires std::vectors of type uint64_t named {allIngestionRates, allExperimentsDuration, allPeriodLengths, allWorkerThreads}
- */
-#define BM_AddBenchmark(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs)        \
-    {                                                                                                                            \
-        auto bufferSize = 4096;                                                                                                  \
-        auto numBuffers = 1024;                                                                                                  \
-        BM_AddBenchmarkCustomBufferSize(benchmarkName,                                                                           \
-                                        benchmarkQuery,                                                                          \
-                                        benchmarkSource,                                                                         \
-                                        benchmarkSink,                                                                           \
-                                        csvHeaderString,                                                                         \
-                                        customCSVOutputs);                                                                       \
-    }
+NES::NesCoordinatorPtr crd;
+NES::NesWorkerPtr wrk;
+NES::QueryServicePtr queryService;
+QueryId queryId;
+NES::QueryCatalogPtr queryCatalog;
+NES::SchemaPtr defaultSchema;
+
+//parameters
+//parameters
+auto bufferSize = 4096;                                                                                                  \
+auto numBuffers = 1024;                                                                                                  \
+auto numberOfWorkerThreads = 1;
+auto numberOfCoordinatorThreads= 1;
+auto numberOfSources= 1;
+
+//paramter for all runs
+auto numberOfBuffersToProduce= 5000000;
+auto numberOfBuffersInGlobalBufferManager= 8192;
+auto numberOfBuffersPerPipeline= 1024;
+auto numberOfBuffersInSourceLocalBufferPool= 1024;
+auto bufferSizeInBytes= 1048576;
+
+//benchmark parameter for the entire run
+//auto inputType = Auto;
+auto outputFile = "E2EFilterQueryBenchmark.csv";
+auto benchmarkName= "E2EFilterQueryBenchmark";
+//auto query = "TestQuery::from(thisSchema).filter(Attribute("key") < selectivity).filter(Attribute("value") < 500).sink(NullOutputSinkDescriptor::create())";
+//'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
+
+//benchmark internal parameter
+auto logLevel= LOG_NONE;
+auto experimentMeasureIntervalInSeconds= 1;
+auto startupSleepIntervalInSeconds= 3;
+auto numberOfMeasurementsToCollect= 5;
+
 
 #if __linux
 #define printPIDandParentID                                                                                                      \

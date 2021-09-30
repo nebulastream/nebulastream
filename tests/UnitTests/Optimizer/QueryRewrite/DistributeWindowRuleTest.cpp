@@ -38,6 +38,9 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <iostream>
+#include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
+#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+#include <Optimizer/QueryRewrite/WindowOperatorRules.hpp>
 using namespace NES;
 
 class DistributeWindowRuleTest : public testing::Test {
@@ -208,3 +211,32 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
     auto sliceOps = queryPlan->getOperatorByType<SliceCreationOperator>();
     ASSERT_EQ(sliceOps.size(), 5u);
 }
+
+/*
+TEST_F(DistributeWindowRuleTest, testWindowOperator) {
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupSensorNodeAndStreamCatalog(streamCatalog);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query query = Query::from("default_logical")
+        .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+        .byKey(Attribute("id"))
+        .apply(Sum(Attribute("value")))
+        .filter(Attribute("id") < 45)
+        .sink(printSinkDescriptor);
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+
+    // Execute
+    WindowOperatorRulesPtr windowRules = WindowOperatorRules::create();
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    const QueryPlanPtr updatedPlan = windowRules->apply(queryPlan);
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+
+    //auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    //typeInferencePhase->execute(queryPlan);
+    //NES_DEBUG("Test Query Plan: " + (queryPlan)->toString());
+
+}*/

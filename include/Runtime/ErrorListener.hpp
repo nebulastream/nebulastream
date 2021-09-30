@@ -16,7 +16,7 @@
 #ifndef NES_INCLUDE_NODEENGINE_ERRORLISTENER_HPP_
 #define NES_INCLUDE_NODEENGINE_ERRORLISTENER_HPP_
 
-#include <Util/VirtualEnableSharedFromThis.hpp>
+#include <../include/Util/VirtualEnableSharedFromThis.hpp>
 #include <memory>
 
 namespace NES {

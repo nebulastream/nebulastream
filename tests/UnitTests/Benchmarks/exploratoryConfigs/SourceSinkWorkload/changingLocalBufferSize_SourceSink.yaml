@@ -1,0 +1,26 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+
+# Parameter that are changed per run with comma separated list
+numberOfWorkerThreads: 1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,4,4,4,4,4,4,4,4,4,4,4,4
+numberOfSources: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+
+# engine configuration parameter
+numberOfBuffersInGlobalBufferManager: 524288
+numberOfBuffersPerPipeline: 8,16,32,64,128,256,512,1024,2048,4096,8192,16384,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,8,16,32,64,128,256,512,1024,2048,4096,8192,16384
+numberOfBuffersInSourceLocalBufferPool: 8,16,32,64,128,256,512,1024,2048,4096,8192,16384,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,8,16,32,64,128,256,512,1024,2048,4096,8192,16384
+bufferSizeInBytes: 1048576
+
+##benchmark parameter for the entire run
+inputType: MemoryMode
+outputFile: changingLocalBufferSizeSourceSink.csv
+benchmarkName: changingLocalBufferSizeSourceSink
+query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
+
+#benchmark internal parameter
+numberOfBuffersToProduce: 5000000
+scalability: scale-up
+logLevel: LOG_NONE
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 3
+numberOfMeasurementsToCollect: 5
+

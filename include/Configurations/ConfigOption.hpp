@@ -17,8 +17,8 @@
 #ifndef NES_CONFIGOPTION_HPP
 #define NES_CONFIGOPTION_HPP
 
-#include <Util/Logger.hpp>
-#include <Util/yaml/Yaml.hpp>
+#include "../include/Util/Logger.hpp"
+#include "../include/Util/yaml/Yaml.hpp"
 #include <any>
 #include <sstream>
 #include <string>

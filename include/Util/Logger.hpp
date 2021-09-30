@@ -17,10 +17,10 @@
 #ifndef INCLUDE_UTIL_LOGGER_HPP_
 #define INCLUDE_UTIL_LOGGER_HPP_
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
-#include <Exceptions/NesRuntimeException.hpp>
-#include <Runtime/ErrorListener.hpp>
-#include <Util/DisableWarningsPragma.hpp>
-#include <Util/StacktraceLoader.hpp>
+#include <../include/Exceptions/NesRuntimeException.hpp>
+#include <../include/Runtime/ErrorListener.hpp>
+#include <../include/Util/DisableWarningsPragma.hpp>
+#include <../include/Util/StacktraceLoader.hpp>
 #include <iostream>
 #include <log4cxx/consoleappender.h>
 #include <log4cxx/fileappender.h>

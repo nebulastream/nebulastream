@@ -1,0 +1,31 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+
+# Parameter that are changed per run with comma separated list
+numberOfWorkerThreads: 1,2,4,8,16,24
+numberOfSources: 1,1,2,4,6,8
+
+# engine configuration parameter
+numberOfBuffersInGlobalBufferManager: 65536
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+bufferSizeInBytes: 1048576
+
+##benchmark parameter for the entire run
+inputType: MemoryMode
+sourceMode: cacheCopy
+sourcePinList: 0,16,1,17,2,18,3,19
+workerPinList: 4,20,5,21,6,7,22,23,8,9,10,11,24,25,26,27,12,13,14,15,28,29,30,31
+
+
+outputFile: RepSouceSink.csv
+benchmarkName: RepSouceSink
+query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
+
+#benchmark internal parameter
+numberOfBuffersToProduce: 5000000
+scalability: scale-up
+logLevel: LOG_NONE
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 3
+numberOfMeasurementsToCollect: 5
+

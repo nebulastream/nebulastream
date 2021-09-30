@@ -1,12 +1,9 @@
 /*
     Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-
         https://www.apache.org/licenses/LICENSE-2.0
-
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +13,10 @@
 
 #include "../../../tests/util/DummySink.hpp"
 #include "../../../tests/util/TestQuery.hpp"
+#include "../include/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp"
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
+#include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <filesystem>
 #include <iostream>
 #include <util/BenchmarkUtils.hpp>
@@ -25,6 +26,7 @@
 
 using namespace NES;
 using namespace NES::Benchmarking;
+static uint64_t portOffset = 13;
 
 /**
  * @brief This file/main shows how a benchmark can be created. The benchmark seen below is a filter query that was implemented by using the BM_AddBenchmark macro from <util/BenchmarkUtils.hpp>.
@@ -55,28 +57,69 @@ int main() {
     if (!std::filesystem::create_directory(benchmarkFolderName)) {
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
     }
+    portOffset += 13;
+    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
+    crdConf->setNumWorkerThreads(1);
+    crdConf->setNumberOfBuffersInGlobalBufferManager(numberOfWorkerThreads);
+    crdConf->setNumberOfBuffersPerWorker(numberOfBuffersPerPipeline);
+    crdConf->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
+    crdConf->setBufferSizeInBytes(bufferSizeInBytes);
+    crdConf->setRpcPort(4000 + portOffset);
+    crdConf->setRestPort(8081 + portOffset);
 
-    auto benchmarkSchema = Schema::create()->addField("test$key", BasicType::INT16)->addField("test$value", BasicType::INT16);
+    NES::WorkerConfigPtr wrkConf = NES::WorkerConfig::create();
+    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
+    wrkConf->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
+    wrkConf->setNumberOfBuffersPerWorker(numberOfBuffersPerPipeline);
+    wrkConf->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
+    wrkConf->setBufferSizeInBytes(bufferSizeInBytes);
+    //wrkConf->setCoordinatorPort(crdConf->getRpcPort()->getValue());
+    //wrkConf->setRpcPort(crdConf->getRpcPort()->getValue() + 1);
+    //wrkConf->setDataPort(crdConf->getRpcPort()->getValue() + 2);
+    //wrkConf->setWorkerPinList(config->getWorkerPinList()->getValue());
+    //wrkConf->setSourcePinList(config->getSourcePinList()->getValue());
+    //wrkConf->setCoordinatorIp(crdConf->getRestIp()->getValue());
+    //wrkConf->setLocalWorkerIp(crdConf->getCoordinatorIp()->getValue());
+    wrkConf->setNumaAware(true);
+    std::cout << "E2EBase: Start coordinator" << std::endl;
+    crd = std::make_shared<NES::NesCoordinator>(crdConf, wrkConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
 
+
+    auto benchmarkSchema = Schema::create()->addField(createField("key", NES::INT64))->addField(createField("value", NES::UINT64));
+    defaultSchema = NES::Schema::create()
+                        ->addField(createField("key", NES::UINT64))
+                        ->addField(createField("value", NES::UINT64));
+
+    std::string benchmarkSchemaStr =
+        R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("payload", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string benchmarkSchemaFileName = "defaultSchema.hpp";
+    std::ofstream out(benchmarkSchemaFileName);
+    out << benchmarkSchemaStr;
+    out.close();
+    crd->getNesWorker()->registerLogicalStream("benchmarkSchemaStr", benchmarkSchemaFileName);
+
+    //input in MemoryMode
+
+    //auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    //streamCatalog->addLogicalStream(thisSchema, benchmarkSchema);
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
     BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 500, 600, 100);
-
     for (auto selectivity : allSelectivities) {
         BM_AddBenchmark("BM_SimpleFilterQuery",
-                        TestQuery::from(thisSchema).filter(Attribute("test$key") < selectivity).sink(DummySink::create()),
+                        TestQuery::from(thisSchema).filter(Attribute("key") < selectivity).filter(Attribute("value") < 500).sink(NullOutputSinkDescriptor::create()),
                         SimpleBenchmarkSource::create(nodeEngine->getBufferManager(),
                                                       nodeEngine->getQueryManager(),
                                                       benchmarkSchema,
                                                       ingestionRate,
                                                       1),
                         SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
-                        ",Selectivity,BufferSize,SchemaSize",
-                        "," + std::to_string(selectivity) + "," + std::to_string(bufferSize) + ","
-                            + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
+                                                      ",Selectivity,BufferSize,SchemaSize",
+                                                      "," + std::to_string(selectivity) + "," + std::to_string(bufferSize) + ","
+                                                      + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
     }
 
     //-----------------------------------------End of BM_SimpleFilterQuery-----------------------------------------------------------------------------------------------
-
     return 0;
 }

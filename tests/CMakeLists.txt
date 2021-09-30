@@ -220,7 +220,7 @@ if (NES_USE_MQTT)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif (NES_USE_MQTT)
 
-### Dynamic Memory Layout Tests ###
+#[[### Dynamic Memory Layout Tests ###
 add_executable(dynamic-memory-layout-tests "UnitTests/DynamicMemoryLayoutTest.cpp")
 target_link_libraries(dynamic-memory-layout-tests nes ${GTEST_LIBRARIES})
 add_test(NAME dynamic-memory-layout-tests COMMAND dynamic-memory-layout-tests)
@@ -625,7 +625,28 @@ add_test(NAME e2e-coordinator-multi-query-test COMMAND e2e-coordinator-multi-que
 set_tests_properties(e2e-coordinator-multi-query-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(e2e-coordinator-multi-query-test nesCoordinator nesWorker)
 
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)]]
+
+#------------------------------- # E2E Benchmark Test Suite --------------------------------
+### E2EBMExecutionTest ###
+macro(add_source_benchmark)
+    add_source(benchmark "${ARGN}")
+endmacro()
+
+add_executable(e2e-bm-execution-test "UnitTests/Benchmarks/impl/E2EBMExecutionTest.cpp")
+target_link_libraries(e2e-bm-execution-test nes ${GTEST_LIBRARIES})
+add_test(NAME e2e-bm-execution-test COMMAND e2e-bm-execution-test)
+set_tests_properties(e2e-bm-execution-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
+#INCLUDE_DIRECTORIES(tests/UnitTests/Benchmarks/impl)
+#("include/")
+#INCLUDE_DIRECTORIES(/Users/shetty/Documents/Thesis/CLionProjects/nebulastream/include)
+add_executable(e2e-benchmark-runner "UnitTests/Benchmarks/impl/E2ERunner.cpp")
+target_link_libraries(e2e-benchmark-runner nes ${GTEST_LIBRARIES})
+target_sources(e2e-benchmark-runner PUBLIC "UnitTests/Benchmarks/impl/E2EBenchmarkConfig.cpp")
+target_sources(e2e-benchmark-runner PUBLIC "UnitTests/Benchmarks/impl/E2EBase.cpp")
+add_test(NAME e2e-benchmark-runner COMMAND e2e-benchmark-runner)
+set_tests_properties(e2e-benchmark-runner PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})

@@ -65,6 +65,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const std::string& queryCompilerOutputBufferOptimizationLevel) {
 
     try {
+        enableNumaAwareness = NES::Runtime::NumaAwarenessFlag::DISABLED;
         auto nodeEngineId = Util::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto hardwareManager = std::make_shared<Runtime::HardwareManager>();

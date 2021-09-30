@@ -1,0 +1,27 @@
+# ~~~ Configurations for the NES E2E Selection Benchmark ~~~
+
+# Parameter that are changed per run with comma separated list
+numberOfWorkerThreads: 1
+numberOfCoordinatorThreads: 1
+numberOfSources: 1
+
+#paramter for all runs
+numberOfBuffersToProduce: 5000000
+numberOfBuffersInGlobalBufferManager: 8192
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+bufferSizeInBytes: 1048576
+
+##benchmark parameter for the entire run
+inputType: Auto
+outputFile: E2EWindowBenchmark.csv
+benchmarkName: E2EWindowBenchmark
+query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
+
+#benchmark internal parameter
+logLevel: LOG_NONE
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 3
+numberOfMeasurementsToCollect: 5
+
+

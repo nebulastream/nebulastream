@@ -20,7 +20,6 @@
 #include <memory>
 #include <mutex>
 
-enum NodeType : int;
 namespace NES {
 class StreamCatalog;
 using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;

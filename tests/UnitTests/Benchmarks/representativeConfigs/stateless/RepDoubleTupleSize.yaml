@@ -1,0 +1,50 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+
+# Parameter that are changed per run with comma separated list
+##numberOfWorkerThreads: 1,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60,64
+##numberOfSources: 1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16
+#numberOfWorkerThreads: 1,4,8,12,16,20,24,28,32
+#numberOfSources: 1,1,2,3,4,5,6,7,8
+#
+## engine configuration parameter
+#numberOfBuffersInGlobalBufferManager: 65536
+#numberOfBuffersPerPipeline: 1024
+#numberOfBuffersInSourceLocalBufferPool: 1024
+#bufferSizeInBytes: 1048576
+#
+###benchmark parameter for the entire run
+#inputType: MemoryMode
+#sourceMode: cacheCopy
+##inputType: LambdaMode
+#sourcePinList: 0,1,2,3,16,17,18,19
+#workerPinList: 4,5,6,7,8,9,10,11,12,13,14,15,20,21,22,23,24,25,26,27,28,29,30,31,36,52,37,53,38,54,39,55
+
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+
+# Parameter that are changed per run with comma separated list
+numberOfWorkerThreads: 1,2,4,8,16,24
+numberOfSources: 1,1,2,4,6,8
+
+# engine configuration parameter
+numberOfBuffersInGlobalBufferManager: 65536
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+bufferSizeInBytes: 1048576
+
+##benchmark parameter for the entire run
+inputType: MemoryMode
+sourceMode: cacheCopy
+sourcePinList: 0,16,1,17,2,18,3,19
+workerPinList: 4,20,5,21,6,7,22,23,8,9,10,11,24,25,26,27,12,13,14,15,28,29,30,31
+
+outputFile: RepDoubleTupleSize.csv
+benchmarkName: RepDoubleTupleSize
+query: 'Query::from("input").map(Attribute("field1") = 1).map(Attribute("field2") = 2).map(Attribute("field3") = 3).map(Attribute("field4") = 3).sink(NullOutputSinkDescriptor::create());'
+
+#benchmark internal parameter
+numberOfBuffersToProduce: 5000000
+scalability: scale-up
+logLevel: LOG_NONE
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 3
+numberOfMeasurementsToCollect: 5

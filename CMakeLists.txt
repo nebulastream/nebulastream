@@ -473,7 +473,11 @@ if (GRPC_LIBRARIES)
 endif ()
 # Documentation
 add_subdirectory(docs)
-
+macro(add_source_benchmark)
+    add_source(benchmark "${ARGN}")
+endmacro()
+#INCLUDE_DIRECTORIES(/Users/shetty/Documents/Thesis/CLionProjects/nebulastream/include/)
+include_directories("include/")
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PRIVATE ${LIBRARIES} nes)
 target_include_directories(nesCoordinator PUBLIC "include")
@@ -496,6 +500,9 @@ add_subdirectory(tests)
 
 #Add benchmarks with command
 add_subdirectory(benchmark)
+
+#Add benchmarks with command
+#add_subdirectory(nes-benchmark)
 
 #Change to alter behaviour of cpack and installation directory of deb package
 install(TARGETS nes

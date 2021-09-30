@@ -1,0 +1,26 @@
+# ~~~ Configurations for the NES E2E Benchmark  ~~~
+
+# Parameter that are changed per run with comma separated list
+numberOfWorkerThreads: 1,2,3,4,5,6,7,8,9,10,11,12.13,14,15,16,17,18,19,20
+numberOfSources: 1,2,3,4,5,6,7,8,9,10,11,12.13,14,15,16,17,18,19,20
+
+# engine configuration parameter
+numberOfBuffersInGlobalBufferManager: 65536
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+bufferSizeInBytes: 1048576
+
+##benchmark parameter for the entire run
+inputType: MemoryMode
+outputFile: changingThreadsAndSource_ReadModifyWrite.csv
+benchmarkName: changingThreadsAndSource_ReadModifyWrite
+query: 'Query::from("input").map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());'
+
+#benchmark internal parameter
+numberOfBuffersToProduce: 5000000
+scalability: scale-up
+logLevel: LOG_NONE
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 3
+numberOfMeasurementsToCollect: 5
+

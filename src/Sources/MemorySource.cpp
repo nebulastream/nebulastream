@@ -127,7 +127,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         case COPY_BUFFER_SIMD_RTE: {
 #ifdef __x86_64__
             buffer = bufferManager->getBufferBlocking();
-            rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
+            //rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, buffer.getBufferSize());
 #else
             NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
 #endif

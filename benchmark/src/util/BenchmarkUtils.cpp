@@ -21,8 +21,9 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
+//#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
+//#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
+#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Version/version.hpp>
@@ -131,36 +132,94 @@ void BenchmarkUtils::runBenchmark(std::vector<Runtime::QueryStatistics*>& statis
                                   Runtime::NodeEnginePtr nodeEngine,
                                   Query query) {
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generateableOperators = translatePhase->transform(query.getQueryPlan()->getRootOperators()[0]);
-    NES_DEBUG("dump output=" << &statisticsVec << &benchmarkSource << &benchmarkSink << &nodeEngine);
-    NES_NOT_IMPLEMENTED();
-    //
-    //    auto builder = GeneratedQueryExecutionPlanBuilder::create()
-    //                       .setQueryManager(nodeEngine->getQueryManager())
-    //                       .setBufferManager(nodeEngine->getBufferManager())
-    //                       .setCompiler(nodeEngine->getCompiler())
-    //                       .setQueryId(1)
-    //                       .setQuerySubPlanId(1)
-    //                       .addSink(benchmarkSink)
-    //                       .addOperatorQueryPlan(generateableOperators);
-    //
-    //    for (auto src : benchmarkSource) {
-    //        builder.addSource(src);
-    //    }
-    //    auto plan = builder.build();
-    //    nodeEngine->registerQueryInNodeEngine(plan);
-    //    NES_INFO("BenchmarkUtils: QEP for " << queryPlan->toString() << " was registered in Runtime. Starting query now...");
-    //
-    //    NES_INFO("BenchmarkUtils: Starting query...");
-    //    nodeEngine->startQuery(1);
-    //    recordStatistics(statisticsVec, nodeEngine);
-    //
-    //    NES_WARNING("BenchmarkUtils: Stopping query...");
-    //    nodeEngine->stopQuery(1, false);
-    //    NES_WARNING("Query was stopped!");
+        NES_DEBUG("Reached runBenchMark");
+
+        //ToDO::Ongoing
+        //crd->getNesWorker()->registerLogicalStream(benchmarkSchema);
+        queryService = crd->getQueryService();
+        queryCatalog = crd->getQueryCatalog();
+        //queryId = queryService->getvalidateAndQueueAddRequest(query, "BottomUp");
+        bool res = NES::TestUtils::waitForQueryToStart(queryId, queryCatalog, std::chrono::seconds(120));
+        if (!res) {
+            std::cout << "run does not succeed" << std::endl;
+        }
+        nodeEngine = crd->getNodeEngine();
+
+
+        //auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+        //auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+        //auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+        //std::cout << " old plan=" << queryPlan->toString() << std::endl;
+        //const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+        //NES_DEBUG("dump output=" << &statisticsVec << &benchmarkSource << &benchmarkSink << &nodeEngine);
+        //std::cout << " new plan=" << queryPlan->toString() << std::endl;
+        //auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+        //auto queryCompiler = TestUtils::createTestQueryCompiler();
+        //auto result = queryCompiler->compileQuery(request);
+        //auto plan = result->getExecutableQueryPlan();
+        //nodeEngine->registerQueryInNodeEngine(plan);
+        //nodeEngine->startQuery(1);
+        //std::cout << " Query Started" << std::endl;
+        //NES_INFO("BenchmarkUtils: QEP for " << queryPlan->toString() << " was registered in Runtime. Starting query now...");
+        //NES_INFO("BenchmarkUtils: Starting query...");
+        /*
+        NES_WARNING("BenchmarkUtils: Stopping query...");
+        nodeEngine->stopQuery(1, false);
+        NES_WARNING("Query was stopped!");*/
+        recordStatistics(statisticsVec, nodeEngine);
+        benchmarkSink->completed.get_future().get();
+        //auto resultBuffer = benchmarkSink->get(0);
+        //std::cout << " Query Stop Reached" << std::endl;
+        nodeEngine->stopQuery(1);
+        benchmarkSink->shutdown();
+        //nodeEngine->stop();
+        //nodeEngine = nullptr;
+        std::cout << " Query Executed" << std::endl;
+        NES_DEBUG("dump output=" << &statisticsVec << &benchmarkSource << &benchmarkSink << &nodeEngine);
+        //auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+        //auto generateableOperators = translatePhase->transform(query.getQueryPlan()->getRootOperators()[0]);
+        //NES_NOT_IMPLEMENTED();
+
+        /*auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+        auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+        NES_DEBUG("dump output=" << &statisticsVec << &benchmarkSource << &benchmarkSink << &nodeEngine);
+
+        auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+        auto queryCompiler = TestUtils::createTestQueryCompiler();
+        auto result = queryCompiler->compileQuery(request);
+        auto plan = result->getExecutableQueryPlan();
+
+
+
+         translatePhase = TranslateToGeneratableOperatorPhase::create();
+        auto generateableOperators = translatePhase->transform(query.getQueryPlan()->getRootOperators()[0]);
+
+        NES_DEBUG("dump output=" << &statisticsVec << &benchmarkSource << &benchmarkSink << &nodeEngine);
+        //NES_NOT_IMPLEMENTED();
+
+            auto builder = GeneratedQueryExecutionPlanBuilder::create()
+                               .setQueryManager(nodeEngine->getQueryManager())
+                               .setBufferManager(nodeEngine->getBufferManager())
+                               .setCompiler(nodeEngine->getCompiler())
+                               .setQueryId(1)
+                               .setQuerySubPlanId(1)
+                               .addSink(benchmarkSink)
+                               .addOperatorQueryPlan(generateableOperators);
+
+            for (auto src : benchmarkSource) {
+                builder.addSource(src);
+            }
+            auto plan = builder.build();
+            nodeEngine->registerQueryInNodeEngine(plan);
+            NES_INFO("BenchmarkUtils: QEP for " << queryPlan->toString() << " was registered in Runtime. Starting query now...");
+            NES_INFO("BenchmarkUtils: Starting query...");
+            nodeEngine->startQuery(1);
+            recordStatistics(statisticsVec, nodeEngine);
+            */
+            /*
+            NES_WARNING("BenchmarkUtils: Stopping query...");
+            nodeEngine->stopQuery(1, false);
+            NES_WARNING("Query was stopped!");*/
 
     /* This is not necessary anymore as we do not want to have the differences anymore. We are only interested in the total
      * number of tuples, buffers, tasks. Via the total number and runSingleExperimentSeconds we can calculate the throughput

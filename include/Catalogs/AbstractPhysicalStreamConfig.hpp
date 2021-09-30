@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_CATALOGS_ABSTRACTPHYSICALSTREAMCONFIG_HPP_
 #define NES_INCLUDE_CATALOGS_ABSTRACTPHYSICALSTREAMCONFIG_HPP_
 
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <../include/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES {
 

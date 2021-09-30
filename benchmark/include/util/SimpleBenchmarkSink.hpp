@@ -72,67 +72,67 @@ class SimpleBenchmarkSink : public SinkMedium {
         auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
         if (physicalType->isBasicType()) {
             auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-            if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+            if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<char, false>::create(fieldIndex,
                                                                                              bindedRowLayout)[recordIndex]
                     != (char) -1) {
                     endOfBenchmark = false;
                 }
-            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+            } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, false>::create(fieldIndex,
                                                                                                 bindedRowLayout)[recordIndex]
                     != (uint8_t) -1) {
                     endOfBenchmark = false;
                 }
-            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+            } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, false>::create(fieldIndex,
                                                                                                  bindedRowLayout)[recordIndex]
                     != (uint16_t) -1) {
                     endOfBenchmark = false;
                 }
-            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+            } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, false>::create(fieldIndex,
                                                                                                  bindedRowLayout)[recordIndex]
                     != (uint32_t) -1) {
                     endOfBenchmark = false;
                 }
-            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+            } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, false>::create(fieldIndex,
                                                                                                  bindedRowLayout)[recordIndex]
                     != (uint64_t) -1) {
                     endOfBenchmark = false;
                 }
-            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+            } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, false>::create(fieldIndex,
                                                                                                bindedRowLayout)[recordIndex]
                     != (int8_t) -1) {
                     endOfBenchmark = false;
                 }
-            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+            } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, false>::create(fieldIndex,
                                                                                                 bindedRowLayout)[recordIndex]
                     != (int16_t) -1) {
                     endOfBenchmark = false;
                 }
-            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+            } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, false>::create(fieldIndex,
                                                                                                 bindedRowLayout)[recordIndex]
                     != (int32_t) -1) {
                     endOfBenchmark = false;
                 }
-            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+            } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, false>::create(fieldIndex,
                                                                                                 bindedRowLayout)[recordIndex]
                     != (int64_t) -1) {
                     endOfBenchmark = false;
                 }
-            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+            } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, false>::create(fieldIndex,
                                                                                               bindedRowLayout)[recordIndex]
                     != (float) -1) {
                     endOfBenchmark = false;
                 }
-            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+            } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
                 if (Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, false>::create(fieldIndex,
                                                                                                bindedRowLayout)[recordIndex]
                     != (double) -1) {
@@ -144,6 +144,9 @@ class SimpleBenchmarkSink : public SinkMedium {
         } else {
             NES_DEBUG("This data sink only accepts data for numeric fields");
         }
+        if (endOfBenchmark == true){
+            completed.set_value(true);
+        }
         return true;
     }
 
@@ -154,11 +157,11 @@ class SimpleBenchmarkSink : public SinkMedium {
         return resultBuffers[index];
     }
 
-    const std::string toString() const override { return ""; }
+    std::string toString() const override { return  ""; }
 
     void setup() override{};
 
-    std::string toString() { return "Test_Sink"; }
+    std::string toString() { return "SimpleBenchmarkSink"; }
 
     void shutdown() override {
         std::unique_lock lock(m);
@@ -174,6 +177,8 @@ class SimpleBenchmarkSink : public SinkMedium {
         std::unique_lock lock(m);
         return resultBuffers.size();
     }
+
+    std::promise<bool> completed;
 
   private:
     void cleanupBuffers() {

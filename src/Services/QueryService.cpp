@@ -20,6 +20,7 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -74,6 +75,70 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
     }
 
     QueryPlanPtr queryPlan = query->getQueryPlan();
+    //
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+    queryPlan = updatedPlan;
+    std::cout << "Updated Query Plan_1: " + (queryPlan)->toString() << std::endl;
+    //
+    queryPlan->setQueryId(queryId);
+
+    // Execute only if the semantic validation flag is enabled
+    if (enableSemanticQueryValidation) {
+        NES_INFO("QueryService: Executing Semantic validation");
+        try {
+            // Checking semantic validity
+            semanticQueryValidation->checkSatisfiability(query);
+        } catch (const std::exception& exc) {
+            // If semantically invalid, we record the query to the catalog as failed
+            NES_ERROR("QueryService: Semantic Query Validation: " + std::string(exc.what()));
+            queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
+            queryCatalog->setQueryFailureReason(queryId, exc.what());
+            throw InvalidQueryException(exc.what());
+        }
+    }
+
+    NES_INFO("QueryService: Queuing the query for the execution");
+    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
+    if (entry) {
+        auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
+        queryRequestQueue->add(request);
+        return queryId;
+    }
+    throw Exception("QueryService: unable to create query catalog entry");
+}
+uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString, const QueryPlanPtr& updatedQueryPlan, const std::string& placementStrategyName) {
+
+    NES_INFO("QueryService: Validating and registering the user query.");
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+
+    NES_INFO("QueryService: Executing Syntactic validation");
+    QueryPtr query;
+    try {
+        // Checking the syntactic validity and compiling the query string to an object
+        NES_INFO("QueryService: check validation of a query");
+        query = syntacticQueryValidation->checkValidityAndGetQuery(queryString);
+    } catch (const std::exception& exc) {
+        NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
+        // On compilation error we record the query to the catalog as failed
+        queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
+        queryCatalog->setQueryFailureReason(queryId, exc.what());
+        throw InvalidQueryException(exc.what());
+    }
+
+    NES_INFO("QueryService: Validating placement strategy");
+    if (Optimizer::stringToPlacementStrategyType.find(placementStrategyName) == Optimizer::stringToPlacementStrategyType.end()) {
+        NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
+        throw InvalidArgumentException("placementStrategyName", placementStrategyName);
+    }
+
+    QueryPlanPtr queryPlan = updatedQueryPlan;
+    //
+    //auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    //const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+    //queryPlan = updatedPlan;
+    std::cout << "Updated Query Plan_1: " + (queryPlan)->toString() << std::endl;
+    //
     queryPlan->setQueryId(queryId);
 
     // Execute only if the semantic validation flag is enabled
@@ -117,6 +182,7 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
 uint64_t QueryService::addQueryRequest(const std::string& queryString, Query query, const std::string& placementStrategyName) {
     NES_INFO("QueryService: Queuing the query for the execution");
     auto queryPlan = query.getQueryPlan();
+    std::cout << "Updated Query Plan_1: " + (queryPlan)->toString() << std::endl;
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);

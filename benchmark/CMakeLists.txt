@@ -70,9 +70,9 @@ if (NES_BUILD_BENCHMARKS)
 #    add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
 
     ### MemorySource Benchmark ###
-    add_executable(memorysource-benchmark "src/Micro-Benchmarks/BenchmarkMemorySource.cpp")
-    target_link_libraries(memorysource-benchmark nes ${GBENCHMARK_LIBRARIES})
-    add_test(NAME memorysource-benchmark COMMAND memorysource-benchmark --benchmark_out=memorysource-benchmark.log --benchmark_out_format=csv)
+    #add_executable(memorysource-benchmark "src/Micro-Benchmarks/BenchmarkMemorySource.cpp")
+    #target_link_libraries(memorysource-benchmark nes ${GBENCHMARK_LIBRARIES})
+    #add_test(NAME memorysource-benchmark COMMAND memorysource-benchmark --benchmark_out=memorysource-benchmark.log --benchmark_out_format=csv)
 
 #
 #    ### Benchmark Uniform Data Benchmark ###
@@ -86,7 +86,7 @@ if (NES_BUILD_BENCHMARKS)
 #    target_link_libraries(tuplebuffer-benchmark nes ${GBENCHMARK_LIBRARIES})
 #    add_test(NAME tuplebuffer-benchmark COMMAND tuplebuffer-benchmark --benchmark_out=tuplebuffer-benchmark.log --benchmark_out_format=json)
 #
-#    ### Filter Queries Benchmark ###
+    ### Filter Queries Benchmark ###
 #    add_executable(filter-query-benchmark "src/Micro-Benchmarks/FilterQueryBenchmarks.cpp")
 #    target_link_libraries(filter-query-benchmark nes)
 #    target_sources(filter-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
@@ -130,6 +130,24 @@ if (NES_BUILD_BENCHMARKS)
 #    add_executable(query-merger-benchmark "src/Micro-Benchmarks/Query-Merger/BenchmarkQueryMerger.cpp")
 #    target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
 #    add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=query-merger-benchmark.log --benchmark_out_format=json)
+
+
+#    ### Sand Box Benchmark ###
+#        add_executable(sand-box-benchmark "src/Micro-Benchmarks/SandBoxBenchmark.cpp")
+#        target_link_libraries(sand-box-benchmark nes ${GBENCHMARK_LIBRARIES})
+#        add_test(NAME sand-box-benchmark COMMAND sand-box-benchmark --benchmark_out=sand-box-benchmark.log --benchmark_out_format=json)
+
+    #    ### Baseline Benchmark ###
+#    add_executable(baseline-benchmark "src/Micro-Benchmarks/BaselineBenchmark.cpp")
+#    target_link_libraries(baseline-benchmark nes ${GBENCHMARK_LIBRARIES})
+#    add_test(NAME baseline-benchmark COMMAND baseline-benchmark --benchmark_out=baseline-benchmark.log --benchmark_out_format=json)
+
+    ### FPD Queries Benchmark ###
+#    add_executable(fpd-query-benchmark "src/Micro-Benchmarks/FPDQueryBenchmarks.cpp")
+#    target_link_libraries(fpd-query-benchmark nes)
+#    target_sources(fpd-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+#    add_test(NAME fpd-query-benchmark COMMAND fpd-query-benchmark --benchmark_out=fpd-query-benchmark.log --benchmark_out_format=json)
+
 
     message("---Done building benchmarks")
 

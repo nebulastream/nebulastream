@@ -66,6 +66,7 @@ class QueryService {
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
     uint64_t validateAndQueueAddRequest(const std::string& queryString, const std::string& placementStrategyName);
+    uint64_t validateAndQueueAddRequest(const std::string& queryString,const QueryPlanPtr& updatedQueryPlan, const std::string& placementStrategyName);
 
     /**
      * @deprecated NOT TO BE USED
