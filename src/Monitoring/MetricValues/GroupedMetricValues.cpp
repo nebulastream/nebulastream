@@ -16,6 +16,11 @@
 #include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <cpprest/json.h>
 
+NES::GroupedMetricValues::GroupedMetricValues() : timestamp(0) {}
+
+NES::GroupedMetricValues::GroupedMetricValues(uint64_t timestamp): timestamp(timestamp) {}
+
+
 web::json::value NES::GroupedMetricValues::asJson() {
     web::json::value metricsJson{};
 
@@ -37,3 +42,5 @@ web::json::value NES::GroupedMetricValues::asJson() {
 
     return metricsJson;
 }
+
+bool NES::GroupedMetricValues::operator<(const GroupedMetricValues& other) const { return timestamp < other.timestamp; }

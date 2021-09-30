@@ -26,14 +26,23 @@
 namespace NES {
 class MonitoringPlan;
 
-struct GroupedMetricValues {
+class GroupedMetricValues {
+  public:
+    GroupedMetricValues();
+    GroupedMetricValues(uint64_t timestamp);
+
+    uint64_t timestamp;
     std::optional<std::unique_ptr<DiskMetrics>> diskMetrics;
     std::optional<std::unique_ptr<CpuMetrics>> cpuMetrics;
     std::optional<std::unique_ptr<NetworkMetrics>> networkMetrics;
     std::optional<std::unique_ptr<MemoryMetrics>> memoryMetrics;
 
     web::json::value asJson();
+
+    bool operator<(const GroupedMetricValues& other) const;
 };
+
+using GroupedMetricValuesPtr = std::shared_ptr<GroupedMetricValues>;
 
 }// namespace NES
 

@@ -18,16 +18,54 @@
 #define NES_INCLUDE_RUNTIME_METRICSTORE_HPP_
 
 #include <Util/Logger.hpp>
+#include <queue>
+#include <unordered_map>
+#include <cstdint>
 
 namespace NES {
 
+class GroupedMetricValues;
+using GroupedMetricValuesPtr = std::shared_ptr<GroupedMetricValues>;
+
+enum MetricStoreType {NEWEST, ALWAYS};
+
 /**
- * @brief WIP
+ * @brief The MetricStore that stores all the metrics for monitoring.
  */
 class MetricStore {
   public:
-    MetricStore() { NES_NOT_IMPLEMENTED(); }
+    explicit MetricStore(MetricStoreType storeType);
+
+    /**
+     * @brief Add a metric for a given node by ID
+     * @param nodeId
+     * @param metrics
+     */
+    void addMetric(uint64_t nodeId, GroupedMetricValuesPtr metrics);
+
+    /**
+     * @brief Get metrics for a given node by ID ordered by the timestamp of the grouped metrics.
+     * @param nodeId
+     * @return The grouped metrics
+     */
+    std::priority_queue<GroupedMetricValuesPtr> getMetrics(uint64_t nodeId);
+
+    /**
+     *
+     * @param nodeId
+     * @return
+     */
+    GroupedMetricValuesPtr getNewestMetric(uint64_t nodeId);
+
+    void removeMetrics(uint64_t nodeId);
+
+  private:
+    MetricStoreType storeType;
+    std::unordered_map<uint64_t, std::priority_queue<GroupedMetricValuesPtr>> storedMetrics;
+
 };
+
+using MetricStorePtr = std::shared_ptr<MetricStore>;
 
 }// namespace NES
 

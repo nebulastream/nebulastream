@@ -32,6 +32,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <Monitoring/MetricStore.hpp>
 #include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
@@ -245,6 +246,37 @@ TEST_F(MonitoringSerializationTest, testSerDeserMetricGroup) {
     EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
     EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
     EXPECT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
+}
+
+TEST_F(MonitoringSerializationTest, testMetricStore) {
+    auto metricStoreAlways = std::make_shared<MetricStore>(MetricStoreType::ALWAYS);
+    auto metricStoreNewest = std::make_shared<MetricStore>(MetricStoreType::NEWEST);
+
+    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto plan = MonitoringPlan::create(metrics);
+
+    //worker side
+    MetricGroupPtr metricGroup = plan->createMetricGroup(MetricCatalog::NesMetrics());
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+    metricGroup->getSample(tupleBuffer);
+
+    // coordinator side
+    auto schema = metricGroup->createSchema();
+    GroupedMetricValuesPtr parsedValues = std::make_shared<GroupedMetricValues>(plan->fromBuffer(schema, tupleBuffer));
+
+    const uint64_t noMetrics = 10;
+    for (uint64_t i=0; i<noMetrics; i++) {
+        metricStoreAlways->addMetric(i, parsedValues);
+        metricStoreAlways->addMetric(i, parsedValues);
+
+        metricStoreNewest->addMetric(i, parsedValues);
+        metricStoreNewest->addMetric(i, parsedValues);
+    }
+
+    for (uint64_t i=0; i<noMetrics; i++) {
+        EXPECT_EQ(int(metricStoreAlways->getMetrics(i).size()), 2);
+        EXPECT_EQ(int(metricStoreNewest->getMetrics(i).size()), 1);
+    }
 }
 
 }// namespace NES
