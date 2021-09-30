@@ -47,6 +47,10 @@ class RESTEndpointTest : public testing::Test {
         restPort = restPort + 2;
     }
 
+    void TearDown() override {
+        NES_INFO("RESTEndpointTest: Test finished");
+    }
+
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
 
     [[nodiscard]] std::pair<NesCoordinatorPtr, uint64_t> startCoordinator() {
@@ -59,6 +63,11 @@ class RESTEndpointTest : public testing::Test {
         EXPECT_NE(port, 0u);
         NES_INFO("RESTEndpointTest: Coordinator started successfully");
         return {coordinator, port};
+    }
+
+    void stopCoordinator(NesCoordinator& coordinator) {
+        NES_INFO("RESTEndpointTest: Stop Coordinator");
+        EXPECT_TRUE(coordinator.stopCoordinator(true));
     }
 };
 
@@ -132,10 +141,7 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
+    stopCoordinator(*crd);
 }
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
@@ -194,10 +200,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
+    stopCoordinator(*crd);
 }
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
@@ -270,10 +273,8 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
+
+    stopCoordinator(*crd);
 }
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
@@ -321,10 +322,8 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
+
+    stopCoordinator(*crd);
 }
 
 TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
@@ -388,10 +387,7 @@ TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
+    stopCoordinator(*crd);
 }
 
 TEST_F(RESTEndpointTest, testAddParentTopology) {
@@ -458,10 +454,7 @@ TEST_F(RESTEndpointTest, testAddParentTopology) {
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
+    stopCoordinator(*crd);
 }
 
 TEST_F(RESTEndpointTest, testRemoveParentTopology) {
@@ -517,10 +510,7 @@ TEST_F(RESTEndpointTest, testRemoveParentTopology) {
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
+    stopCoordinator(*crd);
 }
 
 TEST_F(RESTEndpointTest, testConnectivityCheck) {
@@ -568,10 +558,7 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
+    stopCoordinator(*crd);
 }
 
 TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
@@ -614,10 +601,7 @@ TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     EXPECT_TRUE(postJsonReturn.has_field("Success"));
     EXPECT_EQ(streamCatalog->getAllLogicalStreamAsString().size(), 3U);
 
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
+    stopCoordinator(*crd);
 }
 
 }// namespace NES
