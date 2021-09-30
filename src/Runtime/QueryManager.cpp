@@ -87,6 +87,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 }// namespace detail
 
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
+//static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 2;
 
 QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            uint64_t nodeEngineId,
@@ -574,7 +575,9 @@ void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
             auto task = Task(executablePipeline, buf);
             // dispatch task to task queue.
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-            taskQueue.write(std::move(task));
+            bool ret = taskQueue.write(std::move(task));
+            std::cout << "queue size when insert=" << taskQueue.size() << " or " << taskQueue.sizeGuess() << std::endl;
+            assert(ret);
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
             taskQueues[hardwareManager->getMyNumaRegion()].write(std::move(task));
 #else
@@ -936,7 +939,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-            taskQueue.write(Task(executable, buffer));
+            taskQueue.blockingWrite(Task(executable, buffer));
 #else
             taskQueues[hardwareManager->getMyNumaRegion()].write(Task(executable, buffer));
 #endif
