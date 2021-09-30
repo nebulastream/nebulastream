@@ -45,7 +45,7 @@ class RESTEndpointTest : public testing::Test {
 
     RESTEndpointTest() : coordinatorRpcPort(getNextFreePort()), coordinatorRestPort(getNextFreePort()) { }
 
-    [[nodiscard]] std::pair<NesCoordinatorPtr, uint64_t> startCoordinator() {
+    NesCoordinatorPtr startCoordinator() const {
         NES_INFO("RESTEndpointTest: Start coordinator");
         CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
         coordinatorConfig->setRpcPort(coordinatorRpcPort);
@@ -53,16 +53,17 @@ class RESTEndpointTest : public testing::Test {
         auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         EXPECT_EQ(coordinator->startCoordinator(false), coordinatorRpcPort);
         NES_INFO("RESTEndpointTest: Coordinator started successfully");
-        return {coordinator, coordinatorRpcPort};
+        return coordinator;
     }
 
-    void stopCoordinator(NesCoordinator& coordinator) {
+    static void stopCoordinator(NesCoordinator& coordinator) {
         NES_INFO("RESTEndpointTest: Stop Coordinator");
         EXPECT_TRUE(coordinator.stopCoordinator(true));
     }
 
-    NesWorkerPtr startWorker(uint64_t port, NesNodeType nodeType, uint8_t id = 1) {
-        EXPECT_EQ(port, coordinatorRpcPort);
+    // The id parameter is just used to recreate the log output before refactoring.
+    // The test code also works if the id parameter is omitted.
+    NesWorkerPtr startWorker(NesNodeType nodeType, uint8_t id = 1) {
         NES_INFO("RESTEndpointTest: Start worker " << id);
         WorkerConfigPtr workerConfig = WorkerConfig::create();
         workerConfig->setCoordinatorPort(coordinatorRpcPort);
@@ -74,17 +75,17 @@ class RESTEndpointTest : public testing::Test {
         return worker;
     }
 
-    void stopWorker(NesWorker& worker, uint8_t id = 1) {
+    static void stopWorker(NesWorker& worker, uint8_t id = 1) {
         NES_INFO("RESTEndpointTest: Stop worker " << id);
         EXPECT_TRUE(worker.stop(true));
     }
 
-    [[nodiscard]] web::http::client::http_client createRestClient(const std::string& restEndpoint) {
+    [[nodiscard]] web::http::client::http_client createRestClient(const std::string& restEndpoint) const {
         auto url = "http://127.0.0.1:" + std::to_string(coordinatorRestPort) + "/v1/nes/" + restEndpoint;
         return web::http::client::http_client {url};
     }
 
-    uint64_t getNextFreePort() {
+    static uint64_t getNextFreePort() {
         // Skip 3 ports because some ports are created by default and not handled by this test.
         // TODO: Consolidate assignment of ports with #2007
         nextFreePort += 3;
@@ -100,11 +101,10 @@ class RESTEndpointTest : public testing::Test {
 uint64_t RESTEndpointTest::nextFreePort = 1024;
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
-    auto [crd, port] = startCoordinator();
-    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto crd = startCoordinator();
+    auto wrk1 = startWorker(NesNodeType::Sensor);
     auto getExecutionPlanClient = createRestClient("query/execution-plan");
 
-    SourceConfigPtr srcConf = SourceConfig::create();
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -158,14 +158,11 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
 }
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
-    auto [crd, port] = startCoordinator();
-    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto crd = startCoordinator();
+    auto wrk1 = startWorker(NesNodeType::Sensor);
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("query/execute-query-ex");
 
-    SourceConfigPtr srcConf = SourceConfig::create();
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     QueryPlanPtr queryPlan = QueryPlan::create();
 
     //make a Protobuff object
@@ -201,13 +198,11 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
 }
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
-    auto [crd, port] = startCoordinator();
-    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto crd = startCoordinator();
+    auto wrk1 = startWorker(NesNodeType::Sensor);
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("query/execute-query-ex");
 
-    SourceConfigPtr srcConf = SourceConfig::create();
-    QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     /* REGISTER QUERY */
@@ -261,14 +256,10 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
 }
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
-    auto [crd, port] = startCoordinator();
-    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto crd = startCoordinator();
+    auto wrk1 = startWorker(NesNodeType::Sensor);
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("query/execute-query-ex");
-
-    SourceConfigPtr srcConf = SourceConfig::create();
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     std::string msg = "hello";
     web::json::value postJsonReturn;
@@ -296,11 +287,10 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
 }
 
 TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
-    auto [crd, port] = startCoordinator();
-    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto crd = startCoordinator();
+    auto wrk1 = startWorker(NesNodeType::Sensor);
     auto getExecutionPlanClient = createRestClient("queryCatalog/allRegisteredQueries");
 
-    SourceConfigPtr srcConf = SourceConfig::create();
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -345,12 +335,11 @@ TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
 }
 
 TEST_F(RESTEndpointTest, testAddParentTopology) {
-    auto [crd, port] = startCoordinator();
-    auto wrk1 = startWorker(port, NesNodeType::Sensor);
-    auto wrk2 = startWorker(port, NesNodeType::Worker, 2);
+    auto crd = startCoordinator();
+    auto wrk1 = startWorker(NesNodeType::Sensor);
+    auto wrk2 = startWorker(NesNodeType::Worker, 2);
     auto addParent = createRestClient("topology/addParent");
 
-    SourceConfigPtr srcConf = SourceConfig::create();
     uint64_t parentId = wrk2->getWorkerId();
     uint64_t childId = wrk1->getWorkerId();
 
@@ -389,11 +378,10 @@ TEST_F(RESTEndpointTest, testAddParentTopology) {
 }
 
 TEST_F(RESTEndpointTest, testRemoveParentTopology) {
-    auto [crd, port] = startCoordinator();
-    auto wrk1 = startWorker(port, NesNodeType::Sensor);
-    auto addParent = createRestClient("topology/removeParent");
+    auto crd = startCoordinator();
+    auto wrk1 = startWorker(NesNodeType::Sensor);
+    auto removeParent = createRestClient("topology/removeParent");
 
-    SourceConfigPtr srcConf = SourceConfig::create();
     uint64_t parentId = crd->getNesWorker()->getWorkerId();
     uint64_t childId = wrk1->getWorkerId();
 
@@ -404,7 +392,7 @@ TEST_F(RESTEndpointTest, testRemoveParentTopology) {
 
     web::json::value response;
     std::string msg = "{\"parentId\":\"" + std::to_string(parentId) + "\", \"childId\":\"" + std::to_string(childId) + "\"}";
-    addParent.request(web::http::methods::POST, "", msg)
+    removeParent.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
             return response.extract_json();
         })
@@ -418,11 +406,11 @@ TEST_F(RESTEndpointTest, testRemoveParentTopology) {
         })
         .wait();
 
-    auto addParentResponse = response.as_object();
+    auto removeParentResponse = response.as_object();
     NES_DEBUG("Response: " << response.serialize());
-    EXPECT_TRUE(addParentResponse.size() == 1);
-    EXPECT_TRUE(addParentResponse.find("Success") != addParentResponse.end());
-    EXPECT_TRUE(addParentResponse.at("Success").as_bool());
+    EXPECT_TRUE(removeParentResponse.size() == 1);
+    EXPECT_TRUE(removeParentResponse.find("Success") != removeParentResponse.end());
+    EXPECT_TRUE(removeParentResponse.at("Success").as_bool());
 
     ASSERT_FALSE(child->containAsParent(parent));
 
@@ -431,11 +419,10 @@ TEST_F(RESTEndpointTest, testRemoveParentTopology) {
 }
 
 TEST_F(RESTEndpointTest, testConnectivityCheck) {
-    auto [crd, port] = startCoordinator();
-    auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto crd = startCoordinator();
+    auto wrk1 = startWorker(NesNodeType::Sensor);
     auto getConnectivityCheck = createRestClient("connectivity/check");
 
-    SourceConfigPtr srcConf = SourceConfig::create();
     web::json::value response;
 
     web::uri_builder builder(("/"));
@@ -464,7 +451,7 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
 }
 
 TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
-    auto [crd, _] = startCoordinator();
+    auto crd = startCoordinator();
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("streamCatalog/addLogicalStream-ex");
 
