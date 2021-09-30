@@ -222,12 +222,6 @@ if(UNIX AND NOT APPLE)
     set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 endif()
 
-# folly
-if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    find_package(folly CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
-endif ()
-
 # Numa awareness
 find_package(NUMA)
 if(NUMA_FOUND)
@@ -376,6 +370,13 @@ if (NES_USE_ADAPTIVE)
     set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
     message("Adaptive sampling dependencies OK")
 endif (NES_USE_ADAPTIVE)
+
+# folly
+if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
+    find_dependency(gflags CONFIG REQUIRED)
+    find_package(folly CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+endif ()
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")

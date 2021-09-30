@@ -23,7 +23,7 @@ QueryCompilationRequestPtr QueryCompilationRequest::create(QueryPlanPtr queryPla
 }
 
 QueryCompilationRequest::QueryCompilationRequest(QueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine)
-    : queryPlan(std::move(queryPlan)), nodeEngine(std::move(nodeEngine)), debug(false), optimize(false), dumpQueryPlans(false) {}
+    : queryPlan(std::move(queryPlan)), nodeEngine(std::move(nodeEngine)), debug(true), optimize(true), dumpQueryPlans(false) {}
 
 void QueryCompilationRequest::enableDump() { this->dumpQueryPlans = true; }
 

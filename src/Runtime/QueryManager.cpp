@@ -30,6 +30,7 @@
 #include <memory>
 #include <stack>
 #include <utility>
+#include <xmmintrin.h>
 
 namespace NES::Runtime {
 
@@ -153,7 +154,7 @@ void QueryManager::destroy() {
             std::scoped_lock locks(queryMutex, statisticsMutex);
 #endif
             NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size()
-                                                                    << " task queue size=" << taskQueue.size());
+                                                                    << " task queue size approx=" << taskQueue.size_approx());
 
             sourceIdToExecutableQueryPlanMap.clear();
             queryToStatisticsMap.clear();
@@ -397,9 +398,11 @@ void QueryManager::poisonWorkers() {
     NES_WARNING("QueryManager: Poisoning Task Queue " << taskQueue.size());
     cv.notify_all();
 #else
+    std::vector<Task> batch;
     for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
-        taskQueue.write(Task(pipeline, buffer));
+        batch.emplace_back(pipeline, buffer);
     }
+    taskQueue.enqueue_bulk(batch.begin(), batch.size());
 #endif
 }
 
@@ -475,7 +478,7 @@ uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
     std::unique_lock workLock(workMutex);
     return taskQueue.size();
 #else
-    auto qSize = taskQueue.size();
+    auto qSize = taskQueue.size_approx();
     return qSize > 0 ? qSize : 0;
 #endif
 }
@@ -489,16 +492,18 @@ void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
         // iterate over all executable pipelines
         for (const auto& executablePipeline : executablePipelines) {
             NES_DEBUG("Add Work for executable from network source " << sourceId << " origin id: " << buf.getOriginId());
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
             // create task
             auto task = Task(executablePipeline, buf);
             // dispatch task to task queue.
-#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
             //TODO: this is a problem now as it can become the bottleneck
             std::unique_lock workQueueLock(workMutex);
             taskQueue.emplace_back(task);
             cv.notify_all();
 #else
-            taskQueue.write(std::move(task));
+            while (!taskQueue.try_enqueue(Task(executablePipeline, buf))) {
+                _mm_pause();
+            }
 #endif
         }
     } else {
@@ -538,11 +543,11 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
     if (threadPool->getNumberOfThreads() > 1) {
         std::vector<Task> batch;
         for (size_t i = 0; i < threadPool->getNumberOfThreads(); ++i) {
-            //            batch.emplace_back(pipeline, buffer);
-            taskQueue.write(Task(pipeline, buffer));
+            batch.emplace_back(pipeline, buffer);
         }
+        taskQueue.enqueue_bulk(batch.begin(), batch.size());
     } else {
-        taskQueue.write(Task(pipeline, buffer));
+        taskQueue.enqueue(Task(pipeline, buffer));
     }
 #endif
     if (blocking) {
@@ -579,7 +584,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
         NES_DEBUG("soft end-of-stream opId=" << sourceId << " reconfType=" << HardEndOfStream
                                              << " queryExecutionPlanId=" << executableQueryPlan->getQuerySubPlanId()
                                              << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
-                                             << executableQueryPlan->getQueryId() << " tasks in queue=" << taskQueue.size());
+                                             << executableQueryPlan->getQueryId() << " tasks in queue=" << taskQueue.size_approx());
         auto pipelineContext =
             std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
                                                                               inherited0::shared_from_this());
@@ -593,7 +598,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
         // emit the end of stream for each processing task
         for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-            taskQueue.write(Task(pipeline, buffer));
+            taskQueue.enqueue(Task(pipeline, buffer));
 #else
             taskQueue.emplace_back(pipeline, buffer);
 #endif
@@ -726,7 +731,7 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
 #else
     Task task;
     if (running) {
-        taskQueue.blockingRead(task);
+        taskQueue.wait_dequeue(task);
         NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         auto result = task(workerContext);
         switch (result) {
@@ -793,7 +798,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
     bool hitReconfiguration = false;
     Task task;
-    while (taskQueue.read(task)) {
+    while (taskQueue.try_dequeue(task)) {
         if (!hitReconfiguration) {// execute all pending tasks until first reconfiguration
             task(workerContext);
             if (task.isReconfiguration()) {
@@ -837,12 +842,16 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
         if ((*nextPipeline)->isRunning()) {
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer);
-            taskQueue.write(Task(executable, buffer));
+            while (!taskQueue.try_enqueue(Task(executable, buffer))) {
+                _mm_pause();
+            }
         } else {
             NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
         }
     } else {
-        taskQueue.write(Task(executable, buffer));
+        while (!taskQueue.try_enqueue(Task(executable, buffer))) {
+            _mm_pause();
+        }
     }
 #endif
 }
@@ -876,7 +885,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         auto diff = now - creation;
         statistics->incLatencySum(diff);
 
-        auto qSize = taskQueue.size();
+        auto qSize = taskQueue.size_approx();
         statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
 
         for (auto& bufferManager : bufferManagers) {
