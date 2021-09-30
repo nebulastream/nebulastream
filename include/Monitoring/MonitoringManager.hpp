@@ -33,7 +33,7 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-struct GroupedMetricValues;
+class GroupedMetricValues;
 
 /**
  * @brief The MonitoringManager is responsible for managing all global metrics of all nodes in the topology.

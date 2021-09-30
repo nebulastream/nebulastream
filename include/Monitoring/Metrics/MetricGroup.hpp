@@ -33,7 +33,6 @@ namespace NES {
 class MetricGroup {
   public:
     static std::shared_ptr<MetricGroup> create();
-    ~MetricGroup() = default;
 
     /**
      * @brief Registers a metric.

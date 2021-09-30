@@ -13,9 +13,9 @@
 # limitations under the License.
 
 add_source_nes(
-        MetricCollector.cpp
         MonitoringManager.cpp
         MonitoringAgent.cpp
+        MetricStore.cpp
 )
 
 add_subdirectory(Metrics)
