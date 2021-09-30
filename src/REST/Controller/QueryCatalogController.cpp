@@ -33,7 +33,7 @@ QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog,
     NES_DEBUG("QueryCatalogController()");
 }
 
-void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request request) {
+void QueryCatalogController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     //Extract parameters if any
     auto parameters = getParameters(request);

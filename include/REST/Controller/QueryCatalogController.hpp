@@ -34,7 +34,7 @@ class QueryCatalogController : public BaseController {
   public:
     QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorWeakPtr coordinator, GlobalQueryPlanPtr globalQueryPlan);
 
-    void handleGet(std::vector<utility::string_t> path, web::http::http_request request);
+    void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
 
   private:
     QueryCatalogPtr queryCatalog;
