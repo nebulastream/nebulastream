@@ -86,11 +86,17 @@ class RESTEndpointTest : public testing::Test {
         NES_INFO("RESTEndpointTest: Stop worker " << id);
         EXPECT_TRUE(worker.stop(true));
     }
+
+    [[nodiscard]] web::http::client::http_client createRestClient(const std::string& restEndpoint) {
+        auto url = "http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/" + restEndpoint;
+        return web::http::client::http_client {url};
+    }
 };
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     auto [crd, port] = startCoordinator();
     auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto getExecutionPlanClient = createRestClient("query/execution-plan");
 
     SourceConfigPtr srcConf = SourceConfig::create();
     QueryServicePtr queryService = crd->getQueryService();
@@ -113,8 +119,6 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     string getExecutionPlanRequestBody = getExecutionPlanStringStream.str();
     web::json::value getExecutionPlanJsonReturn;
 
-    web::http::client::http_client getExecutionPlanClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                          + "/v1/nes/query/execution-plan");
     web::uri_builder builder(("/"));
     builder.append_query(("queryId"), queryId);
     getExecutionPlanClient.request(web::http::methods::GET, builder.to_string())
@@ -150,14 +154,12 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     auto [crd, port] = startCoordinator();
     auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    //make httpclient with new endpoint -ex:
+    auto httpClient = createRestClient("query/execute-query-ex");
 
     SourceConfigPtr srcConf = SourceConfig::create();
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //make httpclient with new endpoint -ex:
-    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/query/execute-query-ex");
-
     QueryPlanPtr queryPlan = QueryPlan::create();
 
     //make a Protobuff object
@@ -195,13 +197,12 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     auto [crd, port] = startCoordinator();
     auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    //make httpclient with new endpoint -ex:
+    auto httpClient = createRestClient("query/execute-query-ex");
 
     SourceConfigPtr srcConf = SourceConfig::create();
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //make httpclient with new endpoint -ex:
-    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/query/execute-query-ex");
 
     /* REGISTER QUERY */
     SourceConfigPtr sourceConfig;
@@ -256,13 +257,12 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
     auto [crd, port] = startCoordinator();
     auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    //make httpclient with new endpoint -ex:
+    auto httpClient = createRestClient("query/execute-query-ex");
 
     SourceConfigPtr srcConf = SourceConfig::create();
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //make httpclient with new endpoint -ex:
-    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/query/execute-query-ex");
 
     std::string msg = "hello";
     web::json::value postJsonReturn;
@@ -292,6 +292,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
 TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
     auto [crd, port] = startCoordinator();
     auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto getExecutionPlanClient = createRestClient("queryCatalog/allRegisteredQueries");
 
     SourceConfigPtr srcConf = SourceConfig::create();
     QueryServicePtr queryService = crd->getQueryService();
@@ -305,8 +306,6 @@ TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
 
     // get the execution plan
     web::json::value response;
-    web::http::client::http_client getExecutionPlanClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                          + "/v1/nes/queryCatalog/allRegisteredQueries");
     web::uri_builder builder(("/"));
     getExecutionPlanClient.request(web::http::methods::GET, builder.to_string())
         .then([](const web::http::http_response& response) {
@@ -343,6 +342,7 @@ TEST_F(RESTEndpointTest, testAddParentTopology) {
     auto [crd, port] = startCoordinator();
     auto wrk1 = startWorker(port, NesNodeType::Sensor);
     auto wrk2 = startWorker(port, NesNodeType::Worker, 2);
+    auto addParent = createRestClient("topology/addParent");
 
     SourceConfigPtr srcConf = SourceConfig::create();
     uint64_t parentId = wrk2->getWorkerId();
@@ -354,7 +354,6 @@ TEST_F(RESTEndpointTest, testAddParentTopology) {
     ASSERT_FALSE(child->containAsParent(parent));
 
     web::json::value response;
-    web::http::client::http_client addParent("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/topology/addParent");
     std::string msg = "{\"parentId\":\"" + std::to_string(parentId) + "\", \"childId\":\"" + std::to_string(childId) + "\"}";
     addParent.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
@@ -386,6 +385,7 @@ TEST_F(RESTEndpointTest, testAddParentTopology) {
 TEST_F(RESTEndpointTest, testRemoveParentTopology) {
     auto [crd, port] = startCoordinator();
     auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto addParent = createRestClient("topology/removeParent");
 
     SourceConfigPtr srcConf = SourceConfig::create();
     uint64_t parentId = crd->getNesWorker()->getWorkerId();
@@ -397,7 +397,6 @@ TEST_F(RESTEndpointTest, testRemoveParentTopology) {
     ASSERT_TRUE(child->containAsParent(parent));
 
     web::json::value response;
-    web::http::client::http_client addParent("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/topology/removeParent");
     std::string msg = "{\"parentId\":\"" + std::to_string(parentId) + "\", \"childId\":\"" + std::to_string(childId) + "\"}";
     addParent.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
@@ -428,11 +427,10 @@ TEST_F(RESTEndpointTest, testRemoveParentTopology) {
 TEST_F(RESTEndpointTest, testConnectivityCheck) {
     auto [crd, port] = startCoordinator();
     auto wrk1 = startWorker(port, NesNodeType::Sensor);
+    auto getConnectivityCheck = createRestClient("connectivity/check");
 
     SourceConfigPtr srcConf = SourceConfig::create();
     web::json::value response;
-    web::http::client::http_client getConnectivityCheck("http://127.0.0.1:" + std::to_string(restPort)
-                                                        + "/v1/nes/connectivity/check");
 
     web::uri_builder builder(("/"));
     getConnectivityCheck.request(web::http::methods::GET, builder.to_string())
@@ -461,12 +459,11 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
 
 TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     auto [crd, _] = startCoordinator();
+    //make httpclient with new endpoint -ex:
+    auto httpClient = createRestClient("streamCatalog/addLogicalStream-ex");
 
     StreamCatalogPtr streamCatalog = crd->getStreamCatalog();
 
-    //make httpclient with new endpoint -ex:
-    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
-                                              + "/v1/nes/streamCatalog/addLogicalStream-ex");
 
     //create message as Protobuf encoded object
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
