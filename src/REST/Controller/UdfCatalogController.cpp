@@ -87,6 +87,20 @@ void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& pa
         badRequestImpl(request, "udfName parameter is missing"s);
         return;
     }
+    // Make sure that the URL contains only the udfName parameter and no others.
+    if (queries.size() != 1) {
+        auto unknownParameters =
+            std::accumulate(queries.begin(), queries.end(), ""s, [&](std::string s, const decltype(queries)::value_type& parameter) {
+                const auto& [key, _] = parameter;
+                if (key != "udfName") {
+                    return (s.empty() ? s + ", " : s) + key;
+                }
+                return s;
+            });
+        NES_DEBUG("Request contains unknown parameters: " << unknownParameters);
+        badRequestImpl(request, "Request contains unknown parameters"s + unknownParameters);
+        return;
+    }
     auto udfName = query->second;
     NES_DEBUG("Removing Java UDF '" << udfName << "'");
     auto removed = udfCatalog->removeUdf(udfName);
