@@ -731,7 +731,9 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
 #else
     Task task;
     if (running) {
-        taskQueue.wait_dequeue(task);
+        while (!taskQueue.try_dequeue(task)) {
+            _mm_pause();
+        }
         NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         auto result = task(workerContext);
         switch (result) {

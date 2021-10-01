@@ -46,7 +46,7 @@
 #include <unordered_set>
 
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-#include <Runtime/internal/blockingconcurrentqueue.h>
+#include <Runtime/internal/concurrentqueue.h>
 #endif
 
 namespace NES {
@@ -278,7 +278,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::vector<uint64_t> workerToCoreMapping;
     mutable std::shared_mutex queryMutex;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-    moodycamel::BlockingConcurrentQueue<Task> taskQueue;
+    moodycamel::ConcurrentQueue<Task> taskQueue;
 #else
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;
