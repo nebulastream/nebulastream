@@ -2332,7 +2332,7 @@ Runtime::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(Compiler:
                                                                        PipelineContextPtr code) {
     std::string src = generateCode(code);
     auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", src);
-    auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, true);
+    auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, true, false);
     auto result = jitCompiler->compile(std::move(request)).share();
 
     auto futureCompiledExecutablePipelineStage = std::async(std::launch::async, [result, code, src]() {
