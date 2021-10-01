@@ -279,4 +279,16 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveJavaUdfDescriptor) {
     verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), descriptorMessage.serialized_instance());
     verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), descriptorMessage.classes());
 }
+
+TEST_F(UdfCatalogControllerTest, HandleGetShouldReturnNotFoundIfUdfDoesNotExist) {
+    // when a REST message is passed to the controller to get the UDF descriptor of an UDF that does not exist
+    auto request = web::http::http_request {web::http::methods::GET};
+    request.set_request_uri (UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName=unknownUdf"s);
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
+    // then the response is OK
+    verifyResponseStatusCode(request, status_codes::OK);
+    // and the response message indicates that the UDF was not found
+    auto response = extractGetJavaUdfDescriptorResponse(request);
+    ASSERT_FALSE(response.found());
+}
 } // namespace NES
