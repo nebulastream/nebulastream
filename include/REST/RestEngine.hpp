@@ -79,7 +79,7 @@ using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 class UdfCatalogController;
 using UdfCatalogControllerPtr = std::shared_ptr<UdfCatalogController>;
 
-class RestEngine : public BaseController {
+class RestEngine {
 
   public:
     RestEngine(const StreamCatalogPtr& streamCatalog,
@@ -117,6 +117,17 @@ class RestEngine : public BaseController {
     pplx::task<void> accept();
     pplx::task<void> shutdown();
     static std::vector<utility::string_t> splitPath(const utility::string_t& path);
+
+    static pplx::task<void> returnDefaultReply(const http::method& method, http_request& request);
+
+    static json::value responseNotImpl(const http::method& method, utility::string_t path);
+
+    /**
+        * @brief Get the URI path from the request
+        * @param request : the user request
+        * @return the path from the request
+    */
+    static utility::string_t getPath(http_request& request);
 
   protected:
     web::http::experimental::listener::http_listener _listener;// main micro service network endpoint

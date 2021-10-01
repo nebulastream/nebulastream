@@ -15,30 +15,43 @@
 */
 
 #include "REST/Controller/BaseController.hpp"
-
+#include <REST/RestEngine.hpp>
 #include <utility>
 
 namespace NES {
 
-void BaseController::handleDelete(const std::vector<utility::string_t>&, http_request& request) {
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, getPath(request)));
-}
-
 void BaseController::handleGet(const std::vector<utility::string_t>&, http_request& request) {
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, getPath(request)));
+  RestEngine::returnDefaultReply(methods::GET, request);
 }
 
+void BaseController::handlePut(const std::vector<utility::string_t>&, http_request& request) {
+  RestEngine::returnDefaultReply(methods::PUT, request);
+}
+
+void BaseController::handlePost(const std::vector<utility::string_t>&, http_request& request) {
+  RestEngine::returnDefaultReply(methods::TRCE, request);
+}
+
+void BaseController::handleDelete(const std::vector<utility::string_t>&, http_request& request) {
+  RestEngine::returnDefaultReply(methods::DEL, request);
+}
+
+void BaseController::handlePatch(const std::vector<utility::string_t>&, http_request& request) {
+  RestEngine::returnDefaultReply(methods::TRCE, request);
+}
 void BaseController::handleHead(const std::vector<utility::string_t>&, http_request& request) {
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(request)));
-}
-
-void BaseController::handleMerge(const std::vector<utility::string_t>&, http_request& request) {
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(request)));
+  RestEngine::returnDefaultReply(methods::HEAD, request);
 }
 
 void BaseController::handleTrace(const std::vector<utility::string_t>&, http_request& request) {
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(request)));
+  RestEngine::returnDefaultReply(methods::TRCE, request);
 }
+
+void BaseController::handleMerge(const std::vector<utility::string_t>&, http_request& request) {
+  RestEngine::returnDefaultReply(methods::MERGE, request);
+}
+
+/* I wonder if we should put all the following methods to RestEngine folder too */
 
 void BaseController::handleOptions(const http_request& request) {
     http_response response(status_codes::OK);
@@ -49,12 +62,6 @@ void BaseController::handleOptions(const http_request& request) {
     request.reply(response);
 }
 
-json::value BaseController::responseNotImpl(const http::method& method, utility::string_t path) {
-    auto response = json::value::object();
-    response["path"] = json::value::string(std::move(path));
-    response["http_method"] = json::value::string(method);
-    return response;
-}
 
 void BaseController::successMessageImpl(const http_request& message, const json::value& result) {
     http_response response(status_codes::OK);
@@ -106,8 +113,6 @@ void BaseController::badRequestImpl(const web::http::http_request& request, cons
 template void BaseController::badRequestImpl<std::string>(const web::http::http_request& request, const std::string& detail);
 template void BaseController::badRequestImpl<web::json::value>(const web::http::http_request& request,
                                                                const web::json::value& detail);
-
-utility::string_t BaseController::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
 
 std::map<utility::string_t, utility::string_t> BaseController::getParameters(http_request& request) {
     return uri::split_query(request.request_uri().query());
@@ -220,4 +225,5 @@ void BaseController::handleException(const web::http::http_request& message, con
         this->internalServerErrorImpl(message);
     }
 }
+
 }// namespace NES

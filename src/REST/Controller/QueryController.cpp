@@ -43,7 +43,7 @@ QueryController::QueryController(QueryServicePtr queryService,
     : topology(std::move(topology)), queryService(std::move(queryService)), queryCatalog(std::move(queryCatalog)),
       globalExecutionPlan(std::move(globalExecutionPlan)) {}
 
-void QueryController::handleGet(vector<utility::string_t> path, http_request request) {
+void QueryController::handleGet(const vector<utility::string_t>& path, http_request& request) {
 
     auto parameters = getParameters(request);
 
@@ -116,7 +116,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request req
     }
 }
 
-void QueryController::handlePost(vector<utility::string_t> path, http_request message) {
+void QueryController::handlePost(const vector<utility::string_t>& path, http_request& message) {
 
     if (path[1] == "execute-query") {
 
@@ -203,7 +203,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
     }
 }// namespace NES
 
-void QueryController::handleDelete(std::vector<utility::string_t> path, http_request request) {
+void QueryController::handleDelete(const vector<utility::string_t>& path, http_request& request) {
 
     //Extract parameters if any
     auto parameters = getParameters(request);
