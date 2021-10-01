@@ -62,22 +62,15 @@ void BaseController::handleOptions(const http_request& request) {
     request.reply(response);
 }
 
-
-void BaseController::successMessageImpl(const http_request& message, const json::value& result) {
+template <typename T> void BaseController::successMessageImpl(const http_request& request, const T& result) {
     http_response response(status_codes::OK);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
     response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
     response.set_body(result);
-    message.reply(response);
+    request.reply(response);
 }
-
-void BaseController::successMessageImpl(const http_request& message, const utf8string& result) {
-    http_response response(status_codes::OK);
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-    response.set_body(result);
-    message.reply(response);
-}
+template void BaseController::successMessageImpl<std::string>(const http_request& request, const std::string& result);
+template void BaseController::successMessageImpl<web::json::value>(const http_request& request, const web::json::value& result);
 
 void BaseController::internalServerErrorImpl(const http_request& message) {
     http_response response(status_codes::InternalError);
