@@ -33,7 +33,7 @@ class UdfCatalogTest : public testing::Test {
         auto methodName = "udf_method"s;
         auto instance = JavaSerializedInstance{1};// byte-array containing 1 byte
         auto byteCodeList = JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}};
-        return std::make_shared<JavaUdfDescriptor>(className, methodName, instance, byteCodeList);
+        return JavaUdfDescriptor::create(className, methodName, instance, byteCodeList);
     }
 
   protected:
