@@ -28,6 +28,16 @@ using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;
 using JavaUdfByteCodeList = std::unordered_map<std::string, JavaByteCode>;
 
+// TODO #2079 Change to unique_ptr?
+// This is a shared_ptr for now.
+// The UDF implementation is owned by the UDF catalog, but it is passed to a query operator during query rewrite.
+// If the UDF is removed from the catalog while a query that uses the UDF is still active in the system,
+// the pointer to the UDF must stay valid.
+// It would be better to have the UDF catalog consume a unique_ptr to signal that it owns the implementation object
+// and then return shared_ptrs when the implementation is retrieved.
+class JavaUdfDescriptor;
+using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
+
 /**
  * @brief Container for all the data required to execute a Java UDF inside an embedded JVM.
  */
@@ -48,6 +58,24 @@ class JavaUdfDescriptor {
                       const std::string& methodName,
                       const JavaSerializedInstance& serializedInstance,
                       const JavaUdfByteCodeList& byteCodeList);
+
+    /**
+     * @brief Factory method to create a JavaUdfDescriptorPtr instance.
+     * @param className The fully-qualified class name of the UDF implementing the UDF.
+     * @param methodName The method name of the UDF function.
+     * @param serializedInstance A serialized instance of the UDF class which stores captured free variables.
+     * @param byteCodeList A list of fully-qualified class names and their bytecode required to execute the UDF.
+     * @throws UdfException If className is empty or methodName is empty.
+     * @throws UdfException If byteCodeList does not contain an entry for getClassName.
+     * @throws UdfException If serializedInstance or any of the bytecode entries in byteCodeList are a 0-size byte array.
+     * @return A std::shared_ptr pointing to the newly constructed Java UDF descriptor.
+     */
+    static JavaUdfDescriptorPtr create(const std::string& className,
+                                       const std::string& methodName,
+                                       const JavaSerializedInstance& serializedInstance,
+                                       const JavaUdfByteCodeList& byteCodeList) {
+        return std::make_shared<JavaUdfDescriptor>(className, methodName, serializedInstance, byteCodeList);
+    }
 
     /**
      * @brief Return the fully-qualified class name of the class implementing the UDF.
@@ -91,14 +119,5 @@ class JavaUdfDescriptor {
     const JavaSerializedInstance serializedInstance;
     const JavaUdfByteCodeList byteCodeList;
 };
-
-// TODO #2079 Change to unique_ptr?
-// This is a shared_ptr for now.
-// The UDF implementation is owned by the UDF catalog, but it is passed to a query operator during query rewrite.
-// If the UDF is removed from the catalog while a query that uses the UDF is still active in the system,
-// the pointer to the UDF must stay valid.
-// It would be better to have the UDF catalog consume a unique_ptr to signal that it owns the implementation object
-// and then return shared_ptrs when the implementation is retrieved.
-using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
 
 }// namespace NES::Catalogs
