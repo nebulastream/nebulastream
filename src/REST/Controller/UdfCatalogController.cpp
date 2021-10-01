@@ -57,6 +57,7 @@ std::pair<bool, const std::string> UdfCatalogController::extractUdfParameter(htt
     auto query = queries.find("udfName");
     // Verify that the udfName parameter exists.
     if (query == queries.end()) {
+        NES_DEBUG("Request does not contain the udfName parameter");
         badRequestImpl(request, "udfName parameter is missing"s);
         return {false, ""};
     }
@@ -90,9 +91,11 @@ void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path,
     GetJavaUdfDescriptorResponse response;
     if (udfDescriptor == nullptr) {
         // Signal that the UDF does not exist in the catalog.
+        NES_DEBUG("REST client tried retrieving UDF descriptor for non-existing Java UDF: " << udfName);
         response.set_found(false);
     } else {
         // Return the UDF descriptor to the client.
+        NES_DEBUG("Returning UDF descriptor to REST client for Java UDF: " << udfName);
         response.set_found(true);
         auto descriptorMessage = response.mutable_java_udf_descriptor();
         descriptorMessage->set_udf_class_name(udfDescriptor->getClassName());
