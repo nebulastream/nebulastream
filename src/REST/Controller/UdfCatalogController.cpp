@@ -67,7 +67,7 @@ std::pair<bool, const std::string> UdfCatalogController::extractUdfNameParameter
             std::accumulate(queries.begin(), queries.end(), ""s, [&](std::string s, const decltype(queries)::value_type& parameter) {
                 const auto& key = parameter.first;
                 if (key != "udfName") {
-                    return (s.empty() ? s + ", " : s) + key;
+                    return (s.empty() ? s : s + ", ") + key;
                 }
                 return s;
             });
@@ -97,7 +97,7 @@ void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path,
         // Return the UDF descriptor to the client.
         NES_DEBUG("Returning UDF descriptor to REST client for Java UDF: " << udfName);
         response.set_found(true);
-        auto descriptorMessage = response.mutable_java_udf_descriptor();
+        auto* descriptorMessage = response.mutable_java_udf_descriptor();
         descriptorMessage->set_udf_class_name(udfDescriptor->getClassName());
         descriptorMessage->set_udf_method_name(udfDescriptor->getMethodName());
         descriptorMessage->set_serialized_instance(udfDescriptor->getSerializedInstance().data(),

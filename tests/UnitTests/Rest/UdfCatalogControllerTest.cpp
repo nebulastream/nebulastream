@@ -46,7 +46,7 @@ class UdfCatalogControllerTest : public testing::Test {
                                                                const JavaUdfByteCodeList& byteCodeList) {
         auto javaUdfRequest = RegisterJavaUdfRequest{};
         javaUdfRequest.set_udf_name(udfName);
-        auto descriptorMessage = javaUdfRequest.mutable_java_udf_descriptor();
+        auto* descriptorMessage = javaUdfRequest.mutable_java_udf_descriptor();
         descriptorMessage->set_udf_class_name(udfClassName);
         descriptorMessage->set_udf_method_name(methodName);
         descriptorMessage->set_serialized_instance(serializedInstance.data(), serializedInstance.size());
