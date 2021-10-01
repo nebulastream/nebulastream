@@ -84,9 +84,9 @@ void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& pa
     auto queries = web::uri::split_query(request.request_uri().query());
     auto udfName = queries.find("udfName")->second;
     NES_DEBUG("Removing Java UDF '" << udfName << "'");
-    udfCatalog->removeUdf(udfName);
+    auto removed = udfCatalog->removeUdf(udfName);
     web::json::value result;
-    result["removed"] = web::json::value(true);
+    result["removed"] = web::json::value(removed);
     successMessageImpl(request, result);
 }
 #pragma GCC diagnostic warning "-Wunused-parameter"
