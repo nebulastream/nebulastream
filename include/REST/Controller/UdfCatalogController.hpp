@@ -38,6 +38,8 @@ class UdfCatalogController : public BaseController {
         : udfCatalog(std::move(udfCatalog))
     { }
 
+    void handleGet(const std::vector<utility::string_t>& path, http_request& request);
+
     void handlePost(const std::vector<utility::string_t>& path, http_request& request);
 
     void handleDelete(const std::vector<utility::string_t>& path, http_request& request);

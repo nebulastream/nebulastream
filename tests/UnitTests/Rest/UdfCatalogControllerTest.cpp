@@ -52,7 +52,7 @@ class UdfCatalogControllerTest : public testing::Test {
         for (const auto& [className, byteCode] : byteCodeList) {
             auto* javaClass = javaUdfRequest.add_classes();
             javaClass->set_class_name(className);
-            javaClass->set_byte_code(std::string{byteCode.begin(), byteCode.end()});
+            javaClass->set_byte_code(byteCode.data(), byteCode.size());
         }
         return javaUdfRequest;
     }
@@ -97,6 +97,32 @@ class UdfCatalogControllerTest : public testing::Test {
             auto converted = JavaByteCode(classDefinition.byte_code().begin(), classDefinition.byte_code().end());
             ASSERT_EQ(actualByteCode->second, converted);
         }
+    }
+
+    static void verifyByteCodeList(const JavaUdfByteCodeList& actual,
+                                   const google::protobuf::RepeatedPtrField<JavaUdfDescriptorMessage_JavaUdfClassDefinition>& expected) {
+        ASSERT_EQ(actual.size(), static_cast<decltype(actual.size())>(expected.size()));
+        for (const auto& classDefinition : expected) {
+            auto actualByteCode = actual.find(classDefinition.class_name());
+            ASSERT_TRUE(actualByteCode != actual.end());
+            auto converted = JavaByteCode(classDefinition.byte_code().begin(), classDefinition.byte_code().end());
+            ASSERT_EQ(actualByteCode->second, converted);
+        }
+    }
+
+    [[nodiscard]] static GetJavaUdfDescriptorResponse extractGetJavaUdfDescriptorResponse(const http_request& request) {
+        GetJavaUdfDescriptorResponse response;
+        request.get_response()
+            .then([&response](const pplx::task<http_response>& task) {
+                task.get()
+                    .extract_string(true)
+                    .then([&response](const pplx::task<std::string>& task) {
+                        response.ParseFromString(task.get());
+                    })
+                    .wait();
+            })
+            .wait();
+        return response;
     }
 
     UdfCatalogPtr udfCatalog;
@@ -236,5 +262,30 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteChecksForKnownPath) {
     udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "unknown-path"}, request);
     // then the HTTP response is BadRequest
     verifyResponseStatusCode(request, status_codes::BadRequest);
+}
+
+TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveJavaUdfDescriptor) {
+    // given the UDF catalog contains a Java UDF
+    auto javaUdfDescriptor = JavaUdfDescriptor::create("some_package.my_udf"s,
+                                                       "udf_method"s,
+                                                       JavaSerializedInstance{1},
+                                                       JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}});
+    auto udfName = "my_udf"s;
+    udfCatalog->registerJavaUdf(udfName, javaUdfDescriptor);
+    // when a REST message is passed to the controller to get the UDF descriptor
+    auto request = web::http::http_request {web::http::methods::GET};
+    request.set_request_uri (UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName="s + udfName);
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
+    // then the response is OK
+    verifyResponseStatusCode(request, status_codes::OK);
+    // and the response message indicates that the UDF was found
+    auto response = extractGetJavaUdfDescriptorResponse(request);
+    ASSERT_TRUE(response.found());
+    // and the response contains the UDF descriptor
+    auto javaUdfDescriptorMessage = response.java_udf_descriptor();
+    ASSERT_EQ(javaUdfDescriptor->getClassName(), javaUdfDescriptorMessage.udf_class_name());
+    ASSERT_EQ(javaUdfDescriptor->getMethodName(), javaUdfDescriptorMessage.udf_method_name());
+    verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), javaUdfDescriptorMessage.serialized_instance());
+    verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), javaUdfDescriptorMessage.classes());
 }
 } // namespace NES
