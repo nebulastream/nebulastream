@@ -67,6 +67,21 @@ class UdfCatalogControllerTest : public testing::Test {
             .wait();
     }
 
+    static void verifyResponseResult(const web::http::http_request& request,
+                                     const web::json::value& expected) {
+        request.get_response()
+            .then([&expected](const pplx::task<http_response>& task) {
+                auto response = task.get();
+                response.extract_json()
+                    .then([&expected](const pplx::task<web::json::value>& task) {
+                        web::json::value json;
+                        ASSERT_EQ(task.get(), expected);
+                    })
+                    .wait();
+            })
+            .wait();
+    }
+
     static void verifySerializedInstance(const JavaSerializedInstance& actual,
                                          const std::string& expected) {
         auto converted = JavaSerializedInstance {expected.begin(), expected.end()};
@@ -168,18 +183,22 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
     verifyResponseStatusCode(request, status_codes::OK);
     // and the UDF does no longer exist in the catalog
     ASSERT_EQ(udfCatalog->getUdfDescriptor(udfName), nullptr);
-    // and the response shows that the UDF was deleted
-    request.get_response()
-        .then([&](const pplx::task<http_response>& task) {
-            auto response = task.get();
-            response.extract_json()
-                .then([&](const pplx::task<web::json::value>& task) {
-                    web::json::value json;
-                    json["removed"] = web::json::value(true);
-                    ASSERT_EQ(json, task.get());
-                })
-                .wait();
-        })
-        .wait();
+    // and the response shows that the UDF was removed
+    web::json::value json;
+    json["removed"] = web::json::value(true);
+    verifyResponseResult(request, json);
+}
+
+TEST_F(UdfCatalogControllerTest, HandleDeleteSignalsIfUdfDidNotExist) {
+    // when a REST message is passed to the controller to remove a UDF that does not exist
+    auto request = web::http::http_request{web::http::methods::DEL};
+    request.set_request_uri(UdfCatalogController::path_prefix + "/removeUdf?udfName=unknown_udf"s);
+    udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "removeUdf"}, request);
+    // then the response is OK
+    verifyResponseStatusCode(request, status_codes::OK);
+    // and the response shows that the UDF was not removed
+    web::json::value json;
+    json["removed"] = web::json::value(false);
+    verifyResponseResult(request, json);
 }
 } // namespace NES
