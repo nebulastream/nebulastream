@@ -70,14 +70,12 @@ MQTTSource::MQTTSource(SchemaPtr schema,
       tupleSize(schema->getSchemaSizeInBytes()), qos(qos), cleanSession(cleanSession),
       bufferFlushIntervalMs(bufferFlushIntervalMs) {
 
-    //Compute read timeout
-    if (bufferFlushIntervalMs > 0) {
-        readTimeout = bufferFlushIntervalMs;
-    } else {
-        readTimeout = 100;//Default to 100 ms
+    if (cleanSession == true){
+        uint64_t i = random();
+        this->clientId = (clientId + std::to_string(i));
     }
 
-    client = std::make_shared<mqtt::async_client>(serverAddress, clientId);
+    client = std::make_shared<mqtt::async_client>(serverAddress, this->clientId);
 
     //init physical types
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -156,7 +154,7 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         std::string data = "";
         try {
             NES_TRACE("Waiting for messages on topic: '" << topic << "'");
-            auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeout));
+            auto message = client->consume_message();
             NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
             data = message->get_payload_str();
             if (inputFormat == MQTTSourceDescriptor::JSON) {//remove '}' at the end of message, if JSON

@@ -115,7 +115,7 @@ void Parser::writeFieldValueToTupleBuffer(std::basic_string<char> inputString,
         std::string value;
         // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
         // improve behavior with json library
-        value = (json) ? inputString.substr(1, value.size() - 2) : inputString.c_str();
+        value = (json) ? inputString.substr(1, inputString.size() - 2) : inputString.c_str();
         memcpy(tupleBuffer.getBuffer<char>() + offset, value.c_str(), fieldSize);
     }
 }
