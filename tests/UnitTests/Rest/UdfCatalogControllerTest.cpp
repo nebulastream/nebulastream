@@ -201,4 +201,14 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteSignalsIfUdfDidNotExist) {
     json["removed"] = web::json::value(false);
     verifyResponseResult(request, json);
 }
+
+TEST_F(UdfCatalogControllerTest, HandleDeleteExpectsUdfParameter) {
+    // when a REST message is passed to the controller that is missing the udfName parameter
+    auto request = web::http::http_request{web::http::methods::DEL};
+    request.set_request_uri(UdfCatalogController::path_prefix + "/removeUdf"s);
+    udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "removeUdf"}, request);
+    // then the response is BadRequest
+    verifyResponseStatusCode(request, status_codes::BadRequest);
+}
+
 } // namespace NES

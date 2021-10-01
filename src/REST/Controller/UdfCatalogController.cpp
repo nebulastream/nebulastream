@@ -82,7 +82,12 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& path, http_request& request) {
     auto queries = web::uri::split_query(request.request_uri().query());
-    auto udfName = queries.find("udfName")->second;
+    auto query = queries.find("udfName");
+    if (query == queries.end()) {
+        badRequestImpl(request, "udfName parameter is missing"s);
+        return;
+    }
+    auto udfName = query->second;
     NES_DEBUG("Removing Java UDF '" << udfName << "'");
     auto removed = udfCatalog->removeUdf(udfName);
     web::json::value result;
