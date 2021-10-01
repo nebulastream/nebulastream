@@ -211,4 +211,13 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteExpectsUdfParameter) {
     verifyResponseStatusCode(request, status_codes::BadRequest);
 }
 
+TEST_F(UdfCatalogControllerTest, HandleDeleteTreatsSuperfluousParametersAreAnErrorCondition) {
+    // when a REST message is passed to the controller that is contains  the udfName parameter
+    auto request = web::http::http_request{web::http::methods::DEL};
+    request.set_request_uri(UdfCatalogController::path_prefix + "/removeUdf?udfName=some_udf&unknownParameter=unknownValue"s);
+    udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "removeUdf"}, request);
+    // then the response is BadRequest
+    verifyResponseStatusCode(request, status_codes::BadRequest);
+}
+
 } // namespace NES
