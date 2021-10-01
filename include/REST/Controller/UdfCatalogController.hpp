@@ -57,6 +57,13 @@ class UdfCatalogController : public BaseController {
                                                     const std::string& endpoint,
                                                     http_request& request);
 
+    // Extract the udfName parameter from the URL query string.
+    // This method checks if the udfName parameter exists and if it's the only parameter.
+    // If either is not true, this method constructs a BadRequest response and returns false as the first return value.
+    // Otherwise, the UDF name is returned as the second return value;
+    // Handler methods may call this method in the beginning and should immediately return when this method returns false.
+    [[nodiscard]] static std::pair<bool, const std::string> extractUdfParameter(http_request& request);
+
     UdfCatalogPtr udfCatalog;
 };
 

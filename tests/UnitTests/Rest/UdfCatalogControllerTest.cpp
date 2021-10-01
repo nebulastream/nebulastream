@@ -229,7 +229,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteExpectsUdfParameter) {
 }
 
 TEST_F(UdfCatalogControllerTest, HandleDeleteTreatsSuperfluousParametersAreAnErrorCondition) {
-    // when a REST message is passed to the controller that is contains  the udfName parameter
+    // when a REST message is passed to the controller that is contains parameters other than the udfName parameter
     auto request = web::http::http_request{web::http::methods::DEL};
     request.set_request_uri(UdfCatalogController::path_prefix + "/removeUdf?udfName=some_udf&unknownParameter=unknownValue"s);
     udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "removeUdf"}, request);
@@ -291,4 +291,23 @@ TEST_F(UdfCatalogControllerTest, HandleGetShouldReturnNotFoundIfUdfDoesNotExist)
     auto response = extractGetJavaUdfDescriptorResponse(request);
     ASSERT_FALSE(response.found());
 }
+
+TEST_F(UdfCatalogControllerTest, HandleGetExpectsUdfParameter) {
+    // when a REST message is passed to the controller that is missing the udfName parameter
+    auto request = web::http::http_request{web::http::methods::GET};
+    request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor"s);
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
+    // then the response is BadRequest
+    verifyResponseStatusCode(request, status_codes::BadRequest);
+}
+
+TEST_F(UdfCatalogControllerTest, HandleGetTreatsSuperfluousParametersAreAnErrorCondition) {
+    // when a REST message is passed to the controller that is contains parameters other than the udfName parameter
+    auto request = web::http::http_request{web::http::methods::GET};
+    request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName=some_udf&unknownParameter=unknownValue"s);
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
+    // then the response is BadRequest
+    verifyResponseStatusCode(request, status_codes::BadRequest);
+}
+
 } // namespace NES
