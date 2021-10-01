@@ -59,16 +59,22 @@ void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path,
     auto udfName = query->second;
     auto udfDescriptor = udfCatalog->getUdfDescriptor(udfName);
     GetJavaUdfDescriptorResponse response;
-    response.set_found(udfDescriptor != nullptr);
-    auto descriptorMessage = response.mutable_java_udf_descriptor();
-    descriptorMessage->set_udf_class_name(udfDescriptor->getClassName());
-    descriptorMessage->set_udf_method_name(udfDescriptor->getMethodName());
-    descriptorMessage->set_serialized_instance(udfDescriptor->getSerializedInstance().data(),
-                                              udfDescriptor->getSerializedInstance().size());
-    for (const auto& [className, byteCode] : udfDescriptor->getByteCodeList()) {
-        auto* javaClass = descriptorMessage->add_classes();
-        javaClass->set_class_name(className);
-        javaClass->set_byte_code(byteCode.data(), byteCode.size());
+    if (udfDescriptor == nullptr) {
+        // Signal that the UDF does not exist in the catalog.
+        response.set_found(false);
+    } else {
+        // Return the UDF descriptor to the client.
+        response.set_found(true);
+        auto descriptorMessage = response.mutable_java_udf_descriptor();
+        descriptorMessage->set_udf_class_name(udfDescriptor->getClassName());
+        descriptorMessage->set_udf_method_name(udfDescriptor->getMethodName());
+        descriptorMessage->set_serialized_instance(udfDescriptor->getSerializedInstance().data(),
+                                                   udfDescriptor->getSerializedInstance().size());
+        for (const auto& [className, byteCode] : udfDescriptor->getByteCodeList()) {
+            auto* javaClass = descriptorMessage->add_classes();
+            javaClass->set_class_name(className);
+            javaClass->set_byte_code(byteCode.data(), byteCode.size());
+        }
     }
     successMessageImpl(request, response.SerializeAsString());
 }
