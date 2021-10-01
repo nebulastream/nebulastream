@@ -52,6 +52,28 @@ bool UdfCatalogController::verifyCorrectEndpoint(const std::vector<std::string>&
     return true;
 }
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path, http_request& request) {
+    auto queries = web::uri::split_query(request.request_uri().query());
+    auto query = queries.find("udfName");
+    auto udfName = query->second;
+    auto udfDescriptor = udfCatalog->getUdfDescriptor(udfName);
+    GetJavaUdfDescriptorResponse response;
+    response.set_found(udfDescriptor != nullptr);
+    auto descriptorMessage = response.mutable_java_udf_descriptor();
+    descriptorMessage->set_udf_class_name(udfDescriptor->getClassName());
+    descriptorMessage->set_udf_method_name(udfDescriptor->getMethodName());
+    descriptorMessage->set_serialized_instance(udfDescriptor->getSerializedInstance().data(),
+                                              udfDescriptor->getSerializedInstance().size());
+    for (const auto& [className, byteCode] : udfDescriptor->getByteCodeList()) {
+        auto* javaClass = descriptorMessage->add_classes();
+        javaClass->set_class_name(className);
+        javaClass->set_byte_code(byteCode.data(), byteCode.size());
+    }
+    successMessageImpl(request, response.SerializeAsString());
+}
+#pragma GCC diagnostic warning "-Wunused-parameter"
+
 void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, http_request& request) {
     if (!verifyCorrectPathPrefix(path[0], request) ||
         !verifyCorrectEndpoint(path, "registerJavaUdf", request)) {
