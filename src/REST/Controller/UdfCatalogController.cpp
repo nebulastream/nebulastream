@@ -77,8 +77,11 @@ std::pair<bool, const std::string> UdfCatalogController::extractUdfParameter(htt
     return {true, query->second};
 }
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path, http_request& request) {
+    if (!verifyCorrectPathPrefix(path[0], request) ||
+        !verifyCorrectEndpoint(path, "getUdfDescriptor", request)) {
+        return;
+    }
     auto [found, udfName] = extractUdfParameter(request);
     if (!found) {
         return;
@@ -104,7 +107,6 @@ void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path,
     }
     successMessageImpl(request, response.SerializeAsString());
 }
-#pragma GCC diagnostic warning "-Wunused-parameter"
 
 void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, http_request& request) {
     if (!verifyCorrectPathPrefix(path[0], request) ||

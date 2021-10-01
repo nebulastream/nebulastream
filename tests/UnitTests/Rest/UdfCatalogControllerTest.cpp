@@ -310,4 +310,22 @@ TEST_F(UdfCatalogControllerTest, HandleGetTreatsSuperfluousParametersAreAnErrorC
     verifyResponseStatusCode(request, status_codes::BadRequest);
 }
 
+TEST_F(UdfCatalogControllerTest, HandleGetShouldVerifyUrlPathPrefix) {
+    // given a REST message
+    auto request = web::http::http_request {web::http::methods::GET};
+    // when that message is passed to the controller with the wrong path prefix
+    udfCatalogController.handleGet({"wrong-path-prefix"}, request);
+    // then the HTTP response is InternalServerError
+    verifyResponseStatusCode(request, status_codes::InternalError);
+}
+
+TEST_F(UdfCatalogControllerTest, HandleGetChecksForKnownPath) {
+    // when a REST message is passed to the controller with an unknown path
+    auto request = web::http::http_request {web::http::methods::GET};
+    request.set_request_uri(UdfCatalogController::path_prefix + "/unknown-path?udfName=unknown_udf"s);
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "unknown-path"}, request);
+    // then the HTTP response is BadRequest
+    verifyResponseStatusCode(request, status_codes::BadRequest);
+}
+
 } // namespace NES
