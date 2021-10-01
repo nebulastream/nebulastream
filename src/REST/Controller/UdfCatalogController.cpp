@@ -38,16 +38,23 @@ bool UdfCatalogController::verifyCorrectPathPrefix(const std::string& path_prefi
     return true;
 }
 
-void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, http_request& request) {
-    if (!verifyCorrectPathPrefix(path[0], request)) {
-        return;
-    }
-    if (path.size() != 2 || path[1] != "registerJavaUdf") {
+bool UdfCatalogController::verifyCorrectEndpoint(const std::vector<std::string>& path,
+                                                 const std::string& endpoint,
+                                                 http_request& request) {
+    if (path.size() != 2 || path[1] != endpoint) {
         std::stringstream ss;
         ss << "HTTP request with unknown path: /";
         std::copy(path.begin(), path.end(), std::ostream_iterator<std::string>(ss, "/"));
         NES_WARNING(ss.str());
         badRequestImpl(request, ss.str());
+        return false;
+    }
+    return true;
+}
+
+void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, http_request& request) {
+    if (!verifyCorrectPathPrefix(path[0], request) ||
+        !verifyCorrectEndpoint(path, "registerJavaUdf", request)) {
         return;
     }
     auto udfCatalog = this->udfCatalog;
@@ -86,7 +93,8 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
 }
 
 void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& path, http_request& request) {
-    if (!verifyCorrectPathPrefix(path[0], request)) {
+    if (!verifyCorrectPathPrefix(path[0], request) ||
+        !verifyCorrectEndpoint(path, "removeUdf", request)) {
         return;
     }
     auto queries = web::uri::split_query(request.request_uri().query());
@@ -106,7 +114,7 @@ void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& pa
                 return s;
             });
         NES_DEBUG("Request contains unknown parameters: " << unknownParameters);
-        badRequestImpl(request, "Request contains unknown parameters"s + unknownParameters);
+        badRequestImpl(request, "Request contains unknown parameters: "s + unknownParameters);
         return;
     }
     auto udfName = query->second;

@@ -48,6 +48,13 @@ class UdfCatalogController : public BaseController {
     // Handler methods should call this method in the beginning and immediately return when this method returns false.
     [[nodiscard]] static bool verifyCorrectPathPrefix(const std::string& path_prefix, http_request& request);
 
+    // Check that a handler method was called for a known REST endpoint.
+    // If this is not the case, this method constructs a BadRequest response and returns false.
+    // Handler methods should call this method in the beginning and immediately return when this method returns false.
+    [[nodiscard]] static bool verifyCorrectEndpoint(const std::vector<std::string>& path,
+                                                    const std::string& endpoint,
+                                                    http_request& request);
+
     UdfCatalogPtr udfCatalog;
 };
 
