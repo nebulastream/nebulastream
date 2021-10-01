@@ -26,6 +26,8 @@
 #include <Util/Logger.hpp>
 
 #include <iostream>
+#include "../../include/REST/RestEngine.hpp"
+
 
 namespace NES {
 
@@ -149,7 +151,7 @@ void RestEngine::handlePost(http_request request) {
             return;
         }
     }
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));
+    returnDefaultReply(methods::POST, request); // instead of NotImplemented return 404 ?
 }
 
 void RestEngine::handleDelete(http_request request) {
@@ -171,19 +173,21 @@ void RestEngine::handleDelete(http_request request) {
             return;
         }
     }
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, path));
+    RestEngine::returnDefaultReply(methods::DEL, request); // instead of NotImplemented return 404 ?
 }
 
+utility::string_t RestEngine::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
+
 void RestEngine::handleHead(http_request request) {
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(request)));
+    RestEngine::returnDefaultReply(methods::HEAD, request);
 }
 
 void RestEngine::handleMerge(http_request request) {
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(request)));
+    RestEngine::returnDefaultReply(methods::MERGE, request);
 }
 
 void RestEngine::handleTrace(http_request request) {
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(request)));
+    RestEngine::returnDefaultReply(methods::TRCE, request);
 }
 
 //TODO (covered in issue 1919 (Add option to configure whitelisted addresses for CORS))
@@ -219,6 +223,17 @@ pplx::task<void> RestEngine::shutdown() {
 
 std::vector<utility::string_t> RestEngine::splitPath(const utility::string_t& relativePath) {
     return web::uri::split_path(relativePath);
+}
+
+pplx::task<void> RestEngine::returnDefaultReply(const http::method& method, http_request& request) {
+    return request.reply(status_codes::NotImplemented, responseNotImpl(method, getPath(request)));
+}
+
+json::value RestEngine::responseNotImpl(const http::method& method, utility::string_t path) {
+    auto response = json::value::object();
+    response["path"] = json::value::string(std::move(path));
+    response["http_method"] = json::value::string(method);
+    return response;
 }
 
 }// namespace NES

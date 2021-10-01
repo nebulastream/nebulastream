@@ -30,6 +30,7 @@ namespace NES {
  */
 class BaseController {
   public:
+    virtual ~BaseController() = default;
     /**
      * @brief Handle the get request from the user
      * @param path : the resource path the user wanted to get
@@ -86,13 +87,14 @@ class BaseController {
      */
     virtual void handleMerge(const std::vector<utility::string_t>& path, http_request& request);
 
+
+
     /**
      * @brief set http response options
      * @param request : the message from the user
      */
     static void handleOptions(const http_request& request);
 
-    static json::value responseNotImpl(const http::method& method, utility::string_t path);
     static void internalServerErrorImpl(const web::http::http_request& message);
     static void successMessageImpl(const web::http::http_request& message, const web::json::value& result);
     static void successMessageImpl(const web::http::http_request& message, const utf8string& result);
@@ -111,12 +113,6 @@ class BaseController {
 
     virtual void handleException(const web::http::http_request& message, const std::exception& exc);
 
-    /**
-     * @brief Get the URI path from the request
-     * @param request : the user request
-     * @return the path from the request
-     */
-    static utility::string_t getPath(http_request& request);
 
     /**
      * @brief Get the parameters from the request if any
@@ -124,6 +120,7 @@ class BaseController {
      * @return a map containing parameter keys and values
      */
     static std::map<utility::string_t, utility::string_t> getParameters(http_request& request);
+
+
 };
-}// namespace NES
-#endif// NES_INCLUDE_REST_CONTROLLER_BASE_CONTROLLER_HPP_
+}// namespace NES#endif// NES_INCLUDE_REST_CONTROLLER_BASE_CONTROLLER_HPP_

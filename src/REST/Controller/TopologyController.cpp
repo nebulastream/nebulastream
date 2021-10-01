@@ -28,7 +28,7 @@ namespace NES {
 
 TopologyController::TopologyController(TopologyPtr topology) : topology(std::move(topology)) {}
 
-void TopologyController::handleGet(const std::vector<utility::string_t>& paths, const http_request& message) {
+void TopologyController::handleGet(const std::vector<utility::string_t>& paths, http_request& message) {
     NES_DEBUG("TopologyController: GET Topology");
 
     topology->print();
@@ -40,7 +40,7 @@ void TopologyController::handleGet(const std::vector<utility::string_t>& paths, 
     resourceNotFoundImpl(message);
 }
 
-void TopologyController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
+void TopologyController::handlePost(const std::vector<utility::string_t>& path, http_request& message) {
     if (path[1] == "addParent") {
         NES_DEBUG("TopologyController::handlePost:addParent: REST received request to add parent for a node"
                   << message.to_string());
