@@ -228,4 +228,13 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteShouldVerifyUrlPathPrefix) {
     // then the HTTP response is InternalServerError
     verifyResponseStatusCode(request, status_codes::InternalError);
 }
+
+TEST_F(UdfCatalogControllerTest, HandleDeleteChecksForKnownPath) {
+    // when a REST message is passed to the controller with an unknown path
+    auto request = web::http::http_request {web::http::methods::DEL};
+    request.set_request_uri(UdfCatalogController::path_prefix + "/unknown-path?udfName=unknown_udf"s);
+    udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "unknown-path"}, request);
+    // then the HTTP response is BadRequest
+    verifyResponseStatusCode(request, status_codes::BadRequest);
+}
 } // namespace NES
