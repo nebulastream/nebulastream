@@ -18,19 +18,6 @@ syntax = "proto3";
 
 package NES;
 
-message RegisterJavaUdfRequest {
-  message JavaUdfClassDefinition {
-    string class_name = 1;
-    bytes byte_code = 2;
-  }
-
-  string udf_name = 1;
-  string udf_class_name = 2;
-  string udf_method_name = 3;
-  bytes serialized_instance = 4;
-  repeated JavaUdfClassDefinition classes = 5;
-}
-
 message JavaUdfDescriptorMessage {
   message JavaUdfClassDefinition {
     string class_name = 1;
@@ -41,6 +28,11 @@ message JavaUdfDescriptorMessage {
   string udf_method_name = 2;
   bytes serialized_instance = 3;
   repeated JavaUdfClassDefinition classes = 4;
+}
+
+message RegisterJavaUdfRequest {
+  string udf_name = 1;
+  JavaUdfDescriptorMessage java_udf_descriptor = 2;
 }
 
 message GetJavaUdfDescriptorResponse {

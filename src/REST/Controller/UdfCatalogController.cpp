@@ -85,14 +85,16 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
         NES_DEBUG("Parsing Java UDF descriptor from REST request");
         auto javaUdfRequest = RegisterJavaUdfRequest {};
         javaUdfRequest.ParseFromString(body);
+        auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
         // C++ represents the bytes type of serialized_instance and byte_code as std::strings
         // which have to be converted to typed byte arrays.
         auto serializedInstance = JavaSerializedInstance {
-            javaUdfRequest.serialized_instance().begin(), javaUdfRequest.serialized_instance().end()
+            descriptorMessage.serialized_instance().begin(),
+            descriptorMessage.serialized_instance().end()
         };
         auto javaUdfByteCodeList = JavaUdfByteCodeList {};
-        javaUdfByteCodeList.reserve(javaUdfRequest.classes().size());
-        for (const auto& classDefinition : javaUdfRequest.classes()) {
+        javaUdfByteCodeList.reserve(descriptorMessage.classes().size());
+        for (const auto& classDefinition : descriptorMessage.classes()) {
             javaUdfByteCodeList.insert({classDefinition.class_name(),
                                         JavaByteCode{classDefinition.byte_code().begin(),
                                                      classDefinition.byte_code().end()}});
@@ -100,7 +102,7 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
         // Register JavaUdfDescriptor in UDF catalog and return success.
         try {
             auto javaUdfDescriptor = std::make_shared<JavaUdfDescriptor>(
-                javaUdfRequest.udf_class_name(), javaUdfRequest.udf_method_name(),
+                descriptorMessage.udf_class_name(), descriptorMessage.udf_method_name(),
                 serializedInstance, javaUdfByteCodeList);
             NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
             udfCatalog->registerJavaUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);

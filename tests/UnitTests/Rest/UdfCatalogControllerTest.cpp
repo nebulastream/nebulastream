@@ -46,11 +46,12 @@ class UdfCatalogControllerTest : public testing::Test {
                                                                const JavaUdfByteCodeList& byteCodeList) {
         auto javaUdfRequest = RegisterJavaUdfRequest{};
         javaUdfRequest.set_udf_name(udfName);
-        javaUdfRequest.set_udf_class_name(udfClassName);
-        javaUdfRequest.set_udf_method_name(methodName);
-        javaUdfRequest.set_serialized_instance(serializedInstance.data(), serializedInstance.size());
+        auto descriptorMessage = javaUdfRequest.mutable_java_udf_descriptor();
+        descriptorMessage->set_udf_class_name(udfClassName);
+        descriptorMessage->set_udf_method_name(methodName);
+        descriptorMessage->set_serialized_instance(serializedInstance.data(), serializedInstance.size());
         for (const auto& [className, byteCode] : byteCodeList) {
-            auto* javaClass = javaUdfRequest.add_classes();
+            auto* javaClass = descriptorMessage->add_classes();
             javaClass->set_class_name(className);
             javaClass->set_byte_code(byteCode.data(), byteCode.size());
         }
@@ -86,17 +87,6 @@ class UdfCatalogControllerTest : public testing::Test {
                                          const std::string& expected) {
         auto converted = JavaSerializedInstance {expected.begin(), expected.end()};
         ASSERT_EQ(actual, converted);
-    }
-
-    static void verifyByteCodeList(const JavaUdfByteCodeList& actual,
-                                   const google::protobuf::RepeatedPtrField<RegisterJavaUdfRequest_JavaUdfClassDefinition>& expected) {
-        ASSERT_EQ(actual.size(), static_cast<decltype(actual.size())>(expected.size()));
-        for (const auto& classDefinition : expected) {
-            auto actualByteCode = actual.find(classDefinition.class_name());
-            ASSERT_TRUE(actualByteCode != actual.end());
-            auto converted = JavaByteCode(classDefinition.byte_code().begin(), classDefinition.byte_code().end());
-            ASSERT_EQ(actualByteCode->second, converted);
-        }
     }
 
     static void verifyByteCodeList(const JavaUdfByteCodeList& actual,
@@ -145,10 +135,11 @@ TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
     // and the catalog contains a Java UDF descriptor representing the Java UDF
     auto javaUdfDescriptor = udfCatalog->getUdfDescriptor(javaUdfRequest.udf_name());
     ASSERT_NE(javaUdfDescriptor, nullptr);
-    ASSERT_EQ(javaUdfDescriptor->getClassName(), javaUdfRequest.udf_class_name());
-    ASSERT_EQ(javaUdfDescriptor->getMethodName(), javaUdfRequest.udf_method_name());
-    verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), javaUdfRequest.serialized_instance());
-    verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), javaUdfRequest.classes());
+    auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
+    ASSERT_EQ(javaUdfDescriptor->getClassName(), descriptorMessage.udf_class_name());
+    ASSERT_EQ(javaUdfDescriptor->getMethodName(), descriptorMessage.udf_method_name());
+    verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), descriptorMessage.serialized_instance());
+    verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), descriptorMessage.classes());
 }
 
 TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
@@ -282,10 +273,10 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveJavaUdfDescriptor) {
     auto response = extractGetJavaUdfDescriptorResponse(request);
     ASSERT_TRUE(response.found());
     // and the response contains the UDF descriptor
-    auto javaUdfDescriptorMessage = response.java_udf_descriptor();
-    ASSERT_EQ(javaUdfDescriptor->getClassName(), javaUdfDescriptorMessage.udf_class_name());
-    ASSERT_EQ(javaUdfDescriptor->getMethodName(), javaUdfDescriptorMessage.udf_method_name());
-    verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), javaUdfDescriptorMessage.serialized_instance());
-    verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), javaUdfDescriptorMessage.classes());
+    const auto& descriptorMessage = response.java_udf_descriptor();
+    ASSERT_EQ(javaUdfDescriptor->getClassName(), descriptorMessage.udf_class_name());
+    ASSERT_EQ(javaUdfDescriptor->getMethodName(), descriptorMessage.udf_method_name());
+    verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), descriptorMessage.serialized_instance());
+    verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), descriptorMessage.classes());
 }
 } // namespace NES
