@@ -52,11 +52,37 @@ bool UdfCatalogController::verifyCorrectEndpoint(const std::vector<std::string>&
     return true;
 }
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path, http_request& request) {
+std::pair<bool, const std::string> UdfCatalogController::extractUdfParameter(http_request& request) {
     auto queries = web::uri::split_query(request.request_uri().query());
     auto query = queries.find("udfName");
-    auto udfName = query->second;
+    // Verify that the udfName parameter exists.
+    if (query == queries.end()) {
+        badRequestImpl(request, "udfName parameter is missing"s);
+        return {false, ""};
+    }
+    // Make sure that the URL contains only the udfName parameter and no others.
+    if (queries.size() != 1) {
+        auto unknownParameters =
+            std::accumulate(queries.begin(), queries.end(), ""s, [&](std::string s, const decltype(queries)::value_type& parameter) {
+                const auto& key = parameter.first;
+                if (key != "udfName") {
+                    return (s.empty() ? s + ", " : s) + key;
+                }
+                return s;
+            });
+        NES_DEBUG("Request contains unknown parameters: " << unknownParameters);
+        badRequestImpl(request, "Request contains unknown parameters: "s + unknownParameters);
+        return {false, ""};
+    }
+    return {true, query->second};
+}
+
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path, http_request& request) {
+    auto [found, udfName] = extractUdfParameter(request);
+    if (!found) {
+        return;
+    }
     auto udfDescriptor = udfCatalog->getUdfDescriptor(udfName);
     GetJavaUdfDescriptorResponse response;
     if (udfDescriptor == nullptr) {
@@ -127,27 +153,10 @@ void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& pa
         !verifyCorrectEndpoint(path, "removeUdf", request)) {
         return;
     }
-    auto queries = web::uri::split_query(request.request_uri().query());
-    auto query = queries.find("udfName");
-    if (query == queries.end()) {
-        badRequestImpl(request, "udfName parameter is missing"s);
+    auto [found, udfName] = extractUdfParameter(request);
+    if (!found) {
         return;
     }
-    // Make sure that the URL contains only the udfName parameter and no others.
-    if (queries.size() != 1) {
-        auto unknownParameters =
-            std::accumulate(queries.begin(), queries.end(), ""s, [&](std::string s, const decltype(queries)::value_type& parameter) {
-                const auto& [key, _] = parameter;
-                if (key != "udfName") {
-                    return (s.empty() ? s + ", " : s) + key;
-                }
-                return s;
-            });
-        NES_DEBUG("Request contains unknown parameters: " << unknownParameters);
-        badRequestImpl(request, "Request contains unknown parameters: "s + unknownParameters);
-        return;
-    }
-    auto udfName = query->second;
     NES_DEBUG("Removing Java UDF '" << udfName << "'");
     auto removed = udfCatalog->removeUdf(udfName);
     web::json::value result;
