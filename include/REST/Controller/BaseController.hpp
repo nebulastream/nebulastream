@@ -87,8 +87,6 @@ class BaseController {
      */
     virtual void handleMerge(const std::vector<utility::string_t>& path, http_request& request);
 
-
-
     /**
      * @brief set http response options
      * @param request : the message from the user
@@ -96,8 +94,8 @@ class BaseController {
     static void handleOptions(const http_request& request);
 
     static void internalServerErrorImpl(const web::http::http_request& message);
-    static void successMessageImpl(const web::http::http_request& message, const web::json::value& result);
-    static void successMessageImpl(const web::http::http_request& message, const utf8string& result);
+
+    template <typename T> static void successMessageImpl(const http_request& request, const T& result);
 
     static void resourceNotFoundImpl(const web::http::http_request& message);
     static void noContentImpl(const web::http::http_request& message);
