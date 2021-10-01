@@ -150,5 +150,36 @@ TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
                     ASSERT_TRUE(message.find("Stack trace") == std::string::npos);
                 }).wait();
         }).wait();
-    }
+}
+
+TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
+    // given the UDF catalog contains a Java UDF
+    auto javaUdfDescriptor = JavaUdfDescriptor::create("some_package.my_udf"s,
+                                                       "udf_method"s,
+                                                       JavaSerializedInstance{1},
+                                                       JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}});
+    auto udfName = "my_udf"s;
+    udfCatalog->registerJavaUdf(udfName, javaUdfDescriptor);
+    // when a REST message is passed to the controller to remove the UDF
+    auto request = web::http::http_request {web::http::methods::DEL};
+    request.set_request_uri (UdfCatalogController::path_prefix + "/removeUdf?udfName="s + udfName);
+    udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "removeUdf"}, request);
+    // then the response is OK
+    verifyResponseStatusCode(request, status_codes::OK);
+    // and the UDF does no longer exist in the catalog
+    ASSERT_EQ(udfCatalog->getUdfDescriptor(udfName), nullptr);
+    // and the response shows that the UDF was deleted
+    request.get_response()
+        .then([&](const pplx::task<http_response>& task) {
+            auto response = task.get();
+            response.extract_json()
+                .then([&](const pplx::task<web::json::value>& task) {
+                    web::json::value json;
+                    json["removed"] = web::json::value(true);
+                    ASSERT_EQ(json, task.get());
+                })
+                .wait();
+        })
+        .wait();
+}
 } // namespace NES
