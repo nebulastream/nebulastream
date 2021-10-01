@@ -220,4 +220,12 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteTreatsSuperfluousParametersAreAnErr
     verifyResponseStatusCode(request, status_codes::BadRequest);
 }
 
+TEST_F(UdfCatalogControllerTest, HandleDeleteShouldVerifyUrlPathPrefix) {
+    // given a REST message
+    auto request = web::http::http_request {web::http::methods::DEL};
+    // when that message is passed to the controller with the wrong path prefix
+    udfCatalogController.handleDelete({"wrong-path-prefix"}, request);
+    // then the HTTP response is InternalServerError
+    verifyResponseStatusCode(request, status_codes::InternalError);
+}
 } // namespace NES

@@ -43,6 +43,11 @@ class UdfCatalogController : public BaseController {
     void handleDelete(const std::vector<utility::string_t>& path, http_request& request);
 
   private:
+    // Sanity check that the REST engine delegated the correct requests to this controller.
+    // If this is not the case, this method constructs a InternalServerError response and returns false.
+    // Handler methods should call this method in the beginning and immediately return when this method returns false.
+    [[nodiscard]] static bool verifyCorrectPathPrefix(const std::string& path_prefix, http_request& request);
+
     UdfCatalogPtr udfCatalog;
 };
 

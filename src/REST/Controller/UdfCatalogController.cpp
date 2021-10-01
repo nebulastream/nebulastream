@@ -29,11 +29,17 @@ using namespace Catalogs;
 
 const std::string UdfCatalogController::path_prefix = "udf-catalog"s;
 
-void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, http_request& request) {
-    if (path[0] != UdfCatalogController::path_prefix) {
-        // This is just a sanity check that the RestEngine did not call us with a wrong path.
-        NES_ERROR("The RestEngine delegated an HTTP request with an unknown path prefix to the UdfCatalogController: path[0] = " << path[0]);
+bool UdfCatalogController::verifyCorrectPathPrefix(const std::string& path_prefix, http_request& request) {
+    if (path_prefix != UdfCatalogController::path_prefix) {
+        NES_ERROR("The RestEngine delegated an HTTP request with an unknown path prefix to the UdfCatalogController: path[0] = " << path_prefix);
         internalServerErrorImpl(request);
+        return false;
+    }
+    return true;
+}
+
+void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, http_request& request) {
+    if (!verifyCorrectPathPrefix(path[0], request)) {
         return;
     }
     if (path.size() != 2 || path[1] != "registerJavaUdf") {
@@ -79,8 +85,10 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
     }).wait();
 }
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& path, http_request& request) {
+    if (!verifyCorrectPathPrefix(path[0], request)) {
+        return;
+    }
     auto queries = web::uri::split_query(request.request_uri().query());
     auto query = queries.find("udfName");
     if (query == queries.end()) {
@@ -108,6 +116,5 @@ void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& pa
     result["removed"] = web::json::value(removed);
     successMessageImpl(request, result);
 }
-#pragma GCC diagnostic warning "-Wunused-parameter"
 
 }
