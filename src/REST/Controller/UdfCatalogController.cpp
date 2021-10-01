@@ -52,7 +52,7 @@ bool UdfCatalogController::verifyCorrectEndpoint(const std::vector<std::string>&
     return true;
 }
 
-std::pair<bool, const std::string> UdfCatalogController::extractUdfParameter(http_request& request) {
+std::pair<bool, const std::string> UdfCatalogController::extractUdfNameParameter(http_request& request) {
     auto queries = web::uri::split_query(request.request_uri().query());
     auto query = queries.find("udfName");
     // Verify that the udfName parameter exists.
@@ -83,7 +83,7 @@ void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path,
         !verifyCorrectEndpoint(path, "getUdfDescriptor", request)) {
         return;
     }
-    auto [found, udfName] = extractUdfParameter(request);
+    auto [found, udfName] = extractUdfNameParameter(request);
     if (!found) {
         return;
     }
@@ -158,7 +158,7 @@ void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& pa
         !verifyCorrectEndpoint(path, "removeUdf", request)) {
         return;
     }
-    auto [found, udfName] = extractUdfParameter(request);
+    auto [found, udfName] = extractUdfNameParameter(request);
     if (!found) {
         return;
     }

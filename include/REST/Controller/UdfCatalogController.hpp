@@ -62,7 +62,7 @@ class UdfCatalogController : public BaseController {
     // If either is not true, this method constructs a BadRequest response and returns false as the first return value.
     // Otherwise, the UDF name is returned as the second return value;
     // Handler methods may call this method in the beginning and should immediately return when this method returns false.
-    [[nodiscard]] static std::pair<bool, const std::string> extractUdfParameter(http_request& request);
+    [[nodiscard]] static std::pair<bool, const std::string> extractUdfNameParameter(http_request& request);
 
     UdfCatalogPtr udfCatalog;
 };
