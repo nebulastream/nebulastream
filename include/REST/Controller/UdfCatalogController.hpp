@@ -16,6 +16,7 @@
 
 #pragma once
 #include <REST/Controller/BaseController.hpp>
+#include <unordered_set>
 
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_msg.h>
@@ -53,6 +54,11 @@ class UdfCatalogController : public BaseController {
     // Check that a handler method was called for a known REST endpoint.
     // If this is not the case, this method constructs a BadRequest response and returns false.
     // Handler methods should call this method in the beginning and immediately return when this method returns false.
+    [[nodiscard]] static bool verifyCorrectEndpoints(const std::vector<std::string>& path,
+                                                     const std::unordered_set<std::string>& endpoints,
+                                                     http_request& request);
+
+    // Convenience method to check for a single known REST endpoint.
     [[nodiscard]] static bool verifyCorrectEndpoint(const std::vector<std::string>& path,
                                                     const std::string& endpoint,
                                                     http_request& request);
@@ -63,6 +69,10 @@ class UdfCatalogController : public BaseController {
     // Otherwise, the UDF name is returned as the second return value;
     // Handler methods may call this method in the beginning and should immediately return when this method returns false.
     [[nodiscard]] static std::pair<bool, const std::string> extractUdfNameParameter(http_request& request);
+
+    void handleGetUdfDescriptor(http_request& request);
+
+    void handleListUdfs(http_request& request);
 
     UdfCatalogPtr udfCatalog;
 };
