@@ -166,7 +166,7 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
         }
         // Register JavaUdfDescriptor in UDF catalog and return success.
         try {
-            auto javaUdfDescriptor = std::make_shared<JavaUdfDescriptor>(
+            auto javaUdfDescriptor = JavaUdfDescriptor::create(
                 descriptorMessage.udf_class_name(), descriptorMessage.udf_method_name(),
                 serializedInstance, javaUdfByteCodeList);
             NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");

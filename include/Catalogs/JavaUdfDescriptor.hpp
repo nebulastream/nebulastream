@@ -28,13 +28,6 @@ using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;
 using JavaUdfByteCodeList = std::unordered_map<std::string, JavaByteCode>;
 
-// TODO #2079 Change to unique_ptr?
-// This is a shared_ptr for now.
-// The UDF implementation is owned by the UDF catalog, but it is passed to a query operator during query rewrite.
-// If the UDF is removed from the catalog while a query that uses the UDF is still active in the system,
-// the pointer to the UDF must stay valid.
-// It would be better to have the UDF catalog consume a unique_ptr to signal that it owns the implementation object
-// and then return shared_ptrs when the implementation is retrieved.
 class JavaUdfDescriptor;
 using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
 
