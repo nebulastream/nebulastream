@@ -328,4 +328,35 @@ TEST_F(UdfCatalogControllerTest, HandleGetChecksForKnownPath) {
     verifyResponseStatusCode(request, status_codes::BadRequest);
 }
 
+TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
+    // given the UDF catalog contains a Java UDF
+    auto javaUdfDescriptor = JavaUdfDescriptor::create("some_package.my_udf"s,
+                                                       "udf_method"s,
+                                                       JavaSerializedInstance{1},
+                                                       JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}});
+    auto udfName = "my_udf"s;
+    udfCatalog->registerJavaUdf(udfName, javaUdfDescriptor);
+    // when a REST message is passed to the controller to get a list of the UDFs
+    auto request = web::http::http_request {web::http::methods::GET};
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "listUdfs"}, request);
+    // then the response is OK
+    verifyResponseStatusCode(request, status_codes::OK);
+    // and the response message contains a list of UDFs
+    web::json::value json;
+    json["udfs"][0] = web::json::value(udfName);
+    verifyResponseResult(request, json);
+}
+
+TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveEmptyUdfList) {
+    // when a REST message is passed to the controller to get a list of the UDFs
+    auto request = web::http::http_request {web::http::methods::GET};
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "listUdfs"}, request);
+    // then the response is OK
+    verifyResponseStatusCode(request, status_codes::OK);
+    // and the response message contains an empty list of UDFs
+    web::json::value json;
+    json["udfs"] = web::json::value::array();
+    verifyResponseResult(request, json);
+}
+
 } // namespace NES
