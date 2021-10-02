@@ -81,37 +81,25 @@ class JavaUdfDescriptor {
      * @brief Return the fully-qualified class name of the class implementing the UDF.
      * @return Fully-qualified class name of the class implementing the UDF.
      */
-    const std::string& getClassName() const { return className; }
+    [[nodiscard]] const std::string& getClassName() const { return className; }
 
     /**
      * @brief Return the name of the UDF method.
      * @return The name of the UDF method.
      */
-    const std::string& getMethodName() const { return methodName; }
+    [[nodiscard]] const std::string& getMethodName() const { return methodName; }
 
     /**
      * @brief Return the serialized instance of the UDF class which stores captured free variables.
      * @return Serialized instance of the UDF class.
      */
-    const JavaSerializedInstance& getSerializedInstance() const { return serializedInstance; }
+    [[nodiscard]] const JavaSerializedInstance& getSerializedInstance() const { return serializedInstance; }
 
     /**
-     * @brief Return the start of an iterator over the list of classes and bytecode required to execute the UDF.
-     * @return Const-iterator to byte_code_list.
+     * @brief Return the list of classes and their bytecode required to execute the UDF.
+     * @return A map containing class names as keys and their bytecode as values.
      */
-    // When the UDF is loaded into a JVM, the entire list of bytecode is simply injected into a JVM.
-    // We never need to look up the bytecode of an individual class.
-    // So we don't need to return the underlying storage of the class bytecode and an iterator is enough.
-    JavaUdfByteCodeList::const_iterator begin() const { return byteCodeList.begin(); }
-
-    /**
-     * @brief Return the end of an iterator over the list of classes and bytecode required to execute the UDF.
-     * @return Const-iterator to byte_code_list.
-     */
-    JavaUdfByteCodeList::const_iterator end() const { return byteCodeList.end(); }
-
-    // TODO comment
-    const JavaUdfByteCodeList& getByteCodeList() const { return byteCodeList; }
+    [[nodiscard]] const JavaUdfByteCodeList& getByteCodeList() const { return byteCodeList; }
 
   private:
     const std::string className;
