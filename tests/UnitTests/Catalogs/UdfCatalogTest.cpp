@@ -28,7 +28,7 @@ class UdfCatalogTest : public testing::Test {
   protected:
     static void SetUpTestCase() { NES::setupLogging("UdfTest.log", NES::LOG_DEBUG); }
 
-    static std::shared_ptr<JavaUdfDescriptor> createDescriptor() {
+    static JavaUdfDescriptorPtr createDescriptor() {
         auto className = "some_package.my_udf"s;
         auto methodName = "udf_method"s;
         auto instance = JavaSerializedInstance{1};// byte-array containing 1 byte
