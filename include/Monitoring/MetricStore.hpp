@@ -51,13 +51,24 @@ class MetricStore {
     std::priority_queue<GroupedMetricValuesPtr> getMetrics(uint64_t nodeId);
 
     /**
-     *
+     * @brief Get most recent metric in store
      * @param nodeId
-     * @return
+     * @return the metric
      */
     GroupedMetricValuesPtr getNewestMetric(uint64_t nodeId);
 
-    void removeMetrics(uint64_t nodeId);
+    /**
+     * @brief remove a given metric
+     * @param true if metric existed and was removed, else false
+     */
+    bool removeMetrics(uint64_t nodeId);
+
+    /**
+     * Checks if metrics exist for a given node
+     * @param nodeId
+     * @return True if exists, else false
+     */
+    bool hasMetric(uint64_t nodeId);
 
   private:
     MetricStoreType storeType;

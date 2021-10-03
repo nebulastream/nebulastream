@@ -19,6 +19,7 @@
 
 #include <API/Schema.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Monitoring/MetricStore.hpp>
 #include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
@@ -33,7 +34,7 @@
 namespace NES {
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
-    : workerClient(workerClient), topology(topology) {
+    : metricStore(std::make_shared<MetricStore>(MetricStoreType::NEWEST)), workerClient(workerClient), topology(topology) {
     NES_DEBUG("MonitoringManager: Init");
 }
 
@@ -103,9 +104,17 @@ GroupedMetricValues MonitoringManager::requestMonitoringData(uint64_t nodeId, Ru
                             + std::to_string(node->getId()));
 }
 
-void MonitoringManager::receiveMonitoringData(uint64_t, GroupedMetricValues) {
+void MonitoringManager::receiveMonitoringData(uint64_t nodeId, GroupedMetricValuesPtr metrics) {
+    metricStore->addMetric(nodeId, std::move(metrics));
+}
 
-
+GroupedMetricValuesPtr MonitoringManager::requestNewestMonitoringDataFromMetricStore(uint64_t nodeId) {
+    if (metricStore->hasMetric(nodeId)) {
+        return metricStore->getNewestMetric(nodeId);
+    }
+    else {
+        NES_THROW_RUNTIME_ERROR("MonitoringManager: Node with ID " << nodeId << " not found in MetricStore.");
+    }
 }
 
 
