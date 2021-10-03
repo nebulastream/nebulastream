@@ -46,12 +46,16 @@ class MonitoringService {
     explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology);
     ~MonitoringService();
 
+    /**
+     * @brief Submitting a monitoring plan to all nodes which indicates which metrics have to be sampled.
+     * @param monitoringPlan
+     * @return json to indicate if it was successfully
+     */
     web::json::value registerMonitoringPlanToAllNodes(MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
      * @param id of the node
-     * @param the monitoring plan
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
@@ -59,12 +63,17 @@ class MonitoringService {
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
-     * @param id of the node
-     * @param the monitoring plan
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
     web::json::value requestMonitoringDataFromAllNodesAsJson(Runtime::BufferManagerPtr bufferManager);
+
+    /**
+     * @brief Requests from all remote worker nodes for monitoring data.
+     * @param the buffer where the data will be written into
+     * @return a tuple with the schema and tuplebuffer
+     */
+    web::json::value requestNewestMonitoringDataFromMetricStoreAsJson();
 
     /**
      * @brief Requests from a remote worker node its monitoring data via prometheus node exporter.

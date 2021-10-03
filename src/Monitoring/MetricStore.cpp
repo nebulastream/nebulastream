@@ -50,8 +50,19 @@ std::priority_queue<GroupedMetricValuesPtr> MetricStore::getMetrics(uint64_t nod
 
 GroupedMetricValuesPtr MetricStore::getNewestMetric(uint64_t nodeId) { return storedMetrics[nodeId].top(); }
 
-void MetricStore::removeMetrics(uint64_t nodeId) {
-    storedMetrics.erase(nodeId);
+bool MetricStore::removeMetrics(uint64_t nodeId) {
+    if (storedMetrics.contains(nodeId)) {
+        storedMetrics.erase(nodeId);
+        return true;
+    }
+    return false;
+}
+
+bool MetricStore::hasMetric(uint64_t nodeId) {
+    if (storedMetrics.contains(nodeId)) {
+        return true;
+    }
+    return false;
 }
 
 }// namespace NES

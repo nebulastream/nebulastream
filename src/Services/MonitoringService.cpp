@@ -80,6 +80,27 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesAsJson(Runt
     return metricsJson;
 }
 
+web::json::value MonitoringService::requestNewestMonitoringDataFromMetricStoreAsJson() {
+    web::json::value metricsJson{};
+    auto root = topology->getRoot();
+
+    NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(root->getId()));
+    auto metrics = monitoringManager->requestNewestMonitoringDataFromMetricStore(root->getId());
+    metricsJson[std::to_string(root->getId())] = metrics->asJson();
+
+    NES_INFO("MonitoringService: Metrics from coordinator received \n" + metricsJson.serialize());
+
+    for (const auto& node : root->getAndFlattenAllChildren(false)) {
+        std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
+        NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(tNode->getId()));
+        auto tMetrics = monitoringManager->requestNewestMonitoringDataFromMetricStore(tNode->getId());
+        metricsJson[std::to_string(tNode->getId())] = tMetrics->asJson();
+    }
+    NES_INFO("MonitoringService: Metrics from coordinator received \n" + metricsJson.serialize());
+
+    return metricsJson;
+}
+
 utf8string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port) {
     NES_DEBUG("MonitoringService: Requesting monitoring data from worker id= " + std::to_string(nodeId));
     TopologyNodePtr node = topology->findNodeWithId(nodeId);

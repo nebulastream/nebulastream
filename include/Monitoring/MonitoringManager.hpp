@@ -24,6 +24,9 @@
 
 namespace NES {
 
+class MetricStore;
+using MetricStorePtr = std::shared_ptr<MetricStore>;
+
 class MonitoringPlan;
 using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 
@@ -34,6 +37,7 @@ class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
 class GroupedMetricValues;
+using GroupedMetricValuesPtr = std::shared_ptr<GroupedMetricValues>;
 
 /**
  * @brief The MonitoringManager is responsible for managing all global metrics of all nodes in the topology.
@@ -57,15 +61,22 @@ class MonitoringManager {
      * TupleBuffer is not supporting different nested schemas.
      * @param nodeId
      * @param tupleBuffer
-     * @return
+     * @return the grouped metric values
      */
     GroupedMetricValues requestMonitoringData(uint64_t nodeId, Runtime::BufferManagerPtr bufferManager);
+
+    /**
+     * @brief Requests monitoring data from metric store.
+     * @param nodeId
+     * @return the grouped metric values
+     */
+    GroupedMetricValuesPtr requestNewestMonitoringDataFromMetricStore(uint64_t nodeId);
 
     /**
      * @brief Receive arbitrary monitoring data from a given node.
      * @param nodeId
      */
-    void receiveMonitoringData(uint64_t nodeId, GroupedMetricValues);
+    void receiveMonitoringData(uint64_t nodeId, GroupedMetricValuesPtr metricValues);
 
     /**
      * @brief Get the monitoring plan for a given node ID. If the node exists in the topology but has not a registered
@@ -77,6 +88,7 @@ class MonitoringManager {
 
   private:
     std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
+    MetricStorePtr metricStore;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
 };

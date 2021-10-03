@@ -54,17 +54,22 @@ uint64_t restPort = 8081;
 
 class MonitoringIntegrationTest : public testing::Test {
   public:
+    Runtime::BufferManagerPtr bufferManager;
+
     static void SetUpTestCase() {
         NES::setupLogging("WorkerCoordinatorStarterTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WorkerCoordinatorStarterTest test class.");
     }
 
-    void SetUp() override { rpcPort = rpcPort + 30; }
+    void SetUp() override {
+        rpcPort = rpcPort + 30;
+        bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
+    }
 
     void TearDown() override { std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl; }
 };
 
-TEST_F(MonitoringIntegrationTest, DISABLED_requestMonitoringDataFromServiceAsJson) {
+TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -112,7 +117,7 @@ TEST_F(MonitoringIntegrationTest, DISABLED_requestMonitoringDataFromServiceAsJso
     EXPECT_TRUE(schema->getSize() > 1);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
-    auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson();
+    auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson(bufferManager);
     NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
 
     EXPECT_EQ(jsons.size(), nodeNumber);
@@ -145,5 +150,88 @@ TEST_F(MonitoringIntegrationTest, DISABLED_requestMonitoringDataFromServiceAsJso
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
+
+TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJson) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    cout << "start coordinator" << endl;
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0ull);
+    cout << "coordinator started successfully" << endl;
+
+    cout << "start worker 1" << endl;
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart1);
+    cout << "worker1 started successfully" << endl;
+
+    cout << "start worker 2" << endl;
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart2);
+    cout << "worker2 started successfully" << endl;
+
+    bool retConWrk1 = wrk1->connect();
+    EXPECT_TRUE(retConWrk1);
+    cout << "worker 1 connected " << endl;
+
+    bool retConWrk2 = wrk2->connect();
+    EXPECT_TRUE(retConWrk2);
+    cout << "worker 2 connected " << endl;
+
+    // requesting the monitoring data
+    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto plan = MonitoringPlan::create(metrics);
+    auto schema = plan->createSchema();
+    EXPECT_TRUE(schema->getSize() > 1);
+
+    auto const nodeNumber = static_cast<std::size_t>(3U);
+    auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
+    NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
+
+    EXPECT_EQ(jsons.size(), nodeNumber);
+    for (auto i = static_cast<std::size_t>(1); i <= nodeNumber; ++i) {
+        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
+                 + std::to_string(port + 10));
+        auto json = jsons[std::to_string(i)];
+
+        EXPECT_TRUE(json.has_field("disk"));
+        EXPECT_EQ(json["disk"].size(), 5U);
+
+        EXPECT_TRUE(json.has_field("cpu"));
+        auto numCores = json["cpu"]["NUM_CORES"].as_integer();
+        EXPECT_TRUE(numCores > 0);
+        EXPECT_EQ(json["cpu"].size(), static_cast<std::size_t>(numCores) + 2U);
+
+        EXPECT_TRUE(json.has_field("network"));
+        EXPECT_TRUE(json["network"].size() > 0);
+
+        EXPECT_TRUE(json.has_field("memory"));
+        EXPECT_EQ(json["memory"].size(), 13U);
+    }
+
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+
+    bool retStopWrk2 = wrk2->stop(false);
+    EXPECT_TRUE(retStopWrk2);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
 
 }// namespace NES
