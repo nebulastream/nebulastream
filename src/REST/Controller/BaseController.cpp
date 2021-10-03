@@ -21,37 +21,35 @@
 namespace NES {
 
 void BaseController::handleGet(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultReply(methods::GET, request);
+  RestEngine::returnDefaultNotImplementedReply(methods::GET, request);
 }
 
 void BaseController::handlePut(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultReply(methods::PUT, request);
+  RestEngine::returnDefaultNotImplementedReply(methods::PUT, request);
 }
 
 void BaseController::handlePost(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultReply(methods::TRCE, request);
+  RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
 }
 
 void BaseController::handleDelete(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultReply(methods::DEL, request);
+  RestEngine::returnDefaultNotImplementedReply(methods::DEL, request);
 }
 
 void BaseController::handlePatch(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultReply(methods::TRCE, request);
+  RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
 }
 void BaseController::handleHead(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultReply(methods::HEAD, request);
+  RestEngine::returnDefaultNotImplementedReply(methods::HEAD, request);
 }
 
 void BaseController::handleTrace(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultReply(methods::TRCE, request);
+  RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
 }
 
 void BaseController::handleMerge(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultReply(methods::MERGE, request);
+  RestEngine::returnDefaultNotImplementedReply(methods::MERGE, request);
 }
-
-/* I wonder if we should put all the following methods to RestEngine folder too */
 
 void BaseController::handleOptions(const http_request& request) {
     http_response response(status_codes::OK);
@@ -69,8 +67,6 @@ template <typename T> void BaseController::successMessageImpl(const http_request
     response.set_body(result);
     request.reply(response);
 }
-template void BaseController::successMessageImpl<std::string>(const http_request& request, const std::string& result);
-template void BaseController::successMessageImpl<web::json::value>(const http_request& request, const web::json::value& result);
 
 void BaseController::internalServerErrorImpl(const http_request& message) {
     http_response response(status_codes::InternalError);

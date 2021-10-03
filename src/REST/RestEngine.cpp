@@ -151,7 +151,7 @@ void RestEngine::handlePost(http_request request) {
             return;
         }
     }
-    returnDefaultNotImplementedReply(methods::POST, request); // instead of NotImplemented return 404 ?
+    BaseController::badRequestImpl(methods::DEL, request);
 }
 
 void RestEngine::handleDelete(http_request request) {
@@ -173,7 +173,7 @@ void RestEngine::handleDelete(http_request request) {
             return;
         }
     }
-    RestEngine::returnDefaultNotImplementedReply(methods::DEL, request); // instead of NotImplemented return 404 ?
+    BaseController::BadRequestImpl(methods::DEL, request);
 }
 
 utility::string_t RestEngine::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
