@@ -28,11 +28,15 @@
 
 namespace NES::QueryCompilation {
 
-CodeGenerationPhase::CodeGenerationPhase(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler)
-    : codeGenerator(std::move(codeGenerator)), jitCompiler(std::move(jitCompiler)) {}
+CodeGenerationPhase::CodeGenerationPhase(CodeGeneratorPtr codeGenerator,
+                                         Compiler::JITCompilerPtr jitCompiler,
+                                         QueryCompilerOptions::CompilationStrategy compilationStrategy)
+    : codeGenerator(std::move(codeGenerator)), jitCompiler(std::move(jitCompiler)), compilationStrategy(compilationStrategy) {}
 
-CodeGenerationPhasePtr CodeGenerationPhase::create(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler) {
-    return std::make_shared<CodeGenerationPhase>(codeGenerator, jitCompiler);
+CodeGenerationPhasePtr CodeGenerationPhase::create(CodeGeneratorPtr codeGenerator,
+                                                   Compiler::JITCompilerPtr jitCompiler,
+                                                   QueryCompilerOptions::CompilationStrategy compilationStrategy) {
+    return std::make_shared<CodeGenerationPhase>(codeGenerator, jitCompiler, compilationStrategy);
 }
 
 PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) {
@@ -74,7 +78,7 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
         operatorNode->generateClose(codeGenerator, context);
     });
 
-    auto pipelineStage = codeGenerator->compile(jitCompiler, context);
+    auto pipelineStage = codeGenerator->compile(jitCompiler, context, compilationStrategy);
 
     // we replace the current pipeline operators with an executable operator.
     // this allows us to keep the pipeline structure.

@@ -56,10 +56,15 @@ WorkerConfig::WorkerConfig() {
                                                  "LOG_DEBUG",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
 
-    queryCompilerExecutionMode =
-        ConfigOption<std::string>::create("queryCompilerExecutionMode",
-                                          "RELEASE",
-                                          "Indicates the execution mode for the query compiler [DEBUG|RELEASE]. ");
+    queryCompilerCompilationStrategy =
+        ConfigOption<std::string>::create("queryCompilerCompilationStrategy",
+                                          "OPTIMIZE",
+                                          "Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE].");
+
+    queryCompilerPipeliningStrategy = ConfigOption<std::string>::create(
+        "queryCompilerPipeliningStrategy",
+        "OPERATOR_FUSION",
+        "Indicates the pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME].");
 
     queryCompilerOutputBufferOptimizationLevel =
         ConfigOption<std::string>::create("OutputBufferOptimizationLevel",
@@ -133,9 +138,13 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             if (!config["workerPinList"].As<std::string>().empty() && config["workerPinList"].As<std::string>() != "\n") {
                 setWorkerPinList(config["setWorkerPinList"].As<std::string>());
             }
-            if (!config["queryCompilerExecutionMode"].As<std::string>().empty()
-                && config["queryCompilerExecutionMode"].As<std::string>() != "\n") {
-                setQueryCompilerExecutionMode(config["queryCompilerExecutionMode"].As<std::string>());
+            if (!config["queryCompilerCompilationStrategy"].As<std::string>().empty()
+                && config["queryCompilerCompilationStrategy"].As<std::string>() != "\n") {
+                setQueryCompilerCompilationStrategy(config["queryCompilerCompilationStrategy"].As<std::string>());
+            }
+            if (!config["queryCompilerPipeliningStrategy"].As<std::string>().empty()
+                && config["queryCompilerPipeliningStrategy"].As<std::string>() != "\n") {
+                setQueryCompilerPipeliningStrategy(config["queryCompilerPipeliningStrategy"].As<std::string>());
             }
             if (!config["queryCompilerOutputBufferOptimizationLevel"].As<std::string>().empty()
                 && config["queryCompilerOutputBufferOptimizationLevel"].As<std::string>() != "\n") {
@@ -187,8 +196,10 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setBufferSizeInBytes(stoi(it->second));
             } else if (it->first == "--parentId" && !it->second.empty()) {
                 setParentId(it->second);
-            } else if (it->first == "--queryCompilerExecutionMode" && !it->second.empty()) {
-                setQueryCompilerExecutionMode(it->second);
+            } else if (it->first == "--queryCompilerCompilationStrategy" && !it->second.empty()) {
+                setQueryCompilerCompilationStrategy(it->second);
+            } else if (it->first == "--queryCompilerPipeliningStrategy" && !it->second.empty()) {
+                setQueryCompilerPipeliningStrategy(it->second);
             } else if (it->first == "--queryCompilerOutputBufferOptimizationLevel" && !it->second.empty()) {
                 setQueryCompilerOutputBufferAllocationStrategy(it->second);
             } else if (it->first == "--sourcePinList") {
@@ -222,7 +233,8 @@ void WorkerConfig::resetWorkerOptions() {
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
     setNumberOfBuffersPerWorker(numberOfBuffersPerWorker->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
-    setQueryCompilerExecutionMode(queryCompilerExecutionMode->getDefaultValue());
+    setQueryCompilerCompilationStrategy(queryCompilerPipeliningStrategy->getDefaultValue());
+    setQueryCompilerPipeliningStrategy(queryCompilerPipeliningStrategy->getDefaultValue());
     setQueryCompilerOutputBufferAllocationStrategy(queryCompilerOutputBufferOptimizationLevel->getDefaultValue());
     setWorkerPinList(workerPinList->getDefaultValue());
     setSourcePinList(sourcePinList->getDefaultValue());
@@ -280,16 +292,23 @@ IntConfigOption WorkerConfig::getBufferSizeInBytes() { return bufferSizeInBytes;
 
 void WorkerConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
 
-const StringConfigOption WorkerConfig::getQueryCompilerExecutionMode() const { return queryCompilerExecutionMode; }
-
-void WorkerConfig::setQueryCompilerExecutionMode(std::string queryCompilerExecutionMode) {
-    this->queryCompilerExecutionMode->setValue(std::move(queryCompilerExecutionMode));
-}
 const StringConfigOption WorkerConfig::getQueryCompilerOutputBufferAllocationStrategy() const {
     return queryCompilerOutputBufferOptimizationLevel;
 }
 void WorkerConfig::setQueryCompilerOutputBufferAllocationStrategy(std::string queryCompilerOutputBufferAllocationStrategy) {
     this->queryCompilerOutputBufferOptimizationLevel->setValue(std::move(queryCompilerOutputBufferAllocationStrategy));
+}
+
+const StringConfigOption WorkerConfig::getQueryCompilerCompilationStrategy() const { return queryCompilerCompilationStrategy; }
+
+void WorkerConfig::setQueryCompilerCompilationStrategy(std::string queryCompilerCompilationStrategy) {
+    this->queryCompilerCompilationStrategy->setValue(queryCompilerCompilationStrategy);
+}
+
+const StringConfigOption WorkerConfig::getQueryCompilerPipeliningStrategy() const { return queryCompilerPipeliningStrategy; }
+
+void WorkerConfig::setQueryCompilerPipeliningStrategy(std::string queryCompilerPipeliningStrategy) {
+    this->queryCompilerPipeliningStrategy->setValue(queryCompilerPipeliningStrategy);
 }
 
 const StringConfigOption& WorkerConfig::getWorkerPinList() const { return workerPinList; }

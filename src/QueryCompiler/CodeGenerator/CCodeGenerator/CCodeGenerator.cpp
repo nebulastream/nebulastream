@@ -2363,11 +2363,15 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     return file.code;
 }
 
-Runtime::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
-                                                                       PipelineContextPtr code) {
+Runtime::Execution::ExecutablePipelineStagePtr
+CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
+                        PipelineContextPtr code,
+                        QueryCompilerOptions::CompilationStrategy compilationStrategy) {
     std::string src = generateCode(code);
     auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", src);
-    auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, true);
+    auto enableDebugCompilation = compilationStrategy == QueryCompilerOptions::DEBUG;
+    auto enableOptimizations = compilationStrategy == QueryCompilerOptions::OPTIMIZE;
+    auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, enableOptimizations, enableDebugCompilation);
     auto result = jitCompiler->compile(std::move(request)).share();
 
     auto futureCompiledExecutablePipelineStage = std::async(std::launch::async, [result, code, src]() {

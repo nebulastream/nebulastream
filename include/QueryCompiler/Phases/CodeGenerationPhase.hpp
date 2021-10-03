@@ -16,6 +16,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_CODEGENERATIONPHASE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_CODEGENERATIONPHASE_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <functional>
 
 namespace NES {
@@ -26,13 +27,13 @@ namespace QueryCompilation {
  */
 class CodeGenerationPhase {
   public:
-    CodeGenerationPhase(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler);
+    CodeGenerationPhase(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler, QueryCompilerOptions::CompilationStrategy compilationStrategy);
 
     /**
      * @brief Creates the code generation phase.
      * @return CodeGenerationPhasePtr
      */
-    static CodeGenerationPhasePtr create(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler);
+    static CodeGenerationPhasePtr create(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler, QueryCompilerOptions::CompilationStrategy compilationStrategy);
 
     /**
      * @brief Generates code for all pipelines in a pipelined query plan.
@@ -51,6 +52,7 @@ class CodeGenerationPhase {
   private:
     CodeGeneratorPtr codeGenerator;
     Compiler::JITCompilerPtr jitCompiler;
+    QueryCompilerOptions::CompilationStrategy compilationStrategy;
     static void generate(const OperatorNodePtr& rootOperator,
                          const std::function<void(GeneratableOperators::GeneratableOperatorPtr)>& applyFunction);
 };

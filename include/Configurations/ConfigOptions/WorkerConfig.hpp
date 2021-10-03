@@ -193,13 +193,24 @@ class WorkerConfig {
     /**
      * @brief gets the configuration for the query compiler execution mode
      */
-    [[nodiscard]] const StringConfigOption getQueryCompilerExecutionMode() const;
+    [[nodiscard]] const StringConfigOption getQueryCompilerCompilationStrategy() const;
 
     /**
      * @brief sets the configuration for the query compiler execution mode
      * @param queryCompilerExecutionMode
      */
-    void setQueryCompilerExecutionMode(std::string queryCompilerExecutionMode);
+    void setQueryCompilerCompilationStrategy(std::string queryCompilerCompilationStrategy);
+
+    /**
+     * @brief gets the configuration for the query compiler execution mode
+     */
+    [[nodiscard]] const StringConfigOption getQueryCompilerPipeliningStrategy() const;
+
+    /**
+     * @brief sets the configuration for the query compiler execution mode
+     * @param queryCompilerPipeliningStrategy
+     */
+    void setQueryCompilerPipeliningStrategy(std::string queryCompilerPipeliningStrategy);
 
     /**
     * @brief gets the configuration for the query compiler buffer allocation strategy
@@ -216,15 +227,15 @@ class WorkerConfig {
     * @brief getter/setter for sourcePinList
     * @return
     */
-    const StringConfigOption& getSourcePinList() const;
-    void setSourcePinList(const std::string list);
+    [[nodiscard]] const StringConfigOption& getSourcePinList() const;
+    void setSourcePinList(std::string list);
 
     /**
     * @brief getter/setter for workerPinList
     * @return
     */
-    const StringConfigOption& getWorkerPinList() const;
-    void setWorkerPinList(const std::string list);
+    [[nodiscard]] const StringConfigOption& getWorkerPinList() const;
+    void setWorkerPinList(std::string list);
 
     [[nodiscard]] bool isNumaAware() const;
 
@@ -244,8 +255,10 @@ class WorkerConfig {
     IntConfigOption bufferSizeInBytes;
     StringConfigOption parentId;
     StringConfigOption logLevel;
-    // indicates the execution mode of the query compiler [DEBUG|OPTIMIZE].
-    StringConfigOption queryCompilerExecutionMode;
+    // indicates the compilation strategy of the query compiler [FAST|DEBUG|OPTIMIZE].
+    StringConfigOption queryCompilerCompilationStrategy;
+    // indicates the pipelining strategy for the query compiler [OPERATOR_FUSION, OPERATOR_AT_A_TIME].
+    StringConfigOption queryCompilerPipeliningStrategy;
     // indicates, which output buffer allocation strategy should be used.
     StringConfigOption queryCompilerOutputBufferOptimizationLevel;
     /// numa awarness

@@ -38,14 +38,18 @@ namespace NES::QueryCompilation::Phases {
 PhaseFactoryPtr DefaultPhaseFactory::create() { return std::make_shared<DefaultPhaseFactory>(); }
 
 PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptionsPtr options) {
-    if (options->isOperatorFusionEnabled()) {
-        NES_DEBUG("Create pipelining phase with fuse policy");
-        auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
-        return DefaultPipeliningPhase::create(operatorFusionPolicy);
-    }
-    NES_DEBUG("Create pipelining phase with always break policy");
-    auto operatorFusionPolicy = NeverFusePolicy::create();
-    return DefaultPipeliningPhase::create(operatorFusionPolicy);
+    switch (options->getPipeliningStrategy()) {
+        case QueryCompilerOptions::OPERATOR_FUSION: {
+            NES_DEBUG("Create pipelining phase with fuse policy");
+            auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
+            return DefaultPipeliningPhase::create(operatorFusionPolicy);
+        };
+        case QueryCompilerOptions::OPERATOR_AT_A_TIME: {
+            NES_DEBUG("Create pipelining phase with always break policy");
+            auto operatorFusionPolicy = NeverFusePolicy::create();
+            return DefaultPipeliningPhase::create(operatorFusionPolicy);
+        }
+    };
 }
 
 LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr) {
@@ -64,12 +68,12 @@ DefaultPhaseFactory::createLowerPhysicalToGeneratableOperatorsPhase(QueryCompile
     auto generatableOperatorProvider = DefaultGeneratableOperatorProvider::create();
     return LowerPhysicalToGeneratableOperators::create(generatableOperatorProvider);
 }
-CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr,
+CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr options,
                                                                       Compiler::JITCompilerPtr jitCompiler) {
     NES_DEBUG("Create default code generation phase");
     // TODO create a option to choose between different code generators.
     auto codeGenerator = CCodeGenerator::create();
-    return CodeGenerationPhase::create(codeGenerator, jitCompiler);
+    return CodeGenerationPhase::create(codeGenerator, jitCompiler, options->getCompilationStrategy());
 }
 LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) {
     NES_DEBUG("Create lower to executable query plan phase");

@@ -61,7 +61,8 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersPerWorker,
                                                   NumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& workerToCodeMapping,
-                                                  const std::string& queryCompilerExecutionMode,
+                                                  const std::string& queryCompilerCompilationStrategy,
+                                                  const std::string& queryCompilerPipeliningStrategy,
                                                   const std::string& queryCompilerOutputBufferOptimizationLevel) {
 
     try {
@@ -123,8 +124,9 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
-        auto queryCompilationOptions =
-            createQueryCompilationOptions(queryCompilerExecutionMode, queryCompilerOutputBufferOptimizationLevel);
+        auto queryCompilationOptions = createQueryCompilationOptions(queryCompilerCompilationStrategy,
+                                                                     queryCompilerPipeliningStrategy,
+                                                                     queryCompilerOutputBufferOptimizationLevel);
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions, phaseFactory, jitCompiler);
         if (!compiler) {
             NES_ERROR("Runtime: error while creating compiler");
@@ -158,8 +160,31 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
     return nullptr;
 }
 QueryCompilation::QueryCompilerOptionsPtr
-NodeEngineFactory::createQueryCompilationOptions(std::string, std::string queryCompilerOutputBufferOptimizationLevel) {
+NodeEngineFactory::createQueryCompilationOptions(const std::string& queryCompilerCompilationStrategy,
+                                                 const std::string& queryCompilerPipeliningStrategy,
+                                                 const std::string& queryCompilerOutputBufferOptimizationLevel) {
     auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
+
+    // set compilation mode
+    if (queryCompilerCompilationStrategy == "FAST") {
+        queryCompilationOptions->setCompilationStrategy(QueryCompilation::QueryCompilerOptions::FAST);
+    } else if (queryCompilerCompilationStrategy == "DEBUG") {
+        queryCompilationOptions->setCompilationStrategy(QueryCompilation::QueryCompilerOptions::DEBUG);
+    } else if (queryCompilerCompilationStrategy == "OPTIMIZE") {
+        queryCompilationOptions->setCompilationStrategy(QueryCompilation::QueryCompilerOptions::OPTIMIZE);
+    } else {
+        NES_FATAL_ERROR("queryCompilerCompilationStrategy " << queryCompilerCompilationStrategy << " not supported");
+    }
+
+    // set pipelining strategy mode
+    if (queryCompilerPipeliningStrategy == "OPERATOR_AT_A_TIME") {
+        queryCompilationOptions->setPipeliningStrategy(QueryCompilation::QueryCompilerOptions::OPERATOR_AT_A_TIME);
+    } else if (queryCompilerPipeliningStrategy == "OPERATOR_FUSION") {
+        queryCompilationOptions->setPipeliningStrategy(QueryCompilation::QueryCompilerOptions::OPERATOR_FUSION);
+    } else {
+        NES_FATAL_ERROR("queryCompilerCompilationStrategy " << queryCompilerCompilationStrategy << " not supported");
+    }
+
     // set output buffer optimization level
     if (queryCompilerOutputBufferOptimizationLevel == "ALL") {
         queryCompilationOptions->setOutputBufferOptimizationLevel(QueryCompilation::QueryCompilerOptions::ALL);
@@ -177,8 +202,6 @@ NodeEngineFactory::createQueryCompilationOptions(std::string, std::string queryC
     } else if (queryCompilerOutputBufferOptimizationLevel == "OMIT_OVERFLOW_CHECK_NO_FALLBACK") {
         queryCompilationOptions->setOutputBufferOptimizationLevel(
             QueryCompilation::QueryCompilerOptions::OMIT_OVERFLOW_CHECK_NO_FALLBACK);
-    } else if (queryCompilerOutputBufferOptimizationLevel == "NO") {
-        queryCompilationOptions->setOutputBufferOptimizationLevel(QueryCompilation::QueryCompilerOptions::NO);
     } else {
         NES_FATAL_ERROR("queryCompilerOutputBufferOptimizationLevel " << queryCompilerOutputBufferOptimizationLevel
                                                                       << " not supported");
