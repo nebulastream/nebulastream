@@ -52,12 +52,14 @@ class NodeEngineFactory {
                                           uint64_t numberOfBuffersPerWorker,
                                           NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
                                           const std::string& workerToCodeMapping = "",
-                                          const std::string& queryCompilerExecutionMode = "DEBUG",
+                                          const std::string& queryCompilerCompilationStrategy = "DEBUG",
+                                          const std::string& queryCompilerPipeliningStrategy = "OPERATOR_FUSION",
                                           const std::string& queryCompilerOutputBufferOptimizationLevel = "ALL");
 
   private:
     static QueryCompilation::QueryCompilerOptionsPtr
-    createQueryCompilationOptions(std::string queryCompilerExecutionMode, std::string queryCompilerOutputBufferOptimizationLevel);
+    createQueryCompilationOptions(        const std::string& queryCompilerCompilationStrategy,
+                                          const std::string& queryCompilerPipeliningStrategy, const std::string& queryCompilerOutputBufferOptimizationLevel);
 };
 
 }// namespace NES::Runtime

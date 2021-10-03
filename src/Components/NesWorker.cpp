@@ -54,7 +54,8 @@ NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
       numberOfBuffersPerWorker(workerConfig->getNumberOfBuffersPerWorker()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
-      queryCompilerExecutionMode(workerConfig->getQueryCompilerExecutionMode()->getValue()),
+      queryCompilerCompilationStrategy(workerConfig->getQueryCompilerCompilationStrategy()->getValue()),
+      queryCompilerPipeliningStrategy(workerConfig->getQueryCompilerPipeliningStrategy()->getValue()),
       queryCompilerOutputBufferOptimizationLevel(workerConfig->getQueryCompilerOutputBufferAllocationStrategy()->getValue()),
       enableNumaAwareness(workerConfig->isNumaAware()), type(type) {
     MDC::put("threadName", "NesWorker");
@@ -144,7 +145,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED
                                                                                       : Runtime::NumaAwarenessFlag::DISABLED,
                                                                   workerToCoreMapping,
-                                                                  queryCompilerExecutionMode,
+                                                                  queryCompilerCompilationStrategy,
                                                                   queryCompilerOutputBufferOptimizationLevel);
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create();

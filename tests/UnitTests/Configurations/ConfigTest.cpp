@@ -177,6 +177,9 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
               workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
     EXPECT_EQ(workerConfigPtr->getBufferSizeInBytes()->getValue(), workerConfigPtr->getBufferSizeInBytes()->getDefaultValue());
     EXPECT_NE(workerConfigPtr->getNumWorkerThreads()->getValue(), workerConfigPtr->getNumWorkerThreads()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->getQueryCompilerCompilationStrategy()->getValue(), workerConfigPtr->getQueryCompilerCompilationStrategy()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->getQueryCompilerPipeliningStrategy()->getValue(), workerConfigPtr->getQueryCompilerPipeliningStrategy()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->getQueryCompilerOutputBufferAllocationStrategy()->getValue(), workerConfigPtr->getQueryCompilerOutputBufferAllocationStrategy()->getDefaultValue());
 }
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {

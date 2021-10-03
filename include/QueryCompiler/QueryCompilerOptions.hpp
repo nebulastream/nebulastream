@@ -26,6 +26,21 @@ namespace QueryCompilation {
  */
 class QueryCompilerOptions {
   public:
+    enum CompilationStrategy {
+        /// Use fast compilation strategy, i.e., dose not apply any optimizations and omits debug output.
+        FAST,
+        /// Creates debug output i.e., source code files and applies formatting. No code optimizations.
+        DEBUG,
+        /// Applies all compiler optimizations.
+        OPTIMIZE
+    };
+
+    enum PipeliningStrategy {
+        /// Applies operator fusion.
+        OPERATOR_FUSION,
+        /// Places each operator in an individual pipeline.
+        OPERATOR_AT_A_TIME };
+
     enum OutputBufferOptimizationLevel {
         /// Use highest optimization.
         ALL,
@@ -44,41 +59,20 @@ class QueryCompilerOptions {
         OMIT_OVERFLOW_CHECK_NO_FALLBACK,
         BITMASK
     };
+
     /**
      * @brief Creates the default options.
      * @return QueryCompilerOptionsPtr
      */
     static QueryCompilerOptionsPtr createDefaultOptions();
 
-    /**
-     * @brief Enables operator fusion.
-     */
-    void enableOperatorFusion();
+    [[nodiscard]] PipeliningStrategy getPipeliningStrategy() const;
 
-    /**
-     * @brief Disables operator fusion.
-     */
-    void disableOperatorFusion();
+    void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
 
-    /**
-     * @brief Returns if operator fusion is enabled.
-     */
-    [[nodiscard]] bool isOperatorFusionEnabled() const;
+    [[nodiscard]] CompilationStrategy getCompilationStrategy() const;
 
-    /**
-     * @brief Enables predication.
-     */
-    void enablePredication();
-
-    /**
-     * @brief Disables predication.
-     */
-    void disablePredication();
-
-    /**
-     * @brief Returns if predication is enabled.
-     */
-    [[nodiscard]] bool isPredicationEnabled() const;
+    void setCompilationStrategy(CompilationStrategy compilationStrategy);
 
     /**
      * @brief Sets desired buffer optimization strategy.
@@ -102,10 +96,10 @@ class QueryCompilerOptions {
     uint64_t getNumSourceLocalBuffers() const;
 
   protected:
-    bool operatorFusion;
-    bool predication;
-    OutputBufferOptimizationLevel outputBufferOptimizationLevel;
     uint64_t numSourceLocalBuffers;
+    OutputBufferOptimizationLevel outputBufferOptimizationLevel;
+    PipeliningStrategy pipeliningStrategy;
+    CompilationStrategy compilationStrategy;
 };
 }// namespace QueryCompilation
 }// namespace NES

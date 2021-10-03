@@ -120,9 +120,11 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     auto file = File::createFile(sourceFileName, sourceCode);
     auto compilationFlags = CPPCompilerFlags::createDefaultCompilerFlags();
     if (request->enableOptimizations()) {
+        NES_DEBUG("Compile with optimizations.");
         compilationFlags.enableOptimizationFlags();
     }
     if (request->enableDebugging()) {
+        NES_DEBUG("Compile with debugging.");
         compilationFlags.enableDebugFlags();
         format->formatFile(file);
         file->print();
@@ -168,10 +170,14 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag(sourceFileName);
 
     compileSharedLib(compilationFlags, file, libraryFileName);
+
     // load shared lib
     auto sharedLibrary = SharedLibrary::load(libraryFileName);
+
     timer.pause();
-    std::filesystem::remove(sourceFileName);
+    if (!request->enableDebugging()) {
+        std::filesystem::remove(sourceFileName);
+    }
     NES_INFO("CPPCompiler Runtime: " << (double) timer.getRuntime() / (double) 1000000 << "ms");// print runtime
 
     return CompilationResult(sharedLibrary, std::move(timer));

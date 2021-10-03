@@ -17,18 +17,6 @@
 
 namespace NES::QueryCompilation {
 
-bool QueryCompilerOptions::isOperatorFusionEnabled() const { return operatorFusion; }
-
-void QueryCompilerOptions::enableOperatorFusion() { this->operatorFusion = true; }
-
-void QueryCompilerOptions::disableOperatorFusion() { this->operatorFusion = false; }
-
-bool QueryCompilerOptions::isPredicationEnabled() const { return predication; }
-
-void QueryCompilerOptions::enablePredication() { this->predication = true; }
-
-void QueryCompilerOptions::disablePredication() { this->predication = false; }
-
 QueryCompilerOptions::OutputBufferOptimizationLevel QueryCompilerOptions::getOutputBufferOptimizationLevel() const {
     return outputBufferOptimizationLevel;
 };
@@ -43,11 +31,22 @@ uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() const { return numSour
 
 QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     auto options = QueryCompilerOptions();
-    options.enableOperatorFusion();
-    options.enablePredication();// todo: disable by default
+    options.setCompilationStrategy(OPTIMIZE);
+    options.setPipeliningStrategy(OPERATOR_FUSION);
     options.setNumSourceLocalBuffers(64);
     options.setOutputBufferOptimizationLevel(ALL);
     return std::make_shared<QueryCompilerOptions>(options);
+}
+QueryCompilerOptions::PipeliningStrategy QueryCompilerOptions::getPipeliningStrategy() const { return pipeliningStrategy; }
+
+void QueryCompilerOptions::setPipeliningStrategy(QueryCompilerOptions::PipeliningStrategy pipeliningStrategy) {
+    QueryCompilerOptions::pipeliningStrategy = pipeliningStrategy;
+}
+
+QueryCompilerOptions::CompilationStrategy QueryCompilerOptions::getCompilationStrategy() const { return compilationStrategy; }
+
+void QueryCompilerOptions::setCompilationStrategy(QueryCompilerOptions::CompilationStrategy compilationStrategy) {
+    QueryCompilerOptions::compilationStrategy = compilationStrategy;
 }
 
 }// namespace NES::QueryCompilation

@@ -202,8 +202,10 @@ class NesWorker {
     uint32_t numberOfBuffersPerWorker;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
-    // indicates the execution mode of the query compiler [DEBUG|OPTIMIZE].
-    std::string queryCompilerExecutionMode;
+    // indicates the compilation strategy of the query compiler [FAST|DEBUG|OPTIMIZE].
+    std::string queryCompilerCompilationStrategy;
+    // indicates the pipelining strategy for the query compiler [OPERATOR_FUSION, OPERATOR_AT_A_TIME].
+    std::string queryCompilerPipeliningStrategy;
     // indicates, which output buffer allocation strategy should be used.
     std::string queryCompilerOutputBufferOptimizationLevel;
     bool enableNumaAwareness{false};

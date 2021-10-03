@@ -23,6 +23,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
@@ -223,7 +224,8 @@ class CodeGenerator {
      */
 
     virtual Runtime::Execution::ExecutablePipelineStagePtr compile(Compiler::JITCompilerPtr jitCompiler,
-                                                                   PipelineContextPtr pipelineContext) = 0;
+                                                                   PipelineContextPtr pipelineContext,
+                                                                   QueryCompilerOptions::CompilationStrategy compilationStrategy) = 0;
 
     virtual std::string generateCode(PipelineContextPtr pipelineContext) = 0;
 
