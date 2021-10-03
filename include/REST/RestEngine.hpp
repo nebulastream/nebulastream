@@ -118,7 +118,7 @@ class RestEngine {
     pplx::task<void> shutdown();
     static std::vector<utility::string_t> splitPath(const utility::string_t& path);
 
-    static pplx::task<void> returnDefaultReply(const http::method& method, http_request& request);
+    static pplx::task<void> returnDefaultNotImplementedReply(const http::method& method, http_request& request);
 
     static json::value responseNotImpl(const http::method& method, utility::string_t path);
 

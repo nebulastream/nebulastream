@@ -151,7 +151,7 @@ void RestEngine::handlePost(http_request request) {
             return;
         }
     }
-    returnDefaultReply(methods::POST, request); // instead of NotImplemented return 404 ?
+    returnDefaultNotImplementedReply(methods::POST, request); // instead of NotImplemented return 404 ?
 }
 
 void RestEngine::handleDelete(http_request request) {
@@ -173,21 +173,21 @@ void RestEngine::handleDelete(http_request request) {
             return;
         }
     }
-    RestEngine::returnDefaultReply(methods::DEL, request); // instead of NotImplemented return 404 ?
+    RestEngine::returnDefaultNotImplementedReply(methods::DEL, request); // instead of NotImplemented return 404 ?
 }
 
 utility::string_t RestEngine::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
 
 void RestEngine::handleHead(http_request request) {
-    RestEngine::returnDefaultReply(methods::HEAD, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::HEAD, request);
 }
 
 void RestEngine::handleMerge(http_request request) {
-    RestEngine::returnDefaultReply(methods::MERGE, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::MERGE, request);
 }
 
 void RestEngine::handleTrace(http_request request) {
-    RestEngine::returnDefaultReply(methods::TRCE, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
 }
 
 //TODO (covered in issue 1919 (Add option to configure whitelisted addresses for CORS))
@@ -225,7 +225,7 @@ std::vector<utility::string_t> RestEngine::splitPath(const utility::string_t& re
     return web::uri::split_path(relativePath);
 }
 
-pplx::task<void> RestEngine::returnDefaultReply(const http::method& method, http_request& request) {
+pplx::task<void> RestEngine::returnDefaultNotImplementedReply(const http::method& method, http_request& request) {
     return request.reply(status_codes::NotImplemented, responseNotImpl(method, getPath(request)));
 }
 
