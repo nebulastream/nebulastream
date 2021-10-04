@@ -132,8 +132,7 @@ jobs:
         with:
           personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
           publish_dir: ./build/docs/html
-          destination_dir: private/doc/
-          external_repository: nebulastream/nes-server
+          external_repository: nebulastream-docs
           publish_branch: master
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
