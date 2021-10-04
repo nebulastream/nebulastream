@@ -107,7 +107,7 @@ class CoordinatorRPCClient {
                       int64_t dataPort,
                       int16_t numberOfSlots,
                       NodeType type,
-                      StaticNesMetricsPtr staticNesMetrics);
+                      Runtime::TupleBuffer& staticNesMetrics);
 
     /**
    * @brief method to unregister a node after the connection is established

@@ -25,6 +25,8 @@
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
@@ -245,6 +247,13 @@ bool NesWorker::connect() {
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(address);
     std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
 
+    auto staticStats = MetricUtils::staticNesStats();
+    auto tupleBuffer = nodeEngine->getBufferManager()->getUnpooledBuffer(sizeof(StaticNesMetrics)).value();
+
+    StaticNesMetrics measuredVal = staticStats.measure();
+    auto schema = getSchema(measuredVal, "");
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddress=" << localAddress);
     bool successPRCRegister = false;
     if (type == NesNodeType::Sensor) {
@@ -253,14 +262,14 @@ bool NesWorker::connect() {
                                                                 localWorkerZmqPort,
                                                                 numberOfSlots,
                                                                 NodeType::Sensor,
-                                                                MonitoringAgent::getStaticNesMetrics());
+                                                                tupleBuffer);
     } else if (type == NesNodeType::Worker) {
         successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
                                                                 localWorkerRpcPort,
                                                                 localWorkerZmqPort,
                                                                 numberOfSlots,
                                                                 NodeType::Worker,
-                                                                MonitoringAgent::getStaticNesMetrics());
+                                                                tupleBuffer);
     } else {
         NES_NOT_IMPLEMENTED();
     }
