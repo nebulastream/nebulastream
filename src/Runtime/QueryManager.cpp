@@ -107,21 +107,17 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
     hardwareManager = std::make_shared<Runtime::HardwareManager>();
     auto usedThreadsForMapping = 0;
     for (auto& val : workerToCoreMapping) {
-        if(usedThreadsForMapping < numThreads)
-        {
+        if (usedThreadsForMapping < numThreads) {
             auto tmpNumaNode = hardwareManager->getNumaNodeForCore(val);
             numaRegionToThreadMap[tmpNumaNode] += 1;
             usedThreadsForMapping++;
-        }
-        else
-        {
+        } else {
             break;
         }
     }
 
     std::stringstream ss;
-    for(auto& val : numaRegionToThreadMap)
-    {
+    for (auto& val : numaRegionToThreadMap) {
         ss << "region=" << val.first << " threadCnt=" << val.second << std::endl;
     }
     std::cout << "numa placement=" << ss.str() << std::endl;
@@ -154,12 +150,20 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
 
     NES_WARNING("Number of queues used for running is =" << numberOfQueues);
 
-
     for (uint64_t i = 0; i < numberOfQueues; i++) {
         taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
     }
 #endif
+    tempCounterTasksCompleted.resize(numThreads);
     reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
+}
+
+size_t QueryManager::getCurrentTaskSum() {
+    size_t sum = 0;
+    for (auto& val : tempCounterTasksCompleted) {
+        sum += val.counter.load();
+    }
+    return sum;
 }
 
 QueryManager::~QueryManager() NES_NOEXCEPT(false) { destroy(); }
@@ -937,7 +941,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-//            taskQueue.blockingWrite(Task(executable, buffer));
+            //            taskQueue.blockingWrite(Task(executable, buffer));
             taskQueue.blockingWrite(Task(executable, buffer));
 #else
             taskQueues[hardwareManager->getMyNumaRegion()].write(Task(executable, buffer));
@@ -974,11 +978,14 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
 #endif
 }
 
-void QueryManager::completedWork(Task& task, WorkerContext&) {
+void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString());
     if (task.isReconfiguration()) {
         return;
     }
+    tempCounterTasksCompleted[wtx.getId()].fetch_add(1);
+
+#if 0
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
     std::unique_lock lock(workMutex);
 #endif
@@ -1030,6 +1037,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
     }
+#endif
 }
 
 Execution::ExecutableQueryPlanStatus QueryManager::getQepStatus(QuerySubPlanId id) {
@@ -1115,5 +1123,3 @@ uint64_t QueryManager::getNodeId() const { return nodeEngineId; }
 bool QueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
 
 }// namespace NES::Runtime
-
-#pragma clang diagnostic pop
