@@ -149,8 +149,13 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
                           "--numWorkerThreads=5",
                           "--numberOfBuffersInGlobalBufferManager=2048",
                           "--numberOfBuffersPerWorker=",
-                          "--numberOfBuffersInSourceLocalBufferPool=128"};
-    int argc = 8;
+                          "--numberOfBuffersInSourceLocalBufferPool=128",
+                          "--queryCompilerCompilationStrategy=FAST",
+                          "--queryCompilerPipeliningStrategy=OPERATPR_AT_A_TIME",
+                          "--queryCompilerOutputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+
+    };
+    int argc = 11;
 
     std::map<string, string> commandLineParams;
 
