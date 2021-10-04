@@ -980,11 +980,12 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
 
 void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString());
-    std::cout << "QueryManager::completedWork: Work for task=" << task.toString() << std::endl;
+    std::cout << "QueryManager::completedWork: Work for task=" << task.toString()
+              << "wrtK" << wtx.getId() << std::endl;
     if (task.isReconfiguration()) {
         return;
     }
-    tempCounterTasksCompleted[wtx.getId()].fetch_add(1);
+    tempCounterTasksCompleted[first run value.getId()].fetch_add(1);
 
 #if 0
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
