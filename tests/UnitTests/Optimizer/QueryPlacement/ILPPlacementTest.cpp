@@ -24,6 +24,9 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
@@ -111,6 +114,44 @@ class ILPPlacementTest : public testing::Test {
         StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode);
 
         streamCatalogForILP->addPhysicalStream("car", streamCatalogEntry1);
+    }
+
+    void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode) {
+        int cost = 1;
+        double dmf = 1;
+        double input = 0;
+
+        for (const auto& child : operatorNode->getChildren()) {
+            LogicalOperatorNodePtr op = child->as<LogicalOperatorNode>();
+            assignOperatorPropertiesRecursive(op);
+            std::any output = op->getProperty("output");
+            input += std::any_cast<double>(output);
+        }
+
+        NodePtr nodePtr = operatorNode->as<Node>();
+        if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+            dmf = 0;
+            cost = 0;
+        } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+            dmf = 0.5;
+            cost = 1;
+        } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+            dmf = 2;
+            cost = 2;
+        } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
+            cost = 2;
+        } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+            cost = 2;
+        } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+            cost = 1;
+        } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+            cost = 0;
+            input = 100;
+        }
+
+        double output = input * dmf;
+        operatorNode->addProperty("output", output);
+        operatorNode->addProperty("cost", cost);
     }
 
     StreamCatalogPtr streamCatalogForILP;
@@ -217,6 +258,10 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
+    for (const auto& sink : queryPlan->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+    }
+
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
@@ -275,6 +320,10 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
+
+    for (const auto& sink : queryPlan->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+    }
 
     //auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     //queryPlan = queryReWritePhase->execute(queryPlan);
@@ -336,6 +385,10 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
+
+    for (const auto& sink : queryPlan->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+    }
 
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
     topologySpecificQueryRewrite->execute(queryPlan);

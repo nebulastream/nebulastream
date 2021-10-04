@@ -30,39 +30,58 @@ typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 namespace NES::Optimizer {
 
 /**
- * @brief This class implements Integer Linear Programming strategy to optimize the operator placement
+ * @brief This class implements Integer Linear Programming strategy to perform the operator placement
  */
 class ILPStrategy : public BasePlacementStrategy {
   public:
-    ~ILPStrategy() override= default;;
+    ~ILPStrategy() override = default;
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
     static std::unique_ptr<ILPStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                    TopologyPtr topology,
-                                                    TypeInferencePhasePtr typeInferencePhase,
-                                                    StreamCatalogPtr streamCatalog);
+                                               TopologyPtr topology,
+                                               TypeInferencePhasePtr typeInferencePhase,
+                                               StreamCatalogPtr streamCatalog);
+    /**
+     * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
+     * @param weight the relative weight
+     */
+    void setOverUtilizationWeight(double weight);
 
-    double getOUWeight();
-    double getNetWeight();
-    void setNetWeight(double value);
-    void setOUWeight(double value);
+    /**
+     * @brief get the relative weight for the overutilization cost
+     * @return the relative weight for the overutilization cost
+     */
+    double getOverUtilizationCostWeight();
+
+    /**
+     * @brief set the relative weight for the network cost to be used when computing weighted sum in the final cost
+     * @param weight the relative weight
+     */
+    void setNetworkCostWeight(double weight);
+
+    /**
+     * @brief get the relative weight for the network cost
+     * @return the relative weight for the network cost
+     */
+    double getNetworkCostWeight();
 
   private:
-    double weightOverutilization = 1.0;
-    double weightNetworkCost = 1.0;
+    // default value for the relative weight of overutilization and network cost
+    double overUtilizationCostWeight = 1.0;
+    double networkCostWeight = 1.0;
 
     explicit ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                              TopologyPtr topology,
-                              TypeInferencePhasePtr typeInferencePhase,
-                              StreamCatalogPtr streamCatalog);
+                         TopologyPtr topology,
+                         TypeInferencePhasePtr typeInferencePhase,
+                         StreamCatalogPtr streamCatalog);
     /**
      * @brief assigns operators to topology nodes based on ILP solution
-     * @param queryPlan
-     * @param m
+     * @param queryPlan the query plan to place
+     * @param model a Z3 model from the Z3 Optimize
      * @param placementVariables
      */
-    void placeOperators(QueryPlanPtr queryPlan, z3::model& m, std::map<std::string, z3::expr>& placementVariables);
+    bool placeOperators(QueryPlanPtr queryPlan, z3::model& model, std::map<std::string, z3::expr>& placementVariables);
 
     /**
     * @param sourceNode source operator or source topology node
@@ -72,23 +91,23 @@ class ILPStrategy : public BasePlacementStrategy {
 
     /**
     * @brief creates the placement variables and adds constraints to the optimizer
-    * @param c Z3 context
-    * @param opt
-    * @param operatorPath
-    * @param topologyPath
-    * @param operatorNodes
-    * @param topologyNodes
+    * @param context Z3 context
+    * @param opt an instance of the Z3 optimize class
+    * @param operatorNodePath the selected sequence of operator to add
+    * @param topologyNodePath the selected sequence of topology node to add
+    * @param operatorIdToNodeMap a mapping of operator id string and operator node object
+    * @param topologyNodeIdToNodeMap a mapping of topology nodes id string and topology node object
     * @param placementVariables
     * @param positions
     * @param utilizations
-    * @param mileages
+    * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
-    void addPath(z3::context& c,
+    bool addPath(z3::context& context,
                  z3::optimize& opt,
-                 std::vector<NodePtr>& operatorPath,
-                 std::vector<NodePtr>& topologyPath,
-                 std::map<std::string, OperatorNodePtr>& operatorNodes,
-                 std::map<std::string, TopologyNodePtr>& topologyNodes,
+                 std::vector<NodePtr>& operatorNodePath,
+                 std::vector<NodePtr>& topologyNodePath,
+                 std::map<std::string, OperatorNodePtr>& operatorIdToNodeMap,
+                 std::map<std::string, TopologyNodePtr>& topologyNodeIdToNodeMap,
                  std::map<std::string, z3::expr>& placementVariables,
                  std::map<std::string, z3::expr>& distances,
                  std::map<std::string, z3::expr>& utilizations,
@@ -96,30 +115,18 @@ class ILPStrategy : public BasePlacementStrategy {
 
     /**
     * @brief calculates the mileage property for a node
-    * mileage: distance to the root node, takes into account the bandwidth of the links
+    * @param mileage distance to the root node, takes into account the bandwidth of the links
     * @param node topology node for which mileage is calculated
-    * @mileageMap map of mileages
+    * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
-    void computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileageMap);
+    void computeDistanceRecursive(TopologyNodePtr node, std::map<std::string, double>& mileages);
 
     /**
     * @brief computes heuristics for distance
-    * @param queryPlan
-    * @return the map of mileage parameters
+    * @param queryPlan query plan to place
+    * @return a mapping of topology node (represented by string id) and their distance to the root node
     */
     std::map<std::string, double> computeDistanceHeuristic(QueryPlanPtr queryPlan);
-
-    /**
-     * @brief assigns the output and cost properties to each operator
-     * @param queryPlan
-     */
-    void applyOperatorHeuristics(QueryPlanPtr queryPlan);
-
-    /**
-    * @brief called by applyOperatorHeuristics, (if not provided) estimates output and computing-cost of an
-    * @param operatorNode
-    */
-    void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode);
 };
 }// namespace NES::Optimizer
 
