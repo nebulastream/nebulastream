@@ -205,6 +205,9 @@ message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
+# folly and cpprestsdk relies on boost so we set the right configuration flag
+set(Boost_NO_WARN_NEW_VERSIONS TRUE)
+
 # jemalloc
 option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
 message(STATUS "Using jemalloc: ${CMAKE_ENABLE_JEMALLOC}")
@@ -339,8 +342,6 @@ set(LIBRARIES ${LIBRARIES} ${BACKWARD_LIBRARIES})
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
 # C++ REST SDK
-# cpprestsdk relies on boost so we set the right configuration flag
-set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 find_package(cpprestsdk CONFIG REQUIRED)
 set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
 
