@@ -44,8 +44,6 @@ ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerCont
     NES_TRACE("Execute Pipeline Stage with id=" << querySubPlanId << " originId=" << inputBuffer.getOriginId()
                                                 << " stage=" << pipelineId);
 
-    return executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
-#if 0
     auto pipelineStatus = this->pipelineStatus.load();
     if (pipelineStatus == PipelineStatus::PipelineRunning) {
         inProgressTasks += 1;
@@ -59,7 +57,6 @@ ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerCont
     NES_ERROR("Cannot execute Pipeline Stage with id=" << querySubPlanId << " originId=" << inputBuffer.getOriginId()
                                                        << " stage=" << pipelineId << " as pipeline is not running anymore");
     return ExecutionResult::Error;
-#endif
 }
 
 bool ExecutablePipeline::setup(const QueryManagerPtr&, const BufferManagerPtr&) {
