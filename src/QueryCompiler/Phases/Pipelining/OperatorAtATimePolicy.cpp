@@ -13,9 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Phases/Pipelining/NeverFusePolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
 
 namespace NES::QueryCompilation {
-bool NeverFusePolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr) { return true; }
-OperatorFusionPolicyPtr NeverFusePolicy::create() { return std::make_shared<NeverFusePolicy>(); }
+bool OperatorAtATimePolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr) { return true; }
+OperatorFusionPolicyPtr OperatorAtATimePolicy::create() { return std::make_shared<OperatorAtATimePolicy>(); }
 }// namespace NES::QueryCompilation
