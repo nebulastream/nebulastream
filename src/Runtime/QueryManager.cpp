@@ -160,6 +160,7 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
 
 size_t QueryManager::getCurrentTaskSum() {
     size_t sum = 0;
+    std::cout << "val=0=" << tempCounterTasksCompleted[0].counter.load() << std::endl;
     for (auto& val : tempCounterTasksCompleted) {
         sum += val.counter.load();
     }
@@ -980,8 +981,6 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
 
 void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString());
-std::cout << "QueryManager::completedWork: Work for task=" << task.toString()
-          << "wrtK" << wtx.getId() << std::endl;
     if (task.isReconfiguration()) {
         return;
     }
