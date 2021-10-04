@@ -21,7 +21,7 @@
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
-#include <QueryCompiler/Phases/Pipelining/NeverFusePolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
 #include <QueryCompiler/Phases/PredicationOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
@@ -46,7 +46,7 @@ PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptio
         };
         case QueryCompilerOptions::OPERATOR_AT_A_TIME: {
             NES_DEBUG("Create pipelining phase with always break policy");
-            auto operatorFusionPolicy = NeverFusePolicy::create();
+            auto operatorFusionPolicy = OperatorAtATimePolicy::create();
             return DefaultPipeliningPhase::create(operatorFusionPolicy);
         }
     };

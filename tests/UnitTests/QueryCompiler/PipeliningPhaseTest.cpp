@@ -36,7 +36,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
-#include <QueryCompiler/Phases/Pipelining/NeverFusePolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
