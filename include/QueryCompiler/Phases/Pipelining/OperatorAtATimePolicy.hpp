@@ -22,9 +22,9 @@ namespace QueryCompilation {
 /**
  * @brief This policy permits operator fusion for all operators.
  */
-class NeverFusePolicy : public OperatorFusionPolicy {
+class OperatorAtATimePolicy : public OperatorFusionPolicy {
   public:
-    ~NeverFusePolicy() override = default;
+    ~OperatorAtATimePolicy() override = default;
     static OperatorFusionPolicyPtr create();
     bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
