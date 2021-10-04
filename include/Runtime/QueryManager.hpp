@@ -236,6 +236,21 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     uint64_t getNumberOfTasksInWorkerQueue() const;
 
+    template <typename T>
+    struct AtomicCounter {
+        explicit AtomicCounter(T defValue = 0) : counter(defValue) {}
+        AtomicCounter(const AtomicCounter<T>& other) : counter(other.counter.load()) {}
+        AtomicCounter<T>& operator=(const AtomicCounter<T>& other) {
+            counter.store(other.counter.load());
+            return *this;
+        }
+        operator T() { return counter.load(); }
+        T fetch_add(T delta) { return counter.fetch_add(delta); }
+        std::atomic<T> counter;
+    };
+
+    size_t getCurrentTaskSum();
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;
@@ -282,7 +297,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     uint16_t numThreads;
     std::vector<uint64_t> workerToCoreMapping;
-//    mutable std::shared_mutex queryMutex;
+    //    mutable std::shared_mutex queryMutex;
     mutable std::recursive_mutex queryMutex;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     folly::MPMCQueue<Task> taskQueue;
@@ -296,12 +311,12 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     mutable std::mutex workMutex;
     std::condition_variable cv;
 #endif
-
     std::atomic<QueryManagerStatus> queryManagerStatus{Created};
+    std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
 };
 
 using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 }// namespace Runtime
-}// namespace NES
+}// namespace NESnow it s
 #endif /* INCLUDE_query manager_H_ */

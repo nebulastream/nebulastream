@@ -155,7 +155,7 @@ bool ThreadPool::start() {
 
             barrier->wait();
             NES_ASSERT(localBufferManager != NULL, "localBufferManager is null");
-            runningRoutine(WorkerContext(NesThread::getId(), localBufferManager, numberOfBuffersPerWorker));
+            runningRoutine(WorkerContext(i, localBufferManager, numberOfBuffersPerWorker));
         });
     }
     barrier->wait();
