@@ -943,11 +943,11 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
                                                                     << buffer);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
             //            taskQueue.blockingWrite(Task(executable, buffer));
-//            taskQueue.blockingWrite(Task(executable, buffer));
-            while(!taskQueue.write(Task(executable, buffer)))
-            {
-
-            }
+            taskQueue.blockingWrite(Task(executable, buffer));
+//            while(!taskQueue.write(Task(executable, buffer)))
+//            {
+//
+//            }
 #else
             taskQueues[hardwareManager->getMyNumaRegion()].write(Task(executable, buffer));
 #endif
