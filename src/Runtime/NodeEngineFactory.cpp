@@ -99,6 +99,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         }
 
         auto stateManager = std::make_shared<StateManager>(nodeEngineId);
+        auto bufferStorage = std::make_shared<BufferStorage>();
         if (!partitionManager) {
             NES_ERROR("Runtime: error while creating partition manager");
             throw Exception("Error while creating partition manager");
@@ -110,6 +111,10 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         if (!stateManager) {
             NES_ERROR("Runtime: error while creating stateManager");
             throw Exception("Error while creating stateManager");
+        }
+        if (!bufferStorage) {
+            NES_ERROR("Runtime: error while creating bufferStorage");
+            throw Exception("Error while creating bufferStorage");
         }
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -127,6 +132,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             std::move(hardwareManager),
             std::move(bufferManagers),
             std::move(queryManager),
+            std::move(bufferStorage),
             [hostname, port, numThreads](const std::shared_ptr<NodeEngine>& engine) {
                 return Network::NetworkManager::create(hostname,
                                                        port,

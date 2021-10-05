@@ -20,8 +20,9 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/OutputChannel.hpp>
+#include <Runtime/BufferStorage.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-
 #include <string>
 
 namespace NES::Network {
@@ -42,6 +43,7 @@ class NetworkSink : public SinkMedium {
                          NesPartition nesPartition,
                          const Runtime::BufferManagerPtr& bufferManager,
                          Runtime::QueryManagerPtr queryManager,
+                         BufferStoragePtr bufferStorage,
                          std::chrono::seconds waitTime = std::chrono::seconds(5),
                          uint8_t retryTimes = 10);
 
@@ -88,9 +90,9 @@ class NetworkSink : public SinkMedium {
   private:
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
+    BufferStoragePtr bufferStorage;
     const NodeLocation nodeLocation;
     NesPartition nesPartition;
-
     const std::chrono::seconds waitTime;
     const uint8_t retryTimes;
 };
