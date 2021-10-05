@@ -64,7 +64,7 @@ class GeneratorSource : public DataSource {
     /**
      * @brief running routine while source is active
      */
-    virtual void runningRoutine();
+    virtual void runningRoutine()  {};
 
     /**
      * @brief override the toString method for the generator source
