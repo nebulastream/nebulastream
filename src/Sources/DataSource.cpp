@@ -86,7 +86,6 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
 }
 
 void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
-
     for (const auto& successor : executableSuccessors) {
         queryManager->addWorkForNextPipeline(buffer, successor);
     }
