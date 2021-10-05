@@ -106,7 +106,7 @@ void MemorySource::runningRoutine() {
         buffer.setNumberOfTuples(numberOfTuplesToProduce);
         queryManager->addWork(operatorId, buffer);
     }
-    std::cout << "source stopped" << std::endl;
+    std::cout << "source stopped and produced buffers=" << numBuffersToProcess << std::endl;
     close();
     // inject reconfiguration task containing end of stream
     queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
