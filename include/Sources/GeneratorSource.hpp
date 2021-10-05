@@ -62,6 +62,11 @@ class GeneratorSource : public DataSource {
     std::optional<Runtime::TupleBuffer> receiveData() override = 0;
 
     /**
+     * @brief running routine while source is active
+     */
+    virtual void runningRoutine();
+
+    /**
      * @brief override the toString method for the generator source
      * @return returns string describing the generator source
      */
