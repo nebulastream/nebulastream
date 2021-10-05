@@ -36,9 +36,9 @@ class BufferStorageTest : public testing::Test {
 
 TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
     auto bufferStorage = std::make_shared<BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
+    Runtime::TupleBuffer buffer;
     for (size_t i = 0; i < buffers_inserted; i++) {
-        bufferStorage->insertBuffer(i, buffer.value());
+        bufferStorage->insertBuffer(i, buffer);
         ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted);
@@ -46,9 +46,9 @@ TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
 
 TEST_F(BufferStorageTest, bufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
+    Runtime::TupleBuffer buffer;
     for (size_t i = 0; i < buffers_inserted; i++) {
-        bufferStorage->insertBuffer(i, buffer.value());
+        bufferStorage->insertBuffer(i, buffer);
         ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted);
@@ -61,9 +61,9 @@ TEST_F(BufferStorageTest, bufferDeletionFromBufferStorage) {
 
 TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
+    Runtime::TupleBuffer buffer;
     for (size_t i = 0; i < buffers_inserted; i++) {
-        bufferStorage->insertBuffer(i, buffer.value());
+        bufferStorage->insertBuffer(i, buffer);
         ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
     }
     bufferStorage->trimBuffer(3);
