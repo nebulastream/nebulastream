@@ -87,8 +87,9 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 
 }// namespace detail
 
+#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
-//static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 1024;
+#endif
 
 QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            uint64_t nodeEngineId,
