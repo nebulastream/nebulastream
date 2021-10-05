@@ -106,8 +106,7 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-    auto nodeStats = std::make_shared<NodeStats>();
-    uint64_t nodeId = topologyManagerService->registerNode(address, 4000, 5000, 6, nodeStats, NodeType::Sensor);
+    uint64_t nodeId = topologyManagerService->registerNode(address, 4000, 5000, 6, NodeType::Sensor);
     EXPECT_NE(nodeId, 0u);
 
     //setup test

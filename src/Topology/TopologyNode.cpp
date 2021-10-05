@@ -15,7 +15,6 @@
 */
 
 #include <Topology/TopologyNode.hpp>
-//#include <NodeStats.pb.h>
 #include <algorithm>
 #include <utility>
 
@@ -34,10 +33,6 @@ uint64_t TopologyNode::getId() const { return id; }
 uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 
 uint32_t TopologyNode::getDataPort() const { return dataPort; }
-
-void TopologyNode::setNodeStats(NodeStatsPtr nodeStats) { this->nodeStats = std::move(nodeStats); }
-
-NodeStatsPtr TopologyNode::getNodeStats() { return nodeStats; }
 
 uint16_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
 
