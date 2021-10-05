@@ -34,10 +34,12 @@ class TopologyManagerService;
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 class StreamCatalogService;
 using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
+class MonitoringManager;
+using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
-    explicit CoordinatorRPCServer(TopologyPtr topology, StreamCatalogPtr streamCatalog);
+    explicit CoordinatorRPCServer(TopologyPtr topology, StreamCatalogPtr streamCatalog, MonitoringManagerPtr monitoringService);
 
     /**
      * @brief RPC Call to register a node
@@ -131,5 +133,6 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   private:
     TopologyManagerServicePtr topologyManagerService;
     StreamCatalogServicePtr streamCatalogService;
+    MonitoringManagerPtr monitoringManager;
 };
 }// namespace NES

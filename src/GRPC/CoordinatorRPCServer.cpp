@@ -15,14 +15,18 @@
 */
 
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
+#include <Monitoring/MonitoringManager.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 using namespace NES;
 
-CoordinatorRPCServer::CoordinatorRPCServer(TopologyPtr topology, StreamCatalogPtr streamCatalog)
+CoordinatorRPCServer::CoordinatorRPCServer(TopologyPtr topology, StreamCatalogPtr streamCatalog, MonitoringManagerPtr monitoringManager)
     : topologyManagerService(std::make_shared<TopologyManagerService>(topology, streamCatalog)),
-      streamCatalogService(std::make_shared<StreamCatalogService>(streamCatalog)){};
+      streamCatalogService(std::make_shared<StreamCatalogService>(streamCatalog)),
+      monitoringManager(monitoringManager){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
@@ -30,8 +34,12 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                        request->grpcport(),
                                                        request->dataport(),
                                                        request->numberofslots(),
-                                                       std::make_shared<NodeStats>(request->nodeproperties()),
                                                        (NodeType) request->type());
+
+    auto groupedMetrics = std::make_shared<GroupedMetricValues>();
+    groupedMetrics->staticNesMetrics = std::make_unique<StaticNesMetrics>(StaticNesMetrics(request->monitoringdata()));
+    monitoringManager->receiveMonitoringData(id, groupedMetrics);
+
     if (id != 0) {
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);
         reply->set_id(id);
@@ -47,6 +55,7 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNode
 
     bool success = topologyManagerService->unregisterNode(request->id());
     if (success) {
+        monitoringManager->removeMonitoringNode(request->id());
         NES_DEBUG("CoordinatorRPCServer::UnregisterNode: sensor successfully removed");
         reply->set_success(true);
         return Status::OK;
