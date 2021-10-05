@@ -75,8 +75,7 @@ MemorySource::MemorySource(SchemaPtr schema,
     } else {
         //if the memory area spans multiple buffers
         auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->schemaSize;
-        auto numberOfTuplesPerBuffer =
-            std::floor(double(bufferSize) / double(this->schemaSize));
+        auto numberOfTuplesPerBuffer = std::floor(double(bufferSize) / double(this->schemaSize));
         if (restTuples > numberOfTuplesPerBuffer) {
             numberOfTuplesToProduce = numberOfTuplesPerBuffer;
         } else {
@@ -88,22 +87,14 @@ MemorySource::MemorySource(SchemaPtr schema,
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
-void MemorySource::runningRoutine()
-{
+void MemorySource::runningRoutine() {
     open();
-    while (running) {
-        auto optBuf = receiveData();
-        if (optBuf.has_value()) {
-            auto& buf = optBuf.value();
-            emitWorkFromSource(buf);
-        } else {
-            if (!wasGracefullyStopped) {
-                NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
-                running = false;
-            }
-            NES_DEBUG("DataSource " << operatorId << ": Thread terminating after graceful exit.");
-        }
+    for (uint64_t i = 0; i < (1000 * 1000 * 1000 * 5); ++i) {
+        auto buffer =
+            Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
+        emitWork(buffer);
     }
+    close();
 }
 
 void MemorySource::open() {
@@ -135,8 +126,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
     }
 
-    NES_ASSERT2_FMT(numberOfTuplesToProduce * schemaSize <= bufferSize,
-                    "value to write is larger than the buffer");
+    NES_ASSERT2_FMT(numberOfTuplesToProduce * schemaSize <= bufferSize, "value to write is larger than the buffer");
 
     Runtime::TupleBuffer buffer;
     switch (sourceMode) {
