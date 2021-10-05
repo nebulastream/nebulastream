@@ -129,7 +129,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         file->print();
     }
 #ifdef __linux__
-    compilationFlags.addFlag("--shared");
+    compilationFlags.addFlag("--shared -O3");
 #elif defined(__APPLE__)
     compilationFlags.addFlag("-shared");
     compilationFlags.addFlag("-lnes");
@@ -145,7 +145,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-o" + libraryFileName);
 
 #ifdef NES_LOGGING_TRACE_LEVEL
-    compilationFlags.addFlag("-DNES_LOGGING_TRACE_LEVEL=1");
+    compilationFlags.addFlag("-DNES_LOGGING_NO_LEVEL=1");
 #endif
 #ifdef NES_LOGGING_DEBUG_LEVEL
     compilationFlags.addFlag("-DNES_LOGGING_DEBUG_LEVEL=1");

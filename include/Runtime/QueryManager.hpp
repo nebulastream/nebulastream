@@ -237,7 +237,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     uint64_t getNumberOfTasksInWorkerQueue() const;
 
     template <typename T>
-    struct AtomicCounter {
+    struct alignas(2*64) AtomicCounter {
         explicit AtomicCounter(T defValue = 0) : counter(defValue) {}
         AtomicCounter(const AtomicCounter<T>& other) : counter(other.counter.load()) {}
         AtomicCounter<T>& operator=(const AtomicCounter<T>& other) {
@@ -248,6 +248,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
         T fetch_add(T delta) { return counter.fetch_add(delta); }
         std::atomic<T> counter;
     };
+    static_assert(sizeof(AtomicCounter<uint64_t>)==2*64);
 
     size_t getCurrentTaskSum();
 

@@ -77,6 +77,8 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      */
     SourceType getType() const override;
 
+    void runningRoutine() override;
+
     virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override{};
 
     /**

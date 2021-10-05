@@ -97,6 +97,18 @@ void MemorySource::open() {
     memoryArea.reset();
 }
 
+void MemorySource::runningRoutine() {
+    open();
+    auto buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
+    buffer.setNumberOfTuples(numberOfTuplesToProduce);
+    NES_INFO("Going to produce " << numberOfTuplesToProduce);
+    std::cout << "Going to produce " << numberOfTuplesToProduce << std::endl;
+    for (uint64_t i = 0; i < (1000ul*1000ul*1000ul*5ul); ++i) {
+        queryManager->addWork(operatorId, buffer);
+    }
+    close();
+}
+
 void MemorySource::close() {
     DataSource::close();
     numaLocalMemoryArea.release();
