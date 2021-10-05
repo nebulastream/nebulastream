@@ -88,6 +88,24 @@ MemorySource::MemorySource(SchemaPtr schema,
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
+void MemorySource::runningRoutine()
+{
+    open();
+    while (running) {
+        auto optBuf = receiveData();
+        if (optBuf.has_value()) {
+            auto& buf = optBuf.value();
+            emitWorkFromSource(buf);
+        } else {
+            if (!wasGracefullyStopped) {
+                NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
+                running = false;
+            }
+            NES_DEBUG("DataSource " << operatorId << ": Thread terminating after graceful exit.");
+        }
+    }
+}
+
 void MemorySource::open() {
     DataSource::open();
 
