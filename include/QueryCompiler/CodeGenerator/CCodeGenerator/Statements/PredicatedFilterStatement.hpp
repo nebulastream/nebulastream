@@ -17,20 +17,30 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_PREDICATEDFILTERSTATEMENT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_PREDICATEDFILTERSTATEMENT_HPP_
 
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 
 namespace NES {
 namespace QueryCompilation {
 class PredicatedFilterStatement : public Statement {
   public:
-    static ExpressionStatementPtr generatePredicateEvaluationCode(const ExpressionStatement& condExpr, const VariableDeclaration& tuplePassesFilter, bool tuplePassesPredicateIsDeclared);
+    static ExpressionStatementPtr generatePredicateEvaluationCode(const ExpressionStatement& condExpr,
+                                                                  const VariableDeclaration& tuplePassesFilter,
+                                                                  bool tuplePassesPredicateIsDeclared);
 
-    explicit PredicatedFilterStatement(const ExpressionStatement& condExpr, const VariableDeclaration& tuplePassesFilter, bool tuplePassesPredicateIsDeclared);
+    explicit PredicatedFilterStatement(const ExpressionStatement& condExpr,
+                                       const VariableDeclaration& tuplePassesFilter,
+                                       bool tuplePassesPredicateIsDeclared);
 
-    PredicatedFilterStatement(const ExpressionStatement& condExpr, const VariableDeclaration& tuplePassesFilter, bool tuplePassesPredicateIsDeclared, const Statement& predicatedCode);
-    PredicatedFilterStatement(const ExpressionStatementPtr condExpr, const VariableDeclarationPtr tuplePassesFilter, bool tuplePassesPredicateIsDeclared, const StatementPtr predicatedCode);
+    PredicatedFilterStatement(const ExpressionStatement& condExpr,
+                              const VariableDeclaration& tuplePassesFilter,
+                              bool tuplePassesPredicateIsDeclared,
+                              const Statement& predicatedCode);
+    PredicatedFilterStatement(const ExpressionStatementPtr condExpr,
+                              const VariableDeclarationPtr tuplePassesFilter,
+                              bool tuplePassesPredicateIsDeclared,
+                              const StatementPtr predicatedCode);
 
     [[nodiscard]] StatementType getStamentType() const override;
     [[nodiscard]] CodeExpressionPtr getCode() const override;

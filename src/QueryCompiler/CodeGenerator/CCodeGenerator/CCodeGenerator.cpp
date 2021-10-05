@@ -363,7 +363,9 @@ bool CCodeGenerator::generateCodeForFilterPredicated(PredicatePtr pred, Pipeline
 
     // create predicate expression from filter predicate
     auto predicateExpression = pred->generateCode(context->code, context->getRecordHandler());
-    auto predicatedFilter = PredicatedFilter(*predicateExpression, context->code->varDeclarationTuplePassesFilters, context->getTuplePassesFiltersIsDeclared());
+    auto predicatedFilter = PredicatedFilter(*predicateExpression,
+                                             context->code->varDeclarationTuplePassesFilters,
+                                             context->getTuplePassesFiltersIsDeclared());
 
     context->code->currentCodeInsertionPoint->addStatement(predicatedFilter.createCopy());
     context->setTrueTuplePassesFiltersIsDeclared();
@@ -402,7 +404,8 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, LegacyExpressio
     return true;
 }
 
-bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy,
+bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
+                                         OutputBufferAllocationStrategy bufferStrategy,
                                          PipelineContextPtr context) {
 
     auto tf = getTypeFactory();
@@ -509,9 +512,9 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAlloc
                 // the pipeline uses (branchless) predicated filtering
                 // we increase "numberOfResultTuples" if all filters are passed, as shown by the boolean tuplePassesFilters
                 code->currentCodeInsertionPoint->addStatement(
-                        VarRef(code->varDeclarationNumberOfResultTuples).assign(
-                                VarRef(code->varDeclarationNumberOfResultTuples) + VarRef(code->varDeclarationTuplePassesFilters)
-                                ).copy());
+                    VarRef(code->varDeclarationNumberOfResultTuples)
+                        .assign(VarRef(code->varDeclarationNumberOfResultTuples) + VarRef(code->varDeclarationTuplePassesFilters))
+                        .copy());
             } else {
                 // no (branchless) predicated filtering in pipeline
                 // increment number of tuples in buffer -> ++numberOfResultTuples;
@@ -540,7 +543,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAlloc
         code->variableInitStmts.push_back(varDeclResultTupleStmt.copy());
 
         // Setting the start of all fields for col layout
-        generateCodeInitStructFieldsColLayout(sinkSchema, // TODO duplicate to maxTuple?
+        generateCodeInitStructFieldsColLayout(sinkSchema,// TODO duplicate to maxTuple?
                                               tf,
                                               code->varDeclarationResultBuffer,
                                               code->structDeclarationResultTuple,
@@ -579,7 +582,8 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAlloc
 
         // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
         // We can optimize this away if the result schema is smaller than the input schema.
-        if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || bufferStrategy == OMIT_OVERFLOW_CHECK)) { // TODO does this work yet for col layout?
+        if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
+              || bufferStrategy == OMIT_OVERFLOW_CHECK)) {// TODO does this work yet for col layout?
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
     } else {
@@ -790,7 +794,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     }
 
     // Setting the start of all fields for col layout
-    if (schema->getLayoutType() == Schema::COL_LAYOUT) { // TODO duplicate to maxTuple?
+    if (schema->getLayoutType() == Schema::COL_LAYOUT) {// TODO duplicate to maxTuple?
         std::vector<StatementPtr> statements;
         generateCodeInitStructFieldsColLayout(schema,
                                               tf,

@@ -84,8 +84,8 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         } else if (node->instanceOf<GeneratableOperators::GeneratableBufferEmit>()) {
             emitNode = node->as<GeneratableOperators::GeneratableBufferEmit>();
             outputSchema = emitNode->getOutputSchema();
-        } else if (node->instanceOf<GeneratableOperators::GeneratableFilterOperator>() ||
-                    node->instanceOf<GeneratableOperators::GeneratableFilterOperatorPredicated>()) {
+        } else if (node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()
+                   || node->instanceOf<GeneratableOperators::GeneratableFilterOperatorPredicated>()) {
             filterOperatorFound = true;
         } else if (node->instanceOf<GeneratableOperators::GeneratableCEPIterationOperator>()) {
             return operatorPipeline;

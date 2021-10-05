@@ -67,13 +67,9 @@ uint64_t PipelineContext::getHandlerIndex(const Runtime::Execution::OperatorHand
     return 0;
 }
 
-bool PipelineContext::getTuplePassesFiltersIsDeclared() {
-    return this->tuplePassesFiltersIsDeclared;
-}
+bool PipelineContext::getTuplePassesFiltersIsDeclared() { return this->tuplePassesFiltersIsDeclared; }
 
-void PipelineContext::setTrueTuplePassesFiltersIsDeclared() {
-    this->tuplePassesFiltersIsDeclared = true;
-}
+void PipelineContext::setTrueTuplePassesFiltersIsDeclared() { this->tuplePassesFiltersIsDeclared = true; }
 
 std::vector<Runtime::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() { return this->operatorHandlers; }
 }// namespace NES::QueryCompilation
