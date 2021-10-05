@@ -935,7 +935,6 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 #endif
 
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable) {
-    //std::unique_lock lock(queryMutex);// we need this mutex because runningQEPs can be concurrently modified
     NES_DEBUG("Add Work for executable");
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
@@ -943,12 +942,8 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-            //            taskQueue.blockingWrite(Task(executable, buffer));
             taskQueue.blockingWrite(Task(executable, buffer));
-//            while(!taskQueue.write(Task(executable, buffer)))
-//            {
-//
-//            }
+
 #else
             taskQueues[hardwareManager->getMyNumaRegion()].write(Task(executable, buffer));
 #endif
@@ -983,7 +978,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
     cv.notify_all();
 #endif
 }
-#define LIGHT_WEIGHT_STATISTICS
+//#define LIGHT_WEIGHT_STATISTICS
 void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
     if (task.isReconfiguration()) {

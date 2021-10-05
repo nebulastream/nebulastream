@@ -100,6 +100,7 @@ void MemorySource::runningRoutine() {
     open();
     NES_INFO("Going to produce " << numberOfTuplesToProduce);
     std::cout << "Going to produce " << numberOfTuplesToProduce << std::endl;
+
     for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
         auto buffer =
             Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
@@ -108,7 +109,6 @@ void MemorySource::runningRoutine() {
             queryManager->addWorkForNextPipeline(buffer, successor);
         }
     }
-    std::cout << "source stopped and produced buffers=" << numBuffersToProcess << std::endl;
     close();
     // inject reconfiguration task containing end of stream
     queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
