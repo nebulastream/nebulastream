@@ -95,7 +95,7 @@ void MemorySource::runningRoutine() {
         buffer.setNumberOfTuples(numberOfTuplesToProduce);
 
 //        emitWork(buffer);
-        queryManager->addWork(buffer);
+        queryManager->addWork(operatorId, buffer);
     }
     close();
 }
