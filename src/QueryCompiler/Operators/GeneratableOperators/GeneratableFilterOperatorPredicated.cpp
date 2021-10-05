@@ -22,13 +22,16 @@
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
-GeneratableFilterOperatorPredicated::GeneratableFilterOperatorPredicated(OperatorId id, const SchemaPtr& inputSchema, ExpressionNodePtr predicate)
+GeneratableFilterOperatorPredicated::GeneratableFilterOperatorPredicated(OperatorId id,
+                                                                         const SchemaPtr& inputSchema,
+                                                                         ExpressionNodePtr predicate)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, inputSchema), predicate(std::move(predicate)) {}
 
 GeneratableOperatorPtr GeneratableFilterOperatorPredicated::create(SchemaPtr inputSchema, ExpressionNodePtr predicate) {
     return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(predicate));
 }
-GeneratableOperatorPtr GeneratableFilterOperatorPredicated::create(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate) {
+GeneratableOperatorPtr
+GeneratableFilterOperatorPredicated::create(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate) {
     return std::make_shared<GeneratableFilterOperatorPredicated>(
         GeneratableFilterOperatorPredicated(id, std::move(inputSchema), std::move(predicate)));
 }

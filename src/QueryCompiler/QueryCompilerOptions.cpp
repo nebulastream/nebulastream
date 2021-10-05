@@ -44,7 +44,7 @@ uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() const { return numSour
 QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     auto options = QueryCompilerOptions();
     options.enableOperatorFusion();
-    options.enablePredication(); // todo: disable by default
+    options.enablePredication();// todo: disable by default
     options.setNumSourceLocalBuffers(64);
     options.setOutputBufferOptimizationLevel(ALL);
     return std::make_shared<QueryCompilerOptions>(options);

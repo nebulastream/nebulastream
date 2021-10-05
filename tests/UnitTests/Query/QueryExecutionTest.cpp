@@ -235,40 +235,42 @@ void fillBuffer(TupleBuffer& buf, const Runtime::DynamicMemoryLayout::DynamicRow
 TEST_F(QueryExecutionTest, filterQuery) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
-            testSchema,
-            [&](OperatorId id,
-                    const SourceDescriptorPtr&,
-                    const Runtime::NodeEnginePtr&,
-                    size_t numSourceLocalBuffers,
-                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                     nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(),
-                                                                     id,
-                                                                     numSourceLocalBuffers,
-                                                                     std::move(successors));
-            });
+        testSchema,
+        [&](OperatorId id,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t numSourceLocalBuffers,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 numSourceLocalBuffers,
+                                                                 std::move(successors));
+        });
 
     auto outputSchema = Schema::create()
-            ->addField("test$id", BasicType::INT64)
-            ->addField("test$one", BasicType::INT64)
-            ->addField("test$value", BasicType::INT64);
+                            ->addField("test$id", BasicType::INT64)
+                            ->addField("test$one", BasicType::INT64)
+                            ->addField("test$value", BasicType::INT64);
 
     constexpr std::array<char const*, 6> bufferOptimizationLevelNames{"ALL",
-                                                "NO",
-                                                "ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-                                                "REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK",
-                                                "REUSE_INPUT_BUFFER_NO_FALLBACK",
-                                                "OMIT_OVERFLOW_CHECK_NO_FALLBACK"};
+                                                                      "NO",
+                                                                      "ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+                                                                      "REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK",
+                                                                      "REUSE_INPUT_BUFFER_NO_FALLBACK",
+                                                                      "OMIT_OVERFLOW_CHECK_NO_FALLBACK"};
 
-    for (uint8_t i = 0; i <= 5; i++) {      // try different OutputBufferOptimizationLevel's: enum with six states
-        for (uint8_t j = 0; j <= 1; j++) {  // try Predication on/off: bool
-            NES_DEBUG("Starting: Test filterQuery with bufferOptimizationLevel: " << bufferOptimizationLevelNames[i] << " and predication " << ((j == 0) ? "OFF" : "ON"));
+    for (uint8_t i = 0; i <= 5; i++) {    // try different OutputBufferOptimizationLevel's: enum with six states
+        for (uint8_t j = 0; j <= 1; j++) {// try Predication on/off: bool
+            NES_DEBUG("Starting: Test filterQuery with bufferOptimizationLevel: "
+                      << bufferOptimizationLevelNames[i] << " and predication " << ((j == 0) ? "OFF" : "ON"));
 
             auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
 
             // set OutputBufferOptimizationLevel enum
-            QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel lvl = (QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel) i;
+            QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel lvl =
+                (QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel) i;
             options->setOutputBufferOptimizationLevel(lvl);
 
             // set Predication bool
@@ -284,11 +286,11 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
             // two filter operators to validate correct behaviour of (multiple) branchless predicated filters
             auto query = TestQuery::from(testSourceDescriptor)
-                    .filter(Attribute("id") < 6)
-                    .map(Attribute("idx2") = Attribute("id") * 2)
-                    .filter(Attribute("idx2") < 10)
-                    .project(Attribute("id"), Attribute("one"), Attribute("value"))
-                    .sink(testSinkDescriptor);
+                             .filter(Attribute("id") < 6)
+                             .map(Attribute("idx2") = Attribute("id") * 2)
+                             .filter(Attribute("idx2") < 10)
+                             .project(Attribute("id"), Attribute("one"), Attribute("value"))
+                             .sink(testSinkDescriptor);
 
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
             auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -319,7 +321,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
             auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
             auto resultRecordIndexFields =
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+                Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
             for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
                 // id
                 EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
@@ -329,11 +331,11 @@ TEST_F(QueryExecutionTest, filterQuery) {
             buffer.release();
             plan->stop();
 
-            NES_DEBUG("Done: Test filterQuery with bufferOptimizationLevel: " << bufferOptimizationLevelNames[i] << " and predication " << ((j == 0) ? "OFF" : "ON"));
+            NES_DEBUG("Done: Test filterQuery with bufferOptimizationLevel: "
+                      << bufferOptimizationLevelNames[i] << " and predication " << ((j == 0) ? "OFF" : "ON"));
         }
     }
 }
-
 
 TEST_F(QueryExecutionTest, projectionQuery) {
     auto streamConf = PhysicalStreamConfig::createEmpty();

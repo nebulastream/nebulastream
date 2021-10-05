@@ -26,8 +26,7 @@
 
 namespace NES::QueryCompilation {
 
-PredicationOptimizationPhasePtr
-PredicationOptimizationPhase::PredicationOptimizationPhase::create(bool predicationEnabled) {
+PredicationOptimizationPhasePtr PredicationOptimizationPhase::PredicationOptimizationPhase::create(bool predicationEnabled) {
     return std::make_shared<PredicationOptimizationPhase>(predicationEnabled);
 }
 
@@ -62,7 +61,8 @@ OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr oper
     // abort if windowing operator is found:
     for (const auto& node : nodes) {
         if (node->instanceOf<GeneratableOperators::GeneratableSlicePreAggregationOperator>()) {
-            NES_DEBUG("PredicationOptimizationPhase: No predication applied. Predication is not yet implemented for windowing queries.");
+            NES_DEBUG("PredicationOptimizationPhase: No predication applied. Predication is not yet implemented for windowing "
+                      "queries.");
             return operatorPipeline;
         }
     }
@@ -71,8 +71,8 @@ OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr oper
         if (node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()) {
             auto filterOperator = node->as<GeneratableOperators::GeneratableFilterOperator>();
             auto predicatedFilterOperator =
-                    GeneratableOperators::GeneratableFilterOperatorPredicated::create(filterOperator->getInputSchema(),
-                                                                                      filterOperator->getPredicate());
+                GeneratableOperators::GeneratableFilterOperatorPredicated::create(filterOperator->getInputSchema(),
+                                                                                  filterOperator->getPredicate());
             queryPlan->replaceOperator(filterOperator, predicatedFilterOperator);
             NES_DEBUG("PredicationOptimizationPhase: Replaced filter operator with equivalent predicated filter operator.");
         }
