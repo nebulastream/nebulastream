@@ -104,7 +104,9 @@ void MemorySource::runningRoutine() {
         auto buffer =
             Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
         buffer.setNumberOfTuples(numberOfTuplesToProduce);
-        queryManager->addWork(operatorId, buffer);
+        for (const auto& successor : executableSuccessors) {
+            queryManager->addWorkForNextPipeline(buffer, successor);
+        }
     }
     std::cout << "source stopped and produced buffers=" << numBuffersToProcess << std::endl;
     close();
