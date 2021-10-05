@@ -79,6 +79,12 @@ class MonitoringManager {
     void receiveMonitoringData(uint64_t nodeId, GroupedMetricValuesPtr metricValues);
 
     /**
+     * @brief Remove node from monitoring store.
+     * @param nodeId
+     */
+    void removeMonitoringNode(uint64_t nodeId);
+
+    /**
      * @brief Get the monitoring plan for a given node ID. If the node exists in the topology but has not a registered
      * plan, MonitoringPlan::Default will be returned. If the node does not exist an NES exception is thrown.
      * @param nodeId

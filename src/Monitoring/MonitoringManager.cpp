@@ -109,15 +109,19 @@ void MonitoringManager::receiveMonitoringData(uint64_t nodeId, GroupedMetricValu
     metricStore->addMetric(nodeId, std::move(metrics));
 }
 
+void MonitoringManager::removeMonitoringNode(uint64_t nodeId) {
+    NES_DEBUG("MonitoringManager: Removing node and metrics for node " << nodeId);
+    monitoringPlanMap.erase(nodeId);
+    metricStore->removeMetrics(nodeId);
+}
+
 GroupedMetricValuesPtr MonitoringManager::requestNewestMonitoringDataFromMetricStore(uint64_t nodeId) {
     if (metricStore->hasMetric(nodeId)) {
         return metricStore->getNewestMetric(nodeId);
-    }
-    else {
+    } else {
         NES_THROW_RUNTIME_ERROR("MonitoringManager: Node with ID " << nodeId << " not found in MetricStore.");
     }
 }
-
 
 MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
     if (monitoringPlanMap.find(nodeId) == monitoringPlanMap.end()) {

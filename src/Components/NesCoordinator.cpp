@@ -314,7 +314,7 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     NES_ASSERT(streamCatalogService, "null streamCatalogService");
     NES_ASSERT(topologyManagerService, "null topologyManagerService");
 
-    CoordinatorRPCServer service(topology, streamCatalog);
+    CoordinatorRPCServer service(topology, streamCatalog, monitoringService->getMonitoringManager());
 
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
