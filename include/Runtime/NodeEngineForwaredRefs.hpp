@@ -28,7 +28,6 @@ using WorkerConfigPtr = std::shared_ptr<WorkerConfig>;
 class PhysicalStreamConfig;
 using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
-class NodeStats;
 enum PipelineStageArity : uint8_t { Unary, BinaryLeft, BinaryRight };
 
 class PhysicalType;

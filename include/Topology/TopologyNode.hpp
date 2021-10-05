@@ -22,8 +22,6 @@
 #include <any>
 
 namespace NES {
-class NodeStats;
-using NodeStatsPtr = std::shared_ptr<NodeStats>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
@@ -60,18 +58,6 @@ class TopologyNode : public Node {
      * @param uint64_t of the vlaue that has to be added
      */
     void increaseResources(uint16_t freedCapacity);
-
-    /**
-     * @brief method to set the property of the node by creating a NodeProperties object
-     * @param a string of the serialized json object of the properties
-     */
-    void setNodeStats(NodeStatsPtr nodeStats);
-
-    /**
-   * @brief method to get the node properties
-   * @NodePropertiesPtr to the properties of this node
-   */
-    NodeStatsPtr getNodeStats();
 
     /**
      * @brief Get ip address of the node
@@ -154,7 +140,6 @@ class TopologyNode : public Node {
     uint32_t dataPort;
     uint16_t resources;
     uint16_t usedResources;
-    NodeStatsPtr nodeStats;
 
     /**
      * @brief A field to store a map of node properties

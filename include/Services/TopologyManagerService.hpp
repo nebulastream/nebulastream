@@ -26,8 +26,6 @@ enum NodeType : int;
 namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
-class NodeStats;
-using NodeStatsPtr = std::shared_ptr<NodeStats>;
 
 /**
  * @brief: This class is responsible for registering/unregistering nodes and adding and removing parentNodes.

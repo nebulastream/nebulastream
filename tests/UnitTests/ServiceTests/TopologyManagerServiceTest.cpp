@@ -70,16 +70,14 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     TopologyPtr topology = Topology::create();
     TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, streamCatalog);
 
-    auto nodeStats = std::make_shared<NodeStats>();
-    uint64_t nodeId = topologyManagerService->registerNode(ip, publish_port, 5000, 6, nodeStats, NodeType::Sensor);
+    uint64_t nodeId = topologyManagerService->registerNode(ip, publish_port, 5000, 6, NodeType::Sensor);
     EXPECT_NE(nodeId, 0u);
 
-    uint64_t nodeId1 = topologyManagerService->registerNode(ip, publish_port + 2, 5000, 6, nodeStats, NodeType::Sensor);
+    uint64_t nodeId1 = topologyManagerService->registerNode(ip, publish_port + 2, 5000, 6, NodeType::Sensor);
     EXPECT_NE(nodeId1, 0u);
 
     //test register existing node
-    auto nodeStats2 = std::make_shared<NodeStats>();
-    uint64_t nodeId2 = topologyManagerService->registerNode(ip, publish_port, 5000, 6, nodeStats2, NodeType::Sensor);
+    uint64_t nodeId2 = topologyManagerService->registerNode(ip, publish_port, 5000, 6, NodeType::Sensor);
     EXPECT_EQ(nodeId2, 0u);
     //test unregister not existing node
     bool successUnregisterNotExistingNode = topologyManagerService->unregisterNode(552);
