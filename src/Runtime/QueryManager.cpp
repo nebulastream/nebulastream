@@ -85,10 +85,9 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 };
 
 }// namespace detail
-
-//static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
-static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 1024;
-
+#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
+#endif
 QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            uint64_t nodeEngineId,
                            uint16_t numThreads,
@@ -984,13 +983,14 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
 }
 
 void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
-    NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString());
+    NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
     if (task.isReconfiguration()) {
         return;
     }
+#ifdef LIGHT_WEIGHT_STATISTICS
     tempCounterTasksCompleted[wtx.getId()].fetch_add(1);
+#else
 
-#if 0
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
     std::unique_lock lock(workMutex);
 #endif
