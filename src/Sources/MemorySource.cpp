@@ -87,19 +87,6 @@ MemorySource::MemorySource(SchemaPtr schema,
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
-void MemorySource::runningRoutine() {
-    open();
-    for (uint64_t i = 0; i < (1000 * 1000 * 1000 * 5); ++i) {
-        auto buffer =
-            Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
-        buffer.setNumberOfTuples(numberOfTuplesToProduce);
-
-//        emitWork(buffer);
-        queryManager->addWork(operatorId, buffer);
-    }
-    close();
-}
-
 void MemorySource::open() {
     DataSource::open();
 
