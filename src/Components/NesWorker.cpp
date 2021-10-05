@@ -246,13 +246,7 @@ bool NesWorker::connect() {
 
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(address);
     std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
-
-    auto staticStats = MetricUtils::staticNesStats();
-    auto tupleBuffer = nodeEngine->getBufferManager()->getUnpooledBuffer(sizeof(StaticNesMetrics)).value();
-
-    StaticNesMetrics measuredVal = staticStats.measure();
-    auto schema = getSchema(measuredVal, "");
-    writeToBuffer(measuredVal, tupleBuffer, 0);
+    auto staticStats = MetricUtils::staticNesStats().measure();
 
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddress=" << localAddress);
     bool successPRCRegister = false;
@@ -262,14 +256,14 @@ bool NesWorker::connect() {
                                                                 localWorkerZmqPort,
                                                                 numberOfSlots,
                                                                 NodeType::Sensor,
-                                                                tupleBuffer);
+                                                                staticStats);
     } else if (type == NesNodeType::Worker) {
         successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
                                                                 localWorkerRpcPort,
                                                                 localWorkerZmqPort,
                                                                 numberOfSlots,
                                                                 NodeType::Worker,
-                                                                tupleBuffer);
+                                                                staticStats);
     } else {
         NES_NOT_IMPLEMENTED();
     }

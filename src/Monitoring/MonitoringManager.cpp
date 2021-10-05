@@ -105,6 +105,7 @@ GroupedMetricValues MonitoringManager::requestMonitoringData(uint64_t nodeId, Ru
 }
 
 void MonitoringManager::receiveMonitoringData(uint64_t nodeId, GroupedMetricValuesPtr metrics) {
+    NES_DEBUG("MonitoringManager: Adding metrics for node " << nodeId);
     metricStore->addMetric(nodeId, std::move(metrics));
 }
 

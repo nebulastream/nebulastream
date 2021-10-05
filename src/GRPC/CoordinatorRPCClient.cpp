@@ -231,7 +231,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         NodeType type,
-                                        Runtime::TupleBuffer& staticNesMetricsBuf) {
+                                        StaticNesMetrics staticNesMetrics) {
     if (type == NodeType::Sensor) {
         NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
     } else if (type == NodeType::Worker) {
@@ -246,7 +246,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     request.set_grpcport(grpcPort);
     request.set_dataport(dataPort);
     request.set_numberofslots(numberOfSlots);
-    request.set_monitoringdata(staticNesMetricsBuf.getBuffer(), sizeof(StaticNesMetrics));
+    request.mutable_monitoringdata()->Swap(staticNesMetrics.toProtobufSerializable().get());
     request.set_type(type);
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
 

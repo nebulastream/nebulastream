@@ -102,9 +102,12 @@ message SerializableMonitoringPlan {
   bool diskMetrics = 4;
 }
 
-message StaticNesMetrics {
-  bool cpuMetrics = 1;
-  bool networkMetrics = 2;
-  bool memoryMetrics = 3;
-  bool diskMetrics = 4;
+message SerializableStaticNesMetrics {
+  uint64 totalMemoryBytes = 1;
+  uint32 cpuCoreNum = 2;
+  uint64 totalCPUJiffies = 3;
+  int64 cpuPeriodUS = 4;
+  int64 cpuQuotaUS = 5;
+  bool isMoving = 6;
+  bool hasBattery = 7;
 }

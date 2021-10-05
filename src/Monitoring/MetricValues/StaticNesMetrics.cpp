@@ -22,6 +22,7 @@
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <SerializableDataType.pb.h>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
@@ -32,6 +33,16 @@ namespace NES {
 StaticNesMetrics::StaticNesMetrics()
     : totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false), hasBattery(false) {
     NES_DEBUG("StaticNesMetrics: Default ctor");
+}
+
+StaticNesMetrics::StaticNesMetrics(SerializableStaticNesMetrics metrics): totalMemoryBytes(metrics.totalmemorybytes()),
+                                                                           cpuCoreNum(metrics.cpucorenum()),
+                                                                           totalCPUJiffies(metrics.totalcpujiffies()),
+                                                                           cpuPeriodUS(metrics.cpuperiodus()),
+                                                                           cpuQuotaUS(metrics.cpuquotaus()),
+                                                                           isMoving(metrics.ismoving()),
+                                                                           hasBattery(metrics.hasbattery()) {
+    NES_DEBUG("StaticNesMetrics: Creating StaticNesMetrics from Protobuf object");
 }
 
 StaticNesMetrics::StaticNesMetrics(bool isMoving, bool hasBattery)
@@ -88,6 +99,18 @@ StaticNesMetrics StaticNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::
     return output;
 }
 
+SerializableStaticNesMetricsPtr StaticNesMetrics::toProtobufSerializable() const {
+    SerializableStaticNesMetricsPtr output = std::make_shared<SerializableStaticNesMetrics>();
+    output->set_totalmemorybytes(totalMemoryBytes);
+    output->set_cpucorenum(cpuCoreNum);
+    output->set_totalcpujiffies(totalCPUJiffies);
+    output->set_cpuquotaus(cpuQuotaUS);
+    output->set_ismoving(isMoving);
+    output->set_hasbattery(hasBattery);
+    return output;
+}
+
+
 web::json::value StaticNesMetrics::toJson() const {
     web::json::value metricsJson{};
 
@@ -109,6 +132,7 @@ bool StaticNesMetrics::operator==(const StaticNesMetrics& rhs) const {
         && cpuPeriodUS == rhs.cpuPeriodUS && cpuQuotaUS == rhs.cpuQuotaUS && isMoving == rhs.isMoving
         && hasBattery == rhs.hasBattery;
 }
+
 bool StaticNesMetrics::operator!=(const StaticNesMetrics& rhs) const { return !(rhs == *this); }
 
 void writeToBuffer(const StaticNesMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
