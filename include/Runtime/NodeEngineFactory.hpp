@@ -58,8 +58,9 @@ class NodeEngineFactory {
 
   private:
     static QueryCompilation::QueryCompilerOptionsPtr
-    createQueryCompilationOptions(        const std::string& queryCompilerCompilationStrategy,
-                                          const std::string& queryCompilerPipeliningStrategy, const std::string& queryCompilerOutputBufferOptimizationLevel);
+    createQueryCompilationOptions(const std::string& queryCompilerCompilationStrategy,
+                                  const std::string& queryCompilerPipeliningStrategy,
+                                  const std::string& queryCompilerOutputBufferOptimizationLevel);
 };
 
 }// namespace NES::Runtime
