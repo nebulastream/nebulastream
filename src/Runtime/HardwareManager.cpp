@@ -122,7 +122,11 @@ uint32_t HardwareManager::getMyNumaRegion() const {
 }
 
 uint32_t HardwareManager::getNumaNodeForCore(int coreId) const {
+#ifdef NES_ENABLE_NUMA_SUPPORT
     return numa_node_of_cpu(coreId);
+#else
+    return 0;
+#endif
 }
 
 bool HardwareManager::bindThreadToCore(pthread_t, uint32_t, uint32_t) {
