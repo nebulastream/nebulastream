@@ -166,6 +166,11 @@ add_executable(topology-iterator-tests "UnitTests/Topology/TopologyIterationTest
 target_link_libraries(topology-iterator-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-iterator-tests COMMAND topology-iterator-tests)
 
+### Buffer Storage Test ###
+add_executable(buffer-storage-tests "UnitTests/Runtime/BufferStorageTest.cpp" UnitTests/Runtime/BufferStorageTest.cpp)
+target_link_libraries(buffer-storage-tests nes ${GTEST_LIBRARIES})
+add_test(NAME buffer-storage-tests COMMAND buffer-storage-tests)
+
 ### Buffer Manager Test ###
 add_executable(buffer-manager-tests "UnitTests/Runtime/BufferManagerTest.cpp" UnitTests/Runtime/BufferStorageTest.cpp)
 target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})

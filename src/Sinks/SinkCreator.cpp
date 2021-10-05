@@ -132,6 +132,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   nesPartition,
                                                   nodeEngine->getBufferManager(),
                                                   nodeEngine->getQueryManager(),
+                                                  nodeEngine->getBufferStorage(),
                                                   waitTime,
                                                   retryTimes);
 }

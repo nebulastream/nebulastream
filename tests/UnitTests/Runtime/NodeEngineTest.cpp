@@ -120,7 +120,8 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         std::vector<BufferManagerPtr> bufferManager = {std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
-        auto queryManager = std::make_shared<Runtime::QueryManager>(bufferManager, 0, 1, nullptr);
+        auto queryManager = std::make_shared<Runtime::QueryManager>(bufferManager, 0, 1);
+        auto bufferStorage = std::make_shared<BufferStorage>();
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(hostname,
                                                    port,
@@ -137,6 +138,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
                                                              std::make_shared<HardwareManager>(),
                                                              std::move(bufferManager),
                                                              std::move(queryManager),
+                                                             std::move(bufferStorage),
                                                              std::move(networkManagerCreator),
                                                              std::move(partitionManager),
                                                              std::move(queryCompiler),
@@ -614,6 +616,7 @@ void assertKiller() {
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
+                                  BufferStoragePtr&& bufferStorage,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager,
                                   QueryCompilation::QueryCompilerPtr&& compiler,
@@ -625,6 +628,7 @@ void assertKiller() {
                          std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryMgr),
+                         std::move(bufferStorage),
                          std::move(netFuncInit),
                          std::move(partitionManager),
                          std::move(compiler),
@@ -657,6 +661,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
+                                  BufferStoragePtr&& bufferStorage,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager,
                                   QueryCompilation::QueryCompilerPtr&& compiler,
@@ -668,6 +673,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryMgr),
+                         std::move(bufferStorage),
                          std::move(netFuncInit),
                          std::move(partitionManager),
                          std::move(compiler),
@@ -729,6 +735,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
+                                  BufferStoragePtr&& bufferStorage,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager,
                                   QueryCompilation::QueryCompilerPtr&& compiler,
@@ -740,6 +747,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryMgr),
+                         std::move(bufferStorage),
                          std::move(netFuncInit),
                          std::move(partitionManager),
                          std::move(compiler),

@@ -20,6 +20,7 @@
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
+#include <Runtime/BufferStorage.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/ErrorListener.hpp>
@@ -37,7 +38,7 @@ namespace NES {
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-
+using BufferStoragePtr = std::shared_ptr<BufferStorage>;
 class PhysicalStreamConfig;
 using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
@@ -70,6 +71,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         HardwareManagerPtr&&,
                         std::vector<BufferManagerPtr>&&,
                         QueryManagerPtr&&,
+                        BufferStoragePtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
@@ -171,8 +173,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     BufferManagerPtr getBufferManager(uint32_t bufferManagerIndex = 0) const;
 
     /**
-    * @brief getter of state manager
+    * @brief getter of buffer storage
     * @return stateManager
+    */
+    BufferStoragePtr getBufferStorage();
+
+    /**
+    * @brief getter of state manager
+    * @return bufferStorage
     */
     StateManagerPtr getStateManager();
 
@@ -265,6 +273,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     StateManagerPtr stateManager;
     Network::NetworkManagerPtr networkManager;
     std::atomic<bool> isRunning{};
+    BufferStoragePtr bufferStorage;
     mutable std::recursive_mutex engineMutex;
     [[maybe_unused]] uint64_t nodeEngineId;
     [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;

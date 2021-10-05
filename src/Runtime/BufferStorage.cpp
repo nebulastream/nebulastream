@@ -19,22 +19,28 @@
 #include <queue>
 
 namespace NES {
-    void BufferStorage::insertBuffer(uint64_t id, NES::Runtime::TupleBuffer bufferPtr) {
+void BufferStorage::insertBuffer(uint128_t id, NES::Runtime::TupleBuffer bufferPtr) {
+        mutex.lock();
         buffer.push(std::pair<uint64_t, Runtime::TupleBuffer> {id, bufferPtr});
+        mutex.unlock();
     }
 
-    bool BufferStorage::trimBuffer(uint64_t id) {
+    bool BufferStorage::trimBuffer(uint128_t id) {
+        mutex.lock();
         if(!buffer.empty()) {
             while (buffer.front().first < id) {
                 buffer.pop();
-                return true;
             }
+            return true;
         }
         return false;
+        mutex.unlock();
     }
 
-    size_t  BufferStorage::getStorageSize() {
+    size_t BufferStorage::getStorageSize() const {
+        mutex.lock();
         return buffer.size();
+        mutex.unlock();
     }
 
 }// namespace NES
