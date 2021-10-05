@@ -87,7 +87,7 @@ void readCpuConfig(uint32_t& numa_nodes_count,
         ref.addCpu(0, i);
     }
 #else
-#error "OS not supported"
+#error "OS not supported"HardwareManager
 #endif
 }
 
@@ -125,7 +125,7 @@ uint32_t HardwareManager::getNumaNodeForCore(int coreId) const {
 #ifdef NES_ENABLE_NUMA_SUPPORT
     return numa_node_of_cpu(coreId);
 #else
-    return 0;
+    return coreId;
 #endif
 }
 
