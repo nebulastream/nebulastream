@@ -1,4 +1,4 @@
-/*
+    /*
     Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,7 +79,7 @@ class ILPStrategy : public BasePlacementStrategy {
      * @brief assigns operators to topology nodes based on ILP solution
      * @param queryPlan the query plan to place
      * @param model a Z3 model from the Z3 Optimize
-     * @param placementVariables
+     * @param placementVariables a mapping between concatenation of operator id and placement id and their z3 expression
      */
     bool placeOperators(QueryPlanPtr queryPlan, z3::model& model, std::map<std::string, z3::expr>& placementVariables);
 
@@ -97,9 +97,9 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param topologyNodePath the selected sequence of topology node to add
     * @param operatorIdToNodeMap a mapping of operator id string and operator node object
     * @param topologyNodeIdToNodeMap a mapping of topology nodes id string and topology node object
-    * @param placementVariables
-    * @param positions
-    * @param utilizations
+    * @param placementVariable a mapping between concatenation of operator id and placement id and their z3 expression
+    * @param operatorIdDistancesMap a mapping between operators (represented by ids) to their next operator in the topology
+    * @param operatorIdUtilizationsMap a mapping of topology nodes and their node utilization
     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
     bool addPath(z3::context& context,
@@ -108,9 +108,9 @@ class ILPStrategy : public BasePlacementStrategy {
                  std::vector<NodePtr>& topologyNodePath,
                  std::map<std::string, OperatorNodePtr>& operatorIdToNodeMap,
                  std::map<std::string, TopologyNodePtr>& topologyNodeIdToNodeMap,
-                 std::map<std::string, z3::expr>& placementVariables,
-                 std::map<std::string, z3::expr>& distances,
-                 std::map<std::string, z3::expr>& utilizations,
+                 std::map<std::string, z3::expr>& placementVariable,
+                 std::map<std::string, z3::expr>& operatorIdDistancesMap,
+                 std::map<std::string, z3::expr>& operatorIdUtilizationsMap,
                  std::map<std::string, double>& mileages);
 
     /**

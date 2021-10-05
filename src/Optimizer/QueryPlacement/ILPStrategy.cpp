@@ -68,9 +68,9 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     std::map<std::string, OperatorNodePtr> operatorNodes;
     std::map<std::string, TopologyNodePtr> topologyNodes;
-    std::map<std::string, expr> placementVariables;// (operatorID,topologyID)
-    std::map<std::string, expr> positions;         // operatorID
-    std::map<std::string, expr> utilizations;      // topologyID
+    std::map<std::string, expr> placementVariables;
+    std::map<std::string, expr> distances;
+    std::map<std::string, expr> utilizations;
     std::map<std::string, double> milages = computeDistanceHeuristic(queryPlan);
 
     for (const auto& sourceNode : sourceOperators) {
@@ -85,7 +85,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
                                operatorNodes,
                                topologyNodes,
                                placementVariables,
-                               positions,
+                               distances,
                                utilizations,
                                milages);
         if (!success) {
@@ -95,14 +95,14 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     // calculate network cost = sum over all operators (output of operator * distance of operator)
     expr cost_net = c.int_val(0);
-    for (auto const& [operatorID, position] : positions) {
+    for (auto const& [operatorID, position] : distances) {
         OperatorNodePtr operatorNode = operatorNodes[operatorID]->as<OperatorNode>();
         if (operatorNode->getParents().empty())
             continue;
         OperatorNodePtr operatorParent = operatorNode->getParents()[0]->as<OperatorNode>();
         std::string operatorParentID = std::to_string(operatorParent->getId());
 
-        expr distance = position - positions.find(operatorParentID)->second;
+        expr distance = position - distances.find(operatorParentID)->second;
         NES_DEBUG("distance: " << operatorID << " " << distance << std::endl);
 
         std::any prop = operatorNode->getProperty("output");
@@ -123,6 +123,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         std::any prop = topologyNode->getNodeProperty("slots");
         auto output = std::any_cast<int>(prop);
 
+        // add the overutilization constrain to the optimizer
         opt.add(S_j >= 0);
         opt.add(utilization - S_j <= output);
 
@@ -142,6 +143,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     model z3Model = opt.get_model();
     NES_DEBUG("ILPStrategy:model: \n" << z3Model);
 
+    // Evaluate the z3 expression of each operator id - topology id pair in the placement variable
     std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
     for (auto const& [topologyID, P] : placementVariables) {
         if (z3Model.eval(P).get_numeral_int() == 1) {
@@ -207,9 +209,9 @@ bool ILPStrategy::addPath(context& context,
                           std::vector<NodePtr>& topologyNodePath,
                           std::map<std::string, OperatorNodePtr>& operatorIdToNodeMap,
                           std::map<std::string, TopologyNodePtr>& topologyNodeIdToNodeMap,
-                          std::map<std::string, expr>& placementVariables,
-                          std::map<std::string, expr>& distances,
-                          std::map<std::string, expr>& utilizations,
+                          std::map<std::string, expr>& placementVariable,
+                          std::map<std::string, expr>& operatorIdDistancesMap,
+                          std::map<std::string, expr>& operatorIdUtilizationsMap,
                           std::map<std::string, double>& mileages) {
 
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
@@ -224,8 +226,8 @@ bool ILPStrategy::addPath(context& context,
                 topologyNodeIdToNodeMap[topologyID] = topologyNode;
 
                 std::string variableID = operatorID + "," + topologyID;
-                auto iter = placementVariables.find(variableID);
-                if (iter != placementVariables.end()) {
+                auto iter = placementVariable.find(variableID);
+                if (iter != placementVariable.end()) {
                     path_constraint = path_constraint + iter->second;
                 }
             }
@@ -249,25 +251,25 @@ bool ILPStrategy::addPath(context& context,
             } else {
                 opt.add(P_IJ == 0 || P_IJ == 1);
             }
-            placementVariables.insert(std::make_pair(variableID, P_IJ));
+            placementVariable.insert(std::make_pair(variableID, P_IJ));
             sum_i = sum_i + P_IJ;
 
             // add to node utilization
             std::any prop = operatorNode->getProperty("cost");
             auto slots = std::any_cast<int>(prop);
-            auto iterator = utilizations.find(topologyID);
-            if (iterator != utilizations.end()) {
+            auto iterator = operatorIdUtilizationsMap.find(topologyID);
+            if (iterator != operatorIdUtilizationsMap.end()) {
                 iterator->second = iterator->second + slots * P_IJ;
             } else {
                 // utilization of a node = slots (i.e. computing cost of operator) * placement variable
-                utilizations.insert(std::make_pair(topologyID, slots * P_IJ));
+                operatorIdUtilizationsMap.insert(std::make_pair(topologyID, slots * P_IJ));
             }
 
             // add distance to root (positive part of distance equation)
             double M = mileages[topologyID];
             D_i = D_i + context.real_val(std::to_string(M).c_str()) * P_IJ;
         }
-        distances.insert(std::make_pair(operatorID, D_i));
+        operatorIdDistancesMap.insert(std::make_pair(operatorID, D_i));
         // add constraint that operator is placed exactly once on topology path
         opt.add(sum_i == 1);
     }
