@@ -21,6 +21,8 @@
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
+#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 
 namespace NES {
@@ -36,6 +38,8 @@ class GroupedMetricValues {
     std::optional<std::unique_ptr<CpuMetrics>> cpuMetrics;
     std::optional<std::unique_ptr<NetworkMetrics>> networkMetrics;
     std::optional<std::unique_ptr<MemoryMetrics>> memoryMetrics;
+    std::optional<std::unique_ptr<StaticNesMetrics>> staticNesMetrics;
+    std::optional<std::unique_ptr<RuntimeNesMetrics>> runtimeNesMetrics;
 
     web::json::value asJson();
 

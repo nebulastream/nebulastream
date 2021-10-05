@@ -57,16 +57,18 @@ class MonitoringIntegrationTest : public testing::Test {
     Runtime::BufferManagerPtr bufferManager;
 
     static void SetUpTestCase() {
-        NES::setupLogging("WorkerCoordinatorStarterTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup WorkerCoordinatorStarterTest test class.");
+        NES::setupLogging("MonitoringIntegrationTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup MonitoringIntegrationTest test class.");
     }
 
     void SetUp() override {
         rpcPort = rpcPort + 30;
+        restPort = restPort + 2;
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
+        NES_INFO("MonitoringIntegrationTest: Setting up test with rpc port " << rpcPort << ", rest port " << restPort);
     }
 
-    void TearDown() override { std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down MonitoringIntegrationTest class." << std::endl; }
 };
 
 TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
@@ -207,20 +209,22 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJson) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
+        EXPECT_TRUE(json.has_field("staticNesMetrics"));
+        json = json["staticNesMetrics"];
 
-        EXPECT_TRUE(json.has_field("disk"));
-        EXPECT_EQ(json["disk"].size(), 5U);
+        EXPECT_TRUE(json.has_field("TotalMemory"));
+        EXPECT_TRUE(json["TotalMemory"].as_double() > 1);
 
-        EXPECT_TRUE(json.has_field("cpu"));
-        auto numCores = json["cpu"]["NUM_CORES"].as_integer();
-        EXPECT_TRUE(numCores > 0);
-        EXPECT_EQ(json["cpu"].size(), static_cast<std::size_t>(numCores) + 2U);
+        EXPECT_TRUE(json.has_field("CpuCoreNum"));
+        EXPECT_TRUE(json["CpuCoreNum"].as_double() >= 1);
 
-        EXPECT_TRUE(json.has_field("network"));
-        EXPECT_TRUE(json["network"].size() > 0);
+        EXPECT_TRUE(json.has_field("TotalCPUJiffies"));
+        EXPECT_TRUE(json["TotalCPUJiffies"].as_double() >= 1);
 
-        EXPECT_TRUE(json.has_field("memory"));
-        EXPECT_EQ(json["memory"].size(), 13U);
+        EXPECT_TRUE(json.has_field("CpuPeriodUS"));
+        EXPECT_TRUE(json.has_field("CpuQuotaUS"));
+        EXPECT_TRUE(json.has_field("IsMoving"));
+        EXPECT_TRUE(json.has_field("HasBattery"));
     }
 
     bool retStopWrk1 = wrk1->stop(false);

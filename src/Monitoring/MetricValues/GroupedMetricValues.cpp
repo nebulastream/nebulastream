@@ -40,6 +40,14 @@ web::json::value NES::GroupedMetricValues::asJson() {
         metricsJson["memory"] = memoryMetrics.value()->toJson();
     }
 
+    if (staticNesMetrics.has_value()) {
+        metricsJson["staticNesMetrics"] = staticNesMetrics.value()->toJson();
+    }
+
+    if (runtimeNesMetrics.has_value()) {
+        metricsJson["runtimeNesMetrics"] = runtimeNesMetrics.value()->toJson();
+    }
+
     return metricsJson;
 }
 

@@ -22,6 +22,9 @@
 
 namespace NES {
 
+class SerializableStaticNesMetrics;
+using SerializableStaticNesMetricsPtr = std::shared_ptr<SerializableStaticNesMetrics>;
+
 class StaticNesMetrics {
   public:
     StaticNesMetrics();
@@ -32,6 +35,13 @@ class StaticNesMetrics {
      * @param hasBattery flag to indicate if the node runs on battery.
      */
     StaticNesMetrics(bool isMoving, bool hasBattery);
+
+    /**
+     * Ctor for the static NES metrics.
+     * @param isMoving flag to indicate if the node is moving.
+     * @param hasBattery flag to indicate if the node runs on battery.
+     */
+    explicit StaticNesMetrics(SerializableStaticNesMetrics metrics);
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -49,6 +59,13 @@ class StaticNesMetrics {
      */
     static StaticNesMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
+
+    /**
+     * @brief Returns the metric as protobuf class
+     * @return the SerializableStaticNesMetrics from Protobuf
+     */
+    SerializableStaticNesMetricsPtr toProtobufSerializable() const;
+
     /**
      * @brief Returns the metrics as json
      * @return Json containing the metrics
@@ -60,7 +77,7 @@ class StaticNesMetrics {
 
     uint64_t totalMemoryBytes;
 
-    uint16_t cpuCoreNum;
+    uint32_t cpuCoreNum;
     uint64_t totalCPUJiffies;//user+idle+system (Note: This value can change everytime it is read via SystemResourcesReader)
 
     // Using 1.5 CPUs is equivalent to --cpu-period="100000" and --cpu-quota="150000"
