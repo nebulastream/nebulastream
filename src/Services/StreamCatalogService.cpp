@@ -18,7 +18,6 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorRPCService.pb.h>
-#include <NodeStats.pb.h>
 #include <Services/StreamCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
