@@ -31,6 +31,7 @@
 #include <memory>
 #include <stack>
 #include <utility>
+#include <emmintrin.h>
 
 namespace NES::Runtime {
 
@@ -85,9 +86,10 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 };
 
 }// namespace detail
-#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
-#endif
+
+static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
+//static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 1024;
+
 QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            uint64_t nodeEngineId,
                            uint16_t numThreads,
@@ -159,9 +161,8 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
 
 size_t QueryManager::getCurrentTaskSum() {
     size_t sum = 0;
-    std::cout << "val=0=" << tempCounterTasksCompleted[0].counter.load() << std::endl;
     for (auto& val : tempCounterTasksCompleted) {
-        sum += val.counter.load();
+        sum += val.counter.load(std::memory_order_relaxed);
     }
     return sum;
 }
@@ -810,13 +811,12 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
     Task task;
     if (running) {
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-        taskQueue.blockingRead(task);
+        while (!taskQueue.read(task)) { _mm_pause(); }
 #else
         taskQueues[hardwareManager->getMyNumaRegion()].blockingRead(task);
 #endif
         NES_DEBUG("QueryManager: provide task" << task.toString() << " to thread (getWork())");
-//        auto result = task(workerContext);
-        auto result = ExecutionResult::Ok;
+        auto result = task(workerContext);
         switch (result) {
             case ExecutionResult::Ok: {
                 completedWork(task, workerContext);
@@ -988,9 +988,7 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     if (task.isReconfiguration()) {
         return;
     }
-#ifdef LIGHT_WEIGHT_STATISTICS
-    tempCounterTasksCompleted[wtx.getId()].fetch_add(1);
-#else
+    tempCounterTasksCompleted[wtx.getId() % tempCounterTasksCompleted.size()].fetch_add(1);
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
     std::unique_lock lock(workMutex);
