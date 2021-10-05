@@ -94,7 +94,8 @@ void MemorySource::runningRoutine() {
             Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
         buffer.setNumberOfTuples(numberOfTuplesToProduce);
 
-        emitWork(buffer);
+//        emitWork(buffer);
+        queryManager->addWork(buffer);
     }
     close();
 }
