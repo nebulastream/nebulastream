@@ -31,6 +31,8 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -123,7 +125,10 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
 
     EXPECT_EQ(jsons.size(), nodeNumber);
-    for (auto i = static_cast<std::size_t>(1); i <= nodeNumber; ++i) {
+    auto rootId = crd->getTopology()->getRoot()->getId();
+    NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
+
+    for (auto i = static_cast<std::size_t>(rootId); i < rootId+nodeNumber; ++i) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
@@ -205,7 +210,10 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJson) {
     NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
 
     EXPECT_EQ(jsons.size(), nodeNumber);
-    for (auto i = static_cast<std::size_t>(1); i <= nodeNumber; ++i) {
+    auto rootId = crd->getTopology()->getRoot()->getId();
+    NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
+
+    for (auto i = static_cast<std::size_t>(rootId); i < rootId+nodeNumber; ++i) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
