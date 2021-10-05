@@ -990,6 +990,7 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     }
     tempCounterTasksCompleted[wtx.getId() % tempCounterTasksCompleted.size()].fetch_add(1);
 
+#ifndef LIGHT_WEIGHT_STATISTICS
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
     std::unique_lock lock(workMutex);
 #endif
