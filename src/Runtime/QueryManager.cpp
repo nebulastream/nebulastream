@@ -815,7 +815,8 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
         taskQueues[hardwareManager->getMyNumaRegion()].blockingRead(task);
 #endif
         NES_DEBUG("QueryManager: provide task" << task.toString() << " to thread (getWork())");
-        auto result = task(workerContext);
+//        auto result = task(workerContext);
+        auto result = ExecutionResult::Ok;
         switch (result) {
             case ExecutionResult::Ok: {
                 completedWork(task, workerContext);
