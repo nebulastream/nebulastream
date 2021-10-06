@@ -14,14 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/KafkaSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SenseSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/BinarySourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/DefaultSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/KafkaSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/OPCSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/NoSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SenseSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
@@ -48,12 +48,12 @@ std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig(const std:
         case OPCSource: return OPCSourceConfig::create(sourceConfigMap);
         case BinarySource: return BinarySourceConfig::create(sourceConfigMap);
         case SenseSource: return SenseSourceConfig::create(sourceConfigMap);
-        case NoSource: return NoSourceConfig::create(sourceConfigMap);
+        case DefaultSource: return DefaultSourceConfig::create(sourceConfigMap);
         default: return nullptr;
     }
 }
 
-std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig() { return NoSourceConfig::create(sourceConfigMap); }
+std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig() { return DefaultSourceConfig::create(sourceConfigMap); }
 
 void SourceConfigFactory::readYAMLFile(const std::string& filePath) {
 

@@ -15,6 +15,7 @@
 */
 
 #include <Catalogs/MemorySourceStreamConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/DefaultSourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
@@ -37,7 +38,7 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
                                                    uint64_t numBuffersToProcess,
                                                    uint64_t gatheringValue,
                                                    const std::string& gatheringMode)
-    : PhysicalStreamConfig(SourceConfig::create()), sourceType(std::move(sourceType)),
+    : PhysicalStreamConfig(DefaultSourceConfig::create()), sourceType(std::move(sourceType)),
       memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize) {
     // nop
     this->physicalStreamName = std::move(physicalStreamName);

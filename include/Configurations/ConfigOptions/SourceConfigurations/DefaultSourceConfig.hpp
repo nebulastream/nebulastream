@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_NOSOURCECONFIG_HPP
-#define NES_NOSOURCECONFIG_HPP
+#ifndef NES_DEFAULTSOURCECONFIG_HPP
+#define NES_DEFAULTSOURCECONFIG_HPP
 
 #include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
 #include <map>
@@ -23,8 +23,8 @@ limitations under the License.
 
 namespace NES {
 
-class NoSourceConfig;
-using NoSourceConfigPtr = std::shared_ptr<NoSourceConfig>;
+class DefaultSourceConfig;
+using DefaultSourceConfigPtr = std::shared_ptr<DefaultSourceConfig>;
 
 template<class T>
 class ConfigOption;
@@ -36,7 +36,7 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 /**
 * @brief Configuration object for source config
 */
-class NoSourceConfig : public SourceConfig {
+class DefaultSourceConfig : public SourceConfig {
 
   public:
     /**
@@ -44,7 +44,13 @@ class NoSourceConfig : public SourceConfig {
      * @param sourceConfigMap inputted config options
      * @return MQTTSourceConfigPtr
      */
-    static std::shared_ptr<NoSourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
+    static DefaultSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief create defaultSourceConfig with default values
+     * @return defaultSourceConfig with default values
+     */
+    static DefaultSourceConfigPtr create();
     /**
      * @brief resets all Source configuration to default values
      */
@@ -57,9 +63,14 @@ class NoSourceConfig : public SourceConfig {
 
   private:
     /**
-     * @brief constructor to create a new MQTT source config object initialized with default values as set below
+     * @brief constructor to create a new Default source config object using the sourceConfigMap for configs
      */
-    explicit NoSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit DefaultSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new Default source config object initialized with default values
+     */
+    DefaultSourceConfig();
 
 };
 }// namespace NES

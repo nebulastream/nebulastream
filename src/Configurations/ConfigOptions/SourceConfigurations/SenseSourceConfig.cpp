@@ -17,22 +17,33 @@ limitations under the License.
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/SenseSourceConfig.hpp>
 #include <Util/Logger.hpp>
-#include <filesystem>
 #include <string>
 #include <utility>
 
 namespace NES {
+
 std::shared_ptr<SenseSourceConfig> SenseSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<SenseSourceConfig>(SenseSourceConfig(std::move(sourceConfigMap)));
+}
+
+std::shared_ptr<SenseSourceConfig> SenseSourceConfig::create() {
+    return std::make_shared<SenseSourceConfig>(SenseSourceConfig());
 }
 
 SenseSourceConfig::SenseSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(std::move(sourceConfigMap)),
       udsf(ConfigOption<std::string>::create("udsf", "", "udsf, needed for: SenseSource")) {
-    NES_INFO("BinarySourceConfig: Init source config object.");
+    NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
     if (sourceConfigMap.find("udsf") != sourceConfigMap.end()) {
         udsf->setValue(sourceConfigMap.find("udsf")->second);
     }
+}
+
+SenseSourceConfig::SenseSourceConfig()
+    : SourceConfig(),
+      udsf(ConfigOption<std::string>::create("udsf", "", "udsf, needed for: SenseSource")) {
+    NES_INFO("SenseSourceConfig: Init source config object with default values.");
+
 }
 
 void SenseSourceConfig::resetSourceOptions() {

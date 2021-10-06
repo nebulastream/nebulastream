@@ -17,17 +17,20 @@ limitations under the License.
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/KafkaSourceConfig.hpp>
 #include <Util/Logger.hpp>
-#include <filesystem>
 #include <string>
 #include <utility>
 
 namespace NES {
-std::shared_ptr<KafkaSourceConfig> KafkaSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig(sourceConfigMap));
+KafkaSourceConfigPtr KafkaSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig(std::move(sourceConfigMap)));
+}
+
+KafkaSourceConfigPtr KafkaSourceConfig::create() {
+    return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig());
 }
 
 KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
+    : SourceConfig(std::move(sourceConfigMap)), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
           "autoCommit",
           1,
@@ -38,7 +41,7 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
       topic(ConfigOption<std::string>::create("topic", "testTopic", "topic to listen to")),
       connectionTimeout(
           ConfigOption<uint32_t>::create("connectionTimeout", 10, "connection time out for source, needed for: KafkaSource")) {
-    NES_INFO("NesSourceConfig: Init source config object with default values.");
+    NES_INFO("KafkaSourceConfig: Init source config object with values from sourceConfigMap.");
 
     if (sourceConfigMap.find("brokers") != sourceConfigMap.end()) {
         brokers->setValue(sourceConfigMap.find("brokers")->second);
@@ -55,6 +58,22 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
     if (sourceConfigMap.find("connectionTimeout") != sourceConfigMap.end()) {
         connectionTimeout->setValue(std::stoi(sourceConfigMap.find("connectionTimeout")->second));
     }
+
+}
+
+KafkaSourceConfig::KafkaSourceConfig()
+    : SourceConfig(), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
+      autoCommit(ConfigOption<uint32_t>::create(
+          "autoCommit",
+          1,
+          "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource")),
+      groupId(ConfigOption<std::string>::create("groupId",
+                                                "testGroup",
+                                                "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
+      topic(ConfigOption<std::string>::create("topic", "testTopic", "topic to listen to")),
+      connectionTimeout(
+          ConfigOption<uint32_t>::create("connectionTimeout", 10, "connection time out for source, needed for: KafkaSource")) {
+    NES_INFO("KafkaSourceConfig: Init source config object with default values.");
 
 }
 

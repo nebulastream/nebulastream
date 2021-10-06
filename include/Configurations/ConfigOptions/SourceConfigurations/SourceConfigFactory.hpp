@@ -30,9 +30,7 @@ enum ConfigSourceType {
     BinarySource,
     MQTTSource,
     KafkaSource,
-    OPCSource,
-    NoSource
-};
+    OPCSource, DefaultSource };
 
 static std::map<std::string, ConfigSourceType> stringToConfigSourceType{
     {"SenseSource", SenseSource},
@@ -41,7 +39,7 @@ static std::map<std::string, ConfigSourceType> stringToConfigSourceType{
     {"MQTTSource", MQTTSource},
     {"KafkaSource", KafkaSource},
     {"OPCSource", OPCSource},
-    {"NoSource", NoSource},
+    {"NoSource", DefaultSource},
 };
 
 class SourceConfig;

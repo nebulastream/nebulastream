@@ -23,6 +23,9 @@ limitations under the License.
 
 namespace NES {
 
+class BinarySourceConfig;
+using BinarySourceConfigPtr = std::shared_ptr<BinarySourceConfig>;
+
 template<class T>
 class ConfigOption;
 using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
@@ -41,7 +44,13 @@ class BinarySourceConfig : public SourceConfig {
      * @param sourceConfigMap inputted config options
      * @return BinarySourceConfigPtr
      */
-    static std::shared_ptr<BinarySourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
+    static BinarySourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief create a BinarySourceConfigPtr object with default values
+     * @return BinarySourceConfigPtr
+     */
+    static BinarySourceConfigPtr create();
 
     ~BinarySourceConfig() override = default;
 
@@ -67,9 +76,15 @@ class BinarySourceConfig : public SourceConfig {
 
   private:
     /**
-     * @brief constructor to create a new Binary source config object initialized with default values as set below
+     * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
     explicit BinarySourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new Binary source config object initialized with default values as set below
+     */
+    BinarySourceConfig();
+
     StringConfigOption filePath;
 
 };

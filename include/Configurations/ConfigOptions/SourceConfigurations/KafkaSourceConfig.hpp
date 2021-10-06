@@ -45,7 +45,14 @@ class KafkaSourceConfig : public SourceConfig {
      * @param sourceConfigMap inputted config options
      * @return KafkaSourceConfigPtr
      */
-    static std::shared_ptr<KafkaSourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
+    static KafkaSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief create a KafkaSourceConfigPtr object
+     * @return KafkaSourceConfigPtr
+     */
+    static KafkaSourceConfigPtr create();
+
     /**
      * @brief resets alls Source configuration to default values
      */
@@ -108,9 +115,15 @@ class KafkaSourceConfig : public SourceConfig {
 
   private:
     /**
-     * @brief constructor to create a new Kafka source config object initialized with default values as set below
+     * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
      */
     explicit KafkaSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new Kafka source config object initialized with default values
+     */
+    KafkaSourceConfig();
+
     StringConfigOption brokers;
     IntConfigOption autoCommit;
     StringConfigOption groupId;

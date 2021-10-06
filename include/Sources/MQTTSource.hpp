@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 
+#include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/Parser.hpp>
 
@@ -52,7 +53,7 @@ class MQTTSource : public DataSource {
     explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
                         Runtime::QueryManagerPtr queryManager,
-                        SourceConfigPtr sourceConfig,
+                        MQTTSourceConfigPtr sourceConfig,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
@@ -141,12 +142,12 @@ class MQTTSource : public DataSource {
      * @brief getter for source config
      * @return sourceConfig
      */
-    const SourceConfigPtr& getSourceConfig() const;
+    const MQTTSourceConfigPtr& getSourceConfig() const;
     /**
      * set SourceConfig
      * @param sourceConfig
      */
-    void setSourceConfig(const SourceConfigPtr& sourceConfig);
+    void setSourceConfig(const MQTTSourceConfigPtr& sourceConfig);
 
   private:
     /**
@@ -173,7 +174,7 @@ class MQTTSource : public DataSource {
      * serialization/deserialization process
      */
     friend class DataSource;
-    SourceConfigPtr sourceConfig;
+    MQTTSourceConfigPtr sourceConfig;
     bool connected;
     std::string serverAddress;
     std::string clientId;

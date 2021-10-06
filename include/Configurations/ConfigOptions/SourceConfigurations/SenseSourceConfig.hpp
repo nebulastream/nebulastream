@@ -23,6 +23,9 @@ limitations under the License.
 
 namespace NES {
 
+class SenseSourceConfig;
+using SenseSourceConfigPtr = std::shared_ptr<SenseSourceConfig>;
+
 template<class T>
 class ConfigOption;
 using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
@@ -41,7 +44,13 @@ class SenseSourceConfig : public SourceConfig {
      * @param sourceConfigMap inputted config options
      * @return SenseSourceConfigPtr
      */
-    static std::shared_ptr<SenseSourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
+    static SenseSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief create a SenseSourceConfigPtr object
+     * @return SenseSourceConfigPtr
+     */
+    static SenseSourceConfigPtr create();
 
     ~SenseSourceConfig() override = default;
 
@@ -66,10 +75,17 @@ class SenseSourceConfig : public SourceConfig {
     void setUdsf(std::string udsf);
 
   private:
+
     /**
-     * @brief constructor to create a new Sense source config object initialized with default values as set below
+     * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
     explicit SenseSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new Sense source config object initialized with default values
+     */
+    SenseSourceConfig();
+
     StringConfigOption udsf;
 };
 }// namespace NES

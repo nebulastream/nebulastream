@@ -17,13 +17,16 @@ limitations under the License.
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <Util/Logger.hpp>
-#include <filesystem>
 #include <string>
 #include <utility>
 
 namespace NES {
-std::shared_ptr<CSVSourceConfig> CSVSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+CSVSourceConfigPtr CSVSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<CSVSourceConfig>(CSVSourceConfig(std::move(sourceConfigMap)));
+}
+
+CSVSourceConfigPtr CSVSourceConfig::create() {
+    return std::make_shared<CSVSourceConfig>(CSVSourceConfig());
 }
 
 CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap)
@@ -39,6 +42,15 @@ CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfig
     if (sourceConfigMap.find("skipHeader") != sourceConfigMap.end()) {
         skipHeader->setValue((sourceConfigMap.find("skipHeader")->second == "true"));
     }
+}
+
+CSVSourceConfig::CSVSourceConfig()
+    : SourceConfig(),
+      filePath(ConfigOption<std::string>::create("filePath",
+                                                 "../tests/test_data/QnV_short.csv",
+                                                 "file path, needed for: CSVSource, BinarySource")),
+      skipHeader(ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.")) {
+    NES_INFO("CSVSourceConfig: Init source config object with default values.");
 }
 
 void CSVSourceConfig::resetSourceOptions() {

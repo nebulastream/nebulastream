@@ -24,16 +24,16 @@
 namespace NES {
 
 SourceDescriptorPtr
-MQTTSourceDescriptor::create(SchemaPtr schema, SourceConfigPtr sourceConfig, SourceDescriptor::InputFormat inputFormat) {
+MQTTSourceDescriptor::create(SchemaPtr schema, MQTTSourceConfigPtr sourceConfig, SourceDescriptor::InputFormat inputFormat) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema), std::move(sourceConfig), inputFormat));
 }
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
-                                           SourceConfigPtr sourceConfig,
+                                           MQTTSourceConfigPtr sourceConfig,
                                            SourceDescriptor::InputFormat inputFormat)
     : SourceDescriptor(std::move(schema)), sourceConfig(std::move(sourceConfig)), inputFormat(inputFormat) {}
 
-SourceConfigPtr MQTTSourceDescriptor::getSourceConfig() const { return sourceConfig; }
+MQTTSourceConfigPtr MQTTSourceDescriptor::getSourceConfig() const { return sourceConfig; }
 
 std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor()"; }
 
