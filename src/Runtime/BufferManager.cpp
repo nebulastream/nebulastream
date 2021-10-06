@@ -294,13 +294,8 @@ size_t BufferManager::getAvailableBuffers() const {
     std::unique_lock lock(availableBuffersMutex);
     return availableBuffers.size();
 #else
-    std::unique_lock lock(localBufferPoolsMutex);
     auto qSize = availableBuffers.size();
-    auto avail = qSize > 0 ? qSize : 0;
-    for (auto& pool : localBufferPools) {
-        avail += pool->getAvailableBuffers();
-    }
-    return avail;
+    return qSize > 0 ? qSize : 0;
 #endif
 }
 
