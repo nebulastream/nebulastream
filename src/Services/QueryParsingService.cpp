@@ -40,7 +40,7 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
         code << "#include <API/Schema.hpp>" << std::endl;
-        code << "#include <Sources/DataSource.hpp>" << std::endl;
+        code << "#include <Common/DataTypes/DataTypeFactory.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
 
         code << "Schema createSchema(){" << std::endl;
