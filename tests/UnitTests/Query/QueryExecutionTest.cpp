@@ -254,12 +254,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
                             ->addField("test$one", BasicType::INT64)
                             ->addField("test$value", BasicType::INT64);
 
-    constexpr std::array<char const*, 6> bufferOptimizationLevelNames{"ALL",
-                                                                      "NO",
-                                                                      "ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-                                                                      "REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK",
-                                                                      "REUSE_INPUT_BUFFER_NO_FALLBACK",
-                                                                      "OMIT_OVERFLOW_CHECK_NO_FALLBACK"};
 
     auto outputBufferOptimizationLevels = {
         NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::ALL,
@@ -275,9 +269,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
     for (auto outputBufferOptimizationLevel :
          outputBufferOptimizationLevels) {// try different OutputBufferOptimizationLevel's: enum with six states
         for (auto filterProcessingStrategy : filterProcessingStrategies) {// try Predication on/off: bool
-            NES_DEBUG("Starting: Test filterQuery with bufferOptimizationLevel: "
-            << bufferOptimizationLevelNames << " and predication " << filterProcessingStrategy);
-
             auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
             options->setOutputBufferOptimizationLevel(outputBufferOptimizationLevel);
             options->setFilterProcessingStrategy(filterProcessingStrategy);
@@ -332,9 +323,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
             testSink->cleanupBuffers();
             buffer.release();
             plan->stop();
-
-            NES_DEBUG("Done: Test filterQuery with bufferOptimizationLevel: "
-            << bufferOptimizationLevelNames << " and predication " << filterProcessingStrategy);
         }
     }
 }
