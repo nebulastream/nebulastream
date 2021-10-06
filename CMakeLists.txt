@@ -241,7 +241,6 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
 endif ()
 
-# folly
 if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
     find_package(folly CONFIG REQUIRED)
     set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
@@ -415,7 +414,6 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 # Definition of runtime variables ######################################################################################
 # LLVM
 find_package(LLVM 12.0.0 CONFIG REQUIRED)
-#find_package(LLVM CONFIG REQUIRED)
 if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
     message("-- LLVM binary dir ${LLVM_BINARY_DIR}")

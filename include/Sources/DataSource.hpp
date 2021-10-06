@@ -262,6 +262,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     * @brief running routine with a fix ingestion rate
     */
     virtual void runningRoutineWithIngestionRate();
+
+  protected:
+    uint32_t numaNode;
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

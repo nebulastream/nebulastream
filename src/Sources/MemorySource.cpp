@@ -106,7 +106,7 @@ void MemorySource::runningRoutine() {
             Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
         buffer.setNumberOfTuples(numberOfTuplesToProduce);
         for (const auto& successor : executableSuccessors) {
-            queryManager->addWorkForNextPipeline(buffer, successor);
+            queryManager->addWorkForNextPipeline(buffer, successor, numaNode);
         }
     }
     close();

@@ -192,6 +192,7 @@ bool QueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
                                                   numThreads,
                                                   bufferManagers,
                                                   numberOfBuffersPerWorker,
+                                                  hardwareManager,
                                                   workerToCoreMapping);
         return threadPool->start();
     }
@@ -578,36 +579,6 @@ uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
 #endif
 }
 
-void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
-    //    std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
-    std::unique_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
-
-    // check if source is registered
-    if (sourceIdToSuccessorMap.find(sourceId) != sourceIdToSuccessorMap.end()) {
-        auto executablePipelines = sourceIdToSuccessorMap[sourceId];
-        // iterate over all executable pipelines
-        for (const auto& executablePipeline : executablePipelines) {
-            NES_DEBUG("Add Work for executable from network source " << sourceId << " origin id: " << buf.getOriginId());
-            // create task
-            auto task = Task(executablePipeline, buf);
-            // dispatch task to task queue.
-#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-            taskQueue.blockingWrite(std::move(task));
-#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
-            taskQueues[hardwareManager->getMyNumaRegion()].write(std::move(task));
-#else
-            //TODO: this is a problem now as it can become the bottleneck
-            std::unique_lock workQueueLock(workMutex);
-            taskQueue.emplace_back(task);
-            cv.notify_all();
-
-#endif
-        }
-    } else {
-        NES_ERROR("Source with id: " << sourceId << " is not registered.");
-    }
-}
-
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId,
                                              const ReconfigurationMessage& message,
                                              bool blocking) {
@@ -826,7 +797,7 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
         //        while (!taskQueue.read(task)) { _mm_pause(); }
         taskQueue.blockingRead(task);
 #else
-        taskQueues[hardwareManager->getMyNumaRegion()].blockingRead(task);
+        taskQueues[workerContext.getNumaNode()].blockingRead(task);
 #endif
         NES_DEBUG("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         auto result = task(workerContext);
@@ -884,7 +855,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     while (taskQueue.read(task)) {
 #else
-    while (taskQueues[hardwareManager->getMyNumaRegion()].read(task)) {
+    while (taskQueues[workerContext.getNumaNode()].read(task)) {
 #endif
         if (!hitReconfiguration) {// execute all pending tasks until first reconfiguration
             task(workerContext);
@@ -946,18 +917,18 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 }
 #endif
 
-void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable) {
+void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t numaNode) {
     NES_DEBUG("Add Work for executable");
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if ((*nextPipeline)->isRunning()) {
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
-                                                                    << buffer);
+                                                                    << buffer << " numaNode=" << numaNode);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
             taskQueue.blockingWrite(Task(executable, buffer));
 
 #else
-            taskQueues[hardwareManager->getMyNumaRegion()].write(Task(executable, buffer));
+            taskQueues[numaNode].write(Task(executable, buffer));
 #endif
         } else {
             NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
@@ -966,7 +937,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
         taskQueue.blockingWrite(Task(executable, buffer));
 #else
-        taskQueues[hardwareManager->getMyNumaRegion()].write(Task(executable, buffer));
+        taskQueues[numaNode].write(Task(executable, buffer));
 #endif
     }
 #else
