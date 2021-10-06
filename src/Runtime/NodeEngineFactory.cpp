@@ -92,9 +92,10 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         QueryManagerPtr queryManager;
         if (workerToCodeMapping != "") {
             std::vector<uint64_t> workerToCoreMapping = Util::splitWithStringDelimiter<uint64_t>(workerToCodeMapping, ",");
-            queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, workerToCoreMapping);
+            queryManager =
+                std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, hardwareManager, workerToCoreMapping);
         } else {
-            queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads);
+            queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, hardwareManager);
         }
 
         auto stateManager = std::make_shared<StateManager>(nodeEngineId);

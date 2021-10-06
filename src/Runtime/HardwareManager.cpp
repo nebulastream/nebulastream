@@ -87,7 +87,7 @@ void readCpuConfig(uint32_t& numa_nodes_count,
         ref.addCpu(0, i);
     }
 #else
-#error "OS not supported"HardwareManager
+#error "OS not supported"
 #endif
 }
 
