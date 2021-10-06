@@ -70,12 +70,12 @@ std::pair<bool, const std::string> UdfCatalogController::extractUdfNameParameter
     // Make sure that the URL contains only the udfName parameter and no others.
     if (queries.size() != 1) {
         auto unknownParameters =
-            std::accumulate(queries.begin(), queries.end(), ""s, [&](std::string s, const decltype(queries)::value_type& parameter) {
+            std::accumulate(queries.begin(), queries.end(), ""s, [&](std::string tmpString, const decltype(queries)::value_type& parameter) {
                 const auto& key = parameter.first;
                 if (key != "udfName") {
-                    return (s.empty() ? s : s + ", ") + key;
+                    return (tmpString.empty() ? tmpString : tmpString + ", ") + key;
                 }
-                return s;
+                return tmpString;
             });
         NES_DEBUG("Request contains unknown parameters: " << unknownParameters);
         badRequestImpl(request, "Request contains unknown parameters: "s + unknownParameters);
