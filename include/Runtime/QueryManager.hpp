@@ -45,12 +45,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-#include <folly/MPMCQueue.h>
-#include <folly/concurrency/UnboundedQueue.h>
-#endif
-
-#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 #endif
@@ -89,6 +84,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     explicit QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                           uint64_t nodeEngineId,
                           uint16_t numThreads,
+                          HardwareManagerPtr,
                           std::vector<uint64_t> workerToCoreMapping = {});
 
     ~QueryManager() NES_NOEXCEPT(false) override;
@@ -236,8 +232,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     uint64_t getNumberOfTasksInWorkerQueue() const;
 
-    template <typename T>
-    struct alignas(2*64) AtomicCounter {
+    template<typename T>
+    struct alignas(2 * 64) AtomicCounter {
         explicit AtomicCounter(T defValue = 0) : counter(defValue) {}
         AtomicCounter(const AtomicCounter<T>& other) : counter(other.counter.load()) {}
         AtomicCounter<T>& operator=(const AtomicCounter<T>& other) {
@@ -248,7 +244,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
         T fetch_add(T delta) { return counter.fetch_add(delta); }
         std::atomic<T> counter;
     };
-    static_assert(sizeof(AtomicCounter<uint64_t>)==2*64);
+    static_assert(sizeof(AtomicCounter<uint64_t>) == 2 * 64);
 
     size_t getCurrentTaskSum();
 
@@ -300,6 +296,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::vector<uint64_t> workerToCoreMapping;
     //    mutable std::shared_mutex queryMutex;
     mutable std::recursive_mutex queryMutex;
+    HardwareManagerPtr hardwareManager;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     folly::MPMCQueue<Task> taskQueue;
 #elif NES_USE_ONE_QUEUE_PER_NUMA_NODE
@@ -319,5 +316,5 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 }// namespace Runtime
-}// namespace NESnow it s
+}// namespace NES
 #endif /* INCLUDE_query manager_H_ */

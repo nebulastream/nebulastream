@@ -461,7 +461,7 @@ add_definitions(-D '__STDC_LIMIT_MACROS')
 
 # $ORIGIN is to read the shared object from the installation directory
 if(ORIGIN)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN' -v")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
 endif()
 #https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")
