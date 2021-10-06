@@ -87,6 +87,6 @@ BufferOptimizationPhasePtr DefaultPhaseFactory::createBufferOptimizationPhase(Qu
 }
 PredicationOptimizationPhasePtr DefaultPhaseFactory::createPredicationOptimizationPhase(QueryCompilerOptionsPtr options) {
     NES_DEBUG("Create predication optimization phase");
-    return PredicationOptimizationPhase::create(options->isPredicationEnabled());
+    return PredicationOptimizationPhase::create(options->getFilterProcessingStrategy());
 }
 }// namespace NES::QueryCompilation::Phases

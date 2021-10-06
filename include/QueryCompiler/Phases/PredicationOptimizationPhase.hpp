@@ -34,12 +34,12 @@ class PredicationOptimizationPhase {
     /**
      * @brief Constructor to create a PredicationOptimizationPhase
      */
-    explicit PredicationOptimizationPhase(bool predicationEnabled);
+    explicit PredicationOptimizationPhase(QueryCompilerOptions::FilterProcessingStrategy filterProcessingStrategy);
 
     /**
      * @brief Create a PredicationOptimizationPhase
      */
-    static PredicationOptimizationPhasePtr create(bool predicationEnabled);
+    static PredicationOptimizationPhasePtr create(QueryCompilerOptions::FilterProcessingStrategy filterProcessingStrategy);
 
     /**
      * @brief Applies the phase on a pipelined query plan. Analyzes every pipeline to see if predication optimization can be applied.
@@ -56,7 +56,7 @@ class PredicationOptimizationPhase {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:
-    bool predicationEnabled;
+    QueryCompilerOptions::FilterProcessingStrategy filterProcessingStrategy;
 };
 }// namespace QueryCompilation
 }// namespace NES
