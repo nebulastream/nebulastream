@@ -21,6 +21,7 @@
 #include <Catalogs/UdfCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <UdfCatalogService.pb.h>
+#include "../../util/ProtobufMessageFactory.hpp"
 
 using namespace std::string_literals;
 using namespace NES::Catalogs;
@@ -121,11 +122,11 @@ class UdfCatalogControllerTest : public testing::Test {
 
 TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
     // given a REST message containing a Java UDF
-    auto javaUdfRequest = createRegisterJavaUdfRequest("my_udf",
-                                                       "some_package.my_udf",
-                                                       "udf_method",
-                                                       {1},
-                                                       {{"some_package.my_udf", {1}}});
+    auto javaUdfRequest = ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf",
+                                                                               "some_package.my_udf",
+                                                                               "udf_method",
+                                                                               {1},
+                                                                               {{"some_package.my_udf", {1}}});
     auto request = web::http::http_request {web::http::methods::POST};
     request.set_body(javaUdfRequest.SerializeAsString());
     // when that message is passed to the controller
@@ -162,10 +163,8 @@ TEST_F(UdfCatalogControllerTest, HandlePostChecksForKnownPath) {
 
 TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
     // given a REST message containing a wrongly formed Java UDF (bytecode list is empty)
-    auto javaUdfRequest = createRegisterJavaUdfRequest("my_udf",
-                                                       "some_package.my_udf",
-                                                       "udf_method",
-                                                       {1}, {});
+    auto javaUdfRequest =
+        ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf", "some_package.my_udf", "udf_method", {1}, {});
     auto request = web::http::http_request {web::http::methods::POST};
     request.set_body(javaUdfRequest.SerializeAsString());
     // when that message is passed to the controller (which should cause an exception)

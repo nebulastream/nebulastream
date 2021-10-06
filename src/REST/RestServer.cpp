@@ -17,6 +17,7 @@
 #include <REST/RestServer.hpp>
 
 #include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/UdfCatalog.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/usr_interrupt_handler.hpp>
@@ -37,7 +38,8 @@ RestServer::RestServer(std::string host,
                        const GlobalExecutionPlanPtr& globalExecutionPlan,
                        const QueryServicePtr& queryService,
                        const MonitoringServicePtr& monitoringService,
-                       const GlobalQueryPlanPtr& globalQueryPlan)
+                       const GlobalQueryPlanPtr& globalQueryPlan,
+                       const Catalogs::UdfCatalogPtr& udfCatalog)
     : restEngine(std::make_shared<RestEngine>(streamCatalog,
                                               coordinator,
                                               queryCatalog,
@@ -45,7 +47,8 @@ RestServer::RestServer(std::string host,
                                               globalExecutionPlan,
                                               queryService,
                                               monitoringService,
-                                              globalQueryPlan)),
+                                              globalQueryPlan,
+                                              udfCatalog)),
       host(std::move(host)), port(port) {}
 
 RestEnginePtr restEngine;

@@ -237,7 +237,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               globalExecutionPlan,
                                               queryService,
                                               monitoringService,
-                                              globalQueryPlan);
+                                              globalQueryPlan,
+                                              udfCatalog);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking
@@ -336,6 +337,8 @@ std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(Quer
 QueryServicePtr NesCoordinator::getQueryService() { return queryService; }
 
 QueryCatalogPtr NesCoordinator::getQueryCatalog() { return queryCatalog; }
+
+Catalogs::UdfCatalogPtr NesCoordinator::getUdfCatalog() { return udfCatalog; }
 
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 
