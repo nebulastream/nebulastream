@@ -24,18 +24,18 @@ namespace NES {
 
 class CartesianLine {
   private:
-    double gradient;
-    double constant;
+    double slope;
+    double intercept;
 
   public:
-    CartesianLine(double gradient, double constant);
-    [[nodiscard]] double getGradient() const;
-    [[nodiscard]] double getConstant() const;
-    void setGradient(double gradient);
-    void setConstant(double constant);
+    CartesianLine(double slope, double intercept);
+    [[nodiscard]] double getSlope() const;
+    [[nodiscard]] double getIntercept() const;
+    void setSlope(double slope);
+    void setIntercept(double intercept);
 
-    double getY(double x);
-    bool contains(const CartesianPointPtr& point);
+    double getY(double x) const;
+    bool contains(const CartesianPointPtr& point) const;
 };
 
 using CartesianLinePtr = std::shared_ptr<CartesianLine>;

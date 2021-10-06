@@ -79,9 +79,9 @@ bool MathUtils::intersect(const CartesianLinePtr& line, const CartesianCirclePtr
 
 CartesianLinePtr MathUtils::shift(const CartesianLinePtr& line, double offsetX, double offsetY) {
     double x = offsetX;
-    double y = line->getConstant() + offsetY;
-    double shiftedConstant = y - line->getGradient() * x;
-    return std::make_shared<CartesianLine>(line->getGradient(), shiftedConstant);
+    double y = line->getIntercept() + offsetY;
+    double shiftedIntercept = y - line->getSlope() * x;
+    return std::make_shared<CartesianLine>(line->getSlope(), shiftedIntercept);
 }
 
 CartesianLinePtr MathUtils::leastSquaresRegression(const std::vector<CartesianPointPtr>& points) {

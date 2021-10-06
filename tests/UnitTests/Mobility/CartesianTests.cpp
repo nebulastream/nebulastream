@@ -22,10 +22,10 @@
 namespace NES {
 
 TEST(CartesianTest, CartesianLine) {
-    const uint32_t gradient  = 2;
-    const uint32_t constant  = 1;
+    const uint32_t slope  = 2;
+    const uint32_t intercept  = 1;
 
-    CartesianLinePtr line = std::make_shared<CartesianLine>(gradient, constant);
+    CartesianLinePtr line = std::make_shared<CartesianLine>(slope, intercept);
 
     CartesianPointPtr inlinePoint = std::make_shared<CartesianPoint>(1, 3);
     EXPECT_TRUE(line->contains(inlinePoint));
@@ -35,31 +35,31 @@ TEST(CartesianTest, CartesianLine) {
 }
 
 TEST(CartesianUtils, ShiftCartesianLine) {
-    const uint32_t gradient  = 2;
-    const uint32_t constant  = 1;
+    const uint32_t slope  = 2;
+    const uint32_t intercept  = 1;
 
-    CartesianLinePtr line = std::make_shared<CartesianLine>(gradient, constant);
+    CartesianLinePtr line = std::make_shared<CartesianLine>(slope, intercept);
     CartesianLinePtr shiftedLine = MathUtils::shift(line, -2, -3);
 
-    EXPECT_DOUBLE_EQ(shiftedLine->getGradient(), line->getGradient());
-    EXPECT_DOUBLE_EQ(shiftedLine->getConstant(), 2);
+    EXPECT_DOUBLE_EQ(shiftedLine->getSlope(), line->getSlope());
+    EXPECT_DOUBLE_EQ(shiftedLine->getIntercept(), 2);
 
-    line->setGradient(-1);
-    line->setConstant(0);
+    line->setSlope(-1);
+    line->setIntercept(0);
     shiftedLine = MathUtils::shift(line, 5, -3);
-    EXPECT_DOUBLE_EQ(shiftedLine->getGradient(), line->getGradient());
-    EXPECT_DOUBLE_EQ(shiftedLine->getConstant(), 2);
+    EXPECT_DOUBLE_EQ(shiftedLine->getSlope(), line->getSlope());
+    EXPECT_DOUBLE_EQ(shiftedLine->getIntercept(), 2);
 }
 
 TEST(CartesianUtils, InterstCircleAndLine) {
-    const uint32_t gradient  = 2;
-    const uint32_t constant  = 1;
+    const uint32_t slope  = 2;
+    const uint32_t intercept  = 1;
     const CartesianPointPtr center = std::make_shared<CartesianPoint>(2,3);
-    CartesianLinePtr line = std::make_shared<CartesianLine>(gradient, constant);
+    CartesianLinePtr line = std::make_shared<CartesianLine>(slope, intercept);
     CartesianCirclePtr circle = std::make_shared<CartesianCircle>(center, 2);
     EXPECT_TRUE(MathUtils::intersect(line, circle));
 
-    line->setConstant(5);
+    line->setIntercept(5);
     EXPECT_FALSE(MathUtils::intersect(line, circle));
 }
 
@@ -71,8 +71,8 @@ TEST(CartesianUtils, LeastSquaresRegression) {
     points.push_back(std::make_shared<CartesianPoint>(4, 10));
 
     CartesianLinePtr predictedLine = MathUtils::leastSquaresRegression(points);
-    EXPECT_DOUBLE_EQ(1.4, predictedLine->getGradient());
-    EXPECT_DOUBLE_EQ(3.5, predictedLine->getConstant());
+    EXPECT_DOUBLE_EQ(1.4, predictedLine->getSlope());
+    EXPECT_DOUBLE_EQ(3.5, predictedLine->getIntercept());
 }
 
 }

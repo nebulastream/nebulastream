@@ -18,22 +18,22 @@
 
 namespace NES {
 
-CartesianLine::CartesianLine(double gradient, double constant) : gradient(gradient), constant(constant) {}
+CartesianLine::CartesianLine(double slope, double intercept) : slope(slope), intercept(intercept) {}
 
-[[maybe_unused]] double CartesianLine::getGradient() const { return gradient; }
+[[maybe_unused]] double CartesianLine::getSlope() const { return slope; }
 
-double CartesianLine::getConstant() const { return constant; }
+double CartesianLine::getIntercept() const { return intercept; }
 
-void CartesianLine::setGradient(double gradientValue) { CartesianLine::gradient = gradientValue; }
+void CartesianLine::setSlope(double slopeValue) { CartesianLine::slope = slopeValue; }
 
-void CartesianLine::setConstant(double constantValue) { CartesianLine::constant = constantValue; }
+void CartesianLine::setIntercept(double interceptValue) { CartesianLine::intercept = interceptValue; }
 
-bool CartesianLine::contains(const CartesianPointPtr& point) {
-    double expectedYValue = gradient * point->getX() + constant;
+bool CartesianLine::contains(const CartesianPointPtr& point) const {
+    double expectedYValue = slope * point->getX() + intercept;
     return (expectedYValue == point->getY());
 }
-double CartesianLine::getY(double x) {
-    return gradient * x + constant;
+double CartesianLine::getY(double x) const {
+    return slope * x + intercept;
 }
 
 }
