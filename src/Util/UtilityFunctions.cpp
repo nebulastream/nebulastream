@@ -15,6 +15,7 @@
 */
 
 #include <API/Query.hpp>
+#include <API/AttributeField.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Catalogs/StreamCatalog.hpp>

@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>

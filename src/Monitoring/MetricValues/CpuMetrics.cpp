@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>

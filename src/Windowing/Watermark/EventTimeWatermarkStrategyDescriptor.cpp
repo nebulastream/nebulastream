@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>

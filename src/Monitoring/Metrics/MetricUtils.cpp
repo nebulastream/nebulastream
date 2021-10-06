@@ -15,7 +15,7 @@
 */
 
 #include <Monitoring/Util/MetricUtils.hpp>
-
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>

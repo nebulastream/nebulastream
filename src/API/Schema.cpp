@@ -16,9 +16,10 @@
 
 #include <iostream>
 #include <stdexcept>
-
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
