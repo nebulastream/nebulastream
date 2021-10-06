@@ -37,13 +37,11 @@ class RESTEndpointTest : public testing::Test {
         NES_INFO("Setup RESTEndpointTest test class.");
     }
 
-    void TearDown() override {
-        NES_INFO("RESTEndpointTest: Test finished");
-    }
+    void TearDown() override { NES_INFO("RESTEndpointTest: Test finished"); }
 
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
 
-    RESTEndpointTest() : coordinatorRpcPort(getNextFreePort()), coordinatorRestPort(getNextFreePort()) { }
+    RESTEndpointTest() : coordinatorRpcPort(getNextFreePort()), coordinatorRestPort(getNextFreePort()) {}
 
     NesCoordinatorPtr createAndStartCoordinator() const {
         NES_INFO("RESTEndpointTest: Start coordinator");
@@ -82,7 +80,7 @@ class RESTEndpointTest : public testing::Test {
 
     [[nodiscard]] web::http::client::http_client createRestClient(const std::string& restEndpoint) const {
         auto url = "http://127.0.0.1:" + std::to_string(coordinatorRestPort) + "/v1/nes/" + restEndpoint;
-        return web::http::client::http_client {url};
+        return web::http::client::http_client{url};
     }
 
     static uint64_t getNextFreePort() {
@@ -456,7 +454,6 @@ TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     auto httpClient = createRestClient("streamCatalog/addLogicalStream-ex");
 
     StreamCatalogPtr streamCatalog = crd->getStreamCatalog();
-
 
     //create message as Protobuf encoded object
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
