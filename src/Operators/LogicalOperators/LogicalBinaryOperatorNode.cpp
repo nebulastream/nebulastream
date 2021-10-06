@@ -15,7 +15,7 @@
 */
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-
+#include <API/Schema.hpp>
 namespace NES {
 
 LogicalBinaryOperatorNode::LogicalBinaryOperatorNode(OperatorId id)

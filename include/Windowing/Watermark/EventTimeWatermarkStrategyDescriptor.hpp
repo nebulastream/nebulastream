@@ -17,8 +17,6 @@
 #ifndef NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP
 #define NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP
 
-#include <API/Expressions/Expressions.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkGenerator.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
@@ -31,7 +29,7 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
   public:
     static WatermarkStrategyDescriptorPtr create(const ExpressionItem& onField, TimeMeasure allowedLateness, TimeUnit unit);
 
-    ExpressionItem getOnField();
+    ExpressionNodePtr getOnField();
 
     TimeMeasure getAllowedLateness();
 
@@ -45,7 +43,7 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
 
   private:
     // Field where the watermark should be retrieved
-    ExpressionItem onField;
+    ExpressionNodePtr onField;
     TimeUnit unit;
     TimeMeasure allowedLateness;
 

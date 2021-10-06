@@ -15,7 +15,7 @@
 */
 
 #include <gtest/gtest.h>
-
+#include <API/QueryAPI.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>

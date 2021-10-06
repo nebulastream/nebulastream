@@ -17,9 +17,12 @@
 #ifndef NES_WATERMARKSTRATEGYDESCRIPTOR_HPP
 #define NES_WATERMARKSTRATEGYDESCRIPTOR_HPP
 
-#include <API/Schema.hpp>
-#include <Util/Logger.hpp>
 #include <memory>
+
+namespace NES{
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+}
 
 namespace NES::Windowing {
 
@@ -57,7 +60,6 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
         if (instanceOf<WatermarkStrategyType>()) {
             return std::dynamic_pointer_cast<WatermarkStrategyType>(this->shared_from_this());
         }
-        NES_FATAL_ERROR("We performed an invalid cast");
         throw std::bad_cast();
     }
 

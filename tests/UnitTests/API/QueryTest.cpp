@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>

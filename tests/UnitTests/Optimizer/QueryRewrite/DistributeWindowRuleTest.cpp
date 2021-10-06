@@ -17,7 +17,7 @@
 // clang-format off
 #include <gtest/gtest.h>
 // clang-format on
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -32,6 +32,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -130,9 +131,9 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-                      .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                      .window(NES::Windowing::TumblingWindow::of(NES::Windowing::TimeCharacteristic::createIngestionTime(), API::Seconds(10)))
                       .byKey(Attribute("id"))
-                      .apply(Sum(Attribute("value")))
+                      .apply(API::Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -154,9 +155,9 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
                       .filter(Attribute("id") < 45)
-                      .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                      .window(NES::Windowing::TumblingWindow::of(NES::Windowing::TimeCharacteristic::createIngestionTime(), API::Seconds(10)))
                       .byKey(Attribute("id"))
-                      .apply(Sum(Attribute("value")))
+                      .apply(API::Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan = Optimizer::TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
@@ -185,9 +186,9 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
                       .filter(Attribute("id") < 45)
-                      .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                      .window(NES::Windowing::TumblingWindow::of(NES::Windowing::TimeCharacteristic::createIngestionTime(), API::Seconds(10)))
                       .byKey(Attribute("id"))
-                      .apply(Sum(Attribute("value")))
+                      .apply(API::Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan = query.getQueryPlan();

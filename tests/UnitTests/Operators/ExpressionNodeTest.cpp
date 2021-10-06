@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
