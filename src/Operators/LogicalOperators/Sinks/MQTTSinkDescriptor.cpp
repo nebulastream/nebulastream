@@ -15,6 +15,7 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 MQTTSinkDescriptor::MQTTSinkDescriptor(std::string&& address,

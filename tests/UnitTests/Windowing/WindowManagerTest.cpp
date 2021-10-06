@@ -19,7 +19,7 @@
 #include <map>
 #include <utility>
 #include <vector>
-
+#include <API/QueryAPI.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
@@ -35,8 +35,6 @@
 #include <Util/Logger.hpp>
 #include <cstdlib>
 #include <iostream>
-
-#include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>

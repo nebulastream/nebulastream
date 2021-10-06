@@ -17,19 +17,15 @@
 // clang-format off
 #include <gtest/gtest.h>
 // clang-format on
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>

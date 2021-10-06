@@ -51,6 +51,7 @@
 #include <iostream>
 #include <utility>
 
+#include <API/Expressions/Expressions.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
@@ -549,14 +550,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
 
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
 
-    auto trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto trigger = Windowing::OnTimeTriggerPolicyDescription::create(1000);
 
-    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
+    auto sum = Windowing::SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition =
-        LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64),
+        Windowing::LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64),
                                         sum,
-                                        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                                        Windowing::TumblingWindowing::TimeCharacteristicracteristic::createIngestionTime(), Seconds(10)),
                                         DistributionCharacteristic::createCompleteWindowType(),
                                         1,
                                         trigger,

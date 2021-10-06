@@ -21,7 +21,7 @@
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarnessWorker.hpp>
 #include <Util/TestUtils.hpp>
-
+#include <API/QueryAPI.hpp>
 #include <type_traits>
 #include <utility>
 

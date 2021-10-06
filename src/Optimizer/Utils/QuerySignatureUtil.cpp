@@ -34,6 +34,10 @@
 #include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -340,7 +344,7 @@ QuerySignatureUtil::createQuerySignatureForWatermark(const z3::ContextPtr& conte
         //Compute equality conditions for event time field
         auto eventTimeFieldVar = context->constant(context->str_symbol("eventTimeField"), context->string_sort());
         auto eventTimeFieldName =
-            eventTimeWatermarkStrategy->getOnField().getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();
+            eventTimeWatermarkStrategy->getOnField()->as<FieldAccessExpressionNode>()->getFieldName();
         auto eventTimeFieldVal = context->string_val(eventTimeFieldName);
         auto eventTimeFieldExpr = to_expr(*context, Z3_mk_eq(*context, eventTimeFieldVar, eventTimeFieldVal));
 

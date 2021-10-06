@@ -59,7 +59,7 @@ GeneratableWatermarkAssignmentOperator::GeneratableWatermarkAssignmentOperator(
 void GeneratableWatermarkAssignmentOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     if (auto eventTimeWatermarkStrategyDescriptor =
             std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
-        auto keyExpression = eventTimeWatermarkStrategyDescriptor->getOnField().getExpressionNode();
+        auto keyExpression = eventTimeWatermarkStrategyDescriptor->getOnField();
         if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
             NES_ERROR("GeneratableWatermarkAssignerOperator: watermark field has to be an FieldAccessExpression but it was a "
                       + keyExpression->toString());

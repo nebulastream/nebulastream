@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <API/Query.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <API/QueryAPI.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>

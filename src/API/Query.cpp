@@ -34,6 +34,7 @@
 
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
@@ -43,6 +44,7 @@
 #include <iostream>
 
 #include <API/WindowedQuery.hpp>
+#include <API/Windowing.hpp>
 #include <utility>
 
 namespace NES {
@@ -60,7 +62,7 @@ JoinCondition JoinWhere::equalsTo(const ExpressionItem& onRightKey) const {
 }
 
 JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey)
-    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey) {}
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey.getExpressionNode()) {}
 
 Query& JoinCondition::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery.joinWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original joinWith() function
@@ -70,7 +72,7 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
                              Query& originalQuery,
                              const ExpressionItem& onLeftKey,
                              const ExpressionItem& onRightKey)
-    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey), onRightKey(onRightKey) {}
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey.getExpressionNode()), onRightKey(onRightKey.getExpressionNode()) {}
 
 }// namespace JoinOperatorBuilder
 
@@ -83,6 +85,12 @@ Query Query::from(const std::string& sourceStreamName) {
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceOperator);
     return Query(queryPlan);
+}
+
+Query& Query::project(std::vector<ExpressionNodePtr> expressions) {
+    OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
 }
 
 Query& Query::as(const std::string& newStreamName) {
@@ -121,7 +129,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
     auto rightKeyFieldAccess = rightKeyExpression->as<FieldAccessExpressionNode>();
 
     //we use a on time trigger as default that triggers on each change of the watermark
-    auto triggerPolicy = OnWatermarkChangeTriggerPolicyDescription::create();
+    auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
     //    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
 
     //we use a lazy NL join because this is currently the only one that is implemented
@@ -138,26 +146,26 @@ Query& Query::joinWith(const Query& subQueryRhs,
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
+        if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
             queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
-        } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
+                LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
+        } else if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
                     Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                    Milliseconds(0),
+                    API::Milliseconds(0),
                     windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     }
 
     if (rightQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
-            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create());
+        if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
             rightQueryPlan->appendOperatorAsNewRoot(op);
-        } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+        } else if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
+            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
                 Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                Milliseconds(0),
+                API::Milliseconds(0),
                 windowType->getTimeCharacteristic()->getTimeUnit()));
             rightQueryPlan->appendOperatorAsNewRoot(op);
         }

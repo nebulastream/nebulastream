@@ -15,6 +15,7 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
@@ -1394,7 +1395,7 @@ SerializableOperator_WatermarkStrategyDetails* OperatorSerializationUtil::serial
             std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
         auto serializedWatermarkStrategyDescriptor =
             SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
-        ExpressionSerializationUtil::serializeExpression(eventTimeWatermarkStrategyDescriptor->getOnField().getExpressionNode(),
+        ExpressionSerializationUtil::serializeExpression(eventTimeWatermarkStrategyDescriptor->getOnField(),
                                                          serializedWatermarkStrategyDescriptor.mutable_onfield());
         serializedWatermarkStrategyDescriptor.set_allowedlateness(
             eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime());

@@ -17,32 +17,28 @@
 #ifndef API_QUERY_H
 #define API_QUERY_H
 
-#include <API/Expressions/ArithmeticalExpressions.hpp>
-#include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
-#include <API/Schema.hpp>
-#include <API/Windowing.hpp>
-
-#include <API/Expressions/Expressions.hpp>
-#include <API/WindowedQuery.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Sources/DataSource.hpp>
-
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace NES {
 
+class Query;
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
+class ExpressionItem;
+
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+
+class FieldAssignmentExpressionNode;
+using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
+
+ExpressionNodePtr getExpressionNodePtr(ExpressionItem expressionItem);
 
 class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
@@ -50,17 +46,28 @@ using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 class SinkLogicalOperatorNode;
 using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 
+class SinkDescriptor;
+using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
+
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
+namespace WindowOperatorBuilder {
+
+class WindowedQuery;
+class KeyedWindowedQuery;
+
+}// namespace WindowOperatorBuilder
+namespace Windowing {
 class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
 
 class WindowAggregationDescriptor;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
-using namespace NES::API;
-using namespace NES::Windowing;
+class WatermarkStrategyDescriptor;
+using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
+}// namespace Windowing
 
 static constexpr uint64_t defaultTriggerTimeInMs = 1000;
 
@@ -110,7 +117,7 @@ class JoinWhere {
   private:
     const Query& subQueryRhs;
     Query& originalQuery;
-    ExpressionItem onLeftKey;
+    ExpressionNodePtr onLeftKey;
 };
 
 class JoinCondition {
@@ -137,8 +144,8 @@ class JoinCondition {
   private:
     const Query& subQueryRhs;
     Query& originalQuery;
-    ExpressionItem onLeftKey;
-    ExpressionItem onRightKey;
+    ExpressionNodePtr onLeftKey;
+    ExpressionNodePtr onRightKey;
 };
 
 }//namespace JoinOperatorBuilder
@@ -188,11 +195,15 @@ class Query {
      */
     template<typename... Args>
     auto project(Args&&... args) -> std::enable_if_t<std::conjunction_v<std::is_constructible<ExpressionItem, Args>...>, Query&> {
-        std::vector const expressions{ExpressionItem{std::forward<Args>(args)}.getExpressionNode()...};
-        OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
-        queryPlan->appendOperatorAsNewRoot(op);
-        return *this;
+        return project({getExpressionNodePtr(std::forward<Args>(args))...});
     }
+
+    /**
+      * @brief this call projects out the attributes in the parameter list
+      * @param attribute list
+      * @return the query
+      */
+    Query& project(std::vector<ExpressionNodePtr> expressions);
 
     /**
      * This looks ugly, but we can't reference to QueryPtr at this line.

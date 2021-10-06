@@ -15,6 +15,9 @@
 */
 
 #include <API/Query.hpp>
+#include <API/Expressions/Expressions.hpp>
+#include <API/Expressions/ArithmeticalExpressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>

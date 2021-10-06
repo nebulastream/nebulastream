@@ -17,26 +17,25 @@
 #ifndef NES_SRC_API_WINDOWEDQUERY_H_
 #define NES_SRC_API_WINDOWEDQUERY_H_
 
-#include <API/Expressions/ArithmeticalExpressions.hpp>
-#include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
-#include <API/Schema.hpp>
-#include <API/Windowing.hpp>
-
-#include <API/Expressions/Expressions.hpp>
-#include <API/WindowedQuery.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Sources/DataSource.hpp>
-
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 #include <string>
 
 namespace NES {
+
+class Query;
+class OperatorNode;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+
+class ExpressionItem;
+
+class ExpressionNode;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+
+class FieldAssignmentExpressionNode;
+using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
+
 namespace WindowOperatorBuilder {
 
 class WindowedQuery;
@@ -75,7 +74,7 @@ class KeyedWindowedQuery {
     * @param originalQuery
     * @param windowType
     */
-    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, const ExpressionItem& onKey);
+    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, ExpressionNodePtr onKey);
 
     /**
     * @brief: Calls internally the original windowByKey() function and returns the Query&
@@ -86,7 +85,7 @@ class KeyedWindowedQuery {
   private:
     Query& originalQuery;
     Windowing::WindowTypePtr windowType;
-    ExpressionItem onKey;
+    ExpressionNodePtr onKey;
 };
 
 }// namespace WindowOperatorBuilder

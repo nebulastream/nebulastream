@@ -14,8 +14,7 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>

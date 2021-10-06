@@ -96,6 +96,6 @@ ExpressionItem Attribute(std::string fieldName, BasicType type) {
     return ExpressionItem(FieldAccessExpressionNode::create(DataTypeFactory::createType(type), std::move(fieldName)));
 }
 
-ExpressionNodePtr ExpressionItem::getExpressionNode() { return expression; }
+ExpressionNodePtr ExpressionItem::getExpressionNode() const { return expression; }
 
 }// namespace NES

@@ -15,6 +15,8 @@
 */
 
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -25,18 +27,18 @@ namespace NES::Windowing {
 EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(const ExpressionItem& onField,
                                                                            TimeMeasure allowedLateness,
                                                                            TimeUnit unit)
-    : onField(onField), unit(std::move(unit)), allowedLateness(std::move(allowedLateness)) {}
+    : onField(onField.getExpressionNode()), unit(std::move(unit)), allowedLateness(std::move(allowedLateness)) {}
 
 WatermarkStrategyDescriptorPtr
 EventTimeWatermarkStrategyDescriptor::create(const ExpressionItem& onField, TimeMeasure allowedLateness, TimeUnit unit) {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
-        Windowing::EventTimeWatermarkStrategyDescriptor(onField, std::move(allowedLateness), std::move(unit)));
+        Windowing::EventTimeWatermarkStrategyDescriptor(onField.getExpressionNode(), std::move(allowedLateness), std::move(unit)));
 }
-ExpressionItem EventTimeWatermarkStrategyDescriptor::getOnField() { return onField; }
+ExpressionNodePtr EventTimeWatermarkStrategyDescriptor::getOnField() { return onField; }
 TimeMeasure EventTimeWatermarkStrategyDescriptor::getAllowedLateness() { return allowedLateness; }
 bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other) {
     auto eventTimeWatermarkStrategyDescriptor = other->as<EventTimeWatermarkStrategyDescriptor>();
-    return eventTimeWatermarkStrategyDescriptor->onField.getExpressionNode() == onField.getExpressionNode()
+    return eventTimeWatermarkStrategyDescriptor->onField == onField
         && eventTimeWatermarkStrategyDescriptor->allowedLateness.getTime() == allowedLateness.getTime();
 }
 
@@ -45,13 +47,13 @@ TimeUnit EventTimeWatermarkStrategyDescriptor::getTimeUnit() { return unit; }
 std::string EventTimeWatermarkStrategyDescriptor::toString() {
     std::stringstream ss;
     ss << "TYPE = EVENT-TIME,";
-    ss << "FIELD =" << onField.getExpressionNode() << ",";
+    ss << "FIELD =" << onField << ",";
     ss << "ALLOWED-LATENESS =" << allowedLateness.toString();
     return std::string();
 }
 
 bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema) {
-    auto fieldAccessExpression = onField.getExpressionNode()->as<FieldAccessExpressionNode>();
+    auto fieldAccessExpression = onField->as<FieldAccessExpressionNode>();
     auto fieldName = fieldAccessExpression->getFieldName();
     //Check if the field exists in the schema
     auto existingField = schema->hasFieldName(fieldName);

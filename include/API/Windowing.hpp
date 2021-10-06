@@ -16,13 +16,28 @@
 
 #ifndef NES_INCLUDE_API_WINDOWING_HPP_
 #define NES_INCLUDE_API_WINDOWING_HPP_
-
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
 
+namespace NES {
+
+class ExpressionItem;
+
+namespace Windowing {
+
+class WindowType;
+using WindowTypePtr = std::shared_ptr<WindowType>;
+
+class WindowAggregationDescriptor;
+using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
+
+class TimeMeasure;
+class TimeCharacteristic;
+using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
+
+class WatermarkStrategyDescriptor;
+using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
+}// namespace Windowing
+}
 /**
  * @brief The following declares API functions for windowing.
  */
@@ -81,7 +96,7 @@ Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField);
  * @param Timeunit
  * @return A descriptor of the time characteristic.
  */
-Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, Windowing::TimeUnit unit);
+Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, Windowing::TimeUnit& unit);
 
 /**
  * @brief Defines a ingestion time as a time characteristic for a window.

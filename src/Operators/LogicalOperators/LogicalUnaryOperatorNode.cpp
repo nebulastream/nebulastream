@@ -15,7 +15,7 @@
 */
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
-
+#include <API/Schema.hpp>
 namespace NES {
 
 LogicalUnaryOperatorNode::LogicalUnaryOperatorNode(OperatorId id)

@@ -17,8 +17,6 @@
 #ifndef NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINK_SINKDESCRIPTOR_HPP_
 #define NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINK_SINKDESCRIPTOR_HPP_
 
-#include <Util/Logger.hpp>
-#include <iostream>
 #include <memory>
 
 namespace NES {
@@ -59,7 +57,6 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
         if (instanceOf<SinkType>()) {
             return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
         }
-        NES_FATAL_ERROR("We performed an invalid cast");
         throw std::bad_cast();
     }
     virtual std::string toString() = 0;
