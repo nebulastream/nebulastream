@@ -72,7 +72,7 @@ using TopologyPtr = std::shared_ptr<Topology>;
 namespace Catalogs {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
-}
+}// namespace Catalogs
 
 class UdfCatalogController;
 using UdfCatalogControllerPtr = std::shared_ptr<UdfCatalogController>;

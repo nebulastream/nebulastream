@@ -41,6 +41,7 @@ class UdfException : public NesRuntimeException {
      * These clients should not receive the stack trace information.
      */
     [[nodiscard]] const std::string& getMessage() const { return message; }
+
   private:
     const std::string message;
 };

@@ -17,8 +17,8 @@
 #include <Catalogs/UdfCatalog.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
-#include <Util/Logger.hpp>
 #include <UdfCatalogService.pb.h>
+#include <Util/Logger.hpp>
 #include <algorithm>
 #include <iterator>
 
@@ -31,7 +31,8 @@ const std::string UdfCatalogController::path_prefix = "udf-catalog"s;
 
 bool UdfCatalogController::verifyCorrectPathPrefix(const std::string& path_prefix, http_request& request) {
     if (path_prefix != UdfCatalogController::path_prefix) {
-        NES_ERROR("The RestEngine delegated an HTTP request with an unknown path prefix to the UdfCatalogController: path[0] = " << path_prefix);
+        NES_ERROR("The RestEngine delegated an HTTP request with an unknown path prefix to the UdfCatalogController: path[0] = "
+                  << path_prefix);
         internalServerErrorImpl(request);
         return false;
     }
@@ -69,14 +70,16 @@ std::pair<bool, const std::string> UdfCatalogController::extractUdfNameParameter
     }
     // Make sure that the URL contains only the udfName parameter and no others.
     if (queries.size() != 1) {
-        auto unknownParameters =
-            std::accumulate(queries.begin(), queries.end(), ""s, [&](std::string tmpString, const decltype(queries)::value_type& parameter) {
-                const auto& key = parameter.first;
-                if (key != "udfName") {
-                    return (tmpString.empty() ? tmpString : tmpString + ", ") + key;
-                }
-                return tmpString;
-            });
+        auto unknownParameters = std::accumulate(queries.begin(),
+                                                 queries.end(),
+                                                 ""s,
+                                                 [&](std::string tmpString, const decltype(queries)::value_type& parameter) {
+                                                     const auto& key = parameter.first;
+                                                     if (key != "udfName") {
+                                                         return (tmpString.empty() ? tmpString : tmpString + ", ") + key;
+                                                     }
+                                                     return tmpString;
+                                                 });
         NES_DEBUG("Request contains unknown parameters: " << unknownParameters);
         badRequestImpl(request, "Request contains unknown parameters: "s + unknownParameters);
         return {false, ""};
@@ -125,8 +128,7 @@ void UdfCatalogController::handleListUdfs(http_request& request) {
 }
 
 void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path, http_request& request) {
-    if (!verifyCorrectPathPrefix(path[0], request) ||
-        !verifyCorrectEndpoints(path, {"getUdfDescriptor", "listUdfs"}, request)) {
+    if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoints(path, {"getUdfDescriptor", "listUdfs"}, request)) {
         return;
     }
     if (path[1] == "getUdfDescriptor") {
@@ -140,50 +142,49 @@ void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path,
 }
 
 void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, http_request& request) {
-    if (!verifyCorrectPathPrefix(path[0], request) ||
-        !verifyCorrectEndpoint(path, "registerJavaUdf", request)) {
+    if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoint(path, "registerJavaUdf", request)) {
         return;
     }
     auto udfCatalog = this->udfCatalog;
-    request.extract_string(true).then([udfCatalog, &request](const utility::string_t& body) {
-        // Convert protobuf message contents to JavaUdfDescriptor.
-        NES_DEBUG("Parsing Java UDF descriptor from REST request");
-        auto javaUdfRequest = RegisterJavaUdfRequest {};
-        javaUdfRequest.ParseFromString(body);
-        auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
-        // C++ represents the bytes type of serialized_instance and byte_code as std::strings
-        // which have to be converted to typed byte arrays.
-        auto serializedInstance = JavaSerializedInstance {
-            descriptorMessage.serialized_instance().begin(),
-            descriptorMessage.serialized_instance().end()
-        };
-        auto javaUdfByteCodeList = JavaUdfByteCodeList {};
-        javaUdfByteCodeList.reserve(descriptorMessage.classes().size());
-        for (const auto& classDefinition : descriptorMessage.classes()) {
-            javaUdfByteCodeList.insert({classDefinition.class_name(),
-                                        JavaByteCode{classDefinition.byte_code().begin(),
-                                                     classDefinition.byte_code().end()}});
-        }
-        // Register JavaUdfDescriptor in UDF catalog and return success.
-        try {
-            auto javaUdfDescriptor = JavaUdfDescriptor::create(
-                descriptorMessage.udf_class_name(), descriptorMessage.udf_method_name(),
-                serializedInstance, javaUdfByteCodeList);
-            NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
-            udfCatalog->registerJavaUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
-        } catch (const UdfException& e) {
-            NES_WARNING("Exception occurred during UDF registration: " << e.what());
-            // Just return the exception message to the client, not the stack trace.
-            badRequestImpl(request, e.getMessage());
-            return;
-        }
-        successMessageImpl(request, "Registered Java UDF");
-    }).wait();
+    request.extract_string(true)
+        .then([udfCatalog, &request](const utility::string_t& body) {
+            // Convert protobuf message contents to JavaUdfDescriptor.
+            NES_DEBUG("Parsing Java UDF descriptor from REST request");
+            auto javaUdfRequest = RegisterJavaUdfRequest{};
+            javaUdfRequest.ParseFromString(body);
+            auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
+            // C++ represents the bytes type of serialized_instance and byte_code as std::strings
+            // which have to be converted to typed byte arrays.
+            auto serializedInstance = JavaSerializedInstance{descriptorMessage.serialized_instance().begin(),
+                                                             descriptorMessage.serialized_instance().end()};
+            auto javaUdfByteCodeList = JavaUdfByteCodeList{};
+            javaUdfByteCodeList.reserve(descriptorMessage.classes().size());
+            for (const auto& classDefinition : descriptorMessage.classes()) {
+                javaUdfByteCodeList.insert(
+                    {classDefinition.class_name(),
+                     JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
+            }
+            // Register JavaUdfDescriptor in UDF catalog and return success.
+            try {
+                auto javaUdfDescriptor = JavaUdfDescriptor::create(descriptorMessage.udf_class_name(),
+                                                                   descriptorMessage.udf_method_name(),
+                                                                   serializedInstance,
+                                                                   javaUdfByteCodeList);
+                NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
+                udfCatalog->registerJavaUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
+            } catch (const UdfException& e) {
+                NES_WARNING("Exception occurred during UDF registration: " << e.what());
+                // Just return the exception message to the client, not the stack trace.
+                badRequestImpl(request, e.getMessage());
+                return;
+            }
+            successMessageImpl(request, "Registered Java UDF");
+        })
+        .wait();
 }
 
 void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& path, http_request& request) {
-    if (!verifyCorrectPathPrefix(path[0], request) ||
-        !verifyCorrectEndpoint(path, "removeUdf", request)) {
+    if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoint(path, "removeUdf", request)) {
         return;
     }
     auto [found, udfName] = extractUdfNameParameter(request);
@@ -197,4 +198,4 @@ void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& pa
     successMessageImpl(request, result);
 }
 
-}
+}// namespace NES

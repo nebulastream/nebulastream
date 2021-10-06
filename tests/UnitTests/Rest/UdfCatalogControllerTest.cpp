@@ -14,14 +14,14 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
-#include <cpprest/http_client.h>
-#include <string>
-#include <REST/Controller/UdfCatalogController.hpp>
-#include <Catalogs/UdfCatalog.hpp>
-#include <Util/Logger.hpp>
-#include <UdfCatalogService.pb.h>
 #include "../../util/ProtobufMessageFactory.hpp"
+#include <Catalogs/UdfCatalog.hpp>
+#include <REST/Controller/UdfCatalogController.hpp>
+#include <UdfCatalogService.pb.h>
+#include <Util/Logger.hpp>
+#include <cpprest/http_client.h>
+#include <gtest/gtest.h>
+#include <string>
 
 using namespace std::string_literals;
 using namespace NES::Catalogs;
@@ -36,9 +36,7 @@ class UdfCatalogControllerTest : public testing::Test {
     }
 
     UdfCatalogControllerTest()
-        : udfCatalog(std::make_shared<UdfCatalog>()),
-          udfCatalogController(UdfCatalogController(udfCatalog))
-    {}
+        : udfCatalog(std::make_shared<UdfCatalog>()), udfCatalogController(UdfCatalogController(udfCatalog)) {}
 
     static RegisterJavaUdfRequest createRegisterJavaUdfRequest(const std::string& udfName,
                                                                const std::string& udfClassName,
@@ -60,7 +58,7 @@ class UdfCatalogControllerTest : public testing::Test {
     }
 
     static void verifyResponseStatusCode(const web::http::http_request& request,
-                                  const web::http::status_code expectedStatusCode) {
+                                         const web::http::status_code expectedStatusCode) {
         request.get_response()
             .then([=](const pplx::task<http_response>& task) {
                 auto response = task.get();
@@ -69,8 +67,7 @@ class UdfCatalogControllerTest : public testing::Test {
             .wait();
     }
 
-    static void verifyResponseResult(const web::http::http_request& request,
-                                     const web::json::value& expected) {
+    static void verifyResponseResult(const web::http::http_request& request, const web::json::value& expected) {
         request.get_response()
             .then([&expected](const pplx::task<http_response>& task) {
                 auto response = task.get();
@@ -84,14 +81,14 @@ class UdfCatalogControllerTest : public testing::Test {
             .wait();
     }
 
-    static void verifySerializedInstance(const JavaSerializedInstance& actual,
-                                         const std::string& expected) {
-        auto converted = JavaSerializedInstance {expected.begin(), expected.end()};
+    static void verifySerializedInstance(const JavaSerializedInstance& actual, const std::string& expected) {
+        auto converted = JavaSerializedInstance{expected.begin(), expected.end()};
         ASSERT_EQ(actual, converted);
     }
 
-    static void verifyByteCodeList(const JavaUdfByteCodeList& actual,
-                                   const google::protobuf::RepeatedPtrField<JavaUdfDescriptorMessage_JavaUdfClassDefinition>& expected) {
+    static void
+    verifyByteCodeList(const JavaUdfByteCodeList& actual,
+                       const google::protobuf::RepeatedPtrField<JavaUdfDescriptorMessage_JavaUdfClassDefinition>& expected) {
         ASSERT_EQ(actual.size(), static_cast<decltype(actual.size())>(expected.size()));
         for (const auto& classDefinition : expected) {
             auto actualByteCode = actual.find(classDefinition.class_name());
@@ -127,7 +124,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
                                                                                "udf_method",
                                                                                {1},
                                                                                {{"some_package.my_udf", {1}}});
-    auto request = web::http::http_request {web::http::methods::POST};
+    auto request = web::http::http_request{web::http::methods::POST};
     request.set_body(javaUdfRequest.SerializeAsString());
     // when that message is passed to the controller
     udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerJavaUdf"}, request);
@@ -145,7 +142,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
 
 TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
     // given a REST message
-    auto request = web::http::http_request {web::http::methods::POST};
+    auto request = web::http::http_request{web::http::methods::POST};
     // when that message is passed to the controller with the wrong path prefix
     udfCatalogController.handlePost({"wrong-path-prefix"}, request);
     // then the HTTP response is InternalServerError
@@ -154,7 +151,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
 
 TEST_F(UdfCatalogControllerTest, HandlePostChecksForKnownPath) {
     // given a REST message
-    auto request = web::http::http_request {web::http::methods::POST};
+    auto request = web::http::http_request{web::http::methods::POST};
     // when that message is passed to the controller with an unknown path
     udfCatalogController.handlePost({UdfCatalogController::path_prefix, "unknown-path"}, request);
     // then the HTTP response is BadRequest
@@ -165,7 +162,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
     // given a REST message containing a wrongly formed Java UDF (bytecode list is empty)
     auto javaUdfRequest =
         ProtobufMessageFactory::createRegisterJavaUdfRequest("my_udf", "some_package.my_udf", "udf_method", {1}, {});
-    auto request = web::http::http_request {web::http::methods::POST};
+    auto request = web::http::http_request{web::http::methods::POST};
     request.set_body(javaUdfRequest.SerializeAsString());
     // when that message is passed to the controller (which should cause an exception)
     udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerJavaUdf"}, request);
@@ -179,8 +176,10 @@ TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
                 .then([=](const pplx::task<std::string>& task) {
                     auto message = task.get();
                     ASSERT_TRUE(message.find("Stack trace") == std::string::npos);
-                }).wait();
-        }).wait();
+                })
+                .wait();
+        })
+        .wait();
 }
 
 TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
@@ -192,8 +191,8 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
     auto udfName = "my_udf"s;
     udfCatalog->registerJavaUdf(udfName, javaUdfDescriptor);
     // when a REST message is passed to the controller to remove the UDF
-    auto request = web::http::http_request {web::http::methods::DEL};
-    request.set_request_uri (UdfCatalogController::path_prefix + "/removeUdf?udfName="s + udfName);
+    auto request = web::http::http_request{web::http::methods::DEL};
+    request.set_request_uri(UdfCatalogController::path_prefix + "/removeUdf?udfName="s + udfName);
     udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "removeUdf"}, request);
     // then the response is OK
     verifyResponseStatusCode(request, status_codes::OK);
@@ -238,7 +237,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteTreatsSuperfluousParametersAreAnErr
 
 TEST_F(UdfCatalogControllerTest, HandleDeleteShouldVerifyUrlPathPrefix) {
     // given a REST message
-    auto request = web::http::http_request {web::http::methods::DEL};
+    auto request = web::http::http_request{web::http::methods::DEL};
     // when that message is passed to the controller with the wrong path prefix
     udfCatalogController.handleDelete({"wrong-path-prefix"}, request);
     // then the HTTP response is InternalServerError
@@ -247,7 +246,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteShouldVerifyUrlPathPrefix) {
 
 TEST_F(UdfCatalogControllerTest, HandleDeleteChecksForKnownPath) {
     // when a REST message is passed to the controller with an unknown path
-    auto request = web::http::http_request {web::http::methods::DEL};
+    auto request = web::http::http_request{web::http::methods::DEL};
     request.set_request_uri(UdfCatalogController::path_prefix + "/unknown-path?udfName=unknown_udf"s);
     udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "unknown-path"}, request);
     // then the HTTP response is BadRequest
@@ -263,8 +262,8 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveJavaUdfDescriptor) {
     auto udfName = "my_udf"s;
     udfCatalog->registerJavaUdf(udfName, javaUdfDescriptor);
     // when a REST message is passed to the controller to get the UDF descriptor
-    auto request = web::http::http_request {web::http::methods::GET};
-    request.set_request_uri (UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName="s + udfName);
+    auto request = web::http::http_request{web::http::methods::GET};
+    request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName="s + udfName);
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is OK
     verifyResponseStatusCode(request, status_codes::OK);
@@ -281,8 +280,8 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveJavaUdfDescriptor) {
 
 TEST_F(UdfCatalogControllerTest, HandleGetShouldReturnNotFoundIfUdfDoesNotExist) {
     // when a REST message is passed to the controller to get the UDF descriptor of an UDF that does not exist
-    auto request = web::http::http_request {web::http::methods::GET};
-    request.set_request_uri (UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName=unknownUdf"s);
+    auto request = web::http::http_request{web::http::methods::GET};
+    request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName=unknownUdf"s);
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is OK
     verifyResponseStatusCode(request, status_codes::OK);
@@ -303,7 +302,8 @@ TEST_F(UdfCatalogControllerTest, HandleGetExpectsUdfParameter) {
 TEST_F(UdfCatalogControllerTest, HandleGetTreatsSuperfluousParametersAreAnErrorCondition) {
     // when a REST message is passed to the controller that is contains parameters other than the udfName parameter
     auto request = web::http::http_request{web::http::methods::GET};
-    request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName=some_udf&unknownParameter=unknownValue"s);
+    request.set_request_uri(UdfCatalogController::path_prefix
+                            + "/getUdfDescriptor?udfName=some_udf&unknownParameter=unknownValue"s);
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is BadRequest
     verifyResponseStatusCode(request, status_codes::BadRequest);
@@ -311,7 +311,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetTreatsSuperfluousParametersAreAnErrorC
 
 TEST_F(UdfCatalogControllerTest, HandleGetShouldVerifyUrlPathPrefix) {
     // given a REST message
-    auto request = web::http::http_request {web::http::methods::GET};
+    auto request = web::http::http_request{web::http::methods::GET};
     // when that message is passed to the controller with the wrong path prefix
     udfCatalogController.handleGet({"wrong-path-prefix"}, request);
     // then the HTTP response is InternalServerError
@@ -320,7 +320,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetShouldVerifyUrlPathPrefix) {
 
 TEST_F(UdfCatalogControllerTest, HandleGetChecksForKnownPath) {
     // when a REST message is passed to the controller with an unknown path
-    auto request = web::http::http_request {web::http::methods::GET};
+    auto request = web::http::http_request{web::http::methods::GET};
     request.set_request_uri(UdfCatalogController::path_prefix + "/unknown-path?udfName=unknown_udf"s);
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "unknown-path"}, request);
     // then the HTTP response is BadRequest
@@ -336,7 +336,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
     auto udfName = "my_udf"s;
     udfCatalog->registerJavaUdf(udfName, javaUdfDescriptor);
     // when a REST message is passed to the controller to get a list of the UDFs
-    auto request = web::http::http_request {web::http::methods::GET};
+    auto request = web::http::http_request{web::http::methods::GET};
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "listUdfs"}, request);
     // then the response is OK
     verifyResponseStatusCode(request, status_codes::OK);
@@ -348,7 +348,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
 
 TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveEmptyUdfList) {
     // when a REST message is passed to the controller to get a list of the UDFs
-    auto request = web::http::http_request {web::http::methods::GET};
+    auto request = web::http::http_request{web::http::methods::GET};
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "listUdfs"}, request);
     // then the response is OK
     verifyResponseStatusCode(request, status_codes::OK);
@@ -358,4 +358,4 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveEmptyUdfList) {
     verifyResponseResult(request, json);
 }
 
-} // namespace NES
+}// namespace NES
