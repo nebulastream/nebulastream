@@ -135,6 +135,7 @@ void RestEngine::handlePost(http_request request) {
             return;
         } else if (paths[0] == "topology") {
             topologyController->handlePost(paths, request);
+            return;
         }
     }
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));
