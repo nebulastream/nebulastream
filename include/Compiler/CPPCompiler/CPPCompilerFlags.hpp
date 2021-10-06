@@ -42,6 +42,8 @@ class CPPCompilerFlags {
     inline static const std::string TUNE = "-mtune=native";
     inline static const std::string ARCH = "-march=native";
     inline static const std::string DEBUGGING = "-g";
+    // Enables tracing for compilation time with chrome::tracing
+    inline static const std::string TRACE_COMPILATION_TIME = "-ftime-trace";
 
     // Vector extensions
     inline static const std::string SSE_4_1 = "-msse4.1";

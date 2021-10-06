@@ -129,6 +129,10 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         format->formatFile(file);
         file->print();
     }
+    if(request->enableCompilationProfiling()){
+        compilationFlags.addFlag(CPPCompilerFlags::TRACE_COMPILATION_TIME);
+        NES_DEBUG("Compilation Time tracing is activated open: chrome://tracing/");
+    }
 #ifdef __linux__
     compilationFlags.addFlag("--shared");
 #elif defined(__APPLE__)
