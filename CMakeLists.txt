@@ -77,7 +77,6 @@ message(STATUS "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
-set(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE ON)
 option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC queue for the buffer manager" ON)
 set(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER ON)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
@@ -226,13 +225,6 @@ if(UNIX AND NOT APPLE)
     set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 endif()
 
-
-find_package(folly CONFIG REQUIRED)
-if(folly_FOUND)
-    message(STATUS "Using Folly")
-    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
-endif ()
-
 # Numa awareness
 find_package(NUMA)
 if(NUMA_FOUND)
@@ -380,6 +372,13 @@ if (NES_USE_ADAPTIVE)
     set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
     message("Adaptive sampling dependencies OK")
 endif (NES_USE_ADAPTIVE)
+
+# folly
+if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
+    find_dependency(gflags CONFIG REQUIRED) # required on macos
+    find_package(folly CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+endif ()
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
