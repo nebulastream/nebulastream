@@ -193,6 +193,7 @@ else()
         message(STATUS "CMAKE detects native arch support")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
         if (${AVX2_FOUND})
+            message(STATUS "CMAKE detects AVX2 support")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
         endif ()
     else()
@@ -200,8 +201,15 @@ else()
             message(STATUS "CMAKE detects generic x86-64 arch support")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
         elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-            # Clang on M1 Macs supports a number of arm targets (e.g., arm64, aarch64)
-            # but none of them are recognized by the -march parameter
+            message(STATUS "CMAKE detects APPLE ARM64 support")
+            # Clang has the exact same macros for A14 as M1.
+            # Current Clang master has -mcpu=apple-m1 but
+            # not yet on latest release. Overall, arm64/aarch64
+            # offer so many different configuration parameters
+            # that compilers prefer -mcpu=XXX instead.
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-a14")
+        elseif(NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+            message(STATUS "CMAKE detects generic ARM64 support")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic")
         endif()
     endif ()
