@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <API/AttributeField.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>

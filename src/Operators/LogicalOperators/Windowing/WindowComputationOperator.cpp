@@ -15,6 +15,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <API/AttributeField.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>

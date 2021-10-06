@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_DATATYPES_FIXEDCHAR_HPP_
 #define NES_INCLUDE_DATATYPES_FIXEDCHAR_HPP_
 
-#include "Common/DataTypes/ArrayType.hpp"
+#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES {
@@ -33,7 +33,7 @@ class FixedChar final : public ArrayType {
      * @brief Constructs a new Char(n)
      * @param length length of the char
      */
-    explicit inline FixedChar(uint64_t length) noexcept : ArrayType(length, DataTypeFactory::createChar()) {}
+    explicit FixedChar(uint64_t length) noexcept;
 
     virtual ~FixedChar() = default;
 };

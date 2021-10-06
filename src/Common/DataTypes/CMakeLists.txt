@@ -22,4 +22,5 @@ add_source_nes(
         Integer.cpp
         Float.cpp
         DataTypeFactory.cpp
+        FixedChar.cpp
 )

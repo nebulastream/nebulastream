@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_NODEENGINE_FORMATITERATORS_SINKFORMATITERATOR_HPP_
 #define NES_INCLUDE_NODEENGINE_FORMATITERATORS_SINKFORMATITERATOR_HPP_
-
+#include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Sinks/Formats/FormatType.hpp>
