@@ -24,6 +24,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
@@ -80,7 +81,7 @@ class MillisecondIntervalTest : public testing::Test {
   public:
     CoordinatorConfigPtr crdConf;
     WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
+    CSVSourceConfigPtr srcConf;
 
     static void SetUpTestCase() {
         NES::setupLogging("MillisecondIntervalTest.log", NES::LOG_DEBUG);
@@ -104,7 +105,7 @@ class MillisecondIntervalTest : public testing::Test {
         wrkConf = WorkerConfig::create();
         wrkConf->setCoordinatorPort(rpcPort);
 
-        srcConf = SourceConfig::create();
+        srcConf = CSVSourceConfig::create();
         srcConf->setSourceType("DefaultSource");
         srcConf->setFilePath("../tests/test_data/exdra.csv");
         srcConf->setSourceFrequency(550);

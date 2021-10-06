@@ -17,13 +17,16 @@ limitations under the License.
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
 #include <Util/Logger.hpp>
-#include <filesystem>
 #include <string>
 #include <utility>
 
 namespace NES {
-std::shared_ptr<MQTTSourceConfig> MQTTSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<MQTTSourceConfig>(MQTTSourceConfig(sourceConfigMap));
+MQTTSourceConfigPtr MQTTSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<MQTTSourceConfig>(MQTTSourceConfig(std::move(sourceConfigMap)));
+}
+
+MQTTSourceConfigPtr MQTTSourceConfig::create() {
+    return std::make_shared<MQTTSourceConfig>(MQTTSourceConfig());
 }
 
 MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConfigMap)
@@ -68,6 +71,30 @@ MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConf
         cleanSession->setValue((sourceConfigMap.find("cleanSession")->second == "true"));
     }
 
+}
+
+MQTTSourceConfig::MQTTSourceConfig()
+    : SourceConfig(),
+      url(ConfigOption<std::string>::create("url",
+                                            "ws://127.0.0.1:9001",
+                                            "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
+      clientId(ConfigOption<std::string>::create("clientId",
+                                                 "testClient",
+                                                 "clientId, needed for: MQTTSource (needs to be unique for each connected "
+                                                 "MQTTSource), KafkaSource (use this for groupId)")),
+      userName(ConfigOption<std::string>::create("userName",
+                                                 "testUser",
+                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
+      topic(ConfigOption<std::string>::create("topic",
+                                              "demoTownSensorData",
+                                              "topic to listen to, needed for: MQTTSource, KafkaSource")),
+      qos(ConfigOption<uint32_t>::create("qos", 2, "quality of service, needed for: MQTTSource")),
+      cleanSession(
+          ConfigOption<bool>::create("cleanSession",
+                                     true,
+                                     "cleanSession true = clean up session after client loses connection, false = keep data for "
+                                     "client after connection loss (persistent session), needed for: MQTTSource")) {
+    NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
 void MQTTSourceConfig::resetSourceOptions() {

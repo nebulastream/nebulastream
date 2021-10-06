@@ -23,6 +23,9 @@ limitations under the License.
 
 namespace NES {
 
+class CSVSourceConfig;
+using CSVSourceConfigPtr = std::shared_ptr<CSVSourceConfig>;
+
 template<class T>
 class ConfigOption;
 using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
@@ -41,7 +44,13 @@ class CSVSourceConfig : public SourceConfig {
      * @param sourceConfigMap inputted config options
      * @return CSVSourceConfigPtr
      */
-    static std::shared_ptr<CSVSourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
+    static CSVSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief create a CSVSourceConfigPtr object
+     * @return CSVSourceConfigPtr
+     */
+    static CSVSourceConfigPtr create();
 
     ~CSVSourceConfig() override = default;
 
@@ -77,9 +86,14 @@ class CSVSourceConfig : public SourceConfig {
 
   private:
     /**
-     * @brief constructor to create a new CSV source config object initialized with default values as set below
+     * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
     explicit CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new CSV source config object initialized with default values
+     */
+    CSVSourceConfig();
     StringConfigOption filePath;
     BoolConfigOption skipHeader;
 

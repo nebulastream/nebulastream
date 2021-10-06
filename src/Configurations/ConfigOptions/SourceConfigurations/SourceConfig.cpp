@@ -69,6 +69,25 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap)
 
 }
 
+SourceConfig::SourceConfig()
+    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 0, "Number of buffers to produce.")),
+      numberOfTuplesToProducePerBuffer(
+          ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.")),
+      physicalStreamName(
+          ConfigOption<std::string>::create("physicalStreamName", "default_physical", "Physical name of the stream.")),
+      logicalStreamName(ConfigOption<std::string>::create("logicalStreamName", "default_logical", "Logical name of the stream.")),
+      sourceFrequency(ConfigOption<uint32_t>::create("sourceFrequency", 1, "Sampling frequency of the source.")),
+      rowLayout(ConfigOption<bool>::create("rowLayout", true, "storage layout, true = row layout, false = column layout")),
+      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")),
+      inputFormat(ConfigOption<std::string>::create("inputFormat", "JSON", "input data format")),
+      sourceType(
+          ConfigOption<std::string>::create("sourceType",
+                                            "NoSource",
+                                            "Type of the Source (available options: DefaultSource, CSVSource, BinarySource).")) {
+    NES_INFO("NesSourceConfig: Init source config object with default values.");
+
+}
+
 void SourceConfig::resetSourceOptions() {
     setSourceType(sourceType->getDefaultValue());
     setInputFormat(inputFormat->getDefaultValue());

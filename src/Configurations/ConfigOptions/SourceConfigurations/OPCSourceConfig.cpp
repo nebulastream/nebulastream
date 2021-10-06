@@ -17,13 +17,16 @@ limitations under the License.
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/OPCSourceConfig.hpp>
 #include <Util/Logger.hpp>
-#include <filesystem>
 #include <string>
 #include <utility>
 
 namespace NES {
 std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<OPCSourceConfig>(OPCSourceConfig(std::move(sourceConfigMap)));
+}
+
+std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create() {
+    return std::make_shared<OPCSourceConfig>(OPCSourceConfig());
 }
 
 OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfigMap)
@@ -34,7 +37,7 @@ OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfig
                                                  "testUser",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
       password(ConfigOption<std::string>::create("password", "", "password, needed for: OPCSource")) {
-    NES_INFO("BinarySourceConfig: Init source config object.");
+    NES_INFO("OPCSourceConfig: Init source config object with values from sourceConfigMap.");
     if (sourceConfigMap.find("namespaceIndex") != sourceConfigMap.end()) {
         namespaceIndex->setValue(std::stoi(sourceConfigMap.find("namespaceIndex")->second));
     }
@@ -47,6 +50,18 @@ OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfig
     if (sourceConfigMap.find("password") != sourceConfigMap.end()) {
         password->setValue(sourceConfigMap.find("password")->second);
     }
+}
+
+OPCSourceConfig::OPCSourceConfig()
+    : SourceConfig(),
+      namespaceIndex(ConfigOption<uint32_t>::create("namespaceIndex", 1, "namespaceIndex for node, needed for: OPCSource")),
+      nodeIdentifier(ConfigOption<std::string>::create("nodeIdentifier", "the.answer", "node identifier, needed for: OPCSource")),
+      userName(ConfigOption<std::string>::create("userName",
+                                                 "testUser",
+                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
+      password(ConfigOption<std::string>::create("password", "", "password, needed for: OPCSource")) {
+    NES_INFO("OPCSourceConfig: Init source config object with default values.");
+
 }
 
 void OPCSourceConfig::resetSourceOptions() {

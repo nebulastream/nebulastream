@@ -23,6 +23,9 @@ limitations under the License.
 
 namespace NES {
 
+class OPCSourceConfig;
+using OPCSourceConfigPtr = std::shared_ptr<OPCSourceConfig>;
+
 template<class T>
 class ConfigOption;
 using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
@@ -37,11 +40,17 @@ class OPCSourceConfig : public SourceConfig {
 
   public:
     /**
-     * @brief create a BinarySourceConfigPtr object
+     * @brief create a OPCSourceConfigPtr object
      * @param sourceConfigMap inputted config options
-     * @return BinarySourceConfigPtr
+     * @return OPCSourceConfigPtr
      */
-    static std::shared_ptr<OPCSourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
+    static OPCSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief create a OPCSourceConfigPtr object
+     * @return OPCSourceConfigPtr
+     */
+    static OPCSourceConfigPtr create();
 
     ~OPCSourceConfig() override = default;
 
@@ -94,9 +103,15 @@ class OPCSourceConfig : public SourceConfig {
 
   private:
     /**
-     * @brief constructor to create a new Binary source config object initialized with default values as set below
+     * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
     explicit OPCSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new OPC source config object initialized with default values
+     */
+    OPCSourceConfig();
+
     IntConfigOption namespaceIndex;
     StringConfigOption nodeIdentifier;
     StringConfigOption userName;

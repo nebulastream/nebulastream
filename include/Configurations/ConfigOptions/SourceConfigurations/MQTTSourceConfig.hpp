@@ -44,7 +44,14 @@ class MQTTSourceConfig : public SourceConfig {
      * @param sourceConfigMap inputted config options
      * @return MQTTSourceConfigPtr
      */
-    static std::shared_ptr<MQTTSourceConfig> create(std::map<std::string, std::string> sourceConfigMap);
+    static MQTTSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief create a MQTTSourceConfigPtr object with default values
+     * @return MQTTSourceConfigPtr
+     */
+    static MQTTSourceConfigPtr create();
+
     /**
      * @brief resets all Source configuration to default values
      */
@@ -117,9 +124,15 @@ class MQTTSourceConfig : public SourceConfig {
 
   private:
     /**
-     * @brief constructor to create a new MQTT source config object initialized with default values as set below
+     * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
      */
     explicit MQTTSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new MQTT source config object initialized with default values as set below
+     */
+    MQTTSourceConfig();
+
     StringConfigOption url;
     StringConfigOption clientId;
     StringConfigOption userName;

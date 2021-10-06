@@ -17,13 +17,16 @@ limitations under the License.
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/BinarySourceConfig.hpp>
 #include <Util/Logger.hpp>
-#include <filesystem>
 #include <string>
 #include <utility>
 
 namespace NES {
-std::shared_ptr<BinarySourceConfig> BinarySourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+BinarySourceConfigPtr BinarySourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<BinarySourceConfig>(BinarySourceConfig(std::move(sourceConfigMap)));
+}
+
+BinarySourceConfigPtr BinarySourceConfig::create() {
+    return std::make_shared<BinarySourceConfig>(BinarySourceConfig());
 }
 
 BinarySourceConfig::BinarySourceConfig(std::map<std::string, std::string> sourceConfigMap)

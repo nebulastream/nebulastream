@@ -14,29 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/NoSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/DefaultSourceConfig.hpp>
 #include <Util/Logger.hpp>
-#include <filesystem>
 #include <string>
 #include <utility>
 
 namespace NES {
-std::shared_ptr<NoSourceConfig> NoSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<NoSourceConfig>(NoSourceConfig(sourceConfigMap));
+DefaultSourceConfigPtr DefaultSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<DefaultSourceConfig>(DefaultSourceConfig(sourceConfigMap));
 }
 
-NoSourceConfig::NoSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap){
+DefaultSourceConfigPtr DefaultSourceConfig::create() {
+    return std::make_shared<DefaultSourceConfig>(DefaultSourceConfig());
+}
+
+DefaultSourceConfig::DefaultSourceConfig(std::map<std::string, std::string> sourceConfigMap)
+    : SourceConfig(std::move(sourceConfigMap)){
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 
 }
 
-void NoSourceConfig::resetSourceOptions() {
+DefaultSourceConfig::DefaultSourceConfig() : SourceConfig() {
+    NES_INFO("NesSourceConfig: Init source config object with default values.");
+
+}
+
+void DefaultSourceConfig::resetSourceOptions() {
     SourceConfig::resetSourceOptions();
 }
 
-std::string NoSourceConfig::toString() {
+std::string DefaultSourceConfig::toString() {
     std::stringstream ss;
     ss << SourceConfig::toString();
     return ss.str();

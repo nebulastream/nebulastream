@@ -19,6 +19,7 @@
 
 #include <map>
 #include <string>
+#include <memory>
 
 namespace NES {
 
@@ -35,14 +36,19 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 /**
  * @brief Configuration object for source config
  */
-class SourceConfig {
+class SourceConfig : public std::enable_shared_from_this<SourceConfig>{
 
   public:
 
     /**
-     * @brief constructor to create a new source option object initialized with default values as set below
+     * @brief constructor to create a new source option object initialized with values from sourceConfigMap
      */
     explicit SourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new source option object initialized with default values as set below
+     */
+    SourceConfig();
 
     virtual ~SourceConfig() = default;
 
@@ -147,165 +153,32 @@ class SourceConfig {
     void setRowLayout(bool rowLayout);
 
     /**
-     * @brief Get file path, needed for: CSVSource, BinarySource
+     * @brief Checks if the current Source is of type SourceConfig
+     * @tparam SourceConfig
+     * @return bool true if Source is of SourceConfig
      */
-    virtual std::shared_ptr<ConfigOption<std::string>> getFilePath() const;
+    template<class SourceConfig>
+    bool instanceOf() {
+        if (dynamic_cast<SourceConfig*>(this)) {
+            return true;
+        };
+        return false;
+    };
 
     /**
-     * @brief Set file path, needed for: CSVSource, BinarySource
-     */
-    virtual void setFilePath(std::string filePath);
-
-    /**
-     * @brief gets a ConfigOption object with skipHeader
-     */
-    virtual std::shared_ptr<ConfigOption<bool>> getSkipHeader() const;
-
-    /**
-     * @brief set the value for skipHeader with the appropriate data format
-     */
-    virtual void setSkipHeader(bool skipHeader);
-
-    /**
-     * @brief Get url to connect
-     */
-    virtual std::shared_ptr<ConfigOption<std::string>> getUrl() const;
-
-    /**
-     * @brief Set url to connect to
-     */
-    virtual void setUrl(std::string url);
-
-    /**
-     * @brief Get clientId
-     */
-    virtual std::shared_ptr<ConfigOption<std::string>> getClientId() const;
-
-    /**
-     * @brief Set clientId
-     */
-    virtual void setClientId(std::string clientId);
-
-    /**
-     * @brief Get userName
-     */
-    virtual std::shared_ptr<ConfigOption<std::string>> getUserName() const;
-
-    /**
-     * @brief Set userName
-     */
-    virtual void setUserName(std::string userName);
-
-    /**
-     * @brief Get topic to listen to
-     */
-    virtual std::shared_ptr<ConfigOption<std::string>> getTopic() const;
-
-    /**
-     * @brief Set topic to listen to
-     */
-    virtual void setTopic(std::string topic);
-
-    /**
-     * @brief Get quality of service
-     */
-    virtual std::shared_ptr<ConfigOption<uint32_t>> getQos() const;
-
-    /**
-     * @brief Set quality of service
-     */
-    virtual void setQos(uint32_t qos);
-
-    /**
-     * @brief Get cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-     */
-    virtual std::shared_ptr<ConfigOption<bool>> getCleanSession() const;
-
-    /**
-     * @brief Set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-     */
-    virtual void setCleanSession(bool cleanSession);
-
-    /**
-     * @brief Get udsf
-     */
-    virtual std::shared_ptr<ConfigOption<std::string>> getUdsf() const;
-
-    /**
-     * @brief Set udsf
-     */
-    virtual void setUdsf(std::string udsf);
-
-    /**
-     * @brief Get broker string
-     */
-    virtual std::shared_ptr<ConfigOption<std::string>> getBrokers() const;
-
-    /**
-     * @brief Set broker string
-     */
-    virtual void setBrokers(std::string brokers);
-
-    /**
-     * @brief Get auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
-     */
-    virtual std::shared_ptr<ConfigOption<uint32_t>> getAutoCommit() const;
-
-    /**
-     * @brief Set auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
-     */
-    virtual void setAutoCommit(uint32_t autoCommit);
-
-    /**
-     * @brief get groupId
-     */
-    virtual std::shared_ptr<ConfigOption<std::string>> getGroupId() const;
-
-    /**
-      * @brief set groupId
-      */
-    virtual void setGroupId(std::string groupId);
-
-    /**
-     * @brief Get connection time out for source, needed for: KafkaSource
-     */
-    virtual std::shared_ptr<ConfigOption<uint32_t>> getConnectionTimeout() const;
-
-    /**
-     * @brief Set connection time out for source, needed for: KafkaSource
-     */
-    virtual void setConnectionTimeout(uint32_t connectionTimeout);
-
-    /**
-     * get the name space for OPCSource
-     * @return namespace index
-     */
-    virtual std::shared_ptr<ConfigOption<std::uint32_t>> getNamespaceIndex() const;
-
-    /**
-     * @brief Set namespaceIndex for node
-     */
-    virtual void setNamespaceIndex(uint32_t namespaceIndex);
-
-    /**
-     * @brief Get node identifier
-     */
-    virtual std::shared_ptr<ConfigOption<std::string>> getNodeIdentifier() const;
-
-    /**
-     * @brief Set node identifier
-     */
-    virtual void setNodeIdentifier(std::string nodeIdentifier);
-
-    /**
-     * @brief Get password
-     */
-    virtual std::shared_ptr<ConfigOption<std::string>> getPassword() const;
-
-    /**
-     * @brief Set password
-     */
-    virtual void setPassword(std::string password);
+    * @brief Dynamically casts the Source to a SourceConfigType
+    * @tparam SourceConfigType
+    * @return returns a shared pointer of the SourceConfigType
+    */
+    template<class SourceConfig>
+    std::shared_ptr<SourceConfig> as() {
+        if (instanceOf<SourceConfig>()) {
+            return std::dynamic_pointer_cast<SourceConfig>(this->shared_from_this());
+        }
+        throw std::logic_error("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
+                               + typeid(SourceConfig).name());
+        return nullptr;
+    }
 
   private:
 

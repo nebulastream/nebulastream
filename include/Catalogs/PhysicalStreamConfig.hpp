@@ -46,6 +46,30 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      */
     [[nodiscard]] SourceConfigPtr getSourceConfig() const;
 
+    /**
+     * @brief get the number of tuples to produce in a buffer
+     * @return returns the number of tuples to produce in a buffer
+     */
+    [[nodiscard]] uint32_t getNumberOfTuplesToProducePerBuffer() const;
+
+    /**
+     * @brief get the number of buffers to produce
+     * @return returns the number of buffers to produce
+     */
+    [[nodiscard]] uint32_t getNumberOfBuffersToProduce() const;
+
+    /**
+     * @brief get physical stream name
+     * @return physical stream name
+     */
+    std::string getPhysicalStreamName() override;
+
+    /**
+     * @brief get logical stream name
+     * @return logical stream name
+     */
+    std::string getLogicalStreamName() override;
+
     std::string toString() override;
 
     SourceDescriptorPtr build(SchemaPtr) override;
@@ -54,6 +78,10 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     explicit PhysicalStreamConfig(const SourceConfigPtr& sourceConfig);
 
     SourceConfigPtr sourceConfig;
+    uint32_t numberOfTuplesToProducePerBuffer;
+    uint32_t numberOfBuffersToProduce;
+    std::string physicalStreamName;
+    std::string logicalStreamName;
 };
 
 }// namespace NES
