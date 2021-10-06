@@ -110,7 +110,8 @@ class BaseController {
      * @param request The HTTP request.
      * @param detail The detailed error message.
      */
-    template <typename T> static void badRequestImpl(const web::http::http_request& request, const T& detail);
+    template<typename T>
+    static void badRequestImpl(const web::http::http_request& request, const T& detail);
 
     void handleException(const web::http::http_request& message, const std::exception& exc);
 

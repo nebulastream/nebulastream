@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 
+#include "../util/ProtobufMessageFactory.hpp"
 #include "SerializableQueryPlan.pb.h"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -26,7 +27,6 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include "../util/ProtobufMessageFactory.hpp"
 #include <cpprest/http_client.h>
 #include <iostream>
 
@@ -544,9 +544,11 @@ TEST_F(RESTEndpointTest, DelegateGetRequestToRetrieveUdfDescriptor) {
     request
         .then([&](const web::http::http_response& http_response) {
             return http_response.extract_string(true);
-        }).then([&response](const pplx::task<std::string>& task) {
+        })
+        .then([&response](const pplx::task<std::string>& task) {
             response.ParseFromString(task.get());
-        }).wait();
+        })
+        .wait();
     ASSERT_TRUE(response.found());
     // Skip verifying the remaining contents of the response, that is already done in UdfCatalogControllerTest.
     stopCoordinator(*coordinator);

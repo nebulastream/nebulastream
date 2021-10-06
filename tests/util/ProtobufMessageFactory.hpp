@@ -50,4 +50,4 @@ class ProtobufMessageFactory {
     }
 };
 
-} // namespace NES
+}// namespace NES

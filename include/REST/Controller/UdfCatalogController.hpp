@@ -26,7 +26,7 @@ namespace NES {
 namespace Catalogs {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
-}
+}// namespace Catalogs
 
 using namespace Catalogs;
 
@@ -35,9 +35,7 @@ class UdfCatalogController : public BaseController {
   public:
     static const std::string path_prefix;
 
-    explicit UdfCatalogController(UdfCatalogPtr udfCatalog)
-        : udfCatalog(std::move(udfCatalog))
-    { }
+    explicit UdfCatalogController(UdfCatalogPtr udfCatalog) : udfCatalog(std::move(udfCatalog)) {}
 
     void handleGet(const std::vector<utility::string_t>& path, http_request& request);
 
@@ -59,9 +57,8 @@ class UdfCatalogController : public BaseController {
                                                      http_request& request);
 
     // Convenience method to check for a single known REST endpoint.
-    [[nodiscard]] static bool verifyCorrectEndpoint(const std::vector<std::string>& path,
-                                                    const std::string& endpoint,
-                                                    http_request& request);
+    [[nodiscard]] static bool
+    verifyCorrectEndpoint(const std::vector<std::string>& path, const std::string& endpoint, http_request& request);
 
     // Extract the udfName parameter from the URL query string.
     // This method checks if the udfName parameter exists and if it's the only parameter.
@@ -77,4 +74,4 @@ class UdfCatalogController : public BaseController {
     UdfCatalogPtr udfCatalog;
 };
 
-}
+}// namespace NES

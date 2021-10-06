@@ -52,7 +52,7 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 namespace Catalogs {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
-}
+}// namespace Catalogs
 
 /**
  * @brief : This class is responsible for starting the REST server.
