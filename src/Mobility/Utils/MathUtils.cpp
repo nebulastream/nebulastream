@@ -19,6 +19,7 @@
 #define _USE_MATH_DEFINES
 #define CONVERSION_DEGREES 180
 #include <cmath>
+#include <limits>
 
 namespace NES {
 
@@ -53,6 +54,34 @@ double MathUtils::wrapAnglePiPi(double a) {
     }
 
     return a;
+}
+
+bool MathUtils::intersect(const CartesianLinePtr& line, const CartesianCirclePtr& circle) {
+    double offsetX = -circle->getCenter()->getX();
+    double offsetY = -circle->getCenter()->getY();
+
+    CartesianLinePtr shiftedLine = MathUtils::shift(line, offsetX, offsetY);
+    CartesianCirclePtr shiftedCircle = std::make_shared<CartesianCircle>(circle->getRadius());
+
+    double x1 = std::numeric_limits<double>::min() / std::pow(100000, 50);
+    double y1 = shiftedLine->getY(x1);
+    double x2 = std::numeric_limits<double>::max() / std::pow(100000, 50);
+    double y2 = shiftedLine->getY(x2);
+
+    double dx = x2 - x1;
+    double dy = y2 - y1;
+    double dr = std::sqrt(dx * dx + dy * dy);
+    double D = x1 * y2 - x2 * y1;
+
+    double discriminant = circle->getRadius() * circle->getRadius() * dr * dr - D * D;
+    return discriminant >= 0;
+}
+
+CartesianLinePtr MathUtils::shift(const CartesianLinePtr& line, double offsetX, double offsetY) {
+    double x = offsetX;
+    double y = line->getConstant() + offsetY;
+    double shiftedConstant = y - line->getGradient() * x;
+    return std::make_shared<CartesianLine>(line->getGradient(), shiftedConstant);
 }
 
 }

@@ -32,5 +32,8 @@ bool CartesianLine::contains(const CartesianPointPtr& point) {
     double expectedYValue = gradient * point->getX() + constant;
     return (expectedYValue == point->getY());
 }
+double CartesianLine::getY(double x) {
+    return gradient * x + constant;
+}
 
 }

@@ -34,6 +34,7 @@ class CartesianLine {
     void setGradient(double gradient);
     void setConstant(double constant);
 
+    double getY(double x);
     bool contains(const CartesianPointPtr& point);
 };
 

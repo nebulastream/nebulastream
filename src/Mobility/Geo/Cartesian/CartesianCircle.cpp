@@ -14,28 +14,18 @@
     limitations under the License.
 */
 
-#ifndef NES_MATHUTILS_H
-#define NES_MATHUTILS_H
-
-#include <Mobility/Geo/CartesianPoint.h>
-#include <Mobility/Geo/GeoPoint.h>
-#include <Mobility/Geo/Cartesian/CartesianLine.h>
 #include <Mobility/Geo/Cartesian/CartesianCircle.h>
 
 namespace NES {
 
-class MathUtils {
-  public:
-    static double toDegrees(double radians);
-    static double toRadians(double degrees);
-    static double clamp(double d, double min, double max);
-    static double distance(const CartesianPointPtr& p1, const CartesianPointPtr& p2);
-    static double wrapAnglePiPi(double a);
+CartesianCircle::CartesianCircle(const CartesianPointPtr& center, double radius) : center(center), radius(radius) {}
 
-    static bool intersect(const CartesianLinePtr& line, const CartesianCirclePtr& circle);
-    static CartesianLinePtr shift(const CartesianLinePtr& line, double offsetX, double offsetY);
-};
+CartesianCircle::CartesianCircle(double radius) : center(std::make_shared<CartesianPoint>(0, 0)), radius(radius) {}
+
+const CartesianPointPtr& CartesianCircle::getCenter() const { return center; }
+
+double CartesianCircle::getRadius() const { return radius; }
+
+void CartesianCircle::setCenter(const CartesianPointPtr& center) { CartesianCircle::center = center; }
 
 }
-
-#endif//NES_MATHUTILS_H

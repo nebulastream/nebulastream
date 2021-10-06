@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 
 #include <Mobility/Geo/Cartesian/CartesianLine.h>
+#include <Mobility/Utils/MathUtils.h>
 
 namespace NES {
 
@@ -31,6 +32,35 @@ TEST(CartesianTest, CartesianLine) {
 
     CartesianPointPtr outsidePoint = std::make_shared<CartesianPoint>(1, 2);
     EXPECT_FALSE(line->contains(outsidePoint));
+}
+
+TEST(CartesianUtils, ShiftCartesianLine) {
+    const uint32_t gradient  = 2;
+    const uint32_t constant  = 1;
+
+    CartesianLinePtr line = std::make_shared<CartesianLine>(gradient, constant);
+    CartesianLinePtr shiftedLine = MathUtils::shift(line, -2, -3);
+
+    EXPECT_DOUBLE_EQ(shiftedLine->getGradient(), line->getGradient());
+    EXPECT_DOUBLE_EQ(shiftedLine->getConstant(), 2);
+
+    line->setGradient(-1);
+    line->setConstant(0);
+    shiftedLine = MathUtils::shift(line, 5, -3);
+    EXPECT_DOUBLE_EQ(shiftedLine->getGradient(), line->getGradient());
+    EXPECT_DOUBLE_EQ(shiftedLine->getConstant(), 2);
+}
+
+TEST(CartesianUtils, InterstCircleAndLine) {
+    const uint32_t gradient  = 2;
+    const uint32_t constant  = 1;
+    const CartesianPointPtr center = std::make_shared<CartesianPoint>(2,3);
+    CartesianLinePtr line = std::make_shared<CartesianLine>(gradient, constant);
+    CartesianCirclePtr circle = std::make_shared<CartesianCircle>(center, 2);
+    EXPECT_TRUE(MathUtils::intersect(line, circle));
+
+    line->setConstant(5);
+    EXPECT_FALSE(MathUtils::intersect(line, circle));
 }
 
 }
