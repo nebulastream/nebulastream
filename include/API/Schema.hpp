@@ -17,17 +17,21 @@
 #ifndef API_SCHEMA_H
 #define API_SCHEMA_H
 
-#include <API/AttributeField.hpp>
-#include <API/Expressions/Expressions.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
 #include <string>
-
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <vector>
 
 namespace NES {
+
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
+
+class DataType;
+using DataTypePtr = std::shared_ptr<DataType>;
+
+class AttributeField;
+using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
 class Schema {
   public:

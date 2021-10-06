@@ -18,6 +18,7 @@
 #define NES_INCLUDE_DATATYPES_DATATYPEFACTORY_HPP_
 #include <memory>
 #include <vector>
+#include <Common/DataTypes/BasicTypes.hpp>
 namespace NES {
 
 class DataType;
@@ -28,8 +29,6 @@ using ArrayPtr = std::shared_ptr<ArrayType>;
 
 class ValueType;
 using ValueTypePtr = std::shared_ptr<ValueType>;
-
-enum BasicType { INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, FLOAT32, UINT64, FLOAT64, BOOLEAN, CHAR };
 
 /**
  * @brief The data type factory offers multiple methods to construct data types
