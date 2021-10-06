@@ -27,7 +27,8 @@ limitations under the License.
 namespace NES {
 
 template<typename T>
-struct alignas(folly::hardware_destructive_interference_size) AtomicCounter {
+//TODO: change this to folly::hardware_destructive_interference_size but then we have to load folly
+struct alignas(2 * 64) AtomicCounter {
     explicit AtomicCounter(T defValue = 0) : counter(defValue) {}
     AtomicCounter(const AtomicCounter<T>& other) : counter(other.counter.load()) {}
     AtomicCounter<T>& operator=(const AtomicCounter<T>& other) {
