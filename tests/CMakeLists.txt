@@ -438,6 +438,12 @@ add_executable(mobility-tests "UnitTests/Mobility/MobilityTest.cpp")
 target_link_libraries(mobility-tests nes ${GTEST_LIBRARIES})
 add_test(NAME mobility-tests COMMAND mobility-tests)
 
+### Mobility Cartesian Tests ###
+add_executable(mobility-cartesian-tests "UnitTests/Mobility/CartesianTests.cpp")
+target_link_libraries(mobility-cartesian-tests nes ${GTEST_LIBRARIES})
+add_test(NAME mobility-cartesian-tests COMMAND mobility-cartesian-tests)
+
+
 ### Location Storage Tests ###
 add_executable(location-storage-test "UnitTests/Mobility/LocationStorageTests.cpp")
 target_link_libraries(location-storage-test nes ${GTEST_LIBRARIES})

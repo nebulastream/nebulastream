@@ -13,11 +13,5 @@
 # limitations under the License.
 
 add_source_nes(
-        CartesianPoint.cpp
-        GeoPoint.cpp
+        CartesianLine.cpp
 )
-
-add_subdirectory(Area)
-add_subdirectory(Cartesian)
-add_subdirectory(Node)
-add_subdirectory(Projection)
