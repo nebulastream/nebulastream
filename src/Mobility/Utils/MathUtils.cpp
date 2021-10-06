@@ -84,4 +84,23 @@ CartesianLinePtr MathUtils::shift(const CartesianLinePtr& line, double offsetX, 
     return std::make_shared<CartesianLine>(line->getGradient(), shiftedConstant);
 }
 
+CartesianLinePtr MathUtils::leastSquaresRegression(const std::vector<CartesianPointPtr>& points) {
+    double sumX = 0;
+    double sumY = 0;
+    double sumXSquare = 0;
+    double sumXY = 0 ;
+
+    for (const CartesianPointPtr& point: points) {
+        sumX += point->getX();
+        sumY += point->getY();
+        sumXSquare += point->getX() * point->getX();
+        sumXY += point->getX() * point->getY();
+    }
+
+    double slope = (points.size() * sumXY - sumX * sumY) / (points.size() * sumXSquare - sumX * sumX);
+    double intercept = (sumY - slope * sumX) / points.size();
+
+    return std::make_shared<CartesianLine>(slope, intercept);
+}
+
 }

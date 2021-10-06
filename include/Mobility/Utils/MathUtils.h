@@ -34,6 +34,7 @@ class MathUtils {
 
     static bool intersect(const CartesianLinePtr& line, const CartesianCirclePtr& circle);
     static CartesianLinePtr shift(const CartesianLinePtr& line, double offsetX, double offsetY);
+    static CartesianLinePtr leastSquaresRegression(const std::vector<CartesianPointPtr>& points);
 };
 
 }

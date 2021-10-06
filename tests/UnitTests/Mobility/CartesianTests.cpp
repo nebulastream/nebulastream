@@ -63,4 +63,16 @@ TEST(CartesianUtils, InterstCircleAndLine) {
     EXPECT_FALSE(MathUtils::intersect(line, circle));
 }
 
+TEST(CartesianUtils, LeastSquaresRegression) {
+    std::vector<CartesianPointPtr> points;
+    points.push_back(std::make_shared<CartesianPoint>(1, 6));
+    points.push_back(std::make_shared<CartesianPoint>(2, 5));
+    points.push_back(std::make_shared<CartesianPoint>(3, 7));
+    points.push_back(std::make_shared<CartesianPoint>(4, 10));
+
+    CartesianLinePtr predictedLine = MathUtils::leastSquaresRegression(points);
+    EXPECT_DOUBLE_EQ(1.4, predictedLine->getGradient());
+    EXPECT_DOUBLE_EQ(3.5, predictedLine->getConstant());
+}
+
 }
