@@ -261,24 +261,26 @@ TEST_F(QueryExecutionTest, filterQuery) {
                                                                       "REUSE_INPUT_BUFFER_NO_FALLBACK",
                                                                       "OMIT_OVERFLOW_CHECK_NO_FALLBACK"};
 
-    for (uint8_t i = 0; i <= 5; i++) {    // try different OutputBufferOptimizationLevel's: enum with six states
-        for (uint8_t j = 0; j <= 1; j++) {// try Predication on/off: bool
+    auto outputBufferOptimizationLevels = {
+        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::ALL,
+        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO,
+        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::ONLY_INPLACE_OPERATIONS_NO_FALLBACK,
+        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::
+            REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,
+        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::REUSE_INPUT_BUFFER_NO_FALLBACK,
+        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::OMIT_OVERFLOW_CHECK_NO_FALLBACK};
+
+    auto filterProcessingStrategies = {NES::QueryCompilation::QueryCompilerOptions::BRANCHED,
+                                       NES::QueryCompilation::QueryCompilerOptions::PREDICATION};
+    for (auto outputBufferOptimizationLevel :
+         outputBufferOptimizationLevels) {// try different OutputBufferOptimizationLevel's: enum with six states
+        for (auto filterProcessingStrategy : filterProcessingStrategies) {// try Predication on/off: bool
             NES_DEBUG("Starting: Test filterQuery with bufferOptimizationLevel: "
-                      << bufferOptimizationLevelNames[i] << " and predication " << ((j == 0) ? "OFF" : "ON"));
+            << bufferOptimizationLevelNames << " and predication " << filterProcessingStrategy);
 
             auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
-
-            // set OutputBufferOptimizationLevel enum
-            QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel lvl =
-                (QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel) i;
-            options->setOutputBufferOptimizationLevel(lvl);
-
-            // set Predication bool
-            if (j == 0) {
-                options->disablePredication();
-            } else {
-                options->enablePredication();
-            }
+            options->setOutputBufferOptimizationLevel(outputBufferOptimizationLevel);
+            options->setFilterProcessingStrategy(filterProcessingStrategy);
 
             // now, test the query for all possible combinations
             auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
@@ -332,7 +334,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
             plan->stop();
 
             NES_DEBUG("Done: Test filterQuery with bufferOptimizationLevel: "
-                      << bufferOptimizationLevelNames[i] << " and predication " << ((j == 0) ? "OFF" : "ON"));
+            << bufferOptimizationLevelNames << " and predication " << filterProcessingStrategy);
         }
     }
 }
