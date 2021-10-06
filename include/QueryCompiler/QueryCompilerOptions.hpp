@@ -26,6 +26,13 @@ namespace QueryCompilation {
  */
 class QueryCompilerOptions {
   public:
+    enum FilterProcessingStrategy {
+        // Uses a branches to process filter expressions
+        BRANCHED,
+        // Uses predication for filter expressions if possible
+        PREDICATION
+    };
+
     enum CompilationStrategy {
         // Use fast compilation strategy, i.e., dose not apply any optimizations and omits debug output.
         FAST,
@@ -39,7 +46,8 @@ class QueryCompilerOptions {
         // Applies operator fusion.
         OPERATOR_FUSION,
         // Places each operator in an individual pipeline.
-        OPERATOR_AT_A_TIME };
+        OPERATOR_AT_A_TIME
+    };
 
     enum OutputBufferOptimizationLevel {
         // Use highest optimization.
@@ -74,6 +82,9 @@ class QueryCompilerOptions {
 
     void setCompilationStrategy(CompilationStrategy compilationStrategy);
 
+    void setFilterProcessingStrategy(FilterProcessingStrategy filterProcessingStrategy);
+    [[nodiscard]] QueryCompilerOptions::FilterProcessingStrategy getFilterProcessingStrategy() const;
+
     /**
      * @brief Sets desired buffer optimization strategy.
      */
@@ -100,6 +111,7 @@ class QueryCompilerOptions {
     OutputBufferOptimizationLevel outputBufferOptimizationLevel;
     PipeliningStrategy pipeliningStrategy;
     CompilationStrategy compilationStrategy;
+    FilterProcessingStrategy filterProcessingStrategy;
 };
 }// namespace QueryCompilation
 }// namespace NES

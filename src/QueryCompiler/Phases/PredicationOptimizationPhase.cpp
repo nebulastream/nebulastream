@@ -26,14 +26,14 @@
 
 namespace NES::QueryCompilation {
 
-PredicationOptimizationPhasePtr PredicationOptimizationPhase::PredicationOptimizationPhase::create(bool predicationEnabled) {
-    return std::make_shared<PredicationOptimizationPhase>(predicationEnabled);
+PredicationOptimizationPhasePtr PredicationOptimizationPhase::PredicationOptimizationPhase::create(QueryCompilerOptions::FilterProcessingStrategy filterProcessingStrategy) {
+    return std::make_shared<PredicationOptimizationPhase>(filterProcessingStrategy);
 }
 
-PredicationOptimizationPhase::PredicationOptimizationPhase(bool predicationEnabled) : predicationEnabled(predicationEnabled) {}
+PredicationOptimizationPhase::PredicationOptimizationPhase(QueryCompilerOptions::FilterProcessingStrategy filterProcessingStrategy) : filterProcessingStrategy(filterProcessingStrategy) {}
 
 PipelineQueryPlanPtr PredicationOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
-    if (!predicationEnabled) {
+    if (filterProcessingStrategy == QueryCompilerOptions::BRANCHED) {
         NES_DEBUG("PredicationOptimizationPhase: No optimization requested or applied.");
         return pipelinedQueryPlan;
     }
@@ -47,7 +47,7 @@ PipelineQueryPlanPtr PredicationOptimizationPhase::apply(PipelineQueryPlanPtr pi
 }
 
 OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
-    if (!predicationEnabled) {
+    if (filterProcessingStrategy == QueryCompilerOptions::BRANCHED) {
         NES_DEBUG("PredicationOptimizationPhase: No optimization requested or applied.");
         return operatorPipeline;
     }

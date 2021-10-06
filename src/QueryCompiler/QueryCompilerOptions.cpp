@@ -33,6 +33,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     auto options = QueryCompilerOptions();
     options.setCompilationStrategy(OPTIMIZE);
     options.setPipeliningStrategy(OPERATOR_FUSION);
+    options.setFilterProcessingStrategy(BRANCHED);
     options.setNumSourceLocalBuffers(64);
     options.setOutputBufferOptimizationLevel(ALL);
     return std::make_shared<QueryCompilerOptions>(options);
@@ -40,13 +41,21 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
 QueryCompilerOptions::PipeliningStrategy QueryCompilerOptions::getPipeliningStrategy() const { return pipeliningStrategy; }
 
 void QueryCompilerOptions::setPipeliningStrategy(QueryCompilerOptions::PipeliningStrategy pipeliningStrategy) {
-    QueryCompilerOptions::pipeliningStrategy = pipeliningStrategy;
+    this->pipeliningStrategy = pipeliningStrategy;
 }
 
 QueryCompilerOptions::CompilationStrategy QueryCompilerOptions::getCompilationStrategy() const { return compilationStrategy; }
 
 void QueryCompilerOptions::setCompilationStrategy(QueryCompilerOptions::CompilationStrategy compilationStrategy) {
-    QueryCompilerOptions::compilationStrategy = compilationStrategy;
+    this->compilationStrategy = compilationStrategy;
+}
+
+void QueryCompilerOptions::setFilterProcessingStrategy(FilterProcessingStrategy filterProcessingStrategy) {
+    this->filterProcessingStrategy = filterProcessingStrategy;
+}
+
+QueryCompilerOptions::FilterProcessingStrategy QueryCompilerOptions::getFilterProcessingStrategy() const {
+    return filterProcessingStrategy;
 }
 
 }// namespace NES::QueryCompilation
