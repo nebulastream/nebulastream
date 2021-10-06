@@ -812,7 +812,8 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
     Task task;
     if (running) {
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-        while (!taskQueue.read(task)) { _mm_pause(); }
+//        while (!taskQueue.read(task)) { _mm_pause(); }
+        taskQueue.blockingRead(task);
 #else
         taskQueues[hardwareManager->getMyNumaRegion()].blockingRead(task);
 #endif
