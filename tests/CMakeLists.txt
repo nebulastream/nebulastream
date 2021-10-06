@@ -438,6 +438,11 @@ add_executable(mobility-tests "UnitTests/Mobility/MobilityTest.cpp")
 target_link_libraries(mobility-tests nes ${GTEST_LIBRARIES})
 add_test(NAME mobility-tests COMMAND mobility-tests)
 
+### Location Storage Tests ###
+add_executable(location-storage-test "UnitTests/Mobility/LocationStorageTests.cpp")
+target_link_libraries(location-storage-test nes ${GTEST_LIBRARIES})
+add_test(NAME location-storage-test COMMAND location-storage-test)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

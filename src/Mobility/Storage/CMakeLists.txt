@@ -13,11 +13,5 @@
 # limitations under the License.
 
 add_source_nes(
-        LocationCatalog.cpp
-        LocationHTTPClient.cpp
-        LocationService.cpp
+        LocationStorage.cpp
 )
-
-add_subdirectory(Geo)
-add_subdirectory(Storage)
-add_subdirectory(Utils)
