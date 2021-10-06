@@ -112,15 +112,6 @@ NumaRegionMemoryAllocatorPtr HardwareManager::getNumaAllactor(uint32_t numaNodeI
 #endif
 NesDefaultMemoryAllocatorPtr HardwareManager::getGlobalAllocator() const { return globalAllocator; }
 
-
-uint32_t HardwareManager::getMyNumaRegion() const {
-#ifdef NES_ENABLE_NUMA_SUPPORT
-    return numa_node_of_cpu(sched_getcpu());
-#else
-    return 0;
-#endif
-}
-
 uint32_t HardwareManager::getNumaNodeForCore(int coreId) const {
 #ifdef NES_ENABLE_NUMA_SUPPORT
     return numa_node_of_cpu(coreId);

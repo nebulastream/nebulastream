@@ -41,8 +41,11 @@ class WorkerContext {
 
     LocalBufferPoolPtr localBufferPool;
 
+    uint32_t numaNode = 0;
+
   public:
-    explicit WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker);
+    explicit WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager,
+                           uint64_t numberOfBuffersPerWorker, uint32_t numaNode = 0);
 
     /**
      * @brief Allocates a new tuple buffer.
@@ -55,6 +58,12 @@ class WorkerContext {
      * @return current worker context thread id
      */
     uint32_t getId() const;
+
+    /**
+     * @brief get the numa node of the current worker
+     * @return current numa Node
+     */
+    uint32_t getNumaNode() const;
 
     /**
      * @brief This stores an output channel for an operator

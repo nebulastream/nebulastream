@@ -87,7 +87,7 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
 
 void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
     for (const auto& successor : executableSuccessors) {
-        queryManager->addWorkForNextPipeline(buffer, successor);
+        queryManager->addWorkForNextPipeline(buffer, successor, numaNode);
     }
 }
 
@@ -130,14 +130,14 @@ bool DataSource::start() {
                 NES_ERROR("Error calling set pthread_setaffinity_np: " << rc);
             } else {
                 int cpu = sched_getcpu();
-                auto nodeOfCpu = numa_node_of_cpu(cpu);
+                numaNode = numa_node_of_cpu(cpu);
 
                 unsigned long cur_mask;
                 auto ret = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
                 if (ret != 0) {
                     NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
                 }
-                std::cout << "source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << nodeOfCpu << " ";
+                std::cout << "source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << numaNode << " ";
                 printf("setted affinity after assignment: %08lx\n", cur_mask);
             }
         } else {
