@@ -28,7 +28,12 @@ if(APPLE)
     endif()
 elseif(UNIX AND NOT APPLE)
     # for Linux, BSD, Solaris, Minix
-    set(VCPKG_TARGET_TRIPLET x64-linux-nes)
+    execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
+    if (NES_HOST_PROCESSOR MATCHES "x86_64")
+        set(VCPKG_TARGET_TRIPLET x64-linux-nes)
+    elseif(NES_HOST_PROCESSOR MATCHES "arm64")
+        set(VCPKG_TARGET_TRIPLET arm64-linux-nes)
+    endif()
 endif()
 
 function(download_file url filename hash_type hash)
