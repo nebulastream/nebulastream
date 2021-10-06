@@ -69,6 +69,14 @@ using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+namespace Catalogs {
+class UdfCatalog;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}
+
+class UdfCatalogController;
+using UdfCatalogControllerPtr = std::shared_ptr<UdfCatalogController>;
+
 class RestEngine : public BaseController {
 
   public:
@@ -79,7 +87,8 @@ class RestEngine : public BaseController {
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,
                const MonitoringServicePtr& monitoringService,
-               const GlobalQueryPlanPtr& globalQueryPlan);
+               const GlobalQueryPlanPtr& globalQueryPlan,
+               const Catalogs::UdfCatalogPtr& udfCatalog);
 
     ~RestEngine();
 
@@ -116,6 +125,7 @@ class RestEngine : public BaseController {
     ConnectivityControllerPtr connectivityController;
     MonitoringControllerPtr monitoringController;
     TopologyControllerPtr topologyController;
+    UdfCatalogControllerPtr udfCatalogController;
 };
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;

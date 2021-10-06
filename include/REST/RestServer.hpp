@@ -49,6 +49,11 @@ using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
+namespace Catalogs {
+class UdfCatalog;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}
+
 /**
  * @brief : This class is responsible for starting the REST server.
  */
@@ -71,7 +76,8 @@ class RestServer {
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,
                const MonitoringServicePtr& monitoringService,
-               const GlobalQueryPlanPtr& globalQueryPlan);
+               const GlobalQueryPlanPtr& globalQueryPlan,
+               const Catalogs::UdfCatalogPtr& udfCatalog);
 
     ~RestServer();
     /**

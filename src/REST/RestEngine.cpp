@@ -21,6 +21,7 @@
 #include <REST/Controller/QueryController.hpp>
 #include <REST/Controller/StreamCatalogController.hpp>
 #include <REST/Controller/TopologyController.hpp>
+#include <REST/Controller/UdfCatalogController.hpp>
 #include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
 
@@ -35,13 +36,15 @@ RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
                        const GlobalExecutionPlanPtr& globalExecutionPlan,
                        const QueryServicePtr& queryService,
                        const MonitoringServicePtr& monitoringService,
-                       const GlobalQueryPlanPtr& globalQueryPlan) {
+                       const GlobalQueryPlanPtr& globalQueryPlan,
+                       const Catalogs::UdfCatalogPtr& udfCatalog) {
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator, globalQueryPlan);
     queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
     connectivityController = std::make_shared<ConnectivityController>();
     monitoringController = std::make_shared<MonitoringController>(monitoringService);
     topologyController = std::make_shared<TopologyController>(topology);
+    udfCatalogController = std::make_shared<UdfCatalogController>(udfCatalog);
 }
 
 RestEngine::~RestEngine() { NES_DEBUG("~RestEngine()"); }
@@ -113,6 +116,9 @@ void RestEngine::handleGet(http_request request) {
         } else if (paths[0] == "topology") {
             topologyController->handleGet(paths, request);
             return;
+        } else if (paths[0] == UdfCatalogController::path_prefix) {
+            udfCatalogController->handleGet(paths, request);
+            return;
         }
     }
     // TODO #2197 This should be replaced with BaseController::handleGet(path, request)
@@ -137,6 +143,9 @@ void RestEngine::handlePost(http_request request) {
         } else if (paths[0] == "topology") {
             topologyController->handlePost(paths, request);
             return;
+        } else if (paths[0] == UdfCatalogController::path_prefix) {
+            udfCatalogController->handlePost(paths, request);
+            return;
         }
     }
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));
@@ -154,6 +163,10 @@ void RestEngine::handleDelete(http_request request) {
         }
         if (paths[0] == "query") {
             queryController->handleDelete(paths, request);
+            return;
+        }
+        if (paths[0] == UdfCatalogController::path_prefix) {
+            udfCatalogController->handleDelete(paths, request);
             return;
         }
     }

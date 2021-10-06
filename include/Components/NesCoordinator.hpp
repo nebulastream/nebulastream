@@ -81,7 +81,7 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 namespace Catalogs {
 
 class UdfCatalog;
-using UdfCatalogPtr = std::unique_ptr<UdfCatalog>;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 
 }// namespace Catalogs
 
@@ -140,6 +140,12 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @return query catalog pointer
      */
     QueryCatalogPtr getQueryCatalog();
+
+    /**
+     * @brief Return the UDF catalog.
+     * @return Pointer to the UDF catalog.
+     */
+    Catalogs::UdfCatalogPtr getUdfCatalog();
 
     /**
      * @brief Get instance of monitoring service
