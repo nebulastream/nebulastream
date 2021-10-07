@@ -19,15 +19,20 @@
 
 #include <Mobility/Geo/Area/GeoArea.h>
 #include <Mobility/Geo/Node/GeoNode.h>
+#include <Mobility/Geo/Cartesian/CartesianLine.h>
 
 namespace NES {
 
 class GeoSink: public GeoNode {
 
+  private:
+    CartesianLinePtr trajectory;
+
   public:
     GeoSink(const string& id, double movingRangeArea, uint32_t storageSize);
 
     void setCurrentLocation(const GeoPointPtr& currentLocation) override;
+    const CartesianLinePtr& getTrajectory() const;
     virtual ~GeoSink();
 };
 

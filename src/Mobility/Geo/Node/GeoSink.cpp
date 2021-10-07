@@ -16,15 +16,19 @@
 
 #include <Mobility/Geo/Area/GeoAreaFactory.h>
 #include <Mobility/Geo/Node/GeoSink.h>
+#include <Mobility/Utils/MathUtils.h>
 
 namespace NES {
 
-GeoSink::GeoSink(const string& id, double movingRangeArea, uint32_t storageSize) : GeoNode(id, movingRangeArea, storageSize) {}
+GeoSink::GeoSink(const string& id, double movingRangeArea, uint32_t storageSize) : GeoNode(id, movingRangeArea, storageSize), trajectory(nullptr) {}
 
 void GeoSink::setCurrentLocation(const GeoPointPtr& currentLocation) {
     GeoNode::setCurrentLocation(currentLocation);
     range = GeoAreaFactory::createSquare(currentLocation, rangeArea);
+    trajectory = MathUtils::leastSquaresRegression(getLocationHistory()->getCartesianPoints());
 }
+
+const CartesianLinePtr& GeoSink::getTrajectory() const { return trajectory; }
 
 GeoSink::~GeoSink() = default;
 

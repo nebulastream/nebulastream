@@ -27,7 +27,7 @@
 
 namespace NES {
 
-static uint32_t defaultStorageSize = 5;
+const static uint32_t defaultStorageSize = 5;
 
 void EXPECT_EQ_GEOPOINTS(GeoPoint p1, GeoPointPtr p2){
     EXPECT_EQ(p1.getLatitude(), p2->getLatitude());

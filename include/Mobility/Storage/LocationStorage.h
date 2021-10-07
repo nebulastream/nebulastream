@@ -20,6 +20,7 @@
 #include <mutex>
 #include <vector>
 
+#include <Mobility/Geo/CartesianPoint.h>
 #include <Mobility/Geo/GeoPoint.h>
 
 namespace NES {
@@ -27,15 +28,19 @@ namespace NES {
 class LocationStorage {
   private:
     uint64_t maxNumberOfTuples;
-    std::vector<GeoPointPtr> storage;
+    std::vector<CartesianPointPtr> cartesianStorage;
+    std::vector<GeoPointPtr> geoStorage;
     std::mutex storageLock;
 
   public:
     explicit LocationStorage(int maxNumberOfTuples);
     void add(const GeoPointPtr& point);
-    GeoPointPtr get(int index);
+    CartesianPointPtr getCartesian(int index);
+    GeoPointPtr getGeo(int index);
+    const std::vector<CartesianPointPtr>& getCartesianPoints() const;
     uint64_t size();
     bool empty();
+
 };
 
 using LocationStoragePtr = std::shared_ptr<LocationStorage>;

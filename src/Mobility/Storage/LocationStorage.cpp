@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Mobility/Geo/Projection/GeoCalculator.h>
 #include <Mobility/Storage/LocationStorage.h>
 
 namespace NES {
@@ -22,22 +23,34 @@ LocationStorage::LocationStorage(int maxNumberOfTuples) : maxNumberOfTuples(maxN
 
 void LocationStorage::add(const GeoPointPtr& point) {
     std::lock_guard lock(storageLock);
-    if (this->storage.size() == this->maxNumberOfTuples) {
-        storage.erase(storage.begin());
+    if (this->geoStorage.size() == this->maxNumberOfTuples) {
+        geoStorage.erase(geoStorage.begin());
     }
-    this->storage.push_back(point);
+    this->geoStorage.push_back(point);
+
+    if (this->cartesianStorage.size() == this->maxNumberOfTuples) {
+        cartesianStorage.erase(cartesianStorage.begin());
+    }
+    this->cartesianStorage.push_back(GeoCalculator::geographicToCartesian(point));
 }
 
-GeoPointPtr LocationStorage::get(int index) {
+CartesianPointPtr LocationStorage::getCartesian(int index) {
     std::lock_guard lock(storageLock);
-    return storage.at(index);
+    return cartesianStorage.at(index);
 }
+
+GeoPointPtr LocationStorage::getGeo(int index) {
+    std::lock_guard lock(storageLock);
+    return geoStorage.at(index);
+}
+
+const std::vector<CartesianPointPtr>& LocationStorage::getCartesianPoints() const { return cartesianStorage; }
 
 uint64_t LocationStorage::size() {
     std::lock_guard lock(storageLock);
-    return storage.size();
+    return geoStorage.size();
 }
 
-bool LocationStorage::empty() { return storage.empty(); }
+bool LocationStorage::empty() { return geoStorage.empty(); }
 
 }

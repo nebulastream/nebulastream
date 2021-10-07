@@ -37,7 +37,7 @@ TEST(LocationStorage, ValidLocation) {
 
     for (uint32_t i = 0; i < storageSize; i++) {
         GeoPoint expectedPoint(i + 1, i + 1);
-        EXPECT_EQ_GEOPOINTS(expectedPoint, storage.get(i));
+        EXPECT_EQ_GEOPOINTS(expectedPoint, storage.getGeo(i));
     }
 }
 
