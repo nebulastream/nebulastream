@@ -16,10 +16,17 @@
 
 #ifndef OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP
 #define OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP
-
+#include <stdint.h>
 namespace NES::QueryCompilation {
 
-enum OutputBufferAllocationStrategy : unsigned char {
+enum OutputBufferAssignmentStrategy : uint8_t {
+    // this strategy copies each field individually
+    FIELD_COPY,
+    // This strategy copies the whole record with an singe assignment
+    RECORD_COPY
+};
+
+enum OutputBufferAllocationStrategy : uint8_t{
     /// If all records and all fields match up in input and result buffer we can simply emit the input buffer.
     /// For this no filter can be applied and no new fields can be added.
     /// The only typical operations possible are inplace-maps, e.g. "id = id + 1".
