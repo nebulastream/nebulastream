@@ -17,6 +17,7 @@ add_source_nes(
         NodeEngine.cpp
         QueryManager.cpp
         ReconfigurationMessage.cpp
+        BufferStorage.cpp
         BufferManager.cpp
         FixedSizeBufferPool.cpp
         ThreadPool.cpp
