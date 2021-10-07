@@ -78,7 +78,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
         readTimeout = 100;//Default to 100 ms
     }*/
 
-    if (cleanSession){
+    if (cleanSession) {
         uint64_t randomizeClientId = random();
         this->clientId = (clientId + std::to_string(randomizeClientId));
     }
