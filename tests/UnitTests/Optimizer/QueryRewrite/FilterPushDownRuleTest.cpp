@@ -298,7 +298,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
     ++itr;
     const NodePtr mapOperatorPQ = (*itr);
     ++itr;
-    const NodePtr mergeOperator = (*itr);
+    const NodePtr unionOperator = (*itr);
     ++itr;
     const NodePtr filterOperatorSQ = (*itr);
     ++itr;
@@ -321,11 +321,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
     ++itr;
     EXPECT_TRUE(mapOperatorPQ->equal((*itr)));
     ++itr;
-    EXPECT_TRUE(mergeOperator->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+    EXPECT_TRUE(unionOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(mapOperatorSQ->equal((*itr)));
     ++itr;
@@ -334,6 +330,10 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
     EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
     ++itr;
     EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator) {
@@ -430,7 +430,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
     ++itr;
     const NodePtr mapOperatorPQ2 = (*itr);
     ++itr;
-    const NodePtr mergeOperator = (*itr);
+    const NodePtr unionOperator = (*itr);
     ++itr;
     const NodePtr srcOperatorPQ = (*itr);
     ++itr;
@@ -451,19 +451,19 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
     ++itr;
     EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
     ++itr;
-    EXPECT_TRUE(mergeOperator->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+    EXPECT_TRUE(unionOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
     ++itr;
     EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelowABinaryOperator) {
@@ -497,7 +497,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
     ++itr;
     const NodePtr mapOperatorPQ2 = (*itr);
     ++itr;
-    const NodePtr mergeOperator = (*itr);
+    const NodePtr unionOperator = (*itr);
     ++itr;
     const NodePtr filterOperatorSQ = (*itr);
     ++itr;
@@ -522,13 +522,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
     ++itr;
     EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
     ++itr;
-    EXPECT_TRUE(mergeOperator->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+    EXPECT_TRUE(unionOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(mapOperatorSQ->equal((*itr)));
     ++itr;
@@ -539,6 +533,12 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
     EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
     ++itr;
     EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFiltersBelowABinaryOperator) {
