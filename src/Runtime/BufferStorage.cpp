@@ -27,7 +27,7 @@ namespace NES {
     bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
         std::unique_lock<std::mutex> lck (mutex);
         if(!buffer.empty()) {
-            while (buffer.front().first < id) {
+            while (!buffer.empty() && buffer.front().first < id) {
                 buffer.pop();
             }
             return true;
