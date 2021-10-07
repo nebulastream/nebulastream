@@ -18,12 +18,12 @@
 
 namespace NES {
 
-MetricStore::MetricStore(MetricStoreType storeType) : storeType(storeType) {
+MetricStore::MetricStore(MetricStoreStrategy storeType) : storeType(storeType) {
     NES_DEBUG("MetricStore: Init with store type " << storeType);
 }
 
 void MetricStore::addMetric(uint64_t nodeId, GroupedMetricValuesPtr metrics) {
-    if (storeType == MetricStoreType::ALWAYS) {
+    if (storeType == MetricStoreStrategy::ALWAYS) {
         if (storedMetrics.contains(nodeId)) {
             storedMetrics[nodeId].push(std::move(metrics));
         } else {
@@ -31,7 +31,7 @@ void MetricStore::addMetric(uint64_t nodeId, GroupedMetricValuesPtr metrics) {
             metricQueue.push(std::move(metrics));
             storedMetrics.emplace(nodeId, std::move(metricQueue));
         }
-    } else if (storeType == MetricStoreType::NEWEST) {
+    } else if (storeType == MetricStoreStrategy::NEWEST) {
         std::priority_queue<GroupedMetricValuesPtr> metricQueue;
         metricQueue.push(std::move(metrics));
 

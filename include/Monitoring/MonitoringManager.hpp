@@ -75,6 +75,7 @@ class MonitoringManager {
     /**
      * @brief Receive arbitrary monitoring data from a given node.
      * @param nodeId
+     * @param GroupedMetricValuesPtr the grouped metric values
      */
     void receiveMonitoringData(uint64_t nodeId, GroupedMetricValuesPtr metricValues);
 

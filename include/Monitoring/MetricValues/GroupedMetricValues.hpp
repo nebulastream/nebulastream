@@ -28,10 +28,13 @@
 namespace NES {
 class MonitoringPlan;
 
+/**
+ * A wrapper class for the different kinds of metrics.
+ */
 class GroupedMetricValues {
   public:
     GroupedMetricValues();
-    GroupedMetricValues(uint64_t timestamp);
+    explicit GroupedMetricValues(uint64_t timestamp);
 
     uint64_t timestamp;
     std::optional<std::unique_ptr<DiskMetrics>> diskMetrics;

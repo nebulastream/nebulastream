@@ -25,6 +25,9 @@ namespace NES {
 class SerializableStaticNesMetrics;
 using SerializableStaticNesMetricsPtr = std::shared_ptr<SerializableStaticNesMetrics>;
 
+/**
+ * Class representing the static metrics within NES.
+ */
 class StaticNesMetrics {
   public:
     StaticNesMetrics();
