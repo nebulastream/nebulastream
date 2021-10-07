@@ -158,7 +158,7 @@ TEST_F(ExpressionNodeTest, inferAssertionTest) {
 
     auto assertion = Attribute("f1") = 10 * (33 + Attribute("f1"));
     assertion->inferStamp(schema);
-    EXPECT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
+    EXPECT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(INT8)));
 }
 
 TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {
