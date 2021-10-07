@@ -52,7 +52,7 @@ TEST_F(BufferStorageTest, bufferDeletionFromBufferStorage) {
         ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted);
-    for (size_t i = 0; i <= buffers_inserted; i++) {
+    for (size_t i = 1; i <= buffers_inserted; i++) {
         bufferStorage->trimBuffer(BufferSequenceNumber(i, i));
         ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted - i);
     }

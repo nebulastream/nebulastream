@@ -18,7 +18,7 @@
 #define NES_BUFFERSTORAGE_H
 
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/BufferSequenceNumber.h>
+#include <Util/BufferSequenceNumber.hpp>
 #include <queue>
 
 namespace NES {
