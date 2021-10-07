@@ -32,7 +32,7 @@ MQTTSourceConfigPtr MQTTSourceConfig::create() {
 MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(sourceConfigMap),
       url(ConfigOption<std::string>::create("url",
-                                            "ws://127.0.0.1:9001",
+                                            "tcp://127.0.0.1:1885",
                                             "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
       clientId(ConfigOption<std::string>::create("clientId",
                                                  "testClient",

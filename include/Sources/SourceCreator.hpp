@@ -314,11 +314,11 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
 DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                const Runtime::BufferManagerPtr& bufferManager,
                                const Runtime::QueryManagerPtr& queryManager,
-                               SourceConfigPtr sourceConfig,
+                               const MQTTSourceConfigPtr& sourceConfig,
                                OperatorId operatorId,
                                size_t numSourceLocalBuffers,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                               SourceDescriptor::InputFormat dataFormat);
+                               SourceDescriptor::InputFormat inputFormat);
 #endif
 
 }// namespace NES

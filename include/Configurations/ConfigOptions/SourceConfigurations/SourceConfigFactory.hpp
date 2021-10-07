@@ -49,12 +49,9 @@ class SourceConfigFactory {
   public:
     static std::shared_ptr<SourceConfig> createSourceConfig(const std::map<std::string, std::string>& commandLineParams, int argc);
     static std::shared_ptr<SourceConfig> createSourceConfig();
-    static void readYAMLFile(const std::string& filePath);
-    static void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams);
+    static std::map<std::string, std::string> readYAMLFile(const std::string& filePath);
+    static std::map<std::string, std::string> overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams, std::map<std::string, std::string> configurationMap);
 
-
-  private:
-    static std::map<std::string, std::string> sourceConfigMap;
 };
 
 }
