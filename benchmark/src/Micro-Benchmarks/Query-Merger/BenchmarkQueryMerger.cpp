@@ -276,8 +276,6 @@ int main(int argc, const char* argv[]) {
                 uint64_t actualOperators = 0;
                 for (auto sqp : allSQP) {
                     unsigned long planSize = QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();
-                    std::cout << planSize << std::endl;
-                    std::cout << sqp->getQueryPlan()->getSourceConsumed() << std::endl;
                     actualOperators = actualOperators + planSize;
                 }
 
