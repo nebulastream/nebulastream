@@ -25,7 +25,7 @@ namespace NES {
 class GeoSink: public GeoNode {
 
   public:
-    GeoSink(const string& id, double movingRangeArea);
+    GeoSink(const string& id, double movingRangeArea, uint32_t storageSize);
 
     void setCurrentLocation(const GeoPointPtr& currentLocation) override;
     virtual ~GeoSink();

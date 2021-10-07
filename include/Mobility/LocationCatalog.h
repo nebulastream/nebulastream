@@ -32,13 +32,13 @@ using std::string;
 class LocationCatalog {
 
   private:
+    uint32_t defaultStorageSize;
     std::map<string, GeoSinkPtr> sinks;
     std::map<string, GeoSourcePtr> sources;
-
     std::mutex catalogLock;
 
   public:
-    LocationCatalog() = default;
+    explicit LocationCatalog(uint32_t defaultStorageSize);
     void addSink(const string& nodeId, double movingRangeArea);
     void addSource(const string& nodeId);
     void addSource(const string& nodeId, double rangeArea);

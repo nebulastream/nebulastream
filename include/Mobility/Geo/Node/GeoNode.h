@@ -21,6 +21,7 @@
 #include <cpprest/json.h>
 #include <Mobility/Geo/Area/GeoArea.h>
 #include <Mobility/Geo/GeoPoint.h>
+#include <Mobility/Storage/LocationStorage.h>
 
 namespace NES {
 
@@ -32,23 +33,22 @@ using std::string;
 class GeoNode {
   private:
     string id;
-
     GeoPointPtr currentLocation;
-    std::vector<GeoPointPtr> locationHistory;
+    LocationStoragePtr locationHistory;
 
   protected:
     double rangeArea;
     GeoAreaPtr range;
 
   public:
-    explicit GeoNode(string id);
-    GeoNode(string  id, double rangeArea);
+    explicit GeoNode(string id, uint32_t storageSize);
+    GeoNode(string  id, double rangeArea, uint32_t storageSize);
     [[nodiscard]] string getId() const;
     GeoPointPtr getCurrentLocation();
-    [[nodiscard]] const std::vector<GeoPointPtr>& getLocationHistory() const;
+    const LocationStoragePtr& getLocationHistory() const;
     virtual void setCurrentLocation(const GeoPointPtr& currentLocation);
     [[nodiscard]] const GeoAreaPtr& getRange() const;
-    double getRangeArea() const;
+    [[nodiscard]] double getRangeArea() const;
 
     GeoNode() = delete;
 };

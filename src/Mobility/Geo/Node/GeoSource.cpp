@@ -19,9 +19,9 @@
 
 namespace NES {
 
-GeoSource::GeoSource(const std::string& id) : GeoNode(id), enabled(false) {}
+GeoSource::GeoSource(const std::string& id, uint32_t storageSize) : GeoNode(id, storageSize), enabled(false) {}
 
-GeoSource::GeoSource(const std::string& id, double rangeArea) : GeoNode(id, rangeArea),  enabled(false) {}
+GeoSource::GeoSource(const std::string& id, double rangeArea, uint32_t storageSize) : GeoNode(id, rangeArea, storageSize),  enabled(false) {}
 
 bool GeoSource::hasRange() const { return (range != nullptr); }
 
@@ -37,9 +37,6 @@ void GeoSource::setCurrentLocation(const GeoPointPtr& currentLocation) {
     }
 }
 
-
-
 GeoSource::~GeoSource() = default;
 
 }
-

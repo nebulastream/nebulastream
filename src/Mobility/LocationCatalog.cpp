@@ -20,22 +20,24 @@
 
 namespace NES {
 
+LocationCatalog::LocationCatalog(uint32_t defaultStorageSize) : defaultStorageSize(defaultStorageSize) {}
+
 void LocationCatalog::addSink(const string& nodeId, const double movingRangeArea) {
     std::lock_guard lock(catalogLock);
     NES_DEBUG("LocationCatalog: adding sink " << nodeId);
-    this->sinks.insert(std::pair<string, GeoSinkPtr>(nodeId, std::make_shared<GeoSink>(nodeId, movingRangeArea)));
+    this->sinks.insert(std::pair<string, GeoSinkPtr>(nodeId, std::make_shared<GeoSink>(nodeId, movingRangeArea, defaultStorageSize)));
 }
 
 void LocationCatalog::addSource(const string& nodeId) {
     std::lock_guard lock(catalogLock);
     NES_DEBUG("LocationCatalog: adding source " << nodeId);
-    this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId)));
+    this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId, defaultStorageSize)));
 }
 
 void LocationCatalog::addSource(const string& nodeId,  double rangeArea) {
     std::lock_guard lock(catalogLock);
     NES_DEBUG("LocationCatalog: adding source " << nodeId << " with range " << rangeArea);
-    this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId, rangeArea)));
+    this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId, rangeArea, defaultStorageSize)));
 }
 
 GeoSinkPtr LocationCatalog::getSink(const string& nodeId) {

@@ -19,7 +19,7 @@
 
 namespace NES {
 
-GeoSink::GeoSink(const string& id, double movingRangeArea) : GeoNode(id, movingRangeArea) {}
+GeoSink::GeoSink(const string& id, double movingRangeArea, uint32_t storageSize) : GeoNode(id, movingRangeArea, storageSize) {}
 
 void GeoSink::setCurrentLocation(const GeoPointPtr& currentLocation) {
     GeoNode::setCurrentLocation(currentLocation);

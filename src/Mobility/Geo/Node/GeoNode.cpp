@@ -21,21 +21,22 @@
 namespace NES {
 
 
-GeoNode::GeoNode(string id) : GeoNode(std::move(id), 0) {}
+GeoNode::GeoNode(string id, uint32_t storageSize) : GeoNode(std::move(id), 0, storageSize) {}
 
-GeoNode::GeoNode(string  id, double rangeArea) : id(std::move(id)), rangeArea(rangeArea), range(nullptr) {
+GeoNode::GeoNode(string  id, double rangeArea, uint32_t storageSize) : id(std::move(id)), rangeArea(rangeArea), range(nullptr) {
     currentLocation = std::make_shared<GeoPoint>();
+    locationHistory = std::make_shared<LocationStorage>(storageSize);
 }
 
 string GeoNode::getId() const { return id; }
 
 GeoPointPtr GeoNode::getCurrentLocation() { return currentLocation; }
 
-const std::vector<GeoPointPtr>& GeoNode::getLocationHistory() const { return locationHistory; }
+const LocationStoragePtr& GeoNode::getLocationHistory() const { return locationHistory; }
 
 void GeoNode::setCurrentLocation(const GeoPointPtr& location) {
     if (currentLocation->isValid()) {
-        locationHistory.push_back(currentLocation);
+        locationHistory->add(currentLocation);
     }
     currentLocation = location;
 }

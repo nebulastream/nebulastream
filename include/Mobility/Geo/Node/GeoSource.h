@@ -28,8 +28,8 @@ class GeoSource : public GeoNode {
     bool enabled;
 
   public:
-    explicit GeoSource(const string& id);
-    explicit GeoSource(const string& id, double rangeArea);
+    explicit GeoSource(const string& id, uint32_t storageSize);
+    explicit GeoSource(const string& id, double rangeArea, uint32_t storageSize);
 
     [[nodiscard]] bool hasRange() const;
     [[nodiscard]] bool isEnabled() const;

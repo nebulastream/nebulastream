@@ -21,7 +21,9 @@
 
 namespace NES {
 
-LocationService::LocationService(uint32_t updateInterval) : running(false), updateInterval(updateInterval) { locationCatalog = std::make_shared<LocationCatalog>(); }
+LocationService::LocationService(uint32_t updateInterval, uint32_t storageSize) : running(false), updateInterval(updateInterval) {
+    locationCatalog = std::make_shared<LocationCatalog>(storageSize);
+}
 
 void LocationService::addSink(const string& nodeId, const double movingRangeArea) {
     this->locationCatalog->addSink(nodeId, movingRangeArea);
@@ -41,8 +43,8 @@ void LocationService::updateNodeLocation(const string& nodeId, const GeoPointPtr
 
 const LocationCatalogPtr& LocationService::getLocationCatalog() const { return locationCatalog; }
 
-void LocationService::initInstance(uint32_t updateInterval) {
-    instance = std::make_shared<LocationService>(updateInterval);
+void LocationService::initInstance(uint32_t updateInterval, uint32_t storageSize) {
+    instance = std::make_shared<LocationService>(updateInterval, storageSize);
 }
 
 LocationServicePtr LocationService::getInstance() {
