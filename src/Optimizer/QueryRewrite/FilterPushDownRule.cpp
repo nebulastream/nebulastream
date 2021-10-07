@@ -137,6 +137,7 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
                       nodesToProcess.end());//To ensure consistency in nodes traversed below a merge operator
         }
     }
+    filterOperator->removeAndJoinParentAndChildren();
 }
 
 bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator,
