@@ -54,6 +54,10 @@ CoordinatorConfig::CoordinatorConfig() {
                                                         "The rule to be used for performing query merging");
 
     locationUpdateInterval = ConfigOption<uint32_t>::create("locationUpdateInterval", 500, "Time internal (in milliseconds) to update the status of the nodes based on its location.");
+    numberOfPointsInLocationStorage = ConfigOption<uint32_t>::create("numberOfPointsInLocationStorage", 10, "Number of geo points stored for each node.");
+    dynamicDuplicatesFilterEnabled =
+        ConfigOption<bool>::create("dynamicDuplicatesFilterEnabled", false, "Enable dynamic duplicates filter on the sink.");
+    numberOfTuplesInFilterStorage = ConfigOption<uint32_t>::create("numberOfTuplesInFilterStorage", 50, "Cache size for the dynamic filter storage.");
 
     enableSemanticQueryValidation =
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
@@ -80,6 +84,9 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             setQueryMergerRule(config["queryMergerRule"].As<std::string>());
             setLocationUpdateInterval(config["locationUpdateInterval"].As<uint32_t>());
+            setNumberOfPointsInLocationStorage(config["numberOfPointsInLocationStorage"].As<uint32_t>());
+            setDynamicDuplicatesFilterEnabled(config["dynamicDuplicatesFilterEnabled"].As<bool>());
+            setNumberOfTuplesInFilterStorage(config["numberOfTuplesInFilterStorage"].As<uint32_t>());
             setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
@@ -123,6 +130,12 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setQueryMergerRule(it->second);
             } else if (it->first == "--locationUpdateInterval") {
                 setLocationUpdateInterval(stoi(it->second));
+            } else if (it->first == "--numberOfPointsInLocationStorage") {
+                setNumberOfPointsInLocationStorage(stoi(it->second));
+            } else if (it->first == "--dynamicDuplicatesFilterEnabled") {
+                setDynamicDuplicatesFilterEnabled((it->second == "true"));
+            } else if (it->first == "--numberOfTuplesInFilterStorage") {
+                setNumberOfTuplesInFilterStorage(stoi(it->second));
             } else if (it->first == "--enableSemanticQueryValidation") {
                 setEnableSemanticQueryValidation((it->second == "true"));
             } else {
@@ -151,6 +164,9 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
     setQueryMergerRule(queryMergerRule->getDefaultValue());
     setLocationUpdateInterval(locationUpdateInterval->getDefaultValue());
+    setNumberOfPointsInLocationStorage(numberOfPointsInLocationStorage->getDefaultValue());
+    setDynamicDuplicatesFilterEnabled(dynamicDuplicatesFilterEnabled->getDefaultValue());
+    setNumberOfTuplesInFilterStorage(numberOfTuplesInFilterStorage->getDefaultValue());
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
 }
 
@@ -228,6 +244,24 @@ BoolConfigOption CoordinatorConfig::getEnableSemanticQueryValidation() { return 
 
 void CoordinatorConfig::setEnableSemanticQueryValidation(bool enableSemanticQueryValidation) {
     CoordinatorConfig::enableSemanticQueryValidation->setValue(enableSemanticQueryValidation);
+}
+
+IntConfigOption CoordinatorConfig::getNumberOfPointsInLocationStorage() { return numberOfPointsInLocationStorage; }
+
+void CoordinatorConfig::setNumberOfPointsInLocationStorage(uint32_t storageSize) {
+    numberOfPointsInLocationStorage->setValue(storageSize);
+}
+
+BoolConfigOption CoordinatorConfig::getDynamicDuplicatesFilterEnabled() { return dynamicDuplicatesFilterEnabled; }
+
+void CoordinatorConfig::setDynamicDuplicatesFilterEnabled(bool dynamicDuplicateFilterEnabledValue) {
+    dynamicDuplicatesFilterEnabled->setValue(dynamicDuplicateFilterEnabledValue);
+}
+
+IntConfigOption CoordinatorConfig::getNumberOfTuplesInFilterStorage() { return numberOfTuplesInFilterStorage; }
+
+void CoordinatorConfig::setNumberOfTuplesInFilterStorage(uint32_t storageSize) {
+    numberOfTuplesInFilterStorage->setValue(storageSize);
 }
 
 }// namespace NES

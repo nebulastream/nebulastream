@@ -240,6 +240,43 @@ class CoordinatorConfig {
     void setLocationUpdateInterval(uint32_t interval);
 
     /**
+     * @brief Get the max number of points that each node can store
+     * @return location storage size
+     */
+    IntConfigOption getNumberOfPointsInLocationStorage();
+
+    /**
+     * @brief Set the storage size for all location storages
+     * @param storageSize: the storage size
+     */
+    void setNumberOfPointsInLocationStorage(uint32_t storageSize);
+
+    /**
+     * @brief Enables a dynamic duplicates filter on the sink
+     * @return boolean flag
+     */
+    BoolConfigOption getDynamicDuplicatesFilterEnabled();
+
+    /**
+     * @brief Set the if the dynamic duplicates filter is enabled
+     * @param dynamicDuplicateFilterEnabled: activation flag
+     */
+    void setDynamicDuplicatesFilterEnabled(bool dynamicDuplicateFilterEnabled);
+
+    /**
+    * @brief Get the max number of points that the filter storage should keep
+    * @return filter storage size
+    */
+    IntConfigOption getNumberOfTuplesInFilterStorage();
+
+    /**
+     * @brief Set the storage size for the filter cache
+     * @param storageSize: the storage size
+     */
+    void setNumberOfTuplesInFilterStorage(uint32_t storageSize);
+
+
+    /**
      * @brief Get the value for enabling SemanticQueryValidation
      * @return semantic validation config option
      */
@@ -272,6 +309,9 @@ class CoordinatorConfig {
     IntConfigOption queryBatchSize;
     StringConfigOption queryMergerRule;
     IntConfigOption locationUpdateInterval;
+    IntConfigOption numberOfPointsInLocationStorage;
+    BoolConfigOption dynamicDuplicatesFilterEnabled;
+    IntConfigOption numberOfTuplesInFilterStorage;
 
     // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;
