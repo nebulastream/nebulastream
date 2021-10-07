@@ -38,9 +38,6 @@ Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRu
 
 bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    long qmTime = 0;
-    auto startSI =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     NES_INFO(
         "Z3SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
@@ -52,14 +49,11 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
 
     NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
-//    NES_ERROR("--------------------------------------- " << queryPlansToAdd.size());
     for (const auto& targetQueryPlan : queryPlansToAdd) {
 
         bool matched = false;
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
-//            counter++;
-//            NES_ERROR("CHK Z3 " << counter);
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
@@ -76,9 +70,6 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
 
             //Not all sinks found an equivalent entry in the target shared query metadata
             if (foundMatch) {
-                auto startQM =
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
                 NES_TRACE("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
@@ -106,32 +97,14 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data
                 matched = true;
-                auto endQM =
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
-                qmTime = endQM - startQM;
-                NES_BM("Query-Merging-Time (micro)," << qmTime);
                 break;
             }
         }
 
         if (!matched) {
             NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
-            auto startQM =
-                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                    .count();
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
-            auto endQM =
-                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                    .count();
-            qmTime = endQM - startQM;
-            NES_BM("Query-Merging-Time (micro)," << qmTime);
         }
-        auto endSI =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        NES_BM("Sharing-Identification-Time (micro)," << (endSI - startSI - qmTime));
-        startSI =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     }
     //Remove all empty shared query metadata
     globalQueryPlan->removeEmptySharedQueryPlans();

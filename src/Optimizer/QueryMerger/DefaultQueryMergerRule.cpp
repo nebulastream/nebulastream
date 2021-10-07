@@ -26,18 +26,9 @@ DefaultQueryMergerRulePtr DefaultQueryMergerRule::create() {
 bool DefaultQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     //For each query plan to add we compute a new SharedQueryPlan and add it to the global query plan
-    auto startQM =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     for (auto queryPlan : queryPlansToAdd) {
-
         globalQueryPlan->createNewSharedQueryPlan(queryPlan);
-        auto endQM =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        NES_BM("Query-Merging-Time (micro)," << endQM - startQM);
-        startQM =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        NES_BM("Sharing-Identification-Time (micro)," << 0);
     }
     return globalQueryPlan->clearQueryPlansToAdd();
 }

@@ -33,11 +33,6 @@ StringSignatureBasedPartialQueryMergerRulePtr StringSignatureBasedPartialQueryMe
 
 bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    long qmTime = 0;
-    auto startSI =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_INFO(
-        "StringSignatureBasedPartialQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
         NES_WARNING("StringSignatureBasedPartialQueryMergerRule: Found no new query metadata in the global query plan."
@@ -61,9 +56,6 @@ bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr global
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (!matchedTargetToHostOperatorMap.empty()) {
                 NES_TRACE("SyntaxBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
-                auto startQM =
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
                 // As we merge partially equivalent queries, we can potentially find matches across multiple operators.
@@ -117,33 +109,14 @@ bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr global
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data
                 merged = true;
-                auto endQM =
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
-                qmTime = endQM - startQM;
-                NES_BM("Query-Merging-Time (micro)," << qmTime);
                 break;
             }
         }
 
         if (!merged) {
             NES_DEBUG("StringSignatureBasedPartialQueryMergerRule: computing a new Shared Query Plan");
-            auto startQM =
-                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                    .count();
-            globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
-            auto endQM =
-                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                    .count();
-            qmTime = endQM - startQM;
-            NES_BM("Query-Merging-Time (micro)," << qmTime);
+           globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
-
-        auto endSI =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        NES_BM("Sharing-Identification-Time (micro)," << (endSI - startSI - qmTime));
-        startSI =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     }
     //Remove all empty shared query metadata
     globalQueryPlan->removeEmptySharedQueryPlans();

@@ -82,7 +82,6 @@ static DebugLevel getDebugLevelFromString(const std::string& level) {
 DISABLE_WARNING_POP
 
 static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
-static log4cxx::LoggerPtr NESBMLogger(log4cxx::Logger::getLogger("BM"));
 }// namespace NES
 // LoggerPtr logger(Logger::getLogger("NES"));
 
@@ -110,10 +109,6 @@ struct LoggingBlackHole {
 #define NES_DEBUG(TEXT)                                                                                                          \
     do {                                                                                                                         \
         LOG4CXX_DEBUG(NES::NESLogger, TEXT);                                                                                     \
-    } while (0)
-#define NES_BM(TEXT)                                                                                                             \
-    do {                                                                                                                         \
-        LOG4CXX_TRACE(NES::NESBMLogger, TEXT);                                                                                   \
     } while (0)
 #define NES_INFO(TEXT)                                                                                                           \
     do {                                                                                                                         \
@@ -288,10 +283,6 @@ struct LoggingBlackHole {
             ((void) (bh << __VA_ARGS__));                                                                                        \
         }                                                                                                                        \
     } while (0)
-#define NES_BM(...)                                                                                                              \
-    do {                                                                                                                         \
-        LOG4CXX_TRACE(NES::NESBMLogger, TEXT);                                                                                   \
-    } while (0)
 #define NES_DEBUG(...)                                                                                                           \
     do {                                                                                                                         \
         if (0) {                                                                                                                 \
@@ -407,7 +398,6 @@ static void setLogLevel(DebugLevel level) {
     switch (level) {
         case LOG_NONE: {
             NESLogger->setLevel(log4cxx::Level::getOff());
-            NESBMLogger->setLevel(log4cxx::Level::getTrace());
             break;
         }
         case LOG_ERROR: {
@@ -442,15 +432,12 @@ static void setLogLevel(DebugLevel level) {
 }
 DISABLE_WARNING_PUSH
 DISABLE_WARNING_UNREFERENCED_FUNCTION
-
 static void setupLogging(const std::string& logFileName, DebugLevel level) {
     std::cout << "Logger: SETUP_LOGGING" << std::endl;
     // create PatternLayout
-//    log4cxx::LayoutPtr layoutPtr(
-//        new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l [%M] %X{threadName} [%-5t] [%p] : %m%n"));
-
     log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout("%m%n"));
+        new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l [%M] %X{threadName} [%-5t] [%p] : %m%n"));
+
     // create FileAppender
     LOG4CXX_DECODE_CHAR(fileName, logFileName);
     log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
@@ -460,8 +447,6 @@ static void setupLogging(const std::string& logFileName, DebugLevel level) {
     setLogLevel(level);
     NESLogger->addAppender(file);
     NESLogger->addAppender(console);
-
-    NESBMLogger->addAppender(file);
 }
 DISABLE_WARNING_UNREFERENCED_FUNCTION
 
