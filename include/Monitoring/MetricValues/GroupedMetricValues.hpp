@@ -46,7 +46,7 @@ class GroupedMetricValues {
 
     web::json::value asJson();
 
-    bool operator<(const GroupedMetricValues& other) const;
+    friend bool operator<(const GroupedMetricValues& lhs, const GroupedMetricValues& rhs);
 };
 
 using GroupedMetricValuesPtr = std::shared_ptr<GroupedMetricValues>;
