@@ -21,6 +21,7 @@
 namespace NES {
 const size_t buffers_inserted = 5;
 const size_t empty_buffer = 0;
+const size_t one_buffer = 1;
 const size_t expected_storage_size = 2;
 class BufferStorageTest : public testing::Test {
   public:
@@ -44,7 +45,21 @@ TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
     ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted);
 }
 
-TEST_F(BufferStorageTest, bufferDeletionFromBufferStorage) {
+TEST_F(BufferStorageTest, emptyBufferCheck) {
+    auto bufferStorage = std::make_shared<BufferStorage>();
+    ASSERT_EQ(bufferStorage->trimBuffer(BufferSequenceNumber(0, 0)), false);
+}
+
+TEST_F(BufferStorageTest, oneBufferDeletionFromBufferStorage) {
+    auto bufferStorage = std::make_shared<BufferStorage>();
+    auto buffer = bufferManager->getUnpooledBuffer(16384);
+    bufferStorage->insertBuffer(BufferSequenceNumber(0, 0), buffer.value());
+    ASSERT_EQ(bufferStorage->getStorageSize(), one_buffer);
+    bufferStorage->trimBuffer(BufferSequenceNumber(1, 1));
+    ASSERT_EQ(bufferStorage->getStorageSize(), empty_buffer);
+}
+
+TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<BufferStorage>();
     for (size_t i = 0; i < buffers_inserted; i++) {
         auto buffer = bufferManager->getUnpooledBuffer(16384);
@@ -70,8 +85,5 @@ TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
     ASSERT_EQ(bufferStorage->getStorageSize(), expected_storage_size);
 }
 
-TEST_F(BufferStorageTest, emptyBufferCheck) {
-    auto bufferStorage = std::make_shared<BufferStorage>();
-    ASSERT_EQ(bufferStorage->trimBuffer(BufferSequenceNumber(0, 0)), false);
-}
+
 }// namespace NES
