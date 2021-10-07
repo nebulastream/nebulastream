@@ -35,6 +35,7 @@ class LocationStorage {
     void add(const GeoPointPtr& point);
     GeoPointPtr get(int index);
     uint64_t size();
+    bool empty();
 };
 
 using LocationStoragePtr = std::shared_ptr<LocationStorage>;

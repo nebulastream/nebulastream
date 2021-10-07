@@ -38,4 +38,6 @@ uint64_t LocationStorage::size() {
     return storage.size();
 }
 
+bool LocationStorage::empty() { return storage.empty(); }
+
 }

@@ -41,18 +41,22 @@ class LocationService {
     LocationCatalogPtr locationCatalog;
     bool running;
     uint32_t updateInterval;
+    bool dynamicDuplicatesFilterEnabled;
+    uint32_t filterStorageSize;
 
   public:
-    static void initInstance(uint32_t updateInterval = DEFAULT_UPDATE_INTERVAL, uint32_t storageSize = DEFAULT_STORAGE_SIZE);
+    static void initInstance(uint32_t updateInterval = DEFAULT_UPDATE_INTERVAL, uint32_t storageSize = DEFAULT_STORAGE_SIZE, bool dynamicDuplicatesFilterEnabled = false, uint32_t filterStorageSize = DEFAULT_STORAGE_SIZE);
     static LocationServicePtr getInstance();
     static void cleanInstance();
-    explicit LocationService(uint32_t updateInterval = DEFAULT_UPDATE_INTERVAL, uint32_t storageSize = DEFAULT_STORAGE_SIZE);
+    explicit LocationService(uint32_t updateInterval = DEFAULT_UPDATE_INTERVAL, uint32_t storageSize = DEFAULT_STORAGE_SIZE, bool dynamicDuplicatesFilterEnabled = false, uint32_t filterStorageSize = DEFAULT_STORAGE_SIZE);
     void addSink(const string& nodeId, double movingRangeArea);
     void addSource(const string& nodeId);
     void addSource(const string& nodeId, double rangeArea);
     void updateNodeLocation(const string& nodeId, const GeoPointPtr& location);
     void updateSources();
     [[nodiscard]] const LocationCatalogPtr& getLocationCatalog() const;
+    bool isDynamicDuplicatesFilterEnabled() const;
+    uint32_t getFilterStorageSize() const;
 
     void start();
     void stop();

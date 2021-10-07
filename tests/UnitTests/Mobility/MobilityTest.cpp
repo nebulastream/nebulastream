@@ -27,6 +27,8 @@
 
 namespace NES {
 
+static uint32_t defaultStorageSize = 5;
+
 void EXPECT_EQ_GEOPOINTS(GeoPoint p1, GeoPointPtr p2){
     EXPECT_EQ(p1.getLatitude(), p2->getLatitude());
     EXPECT_EQ(p1.getLongitude(), p2->getLongitude());
@@ -41,9 +43,9 @@ TEST(GeoLocation, ValidLocation) {
 }
 
 TEST(GeoNode, AddAndUpdateLocations) {
-    GeoNode node("1");
+    GeoNode node("1", defaultStorageSize);
     EXPECT_FALSE(node.getCurrentLocation()->isValid());
-    EXPECT_TRUE(node.getLocationHistory().empty());
+    EXPECT_TRUE(node.getLocationHistory()->empty());
 
     node.setCurrentLocation(std::make_shared<GeoPoint>(1,1));
     node.setCurrentLocation(std::make_shared<GeoPoint>(2,2));
@@ -53,11 +55,11 @@ TEST(GeoNode, AddAndUpdateLocations) {
     EXPECT_EQ_GEOPOINTS(expectedLocation, node.getCurrentLocation());
 
     const uint64_t expectedSize= 2;
-    EXPECT_EQ(expectedSize, node.getLocationHistory().size());
+    EXPECT_EQ(expectedSize, node.getLocationHistory()->size());
 }
 
 TEST(LocationCatalog, AddNodeAndUpdateLocation) {
-    LocationCatalog catalog{};
+    LocationCatalog catalog(defaultStorageSize);
 
     catalog.addSource("1");
     catalog.addSource("2");
@@ -74,25 +76,25 @@ TEST(LocationCatalog, AddNodeAndUpdateLocation) {
 
     GeoSourcePtr firstNode = catalog.getSource("1");
     EXPECT_EQ_GEOPOINTS(GeoPoint(1.5,1.5), firstNode->getCurrentLocation());
-    EXPECT_FALSE(firstNode->getLocationHistory().empty());
+    EXPECT_FALSE(firstNode->getLocationHistory()->empty());
     EXPECT_FALSE(firstNode->isEnabled());
     EXPECT_FALSE(firstNode->hasRange());
 
     GeoSourcePtr secondNode = catalog.getSource("2");
     EXPECT_EQ_GEOPOINTS(GeoPoint(2,2), secondNode->getCurrentLocation());
-    EXPECT_TRUE(secondNode->getLocationHistory().empty());
+    EXPECT_TRUE(secondNode->getLocationHistory()->empty());
     EXPECT_FALSE(secondNode->isEnabled());
     EXPECT_FALSE(secondNode->hasRange());
 
     GeoSourcePtr sourceWithRange = catalog.getSource("3");
     EXPECT_EQ_GEOPOINTS(GeoPoint(3,3), sourceWithRange->getCurrentLocation());
-    EXPECT_TRUE(sourceWithRange->getLocationHistory().empty());
+    EXPECT_TRUE(sourceWithRange->getLocationHistory()->empty());
     EXPECT_FALSE(sourceWithRange->isEnabled());
     EXPECT_TRUE(sourceWithRange->hasRange());
 
     GeoSinkPtr sink = catalog.getSink("4");
     EXPECT_EQ_GEOPOINTS(GeoPoint(4,4), sink->getCurrentLocation());
-    EXPECT_TRUE(sink->getLocationHistory().empty());
+    EXPECT_TRUE(sink->getLocationHistory()->empty());
 }
 
 TEST(GeoSquare, DistanceToBound) {
@@ -187,7 +189,7 @@ TEST(GeoCircle, TestContains) {
 
 
 TEST(LocationCatalog, UpdateSources) {
-    LocationCatalog catalog{};
+    LocationCatalog catalog(defaultStorageSize);
 
     // Add sink
     catalog.addSink("test_sink", 10'000);
@@ -216,7 +218,7 @@ TEST(LocationCatalog, UpdateSources) {
 }
 
 TEST(LocationCatalog, UpdateSourcesWithRange) {
-    LocationCatalog catalog{};
+    LocationCatalog catalog(defaultStorageSize);
 
     // Add sink
     catalog.addSink("test_sink", 10'000);

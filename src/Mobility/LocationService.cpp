@@ -14,14 +14,19 @@
     limitations under the License.
 */
 
-#include <chrono>
-#include <thread>
 #include <Mobility/LocationService.h>
 #include <Util/Logger.hpp>
+#include <chrono>
+#include <thread>
 
 namespace NES {
 
-LocationService::LocationService(uint32_t updateInterval, uint32_t storageSize) : running(false), updateInterval(updateInterval) {
+LocationService::LocationService(uint32_t updateInterval,
+                                 uint32_t storageSize,
+                                 bool dynamicDuplicatesFilterEnabled,
+                                 uint32_t filterStorageSize)
+    : running(false), updateInterval(updateInterval),
+      dynamicDuplicatesFilterEnabled(dynamicDuplicatesFilterEnabled), filterStorageSize(filterStorageSize) {
     locationCatalog = std::make_shared<LocationCatalog>(storageSize);
 }
 
@@ -29,13 +34,9 @@ void LocationService::addSink(const string& nodeId, const double movingRangeArea
     this->locationCatalog->addSink(nodeId, movingRangeArea);
 }
 
-void LocationService::addSource(const string& nodeId) {
-    this->locationCatalog->addSource(nodeId, 0);
-}
+void LocationService::addSource(const string& nodeId) { this->locationCatalog->addSource(nodeId, 0); }
 
-void LocationService::addSource(const string& nodeId,  double rangeArea) {
-    this->locationCatalog->addSource(nodeId, rangeArea);
-}
+void LocationService::addSource(const string& nodeId, double rangeArea) { this->locationCatalog->addSource(nodeId, rangeArea); }
 
 void LocationService::updateNodeLocation(const string& nodeId, const GeoPointPtr& location) {
     this->locationCatalog->updateNodeLocation(nodeId, location);
@@ -43,8 +44,11 @@ void LocationService::updateNodeLocation(const string& nodeId, const GeoPointPtr
 
 const LocationCatalogPtr& LocationService::getLocationCatalog() const { return locationCatalog; }
 
-void LocationService::initInstance(uint32_t updateInterval, uint32_t storageSize) {
-    instance = std::make_shared<LocationService>(updateInterval, storageSize);
+void LocationService::initInstance(uint32_t updateInterval,
+                                   uint32_t storageSize,
+                                   bool dynamicDuplicatesFilterEnabled,
+                                   uint32_t filterStorageSize) {
+    instance = std::make_shared<LocationService>(updateInterval, storageSize, dynamicDuplicatesFilterEnabled, filterStorageSize);
 }
 
 LocationServicePtr LocationService::getInstance() {
@@ -54,13 +58,9 @@ LocationServicePtr LocationService::getInstance() {
     return instance;
 }
 
-void LocationService::cleanInstance() {
-    instance = nullptr;
-}
+void LocationService::cleanInstance() { instance = nullptr; }
 
-void LocationService::updateSources() {
-    locationCatalog->updateSources();
-}
+void LocationService::updateSources() { locationCatalog->updateSources(); }
 
 void LocationService::start() {
     this->running = true;
@@ -78,8 +78,10 @@ void LocationService::stop() {
     this->running = false;
 }
 
-bool LocationService::isRunning() const {
-    return running;
-}
+bool LocationService::isRunning() const { return running; }
 
-}
+bool LocationService::isDynamicDuplicatesFilterEnabled() const { return dynamicDuplicatesFilterEnabled; }
+
+uint32_t LocationService::getFilterStorageSize() const { return filterStorageSize; }
+
+}// namespace NES
