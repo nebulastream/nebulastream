@@ -17,9 +17,11 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperatorPredicated.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/GeneratableMapOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/GeneratableProjectionOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Phases/PredicationOptimizationPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -58,11 +60,15 @@ OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr oper
 
     // TODO enable predication based on a cost model and data characteristics
 
-    // abort if windowing operator is found:
+    // abort if invalid operator is found:
     for (const auto& node : nodes) {
-        if (node->instanceOf<GeneratableOperators::GeneratableSlicePreAggregationOperator>()) {
-            NES_DEBUG("PredicationOptimizationPhase: No predication applied. Predication is not yet implemented for windowing "
-                      "queries.");
+        if (!node->instanceOf<GeneratableOperators::GeneratableBufferEmit>()
+        && !node->instanceOf<GeneratableOperators::GeneratableBufferScan>()
+        && !node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()
+        && !node->instanceOf<GeneratableOperators::GeneratableMapOperator>()
+        && !node->instanceOf<GeneratableOperators::GeneratableProjectionOperator>()) {
+            NES_DEBUG("PredicationOptimizationPhase: No predication applied. There is an unsupported operator in the pipeline: "
+            + node->toString());
             return operatorPipeline;
         }
     }
