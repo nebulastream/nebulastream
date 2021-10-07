@@ -124,8 +124,7 @@ void RestEngine::handleGet(http_request request) {
             return;
         }
     }
-    // TODO #2197 This should be replaced with BaseController::handleGet(path, request)
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
+    BaseController::badRequestImpl(methods::GET, request);
 }
 
 void RestEngine::handlePost(http_request request) {
@@ -151,7 +150,7 @@ void RestEngine::handlePost(http_request request) {
             return;
         }
     }
-    BaseController::badRequestImpl(methods::DEL, request);
+    BaseController::badRequestImpl(methods::POST, request);
 }
 
 void RestEngine::handleDelete(http_request request) {
@@ -173,7 +172,7 @@ void RestEngine::handleDelete(http_request request) {
             return;
         }
     }
-    BaseController::BadRequestImpl(methods::DEL, request);
+    BaseController::badRequestImpl(methods::DEL, request);
 }
 
 utility::string_t RestEngine::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
