@@ -16,10 +16,13 @@
 
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <string>
+#include <filesystem>
 
 namespace NES {
 
@@ -193,8 +196,11 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
 
-    SourceConfigPtr sourceConfigPtr = SourceConfig::create();
-    sourceConfigPtr->overwriteConfigWithYAMLFileInput("../tests/test_data/emptySource.yaml");
+    std::map<string, string> commandLineParams;
+
+    commandLineParams.insert(std::pair<string, string>("--sourceConfigPath", "../../tests/test_data/emptySource.yaml"));
+
+    SourceConfigPtr sourceConfigPtr = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
 
     EXPECT_NE(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
@@ -204,12 +210,39 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
               sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getPhysicalStreamName()->getValue(), sourceConfigPtr->getPhysicalStreamName()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr->getLogicalStreamName()->getValue(), sourceConfigPtr->getLogicalStreamName()->getDefaultValue());
-    EXPECT_NE(sourceConfigPtr->getSkipHeader()->getValue(), sourceConfigPtr->getSkipHeader()->getDefaultValue());
+
+    commandLineParams.insert_or_assign("--sourceConfigPath", "../../tests/test_data/emptyMQTTSource.yaml");
+
+    SourceConfigPtr sourceConfigPtr1 = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
+
+    EXPECT_NE(sourceConfigPtr1->getSourceType()->getValue(), sourceConfigPtr1->getSourceType()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->getSourceFrequency()->getValue(), sourceConfigPtr1->getSourceFrequency()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->getNumberOfBuffersToProduce()->getValue(),
+              sourceConfigPtr1->getNumberOfBuffersToProduce()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->getNumberOfTuplesToProducePerBuffer()->getValue(),
+              sourceConfigPtr1->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->getPhysicalStreamName()->getValue(),
+              sourceConfigPtr1->getPhysicalStreamName()->getDefaultValue());
+    EXPECT_NE(sourceConfigPtr1->getLogicalStreamName()->getValue(), sourceConfigPtr1->getLogicalStreamName()->getDefaultValue());
+
+    EXPECT_NE(sourceConfigPtr1->as<MQTTSourceConfig>()->getUrl()->getValue(),
+              sourceConfigPtr1->as<MQTTSourceConfig>()->getUrl()->getDefaultValue());
+    EXPECT_NE(sourceConfigPtr1->as<MQTTSourceConfig>()->getClientId()->getValue(),
+              sourceConfigPtr1->as<MQTTSourceConfig>()->getClientId()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getTopic()->getValue(),
+              sourceConfigPtr1->as<MQTTSourceConfig>()->getTopic()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getQos()->getValue(),
+              sourceConfigPtr1->as<MQTTSourceConfig>()->getQos()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getCleanSession()->getValue(),
+              sourceConfigPtr1->as<MQTTSourceConfig>()->getCleanSession()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getUserName()->getValue(),
+              sourceConfigPtr1->as<MQTTSourceConfig>()->getUserName()->getDefaultValue());
+
 }
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
-    SourceConfigPtr sourceConfigPtr = SourceConfig::create();
+    /*SourceConfigPtr sourceConfigPtr = SourceConfig::create();
     std::string argv[] = {"--sourceType=YSBSource",
                           "--sourceConfig=",
                           "--skipHeader=true",
@@ -236,7 +269,7 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
               sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getPhysicalStreamName()->getValue(), sourceConfigPtr->getPhysicalStreamName()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr->getLogicalStreamName()->getValue(), sourceConfigPtr->getLogicalStreamName()->getDefaultValue());
-    EXPECT_NE(sourceConfigPtr->getSkipHeader()->getValue(), sourceConfigPtr->getSkipHeader()->getDefaultValue());
+    EXPECT_NE(sourceConfigPtr->getSkipHeader()->getValue(), sourceConfigPtr->getSkipHeader()->getDefaultValue());*/
 }
 
 }// namespace NES

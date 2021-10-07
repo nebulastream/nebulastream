@@ -43,20 +43,20 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
           ConfigOption<uint32_t>::create("connectionTimeout", 10, "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceConfig: Init source config object with values from sourceConfigMap.");
 
-    if (sourceConfigMap.find("brokers") != sourceConfigMap.end()) {
-        brokers->setValue(sourceConfigMap.find("brokers")->second);
+    if (sourceConfigMap.find("KafkaSourceBrokers") != sourceConfigMap.end()) {
+        brokers->setValue(sourceConfigMap.find("KafkaSourceBrokers")->second);
     }
-    if (sourceConfigMap.find("autoCommit") != sourceConfigMap.end()) {
-        autoCommit->setValue(std::stoi(sourceConfigMap.find("autoCommit")->second));
+    if (sourceConfigMap.find("KafkaSourceAutoCommit") != sourceConfigMap.end()) {
+        autoCommit->setValue(std::stoi(sourceConfigMap.find("KafkaSourceAutoCommit")->second));
     }
-    if (sourceConfigMap.find("groupId") != sourceConfigMap.end()) {
-        groupId->setValue(sourceConfigMap.find("groupId")->second);
+    if (sourceConfigMap.find("KafkaSourceGroupId") != sourceConfigMap.end()) {
+        groupId->setValue(sourceConfigMap.find("KafkaSourceGroupId")->second);
     }
-    if (sourceConfigMap.find("topic") != sourceConfigMap.end()) {
-        topic->setValue(sourceConfigMap.find("topic")->second);
+    if (sourceConfigMap.find("KafkaSourceTopic") != sourceConfigMap.end()) {
+        topic->setValue(sourceConfigMap.find("KafkaSourceTopic")->second);
     }
-    if (sourceConfigMap.find("connectionTimeout") != sourceConfigMap.end()) {
-        connectionTimeout->setValue(std::stoi(sourceConfigMap.find("connectionTimeout")->second));
+    if (sourceConfigMap.find("KafkaSourceConnectionTimeout") != sourceConfigMap.end()) {
+        connectionTimeout->setValue(std::stoi(sourceConfigMap.find("KafkaSourceConnectionTimeout")->second));
     }
 
 }

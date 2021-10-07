@@ -24,14 +24,22 @@ limitations under the License.
 
 namespace NES {
 
+/**
+ * enum with config objects
+ */
 enum ConfigSourceType {
     SenseSource,
     CSVSource,
     BinarySource,
     MQTTSource,
     KafkaSource,
-    OPCSource, DefaultSource };
+    OPCSource,
+    DefaultSource,
+    NoSource};
 
+/**
+ * enum string mapping for source config factory
+ */
 static std::map<std::string, ConfigSourceType> stringToConfigSourceType{
     {"SenseSource", SenseSource},
     {"CSVSource", CSVSource},
@@ -39,7 +47,8 @@ static std::map<std::string, ConfigSourceType> stringToConfigSourceType{
     {"MQTTSource", MQTTSource},
     {"KafkaSource", KafkaSource},
     {"OPCSource", OPCSource},
-    {"NoSource", DefaultSource},
+    {"DefaultSource", DefaultSource},
+    {"NoSource", NoSource}
 };
 
 class SourceConfig;
@@ -47,9 +56,33 @@ using SourceConfigPtr = std::shared_ptr<SourceConfig>;
 
 class SourceConfigFactory {
   public:
+    /**
+     * @brief create source config with yaml file and/or command line params
+     * @param commandLineParams command line params
+     * @param argc number of command line params
+     * @return source config object
+     */
     static std::shared_ptr<SourceConfig> createSourceConfig(const std::map<std::string, std::string>& commandLineParams, int argc);
+
+    /**
+     * @brief create empty source config
+     * @return source config object with default values
+     */
     static std::shared_ptr<SourceConfig> createSourceConfig();
+
+    /**
+     * @brief read YAML file for configurations
+     * @param filePath path to yaml configuration file
+     * @return configuration map with yaml file configs
+     */
     static std::map<std::string, std::string> readYAMLFile(const std::string& filePath);
+
+    /**
+     * @brief overwrites configurations with command line input params
+     * @param commandLineParams
+     * @param configurationMap map with current configurations from yaml file
+     * @return map with configurations, overwritten if command line configs change yaml file configs
+     */
     static std::map<std::string, std::string> overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams, std::map<std::string, std::string> configurationMap);
 
 };
