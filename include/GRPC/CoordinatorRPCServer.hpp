@@ -28,8 +28,6 @@ using grpc::Status;
 
 namespace NES {
 
-class CoordinatorEngine;
-using CoordinatorEnginePtr = std::shared_ptr<CoordinatorEngine>;
 class TopologyManagerService;
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 class StreamCatalogService;
