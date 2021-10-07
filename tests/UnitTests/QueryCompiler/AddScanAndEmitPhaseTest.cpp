@@ -16,7 +16,7 @@
 
 #include "../../util/NESTest.hpp"
 #include <API/Expressions/Expressions.hpp>
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>

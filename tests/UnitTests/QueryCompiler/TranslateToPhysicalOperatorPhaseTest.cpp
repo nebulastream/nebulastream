@@ -13,9 +13,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <API/Query.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <API/QueryAPI.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>

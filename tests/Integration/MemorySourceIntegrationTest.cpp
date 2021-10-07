@@ -15,6 +15,7 @@
 */
 
 #include <gtest/gtest.h>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>

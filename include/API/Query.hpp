@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <API/Expressions/Expressions.hpp>
 
 namespace NES {
 
@@ -30,15 +31,11 @@ class Query;
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
-class ExpressionItem;
-
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class FieldAssignmentExpressionNode;
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
-
-ExpressionNodePtr getExpressionNodePtr(ExpressionItem expressionItem);
 
 class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
@@ -195,7 +192,7 @@ class Query {
      */
     template<typename... Args>
     auto project(Args&&... args) -> std::enable_if_t<std::conjunction_v<std::is_constructible<ExpressionItem, Args>...>, Query&> {
-        return project({getExpressionNodePtr(std::forward<Args>(args))...});
+        return project({std::forward<Args>(args).getExpressionNode()...});
     }
 
     /**

@@ -17,7 +17,7 @@
 // clang-format off
 #include <gtest/gtest.h>
 // clang-format on
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>

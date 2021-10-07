@@ -49,6 +49,10 @@
 
 namespace NES {
 
+ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem){
+    return expressionItem.getExpressionNode();
+}
+
 JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
 
 namespace JoinOperatorBuilder {

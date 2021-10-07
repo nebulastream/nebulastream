@@ -20,7 +20,7 @@
 #include "../../util/SchemaSourceDescriptor.hpp"
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestSink.hpp"
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/TypeInferenceException.hpp>

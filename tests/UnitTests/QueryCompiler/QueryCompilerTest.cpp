@@ -15,7 +15,7 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>

@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>

@@ -14,8 +14,9 @@
     limitations under the License.
 */
 
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -42,9 +43,12 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>
@@ -557,7 +561,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     auto windowDefinition =
         Windowing::LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64),
                                         sum,
-                                        Windowing::TumblingWindowing::TimeCharacteristicracteristic::createIngestionTime(), Seconds(10)),
+                                        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
                                         DistributionCharacteristic::createCompleteWindowType(),
                                         1,
                                         trigger,
