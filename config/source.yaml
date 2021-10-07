@@ -47,8 +47,8 @@ BinarySource:
   filePath: ../tests/test_data/QnV_short.csv
 
 MQTTSource:
-  # Set url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource
-  url: ws://127.0.0.1:9001
+  # Set url to connect to
+  url: tcp://127.0.0.1:1885
   # Set clientId
   clientId: testClient
   # Set userName

@@ -70,6 +70,12 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      */
     std::string getLogicalStreamName() override;
 
+    /**
+     * @brief get source type
+     * @return source type
+     */
+    std::string getSourceType() override;
+
     std::string toString() override;
 
     SourceDescriptorPtr build(SchemaPtr) override;
@@ -82,6 +88,8 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     uint32_t numberOfBuffersToProduce;
     std::string physicalStreamName;
     std::string logicalStreamName;
+    std::string sourceType;
+
 };
 
 }// namespace NES

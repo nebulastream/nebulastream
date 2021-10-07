@@ -118,10 +118,18 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
  */
 TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 
+    MQTTSourceConfigPtr mqttConfig = srcConf->as<MQTTSourceConfig>();
+    mqttConfig->setUrl("tcp://127.0.0.1:1883");
+    mqttConfig->setCleanSession(false);
+    mqttConfig->setClientId("nes-mqtt-test-client");
+    mqttConfig->setUserName("rfRqLGZRChg8eS30PEeR");
+    mqttConfig->setTopic("v1/devices/me/telemetry");
+    mqttConfig->setQos(1);
+
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
                                        queryManager,
-                                       srcConf,
+                                       mqttConfig,
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,

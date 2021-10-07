@@ -98,5 +98,6 @@ std::string PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamN
 std::string PhysicalStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 uint32_t PhysicalStreamConfig::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+std::string PhysicalStreamConfig::getSourceType() { return sourceType; }
 
 }// namespace NES
