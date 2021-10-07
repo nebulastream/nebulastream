@@ -211,9 +211,6 @@ int main(int argc, const char* argv[]) {
     NES::setupLogging("BM.log", loglevel);
     for (const auto& file : directory_iterator(querySetLocation)) {
         std::ifstream infile(file.path());
-        NES_BM("*****************************************************");
-        NES_BM("Benchmark For : " << file.path().filename());
-        NES_BM("*****************************************************");
         std::vector<std::string> queries;
         std::string line;
 
@@ -240,10 +237,8 @@ int main(int argc, const char* argv[]) {
         }
 
         for (size_t configNum = 0; configNum < queryMergerRules.size(); configNum++) {
-            NES_BM("Query Merging Rule " << queryMergerRules[configNum]);
 
             for (uint64_t expRun = 1; expRun <= noOfMeasurementsToCollect; expRun++) {
-                NES_BM("Experiment " << expRun);
                 setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum], batchSizes[configNum]);
                 NES::QueryServicePtr queryService = coordinator->getQueryService();
                 NES::QueryCatalogPtr queryCatalog = coordinator->getQueryCatalog();
