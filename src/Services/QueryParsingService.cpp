@@ -84,18 +84,7 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
-        code << "#include <API/Query.hpp>" << std::endl;
-        code << "#include <API/Schema.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
-        code << "#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
-        code << "#include <Sources/DataSource.hpp>" << std::endl;
-        code << "using namespace NES::API;" << std::endl;
+        code << "#include <API/QueryAPI.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
         code << "Query createQuery(){" << std::endl;
 
@@ -124,7 +113,7 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
         code << "}" << std::endl;
         NES_DEBUG("Util: query code \n" << code.str());
         auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code.str());
-        auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", true, false, false, true);
+        auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", true, false, false, false);
         auto result = jitCompiler->compile(std::move(request));
         auto compiled_code = result.get().getDynamicObject();
         if (!code) {
