@@ -22,7 +22,7 @@
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
-
+#include <Common/DataTypes/DataTypeFactory.hpp>
 using namespace std;
 
 namespace NES {

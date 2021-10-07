@@ -27,6 +27,7 @@
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <iostream>
 
 using namespace std;

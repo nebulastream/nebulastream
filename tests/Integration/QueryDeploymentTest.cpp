@@ -16,7 +16,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>

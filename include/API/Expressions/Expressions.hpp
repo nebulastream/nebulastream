@@ -17,8 +17,7 @@
 #ifndef NES_INCLUDE_API_EXPRESSIONS_HPP
 #define NES_INCLUDE_API_EXPRESSIONS_HPP
 
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
 #include <string>
 

@@ -14,7 +14,9 @@
     limitations under the License.
 */
 
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -22,7 +24,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -38,8 +40,6 @@
 using namespace std;
 
 namespace NES {
-
-using namespace NES::API;
 
 class QueryPlanIteratorTest : public testing::Test {
   public:

@@ -19,7 +19,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
-
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>

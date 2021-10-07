@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 #include <API/QueryAPI.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>

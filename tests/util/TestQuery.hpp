@@ -20,6 +20,8 @@
 #include "SchemaSourceDescriptor.hpp"
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <utility>
 namespace NES {
