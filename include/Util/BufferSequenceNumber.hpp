@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_BUFFERSEQUENCENUMBER_H
-#define NES_BUFFERSEQUENCENUMBER_H
+#ifndef NES_BUFFERSEQUENCENUMBER_HPP
+#define NES_BUFFERSEQUENCENUMBER_HPP
 namespace NES {
 
 /**
@@ -40,4 +40,4 @@ class BufferSequenceNumber {
 
 
 } // namespace NES
-#endif//NES_BUFFERSEQUENCENUMBER_H
+#endif//NES_BUFFERSEQUENCENUMBER_HPP
