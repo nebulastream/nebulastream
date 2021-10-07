@@ -17,6 +17,7 @@
 #ifdef ENABLE_MQTT_BUILD
 
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <API/AttributeField.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
