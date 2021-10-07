@@ -54,7 +54,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
     }
 
     //get unique id for the new node
-    uint64_t id = Util::getNextTopologyNodeId();
+    uint64_t id = getNextTopologyNodeId();
 
     TopologyNodePtr physicalNode;
     if (type == NodeType::Sensor) {
@@ -232,5 +232,7 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
 }
 
 TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return topology->findNodeWithId(nodeId); }
+
+uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNodeIdCounter; }
 
 }// namespace NES

@@ -20,6 +20,7 @@
 #include <Services/StreamCatalogService.hpp>
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 enum NodeType : int;
 namespace NES {
@@ -85,6 +86,13 @@ class TopologyManagerService {
     TopologyPtr topology;
     StreamCatalogPtr streamCatalog;
     std::mutex registerDeregisterNode;
+    std::atomic_uint64_t topologyNodeIdCounter = 0;
+
+    /**
+     * @brief method to generate the next (monotonically increasing) topology node id
+     * @return next topology node id
+     */
+    uint64_t getNextTopologyNodeId();
 };
 
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;

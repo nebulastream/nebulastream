@@ -246,11 +246,6 @@ uint64_t Util::getNextPipelineId() {
     return ++id;
 }
 
-uint64_t Util::getNextTopologyNodeId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
-}
-
 uint64_t Util::getNextNodeEngineId() {
     static std::atomic_uint64_t id = time(nullptr) ^ getpid();
     return ++id;

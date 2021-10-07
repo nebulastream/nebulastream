@@ -360,7 +360,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
     //create execution node
-    TopologyNodePtr topologyNode1 = TopologyNode::create(Util::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
+    uint64_t node1Id = 1;
+    TopologyNodePtr topologyNode1 = TopologyNode::create(node1Id, "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode1 = ExecutionNode::createExecutionNode(topologyNode1);
 
     //Add sub plan
@@ -375,7 +376,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     executionNode1->addNewQuerySubPlan(queryId1, plan1);
 
     //create execution node
-    TopologyNodePtr topologyNode2 = TopologyNode::create(Util::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
+    uint64_t node2Id = 2;
+    TopologyNodePtr topologyNode2 = TopologyNode::create(node2Id, "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topologyNode2);
 
     //Add sub plan
@@ -433,7 +435,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
     //create execution node 1
-    TopologyNodePtr topologyNode1 = TopologyNode::create(Util::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
+    uint64_t node1Id = 1;
+    TopologyNodePtr topologyNode1 = TopologyNode::create(node1Id, "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode1 = ExecutionNode::createExecutionNode(topologyNode1);
 
     //Add sub plan
@@ -448,7 +451,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     executionNode1->addNewQuerySubPlan(queryId1, plan1);
 
     //create execution node 2
-    TopologyNodePtr topologyNode2 = TopologyNode::create(Util::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
+    uint64_t node2Id = 2;
+    TopologyNodePtr topologyNode2 = TopologyNode::create(node2Id, "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topologyNode2);
 
     //Add sub plan
@@ -462,7 +466,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     executionNode2->addNewQuerySubPlan(queryId2, plan2);
 
     //create execution node 3
-    TopologyNodePtr topologyNode3 = TopologyNode::create(Util::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
+    uint64_t node3Id = 3;
+    TopologyNodePtr topologyNode3 = TopologyNode::create(node3Id, "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
 
     //Add sub plan
@@ -480,7 +485,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     globalExecutionPlan->addExecutionNode(executionNode3);
 
     //create execution node 4
-    TopologyNodePtr topologyNode4 = TopologyNode::create(Util::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
+    uint64_t node4Id = 4;
+    TopologyNodePtr topologyNode4 = TopologyNode::create(node4Id, "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode4 = ExecutionNode::createExecutionNode(topologyNode4);
 
     //Add sub plan
