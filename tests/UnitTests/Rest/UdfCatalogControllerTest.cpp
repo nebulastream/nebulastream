@@ -14,13 +14,14 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
+
 #include "../../util/ProtobufMessageFactory.hpp"
 #include <Catalogs/UdfCatalog.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <UdfCatalogService.pb.h>
 #include <Util/Logger.hpp>
 #include <cpprest/http_client.h>
-#include <gtest/gtest.h>
 #include <string>
 
 using namespace std::string_literals;
