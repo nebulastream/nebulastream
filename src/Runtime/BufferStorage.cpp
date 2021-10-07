@@ -19,13 +19,13 @@
 #include <queue>
 
 namespace NES {
-void BufferStorage::insertBuffer(uint128_t id, NES::Runtime::TupleBuffer bufferPtr) {
+    void BufferStorage::insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) {
         mutex.lock();
-        buffer.push(std::pair<uint64_t, Runtime::TupleBuffer> {id, bufferPtr});
+        buffer.push(std::pair<BufferSequenceNumber, Runtime::TupleBuffer> {id, bufferPtr});
         mutex.unlock();
     }
 
-    bool BufferStorage::trimBuffer(uint128_t id) {
+    bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
         mutex.lock();
         if(!buffer.empty()) {
             while (buffer.front().first < id) {

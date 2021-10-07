@@ -18,11 +18,8 @@
 #define NES_BUFFERSTORAGE_H
 
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/BufferSequenceNumber.h>
 #include <queue>
-
-
-typedef __int128 int128_t;
-typedef unsigned __int128 uint128_t;
 
 namespace NES {
 
@@ -31,7 +28,7 @@ namespace NES {
  */
 class BufferStorage {
   private:
-    std::queue<std::pair<uint64_t, Runtime::TupleBuffer>> buffer;
+    std::queue<std::pair<BufferSequenceNumber, Runtime::TupleBuffer>> buffer;
     mutable std::mutex mutex;
 
   public:
@@ -41,13 +38,13 @@ class BufferStorage {
      * @param id id of the buffer
      * @param bufferPtr pointer to the buffer that will be stored
      */
-    void insertBuffer(uint128_t id, NES::Runtime::TupleBuffer bufferPtr);
+    void insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr);
     /**
      * @brief Deletes a pair id, buffer link from the buffer storage queue with a given id
      * @param mutex mutex to make the method thread safe
      * @param id id of the buffer
      */
-    bool trimBuffer(uint128_t id);
+    bool trimBuffer(BufferSequenceNumber id);
     /**
      * @brief Return current queue size
      * @param mutex mutex to make the method thread safe
