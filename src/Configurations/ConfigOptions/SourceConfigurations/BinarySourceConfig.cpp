@@ -35,8 +35,8 @@ BinarySourceConfig::BinarySourceConfig(std::map<std::string, std::string> source
                                                  "../tests/test_data/QnV_short.csv",
                                                  "file path, needed for: CSVSource, BinarySource")) {
     NES_INFO("BinarySourceConfig: Init source config object.");
-    if (sourceConfigMap.find("filePath") != sourceConfigMap.end()) {
-        filePath->setValue(sourceConfigMap.find("filePath")->second);
+    if (sourceConfigMap.find("BinarySourceFilePath") != sourceConfigMap.end()) {
+        filePath->setValue(sourceConfigMap.find("BinarySourceFilePath")->second);
     }
 }
 

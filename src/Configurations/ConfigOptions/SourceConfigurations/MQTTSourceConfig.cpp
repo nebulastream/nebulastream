@@ -50,25 +50,25 @@ MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConf
                                      true,
                                      "cleanSession true = clean up session after client loses connection, false = keep data for "
                                      "client after connection loss (persistent session), needed for: MQTTSource")) {
-    NES_INFO("NesSourceConfig: Init source config object with default values.");
+    NES_INFO("NesSourceConfig: Init source config object with new values.");
 
-    if (sourceConfigMap.find("url") != sourceConfigMap.end()) {
-        url->setValue(sourceConfigMap.find("url")->second);
+    if (sourceConfigMap.find("MQTTSourceUrl") != sourceConfigMap.end()) {
+        url->setValue(sourceConfigMap.find("MQTTSourceUrl")->second);
     }
-    if (sourceConfigMap.find("clientId") != sourceConfigMap.end()) {
-        clientId->setValue(sourceConfigMap.find("clientId")->second);
+    if (sourceConfigMap.find("MQTTSourceClientId") != sourceConfigMap.end()) {
+        clientId->setValue(sourceConfigMap.find("MQTTSourceClientId")->second);
     }
-    if (sourceConfigMap.find("userName") != sourceConfigMap.end()) {
-        userName->setValue(sourceConfigMap.find("userName")->second);
+    if (sourceConfigMap.find("MQTTSourceUserName") != sourceConfigMap.end()) {
+        userName->setValue(sourceConfigMap.find("MQTTSourceUserName")->second);
     }
-    if (sourceConfigMap.find("topic") != sourceConfigMap.end()) {
-        topic->setValue(sourceConfigMap.find("topic")->second);
+    if (sourceConfigMap.find("MQTTSourceTopic") != sourceConfigMap.end()) {
+        topic->setValue(sourceConfigMap.find("MQTTSourceTopic")->second);
     }
-    if (sourceConfigMap.find("qos") != sourceConfigMap.end()) {
-        qos->setValue(std::stoi(sourceConfigMap.find("qos")->second));
+    if (sourceConfigMap.find("MQTTSourceQos") != sourceConfigMap.end()) {
+        qos->setValue(std::stoi(sourceConfigMap.find("MQTTSourceQos")->second));
     }
-    if (sourceConfigMap.find("cleanSession") != sourceConfigMap.end()) {
-        cleanSession->setValue((sourceConfigMap.find("cleanSession")->second == "true"));
+    if (sourceConfigMap.find("MQTTSourceCleanSession") != sourceConfigMap.end()) {
+        cleanSession->setValue((sourceConfigMap.find("MQTTSourceCleanSession")->second == "true"));
     }
 
 }

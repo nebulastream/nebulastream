@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_SENSESOURCECONFIG_HPP
-#define NES_SENSESOURCECONFIG_HPP
+#ifndef NES_NOSOURCECONFIG_HPP
+#define NES_NOSOURCECONFIG_HPP
 
 #include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
 #include <map>
@@ -23,8 +23,8 @@ limitations under the License.
 
 namespace NES {
 
-class SenseSourceConfig;
-using SenseSourceConfigPtr = std::shared_ptr<SenseSourceConfig>;
+class NoSourceConfig;
+using NoSourceConfigPtr = std::shared_ptr<NoSourceConfig>;
 
 template<class T>
 class ConfigOption;
@@ -36,26 +36,23 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 /**
 * @brief Configuration object for source config
 */
-class SenseSourceConfig : public SourceConfig {
+class NoSourceConfig : public SourceConfig {
 
   public:
     /**
-     * @brief create a SenseSourceConfigPtr object
+     * @brief create a NoSourceConfigPtr object
      * @param sourceConfigMap inputted config options
-     * @return SenseSourceConfigPtr
+     * @return NoSourceConfigPtr
      */
-    static SenseSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static NoSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
-     * @brief create a SenseSourceConfigPtr object
-     * @return SenseSourceConfigPtr
+     * @brief create defaultSourceConfig with default values
+     * @return defaultSourceConfig with default values
      */
-    static SenseSourceConfigPtr create();
-
-    ~SenseSourceConfig() override = default;
-
+    static NoSourceConfigPtr create();
     /**
-     * @brief resets alls Source configuration to default values
+     * @brief resets all Source configuration to default values
      */
     void resetSourceOptions() override;
     /**
@@ -64,29 +61,17 @@ class SenseSourceConfig : public SourceConfig {
      */
     std::string toString() override;
 
-    /**
-     * @brief Get udsf
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUdsf() const;
-
-    /**
-     * @brief Set udsf
-     */
-    void setUdsf(std::string udsf);
-
   private:
+    /**
+     * @brief constructor to create a new Default source config object using the sourceConfigMap for configs
+     */
+    explicit NoSourceConfig(std::map<std::string, std::string> sourceConfigMap);
 
     /**
-     * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
+     * @brief constructor to create a new Default source config object initialized with default values
      */
-    explicit SenseSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    NoSourceConfig();
 
-    /**
-     * @brief constructor to create a new Sense source config object initialized with default values
-     */
-    SenseSourceConfig();
-
-    StringConfigOption udsf;
 };
 }// namespace NES
 #endif

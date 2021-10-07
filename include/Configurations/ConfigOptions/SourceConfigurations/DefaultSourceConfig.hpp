@@ -40,9 +40,9 @@ class DefaultSourceConfig : public SourceConfig {
 
   public:
     /**
-     * @brief create a MQTTSourceConfigPtr object
+     * @brief create a DefaultSourceConfigPtr object
      * @param sourceConfigMap inputted config options
-     * @return MQTTSourceConfigPtr
+     * @return DefaultSourceConfigPtr
      */
     static DefaultSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
 
@@ -57,7 +57,7 @@ class DefaultSourceConfig : public SourceConfig {
     void resetSourceOptions() override;
     /**
      * @brief creates a string representation of the source
-     * @return
+     * @return string object
      */
     std::string toString() override;
 

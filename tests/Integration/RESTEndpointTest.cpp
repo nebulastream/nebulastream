@@ -20,6 +20,7 @@
 #include "SerializableQueryPlan.pb.h"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -211,8 +212,8 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     /* REGISTER QUERY */
-    SourceConfigPtr sourceConfig;
-    sourceConfig = SourceConfig::create();
+    CSVSourceConfigPtr sourceConfig;
+    sourceConfig = CSVSourceConfig::create();
     sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);

@@ -9,19 +9,13 @@ numberOfBuffersToProduce: 1
 numberOfTuplesToProducePerBuffer: 1
 
 # Set physical stream name
-physicalStreamName: default_stream_phy
+physicalStreamName: default_physical
 
 # Set logical stream name where this stream is added to
-logicalStreamName: default_stream_log
+logicalStreamName: hello
 
 # Set sampling frequency of source
 sourceFrequency: 1
-
-# Set storage layout, true = row layout, false = column layout
-rowLayout: true
-
-# set tupleBuffer flush interval in milliseconds
-flushIntervalMS: -1
 
 # Set input data format
 inputFormat: JSON
@@ -29,18 +23,12 @@ inputFormat: JSON
 # Set the source type (available options: NoSource, DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
 #                                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
 #                                         BinarySource (ToDo: Make source available))
-sourceType: NoSource
+sourceType: MQTTSource
 
 # SenseSource and its needed configuration params
 SenseSource:
   # Set udsf
   - udsf:
-
-CSVSource:
-  # Set file path
-  - filePath: ../tests/test_data/QnV_short.csv
-  # Skip first line of the file
-    skipHeader: false
 
 BinarySource:
   # Set file path
@@ -48,13 +36,11 @@ BinarySource:
 
 MQTTSource:
   # Set url to connect to
-  - url: tcp://127.0.0.1:1885
+  - url: tcp://127.0.0.1:2000
   # Set clientId
-    clientId: testClient
+    clientId: blabla
   # Set userName
-    userName: testUser
-  # Set topic to listen to
-    topic: demoTownSensorData
+    userName:
   # set quality of service
     qos: 2
   # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
@@ -71,13 +57,3 @@ KafkaSource:
     topic: testTopic
   # Set connection time out for source
     connectionTimeout: 10
-
-OPCSource:
-  # Set namespaceIndex for node, needed for: OPCSource
-  - namespaceIndex: 1
-  # Set node identifier, needed for: OPCSource
-    nodeIdentifier: the.answer
-  # Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
-    userName: testUser
-  # Set password, needed for: OPCSource
-    password:

@@ -67,7 +67,7 @@ class TestUtils {
 
     [[nodiscard]] static std::string sourceType(std::string sourceType) { return "--sourceType=" + sourceType; }
 
-    [[nodiscard]] static std::string sourceConfig(std::string sourceConfig) { return "--sourceConfig=" + sourceConfig; }
+    [[nodiscard]] static std::string filePath(std::string filePath) { return "--filePath=" + filePath; }
 
     [[nodiscard]] static std::string dataPort(uint64_t dataPort) { return "--dataPort=" + std::to_string(dataPort); }
 

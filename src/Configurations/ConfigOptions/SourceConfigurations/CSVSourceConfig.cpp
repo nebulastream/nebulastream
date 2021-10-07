@@ -36,11 +36,11 @@ CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfig
                                                  "file path, needed for: CSVSource, BinarySource")),
       skipHeader(ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.")) {
     NES_INFO("CSVSourceConfig: Init source config object.");
-    if (sourceConfigMap.find("filePath") != sourceConfigMap.end()) {
-        filePath->setValue(sourceConfigMap.find("filePath")->second);
+    if (sourceConfigMap.find("CSVSourceFilePath") != sourceConfigMap.end()) {
+        filePath->setValue(sourceConfigMap.find("CSVSourceFilePath")->second);
     }
-    if (sourceConfigMap.find("skipHeader") != sourceConfigMap.end()) {
-        skipHeader->setValue((sourceConfigMap.find("skipHeader")->second == "true"));
+    if (sourceConfigMap.find("CSVSourceSkipHeader") != sourceConfigMap.end()) {
+        skipHeader->setValue((sourceConfigMap.find("CSVSourceSkipHeader")->second == "true"));
     }
 }
 

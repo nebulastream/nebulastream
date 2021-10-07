@@ -60,7 +60,7 @@ class OPCSourceConfig : public SourceConfig {
     void resetSourceOptions() override;
     /**
      * @brief creates a string representation of the source
-     * @return
+     * @return string object
      */
     std::string toString() override;
 
