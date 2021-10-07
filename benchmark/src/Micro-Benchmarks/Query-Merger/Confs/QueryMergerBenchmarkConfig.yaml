@@ -6,7 +6,8 @@ querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query
 #querySetLocation: '/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
 
 # Parameter that are changed per run with comma separated list
-#queryMergerRule: Z3SignatureBasedPartialQueryMergerBottomUpRule,SyntaxBasedPartialQueryMergerRule,ImprovedStringSignatureBasedPartialQueryMergerRule,Z3SignatureBasedPartialQueryMergerRule
+#queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule
+  # Z3SignatureBasedPartialQueryMergerBottomUpRule,SyntaxBasedPartialQueryMergerRule,ImprovedStringSignatureBasedPartialQueryMergerRule,Z3SignatureBasedPartialQueryMergerRule
   #,ImprovedStringSignatureBasedPartialQueryMergerRule,Z3SignatureBasedPartialQueryMergerRule
   #,HybridCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
   #,SyntaxBasedCompleteQueryMergerRule
@@ -20,7 +21,7 @@ batchSize: 1,1,1,1,1,1
 #  ,1,1,1,1
 
 #benchmark internal parameter
-logLevel: LOG_ERROR
+logLevel: LOG_NONE
 numberOfDistinctSources: 10
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 3

@@ -112,6 +112,7 @@ bool Node::addParent(const NodePtr newNode) {
 
 bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
 
+    //Perform sanity checks
     if (newNode.get() == this) {
         NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
         return false;
@@ -122,8 +123,22 @@ bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
         return false;
     }
 
-    NES_INFO("Node: Create temporary copy of this nodes parents.");
+    //replace this with the new node in all its parent
+    NES_DEBUG("Node: Create temporary copy of this nodes parents.");
     std::vector<NodePtr> copyOfParents = parents;
+
+    for (auto& parent : copyOfParents) {
+        for (uint64_t i = 0; i < parent->children.size(); i++) {
+            if (parent->children[i] == shared_from_this()) {
+                parent->children[i] = newNode;
+                NES_DEBUG("Node: Add copy of this nodes parent as parent to the input node.");
+                if (!newNode->addParent(parent)) {
+                    NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
+                    return false;
+                }
+            }
+        }
+    }
 
     NES_INFO("Node: Remove all parents of this node.");
     removeAllParent();
@@ -132,15 +147,6 @@ bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
         NES_ERROR("Node: Unable to add input node as parent to this node.");
         return false;
     }
-
-    NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
-    for (const NodePtr& parent : copyOfParents) {
-        if (!newNode->addParent(parent)) {
-            NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
-            return false;
-        }
-    }
-
     return true;
 }
 
@@ -170,7 +176,7 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
     NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
     for (const NodePtr& child : copyOfChildren) {
         if (!newNode->addChild(child)) {
-            NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
+            NES_ERROR("Node: Unable to add child of this node as child to input node.");
             return false;
         }
     }
