@@ -27,14 +27,14 @@ namespace NES {
 class GroupedMetricValues;
 using GroupedMetricValuesPtr = std::shared_ptr<GroupedMetricValues>;
 
-enum MetricStoreType {NEWEST, ALWAYS};
+enum MetricStoreStrategy {NEWEST, ALWAYS};
 
 /**
  * @brief The MetricStore that stores all the metrics for monitoring.
  */
 class MetricStore {
   public:
-    explicit MetricStore(MetricStoreType storeType);
+    explicit MetricStore(MetricStoreStrategy storeType);
 
     /**
      * @brief Add a metric for a given node by ID
@@ -71,7 +71,7 @@ class MetricStore {
     bool hasMetric(uint64_t nodeId);
 
   private:
-    MetricStoreType storeType;
+    MetricStoreStrategy storeType;
     std::unordered_map<uint64_t, std::priority_queue<GroupedMetricValuesPtr>> storedMetrics;
 
 };

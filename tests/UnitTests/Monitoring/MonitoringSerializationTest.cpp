@@ -249,8 +249,8 @@ TEST_F(MonitoringSerializationTest, testSerDeserMetricGroup) {
 }
 
 TEST_F(MonitoringSerializationTest, testMetricStore) {
-    auto metricStoreAlways = std::make_shared<MetricStore>(MetricStoreType::ALWAYS);
-    auto metricStoreNewest = std::make_shared<MetricStore>(MetricStoreType::NEWEST);
+    auto metricStoreAlways = std::make_shared<MetricStore>(MetricStoreStrategy::ALWAYS);
+    auto metricStoreNewest = std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST);
 
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);

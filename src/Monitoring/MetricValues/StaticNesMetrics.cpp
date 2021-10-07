@@ -35,13 +35,10 @@ StaticNesMetrics::StaticNesMetrics()
     NES_DEBUG("StaticNesMetrics: Default ctor");
 }
 
-StaticNesMetrics::StaticNesMetrics(SerializableStaticNesMetrics metrics): totalMemoryBytes(metrics.totalmemorybytes()),
-                                                                           cpuCoreNum(metrics.cpucorenum()),
-                                                                           totalCPUJiffies(metrics.totalcpujiffies()),
-                                                                           cpuPeriodUS(metrics.cpuperiodus()),
-                                                                           cpuQuotaUS(metrics.cpuquotaus()),
-                                                                           isMoving(metrics.ismoving()),
-                                                                           hasBattery(metrics.hasbattery()) {
+StaticNesMetrics::StaticNesMetrics(SerializableStaticNesMetrics metrics)
+    : totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()), totalCPUJiffies(metrics.totalcpujiffies()),
+      cpuPeriodUS(metrics.cpuperiodus()), cpuQuotaUS(metrics.cpuquotaus()), isMoving(metrics.ismoving()),
+      hasBattery(metrics.hasbattery()) {
     NES_DEBUG("StaticNesMetrics: Creating StaticNesMetrics from Protobuf object");
 }
 
@@ -58,7 +55,7 @@ SchemaPtr StaticNesMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create()
                            ->addField(prefix + "totalMemoryBytes", BasicType::UINT64)
 
-                           ->addField(prefix + "cpuCoreNum", BasicType::UINT16)
+                           ->addField(prefix + "cpuCoreNum", BasicType::UINT32)
                            ->addField(prefix + "totalCPUJiffies", BasicType::UINT64)
                            ->addField(prefix + "cpuPeriodUS", BasicType::INT64)
                            ->addField(prefix + "cpuQuotaUS", BasicType::INT64)
@@ -109,7 +106,6 @@ SerializableStaticNesMetricsPtr StaticNesMetrics::toProtobufSerializable() const
     output->set_hasbattery(hasBattery);
     return output;
 }
-
 
 web::json::value StaticNesMetrics::toJson() const {
     web::json::value metricsJson{};
