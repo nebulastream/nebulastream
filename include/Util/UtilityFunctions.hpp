@@ -245,12 +245,6 @@ uint64_t getNextPipelineId();
      * @brief Returns the next free node id
      * @return node id
      */
-uint64_t getNextTopologyNodeId();
-
-/**
-     * @brief Returns the next free node id
-     * @return node id
-     */
 uint64_t getNextNodeEngineId();
 
 /**
