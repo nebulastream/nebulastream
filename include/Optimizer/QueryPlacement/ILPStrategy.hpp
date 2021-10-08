@@ -84,13 +84,14 @@ class ILPStrategy : public BasePlacementStrategy {
     bool placeOperators(QueryPlanPtr queryPlan, z3::model& model, std::map<std::string, z3::expr>& placementVariables);
 
     /**
+    * @brief Find a path between a source node and a destination node
     * @param sourceNode source operator or source topology node
     * @returns array containing all nodes on path from source to sink or parent topology node
     */
     std::vector<NodePtr> findPathToRoot(NodePtr sourceNode);
 
     /**
-    * @brief creates the placement variables and adds constraints to the optimizer
+    * @brief Populate the placement variables and adds constraints to the optimizer
     * @param context Z3 context
     * @param opt an instance of the Z3 optimize class
     * @param operatorNodePath the selected sequence of operator to add
