@@ -14,14 +14,15 @@
     limitations under the License.
 */
 
-#include <cmath>
 #include <Mobility/Geo/Area/GeoCircle.h>
 #include <Mobility/Geo/GeoPoint.h>
+#include <Mobility/Geo/Projection/GeoCalculator.h>
+#include <cmath>
 
 namespace NES {
 
 GeoCircle::GeoCircle(const GeoPointPtr& center, const CartesianPointPtr& cartesianCenter, double area)
-: GeoArea(center, cartesianCenter, area) {}
+    : GeoArea(center, cartesianCenter, area) {}
 
 double GeoCircle::getDistanceToBound() const { return std::sqrt(getArea() / M_PI); }
 
@@ -33,7 +34,22 @@ bool GeoCircle::contains(const GeoPointPtr& location) {
     return (longDistance + latDistance) < std::pow(r, 2);
 }
 
-bool GeoCircle::contains(const GeoAreaPtr& area) { return area->isCircle(); }
+bool GeoCircle::contains(const GeoAreaPtr& area) {
+    if (area->isCircle()) {
+        double x1 = getCartesianCenter()->getX();
+        double y1 = getCartesianCenter()->getY();
+        double x2 = area->getCartesianCenter()->getX();
+        double y2 = area->getCartesianCenter()->getY();
+        double r1 = getDistanceToBound();
+        double r2 = area->getDistanceToBound();
+
+        double distSq = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+        double radSumSq = (r1 + r2) * (r1 + r2);
+        return distSq <= radSumSq;
+    }
+
+    return false;
+}
 
 bool GeoCircle::isCircle() { return true; }
 

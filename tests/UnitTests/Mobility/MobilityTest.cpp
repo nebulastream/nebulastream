@@ -176,7 +176,7 @@ TEST(GeoSquare, TestContainsArea) {
     EXPECT_FALSE(geoSquare->contains(circle));
 }
 
-TEST(GeoCircle, TestContains) {
+TEST(GeoCircle, TestContainsPoint) {
     GeoPointPtr center = std::make_shared<GeoPoint>(10, 10);
     GeoCirclePtr circle = GeoAreaFactory::createCircle(center, 100);
 
@@ -185,6 +185,19 @@ TEST(GeoCircle, TestContains) {
     EXPECT_TRUE(circle->contains(std::make_shared<GeoPoint>(15, 10)));
 
     EXPECT_FALSE(circle->contains(std::make_shared<GeoPoint>(16, 16)));
+}
+
+TEST(GeoCircle, TestContainsArea) {
+    GeoPointPtr center = std::make_shared<GeoPoint>(10, 10);
+    GeoCirclePtr circle = GeoAreaFactory::createCircle(center, 100);
+
+    CartesianPointPtr noOverlapCenter = std::make_shared<CartesianPoint>(circle->getCartesianCenter()->getX() + circle->getDistanceToBound() * 2 + 1, circle->getCartesianCenter()->getY());
+    GeoCirclePtr noOverlapCircle = GeoAreaFactory::createCircle(GeoCalculator::cartesianToGeographic(noOverlapCenter), 100);
+    EXPECT_FALSE(circle->contains(noOverlapCircle));
+
+    CartesianPointPtr overlapCenter = std::make_shared<CartesianPoint>(circle->getCartesianCenter()->getX() + circle->getDistanceToBound() , circle->getCartesianCenter()->getY());
+    GeoCirclePtr overlapCircle = GeoAreaFactory::createCircle(GeoCalculator::cartesianToGeographic(overlapCenter), 100);
+    EXPECT_TRUE(circle->contains(overlapCircle));
 }
 
 
