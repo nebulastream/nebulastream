@@ -74,7 +74,7 @@ class QueryCatalogEntry {
     QueryCatalogEntry(QueryId queryId,
                       std::string queryString,
                       std::string queryPlacementStrategy,
-                      QueryPlanPtr queryPlanPtr,
+                      QueryPlanPtr inputQueryPlan,
                       QueryStatus queryStatus);
 
     /**
@@ -90,10 +90,22 @@ class QueryCatalogEntry {
     [[nodiscard]] std::string getQueryString() const;
 
     /**
-     * @brief method to get the query plan
+     * @brief method to get the input query plan
      * @return pointer to the query plan
      */
-    [[nodiscard]] QueryPlanPtr getQueryPlan() const;
+    [[nodiscard]] QueryPlanPtr getInputQueryPlan() const;
+
+    /**
+     * @brief method to get the executed query plan
+     * @return pointer to the query plan
+     */
+    [[nodiscard]] QueryPlanPtr getExecutedQueryPlan() const;
+
+    /**
+     * @brief method to set the executed query plan
+     * @param executedQueryPlan: the executed query plan for the query
+     */
+    void setExecutedQueryPlan(QueryPlanPtr executedQueryPlan);
 
     /**
      * @brief method to get the status of the query
@@ -133,7 +145,8 @@ class QueryCatalogEntry {
     QueryId queryId;
     std::string queryString;
     std::string queryPlacementStrategy;
-    QueryPlanPtr queryPlanPtr;
+    QueryPlanPtr inputQueryPlan;
+    QueryPlanPtr executedQueryPlan;
     QueryStatus queryStatus;
     std::string failureReason;
 };

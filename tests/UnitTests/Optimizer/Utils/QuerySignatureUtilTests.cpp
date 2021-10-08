@@ -767,7 +767,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
 //        .map(Attribute("value") = Attribute("value") * 10)
 //        .filter(Attribute("value") < 40 && Attribute("value") < 31)
 //        .sink(printSinkDescriptor);
-//    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+//    QueryPlanPtr queryPlan1 = query1.getInputQueryPlan();
 //    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
 //    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
 //    queryPlan1->setQueryId(queryId1);
@@ -779,7 +779,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
 //        .map(Attribute("value") = Attribute("value") * 10)
 //        .filter(Attribute("value") < 40 && Attribute("value") < 40)
 //        .sink(printSinkDescriptor);
-//    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+//    QueryPlanPtr queryPlan2 = query2.getInputQueryPlan();
 //    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
 //    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
 //    queryPlan2->setQueryId(queryId2);

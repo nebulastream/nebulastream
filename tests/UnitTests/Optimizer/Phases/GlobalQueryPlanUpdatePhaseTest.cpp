@@ -70,7 +70,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
                                                                context,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule);
     auto catalogEntry1 = QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), Scheduling);
-    auto request = RunQueryRequest::create(catalogEntry1.getQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
+    auto request = RunQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     //Assert
     EXPECT_THROW(phase->execute(batchOfQueryRequests), GlobalQueryPlanUpdateException);
@@ -97,7 +97,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
                                                                context,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule);
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
-    auto request = RunQueryRequest::create(catalogEntry1->getQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto request = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     auto resultPlan = phase->execute(batchOfQueryRequests);
 
@@ -129,7 +129,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
-    auto request = RunQueryRequest::create(catalogEntry1->getQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto request = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> nesRequests = {request, request};
     //Assert
     EXPECT_THROW(phase->execute(nesRequests), GlobalQueryPlanUpdateException);
@@ -161,8 +161,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
-    auto request1 = RunQueryRequest::create(catalogEntry1->getQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
-    auto request2 = RunQueryRequest::create(catalogEntry2->getQueryPlan(), catalogEntry2->getQueryPlacementStrategy());
+    auto request1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto request2 = RunQueryRequest::create(catalogEntry2->getInputQueryPlan(), catalogEntry2->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> requests = {request1, request2};
     auto resultPlan = phase->execute(requests);
 
@@ -195,7 +195,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
                                                                context,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
-    auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {nesRequest1};
 
     //Assert
@@ -231,9 +231,9 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     queryCatalog->stopQuery(2);
     auto catalogEntry3 = queryCatalog->getQueryCatalogEntry(2);
 
-    auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
-    auto nesRequest2 = RunQueryRequest::create(catalogEntry2->getQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
-    auto nesRequest3 = StopQueryRequest::create(catalogEntry2->getQueryPlan()->getQueryId());
+    auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto nesRequest2 = RunQueryRequest::create(catalogEntry2->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto nesRequest3 = StopQueryRequest::create(catalogEntry2->getInputQueryPlan()->getQueryId());
 
     std::vector<NESRequestPtr> batchOfQueryRequests = {nesRequest1, nesRequest2, nesRequest3};
     auto resultPlan = phase->execute(batchOfQueryRequests);
@@ -265,7 +265,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
     std::vector<NESRequestPtr> batchOfNesRequests;
     auto allQueries = queryCatalog->getAllQueryCatalogEntries();
     for (auto& [key, value] : allQueries) {
-        auto nesRequest = RunQueryRequest::create(value->getQueryPlan(), value->getQueryPlacementStrategy());
+        auto nesRequest = RunQueryRequest::create(value->getInputQueryPlan(), value->getQueryPlacementStrategy());
         batchOfNesRequests.emplace_back(nesRequest);
     }
 
@@ -320,7 +320,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     std::vector<NESRequestPtr> batchOfNesRequests;
     auto allQueries = queryCatalog->getAllQueryCatalogEntries();
     for (auto& [key, value] : allQueries) {
-        auto nesRequest = RunQueryRequest::create(value->getQueryPlan(), value->getQueryPlacementStrategy());
+        auto nesRequest = RunQueryRequest::create(value->getInputQueryPlan(), value->getQueryPlacementStrategy());
         batchOfNesRequests.emplace_back(nesRequest);
     }
 
