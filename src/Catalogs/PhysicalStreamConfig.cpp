@@ -118,7 +118,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
 
         //Places in mqttConfig provide:
         //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat (conversion to enum above)
-        //5 = qos (conversion to enum above); 6 = cleanSession; 7 = bufferFlushIntervalMs
+        //5 = qualityOfService (conversion to enum above); 6 = cleanSession; 7 = bufferFlushIntervalMs
         long bufferFlushIntervalMs = -1;
         if (mqttConfig.size() > 7) {
             bufferFlushIntervalMs = std::stol(mqttConfig[7]);
@@ -129,7 +129,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
                                             mqttConfig[2],
                                             mqttConfig[3],
                                             inputFormat,
-                                            stoi(mqttConfig[5]),
+                                            MQTTSourceDescriptor::ServiceQualities(stoi(mqttConfig[5])),
                                             (strcasecmp("true", mqttConfig[6].c_str()) == 0),
                                             bufferFlushIntervalMs);
 #endif

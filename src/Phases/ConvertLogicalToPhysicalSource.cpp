@@ -143,7 +143,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                 numSourceLocalBuffers,
                                 successors,
                                 mqttSourceDescriptor->getInputFormat(),
-                                mqttSourceDescriptor->getQos(),
+                                mqttSourceDescriptor->getQualityOfService(),
                                 mqttSourceDescriptor->getCleanSession(),
                                 mqttSourceDescriptor->getBufferFlushIntervalMs());
 #endif

@@ -73,7 +73,7 @@
 #endif
 
 #ifndef QOS
-#define QOS 1
+#define QOS MQTTSourceDescriptor::ServiceQualities::atLeastOnce
 #endif
 
 #ifndef CLEANSESSION
@@ -252,6 +252,9 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
                             ->addField(createField("healthStatusDuration", UINT32))
                             ->addField(createField("recovered", BOOLEAN))
                             ->addField(createField("dead", BOOLEAN));)";
+    //Can be used for a simple python MQTT test -> change filter (hospitalId -> MessageNr)!
+//    std::string stream =
+//        R"(Schema::create()->addField(createField("MessageNr", UINT64));)";
     std::string testSchemaFileName = "window.hpp";
     std::ofstream out(testSchemaFileName);
     out << stream;
@@ -259,7 +262,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
     srcConf->setSourceType("MQTTSource");
-    //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat; 5 = qos; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
+    //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat; 5 = qualityOfService; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
     srcConf->setSourceConfig("ws://127.0.0.1:9001;testClients;testUser;demoTownSensorData;JSON;2;false;3000");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setNumberOfBuffersToProduce(10000);

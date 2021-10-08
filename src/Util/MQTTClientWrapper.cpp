@@ -60,7 +60,9 @@ void MQTTClientWrapper::disconnect() {
 
 void MQTTClientWrapper::sendPayload(std::string payload) {
     if (asyncClient) {
-        sendTopic->publish(std::move(payload));
+        //qualityOfService to enable cleanSessions(require > 0), retained not necessary (broker can store up to 1
+        // -> retained message, which is delivered to a newly subscribed client(correct topic) first)
+        sendTopic->publish(std::move(payload), qualityOfService, false);
     } else {
         auto pubmsg = mqtt::make_message(topic, payload);
         pubmsg->set_qos(qualityOfService);

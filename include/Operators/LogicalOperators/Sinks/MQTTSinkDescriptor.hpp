@@ -26,7 +26,7 @@ namespace NES {
 class MQTTSinkDescriptor : public SinkDescriptor {
   public:
     enum TimeUnits { nanoseconds, milliseconds, seconds };
-    enum ServiceQualities { atMostOnce, atLeastOnce, exactlyOnce };// MQTT also offers exactly once, add if needed
+    enum ServiceQualities { atMostOnce, atLeastOnce, exactlyOnce };//cleanSession requires atLeastOnce or exactlyOnce
     /**
      * @brief Creates the MQTT sink description
      * @param address: address name of MQTT broker
@@ -36,7 +36,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
      * @param timeUnit: time unit chosen by client user for message delay
      * @param messageDelay: time before next message is sent by client to broker
-     * @param qualityOfService: either 'at most once' or 'at least once'
+     * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return descriptor for MQTT sink
      */
@@ -116,7 +116,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
      * @param timeUnit: time unit chosen by client user for message delay
      * @param messageDelay: time before next message is sent by client to broker
-     * @param qualityOfService: either 'at most once' or 'at least once'
+     * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return MQTT sink
      */

@@ -303,7 +303,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                size_t numSourceLocalBuffers,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
                                SourceDescriptor::InputFormat dataFormat,
-                               uint8_t qos,
+                               MQTTSourceDescriptor::ServiceQualities qualityOfService,
                                bool cleanSession,
                                long bufferFlushIntervalMs);
 #endif

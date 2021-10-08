@@ -130,12 +130,17 @@ message SerializableOperator{
         JSON=0;
         CSV=1;
       };
+      enum ServiceQualities{
+        atMostOnce=0;
+        atLeastOnce=1;
+        exactlyOnce=2;
+      };
       string serverAddress = 1;
       string clientId = 2;
       string user = 3;
       string topic = 4;
       InputFormat inputFormat = 5;
-      uint32 qos = 6;
+      ServiceQualities qualityOfService = 6;
       bool cleanSession = 7;
       SerializableSchema sourceSchema = 8;
     }
