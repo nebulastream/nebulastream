@@ -223,9 +223,10 @@ class CodeGenerator {
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
 
-    virtual Runtime::Execution::ExecutablePipelineStagePtr compile(Compiler::JITCompilerPtr jitCompiler,
-                                                                   PipelineContextPtr pipelineContext,
-                                                                   QueryCompilerOptions::CompilationStrategy compilationStrategy) = 0;
+    virtual Runtime::Execution::ExecutablePipelineStagePtr
+    compile(Compiler::JITCompilerPtr jitCompiler,
+            PipelineContextPtr pipelineContext,
+            QueryCompilerOptions::CompilationStrategy compilationStrategy) = 0;
 
     virtual std::string generateCode(PipelineContextPtr pipelineContext) = 0;
 

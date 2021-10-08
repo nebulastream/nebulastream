@@ -27,13 +27,17 @@ namespace QueryCompilation {
  */
 class CodeGenerationPhase {
   public:
-    CodeGenerationPhase(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler, QueryCompilerOptions::CompilationStrategy compilationStrategy);
+    CodeGenerationPhase(CodeGeneratorPtr codeGenerator,
+                        Compiler::JITCompilerPtr jitCompiler,
+                        QueryCompilerOptions::CompilationStrategy compilationStrategy);
 
     /**
      * @brief Creates the code generation phase.
      * @return CodeGenerationPhasePtr
      */
-    static CodeGenerationPhasePtr create(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler, QueryCompilerOptions::CompilationStrategy compilationStrategy);
+    static CodeGenerationPhasePtr create(CodeGeneratorPtr codeGenerator,
+                                         Compiler::JITCompilerPtr jitCompiler,
+                                         QueryCompilerOptions::CompilationStrategy compilationStrategy);
 
     /**
      * @brief Generates code for all pipelines in a pipelined query plan.

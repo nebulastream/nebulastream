@@ -28,11 +28,14 @@
 
 namespace NES::QueryCompilation {
 
-PredicationOptimizationPhasePtr PredicationOptimizationPhase::PredicationOptimizationPhase::create(QueryCompilerOptions::FilterProcessingStrategy filterProcessingStrategy) {
+PredicationOptimizationPhasePtr PredicationOptimizationPhase::PredicationOptimizationPhase::create(
+    QueryCompilerOptions::FilterProcessingStrategy filterProcessingStrategy) {
     return std::make_shared<PredicationOptimizationPhase>(filterProcessingStrategy);
 }
 
-PredicationOptimizationPhase::PredicationOptimizationPhase(QueryCompilerOptions::FilterProcessingStrategy filterProcessingStrategy) : filterProcessingStrategy(filterProcessingStrategy) {}
+PredicationOptimizationPhase::PredicationOptimizationPhase(
+    QueryCompilerOptions::FilterProcessingStrategy filterProcessingStrategy)
+    : filterProcessingStrategy(filterProcessingStrategy) {}
 
 PipelineQueryPlanPtr PredicationOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
     if (filterProcessingStrategy == QueryCompilerOptions::BRANCHED) {
@@ -63,12 +66,12 @@ OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr oper
     // abort if invalid operator is found:
     for (const auto& node : nodes) {
         if (!node->instanceOf<GeneratableOperators::GeneratableBufferEmit>()
-        && !node->instanceOf<GeneratableOperators::GeneratableBufferScan>()
-        && !node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()
-        && !node->instanceOf<GeneratableOperators::GeneratableMapOperator>()
-        && !node->instanceOf<GeneratableOperators::GeneratableProjectionOperator>()) {
+            && !node->instanceOf<GeneratableOperators::GeneratableBufferScan>()
+            && !node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()
+            && !node->instanceOf<GeneratableOperators::GeneratableMapOperator>()
+            && !node->instanceOf<GeneratableOperators::GeneratableProjectionOperator>()) {
             NES_DEBUG("PredicationOptimizationPhase: No predication applied. There is an unsupported operator in the pipeline: "
-            + node->toString());
+                      + node->toString());
             return operatorPipeline;
         }
     }

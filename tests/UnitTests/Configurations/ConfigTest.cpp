@@ -142,17 +142,18 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
     WorkerConfigPtr workerConfigPtr = WorkerConfig::create();
-    std::string argv[] = {"--localWorkerIp=localhost",
-                          "--coordinatorIp=",
-                          "--coordinatorPort=5000",
-                          "--numberOfSlots=",
-                          "--numWorkerThreads=5",
-                          "--numberOfBuffersInGlobalBufferManager=2048",
-                          "--numberOfBuffersPerWorker=",
-                          "--numberOfBuffersInSourceLocalBufferPool=128",
-                          "--queryCompilerCompilationStrategy=FAST",
-                          "--queryCompilerPipeliningStrategy=OPERATPR_AT_A_TIME",
-                          "--queryCompilerOutputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+    std::string argv[] = {
+        "--localWorkerIp=localhost",
+        "--coordinatorIp=",
+        "--coordinatorPort=5000",
+        "--numberOfSlots=",
+        "--numWorkerThreads=5",
+        "--numberOfBuffersInGlobalBufferManager=2048",
+        "--numberOfBuffersPerWorker=",
+        "--numberOfBuffersInSourceLocalBufferPool=128",
+        "--queryCompilerCompilationStrategy=FAST",
+        "--queryCompilerPipeliningStrategy=OPERATPR_AT_A_TIME",
+        "--queryCompilerOutputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
 
     };
     int argc = 11;
@@ -182,9 +183,12 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
               workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
     EXPECT_EQ(workerConfigPtr->getBufferSizeInBytes()->getValue(), workerConfigPtr->getBufferSizeInBytes()->getDefaultValue());
     EXPECT_NE(workerConfigPtr->getNumWorkerThreads()->getValue(), workerConfigPtr->getNumWorkerThreads()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getQueryCompilerCompilationStrategy()->getValue(), workerConfigPtr->getQueryCompilerCompilationStrategy()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getQueryCompilerPipeliningStrategy()->getValue(), workerConfigPtr->getQueryCompilerPipeliningStrategy()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getQueryCompilerOutputBufferAllocationStrategy()->getValue(), workerConfigPtr->getQueryCompilerOutputBufferAllocationStrategy()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->getQueryCompilerCompilationStrategy()->getValue(),
+              workerConfigPtr->getQueryCompilerCompilationStrategy()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->getQueryCompilerPipeliningStrategy()->getValue(),
+              workerConfigPtr->getQueryCompilerPipeliningStrategy()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->getQueryCompilerOutputBufferAllocationStrategy()->getValue(),
+              workerConfigPtr->getQueryCompilerOutputBufferAllocationStrategy()->getDefaultValue());
 }
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
