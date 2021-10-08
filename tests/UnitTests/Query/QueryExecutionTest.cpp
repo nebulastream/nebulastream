@@ -254,7 +254,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
                             ->addField("test$one", BasicType::INT64)
                             ->addField("test$value", BasicType::INT64);
 
-
     auto outputBufferOptimizationLevels = {
         NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::ALL,
         NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO,

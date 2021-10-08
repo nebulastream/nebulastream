@@ -2371,7 +2371,12 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
     auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", src);
     auto enableDebugCompilation = compilationStrategy == QueryCompilerOptions::DEBUG;
     auto enableOptimizations = compilationStrategy == QueryCompilerOptions::OPTIMIZE;
-    auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, enableOptimizations, enableDebugCompilation);
+    auto request = Compiler::CompilationRequest::create(std::move(sourceCode),
+                                                        "query",
+                                                        false,
+                                                        false,
+                                                        enableOptimizations,
+                                                        enableDebugCompilation);
     auto result = jitCompiler->compile(std::move(request)).share();
 
     auto futureCompiledExecutablePipelineStage = std::async(std::launch::async, [result, code, src]() {

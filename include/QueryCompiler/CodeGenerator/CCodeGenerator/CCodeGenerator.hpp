@@ -211,9 +211,10 @@ class CCodeGenerator : public CodeGenerator {
      * @param code generated code.
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
-    Runtime::Execution::ExecutablePipelineStagePtr compile(Compiler::JITCompilerPtr jitCompiler,
-                                                           PipelineContextPtr context,
-                                                           QueryCompilerOptions::CompilationStrategy compilationStrategy) override;
+    Runtime::Execution::ExecutablePipelineStagePtr
+    compile(Compiler::JITCompilerPtr jitCompiler,
+            PipelineContextPtr context,
+            QueryCompilerOptions::CompilationStrategy compilationStrategy) override;
 
     std::string generateCode(PipelineContextPtr context) override;
 
