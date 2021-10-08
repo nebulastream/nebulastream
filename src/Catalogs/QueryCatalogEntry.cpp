@@ -22,16 +22,20 @@ namespace NES {
 QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      std::string queryString,
                                      std::string queryPlacementStrategy,
-                                     QueryPlanPtr queryPlanPtr,
+                                     QueryPlanPtr inputQueryPlan,
                                      QueryStatus queryStatus)
     : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(std::move(queryPlacementStrategy)),
-      queryPlanPtr(std::move(queryPlanPtr)), queryStatus(queryStatus) {}
+      inputQueryPlan(std::move(inputQueryPlan)), queryStatus(queryStatus) {}
 
 QueryId QueryCatalogEntry::getQueryId() const noexcept { return queryId; }
 
 std::string QueryCatalogEntry::getQueryString() const { return queryString; }
 
-QueryPlanPtr QueryCatalogEntry::getQueryPlan() const { return queryPlanPtr; }
+QueryPlanPtr QueryCatalogEntry::getInputQueryPlan() const { return inputQueryPlan; }
+
+QueryPlanPtr QueryCatalogEntry::getExecutedQueryPlan() const { return executedQueryPlan; }
+
+void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) { this->executedQueryPlan = executedQueryPlan; }
 
 QueryStatus QueryCatalogEntry::getQueryStatus() const { return queryStatus; }
 
@@ -46,7 +50,9 @@ std::string QueryCatalogEntry::getFailureReason() { return failureReason; }
 const std::string& QueryCatalogEntry::getQueryPlacementStrategy() const { return queryPlacementStrategy; }
 
 QueryCatalogEntry QueryCatalogEntry::copy() {
-    return QueryCatalogEntry(queryId, queryString, queryPlacementStrategy, queryPlanPtr, queryStatus);
+    auto queryCatalogEntry = QueryCatalogEntry(queryId, queryString, queryPlacementStrategy, inputQueryPlan, queryStatus);
+    queryCatalogEntry.setExecutedQueryPlan(executedQueryPlan);
+    return queryCatalogEntry;
 }
 
 }// namespace NES

@@ -96,7 +96,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request req
             QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
 
             NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
-            auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getQueryPlan());
+            auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan());
 
             //Prepare the response
             successMessageImpl(request, basePlan);

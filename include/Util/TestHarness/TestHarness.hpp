@@ -331,13 +331,14 @@ class TestHarness {
         // Currently, we need to produce a result with the schema that does not cause the associated struct to be padded
         // (e.g., the size is multiple of 8)
         uint64_t outputSchemaSizeInBytes = queryCatalog->getQueryCatalogEntry(queryId)
-                                               ->getQueryPlan()
+                                               ->getExecutedQueryPlan()
                                                ->getSinkOperators()[0]
                                                ->getOutputSchema()
                                                ->getSchemaSizeInBytes();
         NES_DEBUG(
             "TestHarness: outputSchema: "
-            << queryCatalog->getQueryCatalogEntry(queryId)->getQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString());
+            << queryCatalog->getQueryCatalogEntry(queryId)
+                                                       ->getInputQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString());
         NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
                    "The size of output struct does not match output schema."
                    " Output struct:"
