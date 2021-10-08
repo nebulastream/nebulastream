@@ -26,11 +26,11 @@ namespace NES {
 class MQTTSinkDescriptor : public SinkDescriptor {
   public:
     enum TimeUnits { nanoseconds, milliseconds, seconds };
-    enum ServiceQualities { atMostOnce, atLeastOnce };// MQTT also offers exactly once, add if needed
+    enum ServiceQualities { atMostOnce, atLeastOnce, exactlyOnce };// MQTT also offers exactly once, add if needed
     /**
      * @brief Creates the MQTT sink description
      * @param address: address name of MQTT broker
-     * @param clientId: client ID for MQTT client
+     * @param clientId: client ID for MQTT client. If non is given, the operatorID is used automatically (see 'ConvertLogicalToPhysicalSink.cpp).
      * @param topic: MQTT topic chosen to publish client data to
      * @param user: user identification for client
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting

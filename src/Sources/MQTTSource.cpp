@@ -80,7 +80,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
     }*/
 
     if (cleanSession) {
-        uint64_t randomizeClientId = random();
+        uint32_t randomizeClientId = random();
         this->clientId = (clientId + std::to_string(randomizeClientId));
     }
 
@@ -244,8 +244,10 @@ bool MQTTSource::disconnect() {
         // But we check, just to make sure.
         if (client->is_connected()) {
             NES_DEBUG("MQTTSource: Shutting down and disconnecting from the MQTT server.");
-            client->unsubscribe(topic)->wait();
-            client->start_consuming();
+            // In a non-clean(persistent) session expects, the broker expects the client to stay subscribed to the topic
+            // -> even unsubscribing and resubscribing does not work, the (only?) way to stop a non-clean(persistent)
+            // -> session is to establish a clean session using the SAME clientID (as was used for the non-clean session)
+            if(cleanSession) { client->unsubscribe(topic)->wait(); }
             client->disconnect()->wait();
             NES_DEBUG("MQTTSource: disconnected.");
         } else {
