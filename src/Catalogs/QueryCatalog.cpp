@@ -83,6 +83,13 @@ QueryCatalogEntryPtr QueryCatalog::recordInvalidQuery(const std::string& querySt
     return queryCatalogEntry;
 }
 
+void QueryCatalog::setExecutedQueryPlanForQuery(QueryId queryId, QueryPlanPtr executedQueryPlan) {
+    std::unique_lock lock(catalogMutex);
+    NES_INFO("QueryCatalog: Update query catalog entry for query with id " << queryId);
+    QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
+    queryCatalogEntry->setExecutedQueryPlan(executedQueryPlan);
+}
+
 void QueryCatalog::setQueryFailureReason(QueryId queryId, const std::string& failureReason) {
     std::unique_lock lock(catalogMutex);
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);

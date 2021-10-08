@@ -109,6 +109,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                                     + std::to_string(queryId));
                 }
 
+                queryCatalog->setExecutedQueryPlanForQuery(queryId, queryPlan);
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 globalQueryPlan->addQueryPlan(queryPlan);
             } else {
