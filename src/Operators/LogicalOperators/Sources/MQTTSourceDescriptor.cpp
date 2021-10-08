@@ -29,7 +29,7 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  std::string user,
                                                  std::string topic,
                                                  SourceDescriptor::InputFormat inputFormat,
-                                                 uint32_t qos,
+                                                 ServiceQualities qualityOfService,
                                                  bool cleanSession,
                                                  long bufferFlushIntervalMs) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema),
@@ -38,7 +38,7 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                                        std::move(user),
                                                                        std::move(topic),
                                                                        inputFormat,
-                                                                       qos,
+                                                                       qualityOfService,
                                                                        cleanSession,
                                                                        bufferFlushIntervalMs));
 }
@@ -50,7 +50,7 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                  std::string user,
                                                  std::string topic,
                                                  SourceDescriptor::InputFormat inputFormat,
-                                                 uint32_t qos,
+                                                 ServiceQualities qualityOfService,
                                                  bool cleanSession,
                                                  long bufferFlushIntervalMs) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema),
@@ -60,7 +60,7 @@ SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
                                                                        std::move(user),
                                                                        std::move(topic),
                                                                        inputFormat,
-                                                                       qos,
+                                                                       qualityOfService,
                                                                        cleanSession,
                                                                        bufferFlushIntervalMs));
 }
@@ -71,11 +71,11 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string user,
                                            std::string topic,
                                            SourceDescriptor::InputFormat inputFormat,
-                                           uint32_t qos,
+                                           ServiceQualities qualityOfService,
                                            bool cleanSession,
                                            long bufferFlushIntervalMs)
     : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)),
-      user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qos(qos), cleanSession(cleanSession),
+    user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qualityOfService(qualityOfService), cleanSession(cleanSession),
       bufferFlushIntervalMs(bufferFlushIntervalMs) {}
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
@@ -85,11 +85,11 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string user,
                                            std::string topic,
                                            SourceDescriptor::InputFormat inputFormat,
-                                           uint32_t qos,
+                                           ServiceQualities qualityOfService,
                                            bool cleanSession,
                                            long bufferFlushIntervalMs)
     : SourceDescriptor(std::move(schema), std::move(logicalStreamName)), serverAddress(std::move(serverAddress)),
-      clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qos(qos),
+    clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qualityOfService(qualityOfService),
       cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs) {}
 
 std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
@@ -100,7 +100,7 @@ std::string MQTTSourceDescriptor::getUser() const { return user; }
 
 std::string MQTTSourceDescriptor::getTopic() const { return topic; }
 
-uint32_t MQTTSourceDescriptor::getQos() const { return qos; }
+MQTTSourceDescriptor::ServiceQualities MQTTSourceDescriptor::getQualityOfService() const { return qualityOfService; }
 
 uint64_t MQTTSourceDescriptor::getBufferFlushIntervalMs() const { return bufferFlushIntervalMs; }
 
@@ -119,7 +119,7 @@ bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     NES_DEBUG("URL= " << serverAddress << " == " << otherMQTTSource->getServerAddress());
     return serverAddress == otherMQTTSource->getServerAddress() && clientId == otherMQTTSource->getClientId()
         && user == otherMQTTSource->getUser() && topic == otherMQTTSource->getTopic()
-        && inputFormat == otherMQTTSource->getInputFormat() && qos == otherMQTTSource->getQos()
+        && inputFormat == otherMQTTSource->getInputFormat() && qualityOfService == otherMQTTSource->getQualityOfService()
         && cleanSession == otherMQTTSource->getCleanSession();
 }
 

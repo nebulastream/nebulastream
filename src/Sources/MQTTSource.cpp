@@ -57,7 +57,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        SourceDescriptor::InputFormat inputFormat,
-                       uint32_t qos,
+                       MQTTSourceDescriptor::ServiceQualities qualityOfService,
                        bool cleanSession,
                        long bufferFlushIntervalMs)
     : DataSource(std::move(schema),
@@ -68,7 +68,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  gatheringMode,
                  std::move(executableSuccessors)),
       connected(false), serverAddress(serverAddress), clientId(clientId), user(user), topic(topic), inputFormat(inputFormat),
-      tupleSize(schema->getSchemaSizeInBytes()), qos(qos), cleanSession(cleanSession),
+      tupleSize(schema->getSchemaSizeInBytes()), qualityOfService(qualityOfService), cleanSession(cleanSession),
       bufferFlushIntervalMs(bufferFlushIntervalMs) {
 
     //ToDo: #2220
@@ -142,7 +142,7 @@ std::string MQTTSource::toString() const {
     ss << "USER=" << user << ", ";
     ss << "TOPIC=" << topic << ", ";
     ss << "DATATYPE=" << inputFormat << ", ";
-    ss << "QOS=" << qos << ", ";
+    ss << "QOS=" << qualityOfService << ", ";
     ss << "CLEANSESSION=" << cleanSession << ". ";
     ss << "BUFFERFLUSHINTERVALMS=" << bufferFlushIntervalMs << ". ";
     return ss.str();
@@ -218,7 +218,7 @@ bool MQTTSource::connect() {
             // there is a session, then the server remembers us and our
             // subscriptions.
             if (!rsp.is_session_present()) {
-                client->subscribe(topic, qos)->wait();
+                client->subscribe(topic, qualityOfService)->wait();
             }
             connected = client->is_connected();
         } catch (const mqtt::exception& exc) {
@@ -277,7 +277,7 @@ uint64_t MQTTSource::getTupleSize() const { return tupleSize; }
 
 SourceType MQTTSource::getType() const { return MQTT_SOURCE; }
 
-uint32_t MQTTSource::getQos() const { return qos; }
+MQTTSourceDescriptor::ServiceQualities MQTTSource::getQualityOfService() const { return qualityOfService; }
 
 uint64_t MQTTSource::getTuplesThisPass() const { return tuplesThisPass; }
 

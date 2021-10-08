@@ -1073,7 +1073,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
                                                 mqttSerializedSourceDescriptor.user(),
                                                 mqttSerializedSourceDescriptor.topic(),
                                                 (SourceDescriptor::InputFormat) mqttSerializedSourceDescriptor.inputformat(),
-                                                mqttSerializedSourceDescriptor.qos(),
+                                                MQTTSourceDescriptor::ServiceQualities(mqttSerializedSourceDescriptor.qualityofservice()),
                                                 mqttSerializedSourceDescriptor.cleansession());
         return ret;
     }

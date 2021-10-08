@@ -229,12 +229,13 @@ createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const st
  * @param parentPlanId: the Id of the parent plan
  * @param nodeEngine: a node engine pointer, e.g. for access to the buffer manager
  * @param address: address of a MQTT broker
- * @param clientID: ID that identifies the MQTT client
+ * @param clientId: client ID for MQTT client. If non is given, the operatorID is used automatically (see 'ConvertLogicalToPhysicalSink.cpp).
  * @param topic: broker topic/path to which the MQTT messages are published
  * @param user: used to identify client at broker
  * @param maxBufferedMSGs: maximal number for how many messages can be buffered at client
  * @param timeUnit: unit used to interpret the msgDelay value (seconds vs milliseconds vs nanoseconds)
  * @param msgDelay: how long to wait before sending the next message from client
+ * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
  * @param asynchronousClient: 1 if client should be asynchronous, else 0
  * @return a data sink pointer
  */

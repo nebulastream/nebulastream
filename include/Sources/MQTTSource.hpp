@@ -39,21 +39,21 @@ class TupleBuffer;
 class MQTTSource : public DataSource {
 
   public:
-    /**
-     * @brief constructor for the MQTT data source
-     * @param schema of the data
-     * @param bufferManager
-     * @param queryManager
-     * @param serverAddress address and port of the mqtt broker
-     * @param clientId identifies the client connecting to the server, each server has aunique clientID
-     * @param user name to connect to the mqtt broker
-     * @param topic to listen to, to obtain the desired data
-     * @param operatorId
-     * @param inputFormat data format that broker sends
-     * @param qos Quality of Service (0 = at most once delivery, 1 = at leaste once delivery, 2 = exactly once delivery)
-     * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-     * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
-     */
+  /**
+   * @brief constructor for the MQTT data source
+   * @param schema of the data
+   * @param bufferManager
+   * @param queryManager
+   * @param serverAddress address and port of the mqtt broker
+   * @param clientId identifies the client connecting to the server, each server has aunique clientID
+   * @param user name to connect to the mqtt broker
+   * @param topic to listen to, to obtain the desired data
+   * @param operatorId
+   * @param inputFormat data format that broker sends
+   * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
+   * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+   * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
+   */
     explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
                         Runtime::QueryManagerPtr queryManager,
@@ -66,7 +66,7 @@ class MQTTSource : public DataSource {
                         GatheringMode gatheringMode,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                         SourceDescriptor::InputFormat inputFormat,
-                        uint32_t qos,
+                        MQTTSourceDescriptor::ServiceQualities qualityOfService,
                         bool cleanSession,
                         long bufferFlushIntervalMs);
 
@@ -133,7 +133,7 @@ class MQTTSource : public DataSource {
      * @brief getter for Quality of Service
      * @return Quality of Service
      */
-    uint32_t getQos() const;
+    MQTTSourceDescriptor::ServiceQualities getQualityOfService() const;
     /**
      * @brief getter for cleanSession
      * @return cleanSession
@@ -183,7 +183,7 @@ class MQTTSource : public DataSource {
     mqtt::async_clientPtr client;
     uint64_t tupleSize;
     uint64_t tuplesThisPass;
-    uint32_t qos;
+    MQTTSourceDescriptor::ServiceQualities qualityOfService;
     bool cleanSession;
     std::vector<PhysicalTypePtr> physicalTypes;
     std::unique_ptr<Parser> inputParser;

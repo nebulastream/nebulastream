@@ -40,7 +40,7 @@ class MQTTSink : public SinkMedium {
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
      * @param timeUnit: time unit chosen by client user for message delay
      * @param messageDelay: time before next message is sent by client to broker
-     * @param qualityOfService: either 'at most once' or 'at least once'
+     * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return MQTT sink
      */
