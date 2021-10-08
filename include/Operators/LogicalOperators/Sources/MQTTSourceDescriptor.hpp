@@ -135,18 +135,18 @@ class MQTTSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-  /**
-   * @brief mqtt source descriptor constructor
-   * @param schema the schema of the data
-   * @param serverAddress the server address to connect to (port included)
-   * @param clientId unique server id
-   * @param user to connect to server
-   * @param topic to subscribe to
-   * @param inputFormat data type that is send by the broker
-   * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
-   * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-   * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
-   */
+    /**
+     * @brief mqtt source descriptor constructor
+     * @param schema the schema of the data
+     * @param serverAddress the server address to connect to (port included)
+     * @param clientId unique server id
+     * @param user to connect to server
+     * @param topic to subscribe to
+     * @param inputFormat data type that is send by the broker
+     * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
+     * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+     * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
+     */
     explicit MQTTSourceDescriptor(SchemaPtr schema,
                                   std::string serverAddress,
                                   std::string clientId,
@@ -157,18 +157,18 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                   bool cleanSession,
                                   long bufferFlushIntervalMs);
     /**
-   * @brief mqtt source descriptor constructor
-   * @param schema the schema of the data
-   * @param logicalStreamName name of the data stream
-   * @param serverAddress the server address to connect to (port included)
-   * @param clientId unique server id
-   * @param user to connect to server
-   * @param topic to subscribe to
-   * @param inputFormat data type that is send by the broker
-   * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
-   * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-   * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
-   */
+     * @brief mqtt source descriptor constructor
+     * @param schema the schema of the data
+     * @param logicalStreamName name of the data stream
+     * @param serverAddress the server address to connect to (port included)
+     * @param clientId unique server id
+     * @param user to connect to server
+     * @param topic to subscribe to
+     * @param inputFormat data type that is send by the broker
+     * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
+     * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+     * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
+     */
     explicit MQTTSourceDescriptor(SchemaPtr schema,
                                   std::string logicalStreamName,
                                   std::string serverAddress,
