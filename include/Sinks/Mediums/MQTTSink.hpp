@@ -34,7 +34,7 @@ class MQTTSink : public SinkMedium {
     /**
      * @brief Creates the MQTT sink
      * @param address: address name of MQTT broker
-     * @param clientId: client ID for MQTT client
+     * @param clientId: client ID for MQTT client. If non is given, the operatorID is used automatically (see 'ConvertLogicalToPhysicalSink.cpp).
      * @param topic: MQTT topic chosen to publish client data to
      * @param user: user identification for client
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
