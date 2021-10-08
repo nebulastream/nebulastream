@@ -15,17 +15,23 @@
 */
 
 #include <Mobility/Geo/Node/GeoNodeUtils.h>
+#include <Mobility/Geo/Projection/GeoCalculator.h>
 #include <Mobility/LocationCatalog.h>
+#include <Mobility/Utils/MathUtils.h>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-LocationCatalog::LocationCatalog(uint32_t defaultStorageSize) : defaultStorageSize(defaultStorageSize) {}
+LocationCatalog::LocationCatalog(uint32_t defaultStorageSize) : LocationCatalog(defaultStorageSize, false) {}
+
+LocationCatalog::LocationCatalog(uint32_t defaultStorageSize, bool dynamicDuplicatesFilterEnabled)
+    : defaultStorageSize(defaultStorageSize), dynamicDuplicatesFilterEnabled(dynamicDuplicatesFilterEnabled) {}
 
 void LocationCatalog::addSink(const string& nodeId, const double movingRangeArea) {
     std::lock_guard lock(catalogLock);
     NES_DEBUG("LocationCatalog: adding sink " << nodeId);
-    this->sinks.insert(std::pair<string, GeoSinkPtr>(nodeId, std::make_shared<GeoSink>(nodeId, movingRangeArea, defaultStorageSize)));
+    this->sinks.insert(
+        std::pair<string, GeoSinkPtr>(nodeId, std::make_shared<GeoSink>(nodeId, movingRangeArea, defaultStorageSize)));
 }
 
 void LocationCatalog::addSource(const string& nodeId) {
@@ -34,10 +40,11 @@ void LocationCatalog::addSource(const string& nodeId) {
     this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId, defaultStorageSize)));
 }
 
-void LocationCatalog::addSource(const string& nodeId,  double rangeArea) {
+void LocationCatalog::addSource(const string& nodeId, double rangeArea) {
     std::lock_guard lock(catalogLock);
     NES_DEBUG("LocationCatalog: adding source " << nodeId << " with range " << rangeArea);
-    this->sources.insert(std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId, rangeArea, defaultStorageSize)));
+    this->sources.insert(
+        std::pair<string, GeoSourcePtr>(nodeId, std::make_shared<GeoSource>(nodeId, rangeArea, defaultStorageSize)));
 }
 
 GeoSinkPtr LocationCatalog::getSink(const string& nodeId) {
@@ -50,27 +57,30 @@ GeoSourcePtr LocationCatalog::getSource(const string& nodeId) {
     return sources.at(nodeId);
 }
 
-void LocationCatalog::enableSource(const string& nodeId) {
-    std::lock_guard lock(catalogLock);
-    if (this->sources.contains(nodeId)) {
-        this->sources.at(nodeId)->setEnabled(true);
-    }
-}
-
-void LocationCatalog::disableSource(const string& nodeId) {
-    std::lock_guard lock(catalogLock);
-    if (this->sources.contains(nodeId)) {
-        this->sources.at(nodeId)->setEnabled(false);
-    }
-}
-
 void LocationCatalog::updateNodeLocation(const string& nodeId, const GeoPointPtr& location) {
     std::lock_guard lock(catalogLock);
     NES_DEBUG("LocationCatalog: update location from node " << nodeId);
     if (sinks.contains(nodeId)) {
         std::_Rb_tree_iterator<std::pair<const string, GeoSinkPtr>> it = this->sinks.find(nodeId);
         if (it != this->sinks.end()) {
-            it->second->setCurrentLocation(location);
+            GeoSinkPtr sink = it->second;
+            sink->setCurrentLocation(location);
+
+            if (dynamicDuplicatesFilterEnabled && sink->getLocationHistory()->size() > 1) {
+                CartesianLinePtr trajectory = MathUtils::leastSquaresRegression(sink->getLocationHistory()->getCartesianPoints());
+                const double allowedSlopeOffset = 0.5;
+                if (sink->getTrajectory() == nullptr) {
+                    sink->setTrajectory(trajectory);
+                    sink->setPredictedSources(findSourcesOnRoute(trajectory));
+                } else {
+                    double slope = sink->getTrajectory()->getSlope();
+                    if (trajectory->getSlope() > slope + allowedSlopeOffset && trajectory->getSlope() < slope - allowedSlopeOffset) {
+                        // Update trajectory
+                        sink->setTrajectory(trajectory);
+                        sink->setPredictedSources(findSourcesOnRoute(trajectory));
+                    }
+                }
+            }
         }
     }
 
@@ -86,27 +96,33 @@ void LocationCatalog::updateSources() {
     std::unique_lock lock(catalogLock);
 
     for (auto const& [nodeId, sink] : sinks) {
-        if (sink->getRange() == nullptr) { continue; }
+        if (sink->getRange() == nullptr) {
+            continue;
+        }
 
         for (auto const& [sourceId, source] : sources) {
             if (source->hasRange()) {
                 bool enabled = sink->getRange()->contains(source->getRange());
                 string status = (enabled) ? "true" : "false";
 
-                NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' contains source with range '" << source->getId() << "': " << status);
+                NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' contains source with range '" << source->getId()
+                                                    << "': " << status);
                 if (source->isEnabled() != enabled) {
                     string oldStatus = (source->isEnabled()) ? "true" : "false";
-                    NES_DEBUG("LocationCatalog: Source '" << source->getId() << "' changed from '" << oldStatus << "' to '" << status << "'!");
+                    NES_DEBUG("LocationCatalog: Source '" << source->getId() << "' changed from '" << oldStatus << "' to '"
+                                                          << status << "'!");
                 }
                 source->setEnabled(enabled);
             } else {
                 bool enabled = sink->getRange()->contains(source->getCurrentLocation());
                 string status = (enabled) ? "true" : "false";
 
-                NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' contains source '" << source->getId() << "': " << status);
+                NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' contains source '" << source->getId()
+                                                    << "': " << status);
                 if (source->isEnabled() != enabled) {
                     string oldStatus = (source->isEnabled()) ? "true" : "false";
-                    NES_DEBUG("LocationCatalog: Source '" << source->getId() << "' changed from '" << oldStatus << "' to '" << status << "'!");
+                    NES_DEBUG("LocationCatalog: Source '" << source->getId() << "' changed from '" << oldStatus << "' to '"
+                                                          << status << "'!");
                 }
                 source->setEnabled(enabled);
             }
@@ -146,4 +162,26 @@ web::json::value LocationCatalog::toJson() {
     return responseJson;
 }
 
+std::vector<PredictedSourcePtr> LocationCatalog::findSourcesOnRoute(const CartesianLinePtr& route) {
+    std::vector<PredictedSourcePtr> predictedSources;
+
+    for (auto const& [nodeId, source] : sources) {
+        CartesianPointPtr center = GeoCalculator::geographicToCartesian(source->getCurrentLocation());
+        CartesianCirclePtr cartesianCircle = std::make_shared<CartesianCircle>(center, source->getRange()->getDistanceToBound());
+        if (MathUtils::intersect(route, cartesianCircle)) {
+            PredictedSourcePtr predictedSource = std::make_shared<PredictedSource>(source);
+            for (auto const& existingSource : predictedSources) {
+                if (predictedSource->getSource()->getRange()->contains(existingSource->getSource()->getRange())) {
+                    predictedSource->getOverlaps().push_back(existingSource->getSource());
+                    existingSource->getOverlaps().push_back(predictedSource->getSource());
+                }
+            }
+            predictedSources.push_back(predictedSource);
+        }
+    }
+
+    return predictedSources;
 }
+
+}
+// namespace NES

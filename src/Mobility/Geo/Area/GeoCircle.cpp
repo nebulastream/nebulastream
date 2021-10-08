@@ -32,6 +32,7 @@ bool GeoCircle::contains(const GeoPointPtr& location) {
     double longDistance = std::pow(location->getLongitude() - getCenter()->getLongitude(), 2);
     return (longDistance + latDistance) < std::pow(r, 2);
 }
+
 bool GeoCircle::contains(const GeoAreaPtr& area) { return area->isCircle(); }
 
 bool GeoCircle::isCircle() { return true; }

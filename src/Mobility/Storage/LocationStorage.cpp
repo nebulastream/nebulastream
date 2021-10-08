@@ -22,7 +22,7 @@ namespace NES {
 LocationStorage::LocationStorage(int maxNumberOfTuples) : maxNumberOfTuples(maxNumberOfTuples) {}
 
 void LocationStorage::add(const GeoPointPtr& point) {
-    std::lock_guard lock(storageLock);
+    std::unique_lock lock(storageLock);
     if (this->geoStorage.size() == this->maxNumberOfTuples) {
         geoStorage.erase(geoStorage.begin());
     }
@@ -35,19 +35,19 @@ void LocationStorage::add(const GeoPointPtr& point) {
 }
 
 CartesianPointPtr LocationStorage::getCartesian(int index) {
-    std::lock_guard lock(storageLock);
+    std::unique_lock lock(storageLock);
     return cartesianStorage.at(index);
 }
 
 GeoPointPtr LocationStorage::getGeo(int index) {
-    std::lock_guard lock(storageLock);
+    std::unique_lock lock(storageLock);
     return geoStorage.at(index);
 }
 
 const std::vector<CartesianPointPtr>& LocationStorage::getCartesianPoints() const { return cartesianStorage; }
 
 uint64_t LocationStorage::size() {
-    std::lock_guard lock(storageLock);
+    std::unique_lock lock(storageLock);
     return geoStorage.size();
 }
 

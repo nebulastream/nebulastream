@@ -33,19 +33,21 @@ class LocationCatalog {
 
   private:
     uint32_t defaultStorageSize;
+    bool dynamicDuplicatesFilterEnabled;
     std::map<string, GeoSinkPtr> sinks;
     std::map<string, GeoSourcePtr> sources;
     std::mutex catalogLock;
 
+    std::vector<PredictedSourcePtr> findSourcesOnRoute(const CartesianLinePtr& route);
+
   public:
     explicit LocationCatalog(uint32_t defaultStorageSize);
+    explicit LocationCatalog(uint32_t defaultStorageSize, bool dynamicDuplicatesFilterEnabled);
     void addSink(const string& nodeId, double movingRangeArea);
     void addSource(const string& nodeId);
     void addSource(const string& nodeId, double rangeArea);
     GeoSinkPtr getSink(const string& nodeId);
     GeoSourcePtr getSource(const string& nodeId);
-    void enableSource(const string& nodeId);
-    void disableSource(const string& nodeId);
     void updateNodeLocation(const string& nodeId, const GeoPointPtr& location);
     void updateSources();
     web::json::value toJson();

@@ -27,7 +27,7 @@ LocationService::LocationService(uint32_t updateInterval,
                                  uint32_t filterStorageSize)
     : running(false), updateInterval(updateInterval),
       dynamicDuplicatesFilterEnabled(dynamicDuplicatesFilterEnabled), filterStorageSize(filterStorageSize) {
-    locationCatalog = std::make_shared<LocationCatalog>(storageSize);
+    locationCatalog = std::make_shared<LocationCatalog>(storageSize, dynamicDuplicatesFilterEnabled);
 }
 
 void LocationService::addSink(const string& nodeId, const double movingRangeArea) {

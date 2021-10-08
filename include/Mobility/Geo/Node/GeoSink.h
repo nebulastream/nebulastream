@@ -17,9 +17,11 @@
 #ifndef NES_GEOSINK_H
 #define NES_GEOSINK_H
 
+#include <vector>
 #include <Mobility/Geo/Area/GeoArea.h>
 #include <Mobility/Geo/Node/GeoNode.h>
 #include <Mobility/Geo/Cartesian/CartesianLine.h>
+#include <Mobility/Storage/PredictedSource.h>
 
 namespace NES {
 
@@ -27,13 +29,16 @@ class GeoSink: public GeoNode {
 
   private:
     CartesianLinePtr trajectory;
+    std::vector<PredictedSourcePtr> predictedSources;
 
   public:
-    GeoSink(const string& id, double movingRangeArea, uint32_t storageSize);
-
+    explicit GeoSink(const string& id, double movingRangeArea, uint32_t storageSize);
+    [[nodiscard]] const CartesianLinePtr& getTrajectory() const;
     void setCurrentLocation(const GeoPointPtr& currentLocation) override;
-    const CartesianLinePtr& getTrajectory() const;
+    void setTrajectory(const CartesianLinePtr& trajectory);
+    const std::vector<PredictedSourcePtr>& getPredictedSources() const;
     virtual ~GeoSink();
+    void setPredictedSources(const std::vector<PredictedSourcePtr>& predictedSources);
 };
 
 using GeoSinkPtr = std::shared_ptr<GeoSink>;

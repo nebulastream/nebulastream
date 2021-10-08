@@ -17,6 +17,8 @@
 #include "gtest/gtest.h"
 
 #include <Mobility/Geo/Cartesian/CartesianLine.h>
+#include <Mobility/Geo/Node/GeoSink.h>
+#include <Mobility/Geo/Projection/GeoCalculator.h>
 #include <Mobility/Utils/MathUtils.h>
 
 namespace NES {
@@ -73,6 +75,18 @@ TEST(CartesianUtils, LeastSquaresRegression) {
     CartesianLinePtr predictedLine = MathUtils::leastSquaresRegression(points);
     EXPECT_DOUBLE_EQ(1.4, predictedLine->getSlope());
     EXPECT_DOUBLE_EQ(3.5, predictedLine->getIntercept());
+}
+
+TEST(GeoSink, GenerateTrajectory) {
+    GeoSinkPtr sink = std::make_shared<GeoSink>("test_sink", 500, 4);
+    sink->setCurrentLocation(GeoCalculator::cartesianToGeographic(std::make_shared<CartesianPoint>(1, 6)));
+    sink->setCurrentLocation(GeoCalculator::cartesianToGeographic(std::make_shared<CartesianPoint>(2, 5)));
+    sink->setCurrentLocation(GeoCalculator::cartesianToGeographic(std::make_shared<CartesianPoint>(3, 7)));
+    sink->setCurrentLocation(GeoCalculator::cartesianToGeographic(std::make_shared<CartesianPoint>(4, 10)));
+
+    CartesianLinePtr trajectory = MathUtils::leastSquaresRegression(sink->getLocationHistory()->getCartesianPoints());
+    EXPECT_DOUBLE_EQ(1.4000000001626063, trajectory->getSlope());
+    EXPECT_DOUBLE_EQ(3.4999999996375708, trajectory->getIntercept());
 }
 
 }

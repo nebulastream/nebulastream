@@ -25,10 +25,17 @@ GeoSink::GeoSink(const string& id, double movingRangeArea, uint32_t storageSize)
 void GeoSink::setCurrentLocation(const GeoPointPtr& currentLocation) {
     GeoNode::setCurrentLocation(currentLocation);
     range = GeoAreaFactory::createSquare(currentLocation, rangeArea);
-    trajectory = MathUtils::leastSquaresRegression(getLocationHistory()->getCartesianPoints());
 }
 
 const CartesianLinePtr& GeoSink::getTrajectory() const { return trajectory; }
+
+void GeoSink::setTrajectory(const CartesianLinePtr& trajectoryValue) { GeoSink::trajectory = trajectoryValue; }
+
+const std::vector<PredictedSourcePtr>& GeoSink::getPredictedSources() const { return predictedSources; }
+
+void GeoSink::setPredictedSources(const std::vector<PredictedSourcePtr>& predictedSourcesVector) {
+    GeoSink::predictedSources = predictedSourcesVector;
+}
 
 GeoSink::~GeoSink() = default;
 

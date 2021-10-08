@@ -35,8 +35,8 @@ GeoPointPtr GeoNode::getCurrentLocation() { return currentLocation; }
 const LocationStoragePtr& GeoNode::getLocationHistory() const { return locationHistory; }
 
 void GeoNode::setCurrentLocation(const GeoPointPtr& location) {
-    if (currentLocation->isValid()) {
-        locationHistory->add(currentLocation);
+    if (location->isValid()) {
+        locationHistory->add(location);
     }
     currentLocation = location;
 }
