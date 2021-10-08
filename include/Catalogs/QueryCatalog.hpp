@@ -54,6 +54,12 @@ class QueryCatalog {
                                             QueryId queryId,
                                             QueryPlanPtr const& queryPlan,
                                             std::string const& placementStrategyName);
+    /**
+     * Set the executed query plan for the query id
+     * @param queryId : the original query id
+     * @param executedQueryPlan : the query plan executed by NES
+     */
+    void setExecutedQueryPlanForQuery(QueryId queryId, QueryPlanPtr executedQueryPlan);
 
     void setQueryFailureReason(QueryId queryId, const std::string& failureReason);
 
