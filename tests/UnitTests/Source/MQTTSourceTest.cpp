@@ -252,9 +252,6 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
                             ->addField(createField("healthStatusDuration", UINT32))
                             ->addField(createField("recovered", BOOLEAN))
                             ->addField(createField("dead", BOOLEAN));)";
-    //Can be used for a simple python MQTT test -> change filter (hospitalId -> MessageNr)!
-//    std::string stream =
-//        R"(Schema::create()->addField(createField("MessageNr", UINT64));)";
     std::string testSchemaFileName = "window.hpp";
     std::ofstream out(testSchemaFileName);
     out << stream;
