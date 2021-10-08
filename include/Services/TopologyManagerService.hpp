@@ -18,9 +18,9 @@
 #define NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_
 
 #include <Services/StreamCatalogService.hpp>
+#include <atomic>
 #include <memory>
 #include <mutex>
-#include <atomic>
 
 enum NodeType : int;
 namespace NES {
