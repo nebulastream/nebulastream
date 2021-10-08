@@ -30,15 +30,18 @@ class GeoSink: public GeoNode {
   private:
     CartesianLinePtr trajectory;
     std::vector<PredictedSourcePtr> predictedSources;
+    bool filterEnabled;
 
   public:
     explicit GeoSink(const string& id, double movingRangeArea, uint32_t storageSize);
     [[nodiscard]] const CartesianLinePtr& getTrajectory() const;
     void setCurrentLocation(const GeoPointPtr& currentLocation) override;
     void setTrajectory(const CartesianLinePtr& trajectory);
-    const std::vector<PredictedSourcePtr>& getPredictedSources() const;
+    [[nodiscard]] const std::vector<PredictedSourcePtr>& getPredictedSources() const;
     virtual ~GeoSink();
     void setPredictedSources(const std::vector<PredictedSourcePtr>& predictedSources);
+    void setFilterEnabled(bool filterEnabled);
+    bool isFilterEnabled() const;
 };
 
 using GeoSinkPtr = std::shared_ptr<GeoSink>;

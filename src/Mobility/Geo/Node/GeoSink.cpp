@@ -20,7 +20,7 @@
 
 namespace NES {
 
-GeoSink::GeoSink(const string& id, double movingRangeArea, uint32_t storageSize) : GeoNode(id, movingRangeArea, storageSize), trajectory(nullptr) {}
+GeoSink::GeoSink(const string& id, double movingRangeArea, uint32_t storageSize) : GeoNode(id, movingRangeArea, storageSize), trajectory(nullptr), filterEnabled(false) {}
 
 void GeoSink::setCurrentLocation(const GeoPointPtr& currentLocation) {
     GeoNode::setCurrentLocation(currentLocation);
@@ -36,6 +36,10 @@ const std::vector<PredictedSourcePtr>& GeoSink::getPredictedSources() const { re
 void GeoSink::setPredictedSources(const std::vector<PredictedSourcePtr>& predictedSourcesVector) {
     GeoSink::predictedSources = predictedSourcesVector;
 }
+
+bool GeoSink::isFilterEnabled() const { return filterEnabled; }
+
+void GeoSink::setFilterEnabled(bool filterEnabledValue) { GeoSink::filterEnabled = filterEnabledValue; }
 
 GeoSink::~GeoSink() = default;
 

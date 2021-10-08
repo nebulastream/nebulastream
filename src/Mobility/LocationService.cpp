@@ -27,7 +27,7 @@ LocationService::LocationService(uint32_t updateInterval,
                                  uint32_t filterStorageSize)
     : running(false), updateInterval(updateInterval),
       dynamicDuplicatesFilterEnabled(dynamicDuplicatesFilterEnabled), filterStorageSize(filterStorageSize) {
-    locationCatalog = std::make_shared<LocationCatalog>(storageSize, dynamicDuplicatesFilterEnabled);
+    locationCatalog = std::make_shared<LocationCatalog>(storageSize);
 }
 
 void LocationService::addSink(const string& nodeId, const double movingRangeArea) {
@@ -60,14 +60,17 @@ LocationServicePtr LocationService::getInstance() {
 
 void LocationService::cleanInstance() { instance = nullptr; }
 
-void LocationService::updateSources() { locationCatalog->updateSources(); }
-
 void LocationService::start() {
     this->running = true;
-    NES_DEBUG("LocationService: starting with time interval -> " + std::to_string(updateInterval));
+    NES_DEBUG("LocationService: starting with time interval -> " << std::to_string(updateInterval));
+    NES_DEBUG("LocationService: starting with dynamicDuplicatesFilterEnabled -> " << (dynamicDuplicatesFilterEnabled? "true" : "false"));
 
     while (running) {
-        updateSources();
+        locationCatalog->updateSources();
+
+        if (dynamicDuplicatesFilterEnabled) {
+            locationCatalog->updateSinks();
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
     }
     NES_DEBUG("LocationService: stopped!");

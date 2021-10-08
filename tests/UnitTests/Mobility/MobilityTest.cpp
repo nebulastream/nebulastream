@@ -259,8 +259,8 @@ TEST(LocationCatalog, UpdateSourcesWithRange) {
     EXPECT_TRUE(catalog.getSource("test_source")->isEnabled());
 }
 
-TEST(LocationCatalog, PredictedSources) {
-    LocationCatalog catalog(defaultStorageSize, true);
+TEST(LocationCatalog, PredictSources) {
+    LocationCatalog catalog(defaultStorageSize);
 
     // Add sink
     catalog.addSink("test_sink", 10'000);
@@ -280,10 +280,106 @@ TEST(LocationCatalog, PredictedSources) {
 
     cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 20, cartesianCenter->getY());
     catalog.updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSinks();
 
     GeoSinkPtr sink = catalog.getSink("test_sink");
     EXPECT_FALSE(sink->getPredictedSources().empty());
     EXPECT_EQ(sink->getPredictedSources().at(0)->getSource(), catalog.getSource("test_source"));
+}
+
+TEST(LocationCatalog, PredictMultipleSourcesWithoutOverlap) {
+    LocationCatalog catalog(defaultStorageSize);
+
+    // Add sink
+    catalog.addSink("test_sink", 10'000);
+    GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
+    CartesianPointPtr cartesianCenter = GeoCalculator::geographicToCartesian(center);
+    catalog.updateNodeLocation("test_sink", center);
+
+    // Add source in the predicted route
+    catalog.addSource("test_source", 10'000);
+    CartesianPointPtr cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 140, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_source", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSources();
+    EXPECT_FALSE(catalog.getSource("test_source")->isEnabled());
+
+    // Add source not in the predicted route
+    catalog.addSource("test_source_off_route", 10'000);
+    CartesianPointPtr otherCenter = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 140, cartesianCenter->getY() + 140);
+    catalog.updateNodeLocation("test_source_off_route", GeoCalculator::cartesianToGeographic(otherCenter));
+    catalog.updateSources();
+    EXPECT_FALSE(catalog.getSource("test_source")->isEnabled());
+
+    // Move sink
+    cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 10, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(cartesianPoint));
+
+    cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 20, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(cartesianPoint));
+
+    catalog.updateSinks();
+
+    // Test that sink has predicted sources, but filter is off
+    GeoSinkPtr sink = catalog.getSink("test_sink");
+    EXPECT_EQ(sink->getPredictedSources().size(), 1U);
+    EXPECT_EQ(sink->getPredictedSources().at(0)->getSource(), catalog.getSource("test_source"));
+    EXPECT_FALSE(sink->isFilterEnabled());
+}
+
+TEST(LocationCatalog, PredictMultipleSourcesWithOverlap) {
+    LocationCatalog catalog(defaultStorageSize);
+
+    // Add sink
+    catalog.addSink("test_sink", 10'000);
+    GeoPointPtr center = std::make_shared<GeoPoint>(52.5128417, 13.3213595);
+    CartesianPointPtr cartesianCenter = GeoCalculator::geographicToCartesian(center);
+    catalog.updateNodeLocation("test_sink", center);
+
+    // Add source in the predicted route
+    catalog.addSource("test_source", 10'000);
+    CartesianPointPtr cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 140, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_source", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSources();
+    EXPECT_FALSE(catalog.getSource("test_source")->isEnabled());
+
+    // Add source not in the predicted route
+    catalog.addSource("test_source_off_route", 10'000);
+    CartesianPointPtr otherCenter = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 165, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_source_off_route", GeoCalculator::cartesianToGeographic(otherCenter));
+    catalog.updateSources();
+    EXPECT_FALSE(catalog.getSource("test_source")->isEnabled());
+
+    // Move sink
+    cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 10, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(cartesianPoint));
+
+    cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 20, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSinks();
+
+    // Test that sink has predicted sources, but filter is off
+    GeoSinkPtr sink = catalog.getSink("test_sink");
+    EXPECT_EQ(sink->getPredictedSources().size(), 2U);
+    EXPECT_EQ(sink->getPredictedSources().at(0)->getSource(), catalog.getSource("test_source"));
+    EXPECT_FALSE(sink->isFilterEnabled());
+
+    // Move sink inside the range of the first source
+    cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 50, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSinks();
+    EXPECT_TRUE(sink->isFilterEnabled());
+
+    // Move sink inside the range of the second source
+    cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 170, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSinks();
+    EXPECT_TRUE(sink->isFilterEnabled());
+
+    //Move outside both sources
+    cartesianPoint = std::make_shared<CartesianPoint>(cartesianCenter->getX() + 300, cartesianCenter->getY());
+    catalog.updateNodeLocation("test_sink", GeoCalculator::cartesianToGeographic(cartesianPoint));
+    catalog.updateSinks();
+    EXPECT_FALSE(sink->isFilterEnabled());
 }
 
 }

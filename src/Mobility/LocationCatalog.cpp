@@ -22,10 +22,7 @@
 
 namespace NES {
 
-LocationCatalog::LocationCatalog(uint32_t defaultStorageSize) : LocationCatalog(defaultStorageSize, false) {}
-
-LocationCatalog::LocationCatalog(uint32_t defaultStorageSize, bool dynamicDuplicatesFilterEnabled)
-    : defaultStorageSize(defaultStorageSize), dynamicDuplicatesFilterEnabled(dynamicDuplicatesFilterEnabled) {}
+LocationCatalog::LocationCatalog(uint32_t defaultStorageSize) : defaultStorageSize(defaultStorageSize) {}
 
 void LocationCatalog::addSink(const string& nodeId, const double movingRangeArea) {
     std::lock_guard lock(catalogLock);
@@ -63,24 +60,7 @@ void LocationCatalog::updateNodeLocation(const string& nodeId, const GeoPointPtr
     if (sinks.contains(nodeId)) {
         std::_Rb_tree_iterator<std::pair<const string, GeoSinkPtr>> it = this->sinks.find(nodeId);
         if (it != this->sinks.end()) {
-            GeoSinkPtr sink = it->second;
-            sink->setCurrentLocation(location);
-
-            if (dynamicDuplicatesFilterEnabled && sink->getLocationHistory()->size() > 1) {
-                CartesianLinePtr trajectory = MathUtils::leastSquaresRegression(sink->getLocationHistory()->getCartesianPoints());
-                const double allowedSlopeOffset = 0.5;
-                if (sink->getTrajectory() == nullptr) {
-                    sink->setTrajectory(trajectory);
-                    sink->setPredictedSources(findSourcesOnRoute(trajectory));
-                } else {
-                    double slope = sink->getTrajectory()->getSlope();
-                    if (trajectory->getSlope() > slope + allowedSlopeOffset && trajectory->getSlope() < slope - allowedSlopeOffset) {
-                        // Update trajectory
-                        sink->setTrajectory(trajectory);
-                        sink->setPredictedSources(findSourcesOnRoute(trajectory));
-                    }
-                }
-            }
+            it->second->setCurrentLocation(location);
         }
     }
 
@@ -89,6 +69,37 @@ void LocationCatalog::updateNodeLocation(const string& nodeId, const GeoPointPtr
         if (it != this->sources.end()) {
             it->second->setCurrentLocation(location);
         }
+    }
+}
+
+void LocationCatalog::updateSinks() {
+    std::unique_lock lock(catalogLock);
+
+    for (auto const& [nodeId, sink] : sinks) {
+        if (sink->getLocationHistory()->size() > 1) {
+            CartesianLinePtr trajectory = MathUtils::leastSquaresRegression(sink->getLocationHistory()->getCartesianPoints());
+            const double allowedSlopeOffset = 0.5;
+            if (sink->getTrajectory() == nullptr) {
+                sink->setTrajectory(trajectory);
+                sink->setPredictedSources(findSourcesOnRoute(trajectory));
+            } else {
+                double slope = sink->getTrajectory()->getSlope();
+                if (trajectory->getSlope() > slope + allowedSlopeOffset && trajectory->getSlope() < slope - allowedSlopeOffset) {
+                    // Update trajectory
+                    sink->setTrajectory(trajectory);
+                    sink->setPredictedSources(findSourcesOnRoute(trajectory));
+                }
+            }
+        }
+
+        bool filterEnabled = false;
+        for (auto const& predictedSource: sink->getPredictedSources()) {
+            if (sink->getRange()->contains(predictedSource->getSource()->getRange())) {
+                predictedSource->setInRange(true);
+                filterEnabled = true;
+            }
+        }
+        sink->setFilterEnabled(filterEnabled);
     }
 }
 
