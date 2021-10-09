@@ -40,7 +40,6 @@ bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
 
     // iterate over fields of schema and cast string values to correct type
     std::basic_string<char> jsonValue;
-    #pragma unroll
     for (uint64_t fieldIndex = 0; fieldIndex < numberOfSchemaFields; fieldIndex++) {
         auto field = physicalTypes[fieldIndex];
         uint64_t fieldSize = field->size();
@@ -52,8 +51,8 @@ bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
             // 1. to keep 'Parser.cpp' independent of cpprest (no need to deal with 'web::json::value' object)
             // 2. to have a single place for NESBasicPhysicalType conversion (could change this)
             jsonValue = parsedJSONObject.at(schemaKeys[fieldIndex]).serialize();
-        } catch (web::json::json_exception &exception) {
-            NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: " << exception.what());
+        } catch (web::json::json_exception &jsonException) {
+            NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: " << jsonException.what());
             return false;
         }
         writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, offset + tupleCount * tupleSize, true);

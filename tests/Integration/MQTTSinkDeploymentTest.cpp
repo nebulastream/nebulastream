@@ -67,7 +67,7 @@ class MQTTSinkDeploymentTest : public testing::Test {
  * DISABLED for now, because it requires a manually set up MQTT broker -> fails otherwise
  */
 
-TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
+TEST_F(MQTTSinkDeploymentTest, testDeployOneWorker) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();

@@ -21,6 +21,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Sinks/Formats/FormatType.hpp>
 #include <utility>
+#include <cpprest/json.h>
 
 namespace NES {
 
@@ -94,20 +95,20 @@ class FormatIterator {
             // Iterate over all fields in a tuple. Get field offsets from fieldOffsets array. Use fieldNames as keys and TupleBuffer
             // values as the corresponding values
             // Adding the first tuple before the loop avoids checking if last tuple is processed in order to omit "," after json value
-            std::stringstream jsonMessage;
-            jsonMessage << "{";
-            for (uint32_t currentField = 0; currentField < fieldNames.size(); currentField++) {
-                auto currentFieldOffset = fieldOffsets[currentField];
-                auto currentFieldType = fieldTypes[currentField];
-                auto fieldName = fieldNames[currentField];
-                auto fieldValue = currentFieldType->convertRawToStringWithoutFill(&tuplePointer[currentFieldOffset]);
-                jsonMessage << R"(")" + fieldName + R"(":)" + R"(")" + fieldValue + R"(")";
-                if (currentField != fieldNames.size() - 1) {
-                    jsonMessage << ",";
+            auto jsonObject = web::json::value::object();
+            try {
+                for (uint32_t currentField = 0; currentField < fieldNames.size(); currentField++) {
+                    auto currentFieldOffset = fieldOffsets[currentField];
+                    auto currentFieldType = fieldTypes[currentField];
+                    auto fieldName = fieldNames[currentField];
+                    auto fieldValue = currentFieldType->convertRawToStringWithoutFill(tuplePointer + currentFieldOffset);
+                    jsonObject[fieldName] = web::json::value(fieldValue);
                 }
+            } catch (web::json::json_exception &jsonException) {
+                NES_ERROR("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values" << jsonException.what());
+                return "";
             }
-            jsonMessage << "}";
-            return jsonMessage.str();
+            return jsonObject.serialize();
         }
 
         /**
