@@ -36,6 +36,9 @@ ZmqSink::ZmqSink(SinkFormatPtr format, const std::string& host, uint16_t port, b
     : SinkMedium(std::move(format), parentPlanId), host(host.substr(0, host.find(':'))), port(port), internal(internal),
       context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
+    locationService = LocationService::getInstance();
+    filterEnabled = false;
+    filterStorage = std::make_shared<FilterStorage>(getSchemaPtr(), locationService->getFilterStorageSize());
 }
 
 ZmqSink::~ZmqSink() {
@@ -106,10 +109,29 @@ bool ZmqSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worker
 
     NES_DEBUG("ZmqSink  " << this << ": writes buffer " << inputBuffer << " with tupleCnt =" << inputBuffer.getNumberOfTuples()
                           << " watermark=" << inputBuffer.getWatermark());
+
+    filterEnabled = locationService->isDynamicDuplicatesFilterEnabled();
+    if (locationService->isRoutePredictionEnabled()) {
+        bool hasSinkFilterEnabled = false;
+        std::vector<GeoSinkPtr> sinks = locationService->getSinkWithStream(getSchemaPtr()->getStreamNameQualifier());
+        for (const auto& sink: sinks){
+            if (sink->isFilterEnabled()) {
+                hasSinkFilterEnabled = true;
+                break;
+            }
+        }
+        filterEnabled = hasSinkFilterEnabled;
+    }
+
+    NES_DEBUG("ZmqSink::filterEnabled: " << (filterEnabled ? "true" : "false"));
+
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {// XXX: Is it actually our intention to iterate over buffers until no exception is thrown?
         try {
             ++sentBuffer;
+            if (filterEnabled) {
+                buffer = filterStorage->filter(buffer);
+            }
 
             // Create envelope
             const int envelopeSize =  (sizeof(uint64_t) * 2) + sizeof(bool);

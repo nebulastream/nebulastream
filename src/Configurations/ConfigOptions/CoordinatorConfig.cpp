@@ -57,6 +57,8 @@ CoordinatorConfig::CoordinatorConfig() {
     numberOfPointsInLocationStorage = ConfigOption<uint32_t>::create("numberOfPointsInLocationStorage", 10, "Number of geo points stored for each node.");
     dynamicDuplicatesFilterEnabled =
         ConfigOption<bool>::create("dynamicDuplicatesFilterEnabled", false, "Enable dynamic duplicates filter on the sink.");
+    routePredictionEnabled =
+        ConfigOption<bool>::create("routePredictionEnabled", false, "Enable route prediction on the location service.");
     numberOfTuplesInFilterStorage = ConfigOption<uint32_t>::create("numberOfTuplesInFilterStorage", 50, "Cache size for the dynamic filter storage.");
 
     enableSemanticQueryValidation =
@@ -86,6 +88,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             setLocationUpdateInterval(config["locationUpdateInterval"].As<uint32_t>());
             setNumberOfPointsInLocationStorage(config["numberOfPointsInLocationStorage"].As<uint32_t>());
             setDynamicDuplicatesFilterEnabled(config["dynamicDuplicatesFilterEnabled"].As<bool>());
+            setRoutePredictionEnabled(config["routePredictionEnabled"].As<bool>());
             setNumberOfTuplesInFilterStorage(config["numberOfTuplesInFilterStorage"].As<uint32_t>());
             setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
         } catch (std::exception& e) {
@@ -134,6 +137,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setNumberOfPointsInLocationStorage(stoi(it->second));
             } else if (it->first == "--dynamicDuplicatesFilterEnabled") {
                 setDynamicDuplicatesFilterEnabled((it->second == "true"));
+            } else if (it->first == "--routePredictionEnabled") {
+                setRoutePredictionEnabled((it->second == "true"));
             } else if (it->first == "--numberOfTuplesInFilterStorage") {
                 setNumberOfTuplesInFilterStorage(stoi(it->second));
             } else if (it->first == "--enableSemanticQueryValidation") {
@@ -166,6 +171,7 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setLocationUpdateInterval(locationUpdateInterval->getDefaultValue());
     setNumberOfPointsInLocationStorage(numberOfPointsInLocationStorage->getDefaultValue());
     setDynamicDuplicatesFilterEnabled(dynamicDuplicatesFilterEnabled->getDefaultValue());
+    setRoutePredictionEnabled(routePredictionEnabled->getDefaultValue());
     setNumberOfTuplesInFilterStorage(numberOfTuplesInFilterStorage->getDefaultValue());
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
 }
@@ -256,6 +262,12 @@ BoolConfigOption CoordinatorConfig::getDynamicDuplicatesFilterEnabled() { return
 
 void CoordinatorConfig::setDynamicDuplicatesFilterEnabled(bool dynamicDuplicateFilterEnabledValue) {
     dynamicDuplicatesFilterEnabled->setValue(dynamicDuplicateFilterEnabledValue);
+}
+
+BoolConfigOption CoordinatorConfig::getRoutePredictionEnabled() { return routePredictionEnabled; }
+
+void CoordinatorConfig::setRoutePredictionEnabled(bool routePredictionEnabledValue) {
+    routePredictionEnabled->setValue(routePredictionEnabledValue);
 }
 
 IntConfigOption CoordinatorConfig::getNumberOfTuplesInFilterStorage() { return numberOfTuplesInFilterStorage; }

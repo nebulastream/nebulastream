@@ -42,10 +42,12 @@ class LocationCatalog {
   public:
     explicit LocationCatalog(uint32_t defaultStorageSize);
     void addSink(const string& nodeId, double movingRangeArea);
+    void addSink(const string& nodeId, double movingRangeArea, string streamName);
     void addSource(const string& nodeId);
     void addSource(const string& nodeId, double rangeArea);
     GeoSinkPtr getSink(const string& nodeId);
     GeoSourcePtr getSource(const string& nodeId);
+    std::vector<GeoSinkPtr> getSinkWithStream(const string& streamName);
     void updateNodeLocation(const string& nodeId, const GeoPointPtr& location);
     void updateSinks();
     void updateSources();

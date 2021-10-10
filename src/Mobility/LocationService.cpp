@@ -24,14 +24,19 @@ namespace NES {
 LocationService::LocationService(uint32_t updateInterval,
                                  uint32_t storageSize,
                                  bool dynamicDuplicatesFilterEnabled,
+                                 bool routePredictionEnabled,
                                  uint32_t filterStorageSize)
-    : running(false), updateInterval(updateInterval),
-      dynamicDuplicatesFilterEnabled(dynamicDuplicatesFilterEnabled), filterStorageSize(filterStorageSize) {
+    : running(false), updateInterval(updateInterval), dynamicDuplicatesFilterEnabled(dynamicDuplicatesFilterEnabled),
+      routePredictionEnabled(routePredictionEnabled), filterStorageSize(filterStorageSize) {
     locationCatalog = std::make_shared<LocationCatalog>(storageSize);
 }
 
 void LocationService::addSink(const string& nodeId, const double movingRangeArea) {
     this->locationCatalog->addSink(nodeId, movingRangeArea);
+}
+
+void LocationService::addSink(const string& nodeId, double movingRangeArea, const string& streamName) {
+    this->locationCatalog->addSink(nodeId, movingRangeArea, streamName);
 }
 
 void LocationService::addSource(const string& nodeId) { this->locationCatalog->addSource(nodeId, 0); }
@@ -47,8 +52,13 @@ const LocationCatalogPtr& LocationService::getLocationCatalog() const { return l
 void LocationService::initInstance(uint32_t updateInterval,
                                    uint32_t storageSize,
                                    bool dynamicDuplicatesFilterEnabled,
+                                   bool routePredictionEnabled,
                                    uint32_t filterStorageSize) {
-    instance = std::make_shared<LocationService>(updateInterval, storageSize, dynamicDuplicatesFilterEnabled, filterStorageSize);
+    instance = std::make_shared<LocationService>(updateInterval,
+                                                 storageSize,
+                                                 dynamicDuplicatesFilterEnabled,
+                                                 routePredictionEnabled,
+                                                 filterStorageSize);
 }
 
 LocationServicePtr LocationService::getInstance() {
@@ -63,12 +73,12 @@ void LocationService::cleanInstance() { instance = nullptr; }
 void LocationService::start() {
     this->running = true;
     NES_DEBUG("LocationService: starting with time interval -> " << std::to_string(updateInterval));
-    NES_DEBUG("LocationService: starting with dynamicDuplicatesFilterEnabled -> " << (dynamicDuplicatesFilterEnabled? "true" : "false"));
+    NES_DEBUG("LocationService: starting with dynamicDuplicatesFilterEnabled -> " << (routePredictionEnabled ? "true" : "false"));
 
     while (running) {
         locationCatalog->updateSources();
 
-        if (dynamicDuplicatesFilterEnabled) {
+        if (routePredictionEnabled) {
             locationCatalog->updateSinks();
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
@@ -85,6 +95,12 @@ bool LocationService::isRunning() const { return running; }
 
 bool LocationService::isDynamicDuplicatesFilterEnabled() const { return dynamicDuplicatesFilterEnabled; }
 
+bool LocationService::isRoutePredictionEnabled() const { return routePredictionEnabled; }
+
 uint32_t LocationService::getFilterStorageSize() const { return filterStorageSize; }
+
+std::vector<GeoSinkPtr> LocationService::getSinkWithStream(const string& streamName) {
+    return locationCatalog->getSinkWithStream(streamName);
+}
 
 }// namespace NES

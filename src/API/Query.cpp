@@ -76,13 +76,15 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
 
+Query::Query(QueryPlanPtr queryPlan, std::string streamName) : queryPlan(std::move(queryPlan)), streamName(std::move(streamName)) {}
+
 Query::Query(const Query& query) = default;
 
 Query Query::from(const std::string& sourceStreamName) {
     NES_DEBUG("Query: create query for input stream " << sourceStreamName);
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceOperator);
-    return Query(queryPlan);
+    return {queryPlan, sourceStreamName};
 }
 
 Query& Query::as(const std::string& newStreamName) {
@@ -187,10 +189,10 @@ Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     return *this;
 }
 
-Query& Query::movingRange(std::string nodeId, double movingRange) {
+Query& Query::movingRange(const std::string& nodeId, double movingRange) {
     NES_DEBUG("Query: add moving range to query");
     LocationServicePtr locationService = LocationService::getInstance();
-    locationService->addSink(nodeId, movingRange);
+    locationService->addSink(nodeId, movingRange, streamName);
     return *this;
 }
 

@@ -22,6 +22,8 @@
 #include <string>
 #include <zmq.hpp>
 
+#include <Mobility/LocationService.h>
+#include <Mobility/Storage/FilterStorage.h>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES {
@@ -57,6 +59,10 @@ class ZmqSink : public SinkMedium {
   private:
     std::string host;
     uint16_t port;
+
+    LocationServicePtr locationService;
+    bool filterEnabled;
+    FilterStoragePtr filterStorage;
 
     bool connected{false};
     bool internal;

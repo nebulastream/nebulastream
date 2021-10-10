@@ -217,7 +217,7 @@ class Query {
      * @param movingRange area of the spatial interest (in m2)
      * @return the query
      */
-    Query& movingRange(std::string nodeId, double movingRange);
+    Query& movingRange(const std::string& nodeId, double movingRange);
 
     /**
      * @brief: Create watermark assginer operator.
@@ -250,12 +250,15 @@ class Query {
 
     // creates a new query object
     Query(QueryPlanPtr queryPlan);
+    Query(QueryPlanPtr queryPlan, std::string streamName);
 
   protected:
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
 
   private:
+    std::string streamName;
+
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
      * We call it only internal as a last step during the Join operation

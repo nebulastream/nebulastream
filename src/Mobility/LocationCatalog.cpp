@@ -31,6 +31,13 @@ void LocationCatalog::addSink(const string& nodeId, const double movingRangeArea
         std::pair<string, GeoSinkPtr>(nodeId, std::make_shared<GeoSink>(nodeId, movingRangeArea, defaultStorageSize)));
 }
 
+void LocationCatalog::addSink(const string& nodeId, double movingRangeArea, string streamName) {
+    std::lock_guard lock(catalogLock);
+    NES_DEBUG("LocationCatalog: adding sink " << nodeId);
+    this->sinks.insert(
+        std::pair<string, GeoSinkPtr>(nodeId, std::make_shared<GeoSink>(nodeId, movingRangeArea, defaultStorageSize, streamName)));
+}
+
 void LocationCatalog::addSource(const string& nodeId) {
     std::lock_guard lock(catalogLock);
     NES_DEBUG("LocationCatalog: adding source " << nodeId);
@@ -52,6 +59,17 @@ GeoSinkPtr LocationCatalog::getSink(const string& nodeId) {
 GeoSourcePtr LocationCatalog::getSource(const string& nodeId) {
     std::lock_guard lock(catalogLock);
     return sources.at(nodeId);
+}
+
+std::vector<GeoSinkPtr> LocationCatalog::getSinkWithStream(const string& streamName) {
+    std::unique_lock lock(catalogLock);
+    std::vector<GeoSinkPtr> sinksWithStream;
+    for (auto const& [nodeId, sink] : sinks) {
+        if (sink->getStreamName() == streamName) {
+            sinksWithStream.push_back(sink);
+        }
+    }
+    return sinksWithStream;
 }
 
 void LocationCatalog::updateNodeLocation(const string& nodeId, const GeoPointPtr& location) {

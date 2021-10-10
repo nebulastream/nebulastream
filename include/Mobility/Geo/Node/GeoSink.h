@@ -31,9 +31,12 @@ class GeoSink: public GeoNode {
     CartesianLinePtr trajectory;
     std::vector<PredictedSourcePtr> predictedSources;
     bool filterEnabled;
+    std::string streamName;
 
   public:
     explicit GeoSink(const string& id, double movingRangeArea, uint32_t storageSize);
+    explicit GeoSink(const string& id, double movingRangeArea, uint32_t storageSize, string  streamName);
+    const string& getStreamName() const;
     [[nodiscard]] const CartesianLinePtr& getTrajectory() const;
     void setCurrentLocation(const GeoPointPtr& currentLocation) override;
     void setTrajectory(const CartesianLinePtr& trajectory);

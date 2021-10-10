@@ -275,4 +275,56 @@ TEST_F(MobilityNodeTest, testMovingSinkReceivesData) {
     EXPECT_TRUE(retStopWrk1);
 }
 
+TEST_F(MobilityNodeTest, testFilterEnabledOnSink) {
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setCoordinatorRestPort(restPort);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    LocationServicePtr locationService = crd->getLocationService();
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    std::string outputFilePath = "testDeployOneWorker.out";
+    remove(outputFilePath.c_str());
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query = R"(Query::from("default_logical").movingRange("veh_1", 500).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(locationService->getLocationCatalog()->contains("veh_1"));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+}
+
 }

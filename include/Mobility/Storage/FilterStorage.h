@@ -24,7 +24,6 @@
 
 namespace NES {
 
-
 class FilterStorage {
   private:
     SchemaPtr schema;
@@ -40,6 +39,8 @@ class FilterStorage {
     NodeEngine::TupleBuffer filter(NodeEngine::TupleBuffer buffer);
     uint32_t size();
 };
+
+using FilterStoragePtr = std::shared_ptr<FilterStorage>;
 
 }
 

@@ -67,6 +67,7 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     LocationService::initInstance(coordinatorConfig->getLocationUpdateInterval()->getValue(),
                                   coordinatorConfig->getNumberOfPointsInLocationStorage()->getValue(),
                                   coordinatorConfig->getDynamicDuplicatesFilterEnabled()->getValue(),
+                                  coordinatorConfig->getRoutePredictionEnabled()->getValue(),
                                   coordinatorConfig->getNumberOfTuplesInFilterStorage()->getValue());
     locationService = LocationService::getInstance();
     streamCatalog = std::make_shared<StreamCatalog>();

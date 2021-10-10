@@ -258,6 +258,18 @@ class CoordinatorConfig {
     BoolConfigOption getDynamicDuplicatesFilterEnabled();
 
     /**
+     * @brief Get the value for enabling route prediction
+     * @return route prediction config option
+     */
+    BoolConfigOption getRoutePredictionEnabled();
+
+    /**
+     * @brief Set the value for enabling route prediction
+     * @param routePredictionEnabled: enable or disable route prediction
+     */
+    void setRoutePredictionEnabled(bool routePredictionEnabled);
+
+    /**
      * @brief Set the if the dynamic duplicates filter is enabled
      * @param dynamicDuplicateFilterEnabled: activation flag
      */
@@ -311,6 +323,7 @@ class CoordinatorConfig {
     IntConfigOption locationUpdateInterval;
     IntConfigOption numberOfPointsInLocationStorage;
     BoolConfigOption dynamicDuplicatesFilterEnabled;
+    BoolConfigOption routePredictionEnabled;
     IntConfigOption numberOfTuplesInFilterStorage;
 
     // temorary flag:

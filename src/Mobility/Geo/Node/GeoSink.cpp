@@ -18,14 +18,20 @@
 #include <Mobility/Geo/Node/GeoSink.h>
 #include <Mobility/Utils/MathUtils.h>
 
+#include <utility>
+
 namespace NES {
 
 GeoSink::GeoSink(const string& id, double movingRangeArea, uint32_t storageSize) : GeoNode(id, movingRangeArea, storageSize), trajectory(nullptr), filterEnabled(false) {}
+
+GeoSink::GeoSink(const string& id, double movingRangeArea, uint32_t storageSize, string streamName) : GeoNode(id, movingRangeArea, storageSize), trajectory(nullptr), filterEnabled(false), streamName(std::move(streamName)) {}
 
 void GeoSink::setCurrentLocation(const GeoPointPtr& currentLocation) {
     GeoNode::setCurrentLocation(currentLocation);
     range = GeoAreaFactory::createSquare(currentLocation, rangeArea);
 }
+
+const string& GeoSink::getStreamName() const { return streamName; }
 
 const CartesianLinePtr& GeoSink::getTrajectory() const { return trajectory; }
 
@@ -40,6 +46,7 @@ void GeoSink::setPredictedSources(const std::vector<PredictedSourcePtr>& predict
 bool GeoSink::isFilterEnabled() const { return filterEnabled; }
 
 void GeoSink::setFilterEnabled(bool filterEnabledValue) { GeoSink::filterEnabled = filterEnabledValue; }
+
 
 GeoSink::~GeoSink() = default;
 
