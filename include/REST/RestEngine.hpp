@@ -20,6 +20,7 @@
 #include <xlocale.h>
 #endif
 #include "REST/Controller/BaseController.hpp"
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 
 #include <cpprest/details/http_server.h>
 #include <cpprest/http_listener.h>
@@ -88,7 +89,8 @@ class RestEngine : public BaseController {
                const QueryServicePtr& queryService,
                const MonitoringServicePtr& monitoringService,
                const GlobalQueryPlanPtr& globalQueryPlan,
-               const Catalogs::UdfCatalogPtr& udfCatalog);
+               const Catalogs::UdfCatalogPtr& udfCatalog,
+               const Runtime::BufferManagerPtr bufferManager);
 
     ~RestEngine();
 

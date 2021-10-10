@@ -75,6 +75,8 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     topology = Topology::create();
+    workerRpcClient = std::make_shared<WorkerRPCClient>();
+    monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology);
 
     // TODO make compiler backend configurable
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -219,10 +221,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     worker = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
-    //create the monitoring service, it can only be used if a NesWorker has started
-    NES_DEBUG("NesCoordinator: Initializing monitoring service");
-    monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology, worker->getNodeEngine()->getBufferManager());
-
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     restServer = std::make_shared<RestServer>(restIp,
@@ -235,7 +233,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               queryService,
                                               monitoringService,
                                               globalQueryPlan,
-                                              udfCatalog);
+                                              udfCatalog,
+                                              worker->getNodeEngine()->getBufferManager());
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking

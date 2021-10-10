@@ -39,7 +39,8 @@ RestServer::RestServer(std::string host,
                        const QueryServicePtr& queryService,
                        const MonitoringServicePtr& monitoringService,
                        const GlobalQueryPlanPtr& globalQueryPlan,
-                       const Catalogs::UdfCatalogPtr& udfCatalog)
+                       const Catalogs::UdfCatalogPtr& udfCatalog,
+                       const Runtime::BufferManagerPtr& bufferManager)
     : restEngine(std::make_shared<RestEngine>(streamCatalog,
                                               coordinator,
                                               queryCatalog,
@@ -48,7 +49,8 @@ RestServer::RestServer(std::string host,
                                               queryService,
                                               monitoringService,
                                               globalQueryPlan,
-                                              udfCatalog)),
+                                              udfCatalog,
+                                              bufferManager)),
       host(std::move(host)), port(port) {}
 
 RestEnginePtr restEngine;

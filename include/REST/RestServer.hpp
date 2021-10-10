@@ -17,6 +17,7 @@
 #ifndef IMPL_REST_RESTSERVER_H_
 #define IMPL_REST_RESTSERVER_H_
 
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
 #include <string>
 
@@ -77,7 +78,8 @@ class RestServer {
                const QueryServicePtr& queryService,
                const MonitoringServicePtr& monitoringService,
                const GlobalQueryPlanPtr& globalQueryPlan,
-               const Catalogs::UdfCatalogPtr& udfCatalog);
+               const Catalogs::UdfCatalogPtr& udfCatalog,
+               const Runtime::BufferManagerPtr& bufferManager);
 
     ~RestServer();
     /**
