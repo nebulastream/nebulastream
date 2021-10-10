@@ -96,7 +96,7 @@ Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField);
  * @param Timeunit
  * @return A descriptor of the time characteristic.
  */
-Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, Windowing::TimeUnit& unit);
+Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, const Windowing::TimeUnit& unit);
 
 /**
  * @brief Defines a ingestion time as a time characteristic for a window.
