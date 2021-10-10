@@ -40,7 +40,6 @@
 
 namespace NES::Runtime {
 
-
 NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        HardwareManagerPtr&& hardwareManager,
                        std::vector<BufferManagerPtr>&& bufferManagers,
@@ -53,10 +52,9 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker)
-    : queryManager(std::move(queryManager)),
-      hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
-      queryCompiler(std::move(queryCompiler)), partitionManager(std::move(partitionManager)),
-      stateManager(std::move(stateManager)), nodeEngineId(nodeEngineId),
+    : queryManager(std::move(queryManager)), hardwareManager(std::move(hardwareManager)),
+      bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
+      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker) {

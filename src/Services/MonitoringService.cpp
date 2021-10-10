@@ -33,7 +33,7 @@
 
 namespace NES {
 
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology): topology(topology) {
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology) : topology(topology) {
     NES_DEBUG("MonitoringService: Initializing");
     monitoringManager = std::make_shared<MonitoringManager>(workerClient, topology);
 }

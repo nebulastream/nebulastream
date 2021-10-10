@@ -62,7 +62,6 @@ class StaticNesMetrics {
      */
     static StaticNesMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
-
     /**
      * @brief Returns the metric as protobuf class
      * @return the SerializableStaticNesMetrics from Protobuf

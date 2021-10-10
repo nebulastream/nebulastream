@@ -18,16 +18,16 @@
 #define NES_INCLUDE_RUNTIME_METRICSTORE_HPP_
 
 #include <Util/Logger.hpp>
+#include <cstdint>
 #include <queue>
 #include <unordered_map>
-#include <cstdint>
 
 namespace NES {
 
 class GroupedMetricValues;
 using GroupedMetricValuesPtr = std::shared_ptr<GroupedMetricValues>;
 
-enum MetricStoreStrategy {NEWEST, ALWAYS};
+enum MetricStoreStrategy { NEWEST, ALWAYS };
 
 /**
  * @brief The MetricStore that stores all the metrics for monitoring.
@@ -73,7 +73,6 @@ class MetricStore {
   private:
     MetricStoreStrategy storeType;
     std::unordered_map<uint64_t, std::priority_queue<GroupedMetricValuesPtr>> storedMetrics;
-
 };
 
 using MetricStorePtr = std::shared_ptr<MetricStore>;

@@ -21,8 +21,8 @@
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 
 namespace NES {

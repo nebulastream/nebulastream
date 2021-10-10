@@ -43,11 +43,7 @@ class TopologyManagerService {
      * @param node type
      * @return id of node
      */
-    uint64_t registerNode(const std::string& address,
-                          int64_t grpcPort,
-                          int64_t dataPort,
-                          uint16_t numberOfSlots,
-                          NodeType type);
+    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, NodeType type);
 
     /**
     * @brief unregister an existing node

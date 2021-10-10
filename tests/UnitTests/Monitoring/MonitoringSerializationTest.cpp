@@ -265,7 +265,7 @@ TEST_F(MonitoringSerializationTest, testMetricStore) {
     GroupedMetricValuesPtr parsedValues = std::make_shared<GroupedMetricValues>(plan->fromBuffer(schema, tupleBuffer));
 
     const uint64_t noMetrics = 10;
-    for (uint64_t i=0; i<noMetrics; i++) {
+    for (uint64_t i = 0; i < noMetrics; i++) {
         metricStoreAlways->addMetric(i, parsedValues);
         metricStoreAlways->addMetric(i, parsedValues);
 
@@ -273,7 +273,7 @@ TEST_F(MonitoringSerializationTest, testMetricStore) {
         metricStoreNewest->addMetric(i, parsedValues);
     }
 
-    for (uint64_t i=0; i<noMetrics; i++) {
+    for (uint64_t i = 0; i < noMetrics; i++) {
         EXPECT_EQ(int(metricStoreAlways->getMetrics(i).size()), 2);
         EXPECT_EQ(int(metricStoreNewest->getMetrics(i).size()), 1);
     }
