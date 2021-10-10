@@ -22,11 +22,11 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>

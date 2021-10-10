@@ -98,7 +98,6 @@ class MonitoringService {
      */
     [[nodiscard]] const MonitoringManagerPtr getMonitoringManager() const;
 
-
   private:
     MonitoringManagerPtr monitoringManager;
     TopologyPtr topology;

@@ -128,7 +128,7 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
 
-    for (auto i = static_cast<std::size_t>(rootId); i < rootId+nodeNumber; ++i) {
+    for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
@@ -213,7 +213,7 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJson) {
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
 
-    for (auto i = static_cast<std::size_t>(rootId); i < rootId+nodeNumber; ++i) {
+    for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
@@ -244,6 +244,5 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJson) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
-
 
 }// namespace NES

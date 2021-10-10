@@ -16,8 +16,8 @@
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
-#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
+#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
