@@ -66,8 +66,8 @@ Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField) {
     return Windowing::TimeCharacteristic::createEventTime(onField);
 }
 
-Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, Windowing::TimeUnit unit) {
-    return Windowing::TimeCharacteristic::createEventTime(onField, std::move(unit));
+Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, const Windowing::TimeUnit& unit) {
+    return Windowing::TimeCharacteristic::createEventTime(onField, unit);
 }
 
 Windowing::TimeCharacteristicPtr IngestionTime() { return Windowing::TimeCharacteristic::createIngestionTime(); }
