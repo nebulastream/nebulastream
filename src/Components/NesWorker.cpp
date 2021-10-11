@@ -148,6 +148,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                                       : Runtime::NumaAwarenessFlag::DISABLED,
                                                                   workerToCoreMapping,
                                                                   queryCompilerCompilationStrategy,
+                                                                  queryCompilerPipeliningStrategy,
                                                                   queryCompilerOutputBufferOptimizationLevel);
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create();
