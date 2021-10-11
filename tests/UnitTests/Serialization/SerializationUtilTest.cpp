@@ -538,7 +538,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
             triggerPolicy,
             triggerAction,
             1,
-            1);
+            1,
+            NES::Join::LogicalJoinDefinition::INNER_JOIN);
 
         auto join = LogicalOperatorFactory::createJoinOperator(joinDef);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);

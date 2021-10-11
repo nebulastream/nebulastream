@@ -64,6 +64,7 @@ TEST_F(JoinHandlerTest, testJoinHandlerSlicing) {
     Windowing::WindowTriggerPolicyPtr triggerPolicy = Windowing::OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
+    auto joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
@@ -72,7 +73,8 @@ TEST_F(JoinHandlerTest, testJoinHandlerSlicing) {
         triggerPolicy,
         triggerAction,
         1,
-        1);
+        1,
+        joinType);
     auto windowManager = std::make_unique<Windowing::WindowManager>(joinDef->getWindowType(), 0, 1);
 
     // slice stream with a value 10 with key 0 arriving at ts 10

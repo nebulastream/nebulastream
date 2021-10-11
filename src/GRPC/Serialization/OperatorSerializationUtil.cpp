@@ -561,6 +561,12 @@ OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNodePt
 
     joinDetails.set_numberofinputedgesleft(joinDefinition->getNumberOfInputEdgesLeft());
     joinDetails.set_numberofinputedgesright(joinDefinition->getNumberOfInputEdgesRight());
+
+    if (joinDefinition->getJoinType() == Join::LogicalJoinDefinition::JoinType::INNER_JOIN){
+        joinDetails.mutable_jointype()->set_jointype(SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_INNER_JOIN);
+    }else if (joinDefinition->getJoinType() == Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT){
+        joinDetails.mutable_jointype()->set_jointype(SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT);
+    }
     return joinDetails;
 }
 
@@ -797,6 +803,15 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize trigger: " << serializedTriggerPolicy.DebugString());
     }
 
+    auto serializedJoinType = joinDetails->jointype();
+    // check which jointype is set
+    // default: INNER_JOIN
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
+    // with Cartesian Product is set, change join type
+    if (serializedJoinType.jointype() == SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT){
+        joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
+    }
+
     Join::BaseJoinActionDescriptorPtr action;
     if (serializedAction.type() == SerializableOperator_JoinDetails_TriggerAction_Type_LazyNestedLoop) {
         action = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
@@ -856,7 +871,8 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
                                                               trigger,
                                                               action,
                                                               joinDetails->numberofinputedgesleft(),
-                                                              joinDetails->numberofinputedgesright());
+                                                              joinDetails->numberofinputedgesright(),
+                                                              joinType);
     auto retValue = LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<JoinLogicalOperatorNode>();
     return retValue;
 

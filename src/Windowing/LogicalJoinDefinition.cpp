@@ -78,6 +78,8 @@ Windowing::WindowTriggerPolicyPtr LogicalJoinDefinition::getTriggerPolicy() cons
 
 Join::BaseJoinActionDescriptorPtr LogicalJoinDefinition::getTriggerAction() const { return triggerAction; }
 
+Join::LogicalJoinDefinition::JoinType LogicalJoinDefinition::getJoinType() const { return joinType; }
+
 Windowing::DistributionCharacteristicPtr LogicalJoinDefinition::getDistributionType() const { return distributionType; }
 
 uint64_t LogicalJoinDefinition::getNumberOfInputEdgesLeft() const { return numberOfInputEdgesLeft; }

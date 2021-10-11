@@ -87,6 +87,12 @@ class LogicalJoinDefinition {
     [[nodiscard]] BaseJoinActionDescriptorPtr getTriggerAction() const;
 
     /**
+     * @brief getter for on trigger action
+     * @return trigger action
+    */
+    [[nodiscard]] JoinType getJoinType() const;
+
+    /**
      * @brief getter for on distribution type
      * @return distributionType
     */
