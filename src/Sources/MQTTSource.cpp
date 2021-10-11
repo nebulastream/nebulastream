@@ -73,9 +73,9 @@ MQTTSource::MQTTSource(SchemaPtr schema,
 
     //Compute read timeout
     if (bufferFlushIntervalMs > 0) {
-        readTimeoutInMs = 1000;
+        readTimeoutInMs = bufferFlushIntervalMs;
     } else {
-        readTimeoutInMs = 5000;//Default to 5000 ms
+        readTimeoutInMs = 2000;//Default to 2000 ms
     }
 
     if (cleanSession) {
