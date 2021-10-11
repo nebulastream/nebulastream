@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>

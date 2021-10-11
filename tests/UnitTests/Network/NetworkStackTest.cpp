@@ -14,7 +14,6 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -23,6 +22,7 @@
 #include <Network/NetworkSource.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqServer.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <API/Query.hpp>
 #include <API/AttributeField.hpp>
+#include <API/Query.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Catalogs/StreamCatalog.hpp>

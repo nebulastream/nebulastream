@@ -14,11 +14,10 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
@@ -27,6 +26,7 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <gtest/gtest.h>
 #include <iostream>
 
 namespace NES {

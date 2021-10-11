@@ -15,10 +15,10 @@
 */
 
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
-#include <API/Schema.hpp>
 namespace NES {
 
 BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id)

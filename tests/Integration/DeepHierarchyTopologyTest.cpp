@@ -16,6 +16,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
@@ -27,7 +28,6 @@
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <iostream>
 
 using namespace std;

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <API/Expressions/Expressions.hpp>
+#include <API/Schema.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>

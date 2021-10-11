@@ -20,9 +20,9 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
