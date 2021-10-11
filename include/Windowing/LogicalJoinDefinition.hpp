@@ -27,7 +27,9 @@ namespace NES::Join {
  * @experimental
  */
 class LogicalJoinDefinition {
+
   public:
+    enum JoinType{INNER_JOIN, CARTESIAN_PRODUCT};
     static LogicalJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
                                            const FieldAccessExpressionNodePtr& rightJoinKeyType,
                                            const Windowing::WindowTypePtr& windowType,
@@ -35,7 +37,8 @@ class LogicalJoinDefinition {
                                            const Windowing::WindowTriggerPolicyPtr& triggerPolicy,
                                            const BaseJoinActionDescriptorPtr& triggerAction,
                                            uint64_t numberOfInputEdgesLeft,
-                                           uint64_t numberOfInputEdgesRight);
+                                           uint64_t numberOfInputEdgesRight,
+                                           JoinType joinType);
 
     explicit LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType,
                                    FieldAccessExpressionNodePtr rightJoinKeyType,
@@ -44,7 +47,8 @@ class LogicalJoinDefinition {
                                    Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                    BaseJoinActionDescriptorPtr triggerAction,
                                    uint64_t numberOfInputEdgesLeft,
-                                   uint64_t numberOfInputEdgesRight);
+                                   uint64_t numberOfInputEdgesRight,
+                                   JoinType joinType);
 
     /**
     * @brief getter/setter for on left join key
@@ -135,6 +139,7 @@ class LogicalJoinDefinition {
     Windowing::DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdgesLeft;
     uint64_t numberOfInputEdgesRight;
+    JoinType joinType;
 };
 
 using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
