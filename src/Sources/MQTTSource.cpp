@@ -71,13 +71,12 @@ MQTTSource::MQTTSource(SchemaPtr schema,
       tupleSize(schema->getSchemaSizeInBytes()), qualityOfService(qualityOfService), cleanSession(cleanSession),
       bufferFlushIntervalMs(bufferFlushIntervalMs) {
 
-    //ToDo: #2220
     //Compute read timeout
-    /*if (bufferFlushIntervalMs > 0) {
-        readTimeout = bufferFlushIntervalMs;
+    if (bufferFlushIntervalMs > 0) {
+        readTimeoutInMs = bufferFlushIntervalMs;
     } else {
-        readTimeout = 100;//Default to 100 ms
-    }*/
+        readTimeoutInMs = 5000;//Default to 5000 ms
+    }
 
     if (cleanSession) {
         uint32_t randomizeClientId = random();
@@ -175,9 +174,9 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         try {
             NES_TRACE("Waiting for messages on topic: '" << topic << "'");
             //ToDo: #2220
-            //auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeout));
-            auto message = client->consume_message();
-            NES_TRACE("MQTTSource::fillBuffer: Client consume message: '" << message->get_payload_str() << "'");
+            auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
+//            auto message = client->consume_message();
+            NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
             data = message->get_payload_str();
         } catch (const mqtt::exception& exc) {
             NES_ERROR("MQTTSource::fillBuffer: " << exc.what());

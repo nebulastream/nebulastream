@@ -189,7 +189,7 @@ class MQTTSource : public DataSource {
     std::unique_ptr<Parser> inputParser;
     long bufferFlushIntervalMs;
     //Read timeout in ms for mqtt message consumer
-    long readTimeout;
+    long readTimeoutInMs;
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;
