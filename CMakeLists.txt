@@ -191,7 +191,6 @@ if (NES_BUILD_NATIVE)
     endif ()
 else()
     # Compiler should produce specific code for system architecture
-    # TODO figure out what to do when building on ARM
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
     if (COMPILER_SUPPORTS_MARCH_NATIVE)

@@ -35,10 +35,19 @@ void CPPCompilerFlags::enableDebugFlags() { addFlag(DEBUGGING); }
 
 void CPPCompilerFlags::enableOptimizationFlags() {
     addFlag(ALL_OPTIMIZATIONS);
-    addFlag(TUNE);
-#if !defined(__APPLE__) || !defined(__aarch64__)
+#if !defined(__aarch64__)
+    // use -mcpu=native instead of TUNE/ARCH for arm64, below
     // -march=native is supported on Intel Macs clang but not on M1 Macs clang
+    addFlag(TUNE);
     addFlag(ARCH);
+#endif
+#if defined(__aarch64__) && defined(__APPLE__)
+    // M1 specific string
+    addFlag(M1_CPU);
+#endif
+#if defined(__aarch64__) && !defined(__APPLE__)
+    // generic arm64 cpu
+    addFlag(CPU);
 #endif
 }
 
