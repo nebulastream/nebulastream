@@ -16,8 +16,8 @@
 
 #ifdef ENABLE_MQTT_BUILD
 
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <API/AttributeField.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
@@ -97,7 +97,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
         fieldName = field->getName();
-        schemaKeys.push_back(fieldName.substr(fieldName.find('$')+1, fieldName.size()-1));
+        schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size() - 1));
     }
 
     switch (inputFormat) {
@@ -109,7 +109,8 @@ MQTTSource::MQTTSource(SchemaPtr schema,
             break;
     }
 
-    NES_DEBUG("MQTTSource::MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId << ".");
+    NES_DEBUG("MQTTSource::MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId
+                                         << ".");
 }
 
 MQTTSource::~MQTTSource() {
@@ -129,7 +130,7 @@ std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
 
     auto buffer = bufferManager->getBufferBlocking();
     if (connect()) {
-        if(!fillBuffer(buffer)) {
+        if (!fillBuffer(buffer)) {
             NES_ERROR("MQTTSource::receiveData: Failed to fill the TupleBuffer.");
             return std::nullopt;
         }
@@ -183,7 +184,7 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         } catch (...) {
             NES_ERROR("MQTTSource::fillBuffer: general error");
         }
-        if(!inputParser->writeInputTupleToTupleBuffer(data, tupleCount, tupleBuffer)) {
+        if (!inputParser->writeInputTupleToTupleBuffer(data, tupleCount, tupleBuffer)) {
             NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
             return false;
         }

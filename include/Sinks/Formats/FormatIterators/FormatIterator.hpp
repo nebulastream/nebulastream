@@ -20,8 +20,8 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Sinks/Formats/FormatType.hpp>
-#include <utility>
 #include <cpprest/json.h>
+#include <utility>
 
 namespace NES {
 
@@ -104,8 +104,9 @@ class FormatIterator {
                     auto fieldValue = currentFieldType->convertRawToStringWithoutFill(tuplePointer + currentFieldOffset);
                     jsonObject[fieldName] = web::json::value(fieldValue);
                 }
-            } catch (web::json::json_exception &jsonException) {
-                NES_ERROR("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values" << jsonException.what());
+            } catch (web::json::json_exception& jsonException) {
+                NES_ERROR("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values"
+                          << jsonException.what());
                 return "";
             }
             return jsonObject.serialize();
