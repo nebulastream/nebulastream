@@ -280,6 +280,21 @@ class Query {
                     Windowing::WindowTypePtr const& windowType);
 
     /**
+     * @new change: Now it's private, because we don't want the user to have access to it.
+     * We call it only internal as a last step during the AND operation
+     * @brief This methods add the and operator to a query
+     * @param subQueryRhs subQuery to be composed
+     * @param onLeftKey key attribute of the left stream
+     * @param onLeftKey key attribute of the right stream
+     * @param windowType Window definition.
+     * @return the query
+     */
+    Query& andWith(const Query& subQueryRhs,
+                    ExpressionItem onLeftKey,
+                    ExpressionItem onRightKey,
+                    Windowing::WindowTypePtr const& windowType);
+
+    /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
      * @brief: Creates a window aggregation.
      * @param windowType Window definition.
