@@ -171,6 +171,13 @@ class Query {
     JoinOperatorBuilder::Join joinWith(const Query& subQueryRhs);
 
     /**
+     * @brief can be called on the original query with the query to be composed with and sets this query in the class Join.
+     * @param subQueryRhs
+     * @return object where where() function is defined and can be called by user
+     */
+    JoinOperatorBuilder::Join andWith(const Query& subQueryRhs);
+
+    /**
      * @brief: Creates a query from a particular source stream. The source stream is identified by its name.
      * During query processing the underlying source descriptor is retrieved from the stream catalog.
      * @param sourceStreamName name of the stream to query. This name has to be registered in the query catalog.
