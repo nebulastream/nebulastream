@@ -73,7 +73,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
 
     //Compute read timeout
     if (bufferFlushIntervalMs > 0) {
-        readTimeoutInMs = bufferFlushIntervalMs;
+        readTimeoutInMs = 1000;
     } else {
         readTimeoutInMs = 5000;//Default to 5000 ms
     }
@@ -171,10 +171,14 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     bool flushIntervalPassed = false;
     bool resubscribeFlag = false;
     while (tupleCount < tuplesThisPass && !flushIntervalPassed) {
-        std::string data = "";
+        std::string receivedMessageString;
         try {
             NES_TRACE("Waiting for messages on topic: '" << topic << "'");
-            //ToDo: #2220
+
+            // Using try_consume_message_for() instead of consume_message(), since the latter is blocking.
+            // By using try_consume_message_for(), if the readTimeout is reached, execution continues and the current
+            // TupleBuffer can be flushed. If the message is empty, we handle a potential disconnect from the broker
+            // by resubscribing to the topic again (necessary if broker and client are non-persistent).
             auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
             if(!message) {
                 std::cout << "Connected?: " << client->is_connected() << '\n';
@@ -195,9 +199,9 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
                 }
             } else {
                 NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
-                data = message->get_payload_str();
+                receivedMessageString = message->get_payload_str();
                 if (inputFormat == MQTTSourceDescriptor::JSON) {//remove '}' at the end of message, if JSON
-                    data = data.substr(0, data.size() - 1);
+                    receivedMessageString = receivedMessageString.substr(0, receivedMessageString.size() - 1);
                 }
             }
         } catch (const mqtt::exception& exc) {
@@ -209,16 +213,19 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
             NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
             return false;
         }
-        NES_TRACE("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/' << tuplesThisPass);
-        tupleCount++;
+        //if tuple was received receivedMessageString is not empty and will be written to the current TupleBuffer
+        if(!receivedMessageString.empty()) {
+            inputParser->writeInputTupleToTupleBuffer(receivedMessageString, tupleCount, tupleBuffer);
+            NES_TRACE("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/' << tuplesThisPass);
+            tupleCount++;
+        }
 
         // if bufferFlushIntervalMs was defined by user (> 0), after every tuple written to the TupleBuffer(TB), we check whether
         // the time spent on writing to the TB exceeds the user defined limit (bufferFlushIntervalMs) is exceeded already
         // if so, we stop filling the TB, flush it, and proceed with the next, if not, we proceed filling the TB
-        if ((bufferFlushIntervalMs > 0
-             && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
-                     .count()
-                 >= bufferFlushIntervalMs)) {
+        if ((bufferFlushIntervalMs > 0 && tupleCount > 0 &&
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+            - flushIntervalTimerStart).count() >= bufferFlushIntervalMs)) {
             NES_DEBUG("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
@@ -234,7 +241,8 @@ bool MQTTSource::connect() {
         NES_DEBUG("MQTTSource was !connect now connect " << this << ": connected");
         // connect with user name and password
         try {
-            auto connOpts = mqtt::connect_options_builder().user_name(user).clean_session(cleanSession).finalize();
+            //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
+            auto connOpts = mqtt::connect_options_builder().user_name(user).automatic_reconnect(true).clean_session(cleanSession).finalize();
 
             // Start consumer before connecting to make sure to not miss messages
             client->start_consuming();
