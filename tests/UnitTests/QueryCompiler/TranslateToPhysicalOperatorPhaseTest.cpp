@@ -100,6 +100,7 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
             Windowing::WindowTriggerPolicyPtr triggerPolicy = Windowing::OnTimeTriggerPolicyDescription::create(1000);
             auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
             auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
+            auto joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
             Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
@@ -108,7 +109,8 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
                 triggerPolicy,
                 triggerAction,
                 1,
-                1);
+                1,
+                joinType);
 
             joinOp1 = LogicalOperatorFactory::createJoinOperator(joinDef)->as<JoinLogicalOperatorNode>();
         }

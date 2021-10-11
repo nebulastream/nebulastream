@@ -1297,6 +1297,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     WindowTriggerPolicyPtr triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     auto distrType = DistributionCharacteristic::createCompleteWindowType();
+    auto joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "window$key")->as<FieldAccessExpressionNode>(),
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "window$key")->as<FieldAccessExpressionNode>(),
@@ -1305,7 +1306,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
         triggerPolicy,
         triggerAction,
         1,
-        1);
+        1,
+        joinType);
 
     joinDef->updateStreamTypes(input_schema, input_schema);
 
