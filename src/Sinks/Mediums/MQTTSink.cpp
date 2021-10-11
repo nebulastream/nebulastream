@@ -89,7 +89,7 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         // and afterwards sent to an MQTT broker, via the MQTT client
         for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
             if(formattedTuple == "") {
-                NES_TRACE("MQTTSink:: Error during tuple creation from tuple buffer: " << formattedTuple);
+                NES_ERROR("MQTTSink:: Error during tuple creation from tuple buffer: " << formattedTuple);
                 continue;
             }
             NES_TRACE("MQTTSink::writeData Sending Payload: " << formattedTuple);
