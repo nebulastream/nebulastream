@@ -41,6 +41,12 @@ class CPPCompilerFlags {
     inline static const std::string ALL_OPTIMIZATIONS = "-O3";
     inline static const std::string TUNE = "-mtune=native";
     inline static const std::string ARCH = "-march=native";
+    // ARM suggests to use cpu type instead of tune/arch
+    inline static const std::string CPU = "-mcpu=native";
+    // LLVM defines specific to this cpu type, for now a14 == m1
+    // TODO: create issue to check when LLVM goes to 13.0.0, more:
+    // https://github.com/llvm/llvm-project/blob/llvmorg-13.0.0/llvm/include/llvm/Support/AArch64TargetParser.def
+    inline static const std::string M1_CPU = "-mcpu=apple-a14";
     inline static const std::string DEBUGGING = "-g";
     // Enables tracing for compilation time with chrome::tracing
     inline static const std::string TRACE_COMPILATION_TIME = "-ftime-trace";
