@@ -90,6 +90,9 @@ MQTTSource::MQTTSource(SchemaPtr schema,
     std::vector<std::string> schemaKeys;
     std::string fieldName;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+
+    //Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
+    //Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
     for (const auto& field : schema->fields) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
@@ -230,7 +233,7 @@ bool MQTTSource::connect() {
             }
             connected = client->is_connected();
         } catch (const mqtt::exception& exc) {
-            NES_WARNING("\n  MQTTSource::connect: " << exc);
+            NES_WARNING("MQTTSource::connect: " << exc);
             connected = false;
             return connected;
         }
