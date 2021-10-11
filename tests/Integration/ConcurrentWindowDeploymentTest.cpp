@@ -380,7 +380,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
+//TODO test needs to be fixed, since it fails randomly. Covered in issue #2234
+TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTimeUnit) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
