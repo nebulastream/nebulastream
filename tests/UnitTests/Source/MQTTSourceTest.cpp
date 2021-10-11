@@ -210,7 +210,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 }
 
 // Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
-TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
+TEST_F(MQTTSourceTest, testDeployOneWorkerWithMQTTSourceConfig) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -256,8 +256,8 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
     srcConf->setSourceType("MQTTSource");
-    //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat; 5 = qos; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
-    srcConf->setSourceConfig("ws://127.0.0.1:9001;testClients;testUser;demoTownSensorData;JSON;2;true;3000");
+    //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat; 5 = qualityOfService; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
+    srcConf->setSourceConfig("ws://127.0.0.1:9001;testClients;testUser;demoTownSensorData;JSON;2;false;20000");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setNumberOfBuffersToProduce(10000);
     srcConf->setSourceFrequency(1);
