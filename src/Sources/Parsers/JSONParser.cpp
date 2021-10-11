@@ -23,35 +23,42 @@
 
 namespace NES {
 
-JSONParser::JSONParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes)
-    : Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
+JSONParser::JSONParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<std::string> schemaKeys, std::vector<NES::PhysicalTypePtr> physicalTypes)
+: Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields), schemaKeys(std::move(schemaKeys)),
       physicalTypes(std::move(physicalTypes)) {}
 
-void JSONParser::writeInputTupleToTupleBuffer(std::string jsonInput,
+bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
                                               uint64_t tupleCount,
                                               NES::Runtime::TupleBuffer& tupleBuffer) {
     NES_DEBUG("JSONParser::parseJSONMessage: Current TupleCount: " << tupleCount);
     uint64_t offset = 0;
 
     std::vector<std::string> helperToken;
-    std::vector<std::string> values;
 
     // extract values as strings from MQTT message - should be improved with JSON library
-    std::vector<std::string> keyValuePairs = NES::Util::splitWithStringDelimiter<std::string>(jsonInput, ",");
-    for (auto& keyValuePair : keyValuePairs) {
-        values.push_back(NES::Util::splitWithStringDelimiter<std::string>(keyValuePair, ":")[1]);
-    }
+    auto parsedJSONObject = web::json::value::parse(jsonTuple);
 
     // iterate over fields of schema and cast string values to correct type
-    for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
-        auto field = physicalTypes[j];
+    std::basic_string<char> jsonValue;
+    #pragma unroll
+    for (uint64_t fieldIndex = 0; fieldIndex < numberOfSchemaFields; fieldIndex++) {
+        auto field = physicalTypes[fieldIndex];
         uint64_t fieldSize = field->size();
-
-        NES_ASSERT2_FMT(fieldSize + offset + tupleCount * tupleSize < tupleBuffer.getBufferSize(),
-                        "Overflow detected: buffer size = " << tupleBuffer.getBufferSize() << " position = "
-                                                            << (offset + tupleCount * tupleSize) << " field size " << fieldSize);
-        writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, offset + tupleCount * tupleSize, true);
+        try {
+            NES_ASSERT2_FMT(fieldSize + offset + tupleCount * tupleSize < tupleBuffer.getBufferSize(),
+                            "Overflow detected: buffer size = " << tupleBuffer.getBufferSize() << " position = "
+                            << (offset + tupleCount * tupleSize) << " field size " << fieldSize);
+            //serialize() is called to get the web::json::value as a string. This is done for 2 reasons:
+            // 1. to keep 'Parser.cpp' independent of cpprest (no need to deal with 'web::json::value' object)
+            // 2. to have a single place for NESBasicPhysicalType conversion (could change this)
+            jsonValue = parsedJSONObject.at(schemaKeys[fieldIndex]).serialize();
+        } catch (web::json::json_exception &exception) {
+            NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: " << exception.what());
+            return false;
+        }
+        writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, offset + tupleCount * tupleSize, true);
         offset += fieldSize;
     }
+    return true;
 }
 }// namespace NES

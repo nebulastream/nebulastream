@@ -30,7 +30,7 @@ CSVParser::CSVParser(uint64_t tupleSize,
     : Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
       physicalTypes(std::move(physicalTypes)), delimiter(delimiter) {}
 
-void CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine,
+bool CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine,
                                              uint64_t tupleCount,
                                              NES::Runtime::TupleBuffer& tupleBuffer) {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount: " << tupleCount);
@@ -49,5 +49,6 @@ void CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine,
         writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, offset + tupleCount * tupleSize, false);
         offset += fieldSize;
     }
+    return true;
 }
 }// namespace NES
