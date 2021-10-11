@@ -102,7 +102,9 @@ class RESTEndpointTest : public testing::Test {
 
 uint64_t RESTEndpointTest::nextFreePort = 1024;
 
-TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
+
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
     auto getExecutionPlanClient = createRestClient("query/execution-plan");
@@ -159,7 +161,8 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     stopCoordinator(*crd);
 }
 
-TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
     //make httpclient with new endpoint -ex:
@@ -199,7 +202,8 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     stopCoordinator(*crd);
 }
 
-TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
     //make httpclient with new endpoint -ex:
@@ -257,7 +261,8 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     stopCoordinator(*crd);
 }
 
-TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWrongPayload) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
     //make httpclient with new endpoint -ex:
@@ -288,7 +293,8 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
     stopCoordinator(*crd);
 }
 
-TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
     auto getExecutionPlanClient = createRestClient("queryCatalog/allRegisteredQueries");
@@ -336,7 +342,8 @@ TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
     stopCoordinator(*crd);
 }
 
-TEST_F(RESTEndpointTest, testAddParentTopology) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_testAddParentTopology) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
     auto wrk2 = createAndStartWorker(NesNodeType::Worker, 2);
@@ -379,7 +386,8 @@ TEST_F(RESTEndpointTest, testAddParentTopology) {
     stopCoordinator(*crd);
 }
 
-TEST_F(RESTEndpointTest, testRemoveParentTopology) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_testRemoveParentTopology) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
     auto removeParent = createRestClient("topology/removeParent");
@@ -420,7 +428,8 @@ TEST_F(RESTEndpointTest, testRemoveParentTopology) {
     stopCoordinator(*crd);
 }
 
-TEST_F(RESTEndpointTest, testConnectivityCheck) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_testConnectivityCheck) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
     auto getConnectivityCheck = createRestClient("connectivity/check");
@@ -452,7 +461,8 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
     stopCoordinator(*crd);
 }
 
-TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_testAddLogicalStreamEx) {
     auto crd = createAndStartCoordinator();
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("streamCatalog/addLogicalStream-ex");
@@ -493,7 +503,8 @@ TEST_F(RESTEndpointTest, testAddLogicalStreamEx) {
     stopCoordinator(*crd);
 }
 
-TEST_F(RESTEndpointTest, DelegatePostRequestToRegisterUdf) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_DelegatePostRequestToRegisterUdf) {
     auto coordinator = createAndStartCoordinator();
     // when a REST client tries to register a Java UDF
     auto udfName = "my_udf"s;
@@ -511,7 +522,8 @@ TEST_F(RESTEndpointTest, DelegatePostRequestToRegisterUdf) {
     stopCoordinator(*coordinator);
 }
 
-TEST_F(RESTEndpointTest, DelegateDeleteRequestToRemoveUdf) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_DelegateDeleteRequestToRemoveUdf) {
     auto coordinator = createAndStartCoordinator();
     // given the udfCatalog contains a Java UDF
     auto javaUdfDescriptor =
@@ -528,7 +540,8 @@ TEST_F(RESTEndpointTest, DelegateDeleteRequestToRemoveUdf) {
     stopCoordinator(*coordinator);
 }
 
-TEST_F(RESTEndpointTest, DelegateGetRequestToRetrieveUdfDescriptor) {
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_DelegateGetRequestToRetrieveUdfDescriptor) {
     auto coordinator = createAndStartCoordinator();
     // given the udfCatalog contains a Java UDF
     auto javaUdfDescriptor =
