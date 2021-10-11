@@ -88,7 +88,7 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
         // and afterwards sent to an MQTT broker, via the MQTT client
         for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
-            if(formattedTuple == "") {
+            if (formattedTuple == "") {
                 NES_ERROR("MQTTSink:: Error during tuple creation from tuple buffer: " << formattedTuple);
                 continue;
             }

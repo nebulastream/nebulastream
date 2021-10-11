@@ -26,7 +26,10 @@ class JSONParser : public Parser {
     /**
    * @brief public constructor for JSON input data parser
    */
-    JSONParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<std::string> schemaKeys, std::vector<NES::PhysicalTypePtr> physicalTypes);
+    JSONParser(uint64_t tupleSize,
+               uint64_t numberOfSchemaFields,
+               std::vector<std::string> schemaKeys,
+               std::vector<NES::PhysicalTypePtr> physicalTypes);
 
     /**
    * @brief takes a json tuple as string, parses it using cpprest and calls Parser::writeFieldValueToTupleBuffer() for every value in the tuple

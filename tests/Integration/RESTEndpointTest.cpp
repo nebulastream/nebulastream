@@ -102,7 +102,6 @@ class RESTEndpointTest : public testing::Test {
 
 uint64_t RESTEndpointTest::nextFreePort = 1024;
 
-
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     auto crd = createAndStartCoordinator();

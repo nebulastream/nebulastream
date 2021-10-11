@@ -23,8 +23,11 @@
 
 namespace NES {
 
-JSONParser::JSONParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<std::string> schemaKeys, std::vector<NES::PhysicalTypePtr> physicalTypes)
-: Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields), schemaKeys(std::move(schemaKeys)),
+JSONParser::JSONParser(uint64_t tupleSize,
+                       uint64_t numberOfSchemaFields,
+                       std::vector<std::string> schemaKeys,
+                       std::vector<NES::PhysicalTypePtr> physicalTypes)
+    : Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields), schemaKeys(std::move(schemaKeys)),
       physicalTypes(std::move(physicalTypes)) {}
 
 bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
@@ -45,13 +48,14 @@ bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
         uint64_t fieldSize = field->size();
         try {
             NES_ASSERT2_FMT(fieldSize + offset + tupleCount * tupleSize < tupleBuffer.getBufferSize(),
-                            "Overflow detected: buffer size = " << tupleBuffer.getBufferSize() << " position = "
-                            << (offset + tupleCount * tupleSize) << " field size " << fieldSize);
+                            "Overflow detected: buffer size = " << tupleBuffer.getBufferSize()
+                                                                << " position = " << (offset + tupleCount * tupleSize)
+                                                                << " field size " << fieldSize);
             //serialize() is called to get the web::json::value as a string. This is done for 2 reasons:
             // 1. to keep 'Parser.cpp' independent of cpprest (no need to deal with 'web::json::value' object)
             // 2. to have a single place for NESBasicPhysicalType conversion (could change this)
             jsonValue = parsedJSONObject.at(schemaKeys[fieldIndex]).serialize();
-        } catch (web::json::json_exception &jsonException) {
+        } catch (web::json::json_exception& jsonException) {
             NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: " << jsonException.what());
             return false;
         }
