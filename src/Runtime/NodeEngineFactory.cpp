@@ -182,7 +182,7 @@ NodeEngineFactory::createQueryCompilationOptions(const std::string& queryCompile
     } else if (queryCompilerPipeliningStrategy == "OPERATOR_FUSION") {
         queryCompilationOptions->setPipeliningStrategy(QueryCompilation::QueryCompilerOptions::OPERATOR_FUSION);
     } else {
-        NES_FATAL_ERROR("queryCompilerCompilationStrategy " << queryCompilerCompilationStrategy << " not supported");
+        NES_FATAL_ERROR("queryCompilerPipeliningStrategy " << queryCompilerCompilationStrategy << " not supported");
     }
 
     // set output buffer optimization level

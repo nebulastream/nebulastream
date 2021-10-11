@@ -233,7 +233,7 @@ void WorkerConfig::resetWorkerOptions() {
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
     setNumberOfBuffersPerWorker(numberOfBuffersPerWorker->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
-    setQueryCompilerCompilationStrategy(queryCompilerPipeliningStrategy->getDefaultValue());
+    setQueryCompilerCompilationStrategy(queryCompilerCompilationStrategy->getDefaultValue());
     setQueryCompilerPipeliningStrategy(queryCompilerPipeliningStrategy->getDefaultValue());
     setQueryCompilerOutputBufferAllocationStrategy(queryCompilerOutputBufferOptimizationLevel->getDefaultValue());
     setWorkerPinList(workerPinList->getDefaultValue());
