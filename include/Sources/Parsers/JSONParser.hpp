@@ -26,20 +26,21 @@ class JSONParser : public Parser {
     /**
    * @brief public constructor for JSON input data parser
    */
-    JSONParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes);
+    JSONParser(uint64_t tupleSize, uint64_t numberOfSchemaFields, std::vector<std::string> schemaKeys, std::vector<NES::PhysicalTypePtr> physicalTypes);
 
     /**
-   * @brief takes a json tuple as string, casts its values to the correct types and writes it to the TupleBuffer
-   * @param jsonInput: string value that is cast to the PhysicalType and written to the TupleBuffer
+   * @brief takes a json tuple as string, parses it using cpprest and calls Parser::writeFieldValueToTupleBuffer() for every value in the tuple
+   * @param jsonTuple: string value that is cast to the PhysicalType and written to the TupleBuffer
    * @param tupleCount: the number of tuples already written to the current TupleBuffer
    * @param buffer: the TupleBuffer to which the value is written
    */
-    void
-    writeInputTupleToTupleBuffer(std::string jsonInput, uint64_t tupleCount, NES::Runtime::TupleBuffer& tupleBuffer) override;
+    bool
+    writeInputTupleToTupleBuffer(std::string jsonTuple, uint64_t tupleCount, NES::Runtime::TupleBuffer& tupleBuffer) override;
 
   private:
     uint64_t tupleSize;
     uint64_t numberOfSchemaFields;
+    std::vector<std::string> schemaKeys;
     std::vector<NES::PhysicalTypePtr> physicalTypes;
 };
 #endif//NES_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_

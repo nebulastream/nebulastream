@@ -42,7 +42,7 @@ class Parser {//: public Runtime::Reconfigurable
    * @param tupleCount: the number of tuples already written to the current TupleBuffer
    * @param buffer: the TupleBuffer to which the value is written
    */
-    virtual void
+    virtual bool
     writeInputTupleToTupleBuffer(std::string inputTuple, uint64_t tupleCount, NES::Runtime::TupleBuffer& tupleBuffer) = 0;
 
     /**

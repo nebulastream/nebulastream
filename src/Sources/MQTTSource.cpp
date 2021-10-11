@@ -16,8 +16,8 @@
 
 #ifdef ENABLE_MQTT_BUILD
 
-#include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <API/AttributeField.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
@@ -87,34 +87,38 @@ MQTTSource::MQTTSource(SchemaPtr schema,
     client = std::make_shared<mqtt::async_client>(serverAddress, this->clientId);
 
     //init physical types
+    std::vector<std::string> schemaKeys;
+    std::string fieldName;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const auto& field : schema->fields) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
+        fieldName = field->getName();
+        schemaKeys.push_back(fieldName.substr(fieldName.find('$')+1, fieldName.size()-1));
     }
 
     switch (inputFormat) {
         case SourceDescriptor::JSON:
-            inputParser = std::make_unique<JSONParser>(tupleSize, schema->getSize(), physicalTypes);
+            inputParser = std::make_unique<JSONParser>(tupleSize, schema->getSize(), schemaKeys, physicalTypes);
             break;
         case SourceDescriptor::CSV:
             inputParser = std::make_unique<CSVParser>(tupleSize, schema->getSize(), physicalTypes, ",");
             break;
     }
 
-    NES_DEBUG("MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId << ".");
+    NES_DEBUG("MQTTSource::MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId << ".");
 }
 
 MQTTSource::~MQTTSource() {
     NES_DEBUG("MQTTSource::~MQTTSource()");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG("MQTTSource  " << this << ": Destroy MQTT Source");
+        NES_DEBUG("MQTTSource::~MQTTSource  " << this << ": Destroy MQTT Source");
     } else {
-        NES_ERROR("MQTTSource  " << this << ": Destroy MQTT Source failed cause it could not be disconnected");
+        NES_ERROR("MQTTSource::~MQTTSource  " << this << ": Destroy MQTT Source failed cause it could not be disconnected");
         assert(0);
     }
-    NES_DEBUG("MQTTSource  " << this << ": Destroy MQTT Source");
+    NES_DEBUG("MQTTSource::~MQTTSource  " << this << ": Destroy MQTT Source");
 }
 
 std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
@@ -122,9 +126,12 @@ std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
 
     auto buffer = bufferManager->getBufferBlocking();
     if (connect()) {
-        fillBuffer(buffer);
+        if(!fillBuffer(buffer)) {
+            NES_ERROR("MQTTSource::receiveData: Failed to fill the TupleBuffer.");
+            return std::nullopt;
+        }
     } else {
-        NES_ERROR("MQTTSource: Not connected!");
+        NES_ERROR("MQTTSource::receiveData: Not connected!");
         return std::nullopt;
     }
     if (buffer.getNumberOfTuples() == 0) {
@@ -148,7 +155,7 @@ std::string MQTTSource::toString() const {
     return ss.str();
 }
 
-void MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
+bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
     //fill buffer maximally
     tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
@@ -166,17 +173,17 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
             //ToDo: #2220
             //auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeout));
             auto message = client->consume_message();
-            NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
+            NES_TRACE("MQTTSource::fillBuffer: Client consume message: '" << message->get_payload_str() << "'");
             data = message->get_payload_str();
-            if (inputFormat == MQTTSourceDescriptor::JSON) {//remove '}' at the end of message, if JSON
-                data = data.substr(0, data.size() - 1);
-            }
         } catch (const mqtt::exception& exc) {
-            NES_ERROR("MQTTSource error: " << exc.what());
+            NES_ERROR("MQTTSource::fillBuffer: " << exc.what());
         } catch (...) {
-            NES_ERROR("MQTTSource general error");
+            NES_ERROR("MQTTSource::fillBuffer: general error");
         }
-        inputParser->writeInputTupleToTupleBuffer(data, tupleCount, tupleBuffer);
+        if(!inputParser->writeInputTupleToTupleBuffer(data, tupleCount, tupleBuffer)) {
+            NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
+            return false;
+        }
         NES_TRACE("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/' << tuplesThisPass);
         tupleCount++;
 
@@ -194,6 +201,7 @@ void MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     tupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
+    return true;
 }
 
 bool MQTTSource::connect() {
@@ -207,7 +215,7 @@ bool MQTTSource::connect() {
             client->start_consuming();
 
             // Connect to the server
-            NES_DEBUG("MQTTSource: Connecting to the MQTT server...");
+            NES_DEBUG("MQTTSource::connect Connecting to the MQTT server...");
             auto tok = client->connect(connOpts);
 
             // Getting the connect response will block waiting for the
@@ -222,23 +230,23 @@ bool MQTTSource::connect() {
             }
             connected = client->is_connected();
         } catch (const mqtt::exception& exc) {
-            NES_WARNING("\n  " << exc);
+            NES_WARNING("\n  MQTTSource::connect: " << exc);
             connected = false;
             return connected;
         }
 
         if (connected) {
-            NES_DEBUG("MQTTSource: Connection established with topic: " << topic);
-            NES_DEBUG("MQTTSource  " << this << ": connected");
+            NES_DEBUG("MQTTSource::connect: Connection established with topic: " << topic);
+            NES_DEBUG("MQTTSource::connect:  " << this << ": connected");
         } else {
-            NES_DEBUG("Exception: MQTTSource  " << this << ": NOT connected");
+            NES_DEBUG("MQTTSource::connect:  " << this << ": NOT connected");
         }
     }
     return connected;
 }
 
 bool MQTTSource::disconnect() {
-    NES_DEBUG("MQTTSource::disconnect() connected=" << connected);
+    NES_DEBUG("MQTTSource::disconnect connected=" << connected);
     if (connected) {
         // If we're here, the client was almost certainly disconnected.
         // But we check, just to make sure.
@@ -251,16 +259,16 @@ bool MQTTSource::disconnect() {
                 client->unsubscribe(topic)->wait();
             }
             client->disconnect()->wait();
-            NES_DEBUG("MQTTSource: disconnected.");
+            NES_DEBUG("MQTTSource::disconnect: disconnected.");
         } else {
-            NES_DEBUG("MQTTSource: Client was already disconnected");
+            NES_DEBUG("MQTTSource::disconnect: Client was already disconnected");
         }
         connected = client->is_connected();
     }
     if (!connected) {
-        NES_DEBUG("MQTTSource  " << this << ": disconnected");
+        NES_DEBUG("MQTTSource::disconnect:  " << this << ": disconnected");
     } else {
-        NES_DEBUG("MQTTSource  " << this << ": NOT disconnected");
+        NES_DEBUG("MQTTSource::disconnect:  " << this << ": NOT disconnected");
         return connected;
     }
     return !connected;
