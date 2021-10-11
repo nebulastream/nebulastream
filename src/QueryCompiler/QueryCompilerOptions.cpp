@@ -33,7 +33,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     auto options = QueryCompilerOptions();
     options.setCompilationStrategy(OPTIMIZE);
     options.setPipeliningStrategy(OPERATOR_FUSION);
-    options.setFilterProcessingStrategy(BRANCHED);
+    options.setFilterProcessingStrategy(PREDICATION);
     options.setNumSourceLocalBuffers(64);
     options.setOutputBufferOptimizationLevel(ALL);
     return std::make_shared<QueryCompilerOptions>(options);
