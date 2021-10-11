@@ -33,7 +33,7 @@ JSONParser::JSONParser(uint64_t tupleSize,
 bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
                                               uint64_t tupleCount,
                                               NES::Runtime::TupleBuffer& tupleBuffer) {
-    NES_DEBUG("JSONParser::parseJSONMessage: Current TupleCount: " << tupleCount);
+    NES_TRACE("JSONParser::parseJSONMessage: Current TupleCount: " << tupleCount);
     uint64_t offset = 0;
 
     std::vector<std::string> helperToken;
