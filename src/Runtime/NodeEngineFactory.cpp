@@ -46,9 +46,7 @@ NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname, uint16_t
                             128,
                             12,
                             NumaAwarenessFlag::DISABLED,
-                            "",
-                            "DEBUG",
-                            "ALL");
+                            "");
 }
 
 NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
