@@ -29,7 +29,7 @@ namespace NES {
 class MQTTSourceDescriptor : public SourceDescriptor {
 
   public:
-  enum ServiceQualities { atMostOnce, atLeastOnce, exactlyOnce };//cleanSession requires atLeastOnce or exactlyOnce
+    enum ServiceQualities { atMostOnce, atLeastOnce, exactlyOnce };//cleanSession requires atLeastOnce or exactlyOnce
     /**
      * @brief create a source descriptor pointer for MQTT source
      * @param schema the schema of the data

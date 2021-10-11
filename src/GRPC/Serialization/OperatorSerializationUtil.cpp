@@ -1067,14 +1067,15 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         serializedSourceDescriptor.UnpackTo(&mqttSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor.release_sourceschema());
-        auto ret = MQTTSourceDescriptor::create(schema,
-                                                mqttSerializedSourceDescriptor.serveraddress(),
-                                                mqttSerializedSourceDescriptor.clientid(),
-                                                mqttSerializedSourceDescriptor.user(),
-                                                mqttSerializedSourceDescriptor.topic(),
-                                                (SourceDescriptor::InputFormat) mqttSerializedSourceDescriptor.inputformat(),
-                                                MQTTSourceDescriptor::ServiceQualities(mqttSerializedSourceDescriptor.qualityofservice()),
-                                                mqttSerializedSourceDescriptor.cleansession());
+        auto ret = MQTTSourceDescriptor::create(
+            schema,
+            mqttSerializedSourceDescriptor.serveraddress(),
+            mqttSerializedSourceDescriptor.clientid(),
+            mqttSerializedSourceDescriptor.user(),
+            mqttSerializedSourceDescriptor.topic(),
+            (SourceDescriptor::InputFormat) mqttSerializedSourceDescriptor.inputformat(),
+            MQTTSourceDescriptor::ServiceQualities(mqttSerializedSourceDescriptor.qualityofservice()),
+            mqttSerializedSourceDescriptor.cleansession());
         return ret;
     }
 #endif

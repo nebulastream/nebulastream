@@ -75,8 +75,8 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            bool cleanSession,
                                            long bufferFlushIntervalMs)
     : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)),
-    user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qualityOfService(qualityOfService), cleanSession(cleanSession),
-      bufferFlushIntervalMs(bufferFlushIntervalMs) {}
+      user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qualityOfService(qualityOfService),
+      cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs) {}
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            std::string logicalStreamName,
@@ -89,8 +89,8 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
                                            bool cleanSession,
                                            long bufferFlushIntervalMs)
     : SourceDescriptor(std::move(schema), std::move(logicalStreamName)), serverAddress(std::move(serverAddress)),
-    clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat), qualityOfService(qualityOfService),
-      cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs) {}
+      clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat),
+      qualityOfService(qualityOfService), cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs) {}
 
 std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
 
