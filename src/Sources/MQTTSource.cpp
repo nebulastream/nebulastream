@@ -169,15 +169,37 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     auto flushIntervalTimerStart = std::chrono::system_clock::now();
 
     bool flushIntervalPassed = false;
+    bool resubscribeFlag = false;
     while (tupleCount < tuplesThisPass && !flushIntervalPassed) {
         std::string data = "";
         try {
             NES_TRACE("Waiting for messages on topic: '" << topic << "'");
             //ToDo: #2220
             auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
-//            auto message = client->consume_message();
-            NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
-            data = message->get_payload_str();
+            if(!message) {
+                std::cout << "Connected?: " << client->is_connected() << '\n';
+                if(!client->is_connected() && !resubscribeFlag) {
+                    std::cout << "Not connected, setting resubscribe flag!" << '\n';
+                    resubscribeFlag = true;
+                }
+                else if(!client->is_connected() && resubscribeFlag) {
+                    std::cout << "Not connected. Resubscribe flag already set!" << '\n';
+                }
+                else if(client->is_connected() && resubscribeFlag) {
+                    std::cout << "Connected, resubscribe flag set, subscribing again!" << '\n';
+                    client->subscribe(topic, qualityOfService)->wait();
+                    resubscribeFlag = false;
+                }
+                else { //client->is_connected() && !connectionToBrokerWasLost
+                    std::cout << "Connected and subscribed, waiting for messages!" << '\n';
+                }
+            } else {
+                NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
+                data = message->get_payload_str();
+                if (inputFormat == MQTTSourceDescriptor::JSON) {//remove '}' at the end of message, if JSON
+                    data = data.substr(0, data.size() - 1);
+                }
+            }
         } catch (const mqtt::exception& exc) {
             NES_ERROR("MQTTSource::fillBuffer: " << exc.what());
         } catch (...) {
