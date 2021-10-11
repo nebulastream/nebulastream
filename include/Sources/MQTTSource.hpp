@@ -39,7 +39,7 @@ class TupleBuffer;
 class MQTTSource : public DataSource {
 
   public:
-  /**
+    /**
    * @brief constructor for the MQTT data source
    * @param schema of the data
    * @param bufferManager
