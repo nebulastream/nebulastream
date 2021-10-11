@@ -26,11 +26,12 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
                                              Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                              BaseJoinActionDescriptorPtr triggerAction,
                                              uint64_t numberOfInputEdgesLeft,
-                                             uint64_t numberOfInputEdgesRight)
+                                             uint64_t numberOfInputEdgesRight,
+                                             JoinType joinType)
     : leftJoinKeyType(std::move(leftJoinKeyType)), rightJoinKeyType(std::move(rightJoinKeyType)),
       triggerPolicy(std::move(triggerPolicy)), triggerAction(std::move(triggerAction)), windowType(std::move(windowType)),
       distributionType(std::move(distributionType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
-      numberOfInputEdgesRight(numberOfInputEdgesRight) {
+      numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType) {
 
     NES_ASSERT(this->leftJoinKeyType, "Invalid left join key type");
     NES_ASSERT(this->rightJoinKeyType, "Invalid right join key type");
@@ -40,6 +41,7 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
     NES_ASSERT(this->triggerAction, "Invalid trigger action");
     NES_ASSERT(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
     NES_ASSERT(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
+    NES_ASSERT((this->joinType == INNER_JOIN || this->joinType == CARTESIAN_PRODUCT), "Invalid Join Type");
 }
 
 LogicalJoinDefinitionPtr LogicalJoinDefinition::create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
@@ -49,15 +51,17 @@ LogicalJoinDefinitionPtr LogicalJoinDefinition::create(const FieldAccessExpressi
                                                        const Windowing::WindowTriggerPolicyPtr& triggerPolicy,
                                                        const BaseJoinActionDescriptorPtr& triggerAction,
                                                        uint64_t numberOfInputEdgesLeft,
-                                                       uint64_t numberOfInputEdgesRight) {
-    return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKeyType,
+                                                       uint64_t numberOfInputEdgesRight,
+                                                       JoinType joinType) {
+       return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKeyType,
                                                          rightJoinKeyType,
                                                          windowType,
                                                          distributionType,
                                                          triggerPolicy,
                                                          triggerAction,
                                                          numberOfInputEdgesLeft,
-                                                         numberOfInputEdgesRight);
+                                                         numberOfInputEdgesRight,
+                                                         joinType);
 }
 
 FieldAccessExpressionNodePtr LogicalJoinDefinition::getLeftJoinKey() { return leftJoinKeyType; }
