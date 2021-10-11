@@ -183,39 +183,35 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
             if(!message) {
                 std::cout << "Connected?: " << client->is_connected() << '\n';
                 if(!client->is_connected() && !resubscribeFlag) {
-                    std::cout << "Not connected, setting resubscribe flag!" << '\n';
+                    NES_DEBUG("Not connected, setting resubscribe flag!");
                     resubscribeFlag = true;
                 }
                 else if(!client->is_connected() && resubscribeFlag) {
-                    std::cout << "Not connected. Resubscribe flag already set!" << '\n';
+                    NES_DEBUG("Not connected. Resubscribe flag already set!");
                 }
                 else if(client->is_connected() && resubscribeFlag) {
-                    std::cout << "Connected, resubscribe flag set, subscribing again!" << '\n';
+                    NES_DEBUG("Connected, resubscribe flag set, subscribing again!");
                     client->subscribe(topic, qualityOfService)->wait();
                     resubscribeFlag = false;
                 }
                 else { //client->is_connected() && !connectionToBrokerWasLost
-                    std::cout << "Connected and subscribed, waiting for messages!" << '\n';
+                    NES_DEBUG("Connected and subscribed, waiting for messages!");
                 }
             } else {
                 NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
                 receivedMessageString = message->get_payload_str();
-                if (inputFormat == MQTTSourceDescriptor::JSON) {//remove '}' at the end of message, if JSON
-                    receivedMessageString = receivedMessageString.substr(0, receivedMessageString.size() - 1);
-                }
             }
         } catch (const mqtt::exception& exc) {
             NES_ERROR("MQTTSource::fillBuffer: " << exc.what());
         } catch (...) {
             NES_ERROR("MQTTSource::fillBuffer: general error");
         }
-        if (!inputParser->writeInputTupleToTupleBuffer(data, tupleCount, tupleBuffer)) {
-            NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
-            return false;
-        }
         //if tuple was received receivedMessageString is not empty and will be written to the current TupleBuffer
         if(!receivedMessageString.empty()) {
-            inputParser->writeInputTupleToTupleBuffer(receivedMessageString, tupleCount, tupleBuffer);
+            if(!inputParser->writeInputTupleToTupleBuffer(receivedMessageString, tupleCount, tupleBuffer)) {
+                NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
+                return false;
+            }
             NES_TRACE("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/' << tuplesThisPass);
             tupleCount++;
         }
