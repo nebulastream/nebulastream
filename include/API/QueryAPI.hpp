@@ -16,22 +16,22 @@
 
 #ifndef NES_INCLUDE_API_QUERYAPI_HPP_
 #define NES_INCLUDE_API_QUERYAPI_HPP_
-#include <API/Query.hpp>
-#include <API/Windowing.hpp>
-#include <API/WindowedQuery.hpp>
-#include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <API/Query.hpp>
+#include <API/WindowedQuery.hpp>
+#include <API/Windowing.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
 
 /**
  * @brief This header includes all headers that are necessary to formulate queries in CPP.

@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -29,6 +27,8 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <iostream>
 
 using namespace std;

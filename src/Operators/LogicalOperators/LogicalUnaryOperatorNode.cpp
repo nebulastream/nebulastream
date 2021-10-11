@@ -13,9 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/Schema.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
-#include <API/Schema.hpp>
 namespace NES {
 
 LogicalUnaryOperatorNode::LogicalUnaryOperatorNode(OperatorId id)

@@ -34,12 +34,12 @@
 
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <cstdarg>
 #include <iostream>
 
@@ -49,9 +49,7 @@
 
 namespace NES {
 
-ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem){
-    return expressionItem.getExpressionNode();
-}
+ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem) { return expressionItem.getExpressionNode(); }
 
 JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
 
@@ -76,7 +74,8 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
                              Query& originalQuery,
                              const ExpressionItem& onLeftKey,
                              const ExpressionItem& onRightKey)
-    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey.getExpressionNode()), onRightKey(onRightKey.getExpressionNode()) {}
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey.getExpressionNode()),
+      onRightKey(onRightKey.getExpressionNode()) {}
 
 }// namespace JoinOperatorBuilder
 
@@ -151,8 +150,8 @@ Query& Query::joinWith(const Query& subQueryRhs,
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
         if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-            queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
+            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
+                Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
@@ -164,13 +163,15 @@ Query& Query::joinWith(const Query& subQueryRhs,
 
     if (rightQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
         if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(
+                Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
             rightQueryPlan->appendOperatorAsNewRoot(op);
         } else if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
-            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                API::Milliseconds(0),
-                windowType->getTimeCharacteristic()->getTimeUnit()));
+            auto op =
+                LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                    API::Milliseconds(0),
+                    windowType->getTimeCharacteristic()->getTimeUnit()));
             rightQueryPlan->appendOperatorAsNewRoot(op);
         }
     }

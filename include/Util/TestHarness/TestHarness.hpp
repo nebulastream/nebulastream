@@ -16,12 +16,12 @@
 
 #ifndef NES_TESTHARNESS_HPP
 #define NES_TESTHARNESS_HPP
+#include <API/QueryAPI.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarnessWorker.hpp>
 #include <Util/TestUtils.hpp>
-#include <API/QueryAPI.hpp>
 #include <type_traits>
 #include <utility>
 

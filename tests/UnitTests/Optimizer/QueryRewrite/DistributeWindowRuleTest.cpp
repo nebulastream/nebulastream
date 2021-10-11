@@ -131,7 +131,8 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-                      .window(NES::Windowing::TumblingWindow::of(NES::Windowing::TimeCharacteristic::createIngestionTime(), API::Seconds(10)))
+                      .window(NES::Windowing::TumblingWindow::of(NES::Windowing::TimeCharacteristic::createIngestionTime(),
+                                                                 API::Seconds(10)))
                       .byKey(Attribute("id"))
                       .apply(API::Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
@@ -155,7 +156,8 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
                       .filter(Attribute("id") < 45)
-                      .window(NES::Windowing::TumblingWindow::of(NES::Windowing::TimeCharacteristic::createIngestionTime(), API::Seconds(10)))
+                      .window(NES::Windowing::TumblingWindow::of(NES::Windowing::TimeCharacteristic::createIngestionTime(),
+                                                                 API::Seconds(10)))
                       .byKey(Attribute("id"))
                       .apply(API::Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
@@ -186,7 +188,8 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
                       .filter(Attribute("id") < 45)
-                      .window(NES::Windowing::TumblingWindow::of(NES::Windowing::TimeCharacteristic::createIngestionTime(), API::Seconds(10)))
+                      .window(NES::Windowing::TumblingWindow::of(NES::Windowing::TimeCharacteristic::createIngestionTime(),
+                                                                 API::Seconds(10)))
                       .byKey(Attribute("id"))
                       .apply(API::Sum(Attribute("value")))
                       .sink(printSinkDescriptor);

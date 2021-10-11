@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <Monitoring/Util/MetricUtils.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
@@ -24,6 +23,7 @@
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <Monitoring/Util/SystemResourcesReader.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>

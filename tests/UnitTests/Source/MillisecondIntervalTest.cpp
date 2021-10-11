@@ -21,6 +21,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -31,7 +32,6 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 using namespace NES::Runtime;
 using namespace NES::Runtime::Execution;
 

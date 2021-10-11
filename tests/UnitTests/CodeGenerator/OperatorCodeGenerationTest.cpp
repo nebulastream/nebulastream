@@ -16,11 +16,11 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
@@ -42,13 +42,13 @@
 #include <Sources/GeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>
@@ -560,13 +560,13 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition =
         Windowing::LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64),
-                                        sum,
-                                        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
-                                        DistributionCharacteristic::createCompleteWindowType(),
-                                        1,
-                                        trigger,
-                                        triggerAction,
-                                        0);
+                                                   sum,
+                                                   TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                                                   DistributionCharacteristic::createCompleteWindowType(),
+                                                   1,
+                                                   trigger,
+                                                   triggerAction,
+                                                   0);
 
     auto strategy = EventTimeWatermarkStrategy::create(windowDefinition->getOnKey(), 12, 1);
     codeGenerator->generateCodeForWatermarkAssigner(strategy, context1);

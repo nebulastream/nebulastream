@@ -14,17 +14,17 @@
     limitations under the License.
 */
 
-#include <iostream>
-#include <stdexcept>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <iostream>
+#include <stdexcept>
 #include <utility>
 
 namespace NES {

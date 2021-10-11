@@ -15,8 +15,8 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <API/Expressions/Expressions.hpp>
+#include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -32,7 +32,9 @@ EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(const
 WatermarkStrategyDescriptorPtr
 EventTimeWatermarkStrategyDescriptor::create(const ExpressionItem& onField, TimeMeasure allowedLateness, TimeUnit unit) {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
-        Windowing::EventTimeWatermarkStrategyDescriptor(onField.getExpressionNode(), std::move(allowedLateness), std::move(unit)));
+        Windowing::EventTimeWatermarkStrategyDescriptor(onField.getExpressionNode(),
+                                                        std::move(allowedLateness),
+                                                        std::move(unit)));
 }
 ExpressionNodePtr EventTimeWatermarkStrategyDescriptor::getOnField() { return onField; }
 TimeMeasure EventTimeWatermarkStrategyDescriptor::getAllowedLateness() { return allowedLateness; }

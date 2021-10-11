@@ -16,9 +16,6 @@
 
 #include <gtest/gtest.h>
 
-#include <map>
-#include <utility>
-#include <vector>
 #include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -32,18 +29,21 @@
 #include <Windowing/WindowAggregations/ExecutableMedianAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+#include <map>
+#include <utility>
+#include <vector>
 
-#include <Util/Logger.hpp>
-#include <cstdlib>
-#include <iostream>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Util/Logger.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
+#include <cstdlib>
+#include <iostream>
 
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>

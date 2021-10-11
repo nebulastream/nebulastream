@@ -20,10 +20,10 @@
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
+#include <API/Expressions/Expressions.hpp>
 #include <memory>
 #include <string>
 #include <vector>
-#include <API/Expressions/Expressions.hpp>
 
 namespace NES {
 

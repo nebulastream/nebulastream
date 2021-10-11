@@ -16,9 +16,9 @@
 
 #ifndef NES_INCLUDE_DATATYPES_DATATYPEFACTORY_HPP_
 #define NES_INCLUDE_DATATYPES_DATATYPEFACTORY_HPP_
+#include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
 #include <vector>
-#include <Common/DataTypes/BasicTypes.hpp>
 namespace NES {
 
 class DataType;

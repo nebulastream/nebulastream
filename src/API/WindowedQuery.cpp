@@ -28,10 +28,10 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 
 #include <API/WindowedQuery.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
@@ -84,8 +84,8 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, const Windowing
     if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         NES_DEBUG("add default watermark strategy as non is provided");
         if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-            queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
+            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
+                Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
@@ -111,13 +111,14 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, const Windowing
 
     auto inputSchema = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
 
-    auto windowDefinition = Windowing::LogicalWindowDefinition::create(aggregation,
-                                                            windowType,
-                                                            Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                            1,
-                                                            triggerPolicy,
-                                                            triggerAction,
-                                                            allowedLateness);
+    auto windowDefinition =
+        Windowing::LogicalWindowDefinition::create(aggregation,
+                                                   windowType,
+                                                   Windowing::DistributionCharacteristic::createCompleteWindowType(),
+                                                   1,
+                                                   triggerPolicy,
+                                                   triggerAction,
+                                                   allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);
@@ -145,8 +146,8 @@ Query& Query::windowByKey(ExpressionItem onKey,
     if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         NES_DEBUG("add default watermark strategy as non is provided");
         if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-            queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
+            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
+                Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
