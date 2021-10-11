@@ -210,7 +210,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 }
 
 // Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
-TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
+TEST_F(MQTTSourceTest, testDeployOneWorkerWithMQTTSourceConfig) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
