@@ -44,6 +44,7 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        HardwareManagerPtr&& hardwareManager,
                        std::vector<BufferManagerPtr>&& bufferManagers,
                        QueryManagerPtr&& queryManager,
+                       BufferStoragePtr&& bufferStorage,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
@@ -54,7 +55,8 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        uint64_t numberOfBuffersPerWorker)
     : queryManager(std::move(queryManager)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
-      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nodeEngineId(nodeEngineId),
+      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)),
+      bufferStorage(std::move(bufferStorage)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker) {
@@ -323,7 +325,10 @@ BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const
     return bufferManagers[bufferManagerIndex];
 }
 
+
 StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
+
+BufferStoragePtr NodeEngine::getBufferStorage() { return bufferStorage; }
 
 uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }
 

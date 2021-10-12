@@ -28,7 +28,7 @@ namespace NES {
  */
 class BufferStorage {
   private:
-    std::queue<std::pair<BufferSequenceNumber, Runtime::TupleBuffer>> buffer;
+    std::map<uint64_t , std::queue<std::pair<BufferSequenceNumber, Runtime::TupleBuffer>>> buffers;
     mutable std::mutex mutex;
 
   public:
@@ -46,11 +46,17 @@ class BufferStorage {
      */
     bool trimBuffer(BufferSequenceNumber id);
     /**
-     * @brief Return current queue size
+     * @brief Return current storage size
      * @param mutex mutex to make the method thread safe
-     * @return Current queue size
+     * @return Current storage size
      */
     size_t getStorageSize() const;
+    /**
+     * @brief Return given origin Id queue size
+     * @param mutex mutex to make the method thread safe
+     * @return Given queue size
+     */
+    size_t getQueueSize(uint64_t originId) const;
 };
 
 }// namespace NES

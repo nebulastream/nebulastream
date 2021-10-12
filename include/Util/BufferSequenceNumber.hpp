@@ -29,13 +29,16 @@ class BufferSequenceNumber {
   public:
     BufferSequenceNumber(int64_t sequenceNumber, int64_t originId) : sequenceNumber(sequenceNumber), originId(originId) {}
 
+    int64_t getSequenceNumber() const { return sequenceNumber; }
+    int64_t getOriginId() const { return originId; }
+
   private:
-    friend bool operator<(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber < rightSN.sequenceNumber && leftSN.originId < rightSN.originId; }
-    friend bool operator<=(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber <= rightSN.sequenceNumber && leftSN.originId <= rightSN.originId; }
-    friend bool operator>(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber > rightSN.sequenceNumber && leftSN.originId > rightSN.originId; }
-    friend bool operator>=(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber >= rightSN.sequenceNumber && leftSN.originId >= rightSN.originId; }
-    friend bool operator==(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber == rightSN.sequenceNumber && leftSN.originId == rightSN.originId; }
-    friend bool operator!=(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber != rightSN.sequenceNumber && leftSN.originId != rightSN.originId; }
+    friend bool operator<(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber < rightSN.sequenceNumber; }
+    friend bool operator<=(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber <= rightSN.sequenceNumber; }
+    friend bool operator>(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber > rightSN.sequenceNumber; }
+    friend bool operator>=(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber >= rightSN.sequenceNumber; }
+    friend bool operator==(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber == rightSN.sequenceNumber; }
+    friend bool operator!=(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber != rightSN.sequenceNumber; }
 };
 
 
