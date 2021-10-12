@@ -18,15 +18,15 @@
 #define INCLUDE_CATALOGS_STREAMCATALOG_HPP_
 
 #include <API/Schema.hpp>
+#include <Catalogs/StreamCatalogEntry.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
+#include <Persistence/StreamCatalogPersistence.hpp>
 #include <Sources/DataSource.hpp>
 #include <deque>
 #include <map>
 #include <string>
 #include <vector>
-//#include <Topology/NESTopologyEntry.hpp>
-#include <Catalogs/StreamCatalogEntry.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
-#include <Persistence/StreamCatalogPersistence.hpp>
+
 namespace NES {
 
 class LogicalStream;
@@ -43,8 +43,8 @@ class StreamCatalog {
   public:
     /**
    * @brief method to add a logical stream
-   * @param logical stream name
-   * @param schema of logical stream as object
+   * @param logicalStreamName the name of the logical stream which is to be added
+   * @param schemaPtr pointer to logical stream schema as an object
    * TODO: what to do if logical stream exists but the new one has a different schema
    * @return bool indicating if insert was successful
    */
@@ -52,30 +52,30 @@ class StreamCatalog {
 
     /**
    * @brief method to add a logical stream
-   * @param logical stream name
-   * @param schema of logical stream as string
+   * @param logicalStreamName the name of the logical stream which is to be added
+   * @param streamSchema logical stream schema as a string
    * @return bool indicating if insert was successful
      */
     bool addLogicalStream(const std::string& streamName, const std::string& streamSchema);
 
     /**
    * @brief method to add a logical stream which was present in mismappedStreams
-   * @param logical stream name
-   * @param schema of logical stream as string
+   * @param logicalStreamName the name of the logical stream which is to be added
+   * @param schemaPtr pointer to logical stream schema as an object
      */
     void addLogicalStreamFromMismappedStreams(std::string logicalStreamName, SchemaPtr schemaPtr);
 
     /**
-       * @brief method to delete a logical stream
-       * @caution this method only remove the entry from the catalog not from the topology
-       * @param name of logical stream to delete
-       * @param bool indicating the success of the removal
-       */
+   * @brief method to delete a logical stream
+   * @caution this method only remove the entry from the catalog not from the topology
+   * @param logicalStreamName name of logical stream to delete
+   * @return bool indicating the success of the removal
+     */
     bool removeLogicalStream(std::string logicalStreamName);
 
     /**
      * @brief method to add a physical stream without a logical stream leading to a MISCONFIGURED physicalStream
-     * @param newEntry
+     * @param newEntry is a StreamCatalogEntryPtr containing information of the sourceType, physicalStreamName, (an empty) logicalStreamName and the physicalNode
      * @return true or false depending if the registration was successful; in case that the stream name already exists, a
      * modified name is returned instead
      */
@@ -92,6 +92,8 @@ class StreamCatalog {
     /**
      * @brief method to add a physical stream
      * @caution combination of node and name has to be unique
+     * @param logicalStreamNames vector of logicalStreamNames which the physicalStream should be added to
+     * @param entry StreamCatalogEntry that contains the physicalStream information to be added to the logical streams.
      * @return true if the physical stream was added successfully to all logicalStreams named (also true im physical stream was added to mismapped
      * logical streams), false otherwise. additionally, the physical stream name is returned (which changes in case of duplicate entries)
      */
@@ -99,15 +101,16 @@ class StreamCatalog {
 
     /**
    * @brief method to add a physical stream to a logical stream
-   * @param physicalStreamName and logicalStreamName
+   * @param physicalStreamName name of the physical stream to be added
+   * @param logicalStreamNae name of the logicalStreamName to be added to
    * @return bool indicating success of insert stream
    */
     bool addPhysicalStreamToLogicalStream(std::string physicalStreamName, std::string logicalStreamName);
 
     /**
      * @brief method to remove a physical stream to logical stream mapping
-     * @param physicalStreamName
-     * @param logicalStreamName
+     * @param physicalStreamName - name of the physical stream to be removed from the mapping
+     * @param logicalStreamName - name of the logical stream to be removed from
      * @return true if the physical stream was removed from the logical stream successfully, false otherwise
      */
     bool removePhysicalStreamFromLogicalStream(std::string physicalStreamName, std::string logicalStreamName);
@@ -196,21 +199,22 @@ class StreamCatalog {
 
     /**
     * @brief test if physical stream with this name exists in nameToPhysicalMapping
-    * @param name of the physical stream to test
+    * @param physicalStreamName -  of the physical stream to test
     * @return bool indicating if stream exists
     */
     bool testIfPhysicalStreamWithNameExists(std::string physicalStreamName);
 
     /**
     * @brief test if logical stream exists in mismappedStreams
-    * @param name of the logical stream to test
+    * @param logicalStreamName - name of the logical stream to test
     * @return bool indicating if stream exists
     */
     bool testIfLogicalStreamExistsInMismappedStreams(std::string logicalStreamName);
 
     /**
     * @brief test if in mismappedStreams there is a mapping of a specific physical to a specific logical stream.
-    * @param name of the logical and physical streams to test.
+    * @param logicalStreamName - name of the logical stream to test.
+    * @param physicalStreamName - name of the physical stream to test.
     * @return bool indicating if mapping exists
     */
     bool testIfLogicalStreamToPhysicalStreamMappingExistsInMismappedStreams(std::string logicalStreamName,
@@ -250,14 +254,14 @@ class StreamCatalog {
     std::map<std::string, std::string> getAllLogicalStreamAsString();
 
     /**
-       * @brief method to return the physical stream and the associated schemas
-       * @return string containing the content of the catalog
-       */
+      * @brief method to return the physical stream and the associated schemas
+      * @return string containing the content of the catalog
+     */
     std::string getPhysicalStreamAndSchemaAsString();
 
     /**
      * @brief get all physical streams
-        * @return std::vector containing all StreamCatalogEntryPtr
+     * @return std::vector containing all StreamCatalogEntryPtr
     */
     std::vector<StreamCatalogEntryPtr> getPhysicalStreams();
 
@@ -273,6 +277,7 @@ class StreamCatalog {
     * @return mapping
     */
     std::map<std::string, std::vector<std::string>> getMismappedPhysicalStreams();
+
     /**
     * @brief get all mismapped physical streams for a logical stream
     * @param logicalStreamName
@@ -288,8 +293,8 @@ class StreamCatalog {
 
     /**
      * @brief update an existing stream
-     * @param streamName
-     * @param streamSchema
+     * @param streamName - name of the logical stream to be updated
+     * @param streamSchema - schema to update logical stream with
      * @return
      */
     bool updatedLogicalStream(std::string& streamName, std::string& streamSchema);

@@ -17,10 +17,10 @@
 #include <Catalogs/PhysicalStreamState.hpp>
 
 namespace NES {
-PhysicalStreamState::PhysicalStreamState() { this->state = State::regular; }
+PhysicalStreamState::PhysicalStreamState() { this->state = State::REGULAR; }
 
 std::string PhysicalStreamState::getStateDescription() {
-    if (state == regular) {
+    if (state == REGULAR) {
         return "REGULAR";
     }
     std::string desc = "MISCONFIGURED";
@@ -37,26 +37,26 @@ std::string PhysicalStreamState::getStateDescription() {
 
 void PhysicalStreamState::addReason(Reason reason, std::string desc) {
     this->description[reason] = desc;
-    this->state = misconfigured;
+    this->state = MISCONFIGURED;
 }
 void PhysicalStreamState::removeReason(Reason reason) {
     this->description.erase(reason);
     if (description.empty()) {
-        this->state = regular;
+        this->state = REGULAR;
     }
 }
 
 bool PhysicalStreamState::isNameValid() {
-    if (description.find(duplicatePhysicalStreamName) != description.end()) {
+    if (description.find(DUPLICATE_PHYSICAL_STREAM_NAME) != description.end()) {
         return false;
     }
     return true;
 }
 
 std::string PhysicalStreamState::getStringForReasonEnum(Reason reason) {
-    if (reason == noLogicalStream) {
+    if (reason == NO_LOGICAL_STREAM) {
         return "NO_LOGICAL_STREAM";
-    } else if (reason == logicalStreamWithoutSchema) {
+    } else if (reason == LOGICAL_STREAM_WITHOUT_SCHEMA) {
         return "LOGICAL_STREAM_WITHOUT_SCHEMA";
     } else {
         return "DUPLICATE_PHYSICAL_STREAM_NAME";
