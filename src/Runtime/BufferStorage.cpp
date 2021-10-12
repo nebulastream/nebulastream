@@ -21,14 +21,20 @@
 namespace NES {
     void BufferStorage::insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) {
         std::unique_lock<std::mutex> lck (mutex);
-        buffer.push(std::pair<BufferSequenceNumber, Runtime::TupleBuffer> {id, bufferPtr});
+        if(this->buffers.find(id.getOriginId()) == this->buffers.end()) {
+            auto queue = std::queue<std::pair<BufferSequenceNumber, Runtime::TupleBuffer>>();
+            queue.push(std::pair<BufferSequenceNumber, Runtime::TupleBuffer>{id, bufferPtr});
+            this->buffers[id.getOriginId()]=std::move(queue);
+        }
+        else
+            this->buffers[id.getOriginId()].push(std::pair<BufferSequenceNumber, Runtime::TupleBuffer> {id, bufferPtr});
     }
 
     bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
         std::unique_lock<std::mutex> lck (mutex);
-        if(!buffer.empty()) {
-            while (!buffer.empty() && buffer.front().first < id) {
-                buffer.pop();
+        if(!this->buffers[id.getOriginId()].empty()) {
+            while (!this->buffers[id.getOriginId()].empty() && this->buffers[id.getOriginId()].front().first < id) {
+                this->buffers[id.getOriginId()].pop();
             }
             return true;
         }
@@ -37,7 +43,12 @@ namespace NES {
 
     size_t BufferStorage::getStorageSize() const {
         std::unique_lock<std::mutex> lck (mutex);
-        return buffer.size();
+        return this->buffers.size();
+    }
+
+    size_t BufferStorage::getQueueSize(uint64_t originId) const {
+        std::unique_lock<std::mutex> lck (mutex);
+        return this->buffers.at(originId).size();
     }
 
 }// namespace NES

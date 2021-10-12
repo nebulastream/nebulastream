@@ -41,6 +41,7 @@ TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
     for (size_t i = 0; i < buffers_inserted; i++) {
         bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
         ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
+        ASSERT_EQ(bufferStorage->getQueueSize(i), one_buffer);
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted);
 }
@@ -55,8 +56,9 @@ TEST_F(BufferStorageTest, oneBufferDeletionFromBufferStorage) {
     auto buffer = bufferManager->getUnpooledBuffer(16384);
     bufferStorage->insertBuffer(BufferSequenceNumber(0, 0), buffer.value());
     ASSERT_EQ(bufferStorage->getStorageSize(), one_buffer);
-    bufferStorage->trimBuffer(BufferSequenceNumber(1, 1));
-    ASSERT_EQ(bufferStorage->getStorageSize(), empty_buffer);
+    ASSERT_EQ(bufferStorage->getQueueSize(0), one_buffer);
+    bufferStorage->trimBuffer(BufferSequenceNumber(1, 0));
+    ASSERT_EQ(bufferStorage->getQueueSize(0), empty_buffer);
 }
 
 TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
@@ -64,25 +66,24 @@ TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
     for (size_t i = 0; i < buffers_inserted; i++) {
         auto buffer = bufferManager->getUnpooledBuffer(16384);
         bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
-        ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
+        ASSERT_EQ(bufferStorage->getQueueSize(i), one_buffer);
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted);
-    for (size_t i = 1; i <= buffers_inserted; i++) {
-        bufferStorage->trimBuffer(BufferSequenceNumber(i, i));
-        ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted - i);
+    for (size_t i = 0; i < buffers_inserted; i++) {
+        bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, i));
+        ASSERT_EQ(bufferStorage->getQueueSize(i), empty_buffer);
     }
-    ASSERT_EQ(bufferStorage->getStorageSize(), empty_buffer);
 }
 
 TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
     for (size_t i = 0; i < buffers_inserted; i++) {
-        bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
-        ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
+        bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
+        ASSERT_EQ(bufferStorage->getQueueSize(0), i + 1);
     }
-    bufferStorage->trimBuffer(BufferSequenceNumber(3, 3));
-    ASSERT_EQ(bufferStorage->getStorageSize(), expected_storage_size);
+    bufferStorage->trimBuffer(BufferSequenceNumber(3, 0));
+    ASSERT_EQ(bufferStorage->getQueueSize(0), expected_storage_size);
 }
 
 
