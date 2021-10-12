@@ -302,8 +302,8 @@ To get all physical streams which mapped to a logical stream without schema
 {"Mismapped Streams":  ["mismappedLogical1":"phyStream1",
                         "mismappedLogical2":"phyStream1 \n phystream2"]}
 
-### Getting all misconfigured physical streams
-To get all physical streams which are labelled misconfigured (including why they are misconfigured)
+### Getting all MISCONFIGURED physical streams
+To get all physical streams which are labelled MISCONFIGURED (including why they are MISCONFIGURED)
 
 **API**: /streamCatalog/allMisconfiguredStreamCatalogEntries\
 **Verb**: GET\
@@ -368,7 +368,7 @@ To add an existing physical to the logical-to-physical mapping of a logical stre
 
 ### Activate duplicate physical stream name
 If a physical stream tries to register with an already existing stream, a random string
-is added at the end, and the physical stream labelled as misconfigured.
+is added at the end, and the physical stream labelled as MISCONFIGURED.
 To be able to query on it, call this method to prove that the new name is valid
 
 **API**: /streamCatalog/addPhysicalStreamToLogicalStream\

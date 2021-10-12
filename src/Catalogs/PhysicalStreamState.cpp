@@ -21,9 +21,9 @@ PhysicalStreamState::PhysicalStreamState() { this->state = State::regular; }
 
 std::string PhysicalStreamState::getStateDescription() {
     if (state == regular) {
-        return "regular";
+        return "REGULAR";
     }
-    std::string desc = "misconfigured";
+    std::string desc = "MISCONFIGURED";
 
     std::map<Reason, std::string>::iterator it = description.begin();
     // Iterate over the map using Iterator till end.
@@ -55,11 +55,11 @@ bool PhysicalStreamState::isNameValid() {
 
 std::string PhysicalStreamState::getStringForReasonEnum(Reason reason) {
     if (reason == noLogicalStream) {
-        return "noLogicalStream";
+        return "NO_LOGICAL_STREAM";
     } else if (reason == logicalStreamWithoutSchema) {
-        return "logicalStreamWithoutSchema";
+        return "LOGICAL_STREAM_WITHOUT_SCHEMA";
     } else {
-        return "duplicatePhysicalStreamName";
+        return "DUPLICATE_PHYSICAL_STREAM_NAME";
     }
 }
 

@@ -25,6 +25,17 @@
 
 namespace NES {
 
+RegisterPhysicalStreamResponse::RegisterPhysicalStreamResponse(bool successful, std::string physicalStreamName){
+    this->successful=successful;
+    this->physicalStreamName=physicalStreamName;
+}
+bool RegisterPhysicalStreamResponse::wasPhysicalStreamRegistrationSuccessful(){
+    return this->successful;
+}
+std::string RegisterPhysicalStreamResponse::getPhysicalStreamName(){
+    return this->physicalStreamName;
+}
+
 CoordinatorRPCClient::CoordinatorRPCClient(std::string address) : address(address) {
     NES_DEBUG("CoordinatorRPCClient(): creating channels to address =" << address);
     rpcChannel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
@@ -40,7 +51,7 @@ CoordinatorRPCClient::CoordinatorRPCClient(std::string address) : address(addres
 
 CoordinatorRPCClient::~CoordinatorRPCClient() { NES_DEBUG("~CoordinatorRPCClient()"); }
 
-std::tuple<bool, std::string> CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
+RegisterPhysicalStreamResponse CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf->toString() << " workerID=" << workerId);
 
     RegisterPhysicalStreamRequest request;
@@ -58,11 +69,11 @@ std::tuple<bool, std::string> CoordinatorRPCClient::registerPhysicalStream(Abstr
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: status ok return success=" << reply.success());
-        return {reply.success(), reply.physicalstreamname()};
+        return RegisterPhysicalStreamResponse(reply.success(), reply.physicalstreamname());
     } else {
         NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream error=" << status.error_code() << ": "
                                                                          << status.error_message());
-        return {reply.success(), reply.physicalstreamname()};
+        return RegisterPhysicalStreamResponse(reply.success(), reply.physicalstreamname());
     }
 }
 

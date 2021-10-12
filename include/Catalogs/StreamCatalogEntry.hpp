@@ -112,7 +112,7 @@ class StreamCatalogEntry {
       bool addLogicalStreamNameToMismapped(std::string newLogicalStreamName);
 
     /**
-    * @brief change a formerly mismapped logical stream to a regular one
+    * @brief change a formerly mismapped logical stream to a REGULAR one
     * @return true if the logicalStreamName was added successfully, false otherwise
     */
       void moveLogicalStreamFromMismappedToRegular(std::string newLogicalStreamName);
@@ -124,7 +124,7 @@ class StreamCatalogEntry {
       bool removeLogicalStreamFromMismapped(std::string oldLogicalStreamName);
 
     /**
-    * @brief remove a logical stream from the vector of regular logical streams
+    * @brief remove a logical stream from the vector of REGULAR logical streams
     * @return true if the logicalStreamName was removed successfully, false otherwise
     */
       bool removeLogicalStream(std::string oldLogicalStreamName);
@@ -142,7 +142,7 @@ class StreamCatalogEntry {
       void changePhysicalStreamName(std::string newName);
 
     /**
-     * @brief get PhysicalStreamState which contains count (#logicalstreams for that physicalStream) and state (e.g. misconfigured, regular)
+     * @brief get PhysicalStreamState which contains count (#logicalstreams for that physicalStream) and state (e.g. MISCONFIGURED, REGULAR)
      * @return PhysicalStreamState object
      */
     PhysicalStreamState getPhysicalStreamState();

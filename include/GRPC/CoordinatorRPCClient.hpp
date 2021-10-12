@@ -31,6 +31,25 @@ namespace NES {
 
 class NodeStats;
 
+class RegisterPhysicalStreamResponse{
+  public:
+    RegisterPhysicalStreamResponse(bool successful, std::string physicalStreamName);
+
+    bool wasPhysicalStreamRegistrationSuccessful();
+    /**
+     * @brief returns if the physical stream was successfully registered true, otherwise false
+     */
+
+    std::string getPhysicalStreamName();
+    /**
+     * @brief returns the name of the physical stream
+     */
+
+  private:
+    bool successful;
+    std::string physicalStreamName;
+};
+
 class PhysicalStreamConfig;
 typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 
@@ -44,7 +63,7 @@ class CoordinatorRPCClient {
      * @param configuration of the stream
      * @return bool indicating success and a new name in case there was a name conflict
      */
-    std::tuple<bool, std::string> registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf);
+    RegisterPhysicalStreamResponse registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf);
 
     /**
      * @brief this method registers logical streams via the coordinator

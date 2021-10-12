@@ -196,6 +196,11 @@ bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, std::string ph
     NES_DEBUG("CoordinatorEngine: node=" << physicalNode->toString());
 
     bool success = streamCatalog->unregisterPhysicalStream(physicalStreamName, nodeId);
+    if (success) {
+        NES_DEBUG("CoordinatorEngine::unregisterPhysicalStream: unregistering physical stream was not successful");
+    } else {
+        NES_DEBUG("CoordinatorEngine::unregisterPhysicalStream: physical stream successfully unregistered");
+    }
     return success;
 }
 
@@ -204,6 +209,10 @@ bool CoordinatorEngine::registerLogicalStream(std::string logicalStreamName, std
                                                                                    << " schema=" << schemaString);
     std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
     bool success = streamCatalog->addLogicalStream(logicalStreamName, schemaString);
+    if (!success){
+        NES_DEBUG("CoordinatorEngine::registerLogicalStream: registering logical stream was not successful");
+    }
+
     return success;
 }
 

@@ -74,7 +74,7 @@ class StreamCatalog {
     bool removeLogicalStream(std::string logicalStreamName);
 
     /**
-     * @brief method to add a physical stream without a logical stream leading to a misconfigured physicalStream
+     * @brief method to add a physical stream without a logical stream leading to a MISCONFIGURED physicalStream
      * @param newEntry
      * @return true or false depending if the registration was successful; in case that the stream name already exists, a
      * modified name is returned instead
@@ -281,8 +281,8 @@ class StreamCatalog {
     std::vector<std::string> getMismappedPhysicalStreams(std::string logicalStreamName);
 
     /**
-    * @brief get all StreamCatalogEntryPtr where the state is misconfigured
-     * @return vector of misconfigured StreamCatalogEntryPtr
+    * @brief get all StreamCatalogEntryPtr where the state is MISCONFIGURED
+     * @return vector of MISCONFIGURED StreamCatalogEntryPtr
     */
     std::vector<StreamCatalogEntryPtr> getAllMisconfiguredPhysicalStreams();
 
@@ -310,7 +310,7 @@ class StreamCatalog {
     std::tuple<bool, std::string> setSourceConfig(const std::string& physicalStreamName, const std::string& sourceConfig);
 
     /**
-     * @brief removes from a misconfigured stream with a formerly duplicated name, the misconfigured flag and allows querying if possible
+     * @brief removes from a MISCONFIGURED stream with a formerly duplicated name, the MISCONFIGURED flag and allows querying if possible
      * @param physicalStreamName the current name
      * @return true whether the validation was succesful
      */

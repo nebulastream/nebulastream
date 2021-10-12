@@ -300,7 +300,7 @@ void DataSource::runningRoutineWithFrequency() {
             if (nowInMillis != lastTimeStampMillis) {//we are in another interval
                 if ((nowInMillis - lastTimeStampMillis) <= gatheringInterval
                     || ((nowInMillis - lastTimeStampMillis) % gatheringInterval).count() == 0) {//produce a regular buffer
-                    NES_DEBUG("DataSource::runningRoutine sending regular buffer");
+                    NES_DEBUG("DataSource::runningRoutine sending REGULAR buffer");
                     recNow = true;
                 }
                 lastTimeStampMillis = nowInMillis;

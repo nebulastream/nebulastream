@@ -111,7 +111,7 @@ void StreamCatalog::addLogicalStreamFromMismappedStreams(std::string logicalStre
     NES_DEBUG("StreamCatalog: remove logical stream " << logicalStreamName << " from mismapped Streams.");
     logicalToPhysicalStreamMapping[logicalStreamName] = mismappedStreams[logicalStreamName];
     mismappedStreams.erase(logicalStreamName);
-    NES_DEBUG("StreamCatalog: physical streams of logical stream transferred to regular logical to physical mapping.");
+    NES_DEBUG("StreamCatalog: physical streams of logical stream transferred to REGULAR logical to physical mapping.");
 
     NES_DEBUG("StreamCatalog: updating state of physical streams involved.");
     for (std::string& physicalStreamName : logicalToPhysicalStreamMapping[logicalStreamName]) {
@@ -226,7 +226,7 @@ bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string physicalStreamN
                     << logicalStreamName
                     << " does not have a registered schema.\n "
                        "Add physicalStream "
-                    << physicalStreamName << "to logical in separate misconfigured mapping.");
+                    << physicalStreamName << "to logical in separate MISCONFIGURED mapping.");
         for (std::string& logStream : nameToPhysicalStream[physicalStreamName]->getMissmappedLogicalName()) {
             if (logStream == logicalStreamName) {
                 NES_ERROR("StreamCatalog: addPhysicalStreamToLogicalStream - mismapping already exists");
@@ -627,10 +627,10 @@ std::vector<std::string> StreamCatalog::getMismappedPhysicalStreams(std::string 
 
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getAllMisconfiguredPhysicalStreams() {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("StreamCatalog: getting all misconfigured physical streams");
+    NES_DEBUG("StreamCatalog: getting all MISCONFIGURED physical streams");
     std::vector<StreamCatalogEntryPtr> streamCatalogEntryPtrs{};
     for (auto entry : nameToPhysicalStream) {
-        if (entry.second->getPhysicalStreamState().state != regular) {
+        if (entry.second->getPhysicalStreamState().state != REGULAR) {
             streamCatalogEntryPtrs.push_back(entry.second);
         }
     }
@@ -746,7 +746,7 @@ bool StreamCatalog::validatePhysicalStreamName(std::string physicalStreamName) {
                 addPhysicalStreamToLogicalStream(found, phyStream);
             }
 
-            phyStream->getPhysicalStreamState().removeReason(duplicatePhysicalStreamName);
+            phyStream->getPhysicalStreamState().removeReason(DUPLICATE_PHYSICAL_STREAM_NAME);
             NES_DEBUG("StreamCatalog: physical stream with name " + physicalStreamName + " is now valid.");
             return true;
         }

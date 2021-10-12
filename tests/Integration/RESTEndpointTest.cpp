@@ -1237,7 +1237,7 @@ TEST_F(RESTEndpointTest, testRemoveLogicalStreamFromMismapped) {
     EXPECT_TRUE(remove_suc);
 
     //test moving from mismapped to regular
-    NES_DEBUG("Adding schema to remaining mismapped logical stream (should be regular after that)");
+    NES_DEBUG("Adding schema to remaining mismapped logical stream (should be REGULAR after that)");
     std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                              "\"value\", BasicType::UINT64);";
     std::string testSchemaFileName = "testSchema.hpp";
@@ -1335,8 +1335,8 @@ TEST_F(RESTEndpointTest, testGetAllMisconfiguredStreamCatalogEntries) {
 
     NES_INFO("allMisconfiguredStreamCatalogEntries: try to acc return");
     NES_DEBUG("allMisconfiguredStreamCatalogEntries response: " << allMisconfiguredStreamCatalogEntriesJsonReturn.serialize());
-    std::string expected = "{\"test_physical1\":\"misconfigured\\nnoLogicalStream: no valid logical "
-                           "stream\",\"test_physical2\":\"misconfigured\\nlogicalStreamWithoutSchema: (non_existing_logical)\"}";
+    std::string expected = "{\"test_physical1\":\"MISCONFIGURED\\nnoLogicalStream: no valid logical "
+                           "stream\",\"test_physical2\":\"MISCONFIGURED\\nlogicalStreamWithoutSchema: (non_existing_logical)\"}";
     NES_DEBUG("allMisconfiguredStreamCatalogEntries response: expected = " << expected);
     ASSERT_EQ(allMisconfiguredStreamCatalogEntriesJsonReturn.serialize(), expected);
 

@@ -228,7 +228,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
 
         json::value result{};
         if (allMisconfiguredPhysicalStreams.empty()) {
-            NES_DEBUG("StreamCatalogController: No misconfigured physical stream found");
+            NES_DEBUG("StreamCatalogController: No MISCONFIGURED physical stream found");
             resourceNotFoundImpl(request);
             return;
         } else {

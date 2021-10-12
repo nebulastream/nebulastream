@@ -63,7 +63,7 @@ bool StreamCatalogEntry::addLogicalStreamName(std::string newLogicalStreamName) 
         }
     }
     logicalStreamName.push_back(newLogicalStreamName);
-    physicalStreamState.removeReason(noLogicalStream);
+    physicalStreamState.removeReason(NO_LOGICAL_STREAM);
     return true;
 }
 
@@ -76,7 +76,7 @@ bool StreamCatalogEntry::addLogicalStreamNameToMismapped(std::string newLogicalS
         }
     }
     mismappedLogicalStreamName.push_back(newLogicalStreamName);
-    physicalStreamState.addReason(logicalStreamWithoutSchema,
+    physicalStreamState.addReason(LOGICAL_STREAM_WITHOUT_SCHEMA,
                                   "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",") + ")");
     return true;
 }
@@ -87,9 +87,9 @@ void StreamCatalogEntry::moveLogicalStreamFromMismappedToRegular(std::string log
 
     this->logicalStreamName.push_back(logicalStreamName);
     if (mismappedLogicalStreamName.empty()) {
-        physicalStreamState.removeReason(logicalStreamWithoutSchema);
+        physicalStreamState.removeReason(LOGICAL_STREAM_WITHOUT_SCHEMA);
     } else {
-        physicalStreamState.addReason(logicalStreamWithoutSchema,
+        physicalStreamState.addReason(LOGICAL_STREAM_WITHOUT_SCHEMA,
                                       "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",") + ")");
     }
 }
@@ -101,9 +101,9 @@ bool StreamCatalogEntry::removeLogicalStreamFromMismapped(std::string oldLogical
             mismappedLogicalStreamName.erase(it, mismappedLogicalStreamName.end());
             NES_DEBUG("StreamCatalogEntry::removeLogicalStream logicalStreamName=" << oldLogicalStreamName << " was removed.");
             if (mismappedLogicalStreamName.empty()) {
-                physicalStreamState.removeReason(logicalStreamWithoutSchema);
+                physicalStreamState.removeReason(LOGICAL_STREAM_WITHOUT_SCHEMA);
             } else {
-                physicalStreamState.addReason(logicalStreamWithoutSchema,
+                physicalStreamState.addReason(LOGICAL_STREAM_WITHOUT_SCHEMA,
                                               "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",")
                                                   + ")");
             }
@@ -122,7 +122,7 @@ bool StreamCatalogEntry::removeLogicalStream(std::string oldLogicalStreamName) {
             logicalStreamName.erase(it, logicalStreamName.end());
             NES_DEBUG("StreamCatalogEntry::removeLogicalStream logicalStreamName=" << oldLogicalStreamName << " was removed.");
             if (logicalStreamName.empty()) {
-                physicalStreamState.addReason(noLogicalStream, "no valid logical stream");
+                physicalStreamState.addReason(NO_LOGICAL_STREAM, "no valid logical stream");
             }
             return true;
         }
@@ -133,14 +133,14 @@ bool StreamCatalogEntry::removeLogicalStream(std::string oldLogicalStreamName) {
 }
 
 void StreamCatalogEntry::setStateToWithoutLogicalStream() {
-    physicalStreamState.addReason(noLogicalStream, "no valid logical stream");
+    physicalStreamState.addReason(NO_LOGICAL_STREAM, "no valid logical stream");
     return;
 }
 
 PhysicalStreamState StreamCatalogEntry::getPhysicalStreamState() { return physicalStreamState; }
 
 void StreamCatalogEntry::changePhysicalStreamName(std::string newName) {
-    physicalStreamState.addReason(duplicatePhysicalStreamName,
+    physicalStreamState.addReason(DUPLICATE_PHYSICAL_STREAM_NAME,
                                   "Physical stream was renamed from " + physicalStreamName + " to " + newName
                                       + ", as the old name already existed.");
     physicalStreamName = newName;

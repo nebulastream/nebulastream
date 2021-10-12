@@ -21,15 +21,26 @@
 #include <map>
 
 namespace NES {
-enum State {misconfigured, regular};
-enum Reason {noLogicalStream, logicalStreamWithoutSchema,duplicatePhysicalStreamName};
+enum State { MISCONFIGURED, REGULAR };
+/**
+ * MISCONFIGURED: The stream was either renamed because the name already existed, or is registered to a logical stream without
+ *                schema or without any logical streams at all
+ * REGULAR:       A physical stream is regular if it is not misconfigured
+ */
+
+enum Reason { NO_LOGICAL_STREAM, LOGICAL_STREAM_WITHOUT_SCHEMA, DUPLICATE_PHYSICAL_STREAM_NAME };
+/**
+ * NO_LOGICAL_STREAM: a physical stream which is not associated to any logical stream
+ * LOGICAL_STREAM_WITHOUT_SCHEMA: a physical stream which is registered at a logical stream without any defined schema
+ * DUPLICATE_PHYSICAL_STREAM_NAME: a physical stream which was forcefully renamed as the name already existed
+ */
 
 class PhysicalStreamState {
   public:
     PhysicalStreamState();
 
     /**
-     * @brief changes the State in case count has been increased/lowered to a significant value (0 => misconfigured, > 0 => regular)
+     * @brief changes the State in case count has been increased/lowered to a significant value (0 => MISCONFIGURED, > 0 => REGULAR)
      *
      */
     void changeState();

@@ -328,10 +328,11 @@ bool NesWorker::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "cannot connect");
-    auto [success, newName] = coordinatorRpcClient->registerPhysicalStream(conf);
+    auto registerPhysicalStreamResponse = coordinatorRpcClient->registerPhysicalStream(conf);
+    bool success = registerPhysicalStreamResponse.wasPhysicalStreamRegistrationSuccessful();
     NES_ASSERT(success, "failed to register stream");
     // TODO we need to get rid of this
-    conf->setPhysicalStreamName(newName);
+    conf->setPhysicalStreamName(registerPhysicalStreamResponse.getPhysicalStreamName());
     nodeEngine->addConfig(conf);
     NES_DEBUG("NesWorker::registerPhysicalStream success=" << success);
     return success;
