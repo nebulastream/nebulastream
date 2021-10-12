@@ -37,16 +37,7 @@ extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
 NodeEnginePtr
 NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    return createNodeEngine(hostname,
-                            port,
-                            std::move(config),
-                            1,
-                            4096,
-                            1024,
-                            128,
-                            12,
-                            NumaAwarenessFlag::DISABLED,
-                            "");
+    return createNodeEngine(hostname, port, std::move(config), 1, 4096, 1024, 128, 12, NumaAwarenessFlag::DISABLED, "");
 }
 
 NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
