@@ -45,8 +45,8 @@ Code StructDeclaration::getCode() const {
     std::stringstream expr;
     expr << "struct ";
     if (packed_struct_) {
-//        expr << "__attribute__((packed)) ";
-        expr << "alignas(16) ";
+        expr << "__attribute__((packed)) ";
+//        expr << "alignas(16) ";
     }
     expr << type_name_ << "{" << std::endl;
     for (const auto& decl : decls_) {
