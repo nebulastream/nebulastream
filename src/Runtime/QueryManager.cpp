@@ -961,7 +961,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
     cv.notify_all();
 #endif
 }
-#define LIGHT_WEIGHT_STATISTICS
+//#define LIGHT_WEIGHT_STATISTICS
 void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
     if (task.isReconfiguration()) {
