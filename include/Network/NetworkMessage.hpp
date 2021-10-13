@@ -18,6 +18,7 @@
 #define NES_INCLUDE_NETWORK_NETWORK_MESSAGE_HPP_
 
 #include <Network/ChannelId.hpp>
+#include <Runtime/Events.hpp>
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
@@ -33,7 +34,7 @@ namespace Messages {
 using nes_magic_number_t = uint64_t;
 static constexpr nes_magic_number_t NES_NETWORK_MAGIC_NUMBER = 0xBADC0FFEE;
 
-enum MessageType {
+enum class MessageType : uint8_t {
     /// message type that the client uses to announce itself to the server
     kClientAnnouncement,
     /// message type that the servers uses to reply to the client regarding the availability
@@ -50,7 +51,14 @@ enum MessageType {
 };
 
 /// this enum defines the errors that can occur in the network stack logic
-enum ErrorType : uint8_t { kNoError, kPartitionNotRegisteredError, kUnknownError, kUnknownPartition };
+enum class ErrorType : uint8_t {
+    kPartitionNotRegisteredError,
+    kUnknownError,
+    kUnknownPartitionError,
+    kDeletedPartitionError
+};
+
+enum class ChannelType : uint8_t { kDataChannel, kEventOnlyChannel };
 
 class MessageHeader {
   public:
@@ -81,73 +89,81 @@ class ExchangeMessage {
 
 class ClientAnnounceMessage : public ExchangeMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = kClientAnnouncement;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::kClientAnnouncement;
 
-    explicit ClientAnnounceMessage(ChannelId channelId) : ExchangeMessage(channelId) {}
+    explicit ClientAnnounceMessage(ChannelId channelId, ChannelType mode) : ExchangeMessage(channelId), mode(mode) {}
+
+    ChannelType getMode() const { return mode; }
+
+  private:
+    ChannelType mode;
 };
 
 class ServerReadyMessage : public ExchangeMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = kServerReady;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::kServerReady;
 
-    explicit ServerReadyMessage(ChannelId channelId, ErrorType withError = kNoError)
-        : ExchangeMessage(channelId), withError(withError) {}
-
-    /**
-     * @brief check if the message does not contain any error
-     * @return true if no error was raised
-     */
-    [[nodiscard]] bool isOk() const { return withError == kNoError; }
-
-    /**
-     * @brief this checks if the message contains a PartitionNotRegisteredError
-     * @return true if the message contains a PartitionNotRegisteredError
-     */
-    [[nodiscard]] bool isPartitionNotFound() const { return withError == kPartitionNotRegisteredError; }
-
-    /**
-     * @return the underlying error
-     */
-    [[nodiscard]] ErrorType getErrorType() const { return withError; }
-
-  private:
-    const ErrorType withError{kNoError};
+    explicit ServerReadyMessage(ChannelId channelId) : ExchangeMessage(channelId) {
+        // nop
+    }
 };
 
 class EndOfStreamMessage : public ExchangeMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = kEndOfStream;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::kEndOfStream;
 
-    explicit EndOfStreamMessage(ChannelId channelId, bool graceful = true) : ExchangeMessage(channelId), graceful(graceful) {}
+    explicit EndOfStreamMessage(ChannelId channelId, ChannelType channelType, bool graceful = true)
+        : ExchangeMessage(channelId), channelType(channelType), graceful(graceful) {}
 
     [[nodiscard]] bool isGraceful() const { return graceful; }
 
+    [[nodiscard]] bool isDataChannel() const { return channelType == ChannelType::kDataChannel; }
+
+    [[nodiscard]] bool isEventChannel() const { return channelType == ChannelType::kEventOnlyChannel; }
+
   private:
+    ChannelType channelType;
     bool graceful;
 };
 
 class ErrorMessage : public ExchangeMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = kErrorMessage;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::kErrorMessage;
 
-    explicit ErrorMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), error(error){};
+    explicit ErrorMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), errorCode(error) {
+        // nop
+    }
 
-    [[nodiscard]] ErrorType getErrorType() const { return error; }
+    [[nodiscard]] ErrorType getErrorType() const { return errorCode; }
 
     [[nodiscard]] std::string getErrorTypeAsString() const {
-        if (error == ErrorType::kPartitionNotRegisteredError) {
+        if (errorCode == ErrorType::kPartitionNotRegisteredError) {
             return "PartitionNotRegisteredError";
+        } else if (errorCode == ErrorType::kDeletedPartitionError) {
+            return "DeletedPartitionError";
         }
         return "UnknownError";
     }
 
+    /**
+     * @brief this checks if the message contains a PartitionNotRegisteredError
+     * @return true if the message contains a PartitionNotRegisteredError
+     */
+    [[nodiscard]] bool isPartitionNotFound() const { return errorCode == ErrorType::kPartitionNotRegisteredError; }
+
+    /**
+     * @brief this checks if the message contains a DeletedPartitionError
+     * @return true if the message contains a DeletedPartitionError
+     */
+    [[nodiscard]] bool isPartitionDeleted() const { return errorCode == ErrorType::kDeletedPartitionError; }
+
   private:
-    const ErrorType error;
+    const ErrorType errorCode;
 };
 
 class DataBufferMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = kDataBuffer;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::kDataBuffer;
 
     explicit inline DataBufferMessage(uint32_t payloadSize,
                                       uint32_t numOfRecords,
@@ -164,6 +180,17 @@ class DataBufferMessage {
     uint64_t const watermark;
     uint64_t const creationTimestamp;
     uint64_t const sequenceNumber;
+};
+
+class EventBufferMessage {
+  public:
+    static constexpr MessageType MESSAGE_TYPE = MessageType::kEventBuffer;
+
+    explicit inline EventBufferMessage(Runtime::EventType eventType, uint32_t payloadSize) noexcept
+        : eventType(eventType), payloadSize(payloadSize) {}
+
+    Runtime::EventType const eventType;
+    uint32_t const payloadSize;
 };
 
 class NesNetworkError : public std::runtime_error {

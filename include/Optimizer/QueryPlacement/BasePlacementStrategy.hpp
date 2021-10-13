@@ -166,9 +166,13 @@ class BasePlacementStrategy {
      * @param queryId : the query id to which the source belongs to
      * @param inputSchema : the schema for input event stream
      * @param operatorId : the operator id of the source network operator
+     * @param sinkTopologyNode
      * @return the instance of network source operator
      */
-    static OperatorNodePtr createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId);
+    static OperatorNodePtr createNetworkSourceOperator(QueryId queryId,
+                                                       SchemaPtr inputSchema,
+                                                       uint64_t operatorId,
+                                                       const TopologyNodePtr& sinkTopologyNode);
 
     /**
      * @brief Attach network source or sink operator to the given operator

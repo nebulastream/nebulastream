@@ -54,8 +54,6 @@ class QueryService {
                           QueryParsingServicePtr queryParsingService,
                           bool enableSemanticQueryValidation);
 
-    ~QueryService();
-
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : query in string form.

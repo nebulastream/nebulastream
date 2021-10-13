@@ -147,6 +147,13 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::string getQueryManagerStatistics();
 
     /**
+     * @brief
+     * @param id
+     * @return
+     */
+    Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(QuerySubPlanId id) const;
+
+    /**
      * @brief method to start a query
      * @param qep of the query to start
      * @return bool indicating success
@@ -200,6 +207,19 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false);
 
+  private:
+    /**
+     * @brief this methods adds a reconfiguration task on the worker queue
+     * @return true if the reconfiguration task was added correctly on the worker queue
+     * N.B.: this does not not mean that the reconfiguration took place but it means that it
+     * was scheduled to be executed!
+     * @param queryExecutionPlanId: the local QEP to reconfigure
+     * @param buffer: a tuple buffer storing the reconfiguration message
+     * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
+     */
+    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking = false);
+
+  public:
     /**
      * @brief introduces end of stream to all QEPs connected to this source
      * @param source the actual source
@@ -254,6 +274,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     ExecutionResult terminateLoop(WorkerContext&);
 
     bool addSoftEndOfStream(OperatorId sourceId);
+
     bool addHardEndOfStream(OperatorId sourceId);
 
     /**

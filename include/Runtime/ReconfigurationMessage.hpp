@@ -72,6 +72,7 @@ class ReconfigurationMessage {
                                     bool blocking = false)
         : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), parentPlanId(parentPlanId),
           userdata(std::move(userdata)) {
+        NES_ASSERT(this->instance, "invalid instance");
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
         refCnt.store(numThreads + (blocking ? 1 : 0));

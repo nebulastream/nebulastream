@@ -28,7 +28,7 @@ namespace NES::Windowing {
 ExecutableOnTimeTriggerPolicy::~ExecutableOnTimeTriggerPolicy() { NES_WARNING("~ExecutableOnTimeTriggerPolicy()"); }
 
 bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr) { return true; }
-bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler, Runtime::WorkerContextPtr workerContext) {
+bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler, Runtime::WorkerContextRef workerContext) {
     std::unique_lock lock(runningTriggerMutex);
     if (this->running) {
         NES_WARNING("ExecutableOnTimeTriggerPolicy::start already started");
@@ -55,7 +55,7 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
 
 bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr) { return true; }
 
-bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandler, Runtime::WorkerContextPtr workerContext) {
+bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandler, Runtime::WorkerContextRef workerContext) {
     std::unique_lock lock(runningTriggerMutex);
     if (this->running) {
         NES_WARNING("ExecutableOnTimeTriggerPolicy::start already started");

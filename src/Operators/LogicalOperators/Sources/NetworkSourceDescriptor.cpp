@@ -20,11 +20,11 @@
 
 namespace NES::Network {
 
-NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition)
-    : SourceDescriptor(std::move(schema)), nesPartition(nesPartition) {}
+NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition, NodeLocation nodeLocation)
+    : SourceDescriptor(std::move(schema)), nesPartition(nesPartition), nodeLocation(nodeLocation) {}
 
-SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema, NesPartition nesPartition) {
-    return std::make_shared<NetworkSourceDescriptor>(NetworkSourceDescriptor(std::move(schema), nesPartition));
+SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema, NesPartition nesPartition, NodeLocation nodeLocation) {
+    return std::make_shared<NetworkSourceDescriptor>(NetworkSourceDescriptor(std::move(schema), nesPartition, nodeLocation));
 }
 
 bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) {
@@ -35,8 +35,12 @@ bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return schema->equals(otherNetworkSource->schema) && nesPartition == otherNetworkSource->nesPartition;
 }
 
-std::string NetworkSourceDescriptor::toString() { return "NetworkSourceDescriptor()"; }
+std::string NetworkSourceDescriptor::toString() {
+    return "NetworkSourceDescriptor{" + nodeLocation.createZmqURI() + " " + nesPartition.toString() + "}";
+}
 
 NesPartition NetworkSourceDescriptor::getNesPartition() const { return nesPartition; }
+
+NodeLocation NetworkSourceDescriptor::getNodeLocation() const { return nodeLocation; }
 
 }// namespace NES::Network

@@ -15,6 +15,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>

@@ -62,7 +62,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                   Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
                   uint64_t currentWatermark,
                   uint64_t lastWatermark,
-                  Runtime::WorkerContextPtr workerContext) override {
+                  Runtime::WorkerContextRef workerContext) override {
 
         // get the reference to the shared ptr.
         if (this->weakExecutionContext.expired()) {
@@ -155,7 +155,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                        Runtime::TupleBuffer& tupleBuffer,
                        uint64_t currentWatermark,
                        uint64_t lastWatermark,
-                       Runtime::WorkerContextPtr workerContext) {
+                       Runtime::WorkerContextRef workerContext) {
         NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":::joinWindows:leftStore currentWatermark is="
                                                            << currentWatermark << " lastWatermark=" << lastWatermark);
         size_t numberOfFlushedRecords = 0;

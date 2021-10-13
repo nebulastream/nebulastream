@@ -32,6 +32,8 @@ namespace NES::Runtime::Execution {
  * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
  */
 class ExecutablePipeline : public Reconfigurable {
+    friend class QueryManager;
+
     enum class PipelineStatus : uint8_t { PipelineCreated, PipelineRunning, PipelineStopped, PipelineFailed };
 
   public:
@@ -53,8 +55,6 @@ class ExecutablePipeline : public Reconfigurable {
                                 uint32_t numOfProducingPipelines,
                                 std::vector<SuccessorExecutablePipeline> successorPipelines,
                                 bool reconfiguration);
-
-    ~ExecutablePipeline() override;
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -149,12 +149,6 @@ class ExecutablePipeline : public Reconfigurable {
      */
     const std::vector<SuccessorExecutablePipeline>& getSuccessors() const;
 
-    /**
-     * @brief Adds a new successor pipeline
-     * @param predecessorPipeline
-     */
-    void addSuccessor(const SuccessorExecutablePipeline& successorPipeline);
-
   private:
     const uint64_t pipelineId;
     const QuerySubPlanId querySubPlanId;
@@ -163,7 +157,6 @@ class ExecutablePipeline : public Reconfigurable {
     bool reconfiguration;
     std::atomic<PipelineStatus> pipelineStatus;
     std::atomic<uint32_t> activeProducers = 0;
-    std::atomic<uint32_t> inProgressTasks = 0;
     std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
 

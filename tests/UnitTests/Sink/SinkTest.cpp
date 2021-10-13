@@ -263,7 +263,7 @@ TEST_F(SinkTest, testNullOutSink) {
     std::ostream os(&fb);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto nullSink = createNullOutputSink(1);
+    auto nullSink = createNullOutputSink(1, nodeEngine);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;

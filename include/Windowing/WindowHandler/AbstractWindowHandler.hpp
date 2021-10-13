@@ -78,7 +78,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      * @brief triggers all ready windows.
      * @return
      */
-    virtual void trigger(Runtime::WorkerContextPtr workerContext, bool forceFlush = false) = 0;
+    virtual void trigger(Runtime::WorkerContextRef workerContext, bool forceFlush = false) = 0;
 
     /**
     * @brief Initialises the state of this window depending on the window definition.
@@ -118,7 +118,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      * @param ts
      * @param originId
      */
-    void updateMaxTs(uint64_t ts, uint64_t originId, uint64_t sequenceNumber, Runtime::WorkerContextPtr workerContext) {
+    void updateMaxTs(uint64_t ts, uint64_t originId, uint64_t sequenceNumber, Runtime::WorkerContextRef workerContext) {
         std::unique_lock lock(windowMutex);
         NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId);
         if (windowDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {

@@ -626,10 +626,15 @@ add_executable(update-topology-remote-test "Integration/UpdateTopologyRemoteTest
 target_link_libraries(update-topology-remote-test nes ${GTEST_LIBRARIES})
 add_test(NAME update-topology-remote-test COMMAND update-topology-remote-test)
 
-# NetworkStackTest
+# NetworkStackUnitTest
 add_executable(network-stack-test "UnitTests/Network/NetworkStackTest.cpp")
 target_link_libraries(network-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME network-stack-test COMMAND network-stack-test)
+
+# NetworkStackIntegrationTest
+add_executable(network-stack-integration-test "Integration/NetworkStackIntegrationTest.cpp")
+target_link_libraries(network-stack-integration-test nes ${GTEST_LIBRARIES})
+add_test(NAME network-stack-integration-test COMMAND network-stack-integration-test)
 
 # MonitoringStackTest
 add_executable(monitoring-stack-test "UnitTests/Monitoring/MonitoringStackTest.cpp")

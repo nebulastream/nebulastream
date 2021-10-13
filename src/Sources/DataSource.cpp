@@ -212,7 +212,7 @@ bool DataSource::stop(bool graceful) {
             NES_ERROR("DataSource::stop error while stopping data source " << this << " error=" << e.what());
         }
     }
-    NES_WARNING("Stopped Source " << operatorId << " = " << wasGracefullyStopped);
+    NES_WARNING("Stopped Source " << operatorId << " = " << (wasGracefullyStopped ? "wasGracefullyStopped" : "notGracefullyStopped"));
     return ret;
 }
 
@@ -373,8 +373,10 @@ void DataSource::runningRoutineWithFrequency() {
 
         //check if already produced enough buffer
         if (cnt < numBuffersToProcess || numBuffersToProcess == 0) {
-            auto optBuf = receiveData();
-
+            auto optBuf = receiveData(); // note that receiveData might block
+            if (!running) { // necessary if source stops while receiveData is called due to stricter shutdown logic
+                break;
+            }
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();

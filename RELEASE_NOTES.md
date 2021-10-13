@@ -7,7 +7,8 @@
 1. Introduce Benchmark source #2252
 2. Introduce basic set of stateful and stateless benchmarks #1900 #1828 
 ### - Stream Processing
-1. Make NES numa-aware #2135
+1. Add event dispatching support at operator level [#2129](https://github.com/nebulastream/nebulastream/issues/2129)
+2. Make NES numa-aware #2135
 ### - Complex Event Processing
 Add a mapping for the three binary Simple Event Algebra Operators AND [1815], SEQ [1817] and OR [1816] to the available Analytical Stream Processing Operators
    - AND to Cartesian Product (akka joinWith + map() for keys currently) 
@@ -29,6 +30,8 @@ Operator Placement
    Introduce `--memoryLayoutPolicy` in the coordinator configuration.
    - `FORCE_ROW_LAYOUT` forces a row memory layout for all operators of an query.
    - `FORCE_COLUMN_LAYOUT` forces a columnar memory layout for all operators of an query.
+3. Add support to PAPI Profiler [#2310](https://github.com/nebulastream/nebulastream/issues/2310)
+4. Fix Numa allocation and CPU mapping in containers [#2271](https://github.com/nebulastream/nebulastream/issues/2271)
 ### - Query Compiler
 1. Add configuration flags for query compiler [#2194](https://github.com/nebulastream/nebulastream/issues/2194)
     - `--queryCompilerCompilationStrategy` Selects the optimization level of a query.
@@ -48,3 +51,4 @@ Operator Placement
 1. [#2079](https://github.com/nebulastream/nebulastream/issues/2079) [#2080](https://github.com/nebulastream/nebulastream/issues/2080) Public API to register Java UDFs in the NES coordinator
 2. [#117](https://github.com/nebulastream/nebulastream-java-client/issues/117) Register Java UDFs from the Java client
 ### - Network Stack
+1. Add event dispatching support at network level [#2129](https://github.com/nebulastream/nebulastream/issues/2129)

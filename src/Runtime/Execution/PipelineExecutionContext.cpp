@@ -34,8 +34,6 @@ PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId,
     NES_DEBUG("Created PipelineExecutionContext() " << toString());
 }
 
-PipelineExecutionContext::~PipelineExecutionContext() { NES_DEBUG("~PipelineExecutionContext() " << toString()); }
-
 void PipelineExecutionContext::emitBuffer(TupleBuffer buffer, WorkerContextRef workerContext) {
     // call the function handler
     emitFunctionHandler(buffer, workerContext);

@@ -41,8 +41,7 @@ class LowerToExecutableQueryPlanPhase {
                        std::vector<DataSinkPtr>& sinks,
                        std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
                        const Runtime::NodeEnginePtr& nodeEngine,
-                       QueryId queryId,
-                       QuerySubPlanId subQueryPlanId,
+                       const PipelineQueryPlanPtr& pipelineQueryPlan,
                        std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
     Runtime::Execution::SuccessorExecutablePipeline
@@ -51,8 +50,7 @@ class LowerToExecutableQueryPlanPhase {
                      std::vector<DataSinkPtr>& sinks,
                      std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
                      const Runtime::NodeEnginePtr& nodeEngine,
-                     QueryId queryId,
-                     QuerySubPlanId subQueryPlanId,
+                     const PipelineQueryPlanPtr& pipelineQueryPlan,
                      std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
     Runtime::Execution::SuccessorExecutablePipeline
@@ -61,8 +59,7 @@ class LowerToExecutableQueryPlanPhase {
                 std::vector<DataSinkPtr>& sinks,
                 std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
                 Runtime::NodeEnginePtr nodeEngine,
-                QueryId queryId,
-                QuerySubPlanId subQueryPlanId);
+                const PipelineQueryPlanPtr& pipelineQueryPlan);
 
     Runtime::Execution::SuccessorExecutablePipeline
     processOperatorPipeline(const OperatorPipelinePtr& pipeline,
@@ -70,8 +67,7 @@ class LowerToExecutableQueryPlanPhase {
                             std::vector<DataSinkPtr>& sinks,
                             std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
                             const Runtime::NodeEnginePtr& nodeEngine,
-                            QueryId queryId,
-                            QuerySubPlanId subQueryPlanId,
+                            const PipelineQueryPlanPtr& pipelineQueryPlan,
                             std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 };
 }// namespace QueryCompilation

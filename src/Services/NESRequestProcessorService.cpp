@@ -78,8 +78,6 @@ NESRequestProcessorService::NESRequestProcessorService(
                                                                                memoryLayoutPolicy);
 }
 
-NESRequestProcessorService::~NESRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
-
 void NESRequestProcessorService::start() {
     try {
         while (isQueryProcessorRunning()) {

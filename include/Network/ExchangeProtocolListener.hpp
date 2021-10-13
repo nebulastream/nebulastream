@@ -19,9 +19,11 @@
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
-#include <Runtime/TupleBuffer.hpp>
 
 namespace NES {
+namespace Runtime {
+class TupleBuffer;
+}
 namespace Network {
 /**
  * @brief Listener for network stack events
@@ -29,6 +31,11 @@ namespace Network {
 class ExchangeProtocolListener {
   public:
     virtual ~ExchangeProtocolListener() = default;
+
+    /**
+     * @brief This is called on every event buffer received by the network stack
+     */
+    virtual void onEvent(NesPartition, Runtime::BaseEvent&) = 0;
 
     /**
      * @brief This is called on every data buffer that the network stack receives

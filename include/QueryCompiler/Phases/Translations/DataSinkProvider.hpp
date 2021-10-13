@@ -42,7 +42,8 @@ class DataSinkProvider {
                               SinkDescriptorPtr sinkDescriptor,
                               SchemaPtr schema,
                               Runtime::NodeEnginePtr nodeEngine,
-                              QuerySubPlanId querySubPlanId);
+                              const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
+                              size_t numOfProducers);
 
     virtual ~DataSinkProvider() = default;
 };

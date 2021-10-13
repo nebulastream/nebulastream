@@ -58,14 +58,7 @@ Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::appl
     //Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
     for (const auto& pipeline : sourcePipelines) {
-        processSource(pipeline,
-                      sources,
-                      sinks,
-                      executablePipelines,
-                      nodeEngine,
-                      pipelineQueryPlan->getQueryId(),
-                      pipelineQueryPlan->getQuerySubPlanId(),
-                      pipelineToExecutableMap);
+        processSource(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
     }
 
     return std::make_shared<Runtime::Execution::ExecutableQueryPlan>(pipelineQueryPlan->getQueryId(),
@@ -82,8 +75,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
-    QueryId queryId,
-    QuerySubPlanId subQueryPlanId,
+    const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     // check if the particular pipeline already exist in the pipeline map.
@@ -92,7 +84,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     }
 
     if (pipeline->isSinkPipeline()) {
-        auto executableSink = processSink(pipeline, sources, sinks, executablePipelines, nodeEngine, queryId, subQueryPlanId);
+        auto executableSink = processSink(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan);
         pipelineToExecutableMap[pipeline->getPipelineId()] = executableSink;
         return executableSink;
     }
@@ -102,8 +94,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                           sinks,
                                                           executablePipelines,
                                                           nodeEngine,
-                                                          queryId,
-                                                          subQueryPlanId,
+                                                          pipelineQueryPlan,
                                                           pipelineToExecutableMap);
         pipelineToExecutableMap[pipeline->getPipelineId()] = executablePipeline;
         return executablePipeline;
@@ -117,8 +108,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
-    QueryId queryId,
-    QuerySubPlanId subQueryPlanId,
+    const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     if (!pipeline->isSourcePipeline()) {
@@ -141,8 +131,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
                                                     sinks,
                                                     executablePipelines,
                                                     nodeEngine,
-                                                    queryId,
-                                                    subQueryPlanId,
+                                                    pipelineQueryPlan,
                                                     pipelineToExecutableMap);
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
@@ -157,15 +146,16 @@ LowerToExecutableQueryPlanPhase::processSink(const OperatorPipelinePtr& pipeline
                                              std::vector<DataSinkPtr>& sinks,
                                              std::vector<Runtime::Execution::ExecutablePipelinePtr>&,
                                              Runtime::NodeEnginePtr nodeEngine,
-                                             QueryId,
-                                             QuerySubPlanId subQueryPlanId) {
+                                             const PipelineQueryPlanPtr& pipelineQueryPlan) {
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
     auto sinkOperator = rootOperator->as<PhysicalOperators::PhysicalSinkOperator>();
+    auto numOfProducers = pipeline->getPredecessors().size();
     auto sink = sinkProvider->lower(sinkOperator->getId(),
                                     sinkOperator->getSinkDescriptor(),
                                     sinkOperator->getOutputSchema(),
                                     std::move(nodeEngine),
-                                    subQueryPlanId);
+                                    pipelineQueryPlan,
+                                    numOfProducers);
     sinks.emplace_back(sink);
     return sink;
 }
@@ -176,8 +166,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
-    QueryId queryId,
-    QuerySubPlanId subQueryPlanId,
+    const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
@@ -190,8 +179,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                     sinks,
                                                     executablePipelines,
                                                     nodeEngine,
-                                                    queryId,
-                                                    subQueryPlanId,
+                                                    pipelineQueryPlan,
                                                     pipelineToExecutableMap);
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
@@ -200,7 +188,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                                          Runtime::WorkerContextRef workerContext) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
             if (const auto* sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
-                NES_DEBUG("Emit Buffer to data sink" << (*sink)->toString());
+                NES_DEBUG("Emit Buffer to data sink " << (*sink)->toString());
                 (*sink)->writeData(buffer, workerContext);
             } else if (const auto* nextExecutablePipeline =
                            std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
@@ -218,14 +206,14 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     };
 
     auto executionContext =
-        std::make_shared<Runtime::Execution::PipelineExecutionContext>(subQueryPlanId,
+        std::make_shared<Runtime::Execution::PipelineExecutionContext>(pipelineQueryPlan->getQuerySubPlanId(),
                                                                        nodeEngine->getQueryManager(),
                                                                        emitToSuccessorFunctionHandler,
                                                                        emitToQueryManagerFunctionHandler,
                                                                        executableOperator->getOperatorHandlers());
 
     auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
-                                                                             subQueryPlanId,
+                                                                             pipelineQueryPlan->getQuerySubPlanId(),
                                                                              executionContext,
                                                                              executableOperator->getExecutablePipelineStage(),
                                                                              pipeline->getPredecessors().size(),

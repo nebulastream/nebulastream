@@ -19,8 +19,8 @@
 
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <memory>
+
 namespace NES {
 
 class Node;

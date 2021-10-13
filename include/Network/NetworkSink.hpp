@@ -18,67 +18,79 @@
 #define NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_
 
 #include <Network/NesPartition.hpp>
-#include <Network/NetworkManager.hpp>
-#include <Network/OutputChannel.hpp>
-#include <Runtime/BufferStorage.hpp>
-#include <Runtime/NodeEngine.hpp>
+#include <Network/NodeLocation.hpp>
+#include <Runtime/Events.hpp>
+#include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <string>
 
-namespace NES::Network {
+namespace NES {
+namespace Network {
+class NetworkManager;
+using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
 
-class NetworkSink : public SinkMedium {
+class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
+    using inherited0 = SinkMedium;
+    using inherited1 = Runtime::RuntimeEventListener;
+
   public:
     /**
-     * @brief constructor for the network sink
-     * @param schema
-     * @param networkManager
-     * @param nodeLocation
-     * @param nesPartition
-     */
+    * @brief constructor for the network sink
+    * @param schema
+    * @param networkManager
+    * @param nodeLocation
+    * @param nesPartition
+    */
     explicit NetworkSink(const SchemaPtr& schema,
-                         QuerySubPlanId parentPlanId,
+                         QuerySubPlanId querySubPlanId,
                          NetworkManagerPtr networkManager,
-                         NodeLocation const& nodeLocation,
+                         NodeLocation const& destination,
                          NesPartition nesPartition,
                          const Runtime::BufferManagerPtr& bufferManager,
                          Runtime::QueryManagerPtr queryManager,
                          Runtime::BufferStoragePtr bufferStorage,
+                         size_t numOfProducers,
                          std::chrono::seconds waitTime = std::chrono::seconds(5),
                          uint8_t retryTimes = 10);
 
-    ~NetworkSink() override;
-
     /**
-     * @brief Writes data to the underlying output channel
-     * @param inputBuffer
-     * @param workerContext
-     * @return true if no error occurred
-     */
+    * @brief Writes data to the underlying output channel
+    * @param inputBuffer
+    * @param workerContext
+    * @return true if no error occurred
+    */
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
 
+  protected:
     /**
-     * @return the string representation of the network sink
+     * @brief This method is called once an event is triggered for the current sink
+     * @param event
      */
+    void onEvent(Runtime::BaseEvent& event) override;
+
+  public:
+    /**
+    * @return the string representation of the network sink
+    */
     std::string toString() const override;
 
     /**
-     * @brief reconfiguration machinery for the network sink
-     * @param task descriptor of the reconfiguration
-     * @param workerContext the thread on which this is called
-     */
+    * @brief reconfiguration machinery for the network sink
+    * @param task descriptor of the reconfiguration
+    * @param workerContext the thread on which this is called
+    */
     void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) override;
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage&) override;
 
     /**
-     * @brief setup method to configure the network sink via a reconfiguration
-     */
+    * @brief setup method to configure the network sink via a reconfiguration
+    */
     void setup() override;
 
     /**
-     * @brief Destroys the network sink
-     */
+    * @brief Destroys the network sink
+    */
     void shutdown() override;
 
     /**
@@ -90,13 +102,16 @@ class NetworkSink : public SinkMedium {
   private:
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
+    const NodeLocation receiverLocation;
+    Runtime::BufferManagerPtr bufferManager;
     Runtime::BufferStoragePtr bufferStorage;
-    const NodeLocation nodeLocation;
     NesPartition nesPartition;
+    size_t numOfProducers;
     const std::chrono::seconds waitTime;
     const uint8_t retryTimes;
 };
 
-}// namespace NES::Network
+}// namespace Network
+}// namespace NES
 
 #endif// NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_

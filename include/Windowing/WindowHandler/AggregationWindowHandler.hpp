@@ -127,36 +127,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override {
-        AbstractWindowHandler::postReconfigurationCallback(task);
-        auto flushInflightWindows = []() {
-            //            return;
-            //            //TODO: this will be removed if we integrate the graceful shutdown
-            //            TODO: we keep this code to integrate the other shutdown method
-            //            return;
-            //            // flush in-flight records
-            //            auto windowType = windowDefinition->getWindowType();
-            //            int64_t windowLenghtMs = 0;
-            //            if (windowType->isTumblingWindow()) {
-            //                auto* window = dynamic_cast<TumblingWindow*>(windowType.get());
-            //                windowLenghtMs = window->getSize().getTime();
-            //
-            //            } else if (windowType->isSlidingWindow()) {
-            //                auto window = dynamic_cast<SlidingWindow*>(windowType.get());
-            //                windowLenghtMs = window->getSize().getTime();
-            //
-            //            } else {
-            //                NES_ASSERT(false, "unknonw windownd");
-            //            }
-            //            NES_DEBUG("Going to flush window " << toString());
-            //            trigger(true);
-            //            //            executableWindowAction->doAction(getTypedWindowState(), lastWatermark + windowLenghtMs + 1, lastWatermark);
-            //            NES_DEBUG("Flushed window content after end of stream message " << toString());
-        };
+        AbstractWindowHandler::postReconfigurationCallback(task);;
 
-        //switch between soft eos (state is drained) and hard eos (state is truncated)
+        // TODO switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {
             case Runtime::SoftEndOfStream: {
-                flushInflightWindows();
                 break;
             }
             case Runtime::HardEndOfStream: {
@@ -171,7 +146,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     /**
      * @brief triggers all ready windows.
      */
-    void trigger(Runtime::WorkerContextPtr workerContext, bool forceFlush = false) override {
+    void trigger(Runtime::WorkerContextRef workerContext, bool forceFlush = false) override {
         std::unique_lock lock(windowMutex);
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run window trigger "
                                               << executableWindowAction->toString()

@@ -30,9 +30,12 @@
 template<std::size_t v>
 static constexpr bool ispow2 = (!!v) && !(v & (v - 1));
 
-namespace NES::Network {
-class OutputChannel;
-}
+namespace NES::Network::detail {
+template<typename>
+class NetworkDataSender;
+template<typename>
+class NetworkEventSender;
+}// namespace NES::Network::detail
 
 namespace NES::Runtime {
 /**
@@ -60,7 +63,10 @@ class TupleBuffer {
     friend class detail::MemorySegment;
 
     /// Utilize the wrapped-memory constructor and requires direct access to the control block for the ZMQ sink.
-    friend class Network::OutputChannel;
+    template<typename T>
+    friend class NES::Network::detail::NetworkDataSender;
+    template<typename T>
+    friend class NES::Network::detail::NetworkEventSender;
 
     [[nodiscard]] constexpr explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
         : controlBlock(controlBlock), ptr(ptr), size(size) {}

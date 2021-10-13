@@ -15,6 +15,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -22,8 +23,8 @@
 
 namespace NES {
 
-SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId)
-    : sinkFormat(std::move(sinkFormat)), parentPlanId(parentPlanId) {
+SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, Runtime::QueryManagerPtr queryManager, QuerySubPlanId querySubPlanId)
+    : sinkFormat(std::move(sinkFormat)), queryManager(std::move(queryManager)), querySubPlanId(querySubPlanId) {
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 
@@ -41,6 +42,8 @@ SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 
 bool SinkMedium::getAppendAsBool() const { return append; }
+
+QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
 
 std::string SinkMedium::getAppendAsString() const {
     if (append) {

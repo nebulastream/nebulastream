@@ -18,7 +18,7 @@
 #define NES_INCLUDE_RUNTIME_WORKER_CONTEXT_HPP_
 
 #include <Network/NesPartition.hpp>
-#include <Network/OutputChannel.hpp>
+#include <Network/NetworkChannel.hpp>
 #include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <cstdint>
@@ -36,8 +36,15 @@ class WorkerContext {
   private:
     /// the id of this worker context (unique per thread).
     uint32_t workerId;
-    std::unordered_map<Network::OperatorId, Network::OutputChannelPtr> channels;
+    /// object reference counters
+    std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
+    /// data channels that send data downstream
+    std::unordered_map<Network::OperatorId, Network::NetworkChannelPtr> dataChannels;
+    /// event only channeks that send events upstream
+    std::unordered_map<Network::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
+    /// worker local buffer pool
     LocalBufferPoolPtr localBufferPool;
+    /// numa location of current worker
     uint32_t numaNode = 0;
 
   public:
@@ -59,30 +66,72 @@ class WorkerContext {
     uint32_t getId() const;
 
     /**
+     * @brief
+     * @param object
+     * @param refCnt
+     */
+    void setObjectRefCnt(void* object, uint32_t refCnt);
+
+    /**
+     * @brief
+     * @param object
+     * @return
+     */
+    uint32_t increaseObjectRefCnt(void* object);
+
+    /**
+     * @brief
+     * @param object
+     * @return
+     */
+    uint32_t decreaseObjectRefCnt(void* object);
+
+
+    /**
      * @brief get the numa node of the current worker
      * @return current numa Node
      */
     uint32_t getNumaNode() const;
 
     /**
-     * @brief This stores an output channel for an operator
+     * @brief This stores a network channel for an operator
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
      */
-    void storeChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel);
+    void storeNetworkChannel(Network::OperatorId id, Network::NetworkChannelPtr&& channel);
 
     /**
-     * @brief removes a registered output channel
+     * @brief removes a registered network channel
      * @param id of the operator that we want to store the output channel
      */
-    void releaseChannel(Network::OperatorId id);
+    bool releaseNetworkChannel(Network::OperatorId id);
+
+    /**
+     * @brief This stores a network channel for an operator
+     * @param id of the operator that we want to store the output channel
+     * @param channel the output channel
+     */
+    void storeEventOnlyChannel(Network::OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel);
+
+    /**
+     * @brief removes a registered network channel
+     * @param id of the operator that we want to store the output channel
+     */
+    bool releaseEventOnlyChannel(Network::OperatorId id);
 
     /**
      * @brief retrieve a registered output channel
      * @param ownerId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::OutputChannel* getChannel(Network::OperatorId ownerId);
+    Network::NetworkChannel* getNetworkChannel(Network::OperatorId ownerId);
+
+    /**
+     * @brief retrieve a registered output channel
+     * @param ownerId id of the operator that we want to store the output channel
+     * @return an output channel
+     */
+    Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(Network::OperatorId ownerId);
 };
 }// namespace NES::Runtime
 #endif// NES_INCLUDE_RUNTIME_WORKER_CONTEXT_HPP_

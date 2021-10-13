@@ -92,8 +92,6 @@ class RestEngine {
                const Catalogs::UdfCatalogPtr& udfCatalog,
                const Runtime::BufferManagerPtr bufferManager);
 
-    ~RestEngine();
-
     void handleGet(web::http::http_request request);
     void handlePost(web::http::http_request request);
     void handleDelete(web::http::http_request request);

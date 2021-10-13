@@ -16,6 +16,8 @@
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Network/ExchangeProtocol.hpp>
+#include <Network/NetworkManager.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -123,7 +125,8 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         auto queryManager = std::make_shared<Runtime::QueryManager>(bufferManager, 0, 1, nullptr);
         auto bufferStorage = std::make_shared<BufferStorage>();
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
-            return Network::NetworkManager::create(hostname,
+            return Network::NetworkManager::create(0,
+                                                   hostname,
                                                    port,
                                                    Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManager[0]);
@@ -209,7 +212,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
  *  - long running queries
  *
  */
-class EngineTest : public testing::Test {
+class NodeEngineTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("EngineTest.log", NES::LOG_DEBUG);
@@ -304,13 +307,13 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId) {
  * Test methods
  *     cout << "Stats=" << ptr->getStatistics() << endl;
  */
-TEST_F(EngineTest, testStartStopEngineEmpty) {
+TEST_F(NodeEngineTest, testStartStopEngineEmpty) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
     EXPECT_TRUE(engine->stop());
 }
 
-TEST_F(EngineTest, teststartDeployStop) {
+TEST_F(NodeEngineTest, teststartDeployStop) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
@@ -323,7 +326,7 @@ TEST_F(EngineTest, teststartDeployStop) {
     testOutput();
 }
 
-TEST_F(EngineTest, testStartDeployUndeployStop) {
+TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto ptr = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
@@ -337,7 +340,7 @@ TEST_F(EngineTest, testStartDeployUndeployStop) {
     testOutput();
 }
 
-TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
+TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto ptr = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
@@ -356,7 +359,7 @@ TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
     testOutput();
 }
 //
-TEST_F(EngineTest, testParallelDifferentSource) {
+TEST_F(NodeEngineTest, testParallelDifferentSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
@@ -409,7 +412,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     testOutput("qep2.txt");
 }
 //
-TEST_F(EngineTest, testParallelSameSource) {
+TEST_F(NodeEngineTest, testParallelSameSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
@@ -452,7 +455,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     testOutput("qep2.txt");
 }
 //
-TEST_F(EngineTest, testParallelSameSink) {
+TEST_F(NodeEngineTest, testParallelSameSink) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
@@ -505,7 +508,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     testOutput("qep12.txt", joinedExpectedOutput);
 }
 //
-TEST_F(EngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
+TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
@@ -583,7 +586,7 @@ TEST_F(EngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     testOutput("qep3.txt", joinedExpectedOutput);
 }
 //
-TEST_F(EngineTest, testStartStopStartStop) {
+TEST_F(NodeEngineTest, testStartStopStartStop) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
@@ -648,9 +651,9 @@ void assertKiller() {
 }
 }// namespace detail
 
-TEST_F(EngineTest, DISABLED_testExceptionCrash) { EXPECT_EXIT(detail::assertKiller(), testing::ExitedWithCode(1), ""); }
+TEST_F(NodeEngineTest, DISABLED_testExceptionCrash) { EXPECT_EXIT(detail::assertKiller(), testing::ExitedWithCode(1), ""); }
 
-TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
+TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     class MockedNodeEngine : public Runtime::NodeEngine {
       public:
         std::promise<bool> completedPromise;
@@ -723,7 +726,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     EXPECT_TRUE(engine->stop());
 }
 
-TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
+TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     class MockedNodeEngine : public Runtime::NodeEngine {
       public:
         std::promise<bool> completedPromise;
@@ -794,7 +797,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     EXPECT_TRUE(engine->stop());
 }
 
-TEST_F(EngineTest, DISABLED_testFatalCrash) {
+TEST_F(NodeEngineTest, DISABLED_testFatalCrash) {
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31400, PhysicalStreamConfig::createEmpty());
     EXPECT_EXIT(detail::segkiller(), testing::ExitedWithCode(1), "Runtime failed fatally");
 }

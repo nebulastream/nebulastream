@@ -81,7 +81,6 @@ class RestServer {
                const Catalogs::UdfCatalogPtr& udfCatalog,
                const Runtime::BufferManagerPtr& bufferManager);
 
-    ~RestServer();
     /**
    * @brief method to start the rest server
    * @return bool indicating success

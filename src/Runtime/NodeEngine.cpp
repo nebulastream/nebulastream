@@ -17,6 +17,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Network/NetworkManager.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -37,7 +38,6 @@
 #include <Util/UtilityFunctions.hpp>
 #include <string>
 #include <utility>
-
 namespace NES::Runtime {
 
 NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
@@ -175,7 +175,7 @@ bool NodeEngine::startQuery(QueryId queryId) {
         }
         return true;
     }
-    NES_ERROR("Runtime: qep does not exists. start failed" << queryId);
+    NES_ERROR("Runtime: qep does not exists. start failed for query=" << queryId);
     return false;
 }
 
@@ -313,6 +313,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
     networkManager->destroy();
+    partitionManager->clear();
     for (auto&& bufferManager : bufferManagers) {
         bufferManager->destroy();
     }
@@ -358,6 +359,10 @@ void NodeEngine::onDataBuffer(Network::NesPartition, TupleBuffer&) {
     // nop :: kept as legacy
 }
 
+void NodeEngine::onEvent(NES::Network::NesPartition, NES::Runtime::BaseEvent&) {
+    // nop :: kept as legacy
+}
+
 void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
@@ -365,19 +370,38 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
-    if (err.getErrorType() == Network::Messages::ErrorType::kPartitionNotRegisteredError) {
-        NES_WARNING("Runtime: Unable to find the NES Partition " << err.getChannelId());
-        return;
+
+    switch (err.getErrorType()) {
+        case Network::Messages::ErrorType::kPartitionNotRegisteredError: {
+            NES_WARNING("Runtime: Unable to find the NES Partition " << err.getChannelId());
+            break;
+        }
+        case Network::Messages::ErrorType::kDeletedPartitionError: {
+            NES_WARNING("Runtime: Requesting deleted NES Partition " << err.getChannelId());
+            break;
+        }
+        default: {
+            NES_THROW_RUNTIME_ERROR(err.getErrorTypeAsString());
+            break;
+        }
     }
-    NES_THROW_RUNTIME_ERROR(err.getErrorTypeAsString());
 }
 
 void NodeEngine::onChannelError(Network::Messages::ErrorMessage err) {
-    if (err.getErrorType() == Network::Messages::ErrorType::kPartitionNotRegisteredError) {
-        NES_WARNING("Runtime: Unable to find the NES Partition " << err.getChannelId() << ": please, retry later or abort.");
-        return;
+    switch (err.getErrorType()) {
+        case Network::Messages::ErrorType::kPartitionNotRegisteredError: {
+            NES_WARNING("Runtime: Unable to find the NES Partition " << err.getChannelId());
+            break;
+        }
+        case Network::Messages::ErrorType::kDeletedPartitionError: {
+            NES_WARNING("Runtime: Requesting deleted NES Partition " << err.getChannelId());
+            break;
+        }
+        default: {
+            NES_THROW_RUNTIME_ERROR(err.getErrorTypeAsString());
+            break;
+        }
     }
-    NES_THROW_RUNTIME_ERROR(err.getErrorTypeAsString());
 }
 
 std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) {

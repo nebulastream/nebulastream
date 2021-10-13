@@ -84,7 +84,6 @@ class NESRequestProcessorService {
                                         Optimizer::QueryMergerRule queryMergerRule,
                                         Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy);
 
-    ~NESRequestProcessorService();
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
      */

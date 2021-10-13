@@ -25,12 +25,14 @@ DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
                                     SinkDescriptorPtr sinkDescriptor,
                                     SchemaPtr schema,
                                     Runtime::NodeEnginePtr nodeEngine,
-                                    QuerySubPlanId querySubPlanId) {
+                                    const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
+                                    size_t numOfProducers) {
     return ConvertLogicalToPhysicalSink::createDataSink(sinkId,
                                                         std::move(sinkDescriptor),
                                                         std::move(schema),
                                                         std::move(nodeEngine),
-                                                        querySubPlanId);
+                                                        querySubPlan,
+                                                        numOfProducers);
 }
 
 }// namespace NES::QueryCompilation

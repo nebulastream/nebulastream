@@ -760,4 +760,5 @@ TEST_F(ProjectionTest, mergeQuery) {
 
     testSink->cleanupBuffers();
     plan->stop();
+    plan->stop();
 }

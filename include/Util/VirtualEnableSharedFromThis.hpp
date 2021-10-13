@@ -39,12 +39,14 @@ struct virtual_enable_shared_from_this : virtual virtual_enable_shared_from_this
 
     ~virtual_enable_shared_from_this() NES_NOEXCEPT(isNoexceptDestructible) override = default;
 
-    std::shared_ptr<T> shared_from_this() {
-        return std::dynamic_pointer_cast<T>(virtual_enable_shared_from_this_base<isNoexceptDestructible>::shared_from_this());
+    template<typename T1 = T>
+    std::shared_ptr<T1> shared_from_this() {
+        return std::dynamic_pointer_cast<T1>(virtual_enable_shared_from_this_base<isNoexceptDestructible>::shared_from_this());
     }
 
-    std::weak_ptr<T> weak_from_this() {
-        return std::dynamic_pointer_cast<T>(
+    template<typename T1 = T>
+    std::weak_ptr<T1> weak_from_this() {
+        return std::dynamic_pointer_cast<T1>(
             virtual_enable_shared_from_this_base<isNoexceptDestructible>::weak_from_this().lock());
     }
 

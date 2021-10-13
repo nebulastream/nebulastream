@@ -22,7 +22,8 @@
 #include <string>
 
 namespace NES {
-NullOutputSink::NullOutputSink(QuerySubPlanId parentPlanId) : SinkMedium(nullptr, parentPlanId) {}
+NullOutputSink::NullOutputSink(Runtime::QueryManagerPtr queryManager, QuerySubPlanId querySubPlanId)
+    : SinkMedium(nullptr, std::move(queryManager), querySubPlanId) {}
 
 NullOutputSink::~NullOutputSink() = default;
 

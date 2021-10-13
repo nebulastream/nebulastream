@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
@@ -27,6 +26,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
@@ -37,21 +37,23 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                                          const SinkDescriptorPtr& sinkDescriptor,
                                                          const SchemaPtr& schema,
                                                          const Runtime::NodeEnginePtr& nodeEngine,
-                                                         QuerySubPlanId querySubPlanId) {
+                                                         const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
+                                                         size_t numOfProducers) {
     NES_DEBUG("Convert sink " << operatorId);
     NES_ASSERT(nodeEngine, "Invalid node engine");
+    NES_ASSERT(querySubPlan, "Invalid query sub-plan");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
-        return createTextPrintSink(schema, querySubPlanId, nodeEngine, std::cout);
+        return createTextPrintSink(schema, querySubPlan->getQuerySubPlanId(), nodeEngine, std::cout);
     }
     if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink" << schema->toString());
-        return createNullOutputSink(querySubPlanId);
+        return createNullOutputSink(querySubPlan->getQuerySubPlanId(), nodeEngine);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
         return createBinaryZmqSink(schema,
-                                   querySubPlanId,
+                                   querySubPlan->getQuerySubPlanId(),
                                    nodeEngine,
                                    zmqSinkDescriptor->getHost(),
                                    zmqSinkDescriptor->getPort(),
@@ -62,7 +64,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
         const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
         return createKafkaSinkWithSchema(schema,
-                                         querySubPlanId,
+                                         querySubPlan->getQuerySubPlanId(),
                                          kafkaSinkDescriptor->getBrokers(),
                                          kafkaSinkDescriptor->getTopic(),
                                          kafkaSinkDescriptor->getTimeout());
@@ -73,7 +75,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
         const OPCSinkDescriptorPtr opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
         return createOPCSink(schema,
-                             querySubPlanId,
+                             querySubPlan->getQuerySubPlanId(),
                              nodeEngine,
                              opcSinkDescriptor->getUrl(),
                              opcSinkDescriptor->getNodeId(),
@@ -90,7 +92,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         std::string clientId =
             (mqttSinkDescriptor->getClientId() != "") ? mqttSinkDescriptor->getClientId() : std::to_string(operatorId);
         return createMQTTSink(schema,
-                              querySubPlanId,
+                              querySubPlan->getQuerySubPlanId(),
                               nodeEngine,
                               mqttSinkDescriptor->getAddress(),
                               clientId,
@@ -109,19 +111,19 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
             "ConvertLogicalToPhysicalSink: Creating Binary file sink for format=" << fileSinkDescriptor->getSinkFormatAsString());
         if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {
             return createCSVFileSink(schema,
-                                     querySubPlanId,
+                                     querySubPlan->getQuerySubPlanId(),
                                      nodeEngine,
                                      fileSinkDescriptor->getFileName(),
                                      fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT") {
             return createBinaryNESFileSink(schema,
-                                           querySubPlanId,
+                                           querySubPlan->getQuerySubPlanId(),
                                            nodeEngine,
                                            fileSinkDescriptor->getFileName(),
                                            fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
             return createTextFileSink(schema,
-                                      querySubPlanId,
+                                      querySubPlan->getQuerySubPlanId(),
                                       nodeEngine,
                                       fileSinkDescriptor->getFileName(),
                                       fileSinkDescriptor->getAppend());
@@ -133,10 +135,11 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSink: Creating network sink");
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         return createNetworkSink(schema,
-                                 querySubPlanId,
+                                 querySubPlan->getQuerySubPlanId(),
                                  networkSinkDescriptor->getNodeLocation(),
                                  networkSinkDescriptor->getNesPartition(),
                                  nodeEngine,
+                                 numOfProducers,
                                  networkSinkDescriptor->getWaitTime(),
                                  networkSinkDescriptor->getRetryTimes());
     } else {

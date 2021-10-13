@@ -102,8 +102,10 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
 
     virtual BufferManagerType getBufferManagerType() const override;
 
+    BufferManagerPtr getParentBufferManager() const { return bufferManager; }
+
   private:
-    std::shared_ptr<BufferManager> bufferManager;
+    BufferManagerPtr bufferManager;
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::deque<detail::MemorySegment*> exclusiveBuffers;
 #else

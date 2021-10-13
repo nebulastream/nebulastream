@@ -18,7 +18,7 @@
 #define NES_INCLUDE_NETWORK_NODE_LOCATION_HPP_
 
 #include <Network/NesPartition.hpp>
-#include <utility>
+#include <Util/Logger.hpp>
 
 namespace NES {
 namespace Network {
@@ -26,7 +26,18 @@ namespace Network {
 class NodeLocation {
   public:
     explicit NodeLocation(NodeId nodeId, std::string hostname, uint32_t port)
-        : nodeId(nodeId), hostname(std::move(hostname)), port(port) {}
+        : nodeId(nodeId), hostname(std::move(hostname)), port(port) {
+         NES_ASSERT2_FMT(this->hostname.size() > 0, "Empty string passed on " << nodeId);
+    }
+
+    NodeLocation(const NodeLocation& other) : nodeId(other.nodeId), hostname(other.hostname), port(other.port) {}
+
+    NodeLocation& operator=(const NodeLocation& other) {
+        nodeId = other.nodeId;
+        hostname = other.hostname;
+        port = other.port;
+        return *this;
+    }
 
     [[nodiscard]] std::string createZmqURI() const { return "tcp://" + hostname + ":" + std::to_string(port); }
 
@@ -47,9 +58,9 @@ class NodeLocation {
     }
 
   private:
-    const NodeId nodeId;
-    const std::string hostname;
-    const uint32_t port;
+    NodeId nodeId;
+    std::string hostname;
+    uint32_t port;
 };
 }// namespace Network
 }// namespace NES

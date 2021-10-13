@@ -80,7 +80,7 @@ class MemoryLayoutSelectionPhaseTest : public testing::Test {
 class TestSink : public SinkMedium {
   public:
     TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0), expectedBuffer(expectedBuffer){};
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nullptr, 0), expectedBuffer(expectedBuffer){};
 
     static std::shared_ptr<TestSink>
     create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {

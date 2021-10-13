@@ -19,6 +19,7 @@
 
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -30,6 +31,10 @@
 #include <map>
 #include <vector>
 
+namespace NES::Network {
+class NetworkSink;
+}
+
 namespace NES::Runtime::Execution {
 
 enum class ExecutableQueryPlanResult : uint8_t { Ok, Error };
@@ -40,7 +45,9 @@ enum class ExecutableQueryPlanResult : uint8_t { Ok, Error };
  * A valid query plan should contain at least one source and sink.
  * This class is thread-safe.
  */
-class ExecutableQueryPlan : public Reconfigurable {
+class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
+    friend class NES::Network::NetworkSink;
+
   public:
     /**
      * @brief Constructor for an executable query plan.
@@ -175,6 +182,13 @@ class ExecutableQueryPlan : public Reconfigurable {
      */
     void destroy();
 
+  protected:
+    /**
+     * @brief
+     * @param event
+     */
+    void onEvent(BaseEvent& event) override;
+
   private:
     const QueryId queryId;
     const QuerySubPlanId querySubPlanId;
@@ -185,7 +199,7 @@ class ExecutableQueryPlan : public Reconfigurable {
     BufferManagerPtr bufferManager;
     std::atomic<ExecutableQueryPlanStatus> qepStatus;
     /// number of producers that provide data to this qep
-    std::atomic<uint32_t> numOfProducers;
+    std::atomic<uint32_t> numOfActiveSources;
     /// promise that indicates how a qep terminates
     std::promise<ExecutableQueryPlanResult> qepTerminationStatusPromise;
     /// future that indicates how a qep terminates

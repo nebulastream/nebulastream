@@ -82,7 +82,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
      * @brief triggers all ready windows.
      * @return
      */
-    virtual void trigger(Runtime::WorkerContextPtr workerContext, bool forceFlush = false) = 0;
+    virtual void trigger(Runtime::WorkerContextRef workerContext, bool forceFlush = false) = 0;
 
     /**
     * @brief Initialises the state of this window depending on the window definition.
@@ -132,7 +132,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
     virtual void updateMaxTs(WatermarkTs ts,
                              OriginId originId,
                              SequenceNumber sequenceNumber,
-                             Runtime::WorkerContextPtr workerContext,
+                             Runtime::WorkerContextRef workerContext,
                              bool leftSide) = 0;
 
   protected:

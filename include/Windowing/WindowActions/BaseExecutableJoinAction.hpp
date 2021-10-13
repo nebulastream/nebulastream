@@ -34,7 +34,7 @@ class BaseExecutableJoinAction {
                           Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
                           uint64_t currentWatermark,
                           uint64_t lastWatermark,
-                          Runtime::WorkerContextPtr workerContext) = 0;
+                          Runtime::WorkerContextRef workerContext) = 0;
 
     virtual std::string toString() = 0;
 

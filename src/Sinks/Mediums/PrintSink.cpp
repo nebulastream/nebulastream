@@ -23,8 +23,11 @@
 #include <utility>
 
 namespace NES {
-PrintSink::PrintSink(SinkFormatPtr format, QuerySubPlanId parentPlanId, std::ostream& pOutputStream)
-    : SinkMedium(std::move(format), parentPlanId), outputStream(pOutputStream) {}
+PrintSink::PrintSink(SinkFormatPtr format,
+                     Runtime::QueryManagerPtr queryManager,
+                     QuerySubPlanId querySubPlanId,
+                     std::ostream& pOutputStream)
+    : SinkMedium(std::move(format), std::move(queryManager), querySubPlanId), outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;
 

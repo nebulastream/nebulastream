@@ -69,7 +69,7 @@ class ExecutableSliceAggregationTriggerAction
     bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
                   uint64_t currentWatermark,
                   uint64_t lastWatermark,
-                  Runtime::WorkerContextPtr workerContext) {
+                  Runtime::WorkerContextRef workerContext) {
         NES_DEBUG("ExecutableSliceAggregationTriggerAction " << id << ": doAction for currentWatermark=" << currentWatermark
                                                              << " lastWatermark=" << lastWatermark);
 
@@ -119,7 +119,7 @@ class ExecutableSliceAggregationTriggerAction
                           Runtime::TupleBuffer& tupleBuffer,
                           uint64_t currentWatermark,
                           uint64_t lastWatermark,
-                          Runtime::WorkerContextPtr workerContext) {
+                          Runtime::WorkerContextRef workerContext) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
