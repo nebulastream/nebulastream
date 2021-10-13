@@ -18,6 +18,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <string>
 
 namespace NES {
 /**

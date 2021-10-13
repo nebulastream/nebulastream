@@ -15,6 +15,7 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
+#include <string>
 
 namespace NES {
 
