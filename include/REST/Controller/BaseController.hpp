@@ -95,7 +95,14 @@ class BaseController {
 
     static void internalServerErrorImpl(const web::http::http_request& message);
 
-    template <typename T> static void successMessageImpl(const http_request& request, const T& result);
+    template <typename T>
+    static void successMessageImpl(const http_request& request, const T& result) {
+        http_response response(status_codes::OK);
+        response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+        response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+        response.set_body(result);
+        request.reply(response);
+    }
 
     static void resourceNotFoundImpl(const web::http::http_request& message);
     static void noContentImpl(const web::http::http_request& message);
@@ -107,7 +114,16 @@ class BaseController {
      * @param detail The detailed error message.
      */
     template<typename T>
-    static void badRequestImpl(const web::http::http_request& request, const T& detail);
+    static void badRequestImpl(const web::http::http_request& request, const T& detail) {
+        // Returns error with http code 400 to indicate bad user request
+        http_response response(status_codes::BadRequest);
+        response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+        response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+
+        // Inform REST users with reason of the error
+        response.set_body(detail);
+        request.reply(response);
+    }
 
     virtual void handleException(const web::http::http_request& message, const std::exception& exc);
 
