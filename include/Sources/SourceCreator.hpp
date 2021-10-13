@@ -17,7 +17,8 @@
 #ifndef NES_INCLUDE_SOURCES_SOURCE_CREATOR_HPP_
 #define NES_INCLUDE_SOURCES_SOURCE_CREATOR_HPP_
 
-#include <Network/NetworkManager.hpp>
+#include <Network/NesPartition.hpp>
+#include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Sources/BenchmarkSource.hpp>
 #include <Sources/DataSource.hpp>
@@ -28,6 +29,7 @@
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 #ifdef ENABLE_OPC_BUILD
+#include <Network/NodeLocation.hpp>
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/client_subscriptions.h>
@@ -35,7 +37,10 @@
 #endif
 
 namespace NES {
-
+namespace Network {
+class NetworkManager;
+using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
+}// namespace Network
 /**
  * @brief function to create a test source which produces 10 tuples within one buffer with value one based on a schema
  * @param schema of the data source
@@ -252,6 +257,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   const Runtime::QueryManagerPtr& queryManager,
                                   const Network::NetworkManagerPtr& networkManager,
                                   Network::NesPartition nesPartition,
+                                  Network::NodeLocation sinkLocation,
                                   size_t numSourceLocalBuffers,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 

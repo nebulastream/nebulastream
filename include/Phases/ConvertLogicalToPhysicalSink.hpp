@@ -17,11 +17,11 @@
 #ifndef NES_INCLUDE_PHASES_CONVERT_LOGICAL_TO_PHYSICAL_SINK_HPP_
 #define NES_INCLUDE_PHASES_CONVERT_LOGICAL_TO_PHYSICAL_SINK_HPP_
 
-#include <Network/NetworkSink.hpp>
+#include <Network/NetworkMessage.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-
 namespace NES {
 
 class Schema;
@@ -40,11 +40,12 @@ class ConvertLogicalToPhysicalSink {
      * @param querySubPlanId: the id of the owning subplan
      * @return Data sink pointer representing the physical sink
      */
-    static DataSinkPtr createDataSink(OperatorId operatorId,
+    static DataSinkPtr createDataSink(Network::OperatorId operatorId,
                                       const SinkDescriptorPtr& sinkDescriptor,
                                       const SchemaPtr& schema,
                                       const Runtime::NodeEnginePtr& nodeEngine,
-                                      QuerySubPlanId querySubPlanId);
+                                      const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
+                                      size_t numOfProducers);
 
   private:
     ConvertLogicalToPhysicalSink() = default;

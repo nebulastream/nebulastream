@@ -176,6 +176,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                    queryManager,
                                    networkManager,
                                    networkSourceDescriptor->getNesPartition(),
+                                   networkSourceDescriptor->getNodeLocation(),
                                    numSourceLocalBuffers,
                                    successors);
     } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {

@@ -37,8 +37,6 @@ namespace NES {
  */
 class QueryCatalog {
   public:
-    QueryCatalog();
-    virtual ~QueryCatalog() noexcept;
 
     /**
      * @brief registers a new query into the NES Query catalog and add it to the scheduling queue for later execution.

@@ -23,9 +23,7 @@
 
 namespace NES {
 
-Topology::Topology() : rootNode(nullptr) { NES_DEBUG("Topology()"); }
-
-Topology::~Topology() { NES_DEBUG("~Topology()"); }
+Topology::Topology() : rootNode(nullptr) {}
 
 TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()); }
 

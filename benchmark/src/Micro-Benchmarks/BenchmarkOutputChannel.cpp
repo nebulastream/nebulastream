@@ -117,7 +117,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
                         netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
                     secondBarrier->wait();
                     if (senderChannel == nullptr) {
-                        NES_DEBUG("NetworkStackTest: Error in registering OutputChannel!");
+                        NES_DEBUG("NetworkStackTest: Error in registering DataChannel!");
                         completedProm.set_value(false);
                     } else {
                         for (uint64_t i = 0; i < totalNumBuffer; ++i) {
@@ -139,7 +139,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
 
         throughputRet = bytesSent.get_future().get() / elapsedSeconds.get_future().get();
     } catch (...) {
-        NES_THROW_RUNTIME_ERROR("BenchmarkOutputChannel: Error occured!");
+        NES_THROW_RUNTIME_ERROR("BenchmarkDataChannel: Error occured!");
     }
     return throughputRet;
 }
@@ -167,8 +167,8 @@ int main(int argc, char** argv) {
                                                                    (uint64_t) 11 * 1024 * 1024 * 1024,
                                                                    (uint64_t) 1 * 1024 * 1024 * 1024);
 
-    std::string benchmarkName = "outputchannel";
-    std::string benchmarkFolderName = "OutputChannel" + NES::Benchmarking::BenchmarkUtils::getCurDateTimeStringWithNESVersion();
+    std::string benchmarkName = "DataChannel";
+    std::string benchmarkFolderName = "DataChannel" + NES::Benchmarking::BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName))
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
 

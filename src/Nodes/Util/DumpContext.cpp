@@ -16,7 +16,11 @@
 
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/DumpHandler.hpp>
-#include <utility>
+#include <Util/Logger.hpp>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+#include <string>
 
 namespace NES {
 

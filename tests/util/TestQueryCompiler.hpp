@@ -78,16 +78,17 @@ class TestSinkDescriptor : public SinkDescriptor {
 
 class TestSinkProvider : public QueryCompilation::DataSinkProvider {
   public:
-    DataSinkPtr lower(OperatorId operatorId,
+    DataSinkPtr lower(OperatorId sinkId,
                       SinkDescriptorPtr sinkDescriptor,
                       SchemaPtr schema,
                       Runtime::NodeEnginePtr nodeEngine,
-                      QuerySubPlanId querySubPlanId) override {
+                      const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
+                      size_t numOfProducers) override {
         if (sinkDescriptor->instanceOf<TestSinkDescriptor>()) {
             auto testSinkDescriptor = sinkDescriptor->as<TestSinkDescriptor>();
             return testSinkDescriptor->getSink();
         }
-        return DataSinkProvider::lower(operatorId, sinkDescriptor, schema, nodeEngine, querySubPlanId);
+        return DataSinkProvider::lower(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlan, numOfProducers);
     }
 };
 
@@ -121,6 +122,7 @@ class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
     }
 };
 
+/// utility method necessary if one wants to write a test that uses a mocked sink using a test sink descriptor
 inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler() {
     auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
     auto phaseProvider = std::make_shared<TestPhaseProvider>();

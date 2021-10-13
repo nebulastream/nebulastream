@@ -78,7 +78,7 @@ class ExecutableCompleteAggregationTriggerAction
     bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
                   uint64_t currentWatermark,
                   uint64_t lastWatermark,
-                  Runtime::WorkerContextPtr workerContext) override {
+                  Runtime::WorkerContextRef workerContext) override {
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id="
                   << id << " " << this->windowDefinition->getDistributionType()->toString()
                   << "): doAction for currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
@@ -141,7 +141,7 @@ class ExecutableCompleteAggregationTriggerAction
                           Runtime::TupleBuffer& tupleBuffer,
                           uint64_t currentWatermark,
                           uint64_t lastWatermark,
-                          Runtime::WorkerContextPtr workerContext) {
+                          Runtime::WorkerContextRef workerContext) {
 
         NES_DEBUG("AggregateWindows for ExecutableCompleteAggregationTriggerAction id=" << id);
         // For event time we use the maximal records ts as watermark.

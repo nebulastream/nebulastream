@@ -37,7 +37,8 @@ const uint32_t NANO_TO_SECONDS_MULTIPLIER = 1000000000;
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
 MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
-                   QuerySubPlanId parentPlanId,
+                   Runtime::QueryManagerPtr queryManager,
+                   QuerySubPlanId querySubPlanId,
                    const std::string& address,
                    const std::string& clientId,
                    const std::string& topic,
@@ -47,9 +48,9 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    uint64_t messageDelay,
                    MQTTSinkDescriptor::ServiceQualities qualityOfService,
                    bool asynchronousClient)
-    : SinkMedium(std::move(sinkFormat), parentPlanId), address(address), clientId(clientId), topic(topic), user(user),
-      maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService),
-      asynchronousClient(asynchronousClient), connected(false) {
+    : SinkMedium(std::move(sinkFormat), queryManager, querySubPlanId), address(address), clientId(clientId), topic(topic),
+      user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay),
+      qualityOfService(qualityOfService), asynchronousClient(asynchronousClient), connected(false) {
 
     minDelayBetweenSends =
         std::chrono::nanoseconds(messageDelay

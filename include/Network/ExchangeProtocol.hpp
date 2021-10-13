@@ -18,12 +18,12 @@
 #define NES_INCLUDE_NETWORK_EXCHANGE_PROTOCOL_HPP_
 
 #include <Network/NetworkMessage.hpp>
-#include <Network/PartitionManager.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <functional>
+#include <Runtime/Events.hpp>
+#include <variant>
 
 namespace NES {
 namespace Network {
+class PartitionManager;
 class ExchangeProtocolListener;
 /**
  * @brief This class is used by the ZmqServer and defines the reaction for events onDataBuffer,
@@ -43,9 +43,8 @@ class ExchangeProtocol {
      * @brief Reaction of the zmqServer after a ClientAnnounceMessage is received.
      * @param clientAnnounceMessage
      * @return if successful, return ServerReadyMessage
-     * @throw NesNetworkError if not successful
      */
-    Messages::ServerReadyMessage onClientAnnouncement(Messages::ClientAnnounceMessage msg);
+    std::variant<Messages::ServerReadyMessage, Messages::ErrorMessage> onClientAnnouncement(Messages::ClientAnnounceMessage msg);
 
     /**
      * @brief Reaction of the zmqServer after a buffer is received.
@@ -71,6 +70,13 @@ class ExchangeProtocol {
      * @param the endOfStreamMessage
      */
     void onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage);
+
+    /**
+     * @brief This method is called when the server receives an event message.
+     * @param nesPartition
+     * @param event
+     */
+    void onEvent(NesPartition nesPartition, Runtime::BaseEvent& event);
 
     /**
      * @brief getter for the PartitionManager

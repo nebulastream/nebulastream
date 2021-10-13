@@ -39,7 +39,6 @@ class CoordinatorRPCClient {
   public:
     explicit CoordinatorRPCClient(const std::string& address);
 
-    ~CoordinatorRPCClient();
     /**
      * @brief this methods registers a physical stream via the coordinator to a logical stream
      * @param configuration of the stream

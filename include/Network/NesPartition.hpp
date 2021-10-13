@@ -22,6 +22,7 @@
 namespace NES::Network {
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
 
+// TODO unify among network, runtime, and optimizer
 using NodeId = uint64_t;
 using SubpartitionId = uint64_t;
 using PartitionId = uint64_t;

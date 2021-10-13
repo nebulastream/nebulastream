@@ -47,8 +47,6 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog,
     semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalog);
 }
 
-QueryService::~QueryService() { NES_DEBUG("~QueryService()"); }
-
 uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString,
                                                   const std::string& placementStrategyName,
                                                   const FaultToleranceType faultTolerance,

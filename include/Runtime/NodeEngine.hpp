@@ -20,7 +20,6 @@
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
-#include <Network/NetworkManager.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/BufferStorage.hpp>
 #include <Runtime/ErrorListener.hpp>
@@ -43,6 +42,12 @@ using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
 }// namespace NES
 
+namespace NES::Network {
+class NetworkManager;
+using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
+class PartitionManager;
+using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
+}// namespace NES::Network
 namespace NES::Runtime {
 
 /**
@@ -222,6 +227,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * for a given nes partition
      */
     void onDataBuffer(Network::NesPartition, TupleBuffer&) override;
+
+    /**
+     * @brief this callback is called once a tuple buffer arrives on the network manager
+     * for a given nes partition
+     */
+    void onEvent(Network::NesPartition, Runtime::BaseEvent&) override;
 
     /**
      * @brief this callback is called once an end of stream message arrives

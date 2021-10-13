@@ -42,8 +42,6 @@ class NESRequestQueue {
      */
     explicit NESRequestQueue(uint64_t batchSize);
 
-    ~NESRequestQueue();
-
     /**
      * @brief Add query request into processing queue
      * @param request: the query request

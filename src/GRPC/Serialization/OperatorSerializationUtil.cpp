@@ -998,17 +998,18 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
                   "SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
         auto networkSourceDescriptor = sourceDescriptor->as<Network::NetworkSourceDescriptor>();
         auto networkSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor();
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_queryid(
-            networkSourceDescriptor->getNesPartition().getQueryId());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_operatorid(
-            networkSourceDescriptor->getNesPartition().getOperatorId());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_partitionid(
-            networkSourceDescriptor->getNesPartition().getPartitionId());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_subpartitionid(
-            networkSourceDescriptor->getNesPartition().getSubpartitionId());
+        const auto nodeLocation = networkSourceDescriptor->getNodeLocation();
+        const auto nesPartition = networkSourceDescriptor->getNesPartition();
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(networkSourceDescriptor->getSchema(),
                                                  networkSerializedSourceDescriptor.mutable_sourceschema());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_operatorid(nesPartition.getOperatorId());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_partitionid(nesPartition.getPartitionId());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_queryid(nesPartition.getQueryId());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_subpartitionid(nesPartition.getSubpartitionId());
+        networkSerializedSourceDescriptor.mutable_nodelocation()->set_port(nodeLocation.getPort());
+        networkSerializedSourceDescriptor.mutable_nodelocation()->set_hostname(nodeLocation.getHostname());
+        networkSerializedSourceDescriptor.mutable_nodelocation()->set_nodeid(nodeLocation.getNodeId());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(networkSerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
         // serialize default source descriptor
@@ -1145,7 +1146,10 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
                                            networkSerializedSourceDescriptor.nespartition().operatorid(),
                                            networkSerializedSourceDescriptor.nespartition().partitionid(),
                                            networkSerializedSourceDescriptor.nespartition().subpartitionid()};
-        auto ret = Network::NetworkSourceDescriptor::create(schema, nesPartition);
+        NES::Network::NodeLocation nodeLocation(networkSerializedSourceDescriptor.nodelocation().nodeid(),
+                                                networkSerializedSourceDescriptor.nodelocation().hostname(),
+                                                networkSerializedSourceDescriptor.nodelocation().port());
+        auto ret = Network::NetworkSourceDescriptor::create(schema, nesPartition, nodeLocation);
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor>()) {
         // de-serialize default stream source descriptor

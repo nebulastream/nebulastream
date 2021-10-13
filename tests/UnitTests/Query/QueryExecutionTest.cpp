@@ -290,12 +290,12 @@ TEST_F(QueryExecutionTest, filterQuery) {
             auto memoryLayout =
                 Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
             fillBuffer(buffer, memoryLayout);
-            plan->setup();
+            ASSERT_TRUE(plan->setup());
             ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-            plan->start(nodeEngine->getStateManager());
+            ASSERT_TRUE(plan->start(nodeEngine->getStateManager()));
             ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
             Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
-            plan->getPipelines()[0]->execute(buffer, workerContext);
+            ASSERT_EQ(plan->getPipelines()[0]->execute(buffer, workerContext), ExecutionResult::Ok);
 
             // This plan should produce one output buffer
             EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
@@ -1065,7 +1065,7 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
     }
 };
 
-TEST_F(QueryExecutionTest, ExternalOperatorQueryQuery) {
+TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
@@ -1112,10 +1112,10 @@ TEST_F(QueryExecutionTest, ExternalOperatorQueryQuery) {
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-    plan->start(nodeEngine->getStateManager());
+    ASSERT_TRUE(plan->start(nodeEngine->getStateManager()));
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
-    plan->getPipelines()[1]->execute(buffer, workerContext);
+    ASSERT_EQ(plan->getPipelines()[1]->execute(buffer, workerContext), ExecutionResult::Ok);
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
@@ -1135,5 +1135,5 @@ TEST_F(QueryExecutionTest, ExternalOperatorQueryQuery) {
 
     testSink->cleanupBuffers();
     buffer.release();
-    plan->stop();
+    ASSERT_TRUE(plan->stop());
 }

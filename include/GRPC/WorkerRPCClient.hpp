@@ -67,9 +67,6 @@ class WorkerRPCClient {
         std::unique_ptr<ClientAsyncResponseReader<ReplayType>> responseReader;
     };
 
-    WorkerRPCClient();
-    ~WorkerRPCClient();
-
     void AsyncCompleteRpc();
 
     /**

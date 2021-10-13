@@ -123,7 +123,7 @@ class JoinHandler : public AbstractJoinHandler {
     /**
     * @brief triggers all ready windows.
     */
-    void trigger(Runtime::WorkerContextPtr workerContext, bool forceFlush = false) override {
+    void trigger(Runtime::WorkerContextRef workerContext, bool forceFlush = false) override {
         std::unique_lock lock(mutex);
         NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString()
                                  << " forceFlush=" << forceFlush);
@@ -183,7 +183,7 @@ class JoinHandler : public AbstractJoinHandler {
     void updateMaxTs(WatermarkTs ts,
                      OriginId originId,
                      SequenceNumber sequenceNumber,
-                     Runtime::WorkerContextPtr workerContext,
+                     Runtime::WorkerContextRef workerContext,
                      bool isLeftSide) override {
         std::unique_lock lock(mutex);
         std::string side = isLeftSide ? "leftSide" : "rightSide";

@@ -53,11 +53,6 @@ RestServer::RestServer(std::string host,
                                               bufferManager)),
       host(std::move(host)), port(port) {}
 
-RestEnginePtr restEngine;
-std::string host;
-uint16_t port;
-RestServer::~RestServer() { NES_DEBUG("~RestServer()"); }
-
 bool RestServer::start() {
 
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));

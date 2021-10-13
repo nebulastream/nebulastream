@@ -36,7 +36,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**FF
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId);
+    explicit SinkMedium(SinkFormatPtr sinkFormat, Runtime::QueryManagerPtr queryManager, QuerySubPlanId querySubPlanId);
 
     /**
      * @brief virtual method to setup sink
@@ -61,7 +61,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @brief get the id of the owning plan
      * @return the id
      */
-    QuerySubPlanId getParentPlanId() const { return parentPlanId; }
+    QuerySubPlanId getParentPlanId() const;
 
     /**
      * @brief debug function for testing to get number of written buffers
@@ -112,19 +112,31 @@ class SinkMedium : public Runtime::Reconfigurable {
       */
     virtual SinkMediumTypes getSinkMediumType() = 0;
 
+    /**
+     * @brief
+     * @param message
+     * @param context
+     */
     void reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) override;
+
+    /**
+     * @brief
+     * @param message
+     */
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
   protected:
     SinkFormatPtr sinkFormat;
-    bool append{false};
-    std::atomic_bool schemaWritten{false};
+    bool append{
+        false};// TODO think if this is really necessary here.. this looks something a file sink may require but it's not general for all sinks
+    std::atomic_bool schemaWritten{false};// TODO same here
 
-    QuerySubPlanId parentPlanId;
+    Runtime::QueryManagerPtr queryManager;
+    QuerySubPlanId querySubPlanId;
 
-    uint64_t sentBuffer{0};
-    uint64_t sentTuples{0};
-    std::mutex writeMutex{};
+    uint64_t sentBuffer{0};// TODO check thread safety
+    uint64_t sentTuples{0};// TODO check thread safety
+    std::mutex writeMutex; // TODO remove the mutex
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;

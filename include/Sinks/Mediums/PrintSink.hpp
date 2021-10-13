@@ -36,7 +36,10 @@ class PrintSink : public SinkMedium {
      * @brief Default constructor
      * @Note the default output will be written to cout
      */
-    PrintSink(SinkFormatPtr format, QuerySubPlanId parentPlanId, std::ostream& pOutputStream = std::cout);
+    PrintSink(SinkFormatPtr format,
+              Runtime::QueryManagerPtr queryManager,
+              QuerySubPlanId querySubPlanId,
+              std::ostream& pOutputStream = std::cout);
 
     /**
      * @brief destructor

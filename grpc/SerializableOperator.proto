@@ -214,6 +214,7 @@ message SerializableOperator{
     message SerializableNetworkSourceDescriptor {
       SerializableSchema sourceSchema = 1;
       NesPartition nesPartition = 2;
+      NodeLocation nodeLocation = 3;
     }
 
     google.protobuf.Any sourceDescriptor = 1;

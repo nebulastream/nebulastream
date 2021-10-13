@@ -21,7 +21,6 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -31,6 +30,7 @@
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <fstream>
 #include <util/BenchmarkUtils.hpp>
 
 using namespace NES;

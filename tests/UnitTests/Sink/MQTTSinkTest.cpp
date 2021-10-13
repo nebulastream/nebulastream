@@ -115,6 +115,7 @@ class MQTTTSinkTest : public testing::Test {
            a std::shared_ptr<SinkMedium> to a std::shared_ptr<MQTTSink>. As it seems, shared pointers should be initialized with
            std::make_shared.  */
         MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format,
+                                                          nullptr,
                                                           0,
                                                           LOCAL_ADDRESS,
                                                           CLIENT_ID,
@@ -179,6 +180,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
     bool asynchronousClient = true;
     SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
     MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format,
+                                                      nullptr,
                                                       0,
                                                       LOCAL_ADDRESS,
                                                       CLIENT_ID,

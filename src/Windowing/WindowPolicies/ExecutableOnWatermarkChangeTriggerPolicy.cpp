@@ -29,12 +29,12 @@ ExecutableOnWatermarkChangeTriggerPolicy::~ExecutableOnWatermarkChangeTriggerPol
     NES_WARNING("~ExecutableOnWatermarkChangeTriggerPolicy()");
 }
 
-bool ExecutableOnWatermarkChangeTriggerPolicy::start(AbstractWindowHandlerPtr, Runtime::WorkerContextPtr) {
+bool ExecutableOnWatermarkChangeTriggerPolicy::start(AbstractWindowHandlerPtr, Runtime::WorkerContextRef) {
     //as this policy do not have to start something we immediately return
     return true;
 }
 
-bool ExecutableOnWatermarkChangeTriggerPolicy::start(Join::AbstractJoinHandlerPtr, Runtime::WorkerContextPtr) {
+bool ExecutableOnWatermarkChangeTriggerPolicy::start(Join::AbstractJoinHandlerPtr, Runtime::WorkerContextRef) {
     //as this policy do not have to start something we immediately return
     return true;
 }

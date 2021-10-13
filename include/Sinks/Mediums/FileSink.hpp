@@ -36,7 +36,11 @@ class FileSink : public SinkMedium {
      * @param filePath location of file on sink server
      * @param modus of writting (overwrite or append)
      */
-    explicit FileSink(SinkFormatPtr format, const std::string& filePath, bool append, QuerySubPlanId parentPlanId);
+    explicit FileSink(SinkFormatPtr format,
+                      Runtime::QueryManagerPtr queryManager,
+                      const std::string& filePath,
+                      bool append,
+                      QuerySubPlanId querySubPlanId);
 
     /**
      * @brief dtor

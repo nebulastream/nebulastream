@@ -43,7 +43,7 @@ bool SinkLogicalOperatorNode::inferSchema() { return LogicalUnaryOperatorNode::i
 
 std::string SinkLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "SINK(" << id << ")";
+    ss << "SINK(" << id << ": {" << sinkDescriptor->toString() << "})";
     return ss.str();
 }
 

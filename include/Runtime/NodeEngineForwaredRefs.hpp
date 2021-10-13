@@ -48,6 +48,9 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 
 namespace Runtime {
 
+class BufferStorage;
+using BufferStoragePtr = std::shared_ptr<BufferStorage>;
+
 class PhysicalField;
 using PhysicalFieldPtr = std::shared_ptr<PhysicalField>;
 template<class ValueType>
@@ -73,7 +76,6 @@ using FixedSizeBufferPoolPtr = std::shared_ptr<FixedSizeBufferPool>;
 
 class WorkerContext;
 using WorkerContextRef = WorkerContext&;
-using WorkerContextPtr = WorkerContext&;
 
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

@@ -32,9 +32,14 @@ namespace NES {
 
 SinkMediumTypes ZmqSink::getSinkMediumType() { return ZMQ_SINK; }
 
-ZmqSink::ZmqSink(SinkFormatPtr format, const std::string& host, uint16_t port, bool internal, QuerySubPlanId parentPlanId)
-    : SinkMedium(std::move(format), parentPlanId), host(host.substr(0, host.find(':'))), port(port), internal(internal),
-      context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PUSH)) {
+ZmqSink::ZmqSink(SinkFormatPtr format,
+                 Runtime::QueryManagerPtr queryManager,
+                 const std::string& host,
+                 uint16_t port,
+                 bool internal,
+                 QuerySubPlanId querySubPlanId)
+    : SinkMedium(std::move(format), std::move(queryManager), querySubPlanId), host(host.substr(0, host.find(':'))), port(port),
+      internal(internal), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
 }
 
@@ -52,7 +57,7 @@ ZmqSink::~ZmqSink() {
 }
 
 bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    std::unique_lock lock(writeMutex);
+    std::unique_lock lock(writeMutex);// TODO this is an anti-pattern in ZMQ
     connect();
     if (!connected) {
         NES_DEBUG("ZmqSink  " << this << ": cannot write buffer " << inputBuffer << " because queue is not connected");

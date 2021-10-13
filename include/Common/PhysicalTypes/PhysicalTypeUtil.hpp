@@ -16,8 +16,10 @@
 
 #ifndef NES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_
 #define NES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_
+
 #include <Common/ExecutableType/NESType.hpp>
-#include <utility>
+#include <cstdint>
+
 namespace NES::PhysicalTypes {
 
 /**

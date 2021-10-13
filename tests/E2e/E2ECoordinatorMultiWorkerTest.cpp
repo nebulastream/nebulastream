@@ -135,7 +135,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     remove(outputFilePath.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -143,7 +143,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
                                            TestUtils::dataPort(dataPort),
@@ -167,7 +167,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                            TestUtils::numberOfTuplesToProducePerBuffer(0),
                                            TestUtils::sourceFrequency(1000)});
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
+    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -183,7 +183,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
 
     string expectedContent = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
                              "R2000073,1543624020000,102.629631,8\n"
@@ -191,16 +191,16 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                              "R2000073,1543624020000,102.629631,8\n"
                              "R2000070,1543625280000,108.166664,5\n";
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_EQ(content, expectedContent);
 
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
@@ -220,7 +220,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
                                            TestUtils::dataPort(dataPort),
@@ -244,7 +244,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                            TestUtils::numberOfTuplesToProducePerBuffer(0),
                                            TestUtils::sourceFrequency(1000)});
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
+    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -262,13 +262,13 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
 
     std::string line;
     bool resultWrk1 = false;
@@ -292,10 +292,10 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
         }
     }
 
-    EXPECT_TRUE((resultWrk1 && resultWrk2));
+    ASSERT_TRUE((resultWrk1 && resultWrk2));
 
     int response = remove(outputFilePath.c_str());
-    EXPECT_TRUE(response == 0);
+    ASSERT_TRUE(response == 0);
 }
 
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
@@ -305,7 +305,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     remove(outputFilePath.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"window\",\"schema\" "
@@ -314,7 +314,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     schema << endl;
 
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
                                            TestUtils::dataPort(dataPort),
@@ -338,7 +338,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
                                            TestUtils::numberOfTuplesToProducePerBuffer(28),
                                            TestUtils::sourceFrequency(1000)});
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
+    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -358,13 +358,13 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
@@ -377,23 +377,23 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
 
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_EQ(content, expectedContent);
 
     int response = remove(outputFilePath.c_str());
-    EXPECT_TRUE(response == 0);
+    ASSERT_TRUE(response == 0);
 }
 
 TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
     auto coordinator = TestUtils::startCoordinator({TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker(
         {TestUtils::rpcPort(rpcPort + 3), TestUtils::dataPort(dataPort), TestUtils::coordinatorPort(rpcPort)});
 
     auto worker2 = TestUtils::startWorker(
         {TestUtils::rpcPort(rpcPort + 6), TestUtils::dataPort(dataPort + 2), TestUtils::coordinatorPort(rpcPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
+    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     web::json::value json_return;
 
@@ -415,7 +415,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
         })
         .wait();
 
-    EXPECT_EQ(json_return.size(), 3ul);
+    ASSERT_EQ(json_return.size(), 3ul);
     NES_INFO("RETURN: " << json_return.size());
     NES_INFO("RETURN: " << json_return);
 
@@ -423,18 +423,18 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
         auto json = json_return[std::to_string(i)];
         NES_INFO("SUB RETURN: " << json);
 
-        EXPECT_TRUE(json.has_field("disk"));
-        EXPECT_EQ(json["disk"].size(), 5U);
+        ASSERT_TRUE(json.has_field("disk"));
+        ASSERT_EQ(json["disk"].size(), 5U);
 
-        EXPECT_TRUE(json.has_field("cpu"));
+        ASSERT_TRUE(json.has_field("cpu"));
         auto numCores = json["cpu"]["NUM_CORES"].as_integer();
-        EXPECT_EQ(json["cpu"].size(), numCores + 2U);
+        ASSERT_EQ(json["cpu"].size(), numCores + 2U);
 
-        EXPECT_TRUE(json.has_field("network"));
-        EXPECT_TRUE(json["network"].size() > 0U);
+        ASSERT_TRUE(json.has_field("network"));
+        ASSERT_TRUE(json["network"].size() > 0U);
 
-        EXPECT_TRUE(json.has_field("memory"));
-        EXPECT_EQ(json["memory"].size(), 13ul);
+        ASSERT_TRUE(json.has_field("memory"));
+        ASSERT_EQ(json["memory"].size(), 13ul);
     }
 }
 

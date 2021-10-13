@@ -18,17 +18,32 @@
 #define NES_INCLUDE_NETWORK_PARTITION_MANAGER_HPP_
 
 #include <Network/NesPartition.hpp>
-#include <map>
-#include <shared_mutex>
+#include <Network/NodeLocation.hpp>
+#include <memory>
+#include <mutex>
 #include <unordered_map>
+#include <vector>
+#include <optional>
 
 namespace NES {
 class DataEmitter;
 using DataEmitterPtr = std::shared_ptr<DataEmitter>;
-
+namespace Runtime {
+class RuntimeEventListener;
+using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
+}// namespace Runtime
 namespace Network {
 class NetworkSource;
 using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
+
+enum class PartitionRegistrationStatus : uint8_t {
+    /// a partition is registered, i.e., its counter is > 0
+    Registered,
+    /// a partition was registered but got deleted, i.e., its counter is == 0
+    Deleted,
+    /// a partition was never registered
+    NotFound,
+};
 
 /**
  * @brief this class keeps track of all ready partitions (and their subpartitions)
@@ -36,17 +51,63 @@ using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
  * A data emitter is notified once there is data for its partition
  */
 class PartitionManager {
+  public:
+
+
   private:
     /**
      * @brief Helper class to store a partition's ref cnt and data emitter
      */
-    class PartitionEntry {
+    class PartitionProducerEntry {
       public:
         /**
          * @brief Creates a new partition entry info with ref cnt = 0
          * @param emitter the data emitter that must be notified upon arrival of new data
          */
-        explicit PartitionEntry(DataEmitterPtr emitter = nullptr);
+        explicit PartitionProducerEntry(NodeLocation&& receiverLocation);
+
+        /**
+         * @return the refcnt of the partition
+         */
+        [[nodiscard]] uint64_t count() const;
+
+        /**
+         * @brief increment ref cnt by 1
+         */
+        void pin();
+
+        /**
+         * @brief decrement ref cnt by 1
+         */
+        void unpin();
+
+        /**
+         * @brief
+         */
+        void registerEventListener(Runtime::RuntimeEventListenerPtr eventListener);
+
+        /**
+         * @brief
+         * @return
+         */
+        Runtime::RuntimeEventListenerPtr getEventListener() const;
+
+      private:
+        uint64_t partitionCounter{1};
+        NodeLocation receiverLocation;
+        Runtime::RuntimeEventListenerPtr eventListener;
+    };
+
+    /**
+     * @brief Helper class to store a partition's ref cnt and data emitter
+     */
+    class PartitionConsumerEntry {
+      public:
+        /**
+         * @brief Creates a new partition entry info with ref cnt = 0
+         * @param emitter the data emitter that must be notified upon arrival of new data
+         */
+        explicit PartitionConsumerEntry(NodeLocation&& senderLocation, DataEmitterPtr&& consumer);
 
         /**
          * @return the refcnt of the partition
@@ -66,15 +127,18 @@ class PartitionManager {
         /**
          * @return the data emitter
          */
-        DataEmitterPtr getEmitter();
+        DataEmitterPtr getConsumer();
 
       private:
-        uint64_t partitionCounter{0};
-        DataEmitterPtr emitter;
+        uint64_t partitionCounter{1};
+        NodeLocation senderLocation;
+        DataEmitterPtr consumer{nullptr};
     };
 
   public:
     PartitionManager() = default;
+
+    ~PartitionManager();
 
     /**
      * @brief Registers a subpartition in the PartitionManager. If the subpartition does not exist a new entry is
@@ -83,13 +147,13 @@ class PartitionManager {
      * @emitter
      * @return true if this is  the first time the partition was registered, false otherwise
      */
-    bool registerSubpartition(NesPartition partition, DataEmitterPtr emitter);
+    bool registerSubpartitionConsumer(NesPartition partition, NodeLocation nodeLocation, DataEmitterPtr emitter);
 
     /**
      * @brief Increment the subpartition counter
      * @param partition the partition
      */
-    void pinSubpartition(NesPartition partition);
+    void pinSubpartitionConsumer(NesPartition partition);
 
     /**
      * @brief Unregisters a subpartition in the PartitionManager. If the subpartition does not exist or the current
@@ -97,7 +161,7 @@ class PartitionManager {
      * @param the partition
      * @return true if the partition counter got to zero, false otherwise
      */
-    bool unregisterSubpartition(NesPartition partition);
+    bool unregisterSubpartitionConsumer(NesPartition partition);
 
     /**
      * @brief Returns the current counter of a given partition. Throws error if not existing.
@@ -105,14 +169,52 @@ class PartitionManager {
      * @return the counter of the partition
      * @throw  std::out_of_range  If no such data is present.
      */
-    uint64_t getSubpartitionCounter(NesPartition partition);
+    std::optional<uint64_t> getSubpartitionConsumerCounter(NesPartition partition);
 
     /**
      * @brief checks if a partition is registered
      * @param the partition
-     * @return true if registered, else false
+     * @return a PartitionRegistrationStatus
      */
-    bool isRegistered(NesPartition partition) const;
+    PartitionRegistrationStatus isConsumerRegistered(NesPartition partition) const;
+
+    /**
+     * @brief Registers a subpartition in the PartitionManager. If the subpartition does not exist a new entry is
+     * added in the partition table, otherwise the counter is incremented.
+     * @param the partition
+     * @emitter
+     * @return true if this is  the first time the partition was registered, false otherwise
+     */
+    bool registerSubpartitionProducer(NesPartition partition, NodeLocation nodeLocation);
+
+    /**
+     * @brief Increment the subpartition counter
+     * @param partition the partition
+     */
+    void pinSubpartitionProducer(NesPartition partition);
+
+    /**
+     * @brief Unregisters a subpartition in the PartitionManager. If the subpartition does not exist or the current
+     * counter is 0 an error is thrown.
+     * @param the partition
+     * @return true if the partition counter got to zero, false otherwise
+     */
+    bool unregisterSubpartitionProducer(NesPartition partition);
+
+    /**
+     * @brief Returns the current counter of a given partition. Throws error if not existing.
+     * @param the partition
+     * @return the counter of the partition
+     * @throw  std::out_of_range  If no such data is present.
+     */
+    std::optional<uint64_t> getSubpartitionProducerCounter(NesPartition partition);
+
+    /**
+     * @brief checks if a partition is registered
+     * @param the partition
+     * @return a PartitionRegistrationStatus
+     */
+    PartitionRegistrationStatus isProducerRegistered(NesPartition partition) const;
 
     /**
      * @brief Returns the data emitter of a partition
@@ -122,13 +224,30 @@ class PartitionManager {
     DataEmitterPtr getDataEmitter(NesPartition partition);
 
     /**
+     * @brief
+     * @param partition
+     * @param eventListener
+     * @return
+     */
+    bool addSubpartionEventListener(NesPartition partition, NodeLocation nodeLocation, Runtime::RuntimeEventListenerPtr eventListener);
+
+    /**
+     * @brief Retrieve event listener for partition
+     * @param partition
+     * @return
+     */
+    Runtime::RuntimeEventListenerPtr getEventListener(NesPartition partition) const;
+
+    /**
      * @brief clears all registered partitions
      */
     void clear();
 
   private:
-    std::unordered_map<NesPartition, PartitionEntry> partitions;
-    mutable std::shared_mutex mutex;
+    std::unordered_map<NesPartition, PartitionProducerEntry> producerPartitions;
+    std::unordered_map<NesPartition, PartitionConsumerEntry> consumerPartitions;
+    mutable std::recursive_mutex producerPartitionsMutex;
+    mutable std::recursive_mutex consumerPartitionsMutex;
 };
 using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
 }// namespace Network

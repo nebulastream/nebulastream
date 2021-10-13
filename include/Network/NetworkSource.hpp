@@ -18,12 +18,14 @@
 #define NES_INCLUDE_NETWORK_NETWORK_SOURCE_HPP_
 
 #include <Network/NesPartition.hpp>
-#include <Network/NetworkManager.hpp>
+#include <Network/NodeLocation.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES::Network {
+class NetworkManager;
+using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
 
 /**
  * @brief this class provide a zmq as data source
@@ -36,11 +38,12 @@ class NetworkSource : public DataSource {
                   Runtime::QueryManagerPtr queryManager,
                   NetworkManagerPtr networkManager,
                   NesPartition nesPartition,
+                  NodeLocation sinkLocation,
                   size_t numSourceLocalBuffers,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors =
-                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-
-    ~NetworkSource() override;
+                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
+                  std::chrono::seconds waitTime = std::chrono::seconds(5),
+                  uint8_t retryTimes = 10);
 
     /**
      * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
@@ -86,9 +89,26 @@ class NetworkSource : public DataSource {
      */
     void emitWork(Runtime::TupleBuffer& buffer) override;
 
+    /**
+     * @brief
+     * @param message
+     * @param context
+     */
+    void reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) override;
+
+    /**
+     * @brief
+     * @param message
+     */
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+
   private:
     NetworkManagerPtr networkManager;
     NesPartition nesPartition;
+    NodeLocation sinkLocation;
+    // for event channel
+    const std::chrono::seconds waitTime;
+    const uint8_t retryTimes;
 };
 using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
 

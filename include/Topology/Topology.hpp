@@ -184,8 +184,6 @@ class Topology {
     std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
                                                   std::vector<TopologyNodePtr> destinationNodes);
 
-    ~Topology();
-
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
 

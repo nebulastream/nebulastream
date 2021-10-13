@@ -17,6 +17,7 @@
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sources/DataSource.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <utility>
@@ -32,7 +33,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
                                          BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
-      qepStatus(Created), numOfProducers(this->sources.size()),
+      qepStatus(Created), numOfActiveSources(this->sources.size()),
       qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
     // nop
 }
@@ -53,7 +54,7 @@ ExecutableQueryPlanPtr ExecutableQueryPlan::create(QueryId queryId,
                                                  std::move(bufferManager));
 }
 
-void ExecutableQueryPlan::incrementProducerCount() { numOfProducers++; }
+void ExecutableQueryPlan::incrementProducerCount() { numOfActiveSources++; }
 
 QueryId ExecutableQueryPlan::getQueryId() const { return queryId; }
 
@@ -138,15 +139,16 @@ const std::vector<DataSinkPtr>& ExecutableQueryPlan::getSinks() const { return s
 
 void ExecutableQueryPlan::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
-    for (auto& sink : sinks) {
-        sink->reconfigure(task, context);
-    }
 }
 
 bool ExecutableQueryPlan::stop() {
     bool allStagesStopped = true;
     auto expected = Running;
-    NES_DEBUG("QueryExecutionPlan: stop " << queryId << " " << querySubPlanId);
+    NES_DEBUG("QueryExecutionPlan: stop queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
+    if (numOfActiveSources.fetch_sub(1) != 1) {
+        NES_WARNING("QueryExecutionPlan: cannot stop queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
+        return true;
+    }
     if (qepStatus.compare_exchange_strong(expected, Stopped)) {
         NES_DEBUG("QueryExecutionPlan: stop " << queryId << "-" << querySubPlanId << " is marked as stopped now");
         for (auto& stage : pipelines) {
@@ -156,33 +158,29 @@ bool ExecutableQueryPlan::stop() {
             }
         }
 
+        bufferManager.reset();
+
         if (allStagesStopped) {
             qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
-            sources.clear();
-            pipelines.clear();
-            sinks.clear();
-            bufferManager.reset();
             return true;// correct stop
         }
 
         qepStatus.store(ErrorState);
         qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Error);
-        sources.clear();
-        pipelines.clear();
-        sinks.clear();
-        bufferManager.reset();
+
         return false;// one stage failed to stop
     }
 
+    if (expected == Stopped) {
+        return true;// we have tried to stop the same QEP twice..
+    }
     // if we get there it mean the CAS failed and expected is the current value
     while (!qepStatus.compare_exchange_strong(expected, ErrorState)) {
         // try to install ErrorState
     }
 
     qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Error);
-    sources.clear();
-    pipelines.clear();
-    sinks.clear();
+
     bufferManager.reset();
     return false;
 }
@@ -192,16 +190,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
     //soft eos means we drain the state and hard means we truncate it
     switch (task.getType()) {
         case HardEndOfStream: {
-            NES_DEBUG("Executing HardEndOfStream on qep " << queryId << " " << querySubPlanId);
-            if (numOfProducers.fetch_sub(1) == 1) {
-                NES_DEBUG("Executing HardEndOfStream and going to stop for qep " << queryId << " " << querySubPlanId);
-                for (auto& sink : sinks) {
-                    sink->postReconfigurationCallback(task);
-                }
-                stop();
-            } else {
-                return;// we must not invoke end of stream on qep's sinks if the qep was not stopped
-            }
+            NES_DEBUG("Executing HardEndOfStream on qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
             break;
         }
         case SoftEndOfStream: {
@@ -211,9 +200,6 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             if (qepStatus.compare_exchange_strong(expected, Stopped)) {
                 NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId
                                                             << " is marked as stopped now");
-                for (auto& sink : sinks) {
-                    sink->postReconfigurationCallback(task);
-                }
                 qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
                 return;
             }
@@ -230,6 +216,10 @@ void ExecutableQueryPlan::destroy() {
     pipelines.clear();
     sinks.clear();
     bufferManager.reset();
+}
+
+void ExecutableQueryPlan::onEvent(BaseEvent&) {
+    // nop
 }
 
 }// namespace NES::Runtime::Execution

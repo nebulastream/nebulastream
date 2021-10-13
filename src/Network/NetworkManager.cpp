@@ -14,21 +14,23 @@
     limitations under the License.
 */
 
+#include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
-#include <Network/OutputChannel.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES::Network {
 
-NetworkManager::NetworkManager(const std::string& hostname,
+NetworkManager::NetworkManager(uint64_t nodeEngineId,
+                               const std::string& hostname,
                                uint16_t port,
                                ExchangeProtocol&& exchangeProtocol,
                                const Runtime::BufferManagerPtr& bufferManager,
                                uint16_t numServerThread)
-    : server(std::make_shared<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)),
-      exchangeProtocol(exchangeProtocol) {
+    : nodeLocation(nodeEngineId, hostname, port),
+      server(std::make_shared<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)),
+      exchangeProtocol(std::move(exchangeProtocol)), partitionManager(this->exchangeProtocol.getPartitionManager()) {
 
     if (bool const success = server->start(); success) {
         NES_INFO("NetworkManager: Server started successfully");
@@ -39,43 +41,89 @@ NetworkManager::NetworkManager(const std::string& hostname,
 
 NetworkManager::~NetworkManager() { destroy(); }
 
-NetworkManagerPtr NetworkManager::create(const std::string& hostname,
+NetworkManagerPtr NetworkManager::create(uint64_t nodeEngineId,
+                                         const std::string& hostname,
                                          uint16_t port,
                                          Network::ExchangeProtocol&& exchangeProtocol,
                                          const Runtime::BufferManagerPtr& bufferManager,
                                          uint16_t numServerThread) {
-    return std::make_shared<NetworkManager>(hostname, port, std::move(exchangeProtocol), bufferManager, numServerThread);
+    return std::make_shared<NetworkManager>(nodeEngineId,
+                                            hostname,
+                                            port,
+                                            std::move(exchangeProtocol),
+                                            bufferManager,
+                                            numServerThread);
 }
 
 void NetworkManager::destroy() { server->stop(); }
 
-bool NetworkManager::isPartitionRegistered(NesPartition nesPartition) const {
-    return exchangeProtocol.getPartitionManager()->isRegistered(nesPartition);
+PartitionRegistrationStatus NetworkManager::isPartitionConsumerRegistered(const NesPartition& nesPartition) const {
+    return partitionManager->isConsumerRegistered(nesPartition);
 }
 
-bool NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition, const std::shared_ptr<DataEmitter>& emitter) const {
-    NES_DEBUG("NetworkManager: Registering SubpartitionConsumer: " << nesPartition.toString());
+PartitionRegistrationStatus NetworkManager::isPartitionProducerRegistered(const NesPartition& nesPartition) const {
+    return partitionManager->isProducerRegistered(nesPartition);
+}
+
+NodeLocation NetworkManager::getServerLocation() const { return nodeLocation; }
+
+bool NetworkManager::registerSubpartitionConsumer(const NesPartition& nesPartition,
+                                                  const NodeLocation& senderLocation,
+                                                  const std::shared_ptr<DataEmitter>& emitter) const {
+    NES_DEBUG("NetworkManager: Registering SubpartitionConsumer: " << nesPartition.toString() << " from "
+                                                                   << senderLocation.getHostname());
     NES_ASSERT2_FMT(emitter, "invalid network source " << nesPartition.toString());
-    return exchangeProtocol.getPartitionManager()->registerSubpartition(nesPartition, emitter);
+    return partitionManager->registerSubpartitionConsumer(nesPartition, senderLocation, emitter);
 }
 
-bool NetworkManager::unregisterSubpartitionConsumer(NesPartition nesPartition) const {
+bool NetworkManager::unregisterSubpartitionConsumer(const NesPartition& nesPartition) const {
     NES_INFO("NetworkManager: Unregistering SubpartitionConsumer: " << nesPartition.toString());
-    return exchangeProtocol.getPartitionManager()->unregisterSubpartition(nesPartition);
+    return partitionManager->unregisterSubpartitionConsumer(nesPartition);
 }
 
-OutputChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation,
-                                                              NesPartition nesPartition,
-                                                              std::chrono::seconds waitTime,
-                                                              uint8_t retryTimes) {
+bool NetworkManager::unregisterSubpartitionProducer(const NesPartition& nesPartition) const {
+    NES_INFO("NetworkManager: Unregistering SubpartitionProducer: " << nesPartition.toString());
+    return partitionManager->unregisterSubpartitionProducer(nesPartition);
+}
+
+NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation,
+                                                               const NesPartition& nesPartition,
+                                                               Runtime::BufferManagerPtr bufferManager,
+                                                               std::chrono::seconds waitTime,
+                                                               uint8_t retryTimes) {
     NES_INFO("NetworkManager: Registering SubpartitionProducer: " << nesPartition.toString());
-    // method needs to return a pointer so that it can be passed to boost::thread_specific_ptr
-    return OutputChannel::create(server->getContext(),
-                                 nodeLocation.createZmqURI(),
-                                 nesPartition,
-                                 exchangeProtocol,
-                                 waitTime,
-                                 retryTimes);
+    partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
+    return NetworkChannel::create(server->getContext(),
+                                  nodeLocation.createZmqURI(),
+                                  nesPartition,
+                                  exchangeProtocol,
+                                  std::move(bufferManager),
+                                  waitTime,
+                                  retryTimes);
+}
+
+EventOnlyNetworkChannelPtr NetworkManager::registerSubpartitionEventProducer(const NodeLocation& nodeLocation,
+                                                                             const NesPartition& nesPartition,
+                                                                             Runtime::BufferManagerPtr bufferManager,
+                                                                             std::chrono::seconds waitTime,
+                                                                             uint8_t retryTimes) {
+    NES_INFO("NetworkManager: Registering SubpartitionEvent Producer: " << nesPartition.toString());
+    return EventOnlyNetworkChannel::create(server->getContext(),
+                                           nodeLocation.createZmqURI(),
+                                           nesPartition,
+                                           exchangeProtocol,
+                                           std::move(bufferManager),
+                                           waitTime,
+                                           retryTimes);
+}
+
+bool NetworkManager::registerSubpartitionEventConsumer(const NodeLocation& nodeLocation,
+                                                       const NesPartition& nesPartition,
+                                                       Runtime::RuntimeEventListenerPtr eventListener) {
+    // note that this increases the subpartition producer counter by one
+    // we want to do so to keep the partition alive until all outbound network channel + the inbound event channel are in-use
+    NES_INFO("NetworkManager: Registering SubpartitionEvent Consumer: " << nesPartition.toString());
+    return partitionManager->addSubpartionEventListener(nesPartition, nodeLocation, eventListener);
 }
 
 }// namespace NES::Network

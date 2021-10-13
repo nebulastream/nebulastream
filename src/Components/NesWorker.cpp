@@ -66,8 +66,6 @@ NesWorker::NesWorker(const Configurations::WorkerConfigPtr& workerConfig, NesNod
 }
 
 NesWorker::~NesWorker() {
-    NES_DEBUG("NesWorker::~NesWorker()");
-    NES_DEBUG("NesWorker::~NesWorker() use count of node engine: " << nodeEngine.use_count());
     stop(true);
 }
 

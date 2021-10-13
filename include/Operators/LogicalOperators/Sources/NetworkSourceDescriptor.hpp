@@ -18,6 +18,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_NETWORK_SOURCE_DESCRIPTOR_HPP_
 
 #include <Network/NesPartition.hpp>
+#include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <string>
 
@@ -34,9 +35,10 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      * @brief The constructor for the network source descriptor
      * @param schema
      * @param nesPartition
+     * @param nodeLocation
      * @return instance of network source descriptor
      */
-    static SourceDescriptorPtr create(SchemaPtr schema, NesPartition nesPartition);
+    static SourceDescriptorPtr create(SchemaPtr schema, NesPartition nesPartition, NodeLocation nodeLocation);
 
     /**
      * @brief equal method for the NetworkSourceDescriptor
@@ -57,10 +59,13 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      */
     NesPartition getNesPartition() const;
 
+    NodeLocation getNodeLocation() const;
+
   private:
-    explicit NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition);
+    explicit NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition, NodeLocation nodeLocation);
 
     NesPartition nesPartition;
+    NodeLocation nodeLocation;
 };
 
 using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;

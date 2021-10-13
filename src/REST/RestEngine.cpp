@@ -49,8 +49,6 @@ RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
     udfCatalogController = std::make_shared<UdfCatalogController>(udfCatalog);
 }
 
-RestEngine::~RestEngine() { NES_DEBUG("~RestEngine()"); }
-
 void RestEngine::initRestOpHandlers() {
     _listener.support(web::http::methods::GET, [this](auto&& PH1) {
         handleGet(std::forward<decltype(PH1)>(PH1));

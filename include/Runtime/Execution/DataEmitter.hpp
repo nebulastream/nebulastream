@@ -16,7 +16,9 @@
 
 #ifndef NES_INCLUDE_RUNTIME_EXECUTION_DATA_EMITTER_HPP_
 #define NES_INCLUDE_RUNTIME_EXECUTION_DATA_EMITTER_HPP_
+#include <Runtime/Events.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+
 namespace NES {
 namespace Runtime {
 class TupleBuffer;
@@ -25,7 +27,7 @@ class TupleBuffer;
 /**
  * @brief Interface that classes have to adhere to emit data as tasks
  */
-class DataEmitter : public detail::virtual_enable_shared_from_this<DataEmitter, false> {
+class DataEmitter : public Runtime::RuntimeEventListener {
   public:
     /**
      * @brief create a task using the provided buffer and submit it to a task consumer, e.g., query manager
@@ -34,6 +36,8 @@ class DataEmitter : public detail::virtual_enable_shared_from_this<DataEmitter, 
     virtual void emitWork(Runtime::TupleBuffer& buffer) = 0;
 
     virtual ~DataEmitter() NES_NOEXCEPT(false) = default;
+
+    virtual void onEvent(Runtime::BaseEvent&) override {}
 };
 }// namespace NES
 #endif// NES_INCLUDE_RUNTIME_EXECUTION_DATA_EMITTER_HPP_

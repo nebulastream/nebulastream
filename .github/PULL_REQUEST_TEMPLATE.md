@@ -79,4 +79,4 @@ This change added tests and can be verified as follows:
 
 ## Issue Closed by this pull request:
 
-This PR will close #<issue number>
+This PR closes #<issue number>

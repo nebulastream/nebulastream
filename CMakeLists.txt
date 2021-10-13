@@ -29,6 +29,15 @@ option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC
 option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_CLANG_TIDY OFF)
+option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
+
+if (NOT CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
+    message(FATAL_ERROR "Not supported for now")
+endif()
+
+if (NOT CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
+    message(FATAL_ERROR "Not supported for now")
+endif()
 
 # for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
 # The system architecture is normally set in CMAKE_HOST_PROCESSOR,
@@ -51,7 +60,7 @@ elseif(UNIX AND NOT APPLE)
 endif()
 
 function(download_file url filename hash_type hash)
-    message("Download: ${url}")
+    message(STATUS "Download: ${url}")
     if (NOT EXISTS ${filename})
         file(DOWNLOAD ${url} ${filename}
                 TIMEOUT 0)
@@ -139,6 +148,10 @@ endif ()
 if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
+
+if(NES_COMPUTE_COVERAGE) # this is an experimental feature; do not rely on it yet
+    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+endif()
 
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     message(STATUS "use CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
@@ -379,6 +392,19 @@ include_directories(${BACKWARD_INCLUDE_DIRS})
 add_compile_definitions(${BACKWARD_DEFINITIONS})
 link_directories(${BACKWARD_LIBRARIES})
 set(LIBRARIES ${LIBRARIES} ${BACKWARD_LIBRARIES})
+
+# folly
+if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
+    include(CMakeFindDependencyMacro)
+    find_dependency(gflags CONFIG REQUIRED) # required on macos
+    find_package(folly CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+endif ()
+
+if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
+    find_package(folly CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+endif ()
 
 
 # Library containing dlopen and dlcose.

@@ -26,10 +26,6 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-WorkerRPCClient::WorkerRPCClient() { NES_DEBUG("WorkerRPCClient()"); }
-
-WorkerRPCClient::~WorkerRPCClient() { NES_DEBUG("~WorkerRPCClient()"); }
-
 bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
