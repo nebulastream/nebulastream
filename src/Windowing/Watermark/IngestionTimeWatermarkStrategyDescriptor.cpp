@@ -16,6 +16,8 @@
 
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
+#include <string>
+
 namespace NES::Windowing {
 
 IngestionTimeWatermarkStrategyDescriptor::IngestionTimeWatermarkStrategyDescriptor() = default;

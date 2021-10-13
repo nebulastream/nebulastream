@@ -19,6 +19,8 @@
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
+#include <string>
+
 namespace NES {
 /**
  * @brief Descriptor defining properties used for creating a physical MQTT sink

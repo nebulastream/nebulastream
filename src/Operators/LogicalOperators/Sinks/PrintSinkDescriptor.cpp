@@ -16,6 +16,8 @@
 
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 
+#include <string>
+
 namespace NES {
 
 PrintSinkDescriptor::PrintSinkDescriptor() = default;

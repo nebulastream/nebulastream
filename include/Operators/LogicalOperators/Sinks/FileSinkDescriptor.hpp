@@ -18,6 +18,9 @@
 #define NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+
+#include <string>
+
 class SinkMedium;
 namespace NES {
 
