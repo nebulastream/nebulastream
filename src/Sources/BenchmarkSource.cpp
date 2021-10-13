@@ -20,7 +20,7 @@
 #ifdef __x86_64__
 #include <Runtime/internal/rte_memory.h>
 #endif
-#include <Sources/MemorySource.hpp>
+#include <Sources/BenchmarkSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -35,7 +35,7 @@
 
 namespace NES {
 
-MemorySource::MemorySource(SchemaPtr schema,
+BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                            const std::shared_ptr<uint8_t>& memoryArea,
                            size_t memoryAreaSize,
                            Runtime::BufferManagerPtr bufferManager,
@@ -83,20 +83,57 @@ MemorySource::MemorySource(SchemaPtr schema,
         }
     }
 
-    NES_DEBUG("MemorySource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
+    NES_DEBUG("BenchmarkSource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
-std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
-    NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
+void BenchmarkSource::open() {
+    DataSource::open();
+
+    auto buffer = localBufferManager->getUnpooledBuffer(memoryAreaSize);
+    numaLocalMemoryArea = *buffer;
+    std::memcpy(numaLocalMemoryArea.getBuffer(), memoryArea.get(), memoryAreaSize);
+//    NES_ASSERT2_FMT(reinterpret_cast<uintptr_t>(buffer->getBuffer()) % 64 == 0, "invalid alignment");
+    memoryArea.reset();
+}
+
+void BenchmarkSource::runningRoutine() {
+    open();
+    NES_INFO("Going to produce " << numberOfTuplesToProduce);
+    std::cout << "Going to produce " << numberOfTuplesToProduce << std::endl;
+
+    for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
+        auto buffer =
+            Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
+        buffer.setNumberOfTuples(numberOfTuplesToProduce);
+        for (const auto& successor : executableSuccessors) {
+            queryManager->addWorkForNextPipeline(buffer, successor, numaNode);
+        }
+    }
+
+    close();
+    // inject reconfiguration task containing end of stream
+    queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
+    bufferManager->destroy();
+    queryManager.reset();
+    NES_DEBUG("DataSource " << operatorId << " end running");
+}
+
+void BenchmarkSource::close() {
+    DataSource::close();
+    numaLocalMemoryArea.release();
+}
+
+std::optional<Runtime::TupleBuffer> BenchmarkSource::receiveData() {
+    NES_DEBUG("BenchmarkSource::receiveData called on operatorId=" << operatorId);
 
     if (memoryAreaSize > bufferSize) {
         if (currentPositionInBytes + numberOfTuplesToProduce * schemaSize > memoryAreaSize) {
             if (numBuffersToProcess != 0) {
-                NES_DEBUG("MemorySource::receiveData: reset buffer to 0");
+                NES_DEBUG("BenchmarkSource::receiveData: reset buffer to 0");
                 currentPositionInBytes = 0;
             } else {
-                NES_DEBUG("MemorySource::receiveData: return as mem sry is empty");
+                NES_DEBUG("BenchmarkSource::receiveData: return as mem sry is empty");
                 return std::nullopt;
             }
         }
@@ -113,7 +150,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         case COPY_BUFFER_SIMD_RTE: {
 #ifdef __x86_64__
             buffer = bufferManager->getBufferBlocking();
-            rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, memoryAreaSize);
+            rte_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
 #else
             NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
 #endif
@@ -121,27 +158,27 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
         case COPY_BUFFER_SIMD_APEX: {
             buffer = bufferManager->getBufferBlocking();
-            apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, memoryAreaSize);
+            apex_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
             break;
         }
         case CACHE_COPY: {
             buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, memoryAreaSize);
+            memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
             break;
         }
         case COPY_BUFFER: {
             buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, memoryAreaSize);
+            memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
             break;
         }
         case WRAP_BUFFER: {
-            buffer = Runtime::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, bufferSize, this);
+            buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
             break;
         }
     }
 
     if (memoryAreaSize > bufferSize) {
-        NES_DEBUG("MemorySource::receiveData: add offset=" << bufferSize << " to currentpos=" << currentPositionInBytes);
+        NES_DEBUG("BenchmarkSource::receiveData: add offset=" << bufferSize << " to currentpos=" << currentPositionInBytes);
         currentPositionInBytes += bufferSize;
     }
 
@@ -150,14 +187,14 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
 
-    NES_DEBUG("MemorySource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+    NES_DEBUG("BenchmarkSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }
     return buffer;
 }
 
-std::string MemorySource::toString() const { return "MemorySource"; }
+std::string BenchmarkSource::toString() const { return "BenchmarkSource"; }
 
-NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
+NES::SourceType BenchmarkSource::getType() const { return MEMORY_SOURCE; }
 }// namespace NES
