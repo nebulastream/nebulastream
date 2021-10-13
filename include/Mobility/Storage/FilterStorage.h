@@ -17,7 +17,7 @@
 #ifndef NES_FILTERSTORAGE_H
 #define NES_FILTERSTORAGE_H
 
-#include <set>
+#include <vector>
 #include <API/Schema.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
@@ -28,7 +28,7 @@ class FilterStorage {
   private:
     SchemaPtr schema;
     uint32_t storageSize;
-    std::set<uint64_t> storedHashes;
+    std::vector<uint64_t> storedHashes;
     NodeEngine::BufferManagerPtr bufferManager;
 
     void add(uint64_t tupleHash);

@@ -30,12 +30,11 @@ void FilterStorage::add(uint64_t tupleHash) {
     if (storedHashes.size() == storageSize) {
         storedHashes.erase(storedHashes.begin());
     }
-    storedHashes.insert(tupleHash);
+    storedHashes.push_back(tupleHash);
 }
 
 bool FilterStorage::contains(uint64_t tupleHash) {
-    auto it = storedHashes.find(tupleHash);
-    return it != storedHashes.end();
+    return std::find(storedHashes.begin(), storedHashes.end(), tupleHash) != storedHashes.end();
 }
 
 NodeEngine::TupleBuffer FilterStorage::filter(NodeEngine::TupleBuffer buffer) {
