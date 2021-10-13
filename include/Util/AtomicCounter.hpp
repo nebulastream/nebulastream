@@ -16,16 +16,6 @@ limitations under the License.
 
 #pragma once
 
-//#include <Util/Logger.hpp>
-//#include <algorithm>
-//#include <condition_variable>
-//#include <iostream>
-//#include <mutex>
-//#include <optional>
-//#include <queue>
-//#include <thread>
-//#include <new>
-
 namespace NES {
 
 #ifdef __cpp_lib_hardware_interference_size
