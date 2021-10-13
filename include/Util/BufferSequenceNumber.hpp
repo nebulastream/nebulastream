@@ -23,22 +23,21 @@ namespace NES {
  * It consists out of a sequence number and an origin id. Their combination allows uniquely define a tuple buffer in the system.
  */
 class BufferSequenceNumber {
-    int64_t sequenceNumber;
-    int64_t originId;
 
   public:
-    BufferSequenceNumber(int64_t sequenceNumber, int64_t originId) : sequenceNumber(sequenceNumber), originId(originId) {}
-
-    int64_t getSequenceNumber() const { return sequenceNumber; }
-    int64_t getOriginId() const { return originId; }
+    BufferSequenceNumber(uint64_t sequenceNumber, uint64_t originId) : sequenceNumber(sequenceNumber), originId(originId) {};
+    uint64_t getSequenceNumber() const { return sequenceNumber; }
+    uint64_t getOriginId() const { return originId; }
 
   private:
-    friend bool operator<(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber < rightSN.sequenceNumber; }
-    friend bool operator<=(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber <= rightSN.sequenceNumber; }
-    friend bool operator>(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber > rightSN.sequenceNumber; }
-    friend bool operator>=(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber >= rightSN.sequenceNumber; }
-    friend bool operator==(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber == rightSN.sequenceNumber; }
-    friend bool operator!=(const BufferSequenceNumber& leftSN, const BufferSequenceNumber& rightSN) { return leftSN.sequenceNumber != rightSN.sequenceNumber; }
+    uint64_t sequenceNumber;
+    uint64_t originId;
+    friend bool operator<(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber < rhs.sequenceNumber; }
+    friend bool operator<=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber <= rhs.sequenceNumber; }
+    friend bool operator>(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber > rhs.sequenceNumber; }
+    friend bool operator>=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber >= rhs.sequenceNumber; }
+    friend bool operator==(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber == rhs.sequenceNumber; }
+    friend bool operator!=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber != rhs.sequenceNumber; }
 };
 
 

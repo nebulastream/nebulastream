@@ -22,18 +22,18 @@ namespace NES {
     void BufferStorage::insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) {
         std::unique_lock<std::mutex> lck (mutex);
         if(this->buffers.find(id.getOriginId()) == this->buffers.end()) {
-            auto queue = std::queue<std::pair<BufferSequenceNumber, Runtime::TupleBuffer>>();
-            queue.push(std::pair<BufferSequenceNumber, Runtime::TupleBuffer>{id, bufferPtr});
+            auto queue = std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>();
+            queue.push(BufferStorageUnit{id, bufferPtr});
             this->buffers[id.getOriginId()]=std::move(queue);
         }
         else
-            this->buffers[id.getOriginId()].push(std::pair<BufferSequenceNumber, Runtime::TupleBuffer> {id, bufferPtr});
+            this->buffers[id.getOriginId()].push(BufferStorageUnit{id, bufferPtr});
     }
 
     bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
         std::unique_lock<std::mutex> lck (mutex);
         if(!this->buffers[id.getOriginId()].empty()) {
-            while (!this->buffers[id.getOriginId()].empty() && this->buffers[id.getOriginId()].front().first < id) {
+            while (!this->buffers[id.getOriginId()].empty() && this->buffers[id.getOriginId()].top().getSequenceNumber() < id) {
                 this->buffers[id.getOriginId()].pop();
             }
             return true;
@@ -43,12 +43,19 @@ namespace NES {
 
     size_t BufferStorage::getStorageSize() const {
         std::unique_lock<std::mutex> lck (mutex);
-        return this->buffers.size();
+        size_t size = 0;
+        for (size_t i = 0; i < this->buffers.size(); i++) {
+            size += this->buffers.at(i).size();
+        }
+        return size;
     }
 
     size_t BufferStorage::getQueueSize(uint64_t originId) const {
         std::unique_lock<std::mutex> lck (mutex);
         return this->buffers.at(originId).size();
     }
+    const std::map<uint64_t, std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>>& BufferStorage::getBuffers() const { return this->buffers; }
 
-}// namespace NES
+    const std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>& BufferStorage::getQueue(uint64_t id) const { return this->buffers.at(id); };
+
+    }// namespace NES

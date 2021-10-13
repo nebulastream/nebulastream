@@ -19,6 +19,7 @@
 
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BufferSequenceNumber.hpp>
+#include <Util/BufferStorageUnit.hpp>
 #include <queue>
 
 namespace NES {
@@ -27,9 +28,6 @@ namespace NES {
  * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
  */
 class BufferStorage {
-  private:
-    std::map<uint64_t , std::queue<std::pair<BufferSequenceNumber, Runtime::TupleBuffer>>> buffers;
-    mutable std::mutex mutex;
 
   public:
     /**
@@ -57,6 +55,14 @@ class BufferStorage {
      * @return Given queue size
      */
     size_t getQueueSize(uint64_t originId) const;
+
+    const std::map<uint64_t, std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>>& getBuffers() const;
+
+    const std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>& getQueue(uint64_t id) const;
+
+  private:
+    std::map<uint64_t , std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>> buffers;
+    mutable std::mutex mutex;
 };
 
 }// namespace NES
