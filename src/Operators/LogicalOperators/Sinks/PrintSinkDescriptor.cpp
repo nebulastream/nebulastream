@@ -15,6 +15,7 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <string>
 
 namespace NES {
 
