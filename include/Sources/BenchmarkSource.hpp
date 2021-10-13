@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
-#define NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
+#ifndef NES_INCLUDE_SOURCES_BenchmarkSource_HPP_
+#define NES_INCLUDE_SOURCES_BenchmarkSource_HPP_
 
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -27,17 +27,17 @@ class MemorySegment;
 }
 }// namespace Runtime
 /**
- * @brief Memory Source that reads from main memory and produces buffers.
+ * @brief Benchmark Source is a special source for benchmarking purposes only and stripes away all overhead
  * The memory area out of which buffers will be produced must be initialized beforehand and allocated as a shared_ptr
  * that must have ownership of the area, i.e., it must control when to free it.
  * Do not use in distributed settings but only for single node dev and testing.
  */
-class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
+class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
     enum SourceMode { EMPTY_BUFFER, WRAP_BUFFER, CACHE_COPY, COPY_BUFFER, COPY_BUFFER_SIMD_RTE, COPY_BUFFER_SIMD_APEX };
 
     /**
-     * @brief The constructor of a MemorySource
+     * @brief The constructor of a BenchmarkSource
      * @param schema the schema of the source
      * @param memoryArea the non-null memory area that stores the data that will be used by the source
      * @param memoryAreaSize the non-zero size of the memory area
@@ -46,7 +46,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param
      * @param operatorId the valid id of the source
      */
-    explicit MemorySource(SchemaPtr schema,
+    explicit BenchmarkSource(SchemaPtr schema,
                           const std::shared_ptr<uint8_t>& memoryArea,
                           size_t memoryAreaSize,
                           Runtime::BufferManagerPtr bufferManager,
@@ -77,6 +77,11 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      */
     SourceType getType() const override;
 
+    /**
+     * @brief running routine while source is active,
+     */
+    virtual void runningRoutine() override;
+
     virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override{};
 
     /**
@@ -85,18 +90,26 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      */
     virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
 
+    /**
+     * @brief This methods creates the local buffer pool and is necessary because we cannot do it in the constructor
+     */
+    void open() override;
+
+    void close() override;
+
   private:
     uint64_t numberOfTuplesToProduce;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
+    Runtime::TupleBuffer numaLocalMemoryArea;
     uint64_t currentPositionInBytes;
     SourceMode sourceMode;
     uint64_t schemaSize;
     uint64_t bufferSize;
 };
 
-using MemorySourcePtr = std::shared_ptr<MemorySource>;
+using BenchmarkSourcePtr = std::shared_ptr<BenchmarkSource>;
 
 }// namespace NES
 
-#endif//NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
+#endif//NES_INCLUDE_SOURCES_BenchmarkSource_HPP_
