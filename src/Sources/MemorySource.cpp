@@ -105,6 +105,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_ASSERT2_FMT(numberOfTuplesToProduce * schemaSize <= bufferSize, "value to write is larger than the buffer");
 
     Runtime::TupleBuffer buffer;
+    //TODO: we can improve here to copy only as much data as necessary and not the entire buffer
     switch (sourceMode) {
         case EMPTY_BUFFER: {
             buffer = bufferManager->getBufferBlocking();
@@ -113,7 +114,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         case COPY_BUFFER_SIMD_RTE: {
 #ifdef __x86_64__
             buffer = bufferManager->getBufferBlocking();
-            rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, memoryAreaSize);
+            rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
 #else
             NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
 #endif
@@ -121,17 +122,17 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
         case COPY_BUFFER_SIMD_APEX: {
             buffer = bufferManager->getBufferBlocking();
-            apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, memoryAreaSize);
+            apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
             break;
         }
         case CACHE_COPY: {
             buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, memoryAreaSize);
+            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
             break;
         }
         case COPY_BUFFER: {
             buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, memoryAreaSize);
+            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
             break;
         }
         case WRAP_BUFFER: {
