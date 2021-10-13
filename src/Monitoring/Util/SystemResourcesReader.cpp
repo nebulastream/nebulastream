@@ -42,7 +42,6 @@ namespace NES {
 
 RuntimeNesMetrics SystemResourcesReader::readRuntimeNesMetrics() {
     RuntimeNesMetrics output{};
-#ifdef __linux__
     output.wallTimeNs = SystemResourcesReader::getWallTimeInNs();
 
     std::vector<std::string> metricLocations{"/sys/fs/cgroup/memory/memory.usage_in_bytes",
@@ -107,7 +106,7 @@ RuntimeNesMetrics SystemResourcesReader::readRuntimeNesMetrics() {
     } catch (const RuntimeException& e) {
         NES_ERROR("SystemResourcesReader: Error reading disk metrics " << e.what());
     }
-#endif
+
     return output;
 }
 
