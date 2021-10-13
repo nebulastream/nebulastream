@@ -60,14 +60,6 @@ void BaseController::handleOptions(const http_request& request) {
     request.reply(response);
 }
 
-template <typename T> void BaseController::successMessageImpl(const http_request& request, const T& result) {
-    http_response response(status_codes::OK);
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-    response.set_body(result);
-    request.reply(response);
-}
-
 void BaseController::internalServerErrorImpl(const http_request& message) {
     http_response response(status_codes::InternalError);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
@@ -88,17 +80,6 @@ void BaseController::noContentImpl(const http_request& message) {
     message.reply(response);
 }
 
-template<typename T>
-void BaseController::badRequestImpl(const web::http::http_request& request, const T& detail) {
-    // Returns error with http code 400 to indicate bad user request
-    http_response response(status_codes::BadRequest);
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-
-    // Inform REST users with reason of the error
-    response.set_body(detail);
-    request.reply(response);
-}
 template void BaseController::badRequestImpl<std::string>(const web::http::http_request& request, const std::string& detail);
 template void BaseController::badRequestImpl<web::json::value>(const web::http::http_request& request,
                                                                const web::json::value& detail);
