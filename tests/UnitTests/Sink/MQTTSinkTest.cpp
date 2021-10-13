@@ -42,7 +42,7 @@ using namespace NES;
  */
 
 //FIXME tests right now rely on setting up a broker manually. Moreover, they intentionally fail. (covered in issue #1599)
-// - find a way to fully automate tests (e.g. using redBoltz c++ MQTT library, which offers a broker
+// - find a way to fully automate tests (e.time::WorkerContext workerContext(g. using redBoltz c++ MQTT library, which offers a broker
 // - fix tests, so they do not intentionally fail, but always succeed, if right behaviour is shown
 class MQTTTSinkTest : public testing::Test {
   public:
@@ -104,7 +104,7 @@ class MQTTTSinkTest : public testing::Test {
                                                 bool asynchronousClient,
                                                 bool printBuffer) {
         // Create MQTT Sink
-        Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager());
+        Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
         SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
 
         /* This was originally done like the other sink tests, using the createMQTTSink() function, which returns a DataSinkPtr.
