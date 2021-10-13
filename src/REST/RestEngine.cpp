@@ -124,7 +124,9 @@ void RestEngine::handleGet(http_request request) {
             return;
         }
     }
-    BaseController::badRequestImpl(request, "Unknown endpoint");
+    web::json::value response{};
+    response["detail"] = json::value::string("Unknown endpoint");
+    BaseController::badRequestImpl(request, response);
 }
 
 void RestEngine::handlePost(http_request request) {
@@ -150,8 +152,9 @@ void RestEngine::handlePost(http_request request) {
             return;
         }
     }
-    // TODO use json
-    BaseController::badRequestImpl(request, "Unknown endpoint");
+    web::json::value response{};
+    response["detail"] = json::value::string("Unknown endpoint");
+    BaseController::badRequestImpl(request, response);
 }
 
 void RestEngine::handleDelete(http_request request) {
@@ -173,8 +176,9 @@ void RestEngine::handleDelete(http_request request) {
             return;
         }
     }
-    // TODO use json
-    BaseController::badRequestImpl(request, "Unknown endpoint");
+    web::json::value response{};
+    response["detail"] = json::value::string("Unknown endpoint");
+    BaseController::badRequestImpl(request, response);
 }
 
 utility::string_t RestEngine::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
