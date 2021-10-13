@@ -46,6 +46,20 @@ TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
     ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted);
 }
 
+TEST_F(BufferStorageTest, sortedInsertionInBufferStorage) {
+    auto bufferStorage = std::make_shared<BufferStorage>();
+    auto buffer = bufferManager->getUnpooledBuffer(16384);
+    for (int i = buffers_inserted - 1; i >= 0; i--) {
+        bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
+    }
+    ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted);
+    auto queue = bufferStorage->getQueue(0);
+    for (uint64_t i = 0; i < buffers_inserted; i++) {
+        ASSERT_EQ(queue.top().getSequenceNumber().getSequenceNumber(), i);
+        queue.pop();
+    }
+}
+
 TEST_F(BufferStorageTest, emptyBufferCheck) {
     auto bufferStorage = std::make_shared<BufferStorage>();
     ASSERT_EQ(bufferStorage->trimBuffer(BufferSequenceNumber(0, 0)), false);
