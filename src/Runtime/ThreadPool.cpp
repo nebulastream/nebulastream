@@ -23,6 +23,8 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <filesystem>
+#include <string>
 #include <cstring>
 #include <filesystem>
 #include <functional>
