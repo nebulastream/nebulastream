@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -51,10 +52,10 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     NES_ASSERT(nodeEngine, "invalid engine");
     auto numaNodeIndex = 0u;
 #ifdef NES_ENABLE_NUMA_SUPPORT
-    if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
+    if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
-        auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
-        auto sourceAffinity = memorySourceDescriptor->getSourceAffinity();
+        auto benchmarkSourceDescriptor = sourceDescriptor->as<BenchmarkSourceDescriptor>();
+        auto sourceAffinity = benchmarkSourceDescriptor->getSourceAffinity();
         if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
             auto nodeOfCpu = numa_node_of_cpu(sourceAffinity);
             numaNodeIndex = nodeOfCpu;
@@ -196,9 +197,23 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   operatorId,
                                   numSourceLocalBuffers,
                                   memorySourceDescriptor->getGatheringMode(),
-                                  memorySourceDescriptor->getSourceMode(),
-                                  successors,
-                                  memorySourceDescriptor->getSourceAffinity());
+                                  successors);
+    } else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
+        auto benchmarkSourceDescriptor = sourceDescriptor->as<BenchmarkSourceDescriptor>();
+        return createBenchmarkSource(benchmarkSourceDescriptor->getSchema(),
+                       bufferManager,
+                       queryManager,
+                       benchmarkSourceDescriptor->getMemoryArea(),
+                       benchmarkSourceDescriptor->getMemoryAreaSize(),
+                       benchmarkSourceDescriptor->getNumBuffersToProcess(),
+                       benchmarkSourceDescriptor->getGatheringValue(),
+                       operatorId,
+                       numSourceLocalBuffers,
+                       benchmarkSourceDescriptor->getGatheringMode(),
+                       benchmarkSourceDescriptor->getSourceMode(),
+                       successors,
+                       benchmarkSourceDescriptor->getSourceAffinity());
     } else if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating lambda source");
         auto lambdaSourceDescriptor = sourceDescriptor->as<LambdaSourceDescriptor>();

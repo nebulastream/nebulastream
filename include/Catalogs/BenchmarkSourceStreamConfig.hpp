@@ -13,38 +13,39 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Sources/MemorySource.hpp>
+#include <Sources/BenchmarkSource.hpp>
 
 namespace NES {
 
 /**
  * @brief A stream config for a memory source
  */
-class MemorySourceStreamConfig : public PhysicalStreamConfig {
+class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
   public:
     /**
-     * @brief Create a MemorySourceStreamConfig using a set of parameters
+     * @brief Create a BenchmarkSourceStreamConfig using a set of parameters
      * @param sourceType the type of the source
      * @param physicalStreamName the name of the physical stream
      * @param logicalStreamName the name of the logical stream
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
      */
-    explicit MemorySourceStreamConfig(std::string sourceType,
+    explicit BenchmarkSourceStreamConfig(std::string sourceType,
                                       std::string physicalStreamName,
                                       std::string logicalStreamName,
                                       uint8_t* memoryArea,
                                       size_t memoryAreaSize,
                                       uint64_t numBuffersToProcess,
                                       uint64_t gatheringValue,
-                                      const std::string& gatheringMode);
+                                      const std::string& gatheringMode,
+                                      const std::string& sourceMode,
+                                      uint64_t sourceAffinity);
 
-    ~MemorySourceStreamConfig() noexcept override = default;
+    ~BenchmarkSourceStreamConfig() noexcept override = default;
 
     /**
      * @brief Creates the source descriptor for the underlying source
@@ -78,13 +79,14 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
     std::string getLogicalStreamName() override;
 
     /**
-     * @brief Factory method of MemorySourceStreamConfig
+     * @brief Factory method of BenchmarkSourceStreamConfig
       * @param sourceType the type of the source
      * @param physicalStreamName the name of the physical stream
      * @param logicalStreamName the name of the logical stream
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
-     * @return a constructed MemorySourceStreamConfig
+     * @param sourceMode how the bechmark source create the content, either by wrapping or by copy buffer
+     * @return a constructed BenchmarkSourceStreamConfig
      */
     static AbstractPhysicalStreamConfigPtr create(const std::string& sourceType,
                                                   const std::string& physicalStreamName,
@@ -93,8 +95,11 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
                                                   size_t memoryAreaSize,
                                                   uint64_t numBuffersToProcess,
                                                   uint64_t gatheringValue,
-                                                  const std::string& gatheringMode);
+                                                  const std::string& gatheringMode,
+                                                  const std::string& sourceMode,
+                                                  uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 
+    static BenchmarkSource::SourceMode getSourceModeFromString(const std::string& mode);
 
   private:
     std::string sourceType;
@@ -102,5 +107,8 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
     const size_t memoryAreaSize;
     uint64_t gatheringValue;
     DataSource::GatheringMode gatheringMode;
+    BenchmarkSource::SourceMode sourceMode;
+    uint64_t sourceAffinity;
 };
+
 }// namespace NES

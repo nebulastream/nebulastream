@@ -27,4 +27,5 @@ add_source_nes(
         MemorySourceDescriptor.cpp
         MQTTSourceDescriptor.cpp
         LambdaSourceDescriptor.cpp
+        BenchmarkSourceDescriptor.cpp
 )

@@ -36,18 +36,18 @@
 namespace NES {
 
 BenchmarkSource::BenchmarkSource(SchemaPtr schema,
-                                 const std::shared_ptr<uint8_t>& memoryArea,
-                                 size_t memoryAreaSize,
-                                 Runtime::BufferManagerPtr bufferManager,
-                                 Runtime::QueryManagerPtr queryManager,
-                                 uint64_t numBuffersToProcess,
-                                 uint64_t gatheringValue,
-                                 OperatorId operatorId,
-                                 size_t numSourceLocalBuffers,
-                                 GatheringMode gatheringMode,
-                                 SourceMode sourceMode,
-                                 uint64_t sourceAffinity,
-                                 std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                           const std::shared_ptr<uint8_t>& memoryArea,
+                           size_t memoryAreaSize,
+                           Runtime::BufferManagerPtr bufferManager,
+                           Runtime::QueryManagerPtr queryManager,
+                           uint64_t numBuffersToProcess,
+                           uint64_t gatheringValue,
+                           OperatorId operatorId,
+                           size_t numSourceLocalBuffers,
+                           GatheringMode gatheringMode,
+                           SourceMode sourceMode,
+                           uint64_t sourceAffinity,
+                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
                       std::move(queryManager),
@@ -93,7 +93,7 @@ void BenchmarkSource::open() {
     auto buffer = localBufferManager->getUnpooledBuffer(memoryAreaSize);
     numaLocalMemoryArea = *buffer;
     std::memcpy(numaLocalMemoryArea.getBuffer(), memoryArea.get(), memoryAreaSize);
-    //    NES_ASSERT2_FMT(reinterpret_cast<uintptr_t>(buffer->getBuffer()) % 64 == 0, "invalid alignment");
+    NES_ASSERT2_FMT(reinterpret_cast<uintptr_t>(buffer->getBuffer()) % 64 == 0, "invalid alignment");
     memoryArea.reset();
 }
 
