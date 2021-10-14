@@ -13,7 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
+
+#ifndef NES_INCLUDE_CATALOGS_BENCHMARKSOURCESTREAMCONFIG_HPP_
+#define NES_INCLUDE_CATALOGS_BENCHMARKSOURCESTREAMCONFIG_HPP_
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
@@ -22,7 +24,7 @@
 namespace NES {
 
 /**
- * @brief A stream config for a memory source
+ * @brief A stream config for a benchm source
  */
 class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
   public:
@@ -35,15 +37,15 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryAreaSize the size of the memory area
      */
     explicit BenchmarkSourceStreamConfig(std::string sourceType,
-                                      std::string physicalStreamName,
-                                      std::string logicalStreamName,
-                                      uint8_t* memoryArea,
-                                      size_t memoryAreaSize,
-                                      uint64_t numBuffersToProcess,
-                                      uint64_t gatheringValue,
-                                      const std::string& gatheringMode,
-                                      const std::string& sourceMode,
-                                      uint64_t sourceAffinity);
+                                         std::string physicalStreamName,
+                                         std::string logicalStreamName,
+                                         uint8_t* memoryArea,
+                                         size_t memoryAreaSize,
+                                         uint64_t numBuffersToProcess,
+                                         uint64_t gatheringValue,
+                                         const std::string& gatheringMode,
+                                         const std::string& sourceMode,
+                                         uint64_t sourceAffinity);
 
     ~BenchmarkSourceStreamConfig() noexcept override = default;
 
@@ -110,5 +112,5 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
     BenchmarkSource::SourceMode sourceMode;
     uint64_t sourceAffinity;
 };
-
 }// namespace NES
+#endif //NES_INCLUDE_CATALOGS_BENCHMARKSOURCESTREAMCONFIG_HPP_
