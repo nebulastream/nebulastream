@@ -48,11 +48,11 @@ set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 
 # check if prebuild dependencies are already downloaded
 if (CMAKE_TOOLCHAIN_FILE)
-    message("Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
+    message(STATUS "Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
 else ()
     set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
     IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
-        message("NES dependencies do not exist!")
+        message(STATUS "NES dependencies do not exist!")
         download_file(https://github.com/nebulastream/dependencies/releases/download/${VCPKG_BINARY_VERSION}/${BINARY_NAME}.7z
                 ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z
                 SHA1 074e7a34c486d8956562b65a247d908ee097fb07
@@ -61,7 +61,7 @@ else ()
     endif ()
 
     # set toolchain file to use prebuild dependencies only if no toolchain file is already set.
-    message("Set toolchain file for prebuild dir.")
+    message(STATUS "Set toolchain file for prebuild dir.")
     set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/scripts/buildsystems/vcpkg.cmake")
 
     # In combination with prebuild binaries, NES supports self hosting its compilation with the clang binary.
@@ -73,20 +73,19 @@ else ()
     else ()
         message(STATUS "Use system compiler")
     endif ()
-    message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 endif ()
 
 project(NES CXX)
-message(STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
-message(STATUS "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
 option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC queue for the buffer manager" ON)
-set(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER ON)
+option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_CLANG_TIDY OFF)
 option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
+
+message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
 if (POLICY CMP0004)
     cmake_policy(SET CMP0004 OLD)
@@ -120,10 +119,10 @@ if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
 endif ()
 
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    message("use CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
+    message(STATUS "use CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE=1")
     if (CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
-        message("use CMAKE_USE_LATCH_FREE_BUFFER_MANAGER")
+        message(STATUS "use CMAKE_USE_LATCH_FREE_BUFFER_MANAGER")
         set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_LATCH_FREE_BUFFER_MANAGER=1")
     endif ()
 endif ()
@@ -414,6 +413,42 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     find_package(folly CONFIG REQUIRED)
     set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
 endif ()
+
+# PAPI
+
+if (CMAKE_USE_PAPI_PROFILER)
+    find_path(PAPI_PREFIX
+            NAMES include/papi.h
+            )
+
+    find_library(PAPI_LIBRARIES
+            # Pick the static library first for easier run-time linking.
+            NAMES libpapi.so libpapi.a papi
+            HINTS ${PAPI_PREFIX}/lib
+            )
+
+    find_path(PAPI_INCLUDE_DIRS
+            NAMES papi.h
+            HINTS ${PAPI_PREFIX}/include
+            )
+
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(PAPI DEFAULT_MSG
+            PAPI_LIBRARIES
+            PAPI_INCLUDE_DIRS
+            )
+
+    mark_as_advanced(
+            PAPI_PREFIX_DIRS
+            PAPI_LIBRARIES
+            PAPI_INCLUDE_DIRS
+    )
+    message(STATUS "Papi found at ${PAPI_LIBRARIES}")
+    message(STATUS "Papi found at ${PAPI_INCLUDE_DIRS}")
+    set(LIBRARIES ${LIBRARIES} ${PAPI_LIBRARIES})
+    add_compile_definitions(ENABLE_PAPI_PROFILER)
+    include_directories(${PAPI_INCLUDE_DIRS})
+endif()
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
