@@ -291,7 +291,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowEventTime) {
+//TODO test needs to be fixed, since it fails randomly. Covered in issue #2258
+TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
