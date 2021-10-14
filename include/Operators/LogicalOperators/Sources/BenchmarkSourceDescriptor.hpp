@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_
+#define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/BenchmarkSource.hpp>
@@ -122,3 +123,4 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     uint64_t sourceAffinity;
 };
 }// namespace NES
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_

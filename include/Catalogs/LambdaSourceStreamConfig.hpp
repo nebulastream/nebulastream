@@ -16,11 +16,14 @@
 #ifndef NES_INCLUDE_CATALOGS_LambdaSourceStreamConfig_HPP_
 #define NES_INCLUDE_CATALOGS_LambdaSourceStreamConfig_HPP_
 
-#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
+//#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <functional>
+
 namespace NES {
+class TupleBuffer;
+class AbstractPhysicalStreamConfig;
+using AbstractPhysicalStreamConfigPtr = std::shared_ptr<AbstractPhysicalStreamConfig>;
 
 /**
  * @brief A stream config for a lambda source
