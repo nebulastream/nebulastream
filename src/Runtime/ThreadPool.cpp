@@ -48,7 +48,7 @@ ThreadPool::ThreadPool(uint64_t nodeId,
                        std::vector<uint64_t> workerPinningPositionList)
     : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)), bufferManagers(bufferManagers),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker), workerPinningPositionList(workerPinningPositionList),
-      hardwareManager(hardwareManager){}
+      hardwareManager(hardwareManager) {}
 
 ThreadPool::~ThreadPool() {
     NES_DEBUG("Threadpool: Destroying Thread Pool");
@@ -133,7 +133,8 @@ bool ThreadPool::start() {
                 localBufferManager = bufferManagers[numaNodeIndex];
                 NES_WARNING("Worker thread " << i << " will use numa node =" << numaNodeIndex);
                 std::stringstream ss;
-                ss << "Worker thread " << i << " pins to core=" << workerPinningPositionList[i] <<" will use numa node =" << numaNodeIndex << std::endl;
+                ss << "Worker thread " << i << " pins to core=" << workerPinningPositionList[i]
+                   << " will use numa node =" << numaNodeIndex << std::endl;
                 std::cout << ss.str();
 
             } else {
@@ -142,7 +143,9 @@ bool ThreadPool::start() {
                 NES_WARNING("Flag: NES_USE_ONE_QUEUE_PER_NUMA_NODE is used but no worker list is specified");
                 auto numberOfNumaRegions = hardwareManager->getNumberOfNumaRegions();
                 if (numberOfNumaRegions != 1 && numThreads != 1) {
-                    NES_ASSERT(false, "We have to specify a worker list that evenly distributes threads among cores for more than one thread");
+                    NES_ASSERT(
+                        false,
+                        "We have to specify a worker list that evenly distributes threads among cores for more than one thread");
                 } else {
                     NES_WARNING("With only one NUMA node we do not distribute the threads among the cores");
                 }

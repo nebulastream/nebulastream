@@ -30,6 +30,7 @@
 #include <Runtime/Task.hpp>
 #include <Sources/DataSource.hpp>
 #include <State/StateManager.hpp>
+#include <Util/AtomicCounter.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
@@ -44,7 +45,6 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
-#include <Util/AtomicCounter.hpp>
 
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #include <folly/MPMCQueue.h>

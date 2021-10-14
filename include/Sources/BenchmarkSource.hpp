@@ -47,18 +47,18 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param operatorId the valid id of the source
      */
     explicit BenchmarkSource(SchemaPtr schema,
-                          const std::shared_ptr<uint8_t>& memoryArea,
-                          size_t memoryAreaSize,
-                          Runtime::BufferManagerPtr bufferManager,
-                          Runtime::QueryManagerPtr queryManager,
-                          uint64_t numBuffersToProcess,
-                          uint64_t gatheringValue,
-                          OperatorId operatorId,
-                          size_t numSourceLocalBuffers,
-                          GatheringMode gatheringMode,
-                          SourceMode sourceMode,
-                          uint64_t sourceAffinity,
-                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+                             const std::shared_ptr<uint8_t>& memoryArea,
+                             size_t memoryAreaSize,
+                             Runtime::BufferManagerPtr bufferManager,
+                             Runtime::QueryManagerPtr queryManager,
+                             uint64_t numBuffersToProcess,
+                             uint64_t gatheringValue,
+                             OperatorId operatorId,
+                             size_t numSourceLocalBuffers,
+                             GatheringMode gatheringMode,
+                             SourceMode sourceMode,
+                             uint64_t sourceAffinity,
+                             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt

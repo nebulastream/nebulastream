@@ -16,7 +16,6 @@
 
 #pragma once
 
-
 namespace NES {
 
 #ifdef __cpp_lib_hardware_interference_size
