@@ -46,6 +46,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#ifdef ENABLE_PAPI_PROFILER
+#include <Runtime/Profiler/PapiProfiler.hpp>
+#endif
+
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
@@ -296,6 +300,9 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 #endif
     std::atomic<QueryManagerStatus> queryManagerStatus{Created};
     std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
+#ifdef ENABLE_PAPI_PROFILER
+    std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
+#endif
 };
 
 using QueryManagerPtr = std::shared_ptr<QueryManager>;

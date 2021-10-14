@@ -185,6 +185,7 @@ bool QueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     auto expected = Created;
     if (queryManagerStatus.compare_exchange_strong(expected, Running)) {
+        cpuProfilers.resize(numThreads);
         threadPool = std::make_shared<ThreadPool>(nodeEngineId,
                                                   inherited0::shared_from_this(),
                                                   numThreads,
@@ -786,7 +787,6 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
 #else
 ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, WorkerContext& workerContext) {
 #endif
-
     NES_TRACE("QueryManager: QueryManager::getWork wait get lock");
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     Task task;
@@ -797,8 +797,15 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
 #else
         taskQueues[workerContext.getNumaNode()].blockingRead(task);
 #endif
+#ifdef ENABLE_PAPI_PROFILER
+        auto profiler = cpuProfilers[NesThread::getId() % cpuProfilers.size()];
+        profiler->startSampling();
+#endif
         NES_DEBUG("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         auto result = task(workerContext);
+#ifdef ENABLE_PAPI_PROFILER
+        profiler->stopSampling(1);
+#endif
         switch (result) {
             case ExecutionResult::Ok: {
                 completedWork(task, workerContext);
@@ -918,7 +925,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                           Execution::SuccessorExecutablePipeline executable,
                                           uint32_t numaNode) {
-    NES_DEBUG("Add Work for executable");
+    NES_TRACE("Add Work for executable");
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     NES_DEBUG("Using numaNode =" << numaNode);
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
@@ -955,7 +962,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
         }
     } else if (auto dataSink = std::get_if<DataSinkPtr>(&executable)) {
-        NES_DEBUG("QueryManager: added Task for next a data sink " << (*dataSink)->toString() << " inputBuffer "
+        NES_TRACE("QueryManager: added Task for next a data sink " << (*dataSink)->toString() << " inputBuffer "
                                                                    << buffer.getOriginId()
                                                                    << " sequence:" << buffer.getSequenceNumber());
         taskQueue.emplace_back(executable, buffer, getNextTaskId());
@@ -965,7 +972,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
 }
 //#define LIGHT_WEIGHT_STATISTICS
 void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
-    NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
+    NES_TRACE("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
     if (task.isReconfiguration()) {
         return;
     }
