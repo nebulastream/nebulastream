@@ -114,7 +114,7 @@ TEST_F(MonitoringStackTest, testNetworkStats) {
     }
 }
 
-TEST_F(MonitoringStackTest, testMetric) {
+TEST_F(MonitoringStackTest, DISABLED_testMetric) {
     Gauge<CpuMetrics> cpuStats = MetricUtils::cpuStats();
     Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();
     Gauge<DiskMetrics> diskStats = MetricUtils::diskStats();
@@ -159,7 +159,7 @@ TEST_F(MonitoringStackTest, testMetric) {
     EXPECT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
 
-TEST_F(MonitoringStackTest, testMetricGroup) {
+TEST_F(MonitoringStackTest, DISABLED_testMetricGroup) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     Gauge<CpuMetrics> cpuStats = MetricUtils::cpuStats();
