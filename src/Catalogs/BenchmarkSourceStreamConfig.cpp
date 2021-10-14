@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <Catalogs/MemorySourceStreamConfig.hpp>
-#include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Catalogs/BenchmarkSourceStreamConfig.hpp>
+#include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
@@ -29,14 +29,16 @@ struct MemoryAreaDeleter {
 
 }// namespace detail
 
-MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
+BenchmarkSourceStreamConfig::BenchmarkSourceStreamConfig(std::string sourceType,
                                                    std::string physicalStreamName,
                                                    std::string logicalStreamName,
                                                    uint8_t* memoryArea,
                                                    size_t memoryAreaSize,
                                                    uint64_t numBuffersToProcess,
                                                    uint64_t gatheringValue,
-                                                   const std::string& gatheringMode)
+                                                   const std::string& gatheringMode,
+                                                   const std::string& sourceMode,
+                                                   uint64_t sourceAffinity)
     : PhysicalStreamConfig(SourceConfig::create()), sourceType(std::move(sourceType)),
       memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize) {
     // nop
@@ -44,43 +46,70 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
     this->logicalStreamName = std::move(logicalStreamName);
     this->numberOfBuffersToProduce = numBuffersToProcess;
     this->gatheringMode = DataSource::getGatheringModeFromString(std::move(gatheringMode));
+    this->sourceMode = getSourceModeFromString(std::move(sourceMode));
     this->gatheringValue = gatheringValue;
+    this->sourceAffinity = sourceAffinity;
 }
 
-std::string MemorySourceStreamConfig::getSourceType() { return sourceType; }
+BenchmarkSource::SourceMode BenchmarkSourceStreamConfig::getSourceModeFromString(const std::string& mode) {
+    Util::trim(mode);
+    if (mode == "emptyBuffer") {
+        return BenchmarkSource::EMPTY_BUFFER;
+    } else if (mode == "wrapBuffer") {
+        return BenchmarkSource::WRAP_BUFFER;
+    } else if (mode == "copyBuffer") {
+        return BenchmarkSource::COPY_BUFFER;
+    } else if (mode == "copyBufferSimdRte") {
+        return BenchmarkSource::COPY_BUFFER_SIMD_RTE;
+    } else if (mode == "cacheCopy") {
+        return BenchmarkSource::CACHE_COPY;
+    } else if (mode == "copyBufferSimdApex") {
+        return BenchmarkSource::COPY_BUFFER_SIMD_APEX;
+    } else {
+        NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
+    }
+}
 
-std::string MemorySourceStreamConfig::toString() { return sourceType; }
+std::string BenchmarkSourceStreamConfig::getSourceType() { return sourceType; }
 
-std::string MemorySourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
+std::string BenchmarkSourceStreamConfig::toString() { return sourceType; }
 
-std::string MemorySourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+std::string BenchmarkSourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-SourceDescriptorPtr MemorySourceStreamConfig::build(SchemaPtr ptr) {
-    return std::make_shared<MemorySourceDescriptor>(ptr,
+std::string BenchmarkSourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+
+SourceDescriptorPtr BenchmarkSourceStreamConfig::build(SchemaPtr ptr) {
+    return std::make_shared<BenchmarkSourceDescriptor>(ptr,
                                                     memoryArea,
                                                     memoryAreaSize,
                                                     this->numberOfBuffersToProduce,
                                                     this->gatheringValue,
-                                                    this->gatheringMode);
+                                                    this->gatheringMode,
+                                                    this->sourceMode,
+                                                    this->sourceAffinity);
 }
 
-AbstractPhysicalStreamConfigPtr MemorySourceStreamConfig::create(const std::string& sourceType,
+AbstractPhysicalStreamConfigPtr BenchmarkSourceStreamConfig::create(const std::string& sourceType,
                                                                  const std::string& physicalStreamName,
                                                                  const std::string& logicalStreamName,
                                                                  uint8_t* memoryArea,
                                                                  size_t memoryAreaSize,
                                                                  uint64_t numBuffersToProcess,
                                                                  uint64_t gatheringValue,
-                                                                 const std::string& gatheringMode) {
+                                                                 const std::string& gatheringMode,
+                                                                 const std::string& sourceMode,
+                                                                 uint64_t sourceAffinity) {
     NES_ASSERT(memoryArea, "invalid memory area");
-    return std::make_shared<MemorySourceStreamConfig>(sourceType,
+    return std::make_shared<BenchmarkSourceStreamConfig>(sourceType,
                                                       physicalStreamName,
                                                       logicalStreamName,
                                                       memoryArea,
                                                       memoryAreaSize,
                                                       numBuffersToProcess,
                                                       gatheringValue,
-                                                      gatheringMode);
+                                                      gatheringMode,
+                                                      sourceMode,
+                                                      sourceAffinity);
 }
 
 }// namespace NES

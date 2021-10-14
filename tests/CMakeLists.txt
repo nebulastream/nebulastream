@@ -599,6 +599,11 @@ add_executable(memory-source-integration-test "Integration/MemorySourceIntegrati
 target_link_libraries(memory-source-integration-test nes ${GTEST_LIBRARIES})
 add_test(NAME memory-source-integration-test COMMAND memory-source-integration-test)
 
+### BenchmarkSourceIntegrationTest ###
+add_executable(benchmark-source-integration-test "Integration/BenchmarkSourceIntegrationTest.cpp")
+target_link_libraries(benchmark-source-integration-test nes ${GTEST_LIBRARIES})
+add_test(NAME benchmark-source-integration-test COMMAND benchmark-source-integration-test)
+
 ### TestHarnessUtilTest ###
 add_executable(test-harness-util-test "Integration/TestHarnessUtilTest.cpp")
 target_link_libraries(test-harness-util-test nes ${GTEST_LIBRARIES})

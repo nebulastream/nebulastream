@@ -23,4 +23,5 @@ add_source_nes(
         LambdaSourceStreamConfig.cpp
         UdfCatalog.cpp
         JavaUdfDescriptor.cpp
+        BenchmarkSourceStreamConfig.cpp
 )

@@ -45,8 +45,6 @@ MemorySource::MemorySource(SchemaPtr schema,
                            OperatorId operatorId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
-                           SourceMode sourceMode,
-                           uint64_t sourceAffinity,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -56,7 +54,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                       numSourceLocalBuffers,
                       gatheringMode,
                       std::move(successors)),
-      memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), sourceMode(sourceMode) {
+      memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0) {
     this->numBuffersToProcess = numBuffersToProcess;
     if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
@@ -104,42 +102,8 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
 
     NES_ASSERT2_FMT(numberOfTuplesToProduce * schemaSize <= bufferSize, "value to write is larger than the buffer");
 
-    Runtime::TupleBuffer buffer;
-    //TODO: we can improve here to copy only as much data as necessary and not the entire buffer
-    switch (sourceMode) {
-        case EMPTY_BUFFER: {
-            buffer = bufferManager->getBufferBlocking();
-            break;
-        }
-        case COPY_BUFFER_SIMD_RTE: {
-#ifdef __x86_64__
-            buffer = bufferManager->getBufferBlocking();
-            rte_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
-#else
-            NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
-#endif
-            break;
-        }
-        case COPY_BUFFER_SIMD_APEX: {
-            buffer = bufferManager->getBufferBlocking();
-            apex_memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
-            break;
-        }
-        case CACHE_COPY: {
-            buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
-            break;
-        }
-        case COPY_BUFFER: {
-            buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
-            break;
-        }
-        case WRAP_BUFFER: {
-            buffer = Runtime::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, bufferSize, this);
-            break;
-        }
-    }
+    Runtime::TupleBuffer buffer = bufferManager->getBufferBlocking();
+    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
 
     if (memoryAreaSize > bufferSize) {
         NES_DEBUG("MemorySource::receiveData: add offset=" << bufferSize << " to currentpos=" << currentPositionInBytes);

@@ -34,7 +34,6 @@ class MemorySegment;
  */
 class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
-    enum SourceMode { EMPTY_BUFFER, WRAP_BUFFER, CACHE_COPY, COPY_BUFFER, COPY_BUFFER_SIMD_RTE, COPY_BUFFER_SIMD_APEX };
 
     /**
      * @brief The constructor of a MemorySource
@@ -56,8 +55,6 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
                           OperatorId operatorId,
                           size_t numSourceLocalBuffers,
                           GatheringMode gatheringMode,
-                          SourceMode sourceMode,
-                          uint64_t sourceAffinity,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
@@ -90,7 +87,6 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t currentPositionInBytes;
-    SourceMode sourceMode;
     uint64_t schemaSize;
     uint64_t bufferSize;
 };

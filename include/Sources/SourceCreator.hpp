@@ -22,6 +22,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/MemorySource.hpp>
+#include <Sources/BenchmarkSource.hpp>
 #include <chrono>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -209,7 +210,31 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  OperatorId operatorId,
                                  size_t numSourceLocalBuffers,
                                  DataSource::GatheringMode gatheringMode,
-                                 MemorySource::SourceMode sourceMode,
+                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+
+/**
+ * @brief create a benchmark source
+ * @param schema of the source
+ * @param bufferManager
+ * @param queryManager
+ * @param memoryArea the memory buffer to scan and create buffers out of
+ * @param memoryAreaSize the size of the memory buffer
+ * @param numBuffersToProcess
+ * @param frequency
+ * @param operatorId
+ * @return
+ */
+DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
+                                 const Runtime::BufferManagerPtr& bufferManager,
+                                 const Runtime::QueryManagerPtr& queryManager,
+                                 const std::shared_ptr<uint8_t>& memoryArea,
+                                 size_t memoryAreaSize,
+                                 uint64_t numBuffersToProcess,
+                                 uint64_t gatheringValue,
+                                 OperatorId operatorId,
+                                 size_t numSourceLocalBuffers,
+                                 DataSource::GatheringMode gatheringMode,
+                                 BenchmarkSource::SourceMode sourceMode,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
                                  uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 

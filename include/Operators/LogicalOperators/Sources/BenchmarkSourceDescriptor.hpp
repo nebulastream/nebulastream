@@ -17,41 +17,45 @@
 #pragma once
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Sources/BenchmarkSource.hpp>
 #include <Sources/DataSource.hpp>
-#include <Sources/MemorySource.hpp>
 
 namespace NES {
 /**
  * @brief Descriptor defining properties used for creating physical memory source
  */
-class MemorySourceDescriptor : public SourceDescriptor {
+class BenchmarkSourceDescriptor : public SourceDescriptor {
   public:
     /**
-     * @brief Ctor of a MemorySourceDescriptor
+     * @brief Ctor of a BenchmarkSourceDescriptor
      * @param schema the schema of the source
      * @param memoryArea a non-null pointer to the area of memory to use in the source
      * @param memoryAreaSize the size of the area of memory
      */
-    explicit MemorySourceDescriptor(SchemaPtr schema,
-                                    std::shared_ptr<uint8_t> memoryArea,
-                                    size_t memoryAreaSize,
-                                    uint64_t numBuffersToProcess,
-                                    uint64_t gatheringValue,
-                                    DataSource::GatheringMode gatheringMode);
+    explicit BenchmarkSourceDescriptor(SchemaPtr schema,
+                                       std::shared_ptr<uint8_t> memoryArea,
+                                       size_t memoryAreaSize,
+                                       uint64_t numBuffersToProcess,
+                                       uint64_t gatheringValue,
+                                       DataSource::GatheringMode gatheringMode,
+                                       BenchmarkSource::SourceMode sourceMode,
+                                       uint64_t sourceAffinity);
 
     /**
-     * @brief Factory method to create a MemorySourceDescriptor object
-     * @param schema the schema of the source
+     * @brief Factory method to create a BenchmarkSourceDescriptor object
+     * @param schema the schame of the source
      * @param memoryArea a non-null pointer to the area of memory to use in the source
      * @param memoryAreaSize the size of the area of memory
-     * @return a correctly initialized shared ptr to MemorySourceDescriptor
+     * @return a correctly initialized shared ptr to BenchmarkSourceDescriptor
      */
-    static std::shared_ptr<MemorySourceDescriptor> create(const SchemaPtr& schema,
-                                                          const std::shared_ptr<uint8_t>& memoryArea,
-                                                          size_t memoryAreaSize,
-                                                          uint64_t numBuffersToProcess,
-                                                          uint64_t gatheringValue,
-                                                          DataSource::GatheringMode gatheringMode);
+    static std::shared_ptr<BenchmarkSourceDescriptor> create(const SchemaPtr& schema,
+                                                             const std::shared_ptr<uint8_t>& memoryArea,
+                                                             size_t memoryAreaSize,
+                                                             uint64_t numBuffersToProcess,
+                                                             uint64_t gatheringValue,
+                                                             DataSource::GatheringMode gatheringMode,
+                                                             BenchmarkSource::SourceMode sourceMode,
+                                                             uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 
     /**
      * @brief Provides the string representation of the memory source
@@ -91,10 +95,22 @@ class MemorySourceDescriptor : public SourceDescriptor {
     DataSource::GatheringMode getGatheringMode() const;
 
     /**
+    * @brief return the source mode
+    * @return
+    */
+    BenchmarkSource::SourceMode getSourceMode() const;
+
+    /**
      * @brief return the gathering value
      * @return
      */
     uint64_t getGatheringValue() const;
+
+    /**
+    * @brief return the source affinity thus on which core this source is mapped
+    * @return
+    */
+    uint64_t getSourceAffinity() const;
 
   private:
     std::shared_ptr<uint8_t> memoryArea;
@@ -102,5 +118,7 @@ class MemorySourceDescriptor : public SourceDescriptor {
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
     DataSource::GatheringMode gatheringMode;
+    BenchmarkSource::SourceMode sourceMode;
+    uint64_t sourceAffinity;
 };
 }// namespace NES
