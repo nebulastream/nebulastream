@@ -97,8 +97,7 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            HardwareManagerPtr hardwareManager,
                            std::vector<uint64_t> workerToCoreMapping)
     : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads),
-     workerToCoreMapping(workerToCoreMapping),
-      hardwareManager(hardwareManager)
+      workerToCoreMapping(workerToCoreMapping), hardwareManager(hardwareManager)
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
       ,
       taskQueue(
@@ -846,7 +845,7 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
     lock.unlock();
     return terminateLoop(workerContext);
 #endif
-}
+}// namespace NES::Runtime
 
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
 ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
@@ -917,7 +916,9 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 }
 #endif
 
-void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t numaNode) {
+void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
+                                          Execution::SuccessorExecutablePipeline executable,
+                                          uint32_t numaNode) {
     NES_DEBUG("Add Work for executable");
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {

@@ -44,8 +44,10 @@ class WorkerContext {
     uint32_t numaNode = 0;
 
   public:
-    explicit WorkerContext(uint32_t workerId, const BufferManagerPtr& bufferManager,
-                           uint64_t numberOfBuffersPerWorker, uint32_t numaNode = 0);
+    explicit WorkerContext(uint32_t workerId,
+                           const BufferManagerPtr& bufferManager,
+                           uint64_t numberOfBuffersPerWorker,
+                           uint32_t numaNode = 0);
 
     /**
      * @brief Allocates a new tuple buffer.
