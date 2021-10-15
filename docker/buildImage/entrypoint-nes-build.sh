@@ -25,7 +25,11 @@ then
     cd /nebulastream/build/tests
     ln -s ../nesCoordinator .
    	ln -s ../nesWorker .
-    make test_debug
+   	#TODO: #2268 remove the if statement to allow test execution on arm server
+   	if [ "${OS}" != "ARM64" ]
+   	then
+      make test_debug
+    fi
     result=$?
     rm -rf /nebulastream/build
     exit $result
