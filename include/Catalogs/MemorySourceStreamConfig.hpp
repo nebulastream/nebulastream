@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef INCLUDE_CATALOGS_MEMORYSOURCESTREAMCONFIG_HPP_
+#define INCLUDE_CATALOGS_MEMORYSOURCESTREAMCONFIG_HPP_
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
@@ -104,3 +105,4 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
     DataSource::GatheringMode gatheringMode;
 };
 }// namespace NES
+#endif //INCLUDE_CATALOGS_MEMORYSOURCESTREAMCONFIG_HPP_
