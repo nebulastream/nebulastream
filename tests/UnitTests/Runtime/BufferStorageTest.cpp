@@ -14,23 +14,24 @@
     limitations under the License.
 */
 
-#include <Runtime/BufferStorage.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/BufferStorage.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include <thread>
 namespace NES {
 const size_t buffers_inserted = 5;
 const size_t empty_buffer = 0;
 const size_t one_buffer = 1;
 const size_t expected_storage_size = 2;
+const size_t number_of_threads = 5;
+
 class BufferStorageTest : public testing::Test {
   public:
     Runtime::BufferManagerPtr bufferManager;
 
   protected:
-    virtual void SetUp() {
-        bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
-    }
+    virtual void SetUp() { bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1); }
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { NES::setupLogging("BufferStorageTest.log", NES::LOG_DEBUG); }
 };
@@ -100,5 +101,19 @@ TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
     ASSERT_EQ(bufferStorage->getQueueSize(0), expected_storage_size);
 }
 
-
+TEST_F(BufferStorageTest, multithreadingInBufferStorage) {
+    auto bufferStorage = std::make_shared<BufferStorage>();
+    auto buffer = bufferManager->getUnpooledBuffer(16384);
+    std::vector<std::thread> t;
+    for (uint32_t i = 0; i < number_of_threads; i++) {
+        t.emplace_back([bufferStorage, buffer, i](){
+            bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
+            ASSERT_EQ(bufferStorage->getQueueSize(i), one_buffer);
+        });
+    }
+    for (auto& thread : t) {
+        thread.join();
+    }
+    ASSERT_EQ(bufferStorage->getStorageSize(), buffers_inserted);
+}
 }// namespace NES
