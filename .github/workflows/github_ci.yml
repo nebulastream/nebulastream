@@ -63,7 +63,7 @@ jobs:
           access_token: ${{ github.token }}
       - name: Run tests
         run: |
-          #TODO: #2268 remove the environment variable to allow test execution on arm server
+        #TODO: 2268 remove the environment variable to allow test execution on arm server
           docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --entrypoint -eOS="ARM64" /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: docker cleanup
         if: ${{ always() }}
