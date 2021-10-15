@@ -21,6 +21,7 @@
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 #include <API/Expressions/Expressions.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -300,6 +301,23 @@ class Query {
                     ExpressionItem onLeftKey,
                     ExpressionItem onRightKey,
                     Windowing::WindowTypePtr const& windowType);
+
+    /**
+     * @new change: Now it's private, because we don't want the user to have access to it.
+     * We call it only internal as a last step during the Join operation
+     * @brief This methods add the join operator to a query
+     * @param subQueryRhs subQuery to be joined
+     * @param onLeftKey key attribute of the left stream
+     * @param onLeftKey key attribute of the right stream
+     * @param windowType Window definition.
+     * @param joinType the definition of how the composition of the streams should be performed
+     * @return the query
+     */
+    Query& joinFinalCall(const Query& subQueryRhs,
+                         ExpressionItem onLeftKey,
+                         ExpressionItem onRightKey,
+                         Windowing::WindowTypePtr const& windowType,
+                         Join::LogicalJoinDefinition::JoinType joinType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
