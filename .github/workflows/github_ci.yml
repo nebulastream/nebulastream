@@ -108,7 +108,7 @@ jobs:
               #When we decide on weather to use the version as tag or not we can use the below command to extract the current version.
               #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
               echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --push
+              docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
               echo "Pushed the build image"
               docker logout
           else

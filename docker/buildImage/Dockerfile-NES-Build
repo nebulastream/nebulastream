@@ -4,6 +4,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libdwarf-dev \
   libdwarf1 \
   binutils-dev \
+  libunwind-dev \
   libdw-dev \
   libssl-dev \
   build-essential \
