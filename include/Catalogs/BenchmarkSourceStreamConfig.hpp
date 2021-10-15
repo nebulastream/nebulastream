@@ -35,6 +35,8 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
      * @param logicalStreamName the name of the logical stream
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
+     * @param source mode on how to bring data into the buffer
+     * @param sourceAffinity id of cpu where to pin the source
      */
     explicit BenchmarkSourceStreamConfig(std::string sourceType,
                                          std::string physicalStreamName,
@@ -87,7 +89,8 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
      * @param logicalStreamName the name of the logical stream
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
-     * @param sourceMode how the bechmark source create the content, either by wrapping or by copy buffer
+     * @param sourceMode how the benchmark source create the content, either by wrapping or by copy buffer
+     * @param sourceAffinity id of cpu where to pin the source
      * @return a constructed BenchmarkSourceStreamConfig
      */
     static AbstractPhysicalStreamConfigPtr create(const std::string& sourceType,
