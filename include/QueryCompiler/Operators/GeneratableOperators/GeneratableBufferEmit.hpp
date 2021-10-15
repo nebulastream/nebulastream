@@ -53,18 +53,6 @@ class GeneratableBufferEmit : public GeneratableOperator {
      */
     void setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy strategy);
 
-    /**
-     * @brief get the output buffer assignment strategy
-     * @return OutputBufferAssignmentStrategy
-     */
-    OutputBufferAssignmentStrategy getOutputBufferAssignmentStrategy() const;
-
-    /**
-     * @brief sets the output buffer assignment strategy
-     * @param strategy
-     */
-    void setOutputBufferAssignmentStrategy(OutputBufferAssignmentStrategy strategy);
-
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
@@ -72,8 +60,7 @@ class GeneratableBufferEmit : public GeneratableOperator {
 
   private:
     GeneratableBufferEmit(OperatorId id, const SchemaPtr& outputSchema);
-    OutputBufferAllocationStrategy bufferAllocationStrategy;
-    OutputBufferAssignmentStrategy bufferAssignmentStrategy = FIELD_COPY;
+    OutputBufferAllocationStrategy bufferStrategy;
 };
 }// namespace NES::QueryCompilation::GeneratableOperators
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEBUFFEREMIT_HPP_

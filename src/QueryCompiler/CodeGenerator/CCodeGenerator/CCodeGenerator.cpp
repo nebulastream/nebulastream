@@ -406,7 +406,6 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, LegacyExpressio
 
 bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                                          OutputBufferAllocationStrategy bufferStrategy,
-                                         OutputBufferAssignmentStrategy bufferAssignmentStrategy,
                                          PipelineContextPtr context) {
 
     auto tf = getTypeFactory();
@@ -420,16 +419,10 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
     // add type declaration for the result tuple
     code->typeDeclarations.push_back(structDeclarationResultTuple);
 
-    if(bufferAssignmentStrategy==RECORD_COPY){
-        structDeclarationResultTuple = code->structDeclarationInputTuples[0];
-    }
-
-
     if (sinkSchema->getLayoutType() == Schema::ROW_LAYOUT) {
-        VariableDeclaration varDeclResultTuple =
+        auto varDeclResultTuple =
             VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(structDeclarationResultTuple)),
                                         "resultTuples");
-
         // initialize result buffer
         if (bufferStrategy == ONLY_INPLACE_OPERATIONS) {
             // We do not even initialize a buffer, we just use "inputBuffer" as the resultBuffer-handle for the later emit.
@@ -487,39 +480,32 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                         .copy());
             }
 
-            if (bufferAssignmentStrategy == FIELD_COPY) {
-                // Now, copy all fields listed in the result schema into the result buffer.
-                for (const auto& field : context->resultSchema->fields) {
-                    auto resultRecordFieldVariableDeclaration =
-                        getVariableDeclarationForField(structDeclarationResultTuple, field);
-                    if (!resultRecordFieldVariableDeclaration) {
-                        NES_FATAL_ERROR("CCodeGenerator: Could not extract field " << field->toString()
-                                                                                   << " from result record struct "
-                                                                                   << structDeclarationResultTuple.getTypeName());
-                    }
-
-                    // check if record handler has current field
-                    if (!recordHandler->hasAttribute(field->getName())) {
-                        NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
-                                        + " is part of the output schema, "
-                                          "but not registered in the record handler.");
-                    }
-
-                    // Get current field from record handler.
-                    auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
-
-                    // use regular assign for types which are not arrays, as fixed char arrays support
-                    // assignment by operator.
-                    auto const copyFieldStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)]
-                                                        .accessRef(VarRef(resultRecordFieldVariableDeclaration))
-                                                        .assign(currentFieldVariableReference);
-
-                    code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
+            // Now, copy all fields listed in the result schema into the result buffer.
+            for (const auto& field : context->resultSchema->fields) {
+                auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
+                if (!resultRecordFieldVariableDeclaration) {
+                    NES_FATAL_ERROR("CCodeGenerator: Could not extract field " << field->toString()
+                                                                               << " from result record struct "
+                                                                               << structDeclarationResultTuple.getTypeName());
                 }
-            } else if (bufferAssignmentStrategy == RECORD_COPY) {
-                auto recordCopyStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)].assign(
-                    VarRef(code->varDeclarationInputTuples)[VarRef(code->varDeclarationRecordIndex)]);
-                code->currentCodeInsertionPoint->addStatement(recordCopyStatement.copy());
+
+                // check if record handler has current field
+                if (!recordHandler->hasAttribute(field->getName())) {
+                    NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
+                                    + " is part of the output schema, "
+                                      "but not registered in the record handler.");
+                }
+
+                // Get current field from record handler.
+                auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
+
+                // use regular assign for types which are not arrays, as fixed char arrays support
+                // assignment by operator.
+                auto const copyFieldStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)]
+                                                    .accessRef(VarRef(resultRecordFieldVariableDeclaration))
+                                                    .assign(currentFieldVariableReference);
+
+                code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
             }
 
             if (context->getTuplePassesFiltersIsDeclared()) {
