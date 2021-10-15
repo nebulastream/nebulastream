@@ -16,7 +16,6 @@
 #ifndef NES_INCLUDE_CATALOGS_LambdaSourceStreamConfig_HPP_
 #define NES_INCLUDE_CATALOGS_LambdaSourceStreamConfig_HPP_
 
-//#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <functional>
 
