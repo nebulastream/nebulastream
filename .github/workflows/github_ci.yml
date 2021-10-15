@@ -14,9 +14,41 @@ on:
       - '*'
 
 jobs:
-  build-job:
+  build-INTEL:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
     runs-on: [self-hosted, linux, X64, Build]
+    timeout-minutes: 90
+    steps:
+      - uses: AutoModality/action-clean@v1
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.7.0
+        with:
+          access_token: ${{ github.token }}
+      - name: Run tests
+        run: |
+          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+      - name: docker cleanup
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_build
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
+
+  build-ARM:
+    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
+    runs-on: [self-hosted, linux, arm64, Build]
     timeout-minutes: 90
     steps:
       - uses: AutoModality/action-clean@v1
@@ -49,7 +81,7 @@ jobs:
   release:
     runs-on: [self-hosted, linux, X64, Build]
     if: github.ref == 'refs/heads/master'
-    needs: build-job
+    needs: [build-INTEL, build-ARM]
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
