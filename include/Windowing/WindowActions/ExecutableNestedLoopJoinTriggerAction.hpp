@@ -85,7 +85,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                                    << " check key=" << rightHashTable.first
                                                                    << " nextEdge=" << rightHashTable.second->nextEdge);
                 {
-                    if (joinDefinition->getJoinType() == LogicalJoinDefinition::JoinType::INNER_JOIN && leftHashTable.first == rightHashTable.first) {
+                    if (joinDefinition->getJoinType() == LogicalJoinDefinition::JoinType::INNER_JOIN
+                        && leftHashTable.first == rightHashTable.first) {
 
                         NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: found join pair for key "
                                                                            << leftHashTable.first);
@@ -109,6 +110,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                               currentWatermark,
                                                               lastWatermark,
                                                               workerContext);
+                    } else {
+                        NES_ERROR("Join handler : Unknown JoinType " << joinDefinition->getJoinType());
                     }
                 }
             }
@@ -126,10 +129,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
             //forward buffer to next  pipeline stage
             this->emitBuffer(tupleBuffer);
-        };
+        }
         NES_DEBUG("Join handler " << toString() << " flushed " << numberOfFlushedRecords << " records");
         return true;
-    };
+    }
 
     std::string toString() override {
         std::stringstream ss;
