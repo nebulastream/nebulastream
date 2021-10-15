@@ -53,8 +53,6 @@ TEST_F(BufferManagerTest, initializedBufferManager) {
 
 #ifdef NES_ENABLE_NUMA_SUPPORT
 TEST_F(BufferManagerTest, initializedBufferManagerWithNuma) {
-    const size_t buffers_managed = 1024;
-    const size_t buffer_size = 2 * 1024;
     auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
     auto bufferManager =
         std::make_shared<Runtime::BufferManager>(buffer_size, buffers_managed, hardwareManager->getNumaAllactor(0));
