@@ -76,7 +76,6 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     SchemaPtr outputSchema = nullptr;
     std::shared_ptr<GeneratableOperators::GeneratableBufferEmit> emitNode = nullptr;
     bool filterOperatorFound = false;
-    bool filterOnly = true;
     // TODO add checks when further operators are introduced that change the number of result tuples
 
     for (const auto& node : nodes) {
@@ -91,8 +90,6 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
             filterOperatorFound = true;
         } else if (node->instanceOf<GeneratableOperators::GeneratableCEPIterationOperator>()) {
             return operatorPipeline;
-        } else {
-            filterOnly = false;
         }
     }
 
@@ -111,15 +108,6 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         return operatorPipeline;
     }
 
-    // If we have only a filter query, we use a record copy instead of a field copy
-    if (inputSchema->equals(outputSchema) && filterOperatorFound && filterOnly) {
-        emitNode->setOutputBufferAssignmentStrategy(RECORD_COPY);
-        NES_DEBUG("BufferOptimizationPhase: Use Record Copy");
-    } else {
-        emitNode->setOutputBufferAssignmentStrategy(FIELD_COPY);
-        NES_DEBUG("BufferOptimizationPhase: Use Field Copy");
-    }
-
     // Check if necessary conditions are fulfilled and set the desired strategy in the emit operator:
     if (inputSchema->equals(outputSchema) && !filterOperatorFound
         && (level == QueryCompilerOptions::ONLY_INPLACE_OPERATIONS_NO_FALLBACK || level == QueryCompilerOptions::ALL)) {
@@ -129,7 +117,6 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         NES_DEBUG("BufferOptimizationPhase: Assign ONLY_INPLACE_OPERATIONS optimization strategy to pipeline.");
         return operatorPipeline;
     }
-
     if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()
         && (level == QueryCompilerOptions::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK
             || level == QueryCompilerOptions::ALL)) {
