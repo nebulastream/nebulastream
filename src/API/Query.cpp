@@ -121,10 +121,11 @@ Query& Query::unionWith(const Query& subQuery) {
     return *this;
 }
 
-Query& Query::joinWith(const Query& subQueryRhs,
-                       ExpressionItem onLeftKey,
-                       ExpressionItem onRightKey,
-                       const Windowing::WindowTypePtr& windowType) {
+Query& Query::joinFinalCall(const Query& subQueryRhs,
+                            ExpressionItem onLeftKey,
+                            ExpressionItem onRightKey,
+                            const Windowing::WindowTypePtr& windowType,
+                            Join::LogicalJoinDefinition::JoinType joinType) {
     NES_DEBUG("Query: joinWith the subQuery to current query");
 
     auto subQuery = const_cast<Query&>(subQueryRhs);
@@ -197,7 +198,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
                                                               triggerAction,
                                                               1,
                                                               1,
-                                                              NES::Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
+                                                              joinType);
 
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
@@ -205,69 +206,24 @@ Query& Query::joinWith(const Query& subQueryRhs,
     return *this;
 }
 
+Query& Query::joinWith(const Query& subQueryRhs,
+                       ExpressionItem onLeftKey,
+                       ExpressionItem onRightKey,
+                       const Windowing::WindowTypePtr& windowType) {
+    NES_DEBUG("Query: add JoinType to Join Operator");
+
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
+
+    return Query::joinFinalCall(subQueryRhs,onLeftKey,onRightKey,windowType,joinType);
+}
+
 Query& Query::andWith(const Query& subQueryRhs,
                        ExpressionItem onLeftKey,
                        ExpressionItem onRightKey,
                        const Windowing::WindowTypePtr& windowType) {
-    NES_DEBUG("Query: andWith the subQuery to current query");
+    NES_DEBUG("Query: add JoinType to AND Operator");
 
-    auto subQuery = const_cast<Query&>(subQueryRhs);
-
-    auto leftKeyExpression = onLeftKey.getExpressionNode();
-    if (!leftKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + leftKeyExpression->toString());
-        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
-    }
-    auto rightKeyExpression = onRightKey.getExpressionNode();
-    if (!rightKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + rightKeyExpression->toString());
-        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
-    }
-    auto leftKeyFieldAccess = leftKeyExpression->as<FieldAccessExpressionNode>();
-    auto rightKeyFieldAccess = rightKeyExpression->as<FieldAccessExpressionNode>();
-
-    //we use a on time trigger as default that triggers on each change of the watermark
-    auto triggerPolicy = OnWatermarkChangeTriggerPolicyDescription::create();
-    //    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
-
-    //we use a lazy NL join because this is currently the only one that is implemented
-    auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
-
-    // we use a complete window type as we currently do not have a distributed join
-    auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
-
-    auto rightQueryPlan = subQuery.getQueryPlan();
-    NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid right query plan");
-    auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
-    auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
-    auto rightJoinType = rootOperatorRhs->getOutputSchema();
-
-    // check if query contain watermark assigner, and add if missing (as default behaviour)
-    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
-            queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
-        } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
-                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                    Milliseconds(0),
-                    windowType->getTimeCharacteristic()->getTimeUnit())));
-        }
-    }
-
-    if (rightQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
-            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create());
-            rightQueryPlan->appendOperatorAsNewRoot(op);
-        } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
-                Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                Milliseconds(0),
-                windowType->getTimeCharacteristic()->getTimeUnit()));
-            rightQueryPlan->appendOperatorAsNewRoot(op);
-        }
-    }
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
@@ -291,7 +247,7 @@ Query& Query::andWith(const Query& subQueryRhs,
     std::sort(sourceNames.begin(), sourceNames.end());
     auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
     queryPlan->setSourceConsumed(updatedSourceName);
-    return *this;
+    return Query::joinFinalCall(subQueryRhs,onLeftKey,onRightKey,windowType,joinType);
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {
