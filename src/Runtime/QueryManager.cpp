@@ -918,8 +918,9 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                           Execution::SuccessorExecutablePipeline executable,
                                           uint32_t numaNode) {
-    NES_DEBUG("Add Work for executable" << numaNode);
+    NES_DEBUG("Add Work for executable");
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+    NES_DEBUG("Using numaNode =" << numaNode);
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if ((*nextPipeline)->isRunning()) {
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
@@ -941,6 +942,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
 #endif
     }
 #else
+    NES_DEBUG("Ignoring parameter numaNode =" << numaNode);
     std::unique_lock lock2(workMutex);
     // dispatch buffer as task
     if (auto* nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
