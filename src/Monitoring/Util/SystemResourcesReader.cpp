@@ -32,6 +32,7 @@
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>
 #elif defined(__APPLE__)
+#include <sys/statvfs.h>
 #else
 #error "Unknown platform"
 #endif
@@ -303,6 +304,7 @@ MemoryMetrics SystemResourcesReader::readMemoryStats() {
     try {
         NES_DEBUG("SystemResourcesReader: Reading memory stats.");
 
+#ifdef __linux__
         auto* sinfo = (struct sysinfo*) malloc(sizeof(struct sysinfo));
 
         int ret = sysinfo(sinfo);
@@ -324,6 +326,10 @@ MemoryMetrics SystemResourcesReader::readMemoryStats() {
         output.LOADS_5MIN = sinfo->loads[1];
         output.LOADS_15MIN = sinfo->loads[2];
         delete[] sinfo;
+#else
+        // TODO #2269 Set memory metrics on macOS
+        NES_WARNING("Could not set MemoryMetrics because <sys/sysinfo.h> does not exist.");
+#endif
     } catch (const RuntimeException& e) {
         NES_ERROR("SystemResourcesReader: Error reading memory stats " << e.what());
     }
