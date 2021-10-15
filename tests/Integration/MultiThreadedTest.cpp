@@ -48,7 +48,7 @@ class MultiThreadedTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down MultiWorkerTest class."); }
 };
 
-TEST_F(MultiThreadedTest, testFilterQuery) {
+TEST_F(MultiThreadedTest, DISABLED_testFilterQuery) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
