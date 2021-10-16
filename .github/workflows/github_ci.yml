@@ -31,7 +31,7 @@ jobs:
           access_token: ${{ github.token }}
       - name: Run tests
         run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --ulimit memlock=70000000:70000000 --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: docker cleanup
         if: ${{ always() }}
         run: |
@@ -64,7 +64,7 @@ jobs:
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run tests
         run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --ulimit memlock=70000000:70000000 -eOS="ARM64" --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eOS="ARM64" --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: docker cleanup
         if: ${{ always() }}
         run: |
