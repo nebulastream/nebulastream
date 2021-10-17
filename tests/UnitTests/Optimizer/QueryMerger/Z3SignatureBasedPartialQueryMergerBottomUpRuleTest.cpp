@@ -73,15 +73,9 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public testing::Test 
         sourceConfig->setPhysicalStreamName("test2");
         sourceConfig->setLogicalStreamName("car");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
-        //        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
-
         StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode1);
-        //        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode2);
-
         streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
-        //        streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
     }
 
     /* Will be called before a test is executed. */

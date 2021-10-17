@@ -92,18 +92,6 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
         NES_DEBUG(" Util: stream name = " << streamName);
 
         std::string newQuery = queryCodeSnippet;
-
-//        bool unionWith = queryCodeSnippet.find(".unionWith") != std::string::npos;
-//        if (unionWith) {//if contains unionWith
-//            auto pos1 = queryCodeSnippet.find("unionWith(");
-//            uint64_t closingLoc = findSubQueryTermination(pos1, queryCodeSnippet);
-//            std::string subquery = queryCodeSnippet.substr(pos1 + 10, closingLoc - pos1 - 10);
-//            NES_DEBUG("UtilityFunctions: subquery = " << subquery);
-//            code << "auto subQuery = " << subquery << ";" << std::endl;
-//            newQuery.replace(pos1, closingLoc - pos1, "unionWith(&subQuery");
-//            NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
-//        }
-
         // add return statement in front of input query
         newQuery = Util::replaceFirst(newQuery, "Query::from", "return Query::from");
 
