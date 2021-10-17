@@ -469,7 +469,7 @@ void QueryManager::poisonWorkers() {
                                                           true);
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
-        taskQueue.blockingWrite(Task(pipeline, buffer));
+        taskQueue.blockingWrite(Task(pipeline, buffer, getNextTaskId()));
     }
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     //TODO:assumption same number of threads per numa region
@@ -602,10 +602,10 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
         std::vector<Task> batch;
         for (size_t i = 0; i < threadPool->getNumberOfThreads(); ++i) {
             //            batch.emplace_back(pipeline, buffer);
-            taskQueue.blockingWrite(Task(pipeline, buffer));
+            taskQueue.blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
     } else {
-        taskQueue.blockingWrite(Task(pipeline, buffer));
+        taskQueue.blockingWrite(Task(pipeline, buffer, getNextTaskId()));
     }
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     //TODO: add one mutex per queue
@@ -675,7 +675,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
 
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
         for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
-            taskQueue.blockingWrite(Task(pipeline, buffer));
+            taskQueue.blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
         auto numberOfNumaRegions = numberOfQueues;
@@ -926,7 +926,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer << " numaNode=" << numaNode);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-            taskQueue.blockingWrite(Task(executable, buffer));
+            taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 
 #else
             taskQueues[numaNode].write(Task(executable, buffer));
@@ -936,7 +936,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
         }
     } else {
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-        taskQueue.blockingWrite(Task(executable, buffer));
+        taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 #else
         taskQueues[numaNode].write(Task(executable, buffer));
 #endif
@@ -1107,5 +1107,7 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
 uint64_t QueryManager::getNodeId() const { return nodeEngineId; }
 
 bool QueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
+
+uint64_t QueryManager::getNextTaskId() { return ++taskIdCounter; }
 
 }// namespace NES::Runtime

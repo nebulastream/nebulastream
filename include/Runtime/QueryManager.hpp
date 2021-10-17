@@ -252,8 +252,15 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool addSoftEndOfStream(OperatorId sourceId);
     bool addHardEndOfStream(OperatorId sourceId);
 
+    /**
+     * @brief Returns the next free task id
+     * @return next task id
+     */
+    uint64_t getNextTaskId();
+
   private:
     uint64_t nodeEngineId;
+    std::atomic_uint64_t taskIdCounter = 0;
 
     ThreadPoolPtr threadPool{nullptr};
 

@@ -61,6 +61,12 @@ class NodeEngineFactory {
     createQueryCompilationOptions(const std::string& queryCompilerCompilationStrategy,
                                   const std::string& queryCompilerPipeliningStrategy,
                                   const std::string& queryCompilerOutputBufferOptimizationLevel);
+
+    /**
+     * @brief Returns the next free node id
+     * @return node id
+     */
+    static uint64_t getNextNodeEngineId();
 };
 
 }// namespace NES::Runtime

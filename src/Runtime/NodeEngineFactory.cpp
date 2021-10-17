@@ -55,7 +55,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const std::string& queryCompilerOutputBufferOptimizationLevel) {
 
     try {
-        auto nodeEngineId = Util::getNextNodeEngineId();
+        auto nodeEngineId = getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
         std::vector<BufferManagerPtr> bufferManagers;
@@ -197,6 +197,11 @@ NodeEngineFactory::createQueryCompilationOptions(const std::string& queryCompile
                                                                       << " not supported");
     }
     return queryCompilationOptions;
+}
+
+uint64_t NodeEngineFactory::getNextNodeEngineId() {
+    static std::atomic_uint64_t id = time(nullptr) ^ getpid();
+    return ++id;
 }
 
 }// namespace NES::Runtime

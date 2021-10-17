@@ -242,18 +242,6 @@ OperatorId getNextOperatorId();
 uint64_t getNextPipelineId();
 
 /**
-     * @brief Returns the next free node id
-     * @return node id
-     */
-uint64_t getNextNodeEngineId();
-
-/**
-     * @brief Returns the next free task id
-     * @return node id
-     */
-uint64_t getNextTaskId();
-
-/**
      *
      * @brief This function replaces the first occurrence of search term in a string with the replace term.
      * @param origin - The original string that is to be manipulated
