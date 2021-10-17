@@ -27,9 +27,6 @@ SignatureEqualityUtilPtr SignatureEqualityUtil::create(const z3::ContextPtr& con
 
 SignatureEqualityUtil::SignatureEqualityUtil(const z3::ContextPtr& context) : counter(0) {
     this->context = context;
-    //    this->context->set("solver2_unknown", true);
-    //    this->context->set("ignore_solver1", true);
-    //    this->context->set("timeout", 1);
     solver = std::make_unique<z3::solver>(*context);
 }
 

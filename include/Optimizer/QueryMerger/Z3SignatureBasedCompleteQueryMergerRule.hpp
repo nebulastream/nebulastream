@@ -83,7 +83,6 @@ class Z3SignatureBasedCompleteQueryMergerRule final : public BaseQueryMergerRule
   private:
     explicit Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context);
     SignatureEqualityUtilPtr signatureEqualityUtil;
-//    uint64_t counter = 0;
 };
 }// namespace NES::Optimizer
 

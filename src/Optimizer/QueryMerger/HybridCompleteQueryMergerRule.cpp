@@ -37,7 +37,6 @@ HybridCompleteQueryMergerRulePtr HybridCompleteQueryMergerRule::create(z3::Conte
 }
 
 bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-
     NES_INFO("HybridCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
@@ -78,12 +77,17 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                 }
             }
 
+            //If matches are not found then use Z3 for equality check
             if (!foundMatch) {
+                //Iterate over all sink operators and then infer Z3 signature
                 auto hostSinkOperators = hostQueryPlan->getSinkOperators();
                 for (auto& hostSinkOperator : hostSinkOperators) {
                     hostSinkOperator->inferZ3Signature(context);
                 }
+
                 targetSinkOperators[0]->inferZ3Signature(context);
+                //Fetch any sink operator from the host query plan and compare
+                // With the target sink operator's Z3 Signature
                 if (signatureEqualityUtil->checkEquality(targetSinkOperators[0]->getZ3Signature(),
                                                          hostSinkOperators[0]->getZ3Signature())) {
                     targetToHostSinkOperatorMap[targetSinkOperators[0]] = hostSinkOperators[0];
@@ -134,5 +138,4 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     globalQueryPlan->removeEmptySharedQueryPlans();
     return globalQueryPlan->clearQueryPlansToAdd();
 }
-
 }// namespace NES::Optimizer

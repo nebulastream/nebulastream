@@ -32,7 +32,6 @@ StringSignatureBasedPartialQueryMergerRulePtr StringSignatureBasedPartialQueryMe
 }
 
 bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
         NES_WARNING("StringSignatureBasedPartialQueryMergerRule: Found no new query metadata in the global query plan."
@@ -46,10 +45,8 @@ bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr global
         bool merged = false;
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
-
             //TODO: we need to check how this will pan out when we will have more than 1 sink
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
-
             //create a map of matching target to address operator id map
             auto matchedTargetToHostOperatorMap = areQueryPlansEqual(targetQueryPlan, hostQueryPlan);
 
@@ -126,7 +123,6 @@ bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr global
 std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr>
 StringSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
                                                                const QueryPlanPtr& hostQueryPlan) {
-
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     NES_DEBUG(
         "StringSignatureBasedPartialQueryMergerRule: check if the target and address query plans are syntactically equal or not");
@@ -156,7 +152,6 @@ StringSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPt
 std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr>
 StringSignatureBasedPartialQueryMergerRule::areOperatorEqual(const LogicalOperatorNodePtr& targetOperator,
                                                              const LogicalOperatorNodePtr& hostOperator) {
-
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE("StringSignatureBasedPartialQueryMergerRule: Both target and host operators are of sink type.");
@@ -188,5 +183,4 @@ StringSignatureBasedPartialQueryMergerRule::areOperatorEqual(const LogicalOperat
     NES_WARNING("StringSignatureBasedPartialQueryMergerRule: Target and host operators are not matched.");
     return {};
 }
-
 }// namespace NES::Optimizer

@@ -235,27 +235,27 @@ class Node : public std::enable_shared_from_this<Node> {
     const std::vector<NodePtr>& getChildren() const;
 
     /**
-     * Check if the node is present as the parent or grand-parent
+     * @brief Check if the node is present as the parent or grand-parent
      * @param node: node to look for
      * @return true if present as false
      */
     bool containAsGrandParent(NodePtr node);
 
     /**
-     * Check if input node is present as parent to this
+     * @brief Check if input node is present as parent to this
      * @return true if input node is in parent list
      */
     virtual bool containAsParent(NodePtr node);
 
     /**
-     * Check if the node is present as the child or grand-child
+     * @brief Check if the node is present as the child or grand-child
      * @param node: node to look for
      * @return true if present as false
      */
     bool containAsGrandChild(NodePtr node);
 
     /**
-     * Check if input node is present as children to this
+     * @brief Check if input node is present as children to this
      * @return true if input node is in children list
      */
     virtual bool containAsChild(NodePtr node);
@@ -273,7 +273,7 @@ class Node : public std::enable_shared_from_this<Node> {
     std::vector<NodePtr> getAllRootNodes();
 
     /**
-     * Get all the leaf nodes
+     * @brief Get all the leaf nodes
      * @return vector of leaf nodes
      */
     std::vector<NodePtr> getAllLeafNodes();
@@ -394,7 +394,7 @@ class Node : public std::enable_shared_from_this<Node> {
      *                   Helper parameters                                           *
      ********************************************************************************/
     /**
-     * Helper parameters for cycle detection
+     * @brief Helper parameters for cycle detection
      */
     bool visited{false};
     bool recStack{false};

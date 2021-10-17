@@ -167,6 +167,12 @@ class LogicalWindowDefinition {
 
     std::string toString();
 
+    /**
+     * @brief Test is the input window definition is equal to this window definition by comparing the window key, type,
+     * and aggregation
+     * @param otherWindowDefinition: The other window definition
+     * @return true if they are equal else false
+     */
     bool equal(LogicalWindowDefinitionPtr otherWindowDefinition);
 
   private:

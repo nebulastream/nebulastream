@@ -1,27 +1,20 @@
-# ~~~ Configurations for the NES E2E Selection Benchmark ~~~
-
 #Location of query set
 # For each query set we will run the experiments
-querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
-#querySetLocation: '/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QueryLoad'
+querySetLocation: '<Path To Query-Set Folder>'
 
-# Parameter that are changed per run with comma separated list
-#queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule
-  # Z3SignatureBasedPartialQueryMergerBottomUpRule,SyntaxBasedPartialQueryMergerRule,ImprovedStringSignatureBasedPartialQueryMergerRule,Z3SignatureBasedPartialQueryMergerRule
-  #,ImprovedStringSignatureBasedPartialQueryMergerRule,Z3SignatureBasedPartialQueryMergerRule
-  #,HybridCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
-  #,SyntaxBasedCompleteQueryMergerRule
-# Z3SignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule
-#,HybridCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
+# List of Query merging strategies in comma separated
 queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,DefaultQueryMergerRule,HashSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule
 #queryMergerRule: Z3SignatureBasedPartialQueryMergerRule,SyntaxBasedPartialQueryMergerRule,DefaultQueryMergerRule,StringSignatureBasedPartialQueryMergerRule,ImprovedStringSignatureBasedPartialQueryMergerRule,Z3SignatureBasedPartialQueryMergerBottomUpRule
+# Number of Physical sources
 noOfPhysicalSources: 1,1,1,1,1,1
-#  ,1,1,1,1
+# Batch size for processing number of queries together
 batchSize: 1,1,1,1,1,1
-#  ,1,1,1,1
 
 #benchmark internal parameter
 logLevel: LOG_NONE
+# Number of Distinct Logical sources
 numberOfDistinctSources: 10
+# Sleep interval between each run
 startupSleepIntervalInSeconds: 3
+# Number of times experiment is to be repeated
 numberOfMeasurementsToCollect: 3

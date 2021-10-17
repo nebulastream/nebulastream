@@ -32,7 +32,6 @@ HashSignatureBasedCompleteQueryMergerRulePtr HashSignatureBasedCompleteQueryMerg
 }
 
 bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-
     NES_INFO(
         "HashSignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
@@ -50,11 +49,11 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             auto hostSignature = hostSharedQueryPlan->getHashBasedSignature();
+
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
             std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
             bool foundMatch = false;
-
             auto targetSinkOperators = targetQueryPlan->getSinkOperators();
             auto targetSignature = targetSinkOperators[0]->getHashBasedSignature();
             auto targetSignatureHashValue = targetSignature.begin()->first;

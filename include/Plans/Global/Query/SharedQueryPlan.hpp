@@ -106,7 +106,7 @@ class SharedQueryPlan {
     bool removeQuery(QueryId queryId);
 
     /**
-     * Add the addition information to the change log
+     * @brief Add the addition information to the change log
      * @param upstreamOperator: the upstream operator to which operator needs to be added
      * @param newOperator : the newly added operator
      */
@@ -189,16 +189,20 @@ class SharedQueryPlan {
      */
     bool addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan);
 
+    /**
+     * @brief Get the shared query plan change log since the last time the shared query plan was deployed.
+     * @return the change log
+     */
     SharedQueryPlanChangeLogPtr getChangeLog();
 
     /**
-     * Get the hash based signature for the shared query plan
+     * @brief Get the hash based signature for the shared query plan
      * @return collection of hash based signatures
      */
     std::map<size_t, std::set<std::string>> getHashBasedSignature();
 
     /**
-     * Update the hash based signatures with new values
+     * @brief Update the hash based signatures with new values
      * @param hashValue: The hash value
      * @param stringSignature: The string signature
      */
@@ -222,7 +226,7 @@ class SharedQueryPlan {
     SharedQueryPlanChangeLogPtr changeLog;
     bool deployed;
     bool newMetaData;
-    //FIXME: We have to figure out a way to change it once a query is removed
+    //FIXME: #2274 We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
 };
 }// namespace NES

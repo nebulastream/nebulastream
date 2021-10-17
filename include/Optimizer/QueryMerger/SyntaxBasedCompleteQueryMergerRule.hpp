@@ -104,7 +104,6 @@ class SyntaxBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
     bool areOperatorEqual(const OperatorNodePtr& targetOperator,
                           const OperatorNodePtr& hostOperator,
                           std::map<uint64_t, uint64_t>& targetHostOperatorMap);
-    uint64_t counter=0;
 };
 }// namespace NES::Optimizer
 #endif//NES_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP
