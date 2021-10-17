@@ -263,7 +263,7 @@ QueryPlanPtr QueryPlan::copy() {
     return newQueryPlan;
 }
 
-const std::string& QueryPlan::getSourceConsumed() const { return sourceConsumed; }
+std::string QueryPlan::getSourceConsumed() const { return sourceConsumed; }
 
 void QueryPlan::setSourceConsumed(const std::string& sourceName) { sourceConsumed = sourceName; }
 
