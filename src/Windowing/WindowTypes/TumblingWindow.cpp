@@ -65,7 +65,7 @@ std::string TumblingWindow::toString() {
 
 bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
     return this->timeCharacteristic->getField()->getName() == otherWindowType->getTimeCharacteristic()->getField()->getName()
-        && this->isTumblingWindow() == otherWindowType->isTumblingWindow()
+        && this->isTumblingWindow() && otherWindowType->isTumblingWindow()
         && this->size.getTime() == otherWindowType->getSize().getTime();
 }
 }// namespace NES::Windowing
