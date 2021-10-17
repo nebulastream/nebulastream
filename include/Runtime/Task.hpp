@@ -37,7 +37,7 @@ class alignas(64) Task {
      * @param id of the pipeline stage inside the QEP that should be applied
      * @param pointer to the tuple buffer that has to be process
      */
-    explicit Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer buf);
+    explicit Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer buf, uint64_t taskId);
 
     constexpr explicit Task() noexcept = default;
 
