@@ -43,7 +43,7 @@ TimeMeasure EventTimeWatermarkStrategyDescriptor::getAllowedLateness() { return 
 
 bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other) {
     auto eventTimeWatermarkStrategyDescriptor = other->as<EventTimeWatermarkStrategyDescriptor>();
-    return eventTimeWatermarkStrategyDescriptor->onField == onField
+    return eventTimeWatermarkStrategyDescriptor->onField->equal(onField)
         && eventTimeWatermarkStrategyDescriptor->allowedLateness.getTime() == allowedLateness.getTime();
 }
 
