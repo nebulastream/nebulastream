@@ -83,6 +83,12 @@ class WindowAggregationDescriptor {
 
     std::string getTypeAsString();
 
+    /**
+     * @brief Check if input window aggregation is equal to this window aggregation definition by checking the aggregation type,
+     * on field, and as field
+     * @param otherWindowAggregationDescriptor : other window aggregation definition
+     * @return true if equal else false
+     */
     bool equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor);
 
   protected:

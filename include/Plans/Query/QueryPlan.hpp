@@ -219,8 +219,12 @@ class QueryPlan {
      */
     QueryPlanPtr copy();
 
-    [[nodiscard]] const std::string& getSourceConsumed() const;
+    [[nodiscard]] std::string getSourceConsumed() const;
 
+    /**
+     * @brief Set the logical sources used in the query
+     * @param sourceName: the name of the logical source
+     */
     void setSourceConsumed(const std::string& sourceName);
 
   private:

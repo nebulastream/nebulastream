@@ -82,6 +82,12 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRule final : public BaseQueryMer
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
                                                                                 const QueryPlanPtr& hostQueryPlan);
 
+    /**
+     * @brief This method compares two operator signatures using Z3
+     * @param targetOperator : the target operator to compare
+     * @param hostOperator : the host operator to compare with
+     * @return bool true if equal else false
+     */
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> areOperatorEqual(const LogicalOperatorNodePtr& targetOperator,
                                                                               const LogicalOperatorNodePtr& hostOperator);
     SignatureEqualityUtilPtr signatureEqualityUtil;

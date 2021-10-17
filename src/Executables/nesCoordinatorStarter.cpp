@@ -48,14 +48,10 @@ const std::string logo = "/*****************************************************
 
 int main(int argc, const char* argv[]) {
     std::cout << logo << std::endl;
-
-
-
     NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
 
     map<string, string> commandLineParams;
-
     for (int i = 1; i < argc; ++i) {
         commandLineParams.insert(
             pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
@@ -63,7 +59,6 @@ int main(int argc, const char* argv[]) {
     }
 
     auto configPath = commandLineParams.find("--configPath");
-
     if (configPath != commandLineParams.end()) {
         coordinatorConfig->overwriteConfigWithYAMLFileInput(configPath->second);
     }

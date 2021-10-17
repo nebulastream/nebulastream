@@ -61,7 +61,7 @@ class LogicalOperatorNode : public virtual OperatorNode {
     virtual void inferStringSignature() = 0;
 
     /**
-     * @brief Set the update the hash based  for the logical operator
+     * @brief Set the hash based signature for the logical operator
      * @param signature : the signature
      */
     void setHashBasedSignature(std::map<size_t, std::set<std::string>> signature);

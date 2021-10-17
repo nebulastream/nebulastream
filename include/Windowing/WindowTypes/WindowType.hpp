@@ -78,6 +78,11 @@ class WindowType {
      */
     bool inferStamp(const SchemaPtr& schema);
 
+    /**
+     * @brief Check equality of this window type with the input window type
+     * @param otherWindowType : the other window type to compare with
+     * @return true if equal else false
+     */
     virtual bool equal(WindowTypePtr otherWindowType) = 0;
 
   protected:
