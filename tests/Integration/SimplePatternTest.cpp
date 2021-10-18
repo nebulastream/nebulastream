@@ -313,7 +313,8 @@ TEST_F(SimplePatternTest, testAndPattern) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$key:CHAR[8]|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|\n"
+        "|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$key:CHAR[8]|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:"
+        "FLOAT32|QnV$quantity:UINT64|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1543624800000|1543625100000|R2000070|R2000070|1543624980000|90.000000|9|R2000070|1543624980000|90.000000|9|\n"
         "+----------------------------------------------------+";

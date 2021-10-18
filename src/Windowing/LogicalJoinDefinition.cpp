@@ -53,7 +53,7 @@ LogicalJoinDefinitionPtr LogicalJoinDefinition::create(const FieldAccessExpressi
                                                        uint64_t numberOfInputEdgesLeft,
                                                        uint64_t numberOfInputEdgesRight,
                                                        JoinType joinType) {
-       return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKeyType,
+    return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKeyType,
                                                          rightJoinKeyType,
                                                          windowType,
                                                          distributionType,
