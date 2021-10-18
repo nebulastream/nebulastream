@@ -75,7 +75,6 @@ class SenseSourceConfig : public SourceConfig {
     void setUdsf(std::string udsf);
 
   private:
-
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */

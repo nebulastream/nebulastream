@@ -17,9 +17,9 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #pragma clang diagnostic pop
 #include <Common/DataTypes/DataTypeFactory.hpp>
 namespace NES {

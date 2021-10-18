@@ -25,9 +25,7 @@ KafkaSourceConfigPtr KafkaSourceConfig::create(std::map<std::string, std::string
     return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig(std::move(sourceConfigMap)));
 }
 
-KafkaSourceConfigPtr KafkaSourceConfig::create() {
-    return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig());
-}
+KafkaSourceConfigPtr KafkaSourceConfig::create() { return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig()); }
 
 KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(sourceConfigMap), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
@@ -58,7 +56,6 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
     if (sourceConfigMap.find("KafkaSourceConnectionTimeout") != sourceConfigMap.end()) {
         connectionTimeout->setValue(std::stoi(sourceConfigMap.find("KafkaSourceConnectionTimeout")->second));
     }
-
 }
 
 KafkaSourceConfig::KafkaSourceConfig()
@@ -74,7 +71,6 @@ KafkaSourceConfig::KafkaSourceConfig()
       connectionTimeout(
           ConfigOption<uint32_t>::create("connectionTimeout", 10, "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceConfig: Init source config object with default values.");
-
 }
 
 void KafkaSourceConfig::resetSourceOptions() {
@@ -97,7 +93,7 @@ std::string KafkaSourceConfig::toString() {
     return ss.str();
 }
 
-StringConfigOption KafkaSourceConfig::getBrokers() const {return brokers;}
+StringConfigOption KafkaSourceConfig::getBrokers() const { return brokers; }
 
 IntConfigOption KafkaSourceConfig::getAutoCommit() const { return autoCommit; }
 
@@ -115,6 +111,8 @@ void KafkaSourceConfig::setGroupId(std::string groupIdValue) { groupId->setValue
 
 void KafkaSourceConfig::setTopic(std::string topicValue) { topic->setValue(std::move(topicValue)); }
 
-void KafkaSourceConfig::setConnectionTimeout(uint32_t connectionTimeoutValue) { connectionTimeout->setValue(connectionTimeoutValue); }
+void KafkaSourceConfig::setConnectionTimeout(uint32_t connectionTimeoutValue) {
+    connectionTimeout->setValue(connectionTimeoutValue);
+}
 
 }// namespace NES

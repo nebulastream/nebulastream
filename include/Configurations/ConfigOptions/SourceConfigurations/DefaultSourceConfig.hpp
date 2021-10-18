@@ -71,7 +71,6 @@ class DefaultSourceConfig : public SourceConfig {
      * @brief constructor to create a new Default source config object initialized with default values
      */
     DefaultSourceConfig();
-
 };
 }// namespace NES
 #endif

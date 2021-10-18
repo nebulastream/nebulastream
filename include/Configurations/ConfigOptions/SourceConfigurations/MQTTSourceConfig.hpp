@@ -139,7 +139,6 @@ class MQTTSourceConfig : public SourceConfig {
     StringConfigOption topic;
     IntConfigOption qos;
     BoolConfigOption cleanSession;
-
 };
 }// namespace NES
 #endif

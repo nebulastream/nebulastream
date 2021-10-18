@@ -89,7 +89,6 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     std::string physicalStreamName;
     std::string logicalStreamName;
     std::string sourceType;
-
 };
 
 }// namespace NES

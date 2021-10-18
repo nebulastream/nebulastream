@@ -33,10 +33,10 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap)
       rowLayout(ConfigOption<bool>::create("rowLayout", true, "storage layout, true = row layout, false = column layout")),
       flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")),
       inputFormat(ConfigOption<std::string>::create("inputFormat", "JSON", "input data format")),
-      sourceType(
-          ConfigOption<std::string>::create("sourceType",
-                                            "NoSource",
-                                            "Type of the Source (available options: NoSource, DefaultSource, CSVSource, BinarySource, MQTTSource, KafkaSource, OPCSource).")) {
+      sourceType(ConfigOption<std::string>::create("sourceType",
+                                                   "NoSource",
+                                                   "Type of the Source (available options: NoSource, DefaultSource, CSVSource, "
+                                                   "BinarySource, MQTTSource, KafkaSource, OPCSource).")) {
     NES_INFO("NesSourceConfig: Init source config object with new values.");
 
     if (sourceConfigMap.find("numberOfBuffersToProduce") != sourceConfigMap.end()) {
@@ -66,7 +66,6 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap)
     if (sourceConfigMap.find("sourceType") != sourceConfigMap.end()) {
         sourceType->setValue(sourceConfigMap.find("sourceType")->second);
     }
-
 }
 
 SourceConfig::SourceConfig()
@@ -85,7 +84,6 @@ SourceConfig::SourceConfig()
                                             "NoSource",
                                             "Type of the Source (available options: DefaultSource, CSVSource, BinarySource).")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
-
 }
 
 void SourceConfig::resetSourceOptions() {

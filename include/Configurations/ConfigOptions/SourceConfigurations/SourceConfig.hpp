@@ -18,8 +18,8 @@
 #define NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_
 
 #include <map>
-#include <string>
 #include <memory>
+#include <string>
 
 namespace NES {
 
@@ -36,10 +36,9 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 /**
  * @brief Configuration object for source config
  */
-class SourceConfig : public std::enable_shared_from_this<SourceConfig>{
+class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
 
   public:
-
     /**
      * @brief constructor to create a new source option object initialized with values from sourceConfigMap
      */
@@ -181,7 +180,6 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig>{
     }
 
   private:
-
     IntConfigOption numberOfBuffersToProduce;
     IntConfigOption numberOfTuplesToProducePerBuffer;
     StringConfigOption physicalStreamName;
@@ -191,7 +189,6 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig>{
     FloatConfigOption flushIntervalMS;
     StringConfigOption inputFormat;
     StringConfigOption sourceType;
-
 };
 }// namespace NES
 #endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_

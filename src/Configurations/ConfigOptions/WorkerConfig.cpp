@@ -240,7 +240,7 @@ void WorkerConfig::resetWorkerOptions() {
     setSourcePinList(sourcePinList->getDefaultValue());
 }
 
-std::string WorkerConfig::toString(){
+std::string WorkerConfig::toString() {
     std::stringstream ss;
     ss << localWorkerIp->toStringNameCurrentValue();
     ss << coordinatorIp->toStringNameCurrentValue();

@@ -18,38 +18,28 @@ limitations under the License.
 #define NES_SOURCECONFIGFACTORY_HPP
 
 #include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
-#include <string>
-#include <memory>
 #include <map>
+#include <memory>
+#include <string>
 
 namespace NES {
 
 /**
  * enum with config objects
  */
-enum ConfigSourceType {
-    SenseSource,
-    CSVSource,
-    BinarySource,
-    MQTTSource,
-    KafkaSource,
-    OPCSource,
-    DefaultSource,
-    NoSource};
+enum ConfigSourceType { SenseSource, CSVSource, BinarySource, MQTTSource, KafkaSource, OPCSource, DefaultSource, NoSource };
 
 /**
  * enum string mapping for source config factory
  */
-static std::map<std::string, ConfigSourceType> stringToConfigSourceType{
-    {"SenseSource", SenseSource},
-    {"CSVSource", CSVSource},
-    {"BinarySource", BinarySource},
-    {"MQTTSource", MQTTSource},
-    {"KafkaSource", KafkaSource},
-    {"OPCSource", OPCSource},
-    {"DefaultSource", DefaultSource},
-    {"NoSource", NoSource}
-};
+static std::map<std::string, ConfigSourceType> stringToConfigSourceType{{"SenseSource", SenseSource},
+                                                                        {"CSVSource", CSVSource},
+                                                                        {"BinarySource", BinarySource},
+                                                                        {"MQTTSource", MQTTSource},
+                                                                        {"KafkaSource", KafkaSource},
+                                                                        {"OPCSource", OPCSource},
+                                                                        {"DefaultSource", DefaultSource},
+                                                                        {"NoSource", NoSource}};
 
 class SourceConfig;
 using SourceConfigPtr = std::shared_ptr<SourceConfig>;
@@ -62,7 +52,8 @@ class SourceConfigFactory {
      * @param argc number of command line params
      * @return source config object
      */
-    static std::shared_ptr<SourceConfig> createSourceConfig(const std::map<std::string, std::string>& commandLineParams, int argc);
+    static std::shared_ptr<SourceConfig> createSourceConfig(const std::map<std::string, std::string>& commandLineParams,
+                                                            int argc);
 
     /**
      * @brief create empty source config
@@ -83,10 +74,11 @@ class SourceConfigFactory {
      * @param configurationMap map with current configurations from yaml file
      * @return map with configurations, overwritten if command line configs change yaml file configs
      */
-    static std::map<std::string, std::string> overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams, std::map<std::string, std::string> configurationMap);
-
+    static std::map<std::string, std::string>
+    overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams,
+                                        std::map<std::string, std::string> configurationMap);
 };
 
-}
+}// namespace NES
 
 #endif//NES_SOURCECONFIGFACTORY_HPP

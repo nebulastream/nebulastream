@@ -86,7 +86,6 @@ class BinarySourceConfig : public SourceConfig {
     BinarySourceConfig();
 
     StringConfigOption filePath;
-
 };
 }// namespace NES
 #endif

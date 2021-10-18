@@ -18,8 +18,8 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
 #include <Services/StreamCatalogService.hpp>

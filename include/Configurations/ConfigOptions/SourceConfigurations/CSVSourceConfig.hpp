@@ -96,7 +96,6 @@ class CSVSourceConfig : public SourceConfig {
     CSVSourceConfig();
     StringConfigOption filePath;
     BoolConfigOption skipHeader;
-
 };
 }// namespace NES
 #endif

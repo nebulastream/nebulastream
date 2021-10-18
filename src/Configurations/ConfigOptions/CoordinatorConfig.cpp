@@ -188,7 +188,7 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
 }
 
-std::string CoordinatorConfig::toString(){
+std::string CoordinatorConfig::toString() {
     std::stringstream ss;
     ss << restPort->toStringNameCurrentValue();
     ss << rpcPort->toStringNameCurrentValue();

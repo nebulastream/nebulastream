@@ -60,7 +60,7 @@ class CoordinatorConfig {
     /**
      * @brief prints the current coordinator configuration (name: current value)
      */
-     std::string toString();
+    std::string toString();
 
     /**
      * @brief gets a ConfigOption object with restIp
