@@ -33,9 +33,10 @@ namespace NES::Runtime {
 
     bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
         std::unique_lock<std::mutex> lck (mutex);
-        if(!this->buffers[id.getOriginId()].empty()) {
-            while (!this->buffers[id.getOriginId()].empty() && this->buffers[id.getOriginId()].top().getSequenceNumber() < id) {
-                this->buffers[id.getOriginId()].pop();
+        auto queue = &this->buffers[id.getOriginId()];
+        if(!queue->empty()) {
+            while (!queue->empty() && queue->top().getSequenceNumber() < id) {
+                queue->pop();
             }
             return true;
         }
@@ -56,7 +57,7 @@ namespace NES::Runtime {
         return this->buffers.at(originId).size();
     }
 
-    BufferStorageUnit BufferStorage::getTopelementFromQueue(uint64_t originId) const {
+    BufferStorageUnit BufferStorage::getTopElementFromQueue(uint64_t originId) const {
         return this->buffers.at(originId).top();
     }
 

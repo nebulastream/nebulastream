@@ -38,7 +38,8 @@ class BufferStorage {
      */
     void insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr);
     /**
-     * @brief Deletes a pair id, buffer link from the buffer storage queue with a given id
+     * @brief Deletes all pairs id, buffer link which sequence number smaller than passed
+     * sequence number from the buffer storage queue with the same origin id
      * @param mutex mutex to make the method thread safe
      * @param id id of the buffer
      */
@@ -60,7 +61,7 @@ class BufferStorage {
      * @param mutex mutex to make the method thread safe
      * @return buffer storage unit
      */
-    BufferStorageUnit getTopelementFromQueue(uint64_t originId) const;
+    BufferStorageUnit getTopElementFromQueue(uint64_t originId) const;
 
   private:
     std::map<uint64_t , std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>> buffers;
