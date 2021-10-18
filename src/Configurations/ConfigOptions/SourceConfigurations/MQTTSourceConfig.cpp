@@ -25,9 +25,7 @@ MQTTSourceConfigPtr MQTTSourceConfig::create(std::map<std::string, std::string> 
     return std::make_shared<MQTTSourceConfig>(MQTTSourceConfig(std::move(sourceConfigMap)));
 }
 
-MQTTSourceConfigPtr MQTTSourceConfig::create() {
-    return std::make_shared<MQTTSourceConfig>(MQTTSourceConfig());
-}
+MQTTSourceConfigPtr MQTTSourceConfig::create() { return std::make_shared<MQTTSourceConfig>(MQTTSourceConfig()); }
 
 MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(sourceConfigMap),
@@ -70,7 +68,6 @@ MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConf
     if (sourceConfigMap.find("MQTTSourceCleanSession") != sourceConfigMap.end()) {
         cleanSession->setValue((sourceConfigMap.find("MQTTSourceCleanSession")->second == "true"));
     }
-
 }
 
 MQTTSourceConfig::MQTTSourceConfig()
