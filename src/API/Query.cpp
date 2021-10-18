@@ -203,6 +203,14 @@ Query& Query::join(const Query& subQueryRhs,
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
+    //Update the Source names by sorting and then concatenating the source names from the sub query plan
+    std::vector<std::string> sourceNames;
+    sourceNames.emplace_back(rightQueryPlan->getSourceConsumed());
+    sourceNames.emplace_back(queryPlan->getSourceConsumed());
+    std::sort(sourceNames.begin(), sourceNames.end());
+    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
+    queryPlan->setSourceConsumed(updatedSourceName);
+
     return *this;
 }
 
@@ -213,7 +221,6 @@ Query& Query::joinWith(const Query& subQueryRhs,
     NES_DEBUG("Query: add JoinType to Join Operator");
 
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
-
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 
@@ -224,30 +231,7 @@ Query& Query::andWith(const Query& subQueryRhs,
     NES_DEBUG("Query: add JoinType to AND Operator");
 
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
-
-    //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
-    //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess,
-                                                              rightKeyFieldAccess,
-                                                              windowType,
-                                                              distrType,
-                                                              triggerPolicy,
-                                                              triggerAction,
-                                                              1,
-                                                              1,
-                                                              NES::Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT);
-
-    auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
-    queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
-    queryPlan->appendOperatorAsNewRoot(op);
-    //Update the Source names by sorting and then concatenating the source names from the sub query plan
-    std::vector<std::string> sourceNames;
-    sourceNames.emplace_back(rightQueryPlan->getSourceConsumed());
-    sourceNames.emplace_back(queryPlan->getSourceConsumed());
-    std::sort(sourceNames.begin(), sourceNames.end());
-    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
-    queryPlan->setSourceConsumed(updatedSourceName);
-    return Query::join(subQueryRhs,onLeftKey,onRightKey,windowType,joinType);
+    return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {
