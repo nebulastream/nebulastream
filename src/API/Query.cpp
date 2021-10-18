@@ -121,11 +121,11 @@ Query& Query::unionWith(const Query& subQuery) {
     return *this;
 }
 
-Query& Query::joinWithInternal(const Query& subQueryRhs,
-                            ExpressionItem onLeftKey,
-                            ExpressionItem onRightKey,
-                            const Windowing::WindowTypePtr& windowType,
-                            Join::LogicalJoinDefinition::JoinType joinType) {
+Query& Query::join(const Query& subQueryRhs,
+                   ExpressionItem onLeftKey,
+                   ExpressionItem onRightKey,
+                   const Windowing::WindowTypePtr& windowType,
+                   Join::LogicalJoinDefinition::JoinType joinType) {
     NES_DEBUG("Query: joinWith the subQuery to current query");
 
     auto subQuery = const_cast<Query&>(subQueryRhs);
@@ -214,13 +214,13 @@ Query& Query::joinWith(const Query& subQueryRhs,
 
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
 
-    return Query::joinWithInternal(subQueryRhs,onLeftKey,onRightKey,windowType,joinType);
+    return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 
 Query& Query::andWith(const Query& subQueryRhs,
-                       ExpressionItem onLeftKey,
-                       ExpressionItem onRightKey,
-                       const Windowing::WindowTypePtr& windowType) {
+                      ExpressionItem onLeftKey,
+                      ExpressionItem onRightKey,
+                      const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType to AND Operator");
 
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
@@ -247,7 +247,7 @@ Query& Query::andWith(const Query& subQueryRhs,
     std::sort(sourceNames.begin(), sourceNames.end());
     auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
     queryPlan->setSourceConsumed(updatedSourceName);
-    return Query::joinWithInternal(subQueryRhs,onLeftKey,onRightKey,windowType,joinType);
+    return Query::join(subQueryRhs,onLeftKey,onRightKey,windowType,joinType);
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {

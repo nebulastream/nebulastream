@@ -275,7 +275,7 @@ class Query {
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
      * We call it only internal as a last step during the Join operation
-     * @brief This methods adds the joinType to the join operator and calls the joinWithInternal function to add the operator to a query
+     * @brief This methods adds the joinType to the join operator and calls the join function to add the operator to a query
      * @param subQueryRhs subQuery to be joined
      * @param onLeftKey key attribute of the left stream
      * @param onLeftKey key attribute of the right stream
@@ -290,7 +290,7 @@ class Query {
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
      * We call it only internal as a last step during the AND operation
-     * @brief This methods adds the joinType to the join operator and calls joinWithInternal function to add the operator to a query
+     * @brief This methods adds the joinType to the join operator and calls join function to add the operator to a query
      * @param subQueryRhs subQuery to be composed
      * @param onLeftKey key attribute of the left stream
      * @param onLeftKey key attribute of the right stream
@@ -298,9 +298,9 @@ class Query {
      * @return the query
      */
     Query& andWith(const Query& subQueryRhs,
-                    ExpressionItem onLeftKey,
-                    ExpressionItem onRightKey,
-                    Windowing::WindowTypePtr const& windowType);
+                   ExpressionItem onLeftKey,
+                   ExpressionItem onRightKey,
+                   Windowing::WindowTypePtr const& windowType);
 
     /**
      * We call it only internal as a last step during the Join/AND operation
@@ -312,11 +312,11 @@ class Query {
      * @param joinType the definition of how the composition of the streams should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
      * @return the query
      */
-    Query& joinWithInternal(const Query& subQueryRhs,
-                         ExpressionItem onLeftKey,
-                         ExpressionItem onRightKey,
-                         Windowing::WindowTypePtr const& windowType,
-                         Join::LogicalJoinDefinition::JoinType joinType);
+    Query& join(const Query& subQueryRhs,
+                ExpressionItem onLeftKey,
+                ExpressionItem onRightKey,
+                Windowing::WindowTypePtr const& windowType,
+                Join::LogicalJoinDefinition::JoinType joinType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
