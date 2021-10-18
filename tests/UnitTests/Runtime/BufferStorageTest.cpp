@@ -36,6 +36,10 @@ class BufferStorageTest : public testing::Test {
     static void SetUpTestCase() { NES::setupLogging("BufferStorageTest.log", NES::LOG_DEBUG); }
 };
 
+/**
+     * @brief test inserts five buffers to different queues and checks after every insertion that queue
+     * size increased on one. After the insertion is fully done the site of the buffer storage is checked to be five
+*/
 TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
@@ -47,6 +51,10 @@ TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
     ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
 }
 
+/**
+     * @brief test inserts five buffers into one queue but starts from the biggest sequence number.
+     * The queue is then checked to be sorted to be exact to have biggest elements at the top.
+*/
 TEST_F(BufferStorageTest, sortedInsertionInBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
@@ -54,17 +62,23 @@ TEST_F(BufferStorageTest, sortedInsertionInBufferStorage) {
         bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
-    for (uint64_t i = 0; i < buffersInserted; i++) {
-        ASSERT_EQ(bufferStorage->getTopelementFromQueue(0).getSequenceNumber().getSequenceNumber(), i);
+    for (uint64_t i = 0; i < buffersInserted - 1; i++) {
         bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, 0));
+        ASSERT_EQ(bufferStorage->getTopElementFromQueue(0).getSequenceNumber().getSequenceNumber(), i + 1);
     }
 }
 
+/**
+     * @brief test checks that if trimming is called on an empty buffer it doesn't cause an error
+*/
 TEST_F(BufferStorageTest, emptyBufferCheck) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     ASSERT_EQ(bufferStorage->trimBuffer(BufferSequenceNumber(0, 0)), false);
 }
 
+/**
+     * @brief test inserts one buffer and deletes it
+*/
 TEST_F(BufferStorageTest, oneBufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
@@ -75,6 +89,9 @@ TEST_F(BufferStorageTest, oneBufferDeletionFromBufferStorage) {
     ASSERT_EQ(bufferStorage->getQueueSize(0), emptyBuffer);
 }
 
+/**
+     * @brief test inserts five buffers in different queues and deletes them.
+*/
 TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     for (size_t i = 0; i < buffersInserted; i++) {
@@ -89,6 +106,10 @@ TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
     }
 }
 
+/**
+     * @brief test inserts five buffers in one queue and deletes three of them. The test checks that
+     * the deleted buffers are smaller that passed id.
+*/
 TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
@@ -100,7 +121,10 @@ TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
     ASSERT_EQ(bufferStorage->getQueueSize(0), expectedStorageSize);
 }
 
-TEST_F(BufferStorageTest, multithreadingInBufferStorage) {
+/**
+     * @brief test inserts five buffers in different queues concurrently.
+*/
+TEST_F(BufferStorageTest, multithreadInsertionInBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
     std::vector<std::thread> t;
@@ -114,5 +138,29 @@ TEST_F(BufferStorageTest, multithreadingInBufferStorage) {
         thread.join();
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
+}
+
+/**
+     * @brief test inserts five buffers in different queues and deletes four of them concurrently.
+*/
+TEST_F(BufferStorageTest, multithreadTrimmingInBufferStorage) {
+    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
+    auto buffer = bufferManager->getUnpooledBuffer(16384);
+    std::vector<std::thread> t;
+    for (uint32_t i = 0; i < numberOfThreads; i++) {
+        t.emplace_back([bufferStorage, buffer, i](){
+            bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
+            ASSERT_EQ(bufferStorage->getQueueSize(i), oneBuffer);
+        });
+    }
+    for (uint32_t i = 0; i < numberOfThreads - 1; i++) {
+        t.emplace_back([bufferStorage, buffer, i](){
+            bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, i));
+        });
+    }
+    for (auto& thread : t) {
+        thread.join();
+    }
+    ASSERT_EQ(bufferStorage->getStorageSize(), oneBuffer);
 }
 }// namespace NES

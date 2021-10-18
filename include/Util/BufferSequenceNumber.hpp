@@ -25,8 +25,22 @@ namespace NES {
 class BufferSequenceNumber {
 
   public:
+    /**
+     * @brief Constructor, which creates new buffer sequence number out of pair sequnce number and origin id
+     * @param sequenceNumber sequence number
+     * @param originId origin id
+     * @return buffer sequence number
+     */
     BufferSequenceNumber(uint64_t sequenceNumber, uint64_t originId) : sequenceNumber(sequenceNumber), originId(originId) {};
+    /**
+     * @brief Getter for a sequence number of a buffer sequence number
+     * @return sequence number
+     */
     uint64_t getSequenceNumber() const { return sequenceNumber; }
+    /**
+     * @brief Getter for an origin id of a buffer sequence number
+     * @return origin id 
+     */
     uint64_t getOriginId() const { return originId; }
 
   private:
