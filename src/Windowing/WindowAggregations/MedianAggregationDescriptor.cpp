@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <API/Expressions/Expressions.hpp>
+#include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>

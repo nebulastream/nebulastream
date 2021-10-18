@@ -918,7 +918,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                           Execution::SuccessorExecutablePipeline executable,
                                           uint32_t numaNode) {
-    NES_DEBUG("Add Work for executable");
+    NES_DEBUG("Add Work for executable"<<numaNode);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if ((*nextPipeline)->isRunning()) {
