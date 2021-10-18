@@ -20,6 +20,16 @@
 #include <map>
 #include <memory>
 
+namespace z3 {
+class expr;
+
+class model;
+
+class context;
+using ContextPtr = std::shared_ptr<context>;
+
+}// namespace z3
+
 namespace NES {
 
 class Topology;
@@ -82,7 +92,8 @@ class PlacementStrategyFactory {
                                                               const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                               const TopologyPtr& topology,
                                                               const TypeInferencePhasePtr& typeInferencePhase,
-                                                              const StreamCatalogPtr& streamCatalog);
+                                                              const StreamCatalogPtr& streamCatalog,
+                                                              const z3::ContextPtr& z3Context);
 };
 }// namespace NES::Optimizer
 #endif//NES_PLACEMENTSTRATEGYFACTORY_HPP

@@ -26,20 +26,23 @@ namespace NES::Optimizer {
 QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
-                                         StreamCatalogPtr streamCatalog)
+                                         StreamCatalogPtr streamCatalog,
+                                         z3::ContextPtr z3Context)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
-      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)) {
+      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)), z3Context(std::move(z3Context)) {
     NES_DEBUG("QueryPlacementPhase()");
 }
 
 QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                    TopologyPtr topology,
                                                    TypeInferencePhasePtr typeInferencePhase,
-                                                   StreamCatalogPtr streamCatalog) {
+                                                   StreamCatalogPtr streamCatalog,
+                                                   z3::ContextPtr z3Context) {
     return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase(std::move(globalExecutionPlan),
                                                                      std::move(topology),
                                                                      std::move(typeInferencePhase),
-                                                                     std::move(streamCatalog)));
+                                                                     std::move(streamCatalog),
+                                                                     std::move(z3Context)));
 }
 
 bool QueryPlacementPhase::execute(const std::string& placementStrategy, QueryPlanPtr queryPlan) {
@@ -51,7 +54,8 @@ bool QueryPlacementPhase::execute(const std::string& placementStrategy, QueryPla
                                                                       globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      streamCatalog);
+                                                                      streamCatalog,
+                                                                      z3Context);
     if (!placementStrategyPtr) {
         NES_ERROR("NESOptimizer: unable to find placement strategy for " + placementStrategy);
         return false;

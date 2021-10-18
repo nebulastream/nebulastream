@@ -19,6 +19,11 @@
 
 #include <memory>
 
+namespace z3 {
+class context;
+using ContextPtr = std::shared_ptr<context>;
+}// namespace z3
+
 namespace NES {
 
 class QueryPlan;
@@ -49,7 +54,8 @@ class QueryPlacementPhase {
     static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
-                                         StreamCatalogPtr streamCatalog);
+                                         StreamCatalogPtr streamCatalog,
+                                         z3::ContextPtr z3Context);
 
     /**
      * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
@@ -65,11 +71,13 @@ class QueryPlacementPhase {
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase,
-                                 StreamCatalogPtr streamCatalog);
+                                 StreamCatalogPtr streamCatalog,
+                                 z3::ContextPtr z3Context);
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     StreamCatalogPtr streamCatalog;
+    z3::ContextPtr z3Context;
 };
 }// namespace NES::Optimizer
 #endif//NES_QUERYPLACEMENTPHASE_HPP
