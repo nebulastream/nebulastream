@@ -21,10 +21,21 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <z3++.h>
 
+namespace z3 {
+class expr;
+
+class model;
+
+class context;
+using ContextPtr = std::shared_ptr<context>;
+
+}// namespace z3
+
+
 namespace NES {
 
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -41,7 +52,8 @@ class ILPStrategy : public BasePlacementStrategy {
     static std::unique_ptr<ILPStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                TopologyPtr topology,
                                                TypeInferencePhasePtr typeInferencePhase,
-                                               StreamCatalogPtr streamCatalog);
+                                               StreamCatalogPtr streamCatalog,
+                                               z3::ContextPtr z3Context);
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
      * @param weight the relative weight
@@ -74,14 +86,15 @@ class ILPStrategy : public BasePlacementStrategy {
     explicit ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                          TopologyPtr topology,
                          TypeInferencePhasePtr typeInferencePhase,
-                         StreamCatalogPtr streamCatalog);
+                         StreamCatalogPtr streamCatalog,
+                         z3::ContextPtr z3Context);
     /**
      * @brief assigns operators to topology nodes based on ILP solution
      * @param queryPlan the query plan to place
-     * @param model a Z3 model from the Z3 Optimize
+     * @param z3Model a Z3 z3Model from the Z3 Optimize
      * @param placementVariables a mapping between concatenation of operator id and placement id and their z3 expression
      */
-    bool placeOperators(QueryPlanPtr queryPlan, z3::model& model, std::map<std::string, z3::expr>& placementVariables);
+    bool placeOperators(QueryPlanPtr queryPlan, z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables);
 
     /**
     * @brief Find a path between a source node and a destination node
@@ -103,7 +116,7 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param operatorIdUtilizationsMap a mapping of topology nodes and their node utilization
     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
-    bool addPath(z3::context& context,
+    bool addPath(z3::ContextPtr z3Context,
                  z3::optimize& opt,
                  std::vector<NodePtr>& operatorNodePath,
                  std::vector<NodePtr>& topologyNodePath,
@@ -128,6 +141,9 @@ class ILPStrategy : public BasePlacementStrategy {
     * @return a mapping of topology node (represented by string id) and their distance to the root node
     */
     std::map<std::string, double> computeDistanceHeuristic(QueryPlanPtr queryPlan);
+
+    // context from the Z3 library used for optimization
+    z3::ContextPtr z3Context;
 };
 }// namespace NES::Optimizer
 
