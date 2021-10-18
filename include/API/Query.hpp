@@ -275,7 +275,7 @@ class Query {
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
      * We call it only internal as a last step during the Join operation
-     * @brief This methods add the join operator to a query
+     * @brief This methods adds the joinType to the join operator and calls the joinWithInternal function to add the operator to a query
      * @param subQueryRhs subQuery to be joined
      * @param onLeftKey key attribute of the left stream
      * @param onLeftKey key attribute of the right stream
@@ -290,7 +290,7 @@ class Query {
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
      * We call it only internal as a last step during the AND operation
-     * @brief This methods add the and operator to a query
+     * @brief This methods adds the joinType to the join operator and calls joinWithInternal function to add the operator to a query
      * @param subQueryRhs subQuery to be composed
      * @param onLeftKey key attribute of the left stream
      * @param onLeftKey key attribute of the right stream
@@ -303,17 +303,16 @@ class Query {
                     Windowing::WindowTypePtr const& windowType);
 
     /**
-     * @new change: Now it's private, because we don't want the user to have access to it.
-     * We call it only internal as a last step during the Join operation
+     * We call it only internal as a last step during the Join/AND operation
      * @brief This methods add the join operator to a query
      * @param subQueryRhs subQuery to be joined
      * @param onLeftKey key attribute of the left stream
      * @param onLeftKey key attribute of the right stream
      * @param windowType Window definition.
-     * @param joinType the definition of how the composition of the streams should be performed
+     * @param joinType the definition of how the composition of the streams should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
      * @return the query
      */
-    Query& joinFinalCall(const Query& subQueryRhs,
+    Query& joinWithInternal(const Query& subQueryRhs,
                          ExpressionItem onLeftKey,
                          ExpressionItem onRightKey,
                          Windowing::WindowTypePtr const& windowType,
