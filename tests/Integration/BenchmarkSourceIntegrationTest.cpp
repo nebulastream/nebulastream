@@ -91,7 +91,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     EXPECT_TRUE(retStart1);
     NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
-    constexpr auto memAreaSize = 4096;// 1 MB
+    constexpr auto memAreaSize = 4096;           // 1 MB
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
     constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
     auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();

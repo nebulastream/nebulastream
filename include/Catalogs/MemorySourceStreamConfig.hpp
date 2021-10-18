@@ -96,7 +96,6 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
                                                   uint64_t gatheringValue,
                                                   const std::string& gatheringMode);
 
-
   private:
     std::string sourceType;
     std::shared_ptr<uint8_t> memoryArea;
@@ -105,4 +104,4 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
     DataSource::GatheringMode gatheringMode;
 };
 }// namespace NES
-#endif //INCLUDE_CATALOGS_MEMORYSOURCESTREAMCONFIG_HPP_
+#endif//INCLUDE_CATALOGS_MEMORYSOURCESTREAMCONFIG_HPP_

@@ -19,10 +19,10 @@
 
 #include <Network/NetworkManager.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Sources/BenchmarkSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/MemorySource.hpp>
-#include <Sources/BenchmarkSource.hpp>
 #include <chrono>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -225,18 +225,18 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
  * @return
  */
 DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
-                                 const Runtime::BufferManagerPtr& bufferManager,
-                                 const Runtime::QueryManagerPtr& queryManager,
-                                 const std::shared_ptr<uint8_t>& memoryArea,
-                                 size_t memoryAreaSize,
-                                 uint64_t numBuffersToProcess,
-                                 uint64_t gatheringValue,
-                                 OperatorId operatorId,
-                                 size_t numSourceLocalBuffers,
-                                 DataSource::GatheringMode gatheringMode,
-                                 BenchmarkSource::SourceMode sourceMode,
-                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                                 uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
+                                    const Runtime::BufferManagerPtr& bufferManager,
+                                    const Runtime::QueryManagerPtr& queryManager,
+                                    const std::shared_ptr<uint8_t>& memoryArea,
+                                    size_t memoryAreaSize,
+                                    uint64_t numBuffersToProcess,
+                                    uint64_t gatheringValue,
+                                    OperatorId operatorId,
+                                    size_t numSourceLocalBuffers,
+                                    DataSource::GatheringMode gatheringMode,
+                                    BenchmarkSource::SourceMode sourceMode,
+                                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                                    uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 
 /**
  * @brief function to create a network source
