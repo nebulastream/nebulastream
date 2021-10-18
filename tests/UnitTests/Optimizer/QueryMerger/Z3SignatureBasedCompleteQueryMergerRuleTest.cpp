@@ -1661,12 +1661,13 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
-                                                                                                NES::API::Milliseconds(10),
-                                                                                                NES::API::Milliseconds()))
-                       .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
-                       .sink(printSinkDescriptor);
+    Query query2 =
+        Query::from("car")
+            .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
+                                                                                     NES::API::Milliseconds(10),
+                                                                                     NES::API::Milliseconds()))
+            .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
+            .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -1935,7 +1936,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
  */
- //NOTE: We do not support this sharing at present as Z3 takes too long if we compare columns individually.
+//NOTE: We do not support this sharing at present as Z3 takes too long if we compare columns individually.
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesWithJoinOperatorWithDifferentStreamOrder) {
 
     // Prepare

@@ -305,12 +305,12 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
                       .filter(Attribute("val") < 36)
                       .filter(Attribute("Y") >= 49)
                       .unionWith(Query::from("example")
-                                      .filter(Attribute("X") <= Attribute("Y"))
-                                      .map(Attribute("id") = Attribute("id") / 1)
-                                      .map(Attribute("Y") = Attribute("Y") - 2)
-                                      .map(Attribute("NEW_id2") = Attribute("Y") / Attribute("Y"))
-                                      .filter(Attribute("val") < 36)
-                                      .filter(Attribute("Y") >= 49))
+                                     .filter(Attribute("X") <= Attribute("Y"))
+                                     .map(Attribute("id") = Attribute("id") / 1)
+                                     .map(Attribute("Y") = Attribute("Y") - 2)
+                                     .map(Attribute("NEW_id2") = Attribute("Y") / Attribute("Y"))
+                                     .filter(Attribute("val") < 36)
+                                     .filter(Attribute("Y") >= 49))
                       .sink(NullOutputSinkDescriptor::create());
 
         q1.getQueryPlan()->setQueryId(i);

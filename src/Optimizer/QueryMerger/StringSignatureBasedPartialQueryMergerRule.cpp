@@ -112,7 +112,7 @@ bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr global
 
         if (!merged) {
             NES_DEBUG("StringSignatureBasedPartialQueryMergerRule: computing a new Shared Query Plan");
-           globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
+            globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }
     //Remove all empty shared query metadata

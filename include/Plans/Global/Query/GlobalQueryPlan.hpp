@@ -133,8 +133,8 @@ class GlobalQueryPlan {
     std::vector<SharedQueryPlanPtr> getSharedQueryPlansConsumingSources(std::string sourceNames);
 
     std::map<std::string, std::vector<SharedQueryPlanPtr>> sourceNamesToSharedQueryPlanMap;
-  private:
 
+  private:
     GlobalQueryPlan();
     std::vector<QueryPlanPtr> queryPlansToAdd;
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
