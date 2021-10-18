@@ -22,7 +22,7 @@
 #include <Util/BufferStorageUnit.hpp>
 #include <queue>
 
-namespace NES {
+namespace NES::Runtime {
 
 /**
  * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
@@ -55,11 +55,12 @@ class BufferStorage {
      * @return Given queue size
      */
     size_t getQueueSize(uint64_t originId) const;
-
-    const std::map<uint64_t, std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>>& getBuffers() const;
-
-    const std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>& getQueue(uint64_t id) const;
-
+    /**
+     * @brief Return top element of the queue
+     * @param mutex mutex to make the method thread safe
+     * @return buffer storage unit
+     */
+    BufferStorageUnit getTopelementFromQueue(uint64_t originId) const;
 
   private:
     std::map<uint64_t , std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>> buffers;

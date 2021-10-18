@@ -18,7 +18,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <queue>
 
-namespace NES {
+namespace NES::Runtime {
     void BufferStorage::insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) {
         std::unique_lock<std::mutex> lck (mutex);
         if(this->buffers.find(id.getOriginId()) == this->buffers.end()) {
@@ -26,8 +26,9 @@ namespace NES {
             queue.push(BufferStorageUnit{id, bufferPtr});
             this->buffers[id.getOriginId()]=std::move(queue);
         }
-        else
+        else {
             this->buffers[id.getOriginId()].push(BufferStorageUnit{id, bufferPtr});
+        }
     }
 
     bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
@@ -54,8 +55,9 @@ namespace NES {
         std::unique_lock<std::mutex> lck (mutex);
         return this->buffers.at(originId).size();
     }
-    const std::map<uint64_t, std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>>& BufferStorage::getBuffers() const { return this->buffers; }
 
-    const std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>& BufferStorage::getQueue(uint64_t id) const { return this->buffers.at(id); };
+    BufferStorageUnit BufferStorage::getTopelementFromQueue(uint64_t originId) const {
+        return this->buffers.at(originId).top();
+    }
 
     }// namespace NES
