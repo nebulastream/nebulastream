@@ -89,7 +89,6 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
 
 void BenchmarkSource::open() {
     DataSource::open();
-
     auto buffer = localBufferManager->getUnpooledBuffer(memoryAreaSize);
     numaLocalMemoryArea = *buffer;
     std::memcpy(numaLocalMemoryArea.getBuffer(), memoryArea.get(), memoryAreaSize);
